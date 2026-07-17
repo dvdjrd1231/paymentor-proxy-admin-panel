@@ -42,6 +42,10 @@ services:
       APP_ENV: local
       APP_DEBUG: "true"
       APP_URL: http://localhost:8080
+      # Theme assets are generated against ASSET_URL. The nginx→php-fpm hop drops
+      # the :8080 port from the request host, so without this the CSS/JS 404.
+      # Must match the URL you open in the browser.
+      ASSET_URL: http://localhost:8080
       DB_CONNECTION: mariadb
       DB_HOST: database
       DB_PORT: "3306"

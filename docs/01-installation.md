@@ -86,3 +86,4 @@ and test with `certbot renew --dry-run`.
 | Certbot fails | DNS not pointed yet — re-run `certbot --nginx -d YOUR-DOMAIN` after DNS propagates |
 | Jobs not processing | `systemctl status paymenter-queue`; ensure Redis is up |
 | Permission errors | `chown -R www-data:www-data /var/www/paymenter && chmod -R 775 storage bootstrap/cache` |
+| **Blank page, CSS/JS 404** (theme assets `app-*.css/js`) | Asset URLs must match the URL you open. Set `APP_URL` **and** `ASSET_URL` to the exact scheme+host+port (e.g. `https://billing.example.com`), then `php artisan config:cache`. In local Docker this is preset in `docker-compose.dev.yml` (`ASSET_URL=http://localhost:8080`); a reverse proxy that strips the port causes port-less asset URLs otherwise. |
