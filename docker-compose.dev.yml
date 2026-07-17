@@ -1,0 +1,70 @@
+# Local development compose for the customized Paymenter platform.
+#
+# Runs the official Paymenter image (PHP 8.4) and overlays THIS repo's custom
+# extensions + themes, so CoinPayments and ProxyPanel show up in a real running
+# Paymenter. Unlike the shipped compose files, MySQL data lives in a NAMED
+# VOLUME (dbdata) so it never clobbers this repo's ./database migrations.
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d
+#   # open http://localhost:8080  and complete the installer
+#   # follow the queue worker + logs:
+#   docker compose -f docker-compose.dev.yml logs -f paymenter
+#
+# Reset everything (drops the DB + app volumes):
+#   docker compose -f docker-compose.dev.yml down -v
+
+services:
+  database:
+    image: mariadb:lts
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: paymenter
+      MYSQL_USER: paymenter
+      MYSQL_PASSWORD: paymenter_dev
+      MYSQL_ROOT_PASSWORD: root_dev
+    volumes:
+      - dbdata:/var/lib/mysql        # named volume — does NOT touch ./database
+    networks: [paymenter_nw]
+
+  cache:
+    image: redis:alpine
+    restart: unless-stopped
+    networks: [paymenter_nw]
+
+  paymenter:
+    image: ghcr.io/paymenter/paymenter:master
+    restart: unless-stopped
+    depends_on: [database, cache]
+    ports:
+      - "8080:80"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8080
+      DB_CONNECTION: mariadb
+      DB_HOST: database
+      DB_PORT: "3306"
+      DB_DATABASE: paymenter
+      DB_USERNAME: paymenter
+      DB_PASSWORD: paymenter_dev
+      CACHE_STORE: redis
+      REDIS_HOST: cache
+      QUEUE_CONNECTION: redis
+      PAYMENTER_SKIP_DEFAULT: "false"
+    volumes:
+      # Overlay our custom modules onto the image so they load at runtime:
+      - "./extensions/Gateways/CoinPayments:/app/extensions/Gateways/CoinPayments"
+      - "./extensions/Servers/ProxyPanel:/app/extensions/Servers/ProxyPanel"
+      # Persist app state (.env, keys) across restarts:
+      - appvar:/app/var
+      - ./storage/logs:/app/storage/logs
+    networks: [paymenter_nw]
+
+networks:
+  paymenter_nw:
+    driver: bridge
+
+volumes:
+  dbdata:
+  appvar:
