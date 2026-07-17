@@ -51,7 +51,10 @@ services:
       CACHE_STORE: redis
       REDIS_HOST: cache
       QUEUE_CONNECTION: redis
-      PAYMENTER_SKIP_DEFAULT: "false"
+      # Our vendored ./extensions + ./themes tree is authoritative. Skip the
+      # entrypoint's "renew defaults" step so the image never writes upstream
+      # files into our mounted source tree on restart.
+      PAYMENTER_SKIP_DEFAULT: "true"
     volumes:
       # Overlay our full extensions + themes tree onto the image so every custom
       # module (CoinPayments, ProxyPanel, BrazilianRegistration, …) loads at
