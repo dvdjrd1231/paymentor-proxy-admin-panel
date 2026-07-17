@@ -28,7 +28,7 @@ architecture and **do not modify core files**, so future upstream updates remain
 | 6 | Payment method fees | `Others/PaymentFees` | 🔴 planned |
 | 7 | Generic service provisioning lifecycle | `Servers/*` contract (native) | ✅ native |
 | 8 | proxyPanel module conversion | New `Servers/ProxyPanel` | 🟡 scaffolded |
-| 9 | Brazilian customer registration (CPF/CNPJ) | `Others/BrazilianRegistration` | 🔴 planned |
+| 9 | Brazilian customer registration (CPF/CNPJ) | `Others/BrazilianRegistration` | 🟢 built |
 | 10 | Disable domain sales | Config + policy override (upgrade-safe) | 🔴 planned |
 | 11 | Notification system (Email + Telegram) | `Others/Notifications` + queue | 🔴 planned |
 | 12 | Security hardening | Cross-cutting (see `docs/12-security.md`) | 🟡 ongoing |
