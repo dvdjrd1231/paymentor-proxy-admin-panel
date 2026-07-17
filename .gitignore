@@ -1,0 +1,36 @@
+# ── Laravel / runtime ──────────────────────────────────────────────
+/.phpunit.cache
+/node_modules
+/public/build
+/public/default/*
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+
+# ── Editors / OS ───────────────────────────────────────────────────
+/.fleet
+/.idea
+/.vscode
+.DS_Store
+Thumbs.db
+
+# ── Project-specific ───────────────────────────────────────────────
+# NOTE: unlike upstream Paymenter we DO commit our custom themes and
+# extensions — they are project deliverables. Only the loose upstream
+# theme build output is ignored below.
+/public/theme
+
+# The original client's business input files (kept out of delivery build,
+# but tracked here for context). Uncomment to exclude from delivery:
+# /File
