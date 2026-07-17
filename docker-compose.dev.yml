@@ -7,7 +7,7 @@
 #
 # Usage:
 #   docker compose -f docker-compose.dev.yml up -d
-#   # open http://localhost:8080  and complete the installer
+#   # open http://localhost  and complete the installer
 #   # follow the queue worker + logs:
 #   docker compose -f docker-compose.dev.yml logs -f paymenter
 #
@@ -37,15 +37,16 @@ services:
     restart: unless-stopped
     depends_on: [database, cache]
     ports:
-      - "8080:80"
+      # Served on the standard port 80 so http://localhost is the canonical URL.
+      # This keeps the request host, generated links, assets, and redirects all
+      # consistent (a non-standard host port gets dropped on the nginx→php-fpm
+      # hop, which breaks Login/Register/asset URLs). Open http://localhost .
+      - "80:80"
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
-      APP_URL: http://localhost:8080
-      # Theme assets are generated against ASSET_URL. The nginx→php-fpm hop drops
-      # the :8080 port from the request host, so without this the CSS/JS 404.
-      # Must match the URL you open in the browser.
-      ASSET_URL: http://localhost:8080
+      APP_URL: http://localhost
+      ASSET_URL: http://localhost
       DB_CONNECTION: mariadb
       DB_HOST: database
       DB_PORT: "3306"
