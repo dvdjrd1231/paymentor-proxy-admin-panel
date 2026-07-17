@@ -53,9 +53,11 @@ services:
       QUEUE_CONNECTION: redis
       PAYMENTER_SKIP_DEFAULT: "false"
     volumes:
-      # Overlay our custom modules onto the image so they load at runtime:
-      - "./extensions/Gateways/CoinPayments:/app/extensions/Gateways/CoinPayments"
-      - "./extensions/Servers/ProxyPanel:/app/extensions/Servers/ProxyPanel"
+      # Overlay our full extensions + themes tree onto the image so every custom
+      # module (CoinPayments, ProxyPanel, BrazilianRegistration, …) loads at
+      # runtime. Our vendored tree includes the upstream extensions too.
+      - "./extensions:/app/extensions"
+      - "./themes:/app/themes"
       # Persist app state (.env, keys) across restarts:
       - appvar:/app/var
       - ./storage/logs:/app/storage/logs

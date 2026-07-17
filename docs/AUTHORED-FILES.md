@@ -13,6 +13,14 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 - `extensions/Servers/ProxyPanel/ProxyPanel.php` — native proxyPanel provisioning module
 - `extensions/Servers/ProxyPanel/README.md`
 
+## Customer registration
+- `extensions/Others/BrazilianRegistration/BrazilianRegistration.php` — CPF/CNPJ fields, validation, encryption, masks
+- `extensions/Others/BrazilianRegistration/Support/Documents.php` — CPF/CNPJ checksum + masking helpers
+- `extensions/Others/BrazilianRegistration/database/migrations/2026_07_17_000000_seed_brazilian_custom_properties.php`
+- `extensions/Others/BrazilianRegistration/resources/views/masks.blade.php` — input-mask script
+- `extensions/Others/BrazilianRegistration/README.md`
+- `docs/modules/brazilian-registration.md`
+
 ## Deployment / operations
 - `scripts/install-debian13.sh` — automated Debian 13 installer
 - `scripts/backup.sh` — DB + files backup
@@ -37,6 +45,5 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 - `extensions/Others/PaymentFees/` — payment method fees
 - `extensions/Others/GatewayRules/` — country/product/currency gateway availability
 - `extensions/Others/Notifications/` — Email + Telegram notifications
-- `extensions/Others/BrazilianRegistration/` — CPF/CNPJ registration
 - `themes/proxy/` — custom client-area theme
 - `docs/10-disable-domains.md`, `docs/CORE-TOUCHPOINTS.md`
