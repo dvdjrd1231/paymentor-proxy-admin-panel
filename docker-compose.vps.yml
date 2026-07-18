@@ -1,0 +1,77 @@
+# VPS / production-style Docker stack, accessed over HTTP by public IP (or domain).
+#
+# Difference from docker-compose.dev.yml: production env, debug off, and the
+# public URL + DB password come from the shell environment so no secrets live in
+# this file. Assets/links are generated against PUBLIC_URL, so it MUST equal the
+# address you open in the browser (e.g. http://203.0.113.10).
+#
+# Usage on the VPS (from the repo root, e.g. /opt/paymentor-proxy-admin-panel):
+#
+#   export PUBLIC_URL="http://YOUR_SERVER_IP"      # exactly what you type in the browser
+#   export DB_PASSWORD="choose-a-strong-password"
+#   docker compose -f docker-compose.vps.yml up -d
+#   # wait ~20s for first-boot migrate/seed, then bake the URL into the config cache:
+#   docker compose -f docker-compose.vps.yml exec paymenter php artisan config:cache
+#   # create your admin login (role id 1 = admin):
+#   docker compose -f docker-compose.vps.yml exec paymenter \
+#       php artisan app:user:create Admin You you@example.com 'StrongPassword!' 1
+#   # open http://YOUR_SERVER_IP
+#
+# Later, to move to a domain + HTTPS, put a reverse proxy (Caddy/Nginx/Traefik)
+# in front and set PUBLIC_URL=https://your-domain, or use scripts/install-debian13.sh.
+
+services:
+  database:
+    image: mariadb:lts
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: paymenter
+      MYSQL_USER: paymenter
+      MYSQL_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in your shell before up}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+    volumes:
+      - dbdata:/var/lib/mysql        # named volume — never touches ./database
+    networks: [paymenter_nw]
+    # DB is NOT published to the host — only reachable inside the docker network.
+
+  cache:
+    image: redis:alpine
+    restart: unless-stopped
+    networks: [paymenter_nw]
+
+  paymenter:
+    image: ghcr.io/paymenter/paymenter:master
+    restart: unless-stopped
+    depends_on: [database, cache]
+    ports:
+      - "80:80"                       # standard port → generated URLs stay consistent
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: ${PUBLIC_URL:?set PUBLIC_URL, e.g. http://YOUR_SERVER_IP}
+      ASSET_URL: ${PUBLIC_URL:?set PUBLIC_URL}
+      DB_CONNECTION: mariadb
+      DB_HOST: database
+      DB_PORT: "3306"
+      DB_DATABASE: paymenter
+      DB_USERNAME: paymenter
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+      CACHE_STORE: redis
+      REDIS_HOST: cache
+      QUEUE_CONNECTION: redis
+      PAYMENTER_SKIP_DEFAULT: "true"
+    volumes:
+      # Overlay our full custom tree (CoinPayments, ProxyPanel, BrazilianRegistration, …):
+      - "./extensions:/app/extensions"
+      - "./themes:/app/themes"
+      - appvar:/app/var               # persists .env + APP_KEY across restarts
+      - ./storage/logs:/app/storage/logs
+    networks: [paymenter_nw]
+
+networks:
+  paymenter_nw:
+    driver: bridge
+
+volumes:
+  dbdata:
+  appvar:
