@@ -45,8 +45,8 @@ services:
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
-      APP_URL: http://localhost
-      ASSET_URL: http://localhost
+      APP_URL: http://69.197.186.115
+      ASSET_URL: http://69.197.186.115
       DB_CONNECTION: mariadb
       DB_HOST: database
       DB_PORT: "3306"
