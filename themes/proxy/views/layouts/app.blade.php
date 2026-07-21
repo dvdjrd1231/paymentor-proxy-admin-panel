@@ -62,7 +62,8 @@
         <x-navigation.sidebar title="$title" />
         @endif
         <div class="{{ (isset($sidebar) && $sidebar) ? 'md:ml-64 rtl:ml-0 rtl:md:mr-64' : '' }} flex flex-col flex-grow overflow-auto">
-            <main class="mt-16 grow">
+            {{-- No top offset: the WHMCS-style header/menu bars are static, not fixed. --}}
+            <main class="grow">
                 {{ $slot }}
             </main>
             <x-notification />

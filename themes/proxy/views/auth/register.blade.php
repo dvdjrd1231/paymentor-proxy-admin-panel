@@ -31,14 +31,35 @@
     $has = fn (string $key) => $props->contains(fn ($p) => $p->key === $key);
 @endphp
 
-<form class="wf-page" wire:submit.prevent="submit" id="register">
+<div class="wf-page">
     <div class="wf-title">
         <h1>{{ __('auth.sign_up_title') }}</h1>
         <span>Create an account with us&hellip;</span>
     </div>
+    <p class="wf-crumbs">
+        <a href="{{ route('home') }}" wire:navigate>Portal Home</a><span>/</span>{{ __('auth.sign_up_title') }}
+    </p>
     <hr class="wf-title-rule">
 
-    <div class="wf-card">
+    <div class="wf-split">
+        {{-- Left panel, mirroring WHMCS's "Already Registered?" sidebar --}}
+        <aside class="wf-aside">
+            <div class="wf-aside-head">{{ __('auth.already_have_account') }}</div>
+            <div class="wf-aside-body">
+                <p style="margin:0">
+                    Already registered with us? If so, click the button below to login to our
+                    client area from where you can manage your account.
+                </p>
+                <ul class="wf-aside-list">
+                    <li><a href="{{ route('login') }}" wire:navigate>{{ __('auth.sign_in') }} <span>&rsaquo;</span></a></li>
+                    @if (Route::has('password.request'))
+                        <li><a href="{{ route('password.request') }}" wire:navigate>Lost Password Reset <span>&rsaquo;</span></a></li>
+                    @endif
+                </ul>
+            </div>
+        </aside>
+
+        <form class="wf-card" wire:submit.prevent="submit" id="register">
         {{-- ─────────────── Personal Information ─────────────── --}}
         <div class="wf-section">Personal Information</div>
         <div class="wf-grid">
@@ -250,9 +271,10 @@
             <button type="submit" class="wf-btn">{{ __('auth.sign_up') }}</button>
         </div>
 
-        <div class="wf-alt">
-            {{ __('auth.already_have_account') }}
-            <a href="{{ route('login') }}" wire:navigate>{{ __('auth.sign_in') }}</a>
-        </div>
+            <div class="wf-alt">
+                {{ __('auth.already_have_account') }}
+                <a href="{{ route('login') }}" wire:navigate>{{ __('auth.sign_in') }}</a>
+            </div>
+        </form>
     </div>
-</form>
+</div>
