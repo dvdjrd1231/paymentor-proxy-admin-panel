@@ -18,15 +18,13 @@ return new class extends Migration
     private function fields(): array
     {
         return [
-            [
-                'key' => 'person_type',
-                'name' => 'Person Type / Tipo de Pessoa',
-                'type' => 'select',
-                'validation' => null,
-                'allowed_values' => ['individual' => 'Pessoa Física (Individual)', 'business' => 'Pessoa Jurídica (Business)'],
-                'required' => true,
-                'show_on_invoice' => false,
-            ],
+            // NOTE: no `person_type` field — the Brazilian block shows all fields together
+            // (client's choice), so a Pessoa Física/Jurídica selector isn't needed. It also
+            // must never be `required`, since the block only renders when country = Brazil.
+            //
+            // NOTE: `company_name` is intentionally NOT seeded here — Paymenter's core
+            // CustomPropertySeeder already provides it (used in the Billing Address
+            // section). Re-seeding it would rename the core field.
             [
                 'key' => 'cpf',
                 'name' => 'CPF',
@@ -44,15 +42,6 @@ return new class extends Migration
                 'allowed_values' => null,
                 'required' => false,
                 'show_on_invoice' => false,
-            ],
-            [
-                'key' => 'company_name',
-                'name' => 'Company Name / Razão Social',
-                'type' => 'string',
-                'validation' => 'max:191',
-                'allowed_values' => null,
-                'required' => false,
-                'show_on_invoice' => true,
             ],
             [
                 'key' => 'trade_name',
