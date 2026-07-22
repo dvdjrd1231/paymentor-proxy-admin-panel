@@ -19,11 +19,27 @@
     $isAuth = auth()->check();
 
     // getDashboardLinks() is the client-area menu: Dashboard, Services, Invoices,
-    // Tickets, and an "Account" item holding the sub-pages. It is empty for guests.
+    // Tickets, and an "Account" item holding the sub-pages. It is Auth-gated, so it
+    // comes back empty for guests.
     $dash = collect($isAuth ? Navigation::getDashboardLinks() : []);
     $accountItem = $dash->first(fn ($l) => !empty($l['children']));
-    $clientLinks = $dash->filter(fn ($l) => empty($l['children']))->values();
     $accountChildren = $accountItem['children'] ?? [];
+
+    if ($isAuth) {
+        $clientLinks = $dash->filter(fn ($l) => empty($l['children']))->values();
+    } else {
+        // Visitors still see Services / Invoices / Tickets in the bar. The routes are
+        // auth-protected, so clicking one simply sends them to the login page.
+        $clientLinks = collect([
+            ['name' => __('navigation.services'), 'url' => route('services')],
+            ['name' => __('navigation.invoices'), 'url' => route('invoices')],
+            [
+                'name' => __('navigation.tickets'),
+                'url' => route('tickets'),
+                'condition' => !config('settings.tickets_disabled', false),
+            ],
+        ])->filter(fn ($l) => $l['condition'] ?? true)->values();
+    }
 
     $isAdmin = $isAuth && auth()->user()->role_id !== null;
     $hasLogo = config('settings.logo') || config('settings.logo_dark');
