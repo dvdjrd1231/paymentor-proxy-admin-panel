@@ -69,9 +69,9 @@
             </main>
             <x-notification />
             <x-confirmation />
-            <div class="flex">
-                <x-navigation.footer />
-            </div>
+            {{-- Not wrapped in a flex container: that made the footer shrink to its
+                 content width instead of spanning the full page. --}}
+            <x-navigation.footer />
         </div>
         <x-impersonating />
     </div>

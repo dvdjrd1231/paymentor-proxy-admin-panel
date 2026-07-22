@@ -45,9 +45,8 @@
                 <a href="{{ route('register') }}" class="wf-hbtn" wire:navigate>{{ __('auth.sign_up') }}</a>
             @endguest
             @auth
-                <a href="{{ route('dashboard') }}" class="wf-hbtn" wire:navigate>{{ __('navigation.dashboard') }}</a>
+                <a href="{{ route('dashboard') }}" class="wf-hbtn wf-hbtn--primary" wire:navigate>{{ __('navigation.dashboard') }}</a>
             @endauth
-            <a href="{{ route('cart') }}" class="wf-hbtn wf-hbtn--primary" wire:navigate>{{ __('navigation.cart') }}</a>
         </div>
     </div>
 </header>
