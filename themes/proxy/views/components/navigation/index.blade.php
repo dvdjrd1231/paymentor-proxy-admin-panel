@@ -61,7 +61,9 @@
                 <a href="{{ route('register') }}" class="wf-hbtn" wire:navigate>{{ __('auth.sign_up') }}</a>
             @endguest
             @auth
-                <a href="{{ route('dashboard') }}" class="wf-hbtn wf-hbtn--primary" wire:navigate>{{ __('navigation.dashboard') }}</a>
+                {{-- Logout lives here (WHMCS puts it top-right); Dashboard is reachable
+                     from the menu bar below. --}}
+                <livewire:auth.logout />
             @endauth
         </div>
     </div>
@@ -105,7 +107,12 @@
         {{-- Account dropdown, right-aligned — shown to guests and members alike --}}
         <div class="wf-menu-right" x-data="{ open: false }" @click.outside="open = false">
             <button type="button" class="wf-menu-link" @click="open = !open">
-                {{ __('navigation.account') }} <span class="wf-caret">▾</span>
+                @auth
+                    {{ __('dashboard.welcome_back', ['name' => auth()->user()->first_name]) }}
+                @else
+                    {{ __('navigation.account') }}
+                @endauth
+                <span class="wf-caret">▾</span>
             </button>
             <ul class="wf-dropdown wf-dropdown--right" x-show="open" x-transition x-cloak>
                 @guest

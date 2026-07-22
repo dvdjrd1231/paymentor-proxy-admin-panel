@@ -51,6 +51,15 @@
     .wf-hbtn--primary { background: var(--brand); border-color: var(--brand); color: var(--brand-contrast); }
     .wf-hbtn--primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); color: var(--brand-contrast); }
 
+    /* Logout (Livewire component) rendered in the header → primary button look */
+    .wf-header-actions .wf-logout button {
+        display: inline-block; padding: .5rem 1.15rem; font-size: .9rem; font-family: inherit;
+        background: var(--brand); color: var(--brand-contrast);
+        border: 1px solid var(--brand); border-radius: var(--wf-radius);
+        cursor: pointer; transition: background .15s;
+    }
+    .wf-header-actions .wf-logout button:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+
     /* ── 2. Brand-coloured menu bar ────────────────────────────────────── */
     .wf-menubar { background: var(--brand); }
     .wf-menubar-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
