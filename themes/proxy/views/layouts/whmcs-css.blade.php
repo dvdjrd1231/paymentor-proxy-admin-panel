@@ -228,6 +228,86 @@
     }
     .wf-aside-list a:hover { color: var(--brand); }
 
+    /* ── 5b. Client-area components (WHMCS "Six" / Bootstrap-3 design language) ──
+       Rebuilt from scratch in plain CSS against Paymenter's data. We deliberately
+       do NOT ship WHMCS's own template files: they are Smarty .tpl bound to WHMCS
+       PHP variables and carry no open-source licence. Bootstrap 3 — the design
+       language Six is built on — is MIT, so recreating the look is fine.        */
+
+    /* Page header: big thin title + grey subtitle, underlined */
+    .wf-pagehead { margin: 0 0 1.25rem; }
+    .wf-pagehead h1 { color: var(--brand); font-size: 2.1rem; font-weight: 300; margin: 0 0 .25rem; }
+    .wf-pagehead p { margin: 0; color: var(--wf-muted); font-size: .95rem; }
+
+    /* Two-column client area: sidebar + main */
+    .wf-layout { display: grid; grid-template-columns: 260px 1fr; gap: 1.5rem; align-items: start; }
+    @media (max-width: 900px) { .wf-layout { grid-template-columns: 1fr; } }
+
+    /* Panel — the core Six building block */
+    .wf-panel {
+        background: var(--wf-bg); border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); margin-bottom: 1.25rem; overflow: hidden;
+    }
+    .wf-panel-heading {
+        padding: .7rem 1rem; font-size: .95rem; font-weight: 600;
+        background: var(--wf-section); border-bottom: 1px solid var(--wf-border);
+        display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+    }
+    .wf-panel--brand > .wf-panel-heading { background: var(--brand); color: var(--brand-contrast); border-bottom-color: var(--brand); }
+    .wf-panel-body { padding: 1rem; }
+    .wf-panel-body > :first-child { margin-top: 0; }
+    .wf-panel-body > :last-child { margin-bottom: 0; }
+    .wf-panel-footer { padding: .65rem 1rem; border-top: 1px solid var(--wf-border); background: var(--wf-section); }
+
+    /* List group — sidebar menus and simple record lists */
+    .wf-list { list-style: none; margin: 0; padding: 0; }
+    .wf-list > li + li { border-top: 1px solid var(--wf-border); }
+    .wf-list a, .wf-list .wf-list-row {
+        display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+        padding: .7rem 1rem; color: var(--wf-text); text-decoration: none; font-size: .9rem;
+    }
+    .wf-list a:hover { background: var(--wf-section); color: var(--brand); }
+    .wf-list a.is-active { background: var(--brand); color: var(--brand-contrast); }
+    .wf-list-title { font-weight: 600; }
+    .wf-list-sub { display: block; font-size: .8rem; color: var(--wf-muted); font-weight: 400; }
+
+    /* Tables */
+    .wf-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    .wf-table th, .wf-table td { padding: .65rem .75rem; text-align: start; border-bottom: 1px solid var(--wf-border); }
+    .wf-table thead th { background: var(--wf-section); font-weight: 600; color: var(--wf-label); white-space: nowrap; }
+    .wf-table tbody tr:hover { background: var(--wf-section); }
+    .wf-table td a { color: var(--brand); text-decoration: none; }
+    .wf-table td a:hover { text-decoration: underline; }
+    .wf-table-wrap { overflow-x: auto; }
+
+    /* Status labels */
+    .wf-label {
+        display: inline-block; padding: .2rem .55rem; border-radius: 999px;
+        font-size: .75rem; font-weight: 600; line-height: 1.4; white-space: nowrap;
+        background: #6b7280; color: #fff;
+    }
+    .wf-label--success { background: #2e9e5b; }
+    .wf-label--warning { background: #d68102; }
+    .wf-label--danger  { background: #c9302c; }
+    .wf-label--info    { background: #2f7ecb; }
+
+    /* Alerts / empty states */
+    .wf-alert {
+        padding: .85rem 1rem; border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); background: var(--wf-section);
+        color: var(--wf-text); font-size: .9rem;
+    }
+    .wf-alert--info { background: color-mix(in srgb, var(--brand) 7%, #fff); border-color: color-mix(in srgb, var(--brand) 25%, transparent); }
+    .wf-empty { padding: 1.5rem 1rem; text-align: center; color: var(--wf-muted); font-size: .9rem; }
+
+    /* Small stat tiles for the dashboard */
+    .wf-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .wf-stat { background: var(--wf-bg); border: 1px solid var(--wf-border); border-left: 3px solid var(--brand); border-radius: var(--wf-radius); padding: .9rem 1rem; }
+    .wf-stat-num { font-size: 1.6rem; font-weight: 600; color: var(--wf-text); line-height: 1.1; }
+    .wf-stat-label { font-size: .8rem; color: var(--wf-muted); text-transform: uppercase; letter-spacing: .04em; }
+
+    .wf-btn--sm { padding: .35rem .8rem; font-size: .82rem; }
+
     /* ── 6. Footer ─────────────────────────────────────────────────────── */
     /* full width, but never grow: the parent is a COLUMN flex container, so a
        flex-basis of 100% would stretch the footer down the whole page.
