@@ -1,16 +1,31 @@
 {{--
     WHMCS-style site chrome (overrides <x-navigation /> from the default theme).
 
-    Two stacked bars, exactly like the WHMCS "Six" layout:
-      1. White header  — logo left, Login/Register/View Cart right
-      2. Brand-coloured menu bar — Home / Store ▾ / (extension items), Account ▾ right
+      1. White header  — logo left, Login/Register (guest) or Dashboard (auth) + View Cart
+      2. Brand-coloured menu bar:
+           left  — Home / Store ▾ / extension items, plus Services, Invoices, Tickets
+                   once signed in (these are Auth-gated by Paymenter itself)
+           right — Account ▾ :  guest → Login / Register / Forgot Password
+                                auth  → Dashboard, Personal Details, Security,
+                                        Payment Methods, Notifications, Admin, Logout
 
-    Menu data comes from Paymenter's real navigation API, so every link points at a
-    page that actually exists (categories, Announcements, tickets, admin, …).
+    All menu data comes from Paymenter's real Navigation API, so every link points at
+    a page that exists and respects Paymenter's own visibility conditions.
 --}}
 @php
-    $links = \App\Classes\Navigation::getLinks();
-    $accountLinks = \App\Classes\Navigation::getAccountDropdownLinks();
+    use App\Classes\Navigation;
+
+    $links = Navigation::getLinks();                 // Home, Store, extension items
+    $isAuth = auth()->check();
+
+    // getDashboardLinks() is the client-area menu: Dashboard, Services, Invoices,
+    // Tickets, and an "Account" item holding the sub-pages. It is empty for guests.
+    $dash = collect($isAuth ? Navigation::getDashboardLinks() : []);
+    $accountItem = $dash->first(fn ($l) => !empty($l['children']));
+    $clientLinks = $dash->filter(fn ($l) => empty($l['children']))->values();
+    $accountChildren = $accountItem['children'] ?? [];
+
+    $isAdmin = $isAuth && auth()->user()->role_id !== null;
     $hasLogo = config('settings.logo') || config('settings.logo_dark');
 @endphp
 
@@ -32,9 +47,7 @@
             @auth
                 <a href="{{ route('dashboard') }}" class="wf-hbtn" wire:navigate>{{ __('navigation.dashboard') }}</a>
             @endauth
-            <a href="{{ route('cart') }}" class="wf-hbtn wf-hbtn--primary" wire:navigate>
-                {{ __('navigation.cart') !== 'navigation.cart' ? __('navigation.cart') : 'View Cart' }}
-            </a>
+            <a href="{{ route('cart') }}" class="wf-hbtn wf-hbtn--primary" wire:navigate>{{ __('navigation.cart') }}</a>
         </div>
     </div>
 </header>
@@ -44,6 +57,7 @@
         <button type="button" class="wf-burger" @click="mobile = !mobile" aria-label="Menu">☰</button>
 
         <ul class="wf-menu" :class="{ 'wf-menu--open': mobile }">
+            {{-- Public links: Home, Store ▾, extension-provided items --}}
             @foreach ($links as $link)
                 @if (!empty($link['children']))
                     <li class="wf-menu-item" x-data="{ open: false }" @click.outside="open = false">
@@ -63,26 +77,47 @@
                     </li>
                 @endif
             @endforeach
+
+            {{-- Client-area links (signed in only): Dashboard, Services, Invoices, Tickets --}}
+            @foreach ($clientLinks as $link)
+                <li class="wf-menu-item">
+                    <a class="wf-menu-link {{ ($link['active'] ?? false) ? 'is-active' : '' }}"
+                        href="{{ $link['url'] }}" wire:navigate>{{ $link['name'] }}</a>
+                </li>
+            @endforeach
         </ul>
 
-        @auth
-            <div class="wf-menu-right" x-data="{ open: false }" @click.outside="open = false">
-                <button type="button" class="wf-menu-link" @click="open = !open">
-                    {{ __('navigation.account') }} <span class="wf-caret">▾</span>
-                </button>
-                <ul class="wf-dropdown wf-dropdown--right" x-show="open" x-transition x-cloak>
-                    @foreach ($accountLinks as $al)
-                        <li>
-                            <a href="{{ $al['url'] }}" @if ($al['spa'] ?? true) wire:navigate @endif>{{ $al['name'] }}</a>
-                        </li>
-                    @endforeach
-                    @if (Route::has('logout'))
+        {{-- Account dropdown, right-aligned — shown to guests and members alike --}}
+        <div class="wf-menu-right" x-data="{ open: false }" @click.outside="open = false">
+            <button type="button" class="wf-menu-link" @click="open = !open">
+                {{ __('navigation.account') }} <span class="wf-caret">▾</span>
+            </button>
+            <ul class="wf-dropdown wf-dropdown--right" x-show="open" x-transition x-cloak>
+                @guest
+                    <li><a href="{{ route('login') }}" wire:navigate>{{ __('auth.sign_in') }}</a></li>
+                    <li><a href="{{ route('register') }}" wire:navigate>{{ __('auth.sign_up') }}</a></li>
+                    @if (Route::has('password.request'))
                         <li class="wf-dropdown-sep">
-                            <a href="{{ route('logout') }}">{{ __('navigation.logout') !== 'navigation.logout' ? __('navigation.logout') : 'Logout' }}</a>
+                            <a href="{{ route('password.request') }}" wire:navigate>{{ __('auth.forgot_password') }}</a>
                         </li>
                     @endif
-                </ul>
-            </div>
-        @endauth
+                @endguest
+
+                @auth
+                    <li><a href="{{ route('dashboard') }}" wire:navigate>{{ __('navigation.dashboard') }}</a></li>
+                    @foreach ($accountChildren as $child)
+                        <li><a href="{{ $child['url'] }}" wire:navigate>{{ $child['name'] }}</a></li>
+                    @endforeach
+                    @if ($isAdmin)
+                        <li class="wf-dropdown-sep">
+                            <a href="{{ route('filament.admin.pages.dashboard') }}">{{ __('navigation.admin') }}</a>
+                        </li>
+                    @endif
+                    <li class="wf-dropdown-sep wf-dropdown-logout">
+                        <livewire:auth.logout />
+                    </li>
+                @endauth
+            </ul>
+        </div>
     </div>
 </nav>
