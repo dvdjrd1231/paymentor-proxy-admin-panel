@@ -24,15 +24,9 @@
         --wf-shell: 1170px;
     }
 
-    .dark {
-        --wf-page-bg: #14171c;
-        --wf-border: #333a45;
-        --wf-label: #c9cfd8;
-        --wf-muted: #97a0ad;
-        --wf-bg: #1c2027;
-        --wf-section: #232830;
-        --wf-text: #eef1f5;
-    }
+    /* The WHMCS design is light-only. The layout never applies the `dark` class, but
+       we neutralise it here too so a stray toggle can't darken the chrome. */
+    .dark { color-scheme: light; }
 
     /* WHMCS pages sit on a light grey canvas, not the base theme's dark background. */
     body { background: var(--wf-page-bg) !important; color: var(--wf-text); }
@@ -90,6 +84,15 @@
     }
     .wf-dropdown a:hover { background: var(--wf-section); color: var(--brand); }
     .wf-dropdown-sep { border-top: 1px solid var(--wf-border); margin-top: .35rem; padding-top: .35rem; }
+
+    /* Paymenter's logout is a Livewire component, so normalise whatever it renders
+       (button/link) to look like the other dropdown entries. */
+    .wf-dropdown-logout :is(a, button) {
+        display: block; width: 100%; text-align: left;
+        padding: .55rem 1rem; font-size: .9rem; font-family: inherit;
+        color: var(--wf-text); background: transparent; border: 0; cursor: pointer;
+    }
+    .wf-dropdown-logout :is(a, button):hover { background: var(--wf-section); color: var(--brand); }
 
     .wf-burger { display: none; background: transparent; border: 0; color: var(--brand-contrast); font-size: 1.3rem; padding: .8rem .6rem; cursor: pointer; }
 

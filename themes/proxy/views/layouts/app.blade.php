@@ -53,7 +53,8 @@
             return this.theme === 'dark' || (this.theme === 'system' && this.systemDark);
         }
     }"
-    :class="{'dark': isDark}"
+    {{-- The WHMCS design is light-only, so this theme never applies the `dark` class.
+         (x-data above is kept so the base theme's toggle JS still has its state.) --}}
 >
     {!! hook('body') !!}
     <x-navigation />
