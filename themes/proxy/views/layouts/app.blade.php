@@ -59,10 +59,12 @@
     {!! hook('body') !!}
     <x-navigation />
     <div class="w-full flex flex-grow">
-        @if (isset($sidebar) && $sidebar)
-        <x-navigation.sidebar title="$title" />
-        @endif
-        <div class="{{ (isset($sidebar) && $sidebar) ? 'md:ml-64 rtl:ml-0 rtl:md:mr-64' : '' }} flex flex-col flex-grow overflow-auto">
+        {{-- Paymenter's default client sidebar is deliberately NOT rendered: the
+             WHMCS-style menu bar already carries Dashboard / Services / Invoices /
+             Tickets / Account, so the sidebar was duplicate navigation. The
+             md:ml-64 offset it required is dropped with it, otherwise every client
+             page would keep a 16rem empty gutter on the left. --}}
+        <div class="flex flex-col flex-grow overflow-auto">
             {{-- No top offset: the WHMCS-style header/menu bars are static, not fixed. --}}
             <main class="grow">
                 {{ $slot }}
