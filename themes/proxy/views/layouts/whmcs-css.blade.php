@@ -229,8 +229,13 @@
     .wf-aside-list a:hover { color: var(--brand); }
 
     /* ── 6. Footer ─────────────────────────────────────────────────────── */
-    /* width/flex-basis so the footer always spans the page, even if a parent is flex */
-    .wf-footer { background: var(--wf-bg); border-top: 3px solid var(--brand); margin-top: auto; width: 100%; flex: 1 1 100%; }
+    /* full width, but never grow: the parent is a COLUMN flex container, so a
+       flex-basis of 100% would stretch the footer down the whole page.
+       margin-top:auto keeps it pinned to the bottom when content is short. */
+    .wf-footer {
+        background: var(--wf-bg); border-top: 3px solid var(--brand);
+        margin-top: auto; width: 100%; flex: 0 0 auto;
+    }
     .wf-footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 1.1rem; padding-bottom: 1.1rem; }
     .wf-footer-copy { margin: 0; font-size: .85rem; color: var(--wf-muted); }
     .wf-totop {
