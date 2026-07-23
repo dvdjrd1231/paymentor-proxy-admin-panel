@@ -30,7 +30,7 @@ architecture and **do not modify core files**, so future upstream updates remain
 | 8 | proxyPanel module conversion | New `Servers/ProxyPanel` | 🟡 scaffolded |
 | 9 | Brazilian customer registration (CPF/CNPJ) | `Others/BrazilianRegistration` | 🟢 built |
 | 10 | Disable domain sales | Config + policy override (upgrade-safe) | 🔴 planned |
-| 11 | Notification system (Email + Telegram) | `Others/Notifications` + queue | 🔴 planned |
+| 11 | Notification system (Email + Telegram) | Core email/in-app + `Others/Notifications` Telegram, queued | 🟢 built |
 | 12 | Security hardening | Cross-cutting (see `docs/12-security.md`) | 🟡 ongoing |
 
 Legend: ✅ provided by core · 🟢 done · 🟡 in progress / scaffolded · 🔴 planned
