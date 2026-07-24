@@ -317,6 +317,27 @@
 
     .wf-btn--sm { padding: .35rem .8rem; font-size: .82rem; }
 
+    /* ── 5c. De-dark shim for not-yet-converted default pages ───────────────
+       The default theme uses `bg-primary-800` (a dark shade of the brand colour)
+       as a *surface* on some detail pages (service/ticket show, invoice blocks),
+       with light text on top. Under this light WHMCS design that reads as a dark
+       box on a light page. Remap those surfaces to a light Six panel and restore
+       readable text, so every page is consistent even before it's individually
+       converted to explicit .wf-panel markup. Converted pages don't use these
+       classes, so this only affects the remainder. */
+    .bg-primary-800,
+    .bg-primary-700 {
+        background-color: var(--wf-bg) !important;
+        border: 1px solid var(--wf-border);
+        color: var(--wf-text) !important;
+    }
+    .bg-primary-600 { background-color: var(--wf-section) !important; }
+    /* The default puts near-white text (text-primary-100) on those dark surfaces;
+       darken it so it's legible on the new light background. */
+    .bg-primary-800 .text-primary-100,
+    .bg-primary-700 .text-primary-100,
+    .text-primary-100 { color: var(--wf-label) !important; }
+
     /* ── 6. Footer ─────────────────────────────────────────────────────── */
     /* full width, but never grow: the parent is a COLUMN flex container, so a
        flex-basis of 100% would stretch the footer down the whole page.
