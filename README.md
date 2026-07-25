@@ -25,7 +25,7 @@ architecture and **do not modify core files**, so future upstream updates remain
 | 4 | Payment gateways: Stripe, Cryptomus (config) | Existing `Gateways/Stripe`, community Cryptomus | 🟡 config/docs |
 | 4 | Payment gateways: CoinPayments, Binance (dev) | New `Gateways/CoinPayments`, `Gateways/Binance` | 🟢 CoinPayments built |
 | 5 | Country-based gateway availability | `Others/GatewayRules` (event-filtered) | 🔴 planned |
-| 6 | Payment method fees | `Others/PaymentFees` | 🔴 planned |
+| 6 | Payment method fees | `Others/PaymentFees` (server-side rules) | 🟢 built |
 | 7 | Generic service provisioning lifecycle | `Servers/*` contract (native) | ✅ native |
 | 8 | proxyPanel module conversion | New `Servers/ProxyPanel` | 🟡 scaffolded |
 | 9 | Brazilian customer registration (CPF/CNPJ) | `Others/BrazilianRegistration` | 🟢 built |
