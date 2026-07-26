@@ -37,5 +37,36 @@ if (class_exists(\Paymenter\Extensions\Others\PaymentFees\PaymentFees::class)) {
 
 ---
 
+## 2. Enforce country-based gateway rules across ALL gateways (optional)
+
+**Why:** Paymenter only filters gateways that implement `canUseGateway()`. Our own
+gateways (CoinPayments, Binance) call the rules engine from that hook, so they're
+already enforced. To also enforce rules for gateways that don't implement it
+(Stripe, Cryptomus, …), filter the checkout list centrally. See
+`docs/modules/gateway-rules.md`.
+
+**File:** `app/Helpers/ExtensionHelper.php`, method `getCheckoutGateways(...)`.
+
+**Change:** wrap the returned `$gateways` through the engine before returning:
+
+```php
+// Country-based Gateway Rules (extensions/Others/GatewayRules) — central enforcement.
+if (class_exists(\Paymenter\Extensions\Others\GatewayRules\GatewayRules::class)) {
+    $gateways = array_values(array_filter($gateways, fn ($g) =>
+        \Paymenter\Extensions\Others\GatewayRules\GatewayRules::allows($g, $total, $currency, $type, $items)
+    ));
+}
+
+return $gateways;
+```
+
+**Notes:**
+- Optional — skip it if you only use gateways that implement `canUseGateway()`.
+- Guarded by `class_exists`; core still runs if the extension is removed.
+- If not re-applied after an upgrade: only non-implementing gateways stop being
+  filtered; our gateways and the admin UI keep working.
+
+---
+
 _(No other core touchpoints at this time. Everything else is implemented via extensions,
 themes, events, or configuration.)_
