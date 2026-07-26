@@ -51,6 +51,22 @@ class CoinPayments extends Gateway
     }
 
     /**
+     * Respect the Country-based Gateway Rules module (item 5) natively, so this
+     * gateway is filtered even without the central checkout touchpoint. Safe no-op
+     * if that extension isn't installed.
+     */
+    public function canUseGateway($total, $currency, $type, $items = [])
+    {
+        $rules = '\\Paymenter\\Extensions\\Others\\GatewayRules\\GatewayRules';
+        if (!class_exists($rules)) {
+            return true;
+        }
+        $gateway = \App\Models\Gateway::where('extension', 'CoinPayments')->first();
+
+        return $gateway ? $rules::allows($gateway, $total, $currency, $type, $items) : true;
+    }
+
+    /**
      * Admin configuration fields (stored encrypted where marked).
      */
     public function getConfig($values = [])
