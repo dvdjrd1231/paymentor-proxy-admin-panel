@@ -23,7 +23,7 @@ architecture and **do not modify core files**, so future upstream updates remain
 | 2 | Client & Admin area customization | Custom theme + Filament panel config | 🔴 planned |
 | 3 | Support ticket system (WHMCS-like) | Core tickets + `Others/*` extensions | 🔴 planned |
 | 4 | Payment gateways: Stripe, Cryptomus (config) | Existing `Gateways/Stripe`, community Cryptomus | 🟡 config/docs |
-| 4 | Payment gateways: CoinPayments, Binance (dev) | New `Gateways/CoinPayments`, `Gateways/Binance` | 🟢 CoinPayments built |
+| 4 | Payment gateways: CoinPayments, Binance (dev) | New `Gateways/CoinPayments`, `Gateways/Binance` | 🟢 both built |
 | 5 | Country-based gateway availability | `Others/GatewayRules` (server-side rules) | 🟢 built |
 | 6 | Payment method fees | `Others/PaymentFees` (server-side rules) | 🟢 built |
 | 7 | Generic service provisioning lifecycle | `Servers/*` contract (native) | ✅ native |
