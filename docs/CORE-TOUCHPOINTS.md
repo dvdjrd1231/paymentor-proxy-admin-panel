@@ -68,5 +68,29 @@ return $gateways;
 
 ---
 
+## 3. Discover admin widgets from extensions (optional)
+
+**Why:** Paymenter auto-discovers `Resources` and `Pages` from enabled extensions, but
+**not** `Widgets`. To show the `Others/AdminOps` Operations metrics widget (spec item 2)
+on the admin dashboard, discover extension widgets too. See `docs/02b-admin-area.md`.
+
+**File:** `app/Providers/Filament/AdminPanelProvider.php`, inside the loop over enabled
+extensions (next to the existing `discoverResources` / `discoverPages` calls).
+
+**Change:** add one line:
+
+```php
+$panel->discoverWidgets(in: base_path('extensions/' . $extension->path . '/Admin/Widgets'), for: $extension->namespace . '\\Admin\\Widgets');
+```
+
+**Notes:**
+- Optional — without it the widget class simply isn't loaded (no breakage).
+- Alternatively, keep core untouched and place the widget on a dedicated admin page.
+- Admin primary **colour**: to match the brand, change `->colors(['primary' => Color::Blue])`
+  to e.g. `->colors(['primary' => Color::hex('#e8365d')])` in the same provider. Purely
+  cosmetic; optional.
+
+---
+
 _(No other core touchpoints at this time. Everything else is implemented via extensions,
 themes, events, or configuration.)_
