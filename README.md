@@ -21,7 +21,7 @@ architecture and **do not modify core files**, so future upstream updates remain
 |---|-------------|------------------|--------|
 | 1 | Deployment automation (Debian 13) | `scripts/install-debian13.sh` + docs | 🟡 scaffolded |
 | 2 | Client & Admin area customization | Custom theme + Filament panel config | 🔴 planned |
-| 3 | Support ticket system (WHMCS-like) | Core tickets + `Others/*` extensions | 🔴 planned |
+| 3 | Support ticket system (WHMCS-like) | Core tickets + `Others/TicketTools` (quick replies, internal notes) | 🟢 built |
 | 4 | Payment gateways: Stripe, Cryptomus (config) | Existing `Gateways/Stripe`, community Cryptomus | 🟡 config/docs |
 | 4 | Payment gateways: CoinPayments, Binance (dev) | New `Gateways/CoinPayments`, `Gateways/Binance` | 🟢 both built |
 | 5 | Country-based gateway availability | `Others/GatewayRules` (server-side rules) | 🟢 built |
