@@ -29,7 +29,7 @@ architecture and **do not modify core files**, so future upstream updates remain
 | 7 | Generic service provisioning lifecycle | `Servers/*` contract (native) | ✅ native |
 | 8 | proxyPanel module conversion | New `Servers/ProxyPanel` | 🟡 scaffolded |
 | 9 | Brazilian customer registration (CPF/CNPJ) | `Others/BrazilianRegistration` | 🟢 built |
-| 10 | Disable domain sales | Config + policy override (upgrade-safe) | 🔴 planned |
+| 10 | Disable domain sales | N/A by architecture — no domain system exists (documented) | 🟢 done |
 | 11 | Notification system (Email + Telegram) | Core email/in-app + `Others/Notifications` Telegram, queued | 🟢 built |
 | 12 | Security hardening | Cross-cutting (see `docs/12-security.md`) | 🟡 ongoing |
 
