@@ -20,9 +20,9 @@ architecture and **do not modify core files**, so future upstream updates remain
 | # | Requirement | Native mechanism | Status |
 |---|-------------|------------------|--------|
 | 1 | Deployment automation (Debian 13) | `scripts/install-debian13.sh` + docs | 🟡 scaffolded |
-| 2 | Client & Admin area customization | Custom theme + Filament panel config | 🔴 planned |
+| 2 | Client & Admin area customization | `themes/proxy` (WHMCS-style) + `Others/AdminOps` metrics + settings branding | 🟢 built |
 | 3 | Support ticket system (WHMCS-like) | Core tickets + `Others/TicketTools` (quick replies, internal notes) | 🟢 built |
-| 4 | Payment gateways: Stripe, Cryptomus (config) | Existing `Gateways/Stripe`, community Cryptomus | 🟡 config/docs |
+| 4 | Payment gateways: Stripe, Cryptomus (config) | Core `Gateways/Stripe` + first-party `Gateways/Cryptomus` | 🟢 built |
 | 4 | Payment gateways: CoinPayments, Binance (dev) | New `Gateways/CoinPayments`, `Gateways/Binance` | 🟢 both built |
 | 5 | Country-based gateway availability | `Others/GatewayRules` (server-side rules) | 🟢 built |
 | 6 | Payment method fees | `Others/PaymentFees` (server-side rules) | 🟢 built |
