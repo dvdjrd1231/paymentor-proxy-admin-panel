@@ -27,7 +27,7 @@ architecture and **do not modify core files**, so future upstream updates remain
 | 5 | Country-based gateway availability | `Others/GatewayRules` (server-side rules) | 🟢 built |
 | 6 | Payment method fees | `Others/PaymentFees` (server-side rules) | 🟢 built |
 | 7 | Generic service provisioning lifecycle | `Servers/*` contract (native) | ✅ native |
-| 8 | proxyPanel module conversion | New `Servers/ProxyPanel` | 🟡 scaffolded |
+| 8 | proxyPanel module conversion | New `Servers/ProxyPanel` (wired to live API) | 🟢 built |
 | 9 | Brazilian customer registration (CPF/CNPJ) | `Others/BrazilianRegistration` | 🟢 built |
 | 10 | Disable domain sales | N/A by architecture — no domain system exists (documented) | 🟢 done |
 | 11 | Notification system (Email + Telegram) | Core email/in-app + `Others/Notifications` Telegram, queued | 🟢 built |
