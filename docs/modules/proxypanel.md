@@ -1,83 +1,93 @@
 # ProxyPanel Provisioning Module
 
-Native Paymenter **Server** (provisioning) module for the IPv6 proxy admin panel — the
-replacement for the legacy WHMCS *proxyPanel* module.
+Native Paymenter **Server** (provisioning) module for the IPv6 proxy admin panel
+(melodyproxy) — the native rewrite of the legacy WHMCS *proxyPanel* module, wired to
+the **live panel API**.
 
 - **Location:** `extensions/Servers/ProxyPanel/`
 - **Type:** Server (provisioning)
-- **Status:** Lifecycle complete; **API endpoints pending the admin-panel spec** (see *Wiring*).
+- **Status:** ✅ wired to the real API (create / suspend / unsuspend / terminate /
+  renew / status / rotate / reboot / credentials).
+
+## API
+
+- **Base URL:** `https://admpx.melodyproxy.com/v0/services` (set in module settings).
+- **Auth:** header `Panel: <token>` — stored as an **encrypted** module setting
+  (never hard-coded, per spec item 12).
+
+Endpoints used (verified against the original module's API client):
+
+| Action | Method / path |
+|---|---|
+| Create | `POST /newIpv6` `{client_id, plan_tag, location_name, amount, authenticate:{username,password}, bwlimit}` |
+| Suspend | `GET /stop/{id}` |
+| Unsuspend | `GET /start/{id}` |
+| Terminate | `GET /cancel/{id}` |
+| Renew / extend | `GET /renew/{id}` · `GET /extend/{id}/{unixtimestamp}` |
+| Status | `GET /{id}` |
+| Plans | `GET /plans` · Locations `GET /locations` |
+| Credentials | `POST /credentials/{id}` `{username,password}` |
+| Rotate | `GET /rotate/{id}/1` · Set rotation `GET /setRotate/{id}/{minutes}` |
+| Reboot | `GET /reboot/{id}` (+ `/hard`) |
+
+Responses are JSON with `status` (`ok`/`error`) and `description`; create returns the
+remote service `id` (+ `ips`).
 
 ## WHMCS → Paymenter mapping
 
-| WHMCS function | Paymenter method | Notes |
+| WHMCS | Paymenter | Notes |
 |---|---|---|
-| `CreateAccount` | `createServer` | idempotent — reuses existing remote id if present |
-| `SuspendAccount` | `suspendServer` | |
-| `UnsuspendAccount` | `unsuspendServer` | |
-| `TerminateAccount` | `terminateServer` | idempotent — no-op if never provisioned |
-| `ChangePackage` | `upgradeServer` | upgrade **and** downgrade |
-| Client-area links | `getActions` | e.g. "Sync status" |
-| Renewal | *(none)* | **Paymenter has no renew hook** — renewal is billing-driven; a paid invoice keeps the service active. We reconcile via `syncStatus`. |
+| `CreateAccount` | `createServer` | idempotent — reuses existing remote id, just `/start` |
+| `SuspendAccount` | `suspendServer` | `/stop` |
+| `UnsuspendAccount` | `unsuspendServer` | `/start` |
+| `TerminateAccount` | `terminateServer` | `/cancel`, idempotent |
+| `ChangePassword` | `setCredentials()` | `/credentials` |
+| Renewal | Service\Updated listener | Paymenter has no renew hook; when `expires_at` moves, the module calls `/extend/{id}/{ts}` |
+| `ChangePackage` | `upgradeServer` | **panel does not allow package change** — surfaced as a clear error (matches the original module) |
+| ClientArea (rotate/reboot) | `getActions` | Sync status, Rotate, Reboot |
 
 ## Configuration
 
-### Module (admin → Servers → ProxyPanel settings)
-
-| Setting | Description | Stored |
-|---|---|---|
-| **Admin Panel API URL** | Base URL of the panel API, e.g. `https://panel.example.com/api` | plain |
-| **API Key** | Auth token for the panel | encrypted |
-
-Use **Test connection** to verify (`GET {api_url}/ping`).
+### Module (admin → Servers → ProxyPanel)
+- **Panel API URL** — e.g. `https://admpx.melodyproxy.com/v0/services`
+- **Panel Token** — the `Panel:` header token (encrypted). Use **Test connection**
+  (calls `/plans`) to verify.
 
 ### Product (admin → Product → this server)
+- **Amount of proxies**, **Plan** (from `/plans`), **Location/Region** (from `/locations`),
+  **Bandwidth limit**, **Max authorized IPs**.
 
-- **Proxy Plan** — plan/package id in the panel (dropdown from the panel).
-- **Protocol** — HTTP(S) / SOCKS5.
-- **Quantity** — proxies per service (overridable at checkout).
-- **Allowed Location(s)** — restrict checkout locations (optional).
+## Provisioning data stored per service
 
-### Checkout (customer)
+- `proxypanel_service_id` — remote id (used by all later calls)
+- `proxy_username`, `proxy_password` — generated proxy credentials (surface to the
+  customer in the service view; can be changed via `setCredentials()`)
 
-- **Location** and **Quantity**.
+## Robustness (spec item 8)
 
-## Robustness
+- **Idempotency** — per-service/per-action lock (`proxypanel_lock`, 5-min TTL);
+  create short-circuits if a remote id already exists; terminate is a no-op if never
+  provisioned.
+- **Retry** — transient HTTP failures retried (3×, 200 ms backoff).
+- **Queue support** — provisioning runs on Paymenter's queue worker; long calls retry
+  via Laravel's queue backoff.
+- **Logging / error handling** — every op + failure logged as `[ProxyPanel]`; panel
+  `status:error` responses raise a descriptive exception.
+- **No hard-coded secrets** — API URL + token are settings; the token is encrypted.
 
-- **Idempotency** — each lifecycle op runs under a per-service/per-action lock (`proxypanel_lock`
-  service property, 5-minute TTL) and short-circuits when the panel already reflects the target
-  state. The remote id is stored as the `proxypanel_service_id` property.
-- **Retry** — transient HTTP errors are retried (3×, 200 ms backoff) before failing.
-- **Queue support** — provisioning is triggered by Paymenter's service lifecycle; long calls run
-  on the queue worker (`php artisan queue:work`) with Laravel's built-in retry/backoff.
-- **Logging / error handling** — every operation and failure is logged with `[ProxyPanel]`.
-- **No hardcoded secrets** — the API key is an encrypted setting.
+## Enable
 
-## Wiring the real API
+```
+php artisan app:extension:enable Servers/ProxyPanel
+```
+Then create a Server with the URL + token, and attach it to your proxy products.
 
-The lifecycle methods are complete and should **not** need changes. When you provide the panel's
-API spec, edit only the marked (`@api`) items in `ProxyPanel.php`:
+## Notes / differences from the old WHMCS module
 
-1. **Endpoint paths** — the `ENDPOINT_*` constants (create / suspend / unsuspend / terminate /
-   change-plan / status / plans / locations / ping).
-2. **Auth header** — `request()` assumes `Authorization: Bearer <api_key>`; adjust if the panel
-   uses a different scheme (e.g. `X-Api-Key`, HMAC-signed).
-3. **Request payload keys** — the `createServer` payload (`external_ref`, `plan`, `protocol`,
-   `location`, `quantity`, `email`) → the panel's create contract.
-4. **Response field names** — where we read the new service id (`id` / `service_id`) and the plan/
-   location list shapes in `fetchPlans()` / `fetchLocations()`.
-
-### Information needed from the client
-
-- Base URL and auth scheme.
-- Request/response for: create, suspend, unsuspend, terminate, change-plan, status, list plans,
-  list locations.
-- The field that uniquely identifies a provisioned service on the panel.
-- Whether the panel exposes proxy credentials/endpoints to surface in the client area.
-
-## Testing (once wired)
-
-1. Configure a product to use ProxyPanel, place a test order, pay the invoice.
-2. Confirm `createServer` runs (log shows `Service provisioned`) and `proxypanel_service_id` is
-   set on the service.
-3. Exercise suspend/unsuspend/terminate/upgrade from the admin service page and confirm panel
-   state changes. Re-run each to confirm idempotency (no duplicate side effects).
+- The panel's `/newIpv6` create endpoint is used (IPv6 proxy service), matching the live
+  deployment. `client_id` is the Paymenter service id.
+- Package change is intentionally unsupported (panel limitation) — to change plan, cancel
+  and re-order.
+- Rotation-limit / auth-IP management UIs from the WHMCS client area can be added as
+  additional `getActions` views on request; the core lifecycle + status/rotate/reboot are
+  wired.
