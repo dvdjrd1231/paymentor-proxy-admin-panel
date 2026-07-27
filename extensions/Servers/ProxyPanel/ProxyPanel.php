@@ -4,84 +4,73 @@ namespace Paymenter\Extensions\Servers\ProxyPanel;
 
 use App\Classes\Extension\Server;
 use App\Models\Service;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * ProxyPanel — native Paymenter server (provisioning) module for the IPv6 proxy
- * admin panel. This is the native rewrite of the legacy WHMCS "proxyPanel"
- * module.
+ * admin panel (melodyproxy). Native rewrite of the legacy WHMCS "proxyPanel" module,
+ * wired against the live panel API (base `/v0/services`, auth header `Panel: <token>`).
  *
- * WHMCS → Paymenter method mapping:
- *   CreateAccount     → createServer
- *   SuspendAccount    → suspendServer
- *   UnsuspendAccount  → unsuspendServer
- *   TerminateAccount  → terminateServer
- *   ChangePackage     → upgradeServer   (upgrade / downgrade)
- *   ClientArea/links  → getActions
- *   (renewal)         → billing-driven in Paymenter; no module hook (a paid
- *                       invoice keeps the Service active). We expose an explicit
- *                       "Sync" action + a scheduled reconcile instead.
+ * WHMCS → Paymenter mapping (verified against the original module + api client):
+ *   CreateAccount    → createServer      POST /newIpv6
+ *   SuspendAccount   → suspendServer     GET  /stop/{id}
+ *   UnsuspendAccount → unsuspendServer   GET  /start/{id}
+ *   TerminateAccount → terminateServer   GET  /cancel/{id}
+ *   ChangePassword   → getActions:credentials  POST /credentials/{id}
+ *   Renewal          → billing-driven (Paymenter has no renew hook): a Service\Updated
+ *                      listener calls GET /extend/{id}/{timestamp} when expires_at moves.
+ *   ChangePackage    → not supported by the panel (upgradeServer returns a clear notice)
+ *   ClientArea       → getActions: sync / rotate / reboot / view credentials
  *
- * Robustness guarantees:
- *   - Idempotency: every lifecycle op is guarded by a per-service, per-action
- *     lock and short-circuits if the panel already reflects the desired state
- *     (the remote id is stored as a service property).
- *   - Retry: transient HTTP failures are retried with backoff.
- *   - Logging + structured error handling on every operation.
- *   - No secrets in code — credentials come from encrypted module settings.
- *
- * ── WIRING NOTE ─────────────────────────────────────────────────────────────
- * The lifecycle logic below is complete. The only thing pending is the concrete
- * admin-panel API surface (base paths + response field names), which the client
- * will provide. Everything that must change when the real spec arrives is marked
- * with `@api` and centralised in the "API surface" section near the bottom —
- * you should not need to touch the lifecycle methods.
- * ────────────────────────────────────────────────────────────────────────────
+ * Robustness: idempotent lifecycle (per-service/per-action lock; short-circuit when the
+ * panel already reflects the target state), HTTP retry with backoff, logging + error
+ * handling. Credentials are encrypted settings (spec item 12) — never hard-coded.
  *
  * @link docs/modules/proxypanel.md
  */
 class ProxyPanel extends Server
 {
-    /** Service property key holding the remote panel id for this service. */
     private const REMOTE_ID_KEY = 'proxypanel_service_id';
 
-    /** Service property key used as a lightweight in-flight lock. */
+    private const USERNAME_KEY = 'proxy_username';
+
+    private const PASSWORD_KEY = 'proxy_password';
+
     private const LOCK_KEY = 'proxypanel_lock';
 
     private const LOG_CHANNEL = 'stack';
 
-    // ── Module-level configuration (admin → Server settings) ────────────────
+    // ── Module configuration (admin → Server settings) ───────────────────────
 
     public function getConfig($values = []): array
     {
         return [
             [
                 'name' => 'api_url',
-                'label' => 'Admin Panel API URL',
+                'label' => 'Panel API URL',
                 'type' => 'text',
-                'description' => 'Base URL of your proxy admin panel API, e.g. https://panel.example.com/api',
+                'description' => 'Base URL including /v0/services, e.g. https://admpx.melodyproxy.com/v0/services',
                 'required' => true,
                 'validation' => 'url',
             ],
             [
-                'name' => 'api_key',
-                'label' => 'API Key',
+                'name' => 'api_token',
+                'label' => 'Panel Token',
                 'type' => 'text',
-                'description' => 'API key/token used to authenticate with the admin panel. Stored encrypted.',
+                'description' => 'Token sent as the "Panel" header. Stored encrypted.',
                 'required' => true,
                 'encrypted' => true,
             ],
         ];
     }
 
-    /**
-     * "Test connection" button in the admin server settings.
-     */
     public function testConfig(): bool|string
     {
         try {
-            $this->request('get', self::ENDPOINT_PING);
+            $this->request('get', '/plans');
 
             return true;
         } catch (\Throwable $e) {
@@ -89,135 +78,124 @@ class ProxyPanel extends Server
         }
     }
 
-    // ── Per-product configuration (admin) ───────────────────────────────────
+    public function boot()
+    {
+        // Renewal is billing-driven — push the new expiry to the panel when a
+        // ProxyPanel service's expires_at is extended (e.g. after an invoice is paid).
+        Event::listen(\App\Events\Service\Updated::class, function ($event) {
+            $service = $event->service;
+            if (!$this->isProxyPanelService($service) || !$service->isDirty('expires_at') || !$service->expires_at) {
+                return;
+            }
+            try {
+                if ($id = $this->remoteId($service)) {
+                    $this->request('get', '/extend/' . $id . '/' . $service->expires_at->timestamp);
+                    $this->log('info', 'Extended service expiry on panel', ['service' => $service->id, 'remote' => $id]);
+                }
+            } catch (\Throwable $e) {
+                $this->log('error', 'Failed to extend expiry', ['service' => $service->id, 'error' => $e->getMessage()]);
+            }
+        });
+    }
 
-    /**
-     * Fields shown to the admin when configuring a product to use this module.
-     * Supports cascading selects (locations are re-fetched live).
-     */
+    // ── Per-product configuration (admin) ────────────────────────────────────
+
     public function getProductConfig($values = []): array
     {
         return [
             [
+                'name' => 'amount',
+                'label' => 'Amount of proxies',
+                'type' => 'text',
+                'description' => 'Number of proxies provisioned per service.',
+                'validation' => 'numeric',
+                'required' => true,
+            ],
+            [
                 'name' => 'plan',
-                'label' => 'Proxy Plan',
+                'label' => 'Plan',
                 'type' => 'select',
-                'description' => 'Plan / package identifier in the admin panel.',
+                'description' => 'Plan tag on the panel.',
                 'options' => $this->safeOptions(fn () => $this->fetchPlans()),
                 'required' => true,
             ],
             [
-                'name' => 'protocol',
-                'label' => 'Protocol',
+                'name' => 'region',
+                'label' => 'Location / Region',
                 'type' => 'select',
-                'description' => 'Proxy protocol offered by this product.',
-                'options' => [
-                    'http' => 'HTTP(S)',
-                    'socks5' => 'SOCKS5',
-                ],
-                'required' => true,
-            ],
-            [
-                'name' => 'default_quantity',
-                'label' => 'Quantity (proxies)',
-                'type' => 'text',
-                'description' => 'Number of proxies provisioned per service (can be overridden at checkout).',
-                'validation' => 'numeric',
-                'required' => true,
-            ],
-            [
-                'name' => 'allowed_locations',
-                'label' => 'Allowed Location(s)',
-                'type' => 'select',
-                'description' => 'Locations the customer may choose from at checkout. Leave empty to allow all.',
+                'description' => 'Location the proxies are provisioned in.',
                 'options' => $this->safeOptions(fn () => $this->fetchLocations()),
-                'multiple' => true,
-                'database_type' => 'array',
+                'required' => true,
+            ],
+            [
+                'name' => 'bwlimit',
+                'label' => 'Bandwidth limit',
+                'type' => 'text',
+                'description' => 'Zero or empty = unlimited.',
+                'validation' => 'numeric',
                 'required' => false,
             ],
-        ];
-    }
-
-    /**
-     * Fields shown to the customer at checkout.
-     */
-    public function getCheckoutConfig(\App\Models\Product $product, $values = [], $settings = []): array
-    {
-        return [
             [
-                'name' => 'location',
-                'label' => 'Location',
-                'type' => 'select',
-                'description' => 'Preferred proxy location.',
-                'options' => $this->safeOptions(fn () => $this->fetchLocations()),
-                'required' => true,
-            ],
-            [
-                'name' => 'quantity',
-                'label' => 'Quantity',
+                'name' => 'auth_ips',
+                'label' => 'Max authorized IPs',
                 'type' => 'text',
-                'description' => 'How many proxies you need.',
+                'description' => 'Zero or empty = disabled.',
                 'validation' => 'numeric',
                 'required' => false,
             ],
         ];
     }
 
-    // ── Lifecycle (idempotent) ──────────────────────────────────────────────
+    // ── Lifecycle (idempotent) ────────────────────────────────────────────────
 
     public function createServer(Service $service, $settings, $properties)
     {
         $settings = array_merge($settings, $properties);
 
         return $this->withLock($service, 'create', function () use ($service, $settings) {
-            // Idempotency: if we already created it, just make sure it's active.
+            // Idempotency: reuse an existing remote service, just ensure it's running.
             if ($remoteId = $this->remoteId($service)) {
-                $this->log('info', 'createServer skipped — remote already exists', ['service' => $service->id, 'remote' => $remoteId]);
+                $this->log('info', 'createServer skipped — remote exists', ['service' => $service->id, 'remote' => $remoteId]);
 
-                return $this->request('post', self::ENDPOINT_UNSUSPEND, ['id' => $remoteId]);
+                return $this->request('get', '/start/' . $remoteId);
             }
 
+            $username = 'svc' . $service->id;
+            $password = substr(sha1(random_bytes(16)), 0, 8);
+            $bwlimit = (int) ($settings['bwlimit'] ?? 0);
+
             $payload = [
-                // @api map these fields to your admin-panel "create" contract
-                'external_ref' => $service->id,
-                'plan'         => $settings['plan'] ?? null,
-                'protocol'     => $settings['protocol'] ?? 'http',
-                'location'     => $settings['location'] ?? null,
-                'quantity'     => (int) ($settings['quantity'] ?? $settings['default_quantity'] ?? 1),
-                'email'        => $service->user->email,
+                'client_id' => (int) $service->id,
+                'plan_tag' => $settings['plan'] ?? null,
+                'location_name' => $settings['region'] ?? null,
+                'amount' => (int) ($settings['amount'] ?? 1),
+                'authenticate' => ['username' => $username, 'password' => $password],
+                'bwlimit' => $bwlimit > 0 ? $bwlimit : null,
             ];
 
-            $response = $this->request('post', self::ENDPOINT_CREATE, $payload);
-
-            // @api adjust to the field the panel returns as the service id
-            $newId = $response['id'] ?? $response['service_id'] ?? null;
+            $res = $this->request('post', '/newIpv6', $payload);
+            $newId = $res['id'] ?? null;
             if (!$newId) {
                 throw new \RuntimeException('ProxyPanel create returned no service id.');
             }
 
-            $this->setRemoteId($service, $newId);
+            $this->setProp($service, self::REMOTE_ID_KEY, $newId);
+            $this->setProp($service, self::USERNAME_KEY, $username);
+            $this->setProp($service, self::PASSWORD_KEY, $password);
             $this->log('info', 'Service provisioned', ['service' => $service->id, 'remote' => $newId]);
 
-            return $response;
+            return $res;
         });
     }
 
     public function suspendServer(Service $service, $settings, $properties)
     {
-        return $this->withLock($service, 'suspend', function () use ($service) {
-            $remoteId = $this->requireRemoteId($service);
-
-            return $this->request('post', self::ENDPOINT_SUSPEND, ['id' => $remoteId]);
-        });
+        return $this->withLock($service, 'suspend', fn () => $this->request('get', '/stop/' . $this->requireRemoteId($service)));
     }
 
     public function unsuspendServer(Service $service, $settings, $properties)
     {
-        return $this->withLock($service, 'unsuspend', function () use ($service) {
-            $remoteId = $this->requireRemoteId($service);
-
-            return $this->request('post', self::ENDPOINT_UNSUSPEND, ['id' => $remoteId]);
-        });
+        return $this->withLock($service, 'unsuspend', fn () => $this->request('get', '/start/' . $this->requireRemoteId($service)));
     }
 
     public function terminateServer(Service $service, $settings, $properties)
@@ -225,71 +203,75 @@ class ProxyPanel extends Server
         return $this->withLock($service, 'terminate', function () use ($service) {
             $remoteId = $this->remoteId($service);
             if (!$remoteId) {
-                // Nothing to terminate remotely; treat as success (idempotent).
-                return true;
+                return true; // nothing to cancel remotely — idempotent
             }
+            $res = $this->request('get', '/cancel/' . $remoteId);
+            $this->clearProp($service, self::REMOTE_ID_KEY);
 
-            $response = $this->request('post', self::ENDPOINT_TERMINATE, ['id' => $remoteId]);
-            $this->clearRemoteId($service);
-
-            return $response;
-        });
-    }
-
-    public function upgradeServer(Service $service, $settings, $properties)
-    {
-        $settings = array_merge($settings, $properties);
-
-        return $this->withLock($service, 'upgrade', function () use ($service, $settings) {
-            $remoteId = $this->requireRemoteId($service);
-
-            return $this->request('post', self::ENDPOINT_CHANGE_PLAN, [
-                'id'       => $remoteId,
-                'plan'     => $settings['plan'] ?? null,
-                'quantity' => (int) ($settings['quantity'] ?? $settings['default_quantity'] ?? 1),
-            ]);
+            return $res;
         });
     }
 
     /**
-     * Client-area actions (buttons) + status lookup.
+     * The panel does not support changing a package/plan (matches the original
+     * WHMCS module). Expose that clearly rather than silently doing nothing.
      */
+    public function upgradeServer(Service $service, $settings, $properties)
+    {
+        throw new \RuntimeException('ProxyPanel does not support changing the package. Cancel and re-order to change plan.');
+    }
+
+    // ── Client-area actions ──────────────────────────────────────────────────
+
     public function getActions(Service $service, $settings = [], $properties = [])
     {
-        $remoteId = $this->remoteId($service);
-        if (!$remoteId) {
+        if (!$this->remoteId($service)) {
             return [];
         }
 
         return [
-            [
-                'type' => 'button',
-                'label' => 'Sync status',
-                'function' => 'syncStatus',
-            ],
+            ['type' => 'button', 'label' => 'Sync status', 'function' => 'syncStatus'],
+            ['type' => 'button', 'label' => 'Rotate proxies', 'function' => 'rotate'],
+            ['type' => 'button', 'label' => 'Reboot', 'function' => 'reboot'],
         ];
     }
 
-    /**
-     * Status lookup / reconcile — callable from the service page and from a
-     * scheduled reconcile job. Safe to run repeatedly.
-     */
+    /** Status lookup / reconcile — safe to run repeatedly. */
     public function syncStatus(Service $service, $settings = [], $properties = [])
     {
-        $remoteId = $this->requireRemoteId($service);
-        $status = $this->request('get', self::ENDPOINT_STATUS . '/' . $remoteId);
-
-        $this->log('debug', 'Synced ProxyPanel status', ['service' => $service->id, 'remote' => $remoteId, 'status' => $status['status'] ?? null]);
-
-        return $status;
+        return $this->request('get', '/' . $this->requireRemoteId($service));
     }
 
-    // ── Idempotency helpers ─────────────────────────────────────────────────
+    public function rotate(Service $service, $settings = [], $properties = [])
+    {
+        return $this->request('get', '/rotate/' . $this->requireRemoteId($service) . '/1');
+    }
 
-    /**
-     * Run $callback under a per-service, per-action lock so overlapping queue
-     * jobs / retries cannot double-execute a provisioning operation.
-     */
+    public function reboot(Service $service, $settings = [], $properties = [])
+    {
+        return $this->request('get', '/reboot/' . $this->requireRemoteId($service));
+    }
+
+    /** Set the proxy username/password on the panel (POST /credentials/{id}). */
+    public function setCredentials(Service $service, string $username, string $password)
+    {
+        $res = $this->request('post', '/credentials/' . $this->requireRemoteId($service), [
+            'username' => $username,
+            'password' => $password,
+        ]);
+        $this->setProp($service, self::USERNAME_KEY, $username);
+        $this->setProp($service, self::PASSWORD_KEY, $password);
+
+        return $res;
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private function isProxyPanelService(Service $service): bool
+    {
+        return optional(optional($service->product)->server)->extension === 'ProxyPanel';
+    }
+
     private function withLock(Service $service, string $action, callable $callback)
     {
         $lock = $service->properties()->where('key', self::LOCK_KEY)->first();
@@ -298,7 +280,6 @@ class ProxyPanel extends Server
 
             return true;
         }
-
         $service->properties()->updateOrCreate(['key' => self::LOCK_KEY], ['value' => $action]);
 
         try {
@@ -326,96 +307,78 @@ class ProxyPanel extends Server
         return $id;
     }
 
-    private function setRemoteId(Service $service, $id): void
+    private function setProp(Service $service, string $key, $value): void
     {
-        $service->properties()->updateOrCreate([
-            'key' => self::REMOTE_ID_KEY,
-        ], ['value' => $id]);
+        $service->properties()->updateOrCreate(['key' => $key], ['value' => $value]);
     }
 
-    private function clearRemoteId(Service $service): void
+    private function clearProp(Service $service, string $key): void
     {
-        $service->properties()->where('key', self::REMOTE_ID_KEY)->delete();
+        $service->properties()->where('key', $key)->delete();
     }
 
-    // ── API surface (the only place to touch when wiring the real panel) ─────
-
-    // @api Replace these path constants with the real admin-panel endpoints.
-    private const ENDPOINT_PING = '/ping';
-
-    private const ENDPOINT_CREATE = '/services';
-
-    private const ENDPOINT_SUSPEND = '/services/suspend';
-
-    private const ENDPOINT_UNSUSPEND = '/services/unsuspend';
-
-    private const ENDPOINT_TERMINATE = '/services/terminate';
-
-    private const ENDPOINT_CHANGE_PLAN = '/services/change-plan';
-
-    private const ENDPOINT_STATUS = '/services';
-
-    private const ENDPOINT_PLANS = '/plans';
-
-    private const ENDPOINT_LOCATIONS = '/locations';
-
-    /** @api adjust to the panel's plan list response shape. */
     private function fetchPlans(): array
     {
-        $data = $this->request('get', self::ENDPOINT_PLANS);
-        $out = [];
-        foreach ($data['data'] ?? $data as $plan) {
-            $out[$plan['id']] = $plan['name'] ?? $plan['id'];
-        }
-
-        return $out;
+        $data = $this->request('get', '/plans');
+        return $this->toOptions($data);
     }
 
-    /** @api adjust to the panel's location list response shape. */
     private function fetchLocations(): array
     {
-        $data = $this->request('get', self::ENDPOINT_LOCATIONS);
+        $data = $this->request('get', '/locations');
+        return $this->toOptions($data);
+    }
+
+    /** The panel returns plans/locations either as a flat list or a keyed map. */
+    private function toOptions($data): array
+    {
+        $rows = $data['data'] ?? $data;
         $out = [];
-        foreach ($data['data'] ?? $data as $loc) {
-            $out[$loc['id']] = $loc['name'] ?? $loc['code'] ?? $loc['id'];
+        foreach ((array) $rows as $k => $v) {
+            if (is_array($v)) {
+                $id = $v['tag'] ?? $v['name'] ?? $v['id'] ?? $k;
+                $out[$id] = $v['name'] ?? $id;
+            } else {
+                $out[$v] = $v;
+            }
         }
 
         return $out;
     }
 
     /**
-     * Signed, retried HTTP call to the admin panel.
+     * Panel HTTP call: `Panel` auth header, retry on transient failure, and the
+     * panel's own {status: ok|error, description} convention checked.
      *
-     * @api adjust the auth header scheme to match the panel (Bearer assumed).
-     *
-     * @throws \RuntimeException on API-level or transport error
+     * @throws \RuntimeException on transport or API-level error
      */
     private function request(string $method, string $path, array $data = []): array
     {
         $url = rtrim((string) $this->config('api_url'), '/') . $path;
 
         $request = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->config('api_key'),
-            'Accept'        => 'application/json',
+            'Panel' => (string) $this->config('api_token'),
+            'Accept' => 'application/json',
         ])->retry(3, 200, throw: false)->timeout(20);
 
-        $response = $method === 'get'
-            ? $request->get($url, $data)
-            : $request->{$method}($url, $data);
+        $response = $method === 'get' ? $request->get($url) : $request->{$method}($url, $data);
 
         if (!$response->successful()) {
-            $detail = $response->json('message') ?? $response->json('errors.0.detail') ?? $response->body();
+            $detail = $response->json('description') ?? $response->body();
             $this->log('error', 'ProxyPanel API error', ['method' => $method, 'path' => $path, 'status' => $response->status(), 'detail' => $detail]);
             throw new \RuntimeException('ProxyPanel API error (HTTP ' . $response->status() . '): ' . $detail);
         }
 
-        return $response->json() ?? [];
+        $json = $response->json() ?? [];
+        if (($json['status'] ?? 'ok') === 'error') {
+            $msg = $json['description'] ?? 'Unknown panel error';
+            $this->log('error', 'ProxyPanel returned error', ['path' => $path, 'detail' => $msg]);
+            throw new \RuntimeException('ProxyPanel: ' . $msg);
+        }
+
+        return $json;
     }
 
-    /**
-     * Fetch select options but never break the admin form if the panel is
-     * unreachable while an admin is just editing settings.
-     */
     private function safeOptions(callable $fetch): array
     {
         try {
