@@ -78,6 +78,13 @@ class PaymentFees extends Extension
             ->where('description', 'like', self::FEE_ITEM_PREFIX . '%')
             ->delete();
 
+        // The invoice (and its cached items/total) still holds the fee line we just
+        // deleted. Without this refresh a percentage fee is calculated on a total that
+        // already includes the previous fee, so switching gateways in the payment modal
+        // compounds the fee on every switch.
+        $invoice->refresh();
+        $invoice->load('items');
+
         $fee = FeeCalculator::calculate($gateway, $invoice);
         if ($fee <= 0) {
             $invoice->refresh();

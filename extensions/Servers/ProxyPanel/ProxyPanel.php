@@ -7,7 +7,7 @@ use App\Models\Service;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
+use Paymenter\Extensions\Others\ProvisioningOps\ProvisioningOps;
 
 /**
  * ProxyPanel — native Paymenter server (provisioning) module for the IPv6 proxy
@@ -41,6 +41,16 @@ class ProxyPanel extends Server
 
     private const LOCK_KEY = 'proxypanel_lock';
 
+    // Cached panel state, refreshed by syncStatus() and by the panel callback, so the
+    // client area can show live details without an API call on every page render.
+    private const STATUS_KEY = 'proxy_status';
+
+    private const IPS_KEY = 'proxy_ips';
+
+    private const HOST_KEY = 'proxy_host';
+
+    private const SYNCED_KEY = 'proxy_synced_at';
+
     private const LOG_CHANNEL = 'stack';
 
     // ── Module configuration (admin → Server settings) ───────────────────────
@@ -64,6 +74,17 @@ class ProxyPanel extends Server
                 'required' => true,
                 'encrypted' => true,
             ],
+            [
+                'name' => 'callback_secret',
+                'label' => 'Callback Secret',
+                'type' => 'text',
+                'description' => 'Shared secret the panel must send when it calls back into Paymenter, '
+                    . 'either as the "X-Panel-Secret" header or as an HMAC-SHA256 of the raw body in '
+                    . '"X-Panel-Signature". Leave empty to disable the callback endpoint entirely. '
+                    . 'Stored encrypted.',
+                'required' => false,
+                'encrypted' => true,
+            ],
         ];
     }
 
@@ -80,6 +101,8 @@ class ProxyPanel extends Server
 
     public function boot()
     {
+        require __DIR__ . '/routes.php';
+
         // Renewal is billing-driven — push the new expiry to the panel when a
         // ProxyPanel service's expires_at is extended (e.g. after an invoice is paid).
         Event::listen(\App\Events\Service\Updated::class, function ($event) {
@@ -182,6 +205,11 @@ class ProxyPanel extends Server
             $this->setProp($service, self::REMOTE_ID_KEY, $newId);
             $this->setProp($service, self::USERNAME_KEY, $username);
             $this->setProp($service, self::PASSWORD_KEY, $password);
+
+            // Create returns the allocated addresses — cache them so the customer sees
+            // their proxies immediately, without waiting for a sync.
+            $this->cachePanelState($service, $res);
+
             $this->log('info', 'Service provisioned', ['service' => $service->id, 'remote' => $newId]);
 
             return $res;
@@ -223,23 +251,102 @@ class ProxyPanel extends Server
 
     // ── Client-area actions ──────────────────────────────────────────────────
 
+    /**
+     * What the customer sees on the service page.
+     *
+     * `text` entries render as labelled fields, `button` entries as actions. Values come
+     * from cached service properties (written by createServer, syncStatus and the panel
+     * callback) so opening the page never blocks on the panel API.
+     */
     public function getActions(Service $service, $settings = [], $properties = [])
     {
         if (!$this->remoteId($service)) {
             return [];
         }
 
+        $actions = [];
+
+        foreach ($this->customerFields($service) as $label => $value) {
+            if ($value !== null && $value !== '') {
+                $actions[] = ['type' => 'text', 'label' => $label, 'text' => $value];
+            }
+        }
+
+        $actions[] = ['type' => 'button', 'label' => 'Sync status', 'function' => 'syncStatus'];
+        $actions[] = ['type' => 'button', 'label' => 'Rotate proxies', 'function' => 'rotate'];
+        $actions[] = ['type' => 'button', 'label' => 'Reboot', 'function' => 'reboot'];
+
+        return $actions;
+    }
+
+    /**
+     * The provisioned proxy details shown to the customer.
+     *
+     * Labels are translated through the `proxypanel` lang file so the client can reword
+     * them without touching code.
+     */
+    private function customerFields(Service $service): array
+    {
+        $prop = fn (string $key) => $service->properties->where('key', $key)->first()?->value;
+
+        $synced = $prop(self::SYNCED_KEY);
+
         return [
-            ['type' => 'button', 'label' => 'Sync status', 'function' => 'syncStatus'],
-            ['type' => 'button', 'label' => 'Rotate proxies', 'function' => 'rotate'],
-            ['type' => 'button', 'label' => 'Reboot', 'function' => 'reboot'],
+            __('proxypanel.proxy_username') => $prop(self::USERNAME_KEY),
+            __('proxypanel.proxy_password') => $prop(self::PASSWORD_KEY),
+            __('proxypanel.proxy_endpoints') => $prop(self::IPS_KEY),
+            __('proxypanel.proxy_host') => $prop(self::HOST_KEY),
+            __('proxypanel.panel_status') => $prop(self::STATUS_KEY),
+            __('proxypanel.panel_service_id') => $prop(self::REMOTE_ID_KEY),
+            __('proxypanel.last_synced') => $synced ? \Carbon\Carbon::parse($synced)->diffForHumans() : null,
         ];
     }
 
     /** Status lookup / reconcile — safe to run repeatedly. */
     public function syncStatus(Service $service, $settings = [], $properties = [])
     {
-        return $this->request('get', '/' . $this->requireRemoteId($service));
+        $data = $this->request('get', '/' . $this->requireRemoteId($service));
+
+        $this->cachePanelState($service, $data);
+
+        return $data;
+    }
+
+    /**
+     * Persist the panel's view of a service onto the Paymenter service, so the client
+     * area and the admin both show real data without another API round-trip.
+     */
+    private function cachePanelState(Service $service, array $data): void
+    {
+        $payload = $data['data'] ?? $data;
+
+        if (!is_array($payload)) {
+            return;
+        }
+
+        if ($status = $payload['status'] ?? $payload['state'] ?? null) {
+            // The envelope's own ok/error `status` is not the service state.
+            if (!in_array($status, ['ok', 'error'], true)) {
+                $this->setProp($service, self::STATUS_KEY, (string) $status);
+            }
+        }
+
+        $ips = $payload['ips'] ?? $payload['proxies'] ?? $payload['ipv6'] ?? null;
+        if (is_array($ips)) {
+            $flat = [];
+            foreach ($ips as $ip) {
+                $flat[] = is_array($ip) ? ($ip['ip'] ?? $ip['address'] ?? json_encode($ip)) : (string) $ip;
+            }
+            $this->setProp($service, self::IPS_KEY, implode(', ', array_filter($flat)));
+        } elseif (is_string($ips) && $ips !== '') {
+            $this->setProp($service, self::IPS_KEY, $ips);
+        }
+
+        if ($host = $payload['host'] ?? $payload['hostname'] ?? $payload['gateway'] ?? null) {
+            $this->setProp($service, self::HOST_KEY, (string) $host);
+        }
+
+        $this->setProp($service, self::SYNCED_KEY, now()->toDateTimeString());
     }
 
     public function rotate(Service $service, $settings = [], $properties = [])
@@ -265,6 +372,149 @@ class ProxyPanel extends Server
         return $res;
     }
 
+    // ── Panel callback ───────────────────────────────────────────────────────
+
+    /**
+     * Handle a status callback from the proxy panel.
+     *
+     * Authentication (either is accepted, both are constant-time compared):
+     *   - `X-Panel-Secret: <callback_secret>`, or
+     *   - `X-Panel-Signature: <hex HMAC-SHA256 of the raw body, keyed with callback_secret>`
+     *
+     * Body (JSON). The service is resolved by whichever identifier the panel sends:
+     *   - `service_id`     → the Paymenter service id (what we send as `client_id`), or
+     *   - `id` / `panel_id` → the panel's own service id (stored as proxypanel_service_id)
+     *
+     * Recognised state fields: `status` or `event`. Everything else in the body is
+     * cached onto the service (ips, host, …) and echoed into the log.
+     *
+     * NOTE: the panel's real callback contract is still an open question for the client
+     * (see docs/modules/proxypanel.md § Open questions). This handler is deliberately
+     * tolerant about field names and *never* guesses a state it does not recognise — an
+     * unknown state is logged and acknowledged, not applied.
+     */
+    public function callback(\Illuminate\Http\Request $request)
+    {
+        $secret = (string) $this->config('callback_secret');
+
+        if ($secret === '') {
+            $this->log('warning', 'Callback received but no callback secret is configured — rejected');
+
+            return response()->json(['status' => 'error', 'description' => 'Callbacks are not enabled'], 403);
+        }
+
+        if (!$this->isValidCallback($request, $secret)) {
+            $this->log('warning', 'Callback rejected: bad secret/signature', ['ip' => $request->ip()]);
+
+            return response()->json(['status' => 'error', 'description' => 'Invalid signature'], 401);
+        }
+
+        $payload = $request->json()->all() ?: $request->all();
+        $service = $this->resolveServiceFromCallback($payload);
+
+        if (!$service) {
+            $this->log('warning', 'Callback for unknown service', ['payload' => $payload]);
+
+            // Acknowledge so the panel stops retrying something we can never resolve.
+            return response()->json(['status' => 'ok', 'description' => 'Unknown service, ignored']);
+        }
+
+        $this->cachePanelState($service, $payload);
+
+        $state = strtolower((string) ($payload['event'] ?? $payload['status'] ?? ''));
+        $applied = $this->applyCallbackState($service, $state);
+
+        $this->log('info', 'Callback processed', [
+            'service' => $service->id,
+            'state' => $state,
+            'applied' => $applied ?? 'none',
+        ]);
+
+        if ($applied === null && $state !== '') {
+            // Unrecognised state: record it so the admin sees the panel is sending
+            // something we do not map yet, rather than silently dropping it.
+            ProvisioningOps::failed(
+                $service,
+                'ProxyPanel',
+                'callback',
+                new \RuntimeException('Unrecognised callback state: "' . $state . '"'),
+                ['payload' => $payload],
+            );
+        }
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    private function isValidCallback(\Illuminate\Http\Request $request, string $secret): bool
+    {
+        if ($header = $request->header('X-Panel-Secret')) {
+            return hash_equals($secret, (string) $header);
+        }
+
+        if ($signature = $request->header('X-Panel-Signature')) {
+            $expected = hash_hmac('sha256', $request->getContent(), $secret);
+
+            return hash_equals($expected, (string) $signature);
+        }
+
+        return false;
+    }
+
+    private function resolveServiceFromCallback(array $payload): ?Service
+    {
+        if ($id = $payload['service_id'] ?? $payload['client_id'] ?? null) {
+            $service = Service::find($id);
+            if ($service && $this->isProxyPanelService($service)) {
+                return $service;
+            }
+        }
+
+        $remoteId = $payload['id'] ?? $payload['panel_id'] ?? null;
+        if ($remoteId === null) {
+            return null;
+        }
+
+        // Service properties are a polymorphic `properties` table (model_type/model_id).
+        $property = \App\Models\Property::where('key', self::REMOTE_ID_KEY)
+            ->where('value', (string) $remoteId)
+            ->where('model_type', Service::class)
+            ->first();
+
+        return $property ? Service::find($property->model_id) : null;
+    }
+
+    /**
+     * Map a panel state onto the Paymenter service status.
+     *
+     * Returns the status applied, or null when the state is not recognised. Idempotent:
+     * re-delivering the same callback is a no-op.
+     */
+    private function applyCallbackState(Service $service, string $state): ?string
+    {
+        $target = match ($state) {
+            'active', 'running', 'started', 'online', 'created', 'unsuspended' => Service::STATUS_ACTIVE,
+            'suspended', 'stopped', 'paused', 'offline' => Service::STATUS_SUSPENDED,
+            'cancelled', 'canceled', 'terminated', 'deleted', 'destroyed' => Service::STATUS_CANCELLED,
+            default => null,
+        };
+
+        if ($target === null) {
+            return null;
+        }
+
+        if ($service->status !== $target) {
+            $service->status = $target;
+            $service->save();
+        }
+
+        // A successful create callback closes any recorded provisioning failure.
+        if ($target === Service::STATUS_ACTIVE) {
+            ProvisioningOps::succeeded($service, 'ProxyPanel', 'create', ['via' => 'callback']);
+        }
+
+        return $target;
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private function isProxyPanelService(Service $service): bool
@@ -283,9 +533,21 @@ class ProxyPanel extends Server
         $service->properties()->updateOrCreate(['key' => self::LOCK_KEY], ['value' => $action]);
 
         try {
-            return $callback();
+            $result = $callback();
+
+            // Closes any earlier failure for this action in the admin Provisioning list.
+            ProvisioningOps::succeeded($service, 'ProxyPanel', $action);
+
+            return $result;
         } catch (\Throwable $e) {
             $this->log('error', 'ProxyPanel ' . $action . ' failed', ['service' => $service->id, 'error' => $e->getMessage()]);
+
+            // Make the failure visible + retryable in the admin, and stop a failed
+            // create from leaving the order silently "active".
+            ProvisioningOps::failed($service, 'ProxyPanel', $action, $e, [
+                'api_url' => (string) $this->config('api_url'),
+            ]);
+
             throw $e;
         } finally {
             $service->properties()->where('key', self::LOCK_KEY)->delete();

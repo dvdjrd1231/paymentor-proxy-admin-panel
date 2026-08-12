@@ -316,6 +316,95 @@
     .wf-stat-label { font-size: .8rem; color: var(--wf-muted); text-transform: uppercase; letter-spacing: .04em; }
 
     .wf-btn--sm { padding: .35rem .8rem; font-size: .82rem; }
+    .wf-btn--danger { background: #c9302c; border-color: #c9302c; color: #fff; }
+    .wf-btn--danger:hover { background: #a82824; border-color: #a82824; }
+
+    /* Key/value table — detail pages (service, invoice, ticket summaries) */
+    .wf-table--kv th {
+        width: 38%; background: transparent; font-weight: 600;
+        color: var(--wf-label); white-space: normal;
+    }
+    .wf-table--kv tbody tr:hover { background: transparent; }
+    .wf-table--kv tr:last-child th, .wf-table--kv tr:last-child td { border-bottom: 0; }
+    /* Proxy addresses / credentials can be long — keep them readable, not clipped. */
+    .wf-kv-value { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; word-break: break-all; }
+
+    /* Tabs inside a panel heading (provisioning module views) */
+    .wf-tabs { gap: 0; padding: 0; justify-content: flex-start; flex-wrap: wrap; }
+    .wf-tab {
+        padding: .7rem 1rem; border: 0; background: transparent; cursor: pointer;
+        font: inherit; font-size: .9rem; color: var(--wf-muted); border-bottom: 2px solid transparent;
+    }
+    .wf-tab:hover { color: var(--brand); }
+    .wf-tab--active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+
+    /* Product / order cards */
+    .wf-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+    .wf-card {
+        background: var(--wf-bg); border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); display: flex; flex-direction: column; overflow: hidden;
+    }
+    .wf-card-head { padding: .7rem 1rem; background: var(--wf-section); border-bottom: 1px solid var(--wf-border); font-weight: 600; font-size: .95rem; }
+    .wf-card-body { padding: 1rem; font-size: .88rem; color: var(--wf-text); flex: 1; }
+    .wf-card-foot { padding: .7rem 1rem; border-top: 1px solid var(--wf-border); display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .wf-price { font-size: 1.1rem; font-weight: 600; color: var(--wf-text); }
+    .wf-price small { font-size: .75rem; font-weight: 400; color: var(--wf-muted); }
+
+    /* Totals block (cart, checkout, invoice) */
+    .wf-total-row { display: flex; align-items: center; justify-content: space-between; padding: .45rem 0; font-size: .9rem; }
+    .wf-total-row + .wf-total-row { border-top: 1px solid var(--wf-border); }
+    .wf-total-row--grand { font-size: 1.05rem; font-weight: 700; border-top: 2px solid var(--wf-border); margin-top: .25rem; padding-top: .65rem; }
+
+    /* Ticket conversation */
+    .wf-msg { border: 1px solid var(--wf-border); border-radius: var(--wf-radius); margin-bottom: .85rem; overflow: hidden; }
+    .wf-msg-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .55rem .85rem; background: var(--wf-section); border-bottom: 1px solid var(--wf-border); font-size: .85rem; }
+    .wf-msg-who { font-weight: 600; }
+    .wf-msg-when { color: var(--wf-muted); font-size: .8rem; }
+    .wf-msg-body { padding: .85rem; font-size: .9rem; line-height: 1.55; }
+    .wf-msg--staff { border-left: 3px solid var(--brand); }
+    .wf-msg--staff .wf-msg-head { background: color-mix(in srgb, var(--brand) 8%, #fff); }
+    .wf-thread { max-height: 60vh; overflow-y: auto; }
+
+    /* Main content left, detail sidebar right (ticket detail) */
+    .wf-layout--reverse { grid-template-columns: 1fr 280px; }
+    @media (max-width: 900px) { .wf-layout--reverse { grid-template-columns: 1fr; } }
+
+    /* Attachment drop zone */
+    .wf-drop {
+        display: flex; justify-content: center; align-items: center;
+        border: 1px dashed var(--wf-border); border-radius: var(--wf-radius);
+        background: var(--wf-section); padding: 1rem; margin-top: .35rem;
+    }
+    .wf-drop.is-over { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 6%, #fff); }
+    .wf-drop-cta { color: var(--brand); font-weight: 600; cursor: pointer; font-size: .9rem; }
+    .wf-drop-hint { display: block; color: var(--wf-muted); font-size: .8rem; margin-top: .2rem; }
+
+    /* Invoice status bar + totals block */
+    .wf-invoice-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .wf-totals { margin-left: auto; width: min(320px, 100%); }
+
+    /* Product card image + order-form intro */
+    .wf-card-img { width: 100%; height: auto; border-radius: var(--wf-radius); margin-bottom: .6rem; display: block; }
+    .wf-product-intro { display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1rem; }
+    .wf-product-intro img { max-width: 140px; height: auto; border-radius: var(--wf-radius); }
+    @media (max-width: 620px) { .wf-product-intro { flex-direction: column; } }
+
+    /* Order summary follows the form on long config pages */
+    .wf-sticky { position: sticky; top: 1rem; }
+    @media (max-width: 900px) { .wf-sticky { position: static; } }
+
+    /* Storefront hero band */
+    .wf-hero {
+        background: var(--wf-bg); border-bottom: 1px solid var(--wf-border);
+        padding: 2.5rem 0;
+    }
+    .wf-hero h1, .wf-hero h2 { color: var(--brand); font-weight: 300; margin-top: 0; }
+
+    /* Cart quantity stepper + coupon row */
+    .wf-qty { display: inline-flex; align-items: center; gap: .4rem; }
+    .wf-qty-value { min-width: 2rem; text-align: center; font-weight: 600; }
+    .wf-coupon { display: flex; align-items: flex-end; gap: .5rem; margin-bottom: .5rem; }
+    .wf-coupon > :first-child { flex: 1; min-width: 0; }
 
     /* ── 5c. De-dark shim for not-yet-converted default pages ───────────────
        The default theme uses `bg-primary-800` (a dark shade of the brand colour)

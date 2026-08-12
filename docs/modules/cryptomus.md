@@ -17,7 +17,7 @@ page + signed webhook settlement.
 
 1. In the Cryptomus dashboard, note your **Merchant UUID** and create a **Payment API key**.
 2. Enable **Cryptomus Gateway** under **Admin → Extensions → Gateways** (or
-   `php artisan app:extension:enable Gateways/Cryptomus`).
+   **Admin → Extensions**; enabling there runs the extension's `installed()` hook).
 3. Create a Gateway using it and set **Merchant UUID** and **Payment API Key**
    (encrypted).
 4. In Cryptomus, set the **webhook / callback URL** to:
