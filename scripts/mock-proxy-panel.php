@@ -1,11 +1,9 @@
 <?php
 
 /**
- * Mock IPv6 proxy panel API — a development/test double for the real panel.
- *
- * It implements the endpoint contract that `extensions/Servers/ProxyPanel` speaks, so the
- * whole provisioning lifecycle (and its failure paths) can be exercised without touching
- * the client's production panel.
+ * Mock proxy panel — a development/test double implementing the panel's documented
+ * RotatingServices REST API (`api.md`), so the whole provisioning lifecycle and its
+ * failure paths can be exercised without touching the client's production panel.
  *
  *   php -S 127.0.0.1:9000 scripts/mock-proxy-panel.php
  *
@@ -13,20 +11,34 @@
  *   Panel API URL  http://127.0.0.1:9000/v0/services
  *   Panel Token    test-token          (override with MOCK_PANEL_TOKEN)
  *
- * Fault injection — to prove that provisioning failures surface in the admin and never
- * silently activate an order:
- *   curl "http://127.0.0.1:9000/_control/fail?on=1"    # every API call now returns 500
- *   curl "http://127.0.0.1:9000/_control/fail?on=0"    # back to healthy
- *   curl "http://127.0.0.1:9000/_control/state"        # dump provisioned services
- *   curl "http://127.0.0.1:9000/_control/reset"        # wipe state
+ * Implemented (every endpoint from api.md):
+ *   GET  /v0/services/{id}                       service info
+ *   POST /v0/services/new                        create
+ *   POST /v0/services/renew/{id}                 renew, clears rotation counter
+ *   GET  /v0/services/extend/{id}/{unixts}       set expiration
+ *   GET  /v0/services/expand/{id}/{amount}       add proxies
+ *   GET  /v0/services/shrink/{id}/{amount}       remove proxies
+ *   GET  /v0/services/cancel/{id}                terminate
+ *   POST /v0/services/aa/{id}                    authorize[] / authenticate[]
+ *   GET  /v0/services/blacklist/{bid}/{status}   blacklist on/off
+ *   GET  /v0/services/reboot/{id}[/hard]         reboot
+ *   GET  /v0/services/rotate/{id}                manual rotation (counter enforced)
+ *   GET  /v0/services/setRotate/{id}/{minutes}   automatic rotation interval
  *
- * State lives in a JSON file next to this script (MOCK_PANEL_STATE to relocate).
- * NOT for production use — there is no real authentication or isolation here.
+ * Fault injection — to prove failures surface in the admin and never silently activate:
+ *   curl "http://127.0.0.1:9000/_control/fail?on=1"    # every API call returns 500
+ *   curl "http://127.0.0.1:9000/_control/fail?on=0"
+ *   curl "http://127.0.0.1:9000/_control/state"        # dump provisioned services
+ *   curl "http://127.0.0.1:9000/_control/reset"
+ *   curl "http://127.0.0.1:9000/_control/callback?id=1000&status=ok&url=<paymenter>&secret=<secret>"
+ *
+ * NOT for production — no real authentication or isolation.
  */
 
 declare(strict_types=1);
 
 const DEFAULT_TOKEN = 'test-token';
+const MAX_AUTH_IPS = 3;
 
 $stateFile = getenv('MOCK_PANEL_STATE') ?: sys_get_temp_dir() . '/mock-proxy-panel.json';
 $token = getenv('MOCK_PANEL_TOKEN') ?: DEFAULT_TOKEN;
@@ -34,7 +46,6 @@ $token = getenv('MOCK_PANEL_TOKEN') ?: DEFAULT_TOKEN;
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
-/** @return array{next_id:int, fail:bool, services:array<string,array>} */
 function loadState(string $file): array
 {
     $default = ['next_id' => 1000, 'fail' => false, 'services' => []];
@@ -61,10 +72,10 @@ function respond(array $body, int $code = 200): never
     exit;
 }
 
-/** The panel's own error convention: HTTP 200 with {status:error} for API-level errors. */
-function panelError(string $description, int $code = 200): never
+/** The panel's convention: HTTP 200 with {status:error} for API-level errors. */
+function panelError(string $description): never
 {
-    respond(['status' => 'error', 'description' => $description], $code);
+    respond(['status' => 'error', 'description' => $description]);
 }
 
 function jsonBody(): array
@@ -81,6 +92,19 @@ function jsonBody(): array
     return is_array($form) ? $form : [];
 }
 
+function makeProxies(string $id, int $amount): array
+{
+    $ips = [];
+    for ($i = 0; $i < $amount; $i++) {
+        $ips[] = [
+            'ip' => sprintf('2a01:4f8:%s:%04x::%d', substr($id, -4), random_int(0, 0xFFFF), $i + 1),
+            'port' => 10000 + $i,
+        ];
+    }
+
+    return $ips;
+}
+
 $state = loadState($stateFile);
 
 // ── Control plane (no auth — local test tool) ────────────────────────────────
@@ -91,23 +115,46 @@ if (str_starts_with($path, '/_control')) {
             saveState($stateFile, $state);
             respond(['status' => 'ok', 'failing' => $state['fail']]);
 
-            // no break — respond() exits
         case '/_control/state':
             respond(['status' => 'ok', 'failing' => $state['fail'], 'services' => $state['services']]);
 
         case '/_control/reset':
-            $state = ['next_id' => 1000, 'fail' => false, 'services' => []];
-            saveState($stateFile, $state);
+            saveState($stateFile, ['next_id' => 1000, 'fail' => false, 'services' => []]);
             respond(['status' => 'ok', 'description' => 'state reset']);
+
+        case '/_control/callback':
+            // Fire a panel->Paymenter callback, the way the real panel would.
+            $url = (string) ($_GET['url'] ?? '');
+            $secret = (string) ($_GET['secret'] ?? '');
+            $body = json_encode([
+                'id' => (string) ($_GET['id'] ?? ''),
+                'status' => (string) ($_GET['status'] ?? 'ok'),
+                'description' => (string) ($_GET['description'] ?? ''),
+            ], JSON_UNESCAPED_SLASHES);
+
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => $body,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type: application/json',
+                    'X-Panel-Signature: ' . hash_hmac('sha256', $body, $secret),
+                ],
+            ]);
+            $result = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            respond(['status' => 'ok', 'sent' => $body, 'response_code' => $code, 'response' => $result]);
 
         default:
             respond(['status' => 'error', 'description' => 'unknown control endpoint'], 404);
     }
 }
 
-// ── Auth: the real panel authenticates with a `Panel:` header ────────────────
-$provided = $_SERVER['HTTP_PANEL'] ?? '';
-if (!hash_equals($token, (string) $provided)) {
+// ── Auth: the panel authenticates with a `Panel:` header ────────────────────
+if (!hash_equals($token, (string) ($_SERVER['HTTP_PANEL'] ?? ''))) {
     respond(['status' => 'error', 'description' => 'Invalid panel token'], 401);
 }
 
@@ -116,133 +163,154 @@ if (!empty($state['fail'])) {
     respond(['status' => 'error', 'description' => 'Mock panel is in forced-failure mode'], 500);
 }
 
-// Everything below lives under the /v0/services prefix.
 $route = preg_replace('#^/v0/services#', '', $path) ?: '/';
 $segments = array_values(array_filter(explode('/', $route), fn ($s) => $s !== ''));
-
-// ── Catalogue ───────────────────────────────────────────────────────────────
-if ($route === '/plans') {
-    respond(['status' => 'ok', 'data' => [
-        ['tag' => 'ipv6-basic', 'name' => 'IPv6 Basic'],
-        ['tag' => 'ipv6-pro', 'name' => 'IPv6 Pro'],
-    ]]);
-}
-
-if ($route === '/locations') {
-    respond(['status' => 'ok', 'data' => [
-        ['tag' => 'us-east', 'name' => 'US East'],
-        ['tag' => 'eu-west', 'name' => 'EU West'],
-    ]]);
-}
+$verb = $segments[0] ?? '';
+$id = $segments[1] ?? '';
 
 // ── Create ──────────────────────────────────────────────────────────────────
-if ($method === 'POST' && $route === '/newIpv6') {
+if ($method === 'POST' && $verb === 'new') {
     $body = jsonBody();
 
-    foreach (['client_id', 'plan_tag', 'location_name'] as $required) {
-        if (empty($body[$required])) {
+    foreach (['client_id', 'plan_tag', 'server_tag', 'amount'] as $required) {
+        if (!isset($body[$required]) || $body[$required] === '' || $body[$required] === null) {
             panelError("Missing required field: {$required}");
         }
     }
 
-    $id = (string) $state['next_id']++;
-    $amount = max(1, (int) ($body['amount'] ?? 1));
+    $newId = (string) $state['next_id']++;
+    $amount = max(1, (int) $body['amount']);
 
-    $ips = [];
-    for ($i = 0; $i < $amount; $i++) {
-        $ips[] = sprintf('2a01:4f8:%s:%04x::%d', substr($id, -4), random_int(0, 0xFFFF), $i + 1);
-    }
-
-    $state['services'][$id] = [
-        'id' => $id,
+    $state['services'][$newId] = [
+        'id' => $newId,
         'client_id' => $body['client_id'],
         'plan_tag' => $body['plan_tag'],
-        'location_name' => $body['location_name'],
-        'amount' => $amount,
-        'status' => 'active',
-        'host' => 'gw-' . ($body['location_name'] ?? 'x') . '.mock-panel.test',
-        'username' => $body['authenticate']['username'] ?? null,
-        'password' => $body['authenticate']['password'] ?? null,
-        'bwlimit' => $body['bwlimit'] ?? null,
-        'ips' => $ips,
-        'expires_at' => null,
+        'server_tag' => $body['server_tag'],
+        'expiration' => $body['expiration'] ?? null,
+        'plan_manual_rotate' => 1,
+        'plan_change_rotate' => 1,
+        'plan_max_rotate' => 10,
+        'rotation_counter' => 0,
+        'rotation_time' => 0,
+        'api_key' => bin2hex(random_bytes(12)),
+        'authorize' => array_slice((array) ($body['authorize'] ?? []), 0, MAX_AUTH_IPS),
+        'authenticate' => $body['authenticate'] ?? null,
+        'blacklists' => [],
+        'ips' => makeProxies($newId, $amount),
     ];
     saveState($stateFile, $state);
 
-    respond(['status' => 'ok', 'id' => $id, 'ips' => $ips, 'host' => $state['services'][$id]['host']]);
+    respond(['status' => 'ok'] + $state['services'][$newId]);
 }
 
-// ── Credentials ─────────────────────────────────────────────────────────────
-if ($method === 'POST' && ($segments[0] ?? '') === 'credentials') {
-    $id = $segments[1] ?? '';
-    if (!isset($state['services'][$id])) {
-        panelError('Unknown service ' . $id);
+// ── Everything below needs an existing service ──────────────────────────────
+$needsService = in_array($verb, ['renew', 'extend', 'expand', 'shrink', 'cancel', 'aa', 'reboot', 'rotate', 'setRotate'], true);
+
+if ($needsService && !isset($state['services'][$id])) {
+    // Cancelling something already gone is a no-op, which terminateServer relies on.
+    if ($verb === 'cancel') {
+        respond(['status' => 'ok', 'description' => 'already removed']);
+    }
+    panelError('Unknown service ' . $id);
+}
+
+if ($verb === 'cancel') {
+    unset($state['services'][$id]);
+    saveState($stateFile, $state);
+    respond(['status' => 'ok', 'description' => 'cancelled']);
+}
+
+if ($method === 'POST' && $verb === 'renew') {
+    $state['services'][$id]['rotation_counter'] = 0;
+    saveState($stateFile, $state);
+    respond(['status' => 'ok'] + $state['services'][$id]);
+}
+
+if ($verb === 'extend') {
+    if (!isset($segments[2]) || !ctype_digit($segments[2])) {
+        panelError('extend requires a unix timestamp');
+    }
+    $state['services'][$id]['expiration'] = (int) $segments[2];
+    saveState($stateFile, $state);
+    respond(['status' => 'ok', 'expiration' => $state['services'][$id]['expiration']]);
+}
+
+if ($verb === 'expand' || $verb === 'shrink') {
+    $amount = (int) ($segments[2] ?? 0);
+    if ($amount < 1) {
+        panelError($verb . ' requires a positive amount');
     }
 
+    $current = $state['services'][$id]['ips'];
+
+    if ($verb === 'expand') {
+        $state['services'][$id]['ips'] = array_merge($current, makeProxies($id, $amount));
+    } else {
+        if ($amount >= count($current)) {
+            panelError('Cannot shrink below one proxy');
+        }
+        $state['services'][$id]['ips'] = array_slice($current, 0, count($current) - $amount);
+    }
+
+    saveState($stateFile, $state);
+    respond(['status' => 'ok'] + $state['services'][$id]);
+}
+
+if ($method === 'POST' && $verb === 'aa') {
     $body = jsonBody();
-    $state['services'][$id]['username'] = $body['username'] ?? $state['services'][$id]['username'];
-    $state['services'][$id]['password'] = $body['password'] ?? $state['services'][$id]['password'];
-    saveState($stateFile, $state);
 
-    respond(['status' => 'ok']);
-}
-
-// ── Lifecycle verbs: /<verb>/<id>[/<arg>] ───────────────────────────────────
-$verbs = [
-    'start' => 'active',
-    'stop' => 'suspended',
-    'cancel' => 'cancelled',
-];
-
-$verb = $segments[0] ?? '';
-$id = $segments[1] ?? '';
-
-if (isset($verbs[$verb])) {
-    if (!isset($state['services'][$id])) {
-        // Cancelling something that is already gone is a no-op, matching the real panel's
-        // idempotent behaviour that ProxyPanel::terminateServer relies on.
-        if ($verb === 'cancel') {
-            respond(['status' => 'ok', 'description' => 'already removed']);
+    if (isset($body['authorize'])) {
+        if (count((array) $body['authorize']) > MAX_AUTH_IPS) {
+            panelError('At most ' . MAX_AUTH_IPS . ' authorized IPs');
         }
-        panelError('Unknown service ' . $id);
+        $state['services'][$id]['authorize'] = array_values((array) $body['authorize']);
     }
 
-    $state['services'][$id]['status'] = $verbs[$verb];
-    saveState($stateFile, $state);
-
-    respond(['status' => 'ok', 'id' => $id, 'state' => $verbs[$verb]]);
-}
-
-if (in_array($verb, ['reboot', 'rotate', 'setRotate', 'extend', 'renew'], true)) {
-    if (!isset($state['services'][$id])) {
-        panelError('Unknown service ' . $id);
-    }
-
-    if ($verb === 'extend' && isset($segments[2])) {
-        $state['services'][$id]['expires_at'] = (int) $segments[2];
-    }
-
-    if ($verb === 'rotate') {
-        foreach ($state['services'][$id]['ips'] as $i => $_) {
-            $state['services'][$id]['ips'][$i] = sprintf('2a01:4f8:%s:%04x::%d', substr($id, -4), random_int(0, 0xFFFF), $i + 1);
-        }
+    if (isset($body['authenticate'])) {
+        $state['services'][$id]['authenticate'] = $body['authenticate'];
     }
 
     saveState($stateFile, $state);
-
-    respond(['status' => 'ok', 'id' => $id]);
+    respond(['status' => 'ok'] + $state['services'][$id]);
 }
 
-// ── Status lookup: /<id> ────────────────────────────────────────────────────
+if ($verb === 'rotate') {
+    $svc = &$state['services'][$id];
+
+    if (!empty($svc['plan_max_rotate']) && $svc['rotation_counter'] >= $svc['plan_max_rotate']) {
+        panelError('Rotation limit reached');
+    }
+
+    $svc['rotation_counter']++;
+    $svc['ips'] = makeProxies($id, count($svc['ips']));
+    unset($svc);
+    saveState($stateFile, $state);
+    respond(['status' => 'ok'] + $state['services'][$id]);
+}
+
+if ($verb === 'setRotate') {
+    $state['services'][$id]['rotation_time'] = (int) ($segments[2] ?? 0);
+    saveState($stateFile, $state);
+    respond(['status' => 'ok', 'rotation_time' => $state['services'][$id]['rotation_time']]);
+}
+
+if ($verb === 'reboot') {
+    respond(['status' => 'ok', 'description' => ($segments[2] ?? '') === 'hard' ? 'hard reboot' : 'reboot']);
+}
+
+if ($verb === 'blacklist') {
+    $blacklistId = $segments[1] ?? '';
+    $status = $segments[2] ?? '';
+    respond(['status' => 'ok', 'blacklist_id' => $blacklistId, 'blacklist_status' => $status]);
+}
+
+// ── Service info: GET /{id} ─────────────────────────────────────────────────
 if (count($segments) === 1 && ctype_digit($segments[0])) {
-    $id = $segments[0];
-    if (!isset($state['services'][$id])) {
-        panelError('Unknown service ' . $id);
+    if (!isset($state['services'][$segments[0]])) {
+        panelError('Unknown service ' . $segments[0]);
     }
 
-    // The service's own state goes in `data` — the top-level `status` is the panel's
-    // ok/error envelope, so merging them here would hide one behind the other.
-    respond(['status' => 'ok', 'data' => $state['services'][$id]]);
+    respond(['status' => 'ok'] + $state['services'][$segments[0]]);
 }
 
 respond(['status' => 'error', 'description' => 'Unknown endpoint: ' . $route], 404);

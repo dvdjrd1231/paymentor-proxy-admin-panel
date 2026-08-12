@@ -1,71 +1,94 @@
 # ProxyPanel Provisioning Module
 
-Native Paymenter **Server** (provisioning) module for the IPv6 proxy admin panel
-(melodyproxy) — the native rewrite of the legacy WHMCS *proxyPanel* module, wired to
-the **live panel API**.
+Native Paymenter **Server** (provisioning) module for the IPv6/IPv4 proxy admin panel —
+the native rewrite of the legacy WHMCS *proxyPanel* module, implemented against the
+panel's documented `api.md` (RotatingServices).
 
 - **Location:** `extensions/Servers/ProxyPanel/`
 - **Type:** Server (provisioning)
-- **Status:** ✅ wired to the real API (create / suspend / unsuspend / terminate /
-  renew / status / rotate / reboot / credentials).
+- **Status:** all `api.md` endpoints implemented; verified end-to-end (32 checks) against
+  `scripts/mock-proxy-panel.php`.
 
 ## API
 
-- **Base URL:** `https://admpx.melodyproxy.com/v0/services` (set in module settings).
-- **Auth:** header `Panel: <token>` — stored as an **encrypted** module setting
-  (never hard-coded, per spec item 12).
+Implemented strictly against the panel's `api.md` (RotatingServices). No endpoint below
+is inferred.
 
-Endpoints used (verified against the original module's API client):
+- **Base URL:** configurable, e.g. `https://<panel-host>/v0/services`
+- **Auth:** header `Panel: <token>` — an **encrypted** module setting
 
 | Action | Method / path |
 |---|---|
-| Create | `POST /newIpv6` `{client_id, plan_tag, location_name, amount, authenticate:{username,password}, bwlimit}` |
-| Suspend | `GET /stop/{id}` |
-| Unsuspend | `GET /start/{id}` |
+| Service info | `GET /{service_id}` → `id, expiration, plan_manual_rotate, plan_change_rotate, plan_max_rotate, rotation_counter, ips[{ip,port}]` |
+| Create | `POST /new` `{client_id, plan_tag, server_tag, amount, authorize[], authenticate{username,password}, expiration}` |
+| Renew | `POST /renew/{id}` (clears rotation counters) |
+| Set expiration | `GET /extend/{id}/{unixtimestamp}` |
+| Upgrade / downgrade | `GET /expand/{id}/{amount}` · `GET /shrink/{id}/{amount}` |
 | Terminate | `GET /cancel/{id}` |
-| Renew / extend | `GET /renew/{id}` · `GET /extend/{id}/{unixtimestamp}` |
-| Status | `GET /{id}` |
-| Plans | `GET /plans` · Locations `GET /locations` |
-| Credentials | `POST /credentials/{id}` `{username,password}` |
-| Rotate | `GET /rotate/{id}/1` · Set rotation `GET /setRotate/{id}/{minutes}` |
-| Reboot | `GET /reboot/{id}` (+ `/hard`) |
+| Auth / authorization | `POST /aa/{id}` `{authorize[], authenticate{}}` — max 3 IPs |
+| Blacklist | `GET /blacklist/{blacklist_id}/{blacklist_status}` |
+| Reboot | `GET /reboot/{id}[/hard]` |
+| Manual rotation | `GET /rotate/{id}` |
+| Rotation interval | `GET /setRotate/{id}/{minutes}` |
 
-Responses are JSON with `status` (`ok`/`error`) and `description`; create returns the
-remote service `id` (+ `ips`).
+All responses are JSON with a `status` field (`ok`/`error`) and an optional `description`.
+
+> **Corrected from the earlier build.** The previous implementation called `/newIpv6`,
+> `/start/{id}`, `/stop/{id}`, `/credentials/{id}`, `/plans` and `/locations` — none of
+> which exist in `api.md`. It would have failed on create against the real panel. The
+> module now matches the specification.
+
+### Suspension — open question
+
+`api.md` documents **no suspend/unsuspend endpoint**. Rather than invent one, the
+behaviour is an explicit module setting:
+
+| `suspend_strategy` | Suspend | Unsuspend |
+|---|---|---|
+| `expire` (default) | `GET /extend/{id}/{now}` — expires the service on the panel | `GET /extend/{id}/{service due date}` |
+| `none` | nothing on the panel; suspended in Paymenter only | nothing |
+
+Confirm with the panel operator which is correct, or whether a dedicated endpoint exists.
 
 ## WHMCS → Paymenter mapping
 
 | WHMCS | Paymenter | Notes |
 |---|---|---|
-| `CreateAccount` | `createServer` | idempotent — reuses existing remote id, just `/start` |
-| `SuspendAccount` | `suspendServer` | `/stop` |
-| `UnsuspendAccount` | `unsuspendServer` | `/start` |
-| `TerminateAccount` | `terminateServer` | `/cancel`, idempotent |
-| `ChangePassword` | `setCredentials()` | `/credentials` |
-| Renewal | Service\Updated listener | Paymenter has no renew hook; when `expires_at` moves, the module calls `/extend/{id}/{ts}` |
-| `ChangePackage` | `upgradeServer` | **panel does not allow package change** — surfaced as a clear error (matches the original module) |
-| ClientArea (rotate/reboot) | `getActions` | Sync status, Rotate, Reboot |
+| `CreateAccount` | `createServer` | `POST /new`; idempotent — an existing remote id short-circuits, so a duplicate InvoicePaid never creates two services |
+| `SuspendAccount` | `suspendServer` | no endpoint in `api.md` — see § Suspension |
+| `UnsuspendAccount` | `unsuspendServer` | no endpoint in `api.md` — see § Suspension |
+| `TerminateAccount` | `terminateServer` | `GET /cancel/{id}`, idempotent |
+| `ChangePackage` | `upgradeServer` | `GET /expand` or `/shrink` by the delta — the panel grows/shrinks in place |
+| `ChangePassword` | `changePassword()` | `POST /aa/{id}` |
+| Renewal | `Service\Updated` listener | Paymenter has no renew hook; on `expires_at` change the module calls `POST /renew/{id}` then `GET /extend/{id}/{ts}` |
+| `ClientArea` | `getActions()` + module methods | proxies list, export, manual rotate, rotation interval, auth IPs, password, API key, reboot |
 
 ## Configuration
 
 ### Module (admin → Servers → ProxyPanel)
-- **Panel API URL** — e.g. `https://admpx.melodyproxy.com/v0/services`
-- **Panel Token** — the `Panel:` header token (encrypted). Use **Test connection**
-  (calls `/plans`) to verify.
+- **Panel API URL** — e.g. `https://<panel-host>/v0/services`
+- **Panel Token** — the `Panel:` header token (encrypted).
 - **Callback Secret** — shared secret the panel must present when calling back into
   Paymenter (encrypted). Leave blank to disable the callback endpoint entirely.
 
+- **Suspension behaviour** — see § Suspension above.
+- **Regions** — one per line, `server_tag|Country - City`. Offered to the customer at
+  checkout and sent as `server_tag` on create. `api.md` exposes no catalogue endpoint, so
+  regions and plan tags are entered by the admin rather than fetched.
+
 ### Product (admin → Product → this server)
-- **Amount of proxies**, **Plan** (from `/plans`), **Location/Region** (from `/locations`),
-  **Bandwidth limit**, **Max authorized IPs**.
+**Plan tag**, **Amount of proxies**, **Allow manual rotation**, **Allow changing rotation
+time**, **Authorized IPs allowed** (panel max 3), **Rotations per period**.
 
 ## Provisioning data stored per service
 
-- `proxypanel_service_id` — remote id (used by all later calls)
-- `proxy_username`, `proxy_password` — generated proxy credentials (can be changed via
-  `setCredentials()`)
-- `proxy_ips`, `proxy_host`, `proxy_status`, `proxy_synced_at` — cached panel state,
-  written by `createServer()`, by **Sync status**, and by the panel callback
+- `proxypanel_service_id` — the panel's service id (used by every later call)
+- `proxy_username`, `proxy_password` — proxy credentials (changeable via `POST /aa`)
+- `proxy_api_key` — the panel-issued API key shown to the customer
+- `proxy_amount`, `proxy_auth_ips`, `proxy_rotation_time`
+- `proxy_ips` — `ip:port` endpoints, comma separated
+- `proxy_expiration`, `proxy_rotation_counter`, `proxy_max_rotate`, `proxy_synced_at` —
+  cached panel state, refreshed by `createServer()`, **Sync status**, and the callback
 
 ## What the customer sees
 
@@ -80,10 +103,19 @@ Labels come from `lang/en/proxypanel.php` — reword them there, no code change 
 | `proxy_username` | Proxy username |
 | `proxy_password` | Proxy password |
 | `proxy_endpoints` | Proxy addresses |
-| `proxy_host` | Proxy host |
-| `panel_status` | Status |
+| `proxy_count` | Proxies |
+| `auth_ips` | Authorized IPs |
+| `rotation_time` | Rotation interval (minutes) |
+| `rotations_used` | Rotations used |
+| `api_key` | API key |
+| `panel_expiration` | Expires on panel |
 | `panel_service_id` | Service reference |
 | `last_synced` | Last updated |
+
+**Export format** — `exportProxies()` returns one line per proxy as
+`host:port:username:password`. IPv6 hosts are bracketed
+(`[2a01:4f8::1]:10000:user:pass`) because a bare IPv6 address contains colons and would
+otherwise be unparseable.
 
 ## Panel callback (panel → Paymenter)
 
@@ -115,9 +147,10 @@ Recognised states → Paymenter status:
 
 | Panel state | Becomes |
 |---|---|
-| `active`, `running`, `started`, `online`, `created`, `unsuspended` | `active` |
-| `suspended`, `stopped`, `paused`, `offline` | `suspended` |
+| `ok`, `success`, `active`, `running`, `started`, `online`, `created`, `unsuspended` | `active` |
+| `suspended`, `stopped`, `paused`, `offline`, `expired` | `suspended` |
 | `cancelled`, `canceled`, `terminated`, `deleted`, `destroyed` | `cancelled` |
+| `error`, `failed`, `failure` | **not activated** — recorded as a provisioning failure with the panel's `description`, mirroring WHMCS's `AfterModuleCreateFailed` |
 
 Anything else is **logged and recorded as a `callback` row in Services → Provisioning**,
 and **not** applied — an unknown state never silently changes a customer's service. Any
@@ -173,13 +206,15 @@ token, and attach it to your proxy products.
 
 ## Notes / differences from the old WHMCS module
 
-- The panel's `/newIpv6` create endpoint is used (IPv6 proxy service), matching the live
-  deployment. `client_id` is the Paymenter service id.
-- Package change is intentionally unsupported (panel limitation) — to change plan, cancel
-  and re-order.
-- Rotation-limit / auth-IP management UIs from the WHMCS client area can be added as
-  additional `getActions` views on request; the core lifecycle + status/rotate/reboot are
-  wired.
+- `client_id` on `POST /new` is the Paymenter service id, so the panel can identify the
+  service in its callbacks.
+- **Package change is supported**, unlike the old module: the panel grows and shrinks a
+  service in place, so an upgrade is `expand`/`shrink` by the difference in proxy count
+  rather than a cancel-and-reorder.
+- **Region** is a checkout option (`Country - City`), not a product setting, so one
+  product can be sold in several locations — matching the WHMCS order form.
+- Rotation is gated client-side by the plan's `plan_max_rotate` / `rotation_counter`
+  pulled from the panel, so the customer gets a clear message rather than a panel error.
 
 ## Open questions for the client
 
