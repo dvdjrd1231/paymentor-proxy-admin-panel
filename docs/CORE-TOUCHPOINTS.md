@@ -5,10 +5,13 @@ and config. This file lists the **rare, unavoidable** edits to vendored Paymente
 so they can be **re-applied after every upstream update** (see `docs/02-updates.md`).
 
 > After `git merge upstream/*`, check each entry here and re-apply if the merge reverted it.
+>
+> **All four touchpoints below are currently applied in this repository.** Each was
+> verified after applying — see `docs/VERIFICATION.md`.
 
 ---
 
-## 1. Apply payment-method fees when a gateway is chosen
+## 1. Apply payment-method fees when a gateway is chosen (**applied**)
 
 **Why:** Paymenter fires no event when a customer selects a gateway to pay an invoice,
 so the Payment Method Fees module (spec item 6) has no hook to attach the fee. One call
@@ -37,7 +40,7 @@ if (class_exists(\Paymenter\Extensions\Others\PaymentFees\PaymentFees::class)) {
 
 ---
 
-## 2. Enforce country-based gateway rules across ALL gateways (optional)
+## 2. Enforce country-based gateway rules across ALL gateways (**applied**)
 
 **Why:** Paymenter only filters gateways that implement `canUseGateway()`. Our own
 gateways (CoinPayments, Binance) call the rules engine from that hook, so they're
@@ -61,14 +64,14 @@ return $gateways;
 ```
 
 **Notes:**
-- Optional — skip it if you only use gateways that implement `canUseGateway()`.
+- Applied. Without it, rules would only bind gateways that implement `canUseGateway()`.
 - Guarded by `class_exists`; core still runs if the extension is removed.
 - If not re-applied after an upgrade: only non-implementing gateways stop being
   filtered; our gateways and the admin UI keep working.
 
 ---
 
-## 3. Discover admin widgets from extensions (optional)
+## 3. Discover admin widgets from extensions (**applied**)
 
 **Why:** Paymenter auto-discovers `Resources` and `Pages` from enabled extensions, but
 **not** `Widgets`. To show the `Others/AdminOps` Operations metrics widget (spec item 2)
@@ -84,11 +87,39 @@ $panel->discoverWidgets(in: base_path('extensions/' . $extension->path . '/Admin
 ```
 
 **Notes:**
-- Optional — without it the widget class simply isn't loaded (no breakage).
-- Alternatively, keep core untouched and place the widget on a dedicated admin page.
+- Applied. Without it the widget class is never loaded, so the dashboard silently
+  omits it (verified: `Filament::getPanel('admin')->getWidgets()` now includes
+  `Paymenter\Extensions\Others\AdminOps\Admin\Widgets\OperationsOverview`).
+- Stat values load lazily over Livewire, so they are not in the initial page HTML.
 - Admin primary **colour**: to match the brand, change `->colors(['primary' => Color::Blue])`
   to e.g. `->colors(['primary' => Color::hex('#e8365d')])` in the same provider. Purely
   cosmetic; optional.
+
+---
+
+## 4. Restored upstream migration lost during vendoring (**required**)
+
+**Why:** the initial vendoring of Paymenter core (`c71388c`) dropped exactly one upstream
+migration. Without it a **fresh install cannot complete**: `php artisan migrate --seed`
+aborts with `SQLSTATE[HY000]: General error: 1 no such table: notification_templates`,
+because `database/seeders/EmailTemplateSeeder.php` and `App\Models\NotificationTemplate`
+target `notification_templates` while only the older `email_templates` table gets created.
+Creating a user (`app:user:create`) fails for the same reason.
+
+**File:** `database/migrations/2025_10_04_183152_rename_email_templates_to_notification_templates_table.php`
+
+**Change:** restored byte-for-byte from upstream
+(`Paymenter/Paymenter@master`). It renames `email_templates` →
+`notification_templates` and adds `mail_enabled`, `in_app_enabled`, `in_app_title`,
+`in_app_body`, `in_app_url`, `edit_preference_message`.
+
+**Notes:**
+- This is a **restoration**, not a customization — the file is identical to upstream, so a
+  future `git merge upstream/master` will simply match it.
+- Verified: after restoring, `migrate --seed` completes and seeds 12 notification templates.
+- Root cause is the vendoring step, not upstream. When core is next re-vendored, diff the
+  file list against upstream rather than copying selectively:
+  `comm -23 <(upstream file list) <(local file list)`.
 
 ---
 

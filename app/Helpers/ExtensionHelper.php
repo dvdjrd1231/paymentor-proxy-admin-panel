@@ -390,6 +390,16 @@ class ExtensionHelper
             }
         }
 
+        // Country-based Gateway Rules (extensions/Others/GatewayRules) — central
+        // enforcement so gateways that don't implement canUseGateway() (Stripe,
+        // Cryptomus, …) are filtered too. See docs/CORE-TOUCHPOINTS.md #2.
+        if (class_exists(\Paymenter\Extensions\Others\GatewayRules\GatewayRules::class)) {
+            $gateways = array_values(array_filter(
+                $gateways,
+                fn ($g) => \Paymenter\Extensions\Others\GatewayRules\GatewayRules::allows($g, $total, $currency, $type, $items)
+            ));
+        }
+
         return $gateways;
     }
 
