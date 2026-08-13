@@ -12,44 +12,48 @@ use Paymenter\Extensions\Others\ProvisioningOps\ProvisioningOps;
 
 /**
  * ProxyPanel — native Paymenter server (provisioning) module for the IPv6/IPv4 proxy
- * admin panel. Native rewrite of the legacy WHMCS "proxyPanel" module.
+ * admin panel. Conversion of the client's existing WHMCS "proxyPanel" module (scope §8).
  *
- * Written against the panel's documented RotatingServices REST API (`api.md`). Every
- * endpoint below appears in that document — nothing is inferred:
+ * The endpoints below are the ones the WHMCS module calls in production against
+ * https://admpx.melodyproxy.com/v0/services. Several are not written up in `api.md`
+ * (/plans, /locations, /stop, /start, /credentials, /auth_ips, /rotate, /setRotate) but
+ * are demonstrably live, so the working module is treated as authoritative:
  *
  *   GET  /{id}                          service info (expiration, rotation, ips[])
- *   POST /new                           create
- *   POST /renew/{id}                    renew (clears counters)
+ *   POST /newIpv6                       create
+ *   GET  /renew/{id}                    renew (clears counters)
  *   GET  /extend/{id}/{unixtimestamp}   set expiration
- *   GET  /expand/{id}/{amount}          add proxies      (upgrade)
- *   GET  /shrink/{id}/{amount}          remove proxies   (downgrade)
+ *   GET  /expand|shrink/{id}/{amount}   add / remove proxies (upgrade / downgrade)
+ *   GET  /stop/{id} · /start/{id}       suspend / unsuspend
  *   GET  /cancel/{id}                   immediate termination
- *   POST /aa/{id}                       authorize[] / authenticate[] (max 3)
- *   GET  /blacklist/{blacklist_id}/{status}
- *   GET  /reboot/{id}[/hard]
+ *   POST /credentials/{id}              username + password
+ *   POST /auth_ips/{id}                 authorized IPs (max 3)
+ *   GET  /rotate/{id}/1                 manual rotation
+ *   GET  /setRotate/{id}/{minutes}      automatic rotation interval
+ *   GET  /reboot/{id}[/hard]            reboot
+ *   GET  /plans · /locations            catalogue for the Plan and Region dropdowns
+ *   GET  /blacklist/{id}/{enabled|disabled}
  *
  * Auth: every call sends the `Panel: <token>` header. Responses are JSON with a
- * `status` field (`ok`/`error`).
+ * `status` field (`ok`/`error`) and an optional `description`.
  *
  * WHMCS → Paymenter mapping:
- *   CreateAccount    → createServer      POST /new
+ *   CreateAccount    → createServer      POST /newIpv6 (client_id = Paymenter service id,
+ *                                        matching the WHMCS module and its callback)
+ *   SuspendAccount   → suspendServer     GET  /stop/{id}
+ *   UnsuspendAccount → unsuspendServer   GET  /start/{id}
  *   TerminateAccount → terminateServer   GET  /cancel/{id}
  *   ChangePackage    → upgradeServer     GET  /expand|shrink/{id}/{delta}
- *   ChangePassword   → changePassword    POST /aa/{id}
- *   SuspendAccount   → suspendServer     see § Suspension below
- *   UnsuspendAccount → unsuspendServer   see § Suspension below
- *   ClientArea       → getActions        proxies list, export, rotate, rotation time,
+ *   ChangePassword   → changePassword    POST /credentials/{id}
+ *   ClientArea       → getView/getActions  proxies, export, rotate, rotation time,
  *                                        auth IPs, password, API key, reboot
  *   Renewal          → billing-driven (Paymenter has no renew hook): a Service\Updated
- *                      listener calls POST /renew/{id} + GET /extend/{id}/{ts}.
+ *                      listener calls GET /renew/{id} then GET /extend/{id}/{ts}.
  *
- * § Suspension — the API document defines **no suspend/unsuspend endpoint**. Rather than
- * invent one, the behaviour is an explicit admin setting (`suspend_strategy`) with a
- * conservative default, and the open question is recorded in docs/modules/proxypanel.md.
- *
- * Robustness: per-service/per-action locks, idempotent create/terminate, HTTP retry with
- * backoff, structured logging, and every failure recorded to Others/ProvisioningOps so the
- * admin can see and retry it — a failed create never leaves an order silently active.
+ * Robustness (scope §7-8): per-service/per-action locks, idempotent create/terminate,
+ * HTTP retry with backoff, structured logging, and every failure recorded to
+ * Others/ProvisioningOps so the admin can see and retry it — a failed create never
+ * leaves an order silently active.
  *
  * @link docs/modules/proxypanel.md
  */
@@ -83,7 +87,7 @@ class ProxyPanel extends Server
 
     private const SYNCED_KEY = 'proxy_synced_at';
 
-    /** The panel accepts at most 3 authorized IPs (api.md). */
+    /** The panel accepts at most 3 authorized IPs. */
     private const MAX_AUTH_IPS = 3;
 
     private const LOG_CHANNEL = 'stack';
@@ -119,40 +123,13 @@ class ProxyPanel extends Server
                 'required' => false,
                 'encrypted' => true,
             ],
-            [
-                'name' => 'suspend_strategy',
-                'label' => 'Suspension behaviour',
-                'type' => 'select',
-                'description' => 'The panel API documents no suspend/unsuspend endpoint. Choose how a '
-                    . 'suspended (unpaid) service should be handled. "Expire now" sets the panel '
-                    . 'expiration to the current time via /extend; unsuspend restores it from the '
-                    . 'service due date. Confirm the intended behaviour with the panel operator.',
-                'options' => [
-                    'expire' => 'Expire now on the panel (/extend), restore on unsuspend',
-                    'none' => 'Do nothing on the panel (suspend in Paymenter only)',
-                ],
-                'default' => 'expire',
-                'required' => true,
-            ],
-            [
-                'name' => 'regions',
-                'label' => 'Regions',
-                'type' => 'textarea',
-                'description' => 'One per line, formatted "server_tag|Country - City" (e.g. '
-                    . '"us-nyc|United States - New York"). Offered to the customer at checkout. '
-                    . 'A line without a "|" is used as both tag and label.',
-                'required' => false,
-            ],
         ];
     }
 
     public function testConfig(): bool|string
     {
         try {
-            // There is no catalogue endpoint in api.md, so probe a service id that will
-            // not exist: a reachable, correctly-authenticated panel answers with a JSON
-            // `status: error` body rather than a transport failure or 401.
-            $this->request('get', '/0', [], throwOnApiError: false);
+            $this->request('get', '/plans');
 
             return true;
         } catch (\Throwable $e) {
@@ -176,7 +153,7 @@ class ProxyPanel extends Server
                 if ($id = $this->remoteId($service)) {
                     // /renew clears the rotation counters for the new period; /extend sets
                     // the actual expiry. api.md documents both.
-                    $this->request('post', '/renew/' . $id);
+                    $this->request('get', '/renew/' . $id);
                     $this->request('get', '/extend/' . $id . '/' . $service->expires_at->timestamp);
                     ProvisioningOps::succeeded($service, 'ProxyPanel', 'renew');
                     $this->log('info', 'Renewed service on panel', ['service' => $service->id, 'remote' => $id]);
@@ -190,51 +167,76 @@ class ProxyPanel extends Server
 
     // ── Per-product configuration (admin) ────────────────────────────────────
 
+    /**
+     * Mirrors the WHMCS module's proxypanel_ConfigOptions(), including the Plan dropdown
+     * populated live from the panel's /plans endpoint.
+     */
     public function getProductConfig($values = []): array
     {
         return [
             [
-                'name' => 'plan_tag',
-                'label' => 'Plan tag',
-                'type' => 'text',
-                'description' => 'The plan identifier on the panel (sent as plan_tag).',
-                'required' => true,
-            ],
-            [
                 'name' => 'amount',
-                'label' => 'Amount of proxies',
+                'label' => 'Amount proxies',
                 'type' => 'text',
                 'description' => 'Number of proxies provisioned per service.',
                 'validation' => 'numeric',
                 'required' => true,
             ],
             [
-                'name' => 'allow_manual_rotate',
-                'label' => 'Allow manual rotation',
-                'type' => 'checkbox',
-                'description' => 'Show the "Rotate now" action in the client area.',
+                'name' => 'plan',
+                'label' => 'Plan',
+                'type' => 'select',
+                'description' => 'Plan tag on the panel.',
+                'options' => $this->safeOptions(fn () => $this->fetchOptions('/plans')),
+                'required' => true,
+            ],
+            [
+                'name' => 'protocol',
+                'label' => 'Protocol',
+                'type' => 'select',
+                'description' => 'Recorded on the service and shown to the customer. The panel API '
+                    . 'exposes no protocol field, so it is not sent upstream — see '
+                    . 'docs/modules/proxypanel.md § Protocol.',
+                'options' => ['http' => 'HTTP', 'https' => 'HTTPS', 'socks5' => 'SOCKS5'],
                 'required' => false,
             ],
             [
-                'name' => 'allow_change_rotate',
-                'label' => 'Allow changing rotation time',
-                'type' => 'checkbox',
-                'description' => 'Let the customer set the automatic rotation interval.',
+                'name' => 'allow_rotation',
+                'label' => 'Allow manual Rotation',
+                'type' => 'select',
+                'options' => ['yes' => 'Yes', 'no' => 'No'],
+                'default' => 'yes',
                 'required' => false,
             ],
             [
-                'name' => 'auth_ips_count',
-                'label' => 'Authorized IPs allowed',
+                'name' => 'change_rotation',
+                'label' => 'Allow change rotation time',
+                'type' => 'select',
+                'options' => ['yes' => 'Yes', 'no' => 'No'],
+                'default' => 'yes',
+                'required' => false,
+            ],
+            [
+                'name' => 'auth_ips',
+                'label' => 'How many auth_ips can be allowed',
                 'type' => 'text',
-                'description' => 'How many authorized IPs the customer may set (panel maximum is ' . self::MAX_AUTH_IPS . ').',
+                'description' => 'Zero or empty means disabled. The panel accepts at most ' . self::MAX_AUTH_IPS . '.',
                 'validation' => 'numeric',
                 'required' => false,
             ],
             [
-                'name' => 'rotations_per_period',
-                'label' => 'Rotations per period',
+                'name' => 'amount_rotations',
+                'label' => 'How many rotations per period are allowed',
                 'type' => 'text',
-                'description' => 'Informational: the plan\'s rotation allowance, shown to the customer.',
+                'description' => 'Zero or empty means unlimited.',
+                'validation' => 'numeric',
+                'required' => false,
+            ],
+            [
+                'name' => 'bwlimit',
+                'label' => 'Bandwidth limit',
+                'type' => 'text',
+                'description' => 'Zero or empty means unlimited.',
                 'validation' => 'numeric',
                 'required' => false,
             ],
@@ -242,12 +244,13 @@ class ProxyPanel extends Server
     }
 
     /**
-     * Region is chosen by the customer at checkout and becomes the panel's `server_tag`.
-     * Labels use the "Country - City" format the client's WHMCS order form used.
+     * Region is chosen by the customer at checkout and sent as `location_name`, exactly as
+     * the WHMCS order form did (`$params['configoptions']['Region']`). Options come live
+     * from the panel's /locations endpoint.
      */
     public function getCheckoutConfig(Product $product): array
     {
-        $regions = $this->regionOptions();
+        $regions = $this->safeOptions(fn () => $this->fetchOptions('/locations'));
 
         if (empty($regions)) {
             return [];
@@ -255,7 +258,7 @@ class ProxyPanel extends Server
 
         return [
             [
-                'name' => 'region',
+                'name' => 'Region',
                 'label' => 'Region',
                 'type' => 'select',
                 'required' => true,
@@ -264,23 +267,38 @@ class ProxyPanel extends Server
         ];
     }
 
-    /** Parse the admin's "server_tag|Country - City" lines into select options. */
-    private function regionOptions(): array
+    /** The panel returns plans/locations either as a flat list or a keyed map. */
+    private function fetchOptions(string $path): array
     {
-        $raw = (string) $this->config('regions');
-        $options = [];
+        $data = $this->request('get', $path);
+        $rows = $data['data'] ?? $data;
+        $out = [];
 
-        foreach (preg_split('/\r\n|\r|\n/', $raw) ?: [] as $line) {
-            $line = trim($line);
-            if ($line === '') {
+        foreach ((array) $rows as $key => $value) {
+            if ($key === 'status' || $key === 'description') {
                 continue;
             }
-            [$tag, $label] = array_pad(explode('|', $line, 2), 2, null);
-            $tag = trim((string) $tag);
-            $options[$tag] = trim((string) ($label ?: $tag));
+            if (is_array($value)) {
+                $tag = $value['tag'] ?? $value['name'] ?? $value['id'] ?? $key;
+                $out[$tag] = $value['name'] ?? $tag;
+            } else {
+                $out[$value] = $value;
+            }
         }
 
-        return $options;
+        return $out;
+    }
+
+    /** A catalogue fetch must never break the admin form when the panel is unreachable. */
+    private function safeOptions(callable $fetch): array
+    {
+        try {
+            return $fetch();
+        } catch (\Throwable $e) {
+            $this->log('warning', 'ProxyPanel option fetch failed', ['error' => $e->getMessage()]);
+
+            return [];
+        }
     }
 
     // ── Lifecycle ────────────────────────────────────────────────────────────
@@ -301,26 +319,27 @@ class ProxyPanel extends Server
             }
 
             $username = 'svc' . $service->id;
-            $password = substr(bin2hex(random_bytes(16)), 0, 16);
+            $password = substr(sha1(random_bytes(10)), 0, 8);
             $amount = max(1, (int) ($settings['amount'] ?? 1));
+            $bwlimit = (int) ($settings['bwlimit'] ?? 0);
 
+            // `client_id` is the Paymenter service id — the WHMCS module states this
+            // explicitly (`// clientid === $params['serviceid']`) and its callback looks
+            // the service up by that same id.
             $payload = [
                 'client_id' => (int) $service->id,
-                'plan_tag' => $settings['plan_tag'] ?? null,
-                'server_tag' => $settings['region'] ?? ($settings['server_tag'] ?? null),
+                'plan_tag' => $settings['plan'] ?? null,
+                'location_name' => $settings['Region'] ?? ($settings['region'] ?? null),
                 'amount' => $amount,
-                'authorize' => [],                 // customer sets these later via /aa
                 'authenticate' => ['username' => $username, 'password' => $password],
-                'expiration' => $service->expires_at?->timestamp,
+                'bwlimit' => $bwlimit > 0 ? $bwlimit : null,
             ];
 
-            foreach (['plan_tag', 'server_tag'] as $required) {
-                if (empty($payload[$required])) {
-                    throw new \RuntimeException('ProxyPanel: missing required "' . $required . '" — check the product configuration and the Region option.');
-                }
+            if (empty($payload['plan_tag'])) {
+                throw new \RuntimeException('ProxyPanel: no Plan configured on this product.');
             }
 
-            $res = $this->request('post', '/new', $payload);
+            $res = $this->request('post', '/newIpv6', $payload);
 
             $newId = $res['id'] ?? ($res['service_id'] ?? ($res['data']['id'] ?? null));
             if (!$newId) {
@@ -343,39 +362,16 @@ class ProxyPanel extends Server
         });
     }
 
-    /**
-     * The API document defines no suspend endpoint. Behaviour is an explicit setting.
-     */
+    /** WHMCS SuspendAccount → GET /stop/{id}. */
     public function suspendServer(Service $service, $settings, $properties)
     {
-        return $this->withLock($service, 'suspend', function () use ($service) {
-            $id = $this->requireRemoteId($service);
-
-            if ($this->config('suspend_strategy') === 'none') {
-                $this->log('info', 'Suspend: panel untouched by configuration', ['service' => $service->id]);
-
-                return ['status' => 'ok', 'description' => 'suspended in Paymenter only'];
-            }
-
-            // Expire the service on the panel now; unsuspend restores the real due date.
-            return $this->request('get', '/extend/' . $id . '/' . now()->timestamp);
-        });
+        return $this->withLock($service, 'suspend', fn () => $this->request('get', '/stop/' . $this->requireRemoteId($service)));
     }
 
+    /** WHMCS UnsuspendAccount → GET /start/{id}. */
     public function unsuspendServer(Service $service, $settings, $properties)
     {
-        return $this->withLock($service, 'unsuspend', function () use ($service) {
-            $id = $this->requireRemoteId($service);
-
-            if ($this->config('suspend_strategy') === 'none') {
-                return ['status' => 'ok', 'description' => 'unsuspended in Paymenter only'];
-            }
-
-            // Restore the paid-through date. Fall back to "now" only if there is none.
-            $expiry = $service->expires_at?->timestamp ?? now()->timestamp;
-
-            return $this->request('get', '/extend/' . $id . '/' . $expiry);
-        });
+        return $this->withLock($service, 'unsuspend', fn () => $this->request('get', '/start/' . $this->requireRemoteId($service)));
     }
 
     public function terminateServer(Service $service, $settings, $properties)
@@ -445,7 +441,7 @@ class ProxyPanel extends Server
 
         $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_sync'), 'function' => 'syncStatus'];
 
-        if ($this->truthy($settings['allow_manual_rotate'] ?? false)) {
+        if ($this->truthy($settings['allow_rotation'] ?? false)) {
             $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_rotate'), 'function' => 'rotate'];
         }
 
@@ -496,12 +492,12 @@ class ProxyPanel extends Server
             'service' => $service,
             'endpoints' => $this->endpointList($service),
             'authIps' => array_filter(array_map('trim', explode(',', (string) $this->prop($service, self::AUTH_IPS_KEY)))),
-            'maxAuthIps' => min(self::MAX_AUTH_IPS, (int) ($settings['auth_ips_count'] ?? self::MAX_AUTH_IPS)),
+            'maxAuthIps' => min(self::MAX_AUTH_IPS, (int) ($settings['auth_ips'] ?? self::MAX_AUTH_IPS)),
             'rotationTime' => $this->prop($service, self::ROTATION_TIME_KEY),
             'rotationCounter' => $this->prop($service, self::ROTATION_COUNTER_KEY),
             'maxRotate' => $this->prop($service, self::MAX_ROTATE_KEY),
-            'canChangeRotation' => $this->truthy($settings['allow_change_rotate'] ?? false),
-            'canRotate' => $this->truthy($settings['allow_manual_rotate'] ?? false),
+            'canChangeRotation' => $this->truthy($settings['change_rotation'] ?? false),
+            'canRotate' => $this->truthy($settings['allow_rotation'] ?? false),
             'username' => $this->prop($service, self::USERNAME_KEY),
             'apiKey' => $this->prop($service, self::API_KEY_KEY),
         ])->render();
@@ -522,7 +518,7 @@ class ProxyPanel extends Server
     public function clientUpdateAuthIps(Service $service, $settings, $properties, array $ips)
     {
         $settings = array_merge($settings, $properties);
-        $allowed = min(self::MAX_AUTH_IPS, (int) ($settings['auth_ips_count'] ?? self::MAX_AUTH_IPS));
+        $allowed = min(self::MAX_AUTH_IPS, (int) ($settings['auth_ips'] ?? self::MAX_AUTH_IPS));
 
         $ips = array_values(array_filter(array_map('trim', $ips)));
         if (count($ips) > $allowed) {
@@ -545,7 +541,7 @@ class ProxyPanel extends Server
     {
         $settings = array_merge($settings, $properties);
 
-        if (!$this->truthy($settings['allow_change_rotate'] ?? false)) {
+        if (!$this->truthy($settings['change_rotation'] ?? false)) {
             throw new \RuntimeException(__('proxypanel.rotation_change_not_allowed'));
         }
 
@@ -579,7 +575,7 @@ class ProxyPanel extends Server
     {
         $settings = array_merge($settings, $properties);
 
-        if (!$this->truthy($settings['allow_manual_rotate'] ?? false)) {
+        if (!$this->truthy($settings['allow_rotation'] ?? false)) {
             throw new \RuntimeException(__('proxypanel.rotate_not_allowed'));
         }
 
@@ -589,7 +585,7 @@ class ProxyPanel extends Server
             throw new \RuntimeException(__('proxypanel.rotate_limit_reached', ['max' => $max]));
         }
 
-        $res = $this->request('get', '/rotate/' . $this->requireRemoteId($service));
+        $res = $this->request('get', '/rotate/' . $this->requireRemoteId($service) . '/1');
 
         // Refresh the counter and the new addresses.
         $this->safely(fn () => $this->syncStatus($service));
@@ -649,19 +645,25 @@ class ProxyPanel extends Server
             return ['status' => 'ok', 'description' => 'nothing to update'];
         }
 
-        $res = $this->request('post', '/aa/' . $this->requireRemoteId($service), $payload);
+        $id = $this->requireRemoteId($service);
+        $result = null;
 
         if (isset($payload['authorize'])) {
+            $result = $this->request('post', '/auth_ips/' . $id, ['ips' => $payload['authorize']]);
             $this->setProp($service, self::AUTH_IPS_KEY, implode(', ', $payload['authorize']));
         }
-        if ($username !== null) {
-            $this->setProp($service, self::USERNAME_KEY, $username);
-        }
-        if ($password !== null) {
-            $this->setProp($service, self::PASSWORD_KEY, $password);
+
+        if (isset($payload['authenticate'])) {
+            $result = $this->request('post', '/credentials/' . $id, $payload['authenticate']);
+            if ($username !== null) {
+                $this->setProp($service, self::USERNAME_KEY, $username);
+            }
+            if ($password !== null) {
+                $this->setProp($service, self::PASSWORD_KEY, $password);
+            }
         }
 
-        return $res;
+        return $result ?? ['status' => 'ok'];
     }
 
     /** WHMCS ChangePassword. */
@@ -673,7 +675,7 @@ class ProxyPanel extends Server
     /** Enable/disable a blacklist — api.md `GET /blacklist/{id}/{status}`. */
     public function setBlacklist(Service $service, string $blacklistId, bool $enabled)
     {
-        return $this->request('get', '/blacklist/' . $blacklistId . '/' . ($enabled ? '1' : '0'));
+        return $this->request('get', '/blacklist/' . $blacklistId . '/' . ($enabled ? 'enabled' : 'disabled'));
     }
 
     /**
@@ -890,7 +892,8 @@ class ProxyPanel extends Server
 
     private function truthy($value): bool
     {
-        return in_array($value, [true, 1, '1', 'true', 'on', 'yes'], true);
+        return in_array($value, [true, 1, '1', 'true', 'on', 'yes'], true)
+            || (is_string($value) && strtolower(trim($value)) === 'yes');
     }
 
     private function safely(callable $fn): void
