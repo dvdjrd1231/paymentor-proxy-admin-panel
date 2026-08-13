@@ -124,6 +124,18 @@ if (str_starts_with($path, '/_control')) {
         case '/_control/state':
             respond(['status' => 'ok', 'failing' => $state['fail'], 'services' => $state['services']]);
 
+        case '/_control/deploy':
+            // Simulate the panel finishing provisioning for a service.
+            $sid = (string) ($_GET['id'] ?? '');
+            if (!isset($state['services'][$sid])) {
+                respond(['status' => 'error', 'description' => 'unknown service'], 404);
+            }
+            $state['services'][$sid]['status'] = 'active';
+            $state['services'][$sid]['deployed'] = 'yes';
+            $state['services'][$sid]['ips'] = makeProxies($sid, (int) ($state['services'][$sid]['pending_amount'] ?? 1));
+            saveState($stateFile, $state);
+            respond(['status' => 'ok', 'deployed' => $sid]);
+
         case '/_control/reset':
             saveState($stateFile, ['next_id' => 1000, 'fail' => false, 'services' => []]);
             respond(['status' => 'ok', 'description' => 'state reset']);
@@ -184,8 +196,9 @@ if ($verb === 'plans') {
 
 if ($verb === 'locations') {
     respond(['status' => 'ok', 'data' => [
-        ['tag' => 'us-nyc', 'name' => 'United States - New York'],
-        ['tag' => 'nl-ams', 'name' => 'Netherlands - Amsterdam'],
+        ['tag' => 'us-nyc', 'name' => 'United States - New York', 'stock' => 1500],
+        ['tag' => 'nl-ams', 'name' => 'Netherlands - Amsterdam', 'stock' => 0],
+        ['tag' => 'dj-dji-1', 'name' => 'Djibouti - Djibouti City', 'available' => false],
     ]]);
 }
 
@@ -221,7 +234,12 @@ if ($method === 'POST' && ($verb === 'newIpv6' || $verb === 'new')) {
         'authorize' => array_slice((array) ($body['authorize'] ?? []), 0, MAX_AUTH_IPS),
         'authenticate' => $body['authenticate'] ?? null,
         'blacklists' => [],
-        'ips' => makeProxies($newId, $amount),
+        // The real panel provisions asynchronously: a new service is listed as
+        // "pending / deployed: none" with no proxies until it finishes.
+        'status' => 'pending',
+        'deployed' => 'none',
+        'ips' => [],
+        'pending_amount' => $amount,
     ];
     saveState($stateFile, $state);
 
