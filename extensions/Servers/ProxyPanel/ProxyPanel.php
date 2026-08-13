@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Paymenter\Extensions\Others\ProvisioningOps\ProvisioningOps;
+use Paymenter\Extensions\Servers\ProxyPanel\Support\CountryFlag;
 
 /**
  * ProxyPanel — native Paymenter server (provisioning) module for the IPv6/IPv4 proxy
@@ -122,6 +123,17 @@ class ProxyPanel extends Server
                     . 'Leave empty to disable the callback endpoint. Stored encrypted.',
                 'required' => false,
                 'encrypted' => true,
+            ],
+            [
+                'name' => 'region_flags',
+                'label' => 'Show country flags on regions',
+                'type' => 'checkbox',
+                'description' => 'Prefix each Region at checkout with its country flag, e.g. '
+                    . '"🇺🇸  United States - Kansas City". Note: Windows has no flag glyphs, so '
+                    . 'browsers there show the two country letters instead ("US"). macOS, iOS, '
+                    . 'Android and most Linux desktops show the flag.',
+                'default' => true,
+                'required' => false,
             ],
         ];
     }
@@ -254,6 +266,11 @@ class ProxyPanel extends Server
 
         if (empty($regions)) {
             return [];
+        }
+
+        // Prefix each region with its country flag, e.g. "🇺🇸  United States - Kansas City".
+        if ($this->config('region_flags') === null || $this->truthy($this->config('region_flags'))) {
+            $regions = array_map(fn ($label) => CountryFlag::decorate((string) $label), $regions);
         }
 
         return [

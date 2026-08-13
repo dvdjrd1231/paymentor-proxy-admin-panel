@@ -84,6 +84,24 @@ Mirrors the WHMCS module's `ConfigOptions`: **Amount proxies**, **Plan** (dropdo
 **Region** is a *checkout* option (dropdown from `/locations`, labelled `Country - City`)
 so one product can be sold in several locations — exactly as the WHMCS order form did.
 
+### Country flags on regions
+
+With **Show country flags on regions** enabled (default), each option is prefixed with its
+country flag: `🇺🇸  United States - Kansas City`. The country is taken from the text before
+the first dash and matched against Paymenter's own ISO-3166 list
+(`config('app.countries')`), plus a small alias table for spellings like `USA`, `UK` and
+`UAE`. An unrecognised country is left untouched — the label is never lost or guessed at.
+
+Only the **label** changes; the value sent to the panel as `location_name` is still the
+bare `server_tag`.
+
+> **Windows shows letters, not flags.** Flags in a `<select>` can only be Unicode
+> regional-indicator characters — HTML options cannot contain images. Windows ships no
+> flag glyphs, so Chrome, Edge and Firefox on Windows render `🇺🇸` as `US`. macOS, iOS,
+> Android and most Linux desktops show the flag. To get real flag images on Windows the
+> native `<select>` would have to be replaced with a custom JavaScript dropdown; turn the
+> setting off if the letter fallback is undesirable.
+
 ## Provisioning data stored per service
 
 - `proxypanel_service_id` — the panel's service id (used by every later call)
