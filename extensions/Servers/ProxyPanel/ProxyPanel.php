@@ -88,6 +88,9 @@ class ProxyPanel extends Server
 
     private const SYNCED_KEY = 'proxy_synced_at';
 
+    /** Set only once the panel confirms the service is deployed. */
+    private const CONFIRMED_KEY = 'proxy_confirmed_at';
+
     /** The panel accepts at most 3 authorized IPs. */
     private const MAX_AUTH_IPS = 3;
 
@@ -156,6 +159,33 @@ class ProxyPanel extends Server
 
         // Renewal is billing-driven — Paymenter has no renew hook. When a ProxyPanel
         // service's expires_at moves (e.g. after an invoice is paid), push it to the panel.
+        // Guard: never let a ProxyPanel service sit at "active" unless the panel has
+        // confirmed it. Core activates independently of the provisioning job, so this
+        // catches it whichever way round the two happen.
+        Event::listen(\App\Events\Service\Updated::class, function ($event) {
+            $service = $event->service;
+
+            if (!$this->isProxyPanelService($service) || !$service->isDirty('status')) {
+                return;
+            }
+
+            if ($service->status !== Service::STATUS_ACTIVE || $this->isConfirmed($service)) {
+                return;
+            }
+
+            // Only gate the initial provisioning. Once a service has been confirmed at
+            // least once, later suspend/unsuspend cycles activate normally.
+            if (!$this->remoteId($service)) {
+                return;
+            }
+
+            $this->forceStatus($service, Service::STATUS_PENDING);
+
+            $this->log('info', 'Held service at pending — panel has not confirmed deployment yet', [
+                'service' => $service->id,
+            ]);
+        });
+
         Event::listen(\App\Events\Service\Updated::class, function ($event) {
             $service = $event->service;
             if (!$this->isProxyPanelService($service) || !$service->isDirty('expires_at') || !$service->expires_at) {
@@ -268,6 +298,17 @@ class ProxyPanel extends Server
             return [];
         }
 
+        // Reflect per-region availability reported by the panel, the way the WHMCS order
+        // form did — an unavailable region is shown but marked, not silently hidden, so
+        // the customer can see it exists and pick another.
+        $stock = $this->safeOptions(fn () => $this->fetchLocationStock());
+
+        foreach ($regions as $tag => $label) {
+            if (($stock[$tag] ?? null) === false) {
+                $regions[$tag] = $label . ' ' . __('proxypanel.out_of_stock');
+            }
+        }
+
         // Prefix each region with its country flag, e.g. "🇺🇸  United States - Kansas City".
         if ($this->config('region_flags') === null || $this->truthy($this->config('region_flags'))) {
             $regions = array_map(fn ($label) => CountryFlag::decorate((string) $label), $regions);
@@ -304,6 +345,53 @@ class ProxyPanel extends Server
         }
 
         return $out;
+    }
+
+    /**
+     * Per-region availability from `GET /locations`, as `[server_tag => bool]`.
+     *
+     * Inventory is the panel's to know, not something the admin should maintain by hand —
+     * so availability is read from the catalogue rather than from Paymenter's own Stock
+     * field. The panel's exact field name is not documented, so the common spellings are
+     * accepted and anything unrecognised is treated as available (fail open: never hide a
+     * region that is actually sellable).
+     *
+     * A region counts as out of stock when the panel reports a false-y availability flag
+     * or a remaining count of zero.
+     */
+    private function fetchLocationStock(): array
+    {
+        $data = $this->request('get', '/locations');
+        $rows = $data['data'] ?? $data;
+        $stock = [];
+
+        foreach ((array) $rows as $key => $value) {
+            if (!is_array($value)) {
+                continue;                  // a bare string carries no stock information
+            }
+
+            $tag = $value['tag'] ?? $value['name'] ?? $value['id'] ?? $key;
+
+            foreach (['available', 'in_stock', 'has_stock', 'enabled'] as $flag) {
+                if (array_key_exists($flag, $value)) {
+                    $stock[$tag] = (bool) $value[$flag];
+                    continue 2;
+                }
+            }
+
+            foreach (['stock', 'free', 'available_count', 'remaining', 'free_proxies'] as $count) {
+                if (array_key_exists($count, $value) && is_numeric($value[$count])) {
+                    $stock[$tag] = (int) $value[$count] > 0;
+                    continue 2;
+                }
+            }
+
+            if (isset($value['out_of_stock'])) {
+                $stock[$tag] = !$value['out_of_stock'];
+            }
+        }
+
+        return $stock;
     }
 
     /** A catalogue fetch must never break the admin form when the panel is unreachable. */
@@ -368,12 +456,25 @@ class ProxyPanel extends Server
             $this->setProp($service, self::PASSWORD_KEY, $password);
             $this->setProp($service, self::AMOUNT_KEY, (string) $amount);
 
-            if ($apiKey = $res['api_key'] ?? ($res['apikey'] ?? null)) {
-                $this->setProp($service, self::API_KEY_KEY, (string) $apiKey);
-            }
+            // The api-key is generated by us, not returned by the panel — same as the
+            // WHMCS module (`'api-key' => sha1(random_bytes(32))`).
+            $apiKey = $res['api_key'] ?? ($res['apikey'] ?? sha1(random_bytes(32)));
+            $this->setProp($service, self::API_KEY_KEY, (string) $apiKey);
 
             $this->cachePanelState($service, $res);
-            $this->log('info', 'Service provisioned', ['service' => $service->id, 'remote' => $newId]);
+
+            // The panel provisions asynchronously: `POST /newIpv6` returning ok means the
+            // request was accepted, NOT that the proxies are deployed — the panel lists the
+            // service as "pending / deployed: none" until it finishes. The WHMCS module
+            // therefore sets the service Pending here and waits for the panel's callback to
+            // mark it Active. Do the same, so a customer is never shown an active service
+            // the panel has not actually delivered.
+            $this->awaitPanelConfirmation($service);
+
+            $this->log('info', 'Service provisioning requested — awaiting panel confirmation', [
+                'service' => $service->id,
+                'remote' => $newId,
+            ]);
 
             return $res;
         });
@@ -581,7 +682,36 @@ class ProxyPanel extends Server
 
         $this->cachePanelState($service, $data);
 
+        // A sync is also a confirmation: if the panel now reports the service deployed,
+        // activate it. This is the manual fallback when a callback never arrives.
+        $payload = is_array($data['data'] ?? null) ? $data['data'] : $data;
+        if ($this->panelReportsDeployed($payload) && !$this->isConfirmed($service)) {
+            $this->confirmActivation($service, 'sync');
+        }
+
         return $data;
+    }
+
+    /**
+     * Does this panel payload describe a deployed, usable service?
+     *
+     * The panel's list view shows "deployed: none / status: pending" until it finishes,
+     * so proxies actually being assigned is the reliable signal.
+     */
+    private function panelReportsDeployed(array $payload): bool
+    {
+        $state = strtolower((string) ($payload['status'] ?? $payload['state'] ?? ''));
+
+        if (in_array($state, ['pending', 'error', 'failed'], true)) {
+            return false;
+        }
+
+        $deployed = $payload['deployed'] ?? null;
+        if ($deployed !== null && in_array(strtolower((string) $deployed), ['none', '0', 'false', ''], true)) {
+            return false;
+        }
+
+        return !empty($payload['ips']);
     }
 
     /**
@@ -727,6 +857,62 @@ class ProxyPanel extends Server
         }
 
         return implode("\n", $lines);
+    }
+
+    // ── Activation gating ────────────────────────────────────────────────────
+
+    /**
+     * Hold the service at `pending` until the panel confirms deployment.
+     *
+     * Paymenter activates a service in `RenewServiceService` independently of the
+     * provisioning job, so simply returning from createServer() is not enough — core
+     * will set `active` either just before the queued job runs or just after it. The
+     * `Service\Updated` listener in boot() therefore reverts any activation that is not
+     * backed by a panel confirmation, which covers both orderings.
+     */
+    /**
+     * Write a status straight to the row.
+     *
+     * The guard runs inside the model's own `updated` event, where the attribute has been
+     * written but `original` still holds the pre-save value. Assigning the old value back
+     * therefore leaves the model *not dirty*, and `save()` would silently write nothing —
+     * so go through the query builder and then re-sync the in-memory attribute. This also
+     * avoids re-entering the observer.
+     */
+    private function forceStatus(Service $service, string $status): void
+    {
+        Service::whereKey($service->getKey())->update(['status' => $status]);
+
+        $service->setAttribute('status', $status);
+        $service->syncOriginalAttribute('status');
+    }
+
+    private function awaitPanelConfirmation(Service $service): void
+    {
+        $this->clearProp($service, self::CONFIRMED_KEY);
+
+        if ($service->status === Service::STATUS_ACTIVE) {
+            $this->forceStatus($service, Service::STATUS_PENDING);
+        }
+    }
+
+    /** Record that the panel has confirmed the service, and activate it. */
+    private function confirmActivation(Service $service, string $via): void
+    {
+        $this->setProp($service, self::CONFIRMED_KEY, now()->toDateTimeString());
+
+        if ($service->status !== Service::STATUS_ACTIVE) {
+            $this->forceStatus($service, Service::STATUS_ACTIVE);
+        }
+
+        ProvisioningOps::succeeded($service, 'ProxyPanel', 'create', ['via' => $via]);
+        $this->log('info', 'Panel confirmed the service — now active', ['service' => $service->id, 'via' => $via]);
+    }
+
+    /** True once the panel has told us the service is really deployed. */
+    private function isConfirmed(Service $service): bool
+    {
+        return $this->prop($service, self::CONFIRMED_KEY) !== null;
     }
 
     // ── Panel callback ───────────────────────────────────────────────────────
@@ -888,13 +1074,17 @@ class ProxyPanel extends Server
             return null;
         }
 
+        if ($target === Service::STATUS_ACTIVE) {
+            // This is the panel telling us the service is really deployed — the only
+            // thing that may activate it.
+            $this->confirmActivation($service, 'callback');
+
+            return $target;
+        }
+
         if ($service->status !== $target) {
             $service->status = $target;
             $service->save();
-        }
-
-        if ($target === Service::STATUS_ACTIVE) {
-            ProvisioningOps::succeeded($service, 'ProxyPanel', 'create', ['via' => 'callback']);
         }
 
         return $target;

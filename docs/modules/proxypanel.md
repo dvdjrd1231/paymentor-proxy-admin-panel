@@ -84,6 +84,24 @@ Mirrors the WHMCS module's `ConfigOptions`: **Amount proxies**, **Plan** (dropdo
 **Region** is a *checkout* option (dropdown from `/locations`, labelled `Country - City`)
 so one product can be sold in several locations — exactly as the WHMCS order form did.
 
+### Stock per region
+
+Inventory is the panel's to know, so availability is read from `GET /locations` rather than
+Paymenter's manual **Stock** field. A region the panel reports as unavailable is shown but
+labelled `(Out of stock)` — visible, not hidden, so the customer can see it exists and pick
+another. This matches the client's WHMCS order form.
+
+The panel's field name for this is not documented, so these are accepted, in order:
+
+| Kind | Fields |
+|---|---|
+| Boolean | `available`, `in_stock`, `has_stock`, `enabled` |
+| Count | `stock`, `free`, `available_count`, `remaining`, `free_proxies` |
+| Inverted | `out_of_stock` |
+
+Anything unrecognised is treated as **available** — failing open, so a sellable region is
+never hidden by a naming mismatch. Confirm the real field and the list can be tightened.
+
 ### Country flags on regions
 
 With **Show country flags on regions** enabled (default), each option is prefixed with its
@@ -138,6 +156,28 @@ Labels come from `lang/en/proxypanel.php` — reword them there, no code change 
 `host:port:username:password`. IPv6 hosts are bracketed
 (`[2a01:4f8::1]:10000:user:pass`) because a bare IPv6 address contains colons and would
 otherwise be unparseable.
+
+## Activation: the service waits for the panel
+
+`POST /newIpv6` returning `ok` means the panel **accepted** the request, not that the
+proxies exist — the panel lists a new service as `status: pending, deployed: none` with an
+empty `ips` array until it finishes. The WHMCS module handles this by setting the service
+`Pending` after create (`'domainstatus' => 'Pending'`) and letting `callback.php` mark it
+Active when the panel calls back.
+
+This module does the same:
+
+1. `createServer()` requests provisioning and leaves the service **pending**.
+2. The panel calls back (or an admin presses **Sync status**).
+3. Only then does the service become **active**, recorded in `proxy_confirmed_at`.
+
+Because Paymenter activates services in `RenewServiceService` independently of the
+provisioning job, a `Service\Updated` listener reverts any activation that is not backed by
+a confirmation — which covers the job running before *or* after core sets the status.
+
+A service therefore never shows as active to the customer while the panel still has it
+queued. `syncStatus()` is the manual fallback if a callback is lost: it activates the
+service once the panel reports proxies assigned.
 
 ## Panel callback (panel → Paymenter)
 
