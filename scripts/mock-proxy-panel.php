@@ -11,9 +11,15 @@
  *   Panel API URL  http://127.0.0.1:9000/v0/services
  *   Panel Token    test-token          (override with MOCK_PANEL_TOKEN)
  *
- * Implemented (every endpoint from api.md):
+ * Implements the endpoint surface the client's WHMCS module calls in production (scope
+ * §8 "convert the existing WHMCS proxyPanel module"), which is a superset of `api.md`:
  *   GET  /v0/services/{id}                       service info
- *   POST /v0/services/new                        create
+ *   POST /v0/services/newIpv6                    create (legacy name used by the module)
+ *   GET  /v0/services/plans · /locations         catalogue for Plan / Region dropdowns
+ *   GET  /v0/services/stop/{id} · /start/{id}    suspend / unsuspend
+ *   POST /v0/services/credentials/{id}           username + password
+ *   POST /v0/services/auth_ips/{id}              authorized IPs
+ *   GET  /v0/services/rotate/{id}/1              manual rotation
  *   POST /v0/services/renew/{id}                 renew, clears rotation counter
  *   GET  /v0/services/extend/{id}/{unixts}       set expiration
  *   GET  /v0/services/expand/{id}/{amount}       add proxies
@@ -168,11 +174,29 @@ $segments = array_values(array_filter(explode('/', $route), fn ($s) => $s !== ''
 $verb = $segments[0] ?? '';
 $id = $segments[1] ?? '';
 
+// ── Catalogue (Plan / Region dropdowns) ─────────────────────────────────────
+if ($verb === 'plans') {
+    respond(['status' => 'ok', 'data' => [
+        ['tag' => 'rot-100', 'name' => 'Rotating 100'],
+        ['tag' => 'rot-500', 'name' => 'Rotating 500'],
+    ]]);
+}
+
+if ($verb === 'locations') {
+    respond(['status' => 'ok', 'data' => [
+        ['tag' => 'us-nyc', 'name' => 'United States - New York'],
+        ['tag' => 'nl-ams', 'name' => 'Netherlands - Amsterdam'],
+    ]]);
+}
+
 // ── Create ──────────────────────────────────────────────────────────────────
-if ($method === 'POST' && $verb === 'new') {
+if ($method === 'POST' && ($verb === 'newIpv6' || $verb === 'new')) {
     $body = jsonBody();
 
-    foreach (['client_id', 'plan_tag', 'server_tag', 'amount'] as $required) {
+    // The WHMCS module sends location_name; api.md calls the same field server_tag.
+    $body['server_tag'] = $body['server_tag'] ?? ($body['location_name'] ?? null);
+
+    foreach (['client_id', 'plan_tag', 'amount'] as $required) {
         if (!isset($body[$required]) || $body[$required] === '' || $body[$required] === null) {
             panelError("Missing required field: {$required}");
         }
@@ -186,6 +210,7 @@ if ($method === 'POST' && $verb === 'new') {
         'client_id' => $body['client_id'],
         'plan_tag' => $body['plan_tag'],
         'server_tag' => $body['server_tag'],
+        'bwlimit' => $body['bwlimit'] ?? null,
         'expiration' => $body['expiration'] ?? null,
         'plan_manual_rotate' => 1,
         'plan_change_rotate' => 1,
@@ -204,7 +229,8 @@ if ($method === 'POST' && $verb === 'new') {
 }
 
 // ── Everything below needs an existing service ──────────────────────────────
-$needsService = in_array($verb, ['renew', 'extend', 'expand', 'shrink', 'cancel', 'aa', 'reboot', 'rotate', 'setRotate'], true);
+$needsService = in_array($verb, ['renew', 'extend', 'expand', 'shrink', 'cancel', 'aa', 'reboot',
+    'rotate', 'setRotate', 'stop', 'start', 'credentials', 'auth_ips'], true);
 
 if ($needsService && !isset($state['services'][$id])) {
     // Cancelling something already gone is a no-op, which terminateServer relies on.
@@ -214,13 +240,40 @@ if ($needsService && !isset($state['services'][$id])) {
     panelError('Unknown service ' . $id);
 }
 
+if ($verb === 'stop' || $verb === 'start') {
+    $state['services'][$id]['suspended'] = ($verb === 'stop');
+    saveState($stateFile, $state);
+    respond(['status' => 'ok'] + $state['services'][$id]);
+}
+
+if ($method === 'POST' && $verb === 'credentials') {
+    $body = jsonBody();
+    $state['services'][$id]['authenticate'] = [
+        'username' => $body['username'] ?? null,
+        'password' => $body['password'] ?? null,
+    ];
+    saveState($stateFile, $state);
+    respond(['status' => 'ok'] + $state['services'][$id]);
+}
+
+if ($method === 'POST' && $verb === 'auth_ips') {
+    $body = jsonBody();
+    $ips = (array) ($body['ips'] ?? []);
+    if (count($ips) > MAX_AUTH_IPS) {
+        panelError('At most ' . MAX_AUTH_IPS . ' authorized IPs');
+    }
+    $state['services'][$id]['authorize'] = array_values($ips);
+    saveState($stateFile, $state);
+    respond(['status' => 'ok'] + $state['services'][$id]);
+}
+
 if ($verb === 'cancel') {
     unset($state['services'][$id]);
     saveState($stateFile, $state);
     respond(['status' => 'ok', 'description' => 'cancelled']);
 }
 
-if ($method === 'POST' && $verb === 'renew') {
+if ($verb === 'renew') {
     $state['services'][$id]['rotation_counter'] = 0;
     saveState($stateFile, $state);
     respond(['status' => 'ok'] + $state['services'][$id]);
@@ -275,6 +328,7 @@ if ($method === 'POST' && $verb === 'aa') {
 }
 
 if ($verb === 'rotate') {
+    // The WHMCS module calls /rotate/{id}/1 — the trailing segment is accepted and ignored.
     $svc = &$state['services'][$id];
 
     if (!empty($svc['plan_max_rotate']) && $svc['rotation_counter'] >= $svc['plan_max_rotate']) {

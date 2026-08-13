@@ -11,56 +11,59 @@ panel's documented `api.md` (RotatingServices).
 
 ## API
 
-Implemented strictly against the panel's `api.md` (RotatingServices). No endpoint below
-is inferred.
+Scope §8 is *"convert the existing WHMCS proxyPanel module"*, so the endpoints this module
+calls are the ones that module calls in production against
+`https://admpx.melodyproxy.com/v0/services`.
+
+Several are **not written up in `api.md`** — `/plans`, `/locations`, `/stop`, `/start`,
+`/credentials`, `/auth_ips`, `/rotate`, `/setRotate` — but the working module calls them,
+so the module is treated as authoritative and `api.md` as an incomplete description.
 
 - **Base URL:** configurable, e.g. `https://<panel-host>/v0/services`
 - **Auth:** header `Panel: <token>` — an **encrypted** module setting
 
 | Action | Method / path |
 |---|---|
-| Service info | `GET /{service_id}` → `id, expiration, plan_manual_rotate, plan_change_rotate, plan_max_rotate, rotation_counter, ips[{ip,port}]` |
-| Create | `POST /new` `{client_id, plan_tag, server_tag, amount, authorize[], authenticate{username,password}, expiration}` |
-| Renew | `POST /renew/{id}` (clears rotation counters) |
+| Service info | `GET /{id}` → `id, expiration, plan_manual_rotate, plan_change_rotate, plan_max_rotate, rotation_counter, ips[{ip,port}]` |
+| Create | `POST /newIpv6` `{client_id, plan_tag, location_name, amount, authenticate{username,password}, bwlimit}` |
+| Suspend / unsuspend | `GET /stop/{id}` · `GET /start/{id}` |
+| Renew | `GET /renew/{id}` (clears rotation counters) |
 | Set expiration | `GET /extend/{id}/{unixtimestamp}` |
 | Upgrade / downgrade | `GET /expand/{id}/{amount}` · `GET /shrink/{id}/{amount}` |
 | Terminate | `GET /cancel/{id}` |
-| Auth / authorization | `POST /aa/{id}` `{authorize[], authenticate{}}` — max 3 IPs |
-| Blacklist | `GET /blacklist/{blacklist_id}/{blacklist_status}` |
-| Reboot | `GET /reboot/{id}[/hard]` |
-| Manual rotation | `GET /rotate/{id}` |
+| Credentials | `POST /credentials/{id}` `{username, password}` |
+| Authorized IPs | `POST /auth_ips/{id}` `{ips: []}` — max 3 |
+| Manual rotation | `GET /rotate/{id}/1` |
 | Rotation interval | `GET /setRotate/{id}/{minutes}` |
+| Reboot | `GET /reboot/{id}[/hard]` |
+| Catalogue | `GET /plans` · `GET /locations` — populate the Plan and Region dropdowns |
+| Blacklist | `GET /blacklist/{blacklist_id}/{enabled\|disabled}` |
 
 All responses are JSON with a `status` field (`ok`/`error`) and an optional `description`.
 
-> **Corrected from the earlier build.** The previous implementation called `/newIpv6`,
-> `/start/{id}`, `/stop/{id}`, `/credentials/{id}`, `/plans` and `/locations` — none of
-> which exist in `api.md`. It would have failed on create against the real panel. The
-> module now matches the specification.
+`client_id` is the **Paymenter service id**, matching the WHMCS module — its source says
+so explicitly (`// clientid === $params['serviceid']`), and its callback looks the service
+up by that same id. `api.md` describes `client_id` as a user id; the working code wins.
 
-### Suspension — open question
+### Protocol
 
-`api.md` documents **no suspend/unsuspend endpoint**. Rather than invent one, the
-behaviour is an explicit module setting:
-
-| `suspend_strategy` | Suspend | Unsuspend |
-|---|---|---|
-| `expire` (default) | `GET /extend/{id}/{now}` — expires the service on the panel | `GET /extend/{id}/{service due date}` |
-| `none` | nothing on the panel; suspended in Paymenter only | nothing |
-
-Confirm with the panel operator which is correct, or whether a dedicated endpoint exists.
+Scope §8 lists "Protocol selection". Neither the WHMCS module nor the panel API has any
+protocol field — zero occurrences in either. It is therefore offered as a **product
+option** (HTTP / HTTPS / SOCKS5), recorded on the service and shown to the customer, but
+**not sent upstream**. If the panel does support protocol selection, tell us the field and
+it becomes a one-line change.
 
 ## WHMCS → Paymenter mapping
 
 | WHMCS | Paymenter | Notes |
 |---|---|---|
-| `CreateAccount` | `createServer` | `POST /new`; idempotent — an existing remote id short-circuits, so a duplicate InvoicePaid never creates two services |
-| `SuspendAccount` | `suspendServer` | no endpoint in `api.md` — see § Suspension |
-| `UnsuspendAccount` | `unsuspendServer` | no endpoint in `api.md` — see § Suspension |
+| `CreateAccount` | `createServer` | `POST /newIpv6`; idempotent — an existing remote id short-circuits, so a duplicate InvoicePaid never creates two services |
+| `SuspendAccount` | `suspendServer` | `GET /stop/{id}` |
+| `UnsuspendAccount` | `unsuspendServer` | `GET /start/{id}` |
 | `TerminateAccount` | `terminateServer` | `GET /cancel/{id}`, idempotent |
 | `ChangePackage` | `upgradeServer` | `GET /expand` or `/shrink` by the delta — the panel grows/shrinks in place |
-| `ChangePassword` | `changePassword()` | `POST /aa/{id}` |
-| Renewal | `Service\Updated` listener | Paymenter has no renew hook; on `expires_at` change the module calls `POST /renew/{id}` then `GET /extend/{id}/{ts}` |
+| `ChangePassword` | `changePassword()` | `POST /credentials/{id}` |
+| Renewal | `Service\Updated` listener | Paymenter has no renew hook; on `expires_at` change the module calls `GET /renew/{id}` then `GET /extend/{id}/{ts}` |
 | `ClientArea` | `getActions()` + module methods | proxies list, export, manual rotate, rotation interval, auth IPs, password, API key, reboot |
 
 ## Configuration
@@ -71,14 +74,15 @@ Confirm with the panel operator which is correct, or whether a dedicated endpoin
 - **Callback Secret** — shared secret the panel must present when calling back into
   Paymenter (encrypted). Leave blank to disable the callback endpoint entirely.
 
-- **Suspension behaviour** — see § Suspension above.
-- **Regions** — one per line, `server_tag|Country - City`. Offered to the customer at
-  checkout and sent as `server_tag` on create. `api.md` exposes no catalogue endpoint, so
-  regions and plan tags are entered by the admin rather than fetched.
-
 ### Product (admin → Product → this server)
-**Plan tag**, **Amount of proxies**, **Allow manual rotation**, **Allow changing rotation
-time**, **Authorized IPs allowed** (panel max 3), **Rotations per period**.
+
+Mirrors the WHMCS module's `ConfigOptions`: **Amount proxies**, **Plan** (dropdown from
+`/plans`), **Protocol**, **Allow manual Rotation**, **Allow change rotation time**,
+**How many auth_ips can be allowed**, **How many rotations per period are allowed**,
+**Bandwidth limit**.
+
+**Region** is a *checkout* option (dropdown from `/locations`, labelled `Country - City`)
+so one product can be sold in several locations — exactly as the WHMCS order form did.
 
 ## Provisioning data stored per service
 
@@ -206,7 +210,7 @@ token, and attach it to your proxy products.
 
 ## Notes / differences from the old WHMCS module
 
-- `client_id` on `POST /new` is the Paymenter service id, so the panel can identify the
+- `client_id` on `POST /newIpv6` is the Paymenter service id, so the panel can identify the
   service in its callbacks.
 - **Package change is supported**, unlike the old module: the panel grows and shrinks a
   service in place, so an upgrade is `expand`/`shrink` by the difference in proxy count
