@@ -163,6 +163,7 @@ class ProxyPanel extends Server
     public function boot()
     {
         require __DIR__ . '/routes.php';
+        \Illuminate\Support\Facades\View::addNamespace('servers.proxypanel', __DIR__ . '/resources/views');
 
         // Renewal is billing-driven — Paymenter has no renew hook. When a ProxyPanel
         // service's expires_at moves (e.g. after an invoice is paid), push it to the panel.
@@ -450,6 +451,9 @@ class ProxyPanel extends Server
 
         $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_reboot'), 'function' => 'reboot'];
 
+        // The management panel (proxy list, export, auth IPs, rotation, password).
+        $actions[] = ['type' => 'view', 'name' => 'manage', 'label' => __('proxypanel.manage_title')];
+
         return $actions;
     }
 
@@ -475,6 +479,86 @@ class ProxyPanel extends Server
             __('proxypanel.panel_service_id') => $this->prop($service, self::REMOTE_ID_KEY),
             __('proxypanel.last_synced') => $synced ? \Carbon\Carbon::parse($synced)->diffForHumans() : null,
         ];
+    }
+
+    /**
+     * The proxy management panel rendered on the customer's service page.
+     *
+     * Core echoes the returned HTML raw, and its `goto()` helper passes no arguments — so
+     * the interactive forms post to this extension's own routes (see routes.php), which
+     * authorize against the Service policy and call the `client*` methods below.
+     */
+    public function getView(Service $service, $settings = [], $properties = [], $view = null)
+    {
+        $settings = array_merge($settings, $properties);
+
+        return view('servers.proxypanel::manage', [
+            'service' => $service,
+            'endpoints' => $this->endpointList($service),
+            'authIps' => array_filter(array_map('trim', explode(',', (string) $this->prop($service, self::AUTH_IPS_KEY)))),
+            'maxAuthIps' => min(self::MAX_AUTH_IPS, (int) ($settings['auth_ips_count'] ?? self::MAX_AUTH_IPS)),
+            'rotationTime' => $this->prop($service, self::ROTATION_TIME_KEY),
+            'rotationCounter' => $this->prop($service, self::ROTATION_COUNTER_KEY),
+            'maxRotate' => $this->prop($service, self::MAX_ROTATE_KEY),
+            'canChangeRotation' => $this->truthy($settings['allow_change_rotate'] ?? false),
+            'canRotate' => $this->truthy($settings['allow_manual_rotate'] ?? false),
+            'username' => $this->prop($service, self::USERNAME_KEY),
+            'apiKey' => $this->prop($service, self::API_KEY_KEY),
+        ])->render();
+    }
+
+    /** `ip:port` endpoints as an array, for the management table. */
+    private function endpointList(Service $service): array
+    {
+        return array_values(array_filter(array_map('trim', explode(',', (string) $this->prop($service, self::IPS_KEY)))));
+    }
+
+    // ── Client-initiated actions (called via this extension's routes) ────────
+    //
+    // These follow ExtensionHelper::callService()'s convention — ($service, $settings,
+    // $properties, ...$args) — so per-product permission flags are enforced here on the
+    // server, never trusted from the form.
+
+    public function clientUpdateAuthIps(Service $service, $settings, $properties, array $ips)
+    {
+        $settings = array_merge($settings, $properties);
+        $allowed = min(self::MAX_AUTH_IPS, (int) ($settings['auth_ips_count'] ?? self::MAX_AUTH_IPS));
+
+        $ips = array_values(array_filter(array_map('trim', $ips)));
+        if (count($ips) > $allowed) {
+            throw new \RuntimeException(__('proxypanel.too_many_ips', ['max' => $allowed]));
+        }
+
+        return $this->updateAuth($service, $ips);
+    }
+
+    public function clientUpdatePassword(Service $service, $settings, $properties, string $password)
+    {
+        if (strlen($password) < 8) {
+            throw new \RuntimeException(__('proxypanel.password_too_short'));
+        }
+
+        return $this->changePassword($service, $password);
+    }
+
+    public function clientUpdateRotation(Service $service, $settings, $properties, int $minutes)
+    {
+        $settings = array_merge($settings, $properties);
+
+        if (!$this->truthy($settings['allow_change_rotate'] ?? false)) {
+            throw new \RuntimeException(__('proxypanel.rotation_change_not_allowed'));
+        }
+
+        if ($minutes < 0) {
+            throw new \RuntimeException(__('proxypanel.invalid_rotation_time'));
+        }
+
+        return $this->setRotationTime($service, $minutes);
+    }
+
+    public function clientExport(Service $service, $settings = [], $properties = []): string
+    {
+        return $this->exportProxies($service);
     }
 
     /** Pull service info from the panel and cache it (scope §7 "Synchronization"). */
