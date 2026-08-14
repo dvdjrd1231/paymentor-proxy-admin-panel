@@ -198,5 +198,37 @@ arrival. Wording lives in `lang/en/account.php` (`credit_pending_invoice`).
 
 ---
 
+## 8. Sandbox credentials via `PAYMENT_MODE` (**applied**)
+
+**Why:** gateway credentials live only in the database, so switching between sandbox and
+the client's real keys meant editing every gateway by hand in the admin — easy to get
+wrong, and it risks running development traffic against live keys. The client asked for an
+env switch instead.
+
+**File:** `app/Classes/Extension/Extension.php`, method `config($key)` plus a new
+`developmentConfig()` helper. New file `config/payments.php` holds the mapping.
+
+**Change:** when `PAYMENT_MODE=dev`, a gateway setting is read from
+`config('payments.dev.<Extension>.<setting>')` (populated from `PAYMENT_DEV_*` in `.env`)
+in preference to the stored value. Blank entries fall through to the database, so a single
+field can be overridden alone. `PAYMENT_MODE=prod` — the default — ignores the dev block
+entirely.
+
+**Why here rather than per gateway:** `Extension::config()` is the single point every
+gateway resolves settings through, so one change covers CoinPayments, Cryptomus, Binance
+**and** the upstream Stripe extension without modifying any of them. Editing four gateway
+classes — one of them vendored — would have been four places to re-apply on upgrade.
+
+**Notes:**
+- Restricted to `Paymenter\Extensions\Gateways\*`; server extensions are untouched.
+- Read through `config()` rather than `env()` so it survives `php artisan config:cache`,
+  where `.env` is no longer loaded.
+- Defaults to `prod`, so a deployment that never sets `PAYMENT_MODE` behaves exactly as
+  before — dev keys are strictly opt-in.
+- If not re-applied after an upgrade, `PAYMENT_MODE` silently stops working and gateways
+  fall back to the database. Verify with `docs/PAYMENT-KEYS.md`.
+
+---
+
 _(No other core touchpoints at this time. Everything else is implemented via extensions,
 themes, events, or configuration.)_
