@@ -146,6 +146,14 @@ class Show extends Component
             return __('invoices.amount_too_large');
         }
 
+        // Bad or missing credentials are an operator problem, not something the customer
+        // can fix by retrying. Check this before echoing the gateway's own wording, which
+        // for Stripe is "Invalid API Key provided: sk_test_*ocal" — a key fragment that
+        // should never reach a customer's screen.
+        if (preg_match('/invalid.{0,20}(api|public|secret|merchant|key|uuid)/i', $raw)) {
+            return __('invoices.gateway_misconfigured');
+        }
+
         // Gateway JSON bodies carry a human-readable message; prefer it when present.
         if (preg_match('/"message"\s*:\s*"([^"]{5,200})"/', $raw, $m)) {
             return $m[1];

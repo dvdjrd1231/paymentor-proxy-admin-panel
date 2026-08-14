@@ -51,6 +51,9 @@ return [
     'no_credit' => 'You have no credits.',
     'add_credit' => 'Add credit',
     'credit_deposit' => 'Credit deposit (:currency)',
+    // Shown when a customer starts a second deposit while one is still unpaid; they are
+    // taken to that invoice's payment step rather than being blocked on the form.
+    'credit_pending_invoice' => 'You already have a credit deposit awaiting payment — invoice #:number for :amount. Pay it here and your credits will be added automatically; you can start another deposit afterwards.',
 
     'payment_methods' => 'Payment Methods',
     'recent_transactions' => 'Recent Transactions',
