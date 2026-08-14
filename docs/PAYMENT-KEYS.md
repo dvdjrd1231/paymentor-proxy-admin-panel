@@ -59,12 +59,25 @@ Verify with `php scripts/verify-stripe.php`, then prove the full loop with
 
 ### CoinPayments — free, self-serve ✅
 
-1. Create a free account at <https://www.coinpayments.net/>.
-2. **Merchant ID** — Account → Account Settings.
-3. **Public / private key** — Account → API Keys.
-4. **IPN secret** — Account → Merchant Settings; you choose this string yourself.
-5. Testing uses **LTCT (Litecoin testnet)**, a free test currency — no real crypto is
-   needed. Set `PAYMENT_DEV_COINPAYMENTS_RECEIVE_CURRENCY=LTCT`.
+New accounts use the **current** API (`c-api.coinpayments.net`), which authenticates with a
+Client ID + Client Secret. It is *not* the legacy `merchant_id` / `public_key` /
+`private_key` / `ipn_secret` scheme — that belongs to the old `www.coinpayments.net/api.php`
++ IPN system, which new signups do not get.
+
+1. Create a free account, then open **API Integrations → new integration**.
+2. Name it and set the webhook URL to your site's
+   `/extensions/coinpayments/ipn` (it can be edited later).
+3. On creation it shows the **Client ID** and **Client Secret** — the secret is displayed
+   once. If you lose it, regenerate it; it cannot be retrieved.
+4. Optionally restrict **Allowed IPs** to your server.
+5. Testing uses **LTCT** (Litecoin testnet, currency id `1002`), which is enabled for
+   payment and costs nothing.
+
+Paste them into Admin → Gateways → CoinPayments (Client ID, Client Secret, API URL), or set
+`PAYMENT_DEV_COINPAYMENTS_*` in `.env` with `PAYMENT_MODE=dev`.
+
+Verify with `php scripts/test-coinpayments-payment.php`, then complete the payment by
+opening the printed checkout link and paying with LTCT.
 
 ### Cryptomus — application required ⚠️
 
@@ -98,7 +111,8 @@ the others **nothing about it can be simulated** without real credentials.
 ## Sources
 
 - [Stripe test API keys](https://dashboard.stripe.com/test/apikeys)
-- [CoinPayments — API documentation](https://www.coinpayments.net/apidoc)
+- [CoinPayments — API authentication (current)](https://docs.coinpayments.net/api/auth)
+- [CoinPayments — invoices API](https://docs.coinpayments.net/api/invoices)
 - [CoinPayments — testing your integration (LTCT)](https://blog.coinpayments.net/tutorials/integration/integrating-coinpayments-step-4-testing-integration)
 - [CoinPayments — account setup](https://blog.coinpayments.net/tutorials/integration/integrating-coinpayments-step-1-account-setup)
 - [Cryptomus — merchant API docs](https://doc.cryptomus.com/merchant-api/payments/testing-webhook)

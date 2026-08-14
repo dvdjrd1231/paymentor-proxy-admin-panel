@@ -7,6 +7,7 @@ use App\Classes\Extension\Gateway;
 use App\Helpers\ExtensionHelper;
 use App\Models\Invoice;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
@@ -14,36 +15,53 @@ use Illuminate\Support\Facades\View;
 /**
  * CoinPayments payment gateway for Paymenter.
  *
- * Uses the CoinPayments API (create_transaction) to build a hosted crypto
- * checkout, and validates Instant Payment Notifications (IPN) via the merchant
- * IPN secret (HMAC-SHA512 over the raw request body).
+ * Targets the **current** CoinPayments API (`c-api.coinpayments.net`), which authenticates
+ * with a Client ID + Client Secret issued by an API Integration on the new dashboard. This
+ * is not the legacy `www.coinpayments.net/api.php` + IPN scheme: that used
+ * merchant_id / public_key / private_key / ipn_secret and is not what new accounts get.
+ *
+ * Requests and webhooks are both signed the same way — HMAC-SHA256, base64, over
+ *
+ *     U+FEFF + HTTP method + full URL + client id + UTC timestamp + raw body
+ *
+ * with the client secret as key, sent as `X-CoinPayments-Signature` alongside
+ * `X-CoinPayments-Client` and `X-CoinPayments-Timestamp`.
  *
  * Security / robustness:
- *  - Signature validation on every IPN (constant-time compare).
- *  - Merchant-id check to reject IPNs meant for other accounts.
- *  - Idempotent settlement: payments are recorded keyed on the CoinPayments
- *    `txn_id`, so duplicate IPNs never double-credit an invoice.
- *  - No secrets in code — everything comes from encrypted extension settings.
- *  - Structured logging on every state transition and error.
+ *  - Every webhook signature verified in constant time before any state changes.
+ *  - Settlement is idempotent: payments are keyed on the CoinPayments invoice id, so a
+ *    redelivered notification never double-credits.
+ *  - Partial payments are never credited — a half-paid invoice would still provision.
+ *  - No secrets in code; everything comes from encrypted extension settings.
  *
- * @link https://www.coinpayments.net/apidoc
+ * Verified against the live API on 14 Aug 2026: signing accepted (HTTP 200 on
+ * /api/v1/merchant/wallets) and invoice creation returns 201 with a checkout link.
+ *
+ * @link https://docs.coinpayments.net/api/auth
  */
 #[ExtensionMeta(
     name: 'CoinPayments Gateway',
-    description: 'Accept cryptocurrency payments via CoinPayments (API + IPN).',
-    version: '1.0.0',
+    description: 'Accept cryptocurrency payments via CoinPayments (current API).',
+    version: '2.0.0',
     author: 'Paymenter Proxy Platform',
     url: 'https://www.coinpayments.net',
 )]
 class CoinPayments extends Gateway
 {
-    private const API_URL = 'https://www.coinpayments.net/api.php';
+    /** Default host. Overridable because the dashboard shows the API URL per integration. */
+    private const DEFAULT_API_URL = 'https://c-api.coinpayments.net';
 
     private const LOG_CHANNEL = 'stack';
 
-    /**
-     * Register the IPN webhook route when the extension boots.
-     */
+    /** Notifications we ask CoinPayments to send for each invoice. */
+    private const NOTIFICATIONS = [
+        'invoiceCreated',
+        'invoicePaid',
+        'invoiceCompleted',
+        'invoiceCancelled',
+        'invoiceTimedOut',
+    ];
+
     public function boot()
     {
         require __DIR__ . '/routes.php';
@@ -51,14 +69,12 @@ class CoinPayments extends Gateway
     }
 
     /**
-     * Respect the Country-based Gateway Rules module (item 5) natively, so this
-     * gateway is filtered even without the central checkout touchpoint. Safe no-op
-     * if that extension isn't installed.
+     * Respect the Country-based Gateway Rules module natively, and never offer a method
+     * that would refuse the amount — failing after the customer commits is worse than
+     * not offering it at all.
      */
     public function canUseGateway($total, $currency, $type, $items = [])
     {
-        // Do not offer a method that will refuse the amount. Showing it and then
-        // failing after the customer commits is worse than not offering it.
         $minimum = (float) ($this->config('minimum_amount') ?? 0);
         if ($minimum > 0 && (float) $total < $minimum) {
             return false;
@@ -73,64 +89,38 @@ class CoinPayments extends Gateway
         return $gateway ? $rules::allows($gateway, $total, $currency, $type, $items) : true;
     }
 
-    /**
-     * Admin configuration fields (stored encrypted where marked).
-     */
     public function getConfig($values = [])
     {
         return [
             [
-                'name' => 'merchant_id',
-                'label' => 'Merchant ID',
+                'name' => 'client_id',
+                'label' => 'Client ID',
                 'type' => 'text',
-                'description' => 'Your CoinPayments Merchant ID (Account Settings → Merchant Settings).',
+                'description' => 'From your CoinPayments dashboard → API Integrations → your integration.',
                 'required' => true,
             ],
             [
-                'name' => 'public_key',
-                'label' => 'API Public Key',
+                'name' => 'client_secret',
+                'label' => 'Client Secret',
                 'type' => 'text',
-                'description' => 'CoinPayments API public key (My Account → API Keys). Needs create_transaction permission.',
-                'required' => true,
-                'encrypted' => true,
-            ],
-            [
-                'name' => 'private_key',
-                'label' => 'API Private Key',
-                'type' => 'text',
-                'description' => 'CoinPayments API private key. Stored encrypted; used to sign API requests.',
+                'description' => 'Shown only once when the integration is created. Stored encrypted. '
+                    . 'If lost, regenerate it in the dashboard and paste the new value here.',
                 'required' => true,
                 'encrypted' => true,
             ],
             [
-                'name' => 'ipn_secret',
-                'label' => 'IPN Secret',
+                'name' => 'api_url',
+                'label' => 'API URL',
                 'type' => 'text',
-                'description' => 'The IPN Secret configured in Account Settings → Merchant Settings. Used to validate incoming IPNs.',
-                'required' => true,
-                'encrypted' => true,
-            ],
-            [
-                'name' => 'receive_currency',
-                'label' => 'Receive Currency',
-                'type' => 'text',
-                'description' => 'Coin you want to receive (currency2), e.g. BTC, LTCT (testnet), USDT.TRC20. CoinPayments auto-converts the buyer\'s coin.',
-                'required' => true,
-            ],
-            [
-                'name' => 'test_mode',
-                'label' => 'Test Mode',
-                'type' => 'checkbox',
-                'description' => 'CoinPayments has no separate sandbox host — testing is done with testnet coins '
-                    . '(set Receive Currency to LTCT). Enabling this validates that, labels transactions in the '
-                    . 'payment log, and is required before the module will accept a testnet currency.',
+                'description' => 'The API URL shown on your integration. Normally ' . self::DEFAULT_API_URL . '.',
+                'default' => self::DEFAULT_API_URL,
                 'required' => false,
             ],
             [
                 'name' => 'minimum_amount',
                 'label' => 'Minimum amount',
                 'type' => 'text',
-                'description' => 'Hide this method at checkout when the invoice total is below this. CoinPayments will not settle dust amounts. Zero disables the check.',
+                'description' => 'Hide this method at checkout below this total — crypto networks will not settle dust. Zero disables the check.',
                 'validation' => 'numeric',
                 'default' => '1.00',
                 'required' => false,
@@ -138,240 +128,270 @@ class CoinPayments extends Gateway
         ];
     }
 
-    /** True when this gateway is configured for testnet. */
-    private function isTestMode(): bool
+    private function apiUrl(): string
     {
-        return (bool) $this->config('test_mode');
+        return rtrim((string) ($this->config('api_url') ?: self::DEFAULT_API_URL), '/');
     }
 
     /**
-     * CoinPayments testnet coins are worthless, and they are selected by currency rather
-     * than by endpoint — so a mismatch between Test Mode and Receive Currency is a real
-     * money bug in either direction. Fail loudly instead of taking the payment.
-     */
-    private function guardTestMode(): void
-    {
-        // LTCT is CoinPayments' testnet coin (Litecoin Testnet).
-        $isTestCurrency = strtoupper((string) $this->config('receive_currency')) === 'LTCT';
-
-        if ($this->isTestMode() && !$isTestCurrency) {
-            throw new \RuntimeException(
-                'CoinPayments is in Test Mode but Receive Currency is not a testnet coin (expected LTCT). '
-                . 'Refusing to create a live transaction from a test configuration.'
-            );
-        }
-
-        if (!$this->isTestMode() && $isTestCurrency) {
-            throw new \RuntimeException(
-                'CoinPayments Receive Currency is LTCT (testnet) but Test Mode is off. '
-                . 'Refusing to settle a real invoice with testnet coins.'
-            );
-        }
-    }
-
-    /**
-     * Build a hosted CoinPayments checkout for the given invoice.
+     * Build the canonical string CoinPayments signs, and return its base64 HMAC-SHA256.
      *
-     * Returns a Blade view that shows/redirects the buyer to the CoinPayments
-     * checkout URL. The CoinPayments `txn_id` is stored on the invoice
-     * transaction so IPNs can be reconciled idempotently.
+     * The leading U+FEFF and the absence of separators are both required — the signature
+     * is rejected without them.
+     */
+    private function signature(string $method, string $url, string $timestamp, string $body): string
+    {
+        $message = "\u{feff}" . $method . $url . (string) $this->config('client_id') . $timestamp . $body;
+
+        return base64_encode(hash_hmac('sha256', $message, (string) $this->config('client_secret'), true));
+    }
+
+    /**
+     * Perform a signed API call.
+     *
+     * @throws \RuntimeException on transport or API-level failure.
+     */
+    private function request(string $method, string $path, ?array $payload = null): array
+    {
+        $url = $this->apiUrl() . $path;
+        // The exact bytes signed must be the exact bytes sent, so encode once and reuse.
+        $body = $payload === null ? '' : json_encode($payload, JSON_UNESCAPED_SLASHES);
+        $timestamp = gmdate('Y-m-d\TH:i:s');
+
+        $request = Http::withHeaders([
+            'X-CoinPayments-Client' => (string) $this->config('client_id'),
+            'X-CoinPayments-Timestamp' => $timestamp,
+            'X-CoinPayments-Signature' => $this->signature($method, $url, $timestamp, $body),
+            'Accept' => 'application/json',
+        ])->timeout(30);
+
+        $response = $body === ''
+            ? $request->send($method, $url)
+            : $request->withBody($body, 'application/json')->send($method, $url);
+
+        if (!$response->successful()) {
+            $detail = $response->json('detail') ?? $response->json('title') ?? $response->body();
+            $this->log('error', 'CoinPayments API error', [
+                'method' => $method,
+                'path' => $path,
+                'status' => $response->status(),
+                'detail' => is_string($detail) ? substr($detail, 0, 300) : $detail,
+            ]);
+
+            throw new \RuntimeException('CoinPayments API error: ' . (is_string($detail) ? $detail : 'HTTP ' . $response->status()));
+        }
+
+        return (array) $response->json();
+    }
+
+    /**
+     * Map an ISO currency code to the numeric CoinPayments currency id its API expects.
+     *
+     * The list is public and stable, so it is cached rather than fetched per checkout.
+     */
+    private function currencyId(string $code): string
+    {
+        $map = Cache::remember('coinpayments.currencies', now()->addDay(), function () {
+            $currencies = $this->request('GET', '/api/v1/currencies');
+            $map = [];
+            foreach ($currencies as $currency) {
+                if (isset($currency['symbol'], $currency['id'])) {
+                    $map[strtoupper($currency['symbol'])] = (string) $currency['id'];
+                }
+            }
+
+            return $map;
+        });
+
+        $id = $map[strtoupper($code)] ?? null;
+
+        if ($id === null) {
+            throw new \RuntimeException('CoinPayments does not recognise the currency ' . $code . '.');
+        }
+
+        return $id;
+    }
+
+    /**
+     * Create a hosted CoinPayments invoice and send the buyer to its checkout.
+     *
+     * Returning a string makes Paymenter redirect, which is what we want — the checkout is
+     * hosted by CoinPayments and handles coin selection and confirmations itself.
      */
     public function pay($invoice, $total)
     {
-        $this->guardTestMode();
+        $amount = number_format((float) $total, 2, '.', '');
 
-        $fields = [
-            'version'     => 1,
-            'cmd'         => 'create_transaction',
-            'key'         => $this->config('public_key'),
-            'format'      => 'json',
-            'amount'      => number_format((float) $total, 8, '.', ''),
-            'currency1'   => $invoice->currency_code,
-            'currency2'   => $this->config('receive_currency'),
-            'buyer_email' => $invoice->user->email,
-            'item_name'   => __('invoices.payment_for_invoice', ['number' => $invoice->number ?? $invoice->id]),
-            'invoice'     => (string) $invoice->id,
-            'custom'      => (string) $invoice->id,
-            'ipn_url'     => route('extensions.gateways.coinpayments.ipn'),
-            'success_url' => route('invoices.show', $invoice),
-            'cancel_url'  => route('invoices.show', $invoice),
+        $payload = [
+            'currency' => $this->currencyId($invoice->currency_code),
+            'amount' => [
+                'breakdown' => ['subtotal' => $amount],
+                'total' => $amount,
+            ],
+            'items' => [[
+                'name' => __('invoices.payment_for_invoice', ['number' => $invoice->number ?? $invoice->id]),
+                'quantity' => ['value' => 1, 'type' => 'quantity'],
+                'amount' => $amount,
+            ]],
+            // Our own reference, echoed back on every notification so we can reconcile.
+            'invoiceId' => (string) $invoice->id,
+            'refundEmail' => $invoice->user->email,
+            'successUrl' => route('invoices.show', $invoice),
+            'cancelUrl' => route('invoices.show', $invoice),
+            'webhooks' => [[
+                'notificationsUrl' => route('extensions.gateways.coinpayments.ipn'),
+                'notifications' => self::NOTIFICATIONS,
+            ]],
         ];
 
-        $result = $this->apiCall($fields);
+        $response = $this->request('POST', '/api/v2/merchant/invoices', $payload);
+        $created = $response['invoices'][0] ?? null;
 
-        // Record a pending transaction keyed on the CoinPayments txn_id so the
-        // later IPN can settle it idempotently.
-        ExtensionHelper::addProcessingPayment(
-            $invoice->id,
-            'CoinPayments',
-            (float) $total,
-            null,
-            $result->txn_id,
-        );
+        if (!isset($created['id'], $created['checkoutLink'])) {
+            throw new \RuntimeException('CoinPayments did not return a checkout link for this invoice.');
+        }
 
-        $this->log('info', 'Created CoinPayments transaction', [
+        // Record the attempt keyed on the CoinPayments invoice id so the notification can
+        // settle it idempotently later.
+        ExtensionHelper::addProcessingPayment($invoice->id, 'CoinPayments', (float) $total, null, $created['id']);
+
+        $this->log('info', 'Created CoinPayments invoice', [
             'invoice_id' => $invoice->id,
-            'txn_id'     => $result->txn_id,
-            'amount'     => $total,
-            'currency'   => $invoice->currency_code,
-            'test_mode'  => $this->isTestMode(),
+            'coinpayments_id' => $created['id'],
+            'amount' => $amount,
+            'currency' => $invoice->currency_code,
         ]);
 
-        return view('gateways.coinpayments::pay', [
-            'invoice'      => $invoice,
-            'total'        => $total,
-            'checkoutUrl'  => $result->checkout_url,
-            'statusUrl'    => $result->status_url ?? null,
-            'qrcodeUrl'    => $result->qrcode_url ?? null,
-            'address'      => $result->address ?? null,
-            'cryptoAmount' => $result->amount ?? null,
-            'currency2'    => $this->config('receive_currency'),
-        ]);
+        return $created['checkoutLink'];
     }
 
     /**
-     * Perform a signed CoinPayments API call and return the `result` object.
+     * Handle a signed CoinPayments notification.
      *
-     * The request body is signed with the private key (HMAC-SHA512). The exact
-     * bytes that are signed are the exact bytes transmitted, to avoid encoding
-     * mismatches.
-     *
-     * @throws \RuntimeException on transport or API-level error.
-     */
-    private function apiCall(array $fields): object
-    {
-        $body = http_build_query($fields);
-        $hmac = hash_hmac('sha512', $body, (string) $this->config('private_key'));
-
-        $response = Http::withHeaders([
-            'HMAC'         => $hmac,
-            'Content-Type' => 'application/x-www-form-urlencoded',
-        ])->withBody($body, 'application/x-www-form-urlencoded')
-            ->post(self::API_URL);
-
-        if (!$response->successful()) {
-            $this->log('error', 'CoinPayments API transport error', [
-                'status' => $response->status(),
-                'cmd'    => $fields['cmd'] ?? null,
-            ]);
-            throw new \RuntimeException('CoinPayments API request failed (HTTP ' . $response->status() . ').');
-        }
-
-        $json = $response->object();
-
-        if (!isset($json->error) || $json->error !== 'ok') {
-            $message = $json->error ?? 'Unknown CoinPayments API error';
-            $this->log('error', 'CoinPayments API error', [
-                'cmd'   => $fields['cmd'] ?? null,
-                'error' => $message,
-            ]);
-            throw new \RuntimeException('CoinPayments API error: ' . $message);
-        }
-
-        return $json->result;
-    }
-
-    /**
-     * Handle an incoming CoinPayments IPN.
-     *
-     * CoinPayments always returns HTTP 200 on success; a non-200 makes it retry,
-     * so we return 200 for anything we have safely handled (including ignored
-     * events) and an error status only for signature/validation failures.
+     * CoinPayments retries on non-2xx, so anything safely handled — including events we
+     * deliberately ignore — answers 200. Only signature failures return an error.
      */
     public function webhook(Request $request)
     {
         $raw = $request->getContent();
-        $signature = $request->header('HMAC');
-        $merchant = $request->input('merchant');
-        $txnId = $request->input('txn_id');
 
-        // 1. Signature present + valid (HMAC-SHA512 of the raw body, IPN secret).
-        if (!$this->isValidSignature($raw, $signature)) {
-            $this->log('warning', 'CoinPayments IPN rejected: invalid signature', ['txn_id' => $txnId]);
+        if (!$this->isValidSignature($request, $raw)) {
+            $this->log('warning', 'CoinPayments notification rejected: invalid signature');
 
             return response('Invalid signature', 400);
         }
 
-        // 2. Merchant id must match ours (defence-in-depth).
-        if (!hash_equals((string) $this->config('merchant_id'), (string) $merchant)) {
-            $this->log('warning', 'CoinPayments IPN rejected: merchant mismatch', ['txn_id' => $txnId]);
+        $payload = json_decode($raw, true) ?: [];
+        $event = $this->extract($payload, ['type', 'event', 'notification', 'notificationType']) ?? 'unknown';
 
-            return response('Invalid merchant', 400);
-        }
+        // `invoice.id` is CoinPayments' own invoice id and is the same on every
+        // notification about that invoice. The top-level `id` is the *notification* id and
+        // differs per event — keying settlement on it would write a second payment row
+        // when InvoicePaid and InvoiceCompleted both arrive. Confirmed against a live
+        // payload: two InvoiceCreated deliveries carried different top-level ids.
+        $coinPaymentsId = $this->extract($payload, ['invoice.id']);
+        $ourReference = $this->extract($payload, ['invoice.invoiceId', 'invoice.invoiceNumber', 'invoiceId', 'customId']);
+        $eventId = $this->extract($payload, ['id']);
 
-        $status = (int) $request->input('status');
-        $invoiceId = $request->input('custom') ?: $request->input('invoice');
-        $amount = (float) $request->input('amount1'); // fiat amount in currency1
-        $fee = $request->input('fee') !== null ? (float) $request->input('fee') : null;
+        // The payload shape is documented only loosely, so keep a copy of anything we
+        // could not map — the log is what tells us why a real notification was missed.
+        $this->log('info', 'CoinPayments notification received', [
+            'event' => $event,
+            'event_id' => $eventId,
+            'coinpayments_id' => $coinPaymentsId,
+            'reference' => $ourReference,
+        ]);
 
-        $invoice = Invoice::find($invoiceId);
+        $invoice = ctype_digit((string) $ourReference) ? Invoice::find((int) $ourReference) : null;
+
         if (!$invoice) {
-            // Nothing to reconcile against; acknowledge so CoinPayments stops retrying.
-            $this->log('warning', 'CoinPayments IPN for unknown invoice', ['invoice_id' => $invoiceId, 'txn_id' => $txnId]);
+            $this->log('warning', 'CoinPayments notification for unknown invoice', [
+                'reference' => $ourReference,
+                'payload' => substr($raw, 0, 1000),
+            ]);
 
+            // Acknowledge, otherwise CoinPayments retries something we can never match.
             return response('OK', 200);
         }
 
-        // How much the buyer actually sent, in the coin they paid with. Present on
-        // underpayments and on partially-confirmed transactions.
-        $received = $request->input('received_amount') !== null ? (float) $request->input('received_amount') : null;
-        $expected = $request->input('amount2') !== null ? (float) $request->input('amount2') : null;
-        $underpaid = $received !== null && $expected !== null && $received > 0 && $received < $expected;
+        // Settle against our own recorded total rather than the payload. CoinPayments
+        // reports line-item amounts in minor units (500 for $5.00) across several nested
+        // shapes, and misreading that by a factor of 100 is the kind of error that only
+        // shows up in production. The invoice we issued is the authoritative figure.
+        $amount = (float) $invoice->total;
 
-        // CoinPayments status semantics:
-        //   >= 100 or == 2 : payment complete
-        //   0..99          : pending / in progress (1 = funds received, awaiting confirms)
-        //   < 0            : cancelled / timed out / underpaid / error
-        if ($status >= 100 || $status === 2) {
-            // Idempotent: updateOrCreate keyed on txn_id inside a locked tx.
-            ExtensionHelper::addPayment($invoice->id, 'CoinPayments', $amount, $fee, $txnId);
-            $this->log('info', 'CoinPayments payment completed', ['invoice_id' => $invoice->id, 'txn_id' => $txnId, 'amount' => $amount]);
-        } elseif ($status < 0) {
-            // Underpaid and timed-out both land here. Either way the invoice must stay
-            // unpaid — we never credit a partial amount, because a partially paid invoice
-            // would still provision the service.
-            ExtensionHelper::addFailedPayment($invoice->id, 'CoinPayments', $amount, $fee, $txnId);
+        // Falls back to our own invoice id only if CoinPayments ever omits theirs; the
+        // processing row created at checkout used their id, so this settles it in place.
+        $transactionId = (string) ($coinPaymentsId ?? $invoice->id);
 
-            $this->log($underpaid ? 'warning' : 'info', $underpaid
-                ? 'CoinPayments payment underpaid — invoice left unpaid'
-                : 'CoinPayments payment failed/cancelled', [
+        // The API documents these as camelCase but sends PascalCase ("InvoiceCreated"),
+        // confirmed against a live notification. Match case-insensitively so a change in
+        // either direction cannot silently strand a paid invoice at pending.
+        switch (lcfirst((string) $event)) {
+            case 'invoicePaid':
+            case 'invoiceCompleted':
+                ExtensionHelper::addPayment($invoice->id, 'CoinPayments', $amount, null, $transactionId);
+                $this->log('info', 'CoinPayments payment completed', [
                     'invoice_id' => $invoice->id,
-                    'txn_id' => $txnId,
-                    'status' => $status,
-                    'status_text' => $request->input('status_text'),
-                    'received' => $received,
-                    'expected' => $expected,
-                    'currency' => $request->input('currency2'),
+                    'coinpayments_id' => $transactionId,
+                    'amount' => $amount,
                 ]);
-        } else {
-            ExtensionHelper::addProcessingPayment($invoice->id, 'CoinPayments', $amount, $fee, $txnId);
-            $this->log('debug', 'CoinPayments payment pending', [
-                'invoice_id' => $invoice->id,
-                'txn_id' => $txnId,
-                'status' => $status,
-                'status_text' => $request->input('status_text'),
-                'received' => $received,
-                'expected' => $expected,
-            ]);
+                break;
+
+            case 'invoiceCancelled':
+            case 'invoiceTimedOut':
+                // Timed-out invoices include underpayments. Never credit a partial amount:
+                // a partially paid invoice would still provision the service.
+                ExtensionHelper::addFailedPayment($invoice->id, 'CoinPayments', $amount, null, $transactionId);
+                $this->log('info', 'CoinPayments payment cancelled or timed out', [
+                    'invoice_id' => $invoice->id,
+                    'coinpayments_id' => $transactionId,
+                    'event' => $event,
+                ]);
+                break;
+
+            default:
+                // invoiceCreated and anything new: acknowledged, nothing to settle.
+                break;
         }
 
-        return response('IPN OK', 200);
+        return response('OK', 200);
     }
 
     /**
-     * Validate the IPN HMAC signature in constant time.
+     * Verify the notification signature in constant time.
+     *
+     * Webhooks are signed exactly like outbound requests, over the notification URL we
+     * registered — so that URL, not the request's own host, is what must be signed.
      */
-    private function isValidSignature(string $payload, ?string $signature): bool
+    private function isValidSignature(Request $request, string $raw): bool
     {
-        $secret = (string) $this->config('ipn_secret');
+        $signature = $request->header('X-CoinPayments-Signature');
+        $timestamp = $request->header('X-CoinPayments-Timestamp');
 
-        if ($signature === null || $signature === '' || $secret === '') {
+        if (!$signature || !$timestamp || !$this->config('client_secret')) {
             return false;
         }
 
-        $expected = hash_hmac('sha512', $payload, $secret);
+        $expected = $this->signature('POST', route('extensions.gateways.coinpayments.ipn'), $timestamp, $raw);
 
         return hash_equals($expected, $signature);
+    }
+
+    /**
+     * Pull the first present value from a set of candidate paths ("a.b.c" notation),
+     * because the notification payload nests differently per event type.
+     */
+    private function extract(array $payload, array $paths): mixed
+    {
+        foreach ($paths as $path) {
+            $value = data_get($payload, $path);
+            if ($value !== null && $value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
     private function log(string $level, string $message, array $context = []): void
