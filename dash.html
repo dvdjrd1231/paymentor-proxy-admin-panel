@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="bUXChS4dwZ94bCr9fjTiKZiNQuoeUzyIm2qAj1Mi">
+    <title>
+        Paymenter
+            </title>
+    <!-- Livewire Styles --><style >[wire\:loading][wire\:loading], [wire\:loading\.delay][wire\:loading\.delay], [wire\:loading\.list-item][wire\:loading\.list-item], [wire\:loading\.inline-block][wire\:loading\.inline-block], [wire\:loading\.inline][wire\:loading\.inline], [wire\:loading\.block][wire\:loading\.block], [wire\:loading\.flex][wire\:loading\.flex], [wire\:loading\.table][wire\:loading\.table], [wire\:loading\.grid][wire\:loading\.grid], [wire\:loading\.inline-flex][wire\:loading\.inline-flex] {display: none;}[wire\:loading\.delay\.none][wire\:loading\.delay\.none], [wire\:loading\.delay\.shortest][wire\:loading\.delay\.shortest], [wire\:loading\.delay\.shorter][wire\:loading\.delay\.shorter], [wire\:loading\.delay\.short][wire\:loading\.delay\.short], [wire\:loading\.delay\.default][wire\:loading\.delay\.default], [wire\:loading\.delay\.long][wire\:loading\.delay\.long], [wire\:loading\.delay\.longer][wire\:loading\.delay\.longer], [wire\:loading\.delay\.longest][wire\:loading\.delay\.longest] {display: none;}[wire\:offline][wire\:offline] {display: none;}[wire\:dirty]:not(textarea):not(input):not(select) {display: none;}:root {--livewire-progress-bar-color: hsl(var(--color-primary));}[x-cloak] {display: none !important;}[wire\:cloak] {display: none !important;}dialog#livewire-error::backdrop {background-color: rgba(0, 0, 0, .6);}</style>
+    
+    <link rel="preload" as="style" href="http://127.0.0.1:8080/default/assets/app-D0HXJEYZ.css" /><link rel="modulepreload" as="script" href="http://127.0.0.1:8080/default/assets/app-i98O5C7j.js" /><link rel="stylesheet" href="http://127.0.0.1:8080/default/assets/app-D0HXJEYZ.css" data-navigate-track="reload" /><script type="module" src="http://127.0.0.1:8080/default/assets/app-i98O5C7j.js" data-navigate-track="reload"></script>    <style>
+    :root {
+        /* Branding Colors (Light) */
+        --color-primary: 229 100% 64%;
+        --color-secondary: 237 33% 60%;
+
+        /* Neutral Colors - Borders, Accents... (Light) */
+        --color-neutral: 220 25% 85%;
+
+        /* Text Colors (Light) */
+        --color-base: 0 0% 0%;
+        --color-muted: 0 0% 40%;
+        --color-inverted: 100 100% 100%;
+
+        /* State Colors */
+        --color-success: 142 71% 45%;
+        --color-error: 0 75% 60%;
+        --color-warning: 25 95% 53%;
+        --color-inactive: 0 0% 63%;
+        --color-info: 210 100% 60%;
+
+        /* Background Colors (Light) */
+        --color-background: 100 100% 100%;
+        --color-background-secondary: 0 0% 97%;
+    }
+
+    .dark {
+        /* Branding Colors (Dark) */
+        --color-primary: 229 100% 64%;
+        --color-secondary: 237 33% 60%;
+
+        /* Neutral Colors - Borders, Accents... (Dark) */
+        --color-neutral: 0 0% 17%;
+
+        /* Text Colors (Dark) */
+        --color-base: 100 100% 100%;
+        --color-muted: 220 0% 53%;
+        --color-inverted: 220 14% 60%;
+
+        /* Background Colors (Dark) */
+        --color-background: 240 18% 9%;
+        --color-background-secondary: 240 13% 11%;
+    }
+</style>    <style>
+    :root {
+        --brand: #e8365d;
+        --brand-dark: #c72b4c;
+        --brand-contrast: #ffffff;
+
+        --wf-page-bg: #f0f2f5;
+        --wf-border: #e3e6ea;
+        --wf-label: #4a5260;
+        --wf-muted: #7b8494;
+        --wf-bg: #ffffff;
+        --wf-section: #f7f8fa;
+        --wf-text: #2b3038;
+        --wf-radius: 4px;
+        --wf-shell: 1170px;
+    }
+
+    /* The WHMCS design is light-only. The layout never applies the `dark` class, but
+       we neutralise it here too so a stray toggle can't darken the chrome. */
+    .dark { color-scheme: light; }
+
+    /* WHMCS pages sit on a light grey canvas, not the base theme's dark background. */
+    body { background: var(--wf-page-bg) !important; color: var(--wf-text); }
+
+    .wf-shell { max-width: var(--wf-shell); margin: 0 auto; padding: 0 1rem; width: 100%; box-sizing: border-box; }
+
+    /* ── 1. Header bar (white; logo left, actions right) ───────────────── */
+    .wf-header { background: var(--wf-bg); border-bottom: 1px solid var(--wf-border); }
+    .wf-header-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 78px; flex-wrap: wrap; }
+    .wf-brand { display: inline-flex; align-items: center; gap: .6rem; text-decoration: none; }
+    .wf-logo { height: 42px; width: auto; }
+    .wf-brand-text { font-size: 1.6rem; font-weight: 700; color: var(--brand); letter-spacing: -.01em; }
+    .wf-header-actions { display: flex; align-items: center; gap: .5rem; }
+
+    .wf-hbtn {
+        display: inline-block; padding: .5rem 1rem; font-size: .9rem; text-decoration: none;
+        color: var(--brand); background: transparent;
+        border: 1px solid var(--wf-border); border-radius: var(--wf-radius);
+        transition: background .15s, color .15s, border-color .15s;
+    }
+    .wf-hbtn:hover { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 8%, transparent); }
+    .wf-hbtn--primary { background: var(--brand); border-color: var(--brand); color: var(--brand-contrast); }
+    .wf-hbtn--primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); color: var(--brand-contrast); }
+
+    /* Logout (Livewire component) rendered in the header → primary button look */
+    .wf-header-actions .wf-logout button {
+        display: inline-block; padding: .5rem 1.15rem; font-size: .9rem; font-family: inherit;
+        background: var(--brand); color: var(--brand-contrast);
+        border: 1px solid var(--brand); border-radius: var(--wf-radius);
+        cursor: pointer; transition: background .15s;
+    }
+    .wf-header-actions .wf-logout button:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+
+    /* ── 2. Brand-coloured menu bar ────────────────────────────────────── */
+    .wf-menubar { background: var(--brand); }
+    .wf-menubar-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+
+    .wf-menu { display: flex; align-items: center; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
+    .wf-menu-item { position: relative; }
+    .wf-menu-right { position: relative; }
+
+    .wf-menu-link {
+        display: inline-flex; align-items: center; gap: .35rem;
+        padding: .95rem 1.1rem; font-size: .95rem; line-height: 1;
+        color: var(--brand-contrast); text-decoration: none;
+        background: transparent; border: 0; cursor: pointer; font-family: inherit;
+        transition: background .15s;
+    }
+    .wf-menu-link:hover, .wf-menu-link.is-active { background: rgba(0, 0, 0, .14); color: var(--brand-contrast); }
+    .wf-caret { font-size: .7rem; opacity: .85; }
+
+    .wf-dropdown {
+        position: absolute; top: 100%; left: 0; z-index: 60; min-width: 220px;
+        list-style: none; margin: 0; padding: .35rem 0;
+        background: var(--wf-bg); border: 1px solid var(--wf-border);
+        border-top: 2px solid var(--brand);
+        border-radius: 0 0 var(--wf-radius) var(--wf-radius);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, .12);
+    }
+    .wf-dropdown--right { left: auto; right: 0; }
+    .wf-dropdown a {
+        display: block; padding: .55rem 1rem; font-size: .9rem;
+        color: var(--wf-text); text-decoration: none;
+    }
+    .wf-dropdown a:hover { background: var(--wf-section); color: var(--brand); }
+    .wf-dropdown-sep { border-top: 1px solid var(--wf-border); margin-top: .35rem; padding-top: .35rem; }
+
+    /* Paymenter's logout is a Livewire component, so normalise whatever it renders
+       (button/link) to look like the other dropdown entries. */
+    .wf-dropdown-logout :is(a, button) {
+        display: block; width: 100%; text-align: left;
+        padding: .55rem 1rem; font-size: .9rem; font-family: inherit;
+        color: var(--wf-text); background: transparent; border: 0; cursor: pointer;
+    }
+    .wf-dropdown-logout :is(a, button):hover { background: var(--wf-section); color: var(--brand); }
+
+    .wf-burger { display: none; background: transparent; border: 0; color: var(--brand-contrast); font-size: 1.3rem; padding: .8rem .6rem; cursor: pointer; }
+
+    @media (max-width: 820px) {
+        .wf-burger { display: inline-block; }
+        .wf-menu { display: none; width: 100%; flex-direction: column; align-items: stretch; }
+        .wf-menu--open { display: flex; }
+        .wf-menu-link { width: 100%; justify-content: space-between; }
+        .wf-dropdown { position: static; box-shadow: none; border: 0; background: rgba(0, 0, 0, .12); border-radius: 0; }
+        .wf-dropdown a { color: var(--brand-contrast); }
+        .wf-menubar-inner { flex-wrap: wrap; }
+    }
+
+    /* ── 3. Page + card ────────────────────────────────────────────────── */
+    .wf-page { max-width: var(--wf-shell); margin: 0 auto; padding: 1.75rem 1rem 3rem; }
+    .wf-page--narrow { max-width: 560px; }
+
+    .wf-card {
+        background: var(--wf-bg);
+        border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius);
+        padding: 1.75rem;
+        color: var(--wf-text);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+    }
+
+    /* Breadcrumbs: "Portal Home / Register" */
+    .wf-crumbs { font-size: .82rem; color: var(--wf-muted); margin: 0 0 1.25rem; }
+    .wf-crumbs a { color: var(--wf-muted); text-decoration: none; }
+    .wf-crumbs a:hover { color: var(--brand); }
+    .wf-crumbs span { margin: 0 .4rem; opacity: .6; }
+
+    /* Page heading: big thin brand title + grey subtitle */
+    .wf-title { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; margin-bottom: .35rem; }
+    .wf-title h1 { color: var(--brand); font-size: 2.3rem; font-weight: 300; line-height: 1.1; margin: 0; }
+    .wf-title span { color: var(--wf-muted); font-size: 1.05rem; font-weight: 300; }
+    .wf-title-rule { border: 0; border-top: 1px solid var(--brand); opacity: .35; margin: .75rem 0 1.5rem; }
+
+    /* Centered section divider */
+    .wf-section {
+        display: flex; align-items: center; gap: 1rem;
+        margin: 1.75rem 0 1.1rem; color: var(--brand);
+        font-size: 1.15rem; font-weight: 300; text-align: center;
+    }
+    .wf-section::before, .wf-section::after { content: ""; flex: 1; border-top: 1px solid var(--wf-border); }
+    .wf-section-note { display: block; font-size: .8rem; color: var(--wf-muted); font-style: italic; }
+
+    /* ── 4. Forms ──────────────────────────────────────────────────────── */
+    .wf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .wf-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+    .wf-col-2 { grid-column: 1 / -1; }
+    @media (max-width: 720px) { .wf-grid, .wf-grid-3 { grid-template-columns: 1fr; } }
+
+    .wf-field { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+    .wf-field label { font-size: .85rem; font-weight: 600; color: var(--wf-label); }
+    .wf-req { color: var(--brand); margin-left: .15rem; }
+
+    /* Icon-prefixed input group (WHMCS "input-group addon" look) */
+    .wf-ig { display: flex; align-items: stretch; }
+    .wf-ig-icon {
+        display: inline-flex; align-items: center; justify-content: center; min-width: 40px;
+        background: var(--wf-section); border: 1px solid var(--wf-border); border-right: 0;
+        border-radius: var(--wf-radius) 0 0 var(--wf-radius);
+        color: var(--wf-muted); font-size: .9rem;
+    }
+    .wf-ig .wf-input, .wf-ig .wf-select { border-radius: 0 var(--wf-radius) var(--wf-radius) 0; }
+
+    .wf-input, .wf-select {
+        width: 100%; box-sizing: border-box;
+        padding: .6rem .75rem;
+        border: 1px solid var(--wf-border); border-radius: var(--wf-radius);
+        background: var(--wf-bg); color: var(--wf-text);
+        font-size: .95rem; line-height: 1.3;
+        transition: border-color .15s, box-shadow .15s;
+    }
+    .wf-input::placeholder { color: var(--wf-muted); }
+    .wf-input:focus, .wf-select:focus {
+        outline: none; border-color: var(--brand);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent);
+    }
+    .wf-input[aria-invalid="true"] { border-color: var(--brand); }
+    .wf-error { color: var(--brand); font-size: .8rem; }
+
+    .wf-check { display: flex; align-items: flex-start; gap: .5rem; font-size: .9rem; color: var(--wf-text); }
+    .wf-check input { margin-top: .2rem; }
+
+    /* Password strength meter */
+    .wf-meter { height: 6px; background: var(--wf-section); border-radius: 999px; overflow: hidden; }
+    .wf-meter-bar { height: 100%; width: 0; background: var(--brand); transition: width .2s, background .2s; }
+
+    /* Brazil-only tax block */
+    .wf-br {
+        border: 1px solid var(--wf-border); border-left: 3px solid var(--brand);
+        background: var(--wf-section); border-radius: var(--wf-radius);
+        padding: 1.1rem; margin-top: .5rem;
+    }
+    .wf-br-head { display: flex; align-items: center; gap: .5rem; margin-bottom: .9rem; font-weight: 600; color: var(--wf-text); }
+    .wf-br-flag { font-size: 1.15rem; }
+
+    /* ── 5. Buttons + sidebar panel ────────────────────────────────────── */
+    .wf-actions { display: flex; align-items: center; gap: .75rem; margin-top: 1.75rem; flex-wrap: wrap; }
+    .wf-btn {
+        display: inline-block; padding: .6rem 1.5rem;
+        background: var(--brand); color: var(--brand-contrast);
+        border: 1px solid var(--brand); border-radius: var(--wf-radius);
+        font-size: .95rem; cursor: pointer; text-decoration: none; font-family: inherit;
+        transition: background .15s;
+    }
+    .wf-btn:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+    .wf-btn--ghost { background: transparent; color: var(--brand); }
+    .wf-btn--ghost:hover { background: color-mix(in srgb, var(--brand) 10%, transparent); color: var(--brand); }
+    .wf-btn--block { width: 100%; text-align: center; }
+
+    .wf-alt { margin-top: 1.25rem; font-size: .9rem; color: var(--wf-muted); text-align: center; }
+    .wf-alt a { color: var(--brand); text-decoration: none; }
+    .wf-alt a:hover { text-decoration: underline; }
+
+    /* Left sidebar panel with coloured header ("Already Registered?") */
+    .wf-split { display: grid; grid-template-columns: 300px 1fr; gap: 1.5rem; align-items: start; }
+    @media (max-width: 860px) { .wf-split { grid-template-columns: 1fr; } }
+    .wf-aside { border: 1px solid var(--wf-border); border-radius: var(--wf-radius); overflow: hidden; background: var(--wf-bg); }
+    .wf-aside-head {
+        background: var(--brand); color: var(--brand-contrast);
+        padding: .8rem 1rem; font-weight: 600; font-size: .95rem;
+        display: flex; align-items: center; gap: .5rem;
+    }
+    .wf-aside-body { padding: 1rem; font-size: .9rem; color: var(--wf-text); }
+    .wf-aside-list { list-style: none; margin: .75rem 0 0; padding: 0; border-top: 1px solid var(--wf-border); }
+    .wf-aside-list li { border-bottom: 1px solid var(--wf-border); }
+    .wf-aside-list a {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: .65rem .25rem; color: var(--wf-text); text-decoration: none; font-size: .9rem;
+    }
+    .wf-aside-list a:hover { color: var(--brand); }
+
+    /* ── 5b. Client-area components (WHMCS "Six" / Bootstrap-3 design language) ──
+       Rebuilt from scratch in plain CSS against Paymenter's data. We deliberately
+       do NOT ship WHMCS's own template files: they are Smarty .tpl bound to WHMCS
+       PHP variables and carry no open-source licence. Bootstrap 3 — the design
+       language Six is built on — is MIT, so recreating the look is fine.        */
+
+    /* Page header: big thin title + grey subtitle, underlined */
+    .wf-pagehead { margin: 0 0 1.25rem; }
+    .wf-pagehead h1 { color: var(--brand); font-size: 2.1rem; font-weight: 300; margin: 0 0 .25rem; }
+    .wf-pagehead p { margin: 0; color: var(--wf-muted); font-size: .95rem; }
+
+    /* Two-column client area: sidebar + main */
+    .wf-layout { display: grid; grid-template-columns: 260px 1fr; gap: 1.5rem; align-items: start; }
+    @media (max-width: 900px) { .wf-layout { grid-template-columns: 1fr; } }
+
+    /* Panel — the core Six building block */
+    .wf-panel {
+        background: var(--wf-bg); border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); margin-bottom: 1.25rem; overflow: hidden;
+    }
+    .wf-panel-heading {
+        padding: .7rem 1rem; font-size: .95rem; font-weight: 600;
+        background: var(--wf-section); border-bottom: 1px solid var(--wf-border);
+        display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+    }
+    .wf-panel--brand > .wf-panel-heading { background: var(--brand); color: var(--brand-contrast); border-bottom-color: var(--brand); }
+    .wf-panel-body { padding: 1rem; }
+    .wf-panel-body > :first-child { margin-top: 0; }
+    .wf-panel-body > :last-child { margin-bottom: 0; }
+    .wf-panel-footer { padding: .65rem 1rem; border-top: 1px solid var(--wf-border); background: var(--wf-section); }
+
+    /* List group — sidebar menus and simple record lists */
+    .wf-list { list-style: none; margin: 0; padding: 0; }
+    .wf-list > li + li { border-top: 1px solid var(--wf-border); }
+    .wf-list a, .wf-list .wf-list-row {
+        display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+        padding: .7rem 1rem; color: var(--wf-text); text-decoration: none; font-size: .9rem;
+    }
+    .wf-list a:hover { background: var(--wf-section); color: var(--brand); }
+    .wf-list a.is-active { background: var(--brand); color: var(--brand-contrast); }
+    .wf-list-title { font-weight: 600; }
+    .wf-list-sub { display: block; font-size: .8rem; color: var(--wf-muted); font-weight: 400; }
+
+    /* Tables */
+    .wf-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    .wf-table th, .wf-table td { padding: .65rem .75rem; text-align: start; border-bottom: 1px solid var(--wf-border); }
+    .wf-table thead th { background: var(--wf-section); font-weight: 600; color: var(--wf-label); white-space: nowrap; }
+    .wf-table tbody tr:hover { background: var(--wf-section); }
+    .wf-table td a { color: var(--brand); text-decoration: none; }
+    .wf-table td a:hover { text-decoration: underline; }
+    .wf-table-wrap { overflow-x: auto; }
+
+    /* Status labels */
+    .wf-label {
+        display: inline-block; padding: .2rem .55rem; border-radius: 999px;
+        font-size: .75rem; font-weight: 600; line-height: 1.4; white-space: nowrap;
+        background: #6b7280; color: #fff;
+    }
+    .wf-label--success { background: #2e9e5b; }
+    .wf-label--warning { background: #d68102; }
+    .wf-label--danger  { background: #c9302c; }
+    .wf-label--info    { background: #2f7ecb; }
+
+    /* Alerts / empty states */
+    .wf-alert {
+        padding: .85rem 1rem; border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); background: var(--wf-section);
+        color: var(--wf-text); font-size: .9rem;
+    }
+    .wf-alert--info { background: color-mix(in srgb, var(--brand) 7%, #fff); border-color: color-mix(in srgb, var(--brand) 25%, transparent); }
+    .wf-empty { padding: 1.5rem 1rem; text-align: center; color: var(--wf-muted); font-size: .9rem; }
+
+    /* Small stat tiles for the dashboard */
+    .wf-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .wf-stat { background: var(--wf-bg); border: 1px solid var(--wf-border); border-left: 3px solid var(--brand); border-radius: var(--wf-radius); padding: .9rem 1rem; }
+    .wf-stat-num { font-size: 1.6rem; font-weight: 600; color: var(--wf-text); line-height: 1.1; }
+    .wf-stat-label { font-size: .8rem; color: var(--wf-muted); text-transform: uppercase; letter-spacing: .04em; }
+
+    .wf-btn--sm { padding: .35rem .8rem; font-size: .82rem; }
+    .wf-btn--danger { background: #c9302c; border-color: #c9302c; color: #fff; }
+    .wf-btn--danger:hover { background: #a82824; border-color: #a82824; }
+
+    /* Key/value table — detail pages (service, invoice, ticket summaries) */
+    .wf-table--kv th {
+        width: 38%; background: transparent; font-weight: 600;
+        color: var(--wf-label); white-space: normal;
+    }
+    .wf-table--kv tbody tr:hover { background: transparent; }
+    .wf-table--kv tr:last-child th, .wf-table--kv tr:last-child td { border-bottom: 0; }
+    /* Proxy addresses / credentials can be long — keep them readable, not clipped. */
+    .wf-kv-value { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; word-break: break-all; }
+
+    /* Tabs inside a panel heading (provisioning module views) */
+    .wf-tabs { gap: 0; padding: 0; justify-content: flex-start; flex-wrap: wrap; }
+    .wf-tab {
+        padding: .7rem 1rem; border: 0; background: transparent; cursor: pointer;
+        font: inherit; font-size: .9rem; color: var(--wf-muted); border-bottom: 2px solid transparent;
+    }
+    .wf-tab:hover { color: var(--brand); }
+    .wf-tab--active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+
+    /* Product / order cards */
+    .wf-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+    .wf-card {
+        background: var(--wf-bg); border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); display: flex; flex-direction: column; overflow: hidden;
+    }
+    .wf-card-head { padding: .7rem 1rem; background: var(--wf-section); border-bottom: 1px solid var(--wf-border); font-weight: 600; font-size: .95rem; }
+    .wf-card-body { padding: 1rem; font-size: .88rem; color: var(--wf-text); flex: 1; }
+    .wf-card-foot { padding: .7rem 1rem; border-top: 1px solid var(--wf-border); display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .wf-price { font-size: 1.1rem; font-weight: 600; color: var(--wf-text); }
+    .wf-price small { font-size: .75rem; font-weight: 400; color: var(--wf-muted); }
+
+    /* Totals block (cart, checkout, invoice) */
+    .wf-total-row { display: flex; align-items: center; justify-content: space-between; padding: .45rem 0; font-size: .9rem; }
+    .wf-total-row + .wf-total-row { border-top: 1px solid var(--wf-border); }
+    .wf-total-row--grand { font-size: 1.05rem; font-weight: 700; border-top: 2px solid var(--wf-border); margin-top: .25rem; padding-top: .65rem; }
+
+    /* Ticket conversation */
+    .wf-msg { border: 1px solid var(--wf-border); border-radius: var(--wf-radius); margin-bottom: .85rem; overflow: hidden; }
+    .wf-msg-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .55rem .85rem; background: var(--wf-section); border-bottom: 1px solid var(--wf-border); font-size: .85rem; }
+    .wf-msg-who { font-weight: 600; }
+    .wf-msg-when { color: var(--wf-muted); font-size: .8rem; }
+    .wf-msg-body { padding: .85rem; font-size: .9rem; line-height: 1.55; }
+    .wf-msg--staff { border-left: 3px solid var(--brand); }
+    .wf-msg--staff .wf-msg-head { background: color-mix(in srgb, var(--brand) 8%, #fff); }
+    .wf-thread { max-height: 60vh; overflow-y: auto; }
+
+    /* Main content left, detail sidebar right (ticket detail) */
+    .wf-layout--reverse { grid-template-columns: 1fr 280px; }
+    @media (max-width: 900px) { .wf-layout--reverse { grid-template-columns: 1fr; } }
+
+    /* Attachment drop zone */
+    .wf-drop {
+        display: flex; justify-content: center; align-items: center;
+        border: 1px dashed var(--wf-border); border-radius: var(--wf-radius);
+        background: var(--wf-section); padding: 1rem; margin-top: .35rem;
+    }
+    .wf-drop.is-over { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 6%, #fff); }
+    .wf-drop-cta { color: var(--brand); font-weight: 600; cursor: pointer; font-size: .9rem; }
+    .wf-drop-hint { display: block; color: var(--wf-muted); font-size: .8rem; margin-top: .2rem; }
+
+    /* Invoice status bar + totals block */
+    .wf-invoice-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .wf-totals { margin-left: auto; width: min(320px, 100%); }
+
+    /* Product card image + order-form intro */
+    .wf-card-img { width: 100%; height: auto; border-radius: var(--wf-radius); margin-bottom: .6rem; display: block; }
+    .wf-product-intro { display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1rem; }
+    .wf-product-intro img { max-width: 140px; height: auto; border-radius: var(--wf-radius); }
+    @media (max-width: 620px) { .wf-product-intro { flex-direction: column; } }
+
+    /* Order summary follows the form on long config pages */
+    .wf-sticky { position: sticky; top: 1rem; }
+    @media (max-width: 900px) { .wf-sticky { position: static; } }
+
+    /* Storefront hero band */
+    .wf-hero {
+        background: var(--wf-bg); border-bottom: 1px solid var(--wf-border);
+        padding: 2.5rem 0;
+    }
+    .wf-hero h1, .wf-hero h2 { color: var(--brand); font-weight: 300; margin-top: 0; }
+
+    /* Cart quantity stepper + coupon row */
+    .wf-qty { display: inline-flex; align-items: center; gap: .4rem; }
+    .wf-qty-value { min-width: 2rem; text-align: center; font-weight: 600; }
+    .wf-coupon { display: flex; align-items: flex-end; gap: .5rem; margin-bottom: .5rem; }
+    .wf-coupon > :first-child { flex: 1; min-width: 0; }
+
+    /* ── 5c. De-dark shim for not-yet-converted default pages ───────────────
+       The default theme uses `bg-primary-800` (a dark shade of the brand colour)
+       as a *surface* on some detail pages (service/ticket show, invoice blocks),
+       with light text on top. Under this light WHMCS design that reads as a dark
+       box on a light page. Remap those surfaces to a light Six panel and restore
+       readable text, so every page is consistent even before it's individually
+       converted to explicit .wf-panel markup. Converted pages don't use these
+       classes, so this only affects the remainder. */
+    .bg-primary-800,
+    .bg-primary-700 {
+        background-color: var(--wf-bg) !important;
+        border: 1px solid var(--wf-border);
+        color: var(--wf-text) !important;
+    }
+    .bg-primary-600 { background-color: var(--wf-section) !important; }
+    /* The default puts near-white text (text-primary-100) on those dark surfaces;
+       darken it so it's legible on the new light background. */
+    .bg-primary-800 .text-primary-100,
+    .bg-primary-700 .text-primary-100,
+    .text-primary-100 { color: var(--wf-label) !important; }
+
+    /* ── 6. Footer ─────────────────────────────────────────────────────── */
+    /* full width, but never grow: the parent is a COLUMN flex container, so a
+       flex-basis of 100% would stretch the footer down the whole page.
+       margin-top:auto keeps it pinned to the bottom when content is short. */
+    .wf-footer {
+        background: var(--wf-bg); border-top: 3px solid var(--brand);
+        margin-top: auto; width: 100%; flex: 0 0 auto;
+    }
+    .wf-footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 1.1rem; padding-bottom: 1.1rem; }
+    .wf-footer-copy { margin: 0; font-size: .85rem; color: var(--wf-muted); }
+    .wf-totop {
+        background: var(--brand); color: var(--brand-contrast); border: 0;
+        border-radius: var(--wf-radius); width: 34px; height: 34px; cursor: pointer; font-size: .8rem;
+    }
+    .wf-totop:hover { background: var(--brand-dark); }
+</style>
+
+                
+    <meta name="theme-color" content="">
+
+    
+</head>
+
+<body class="w-full bg-background text-base min-h-screen flex flex-col antialiased"
+    x-cloak
+    x-data="{
+        theme: $persist('system').as('theme_mode'),
+        systemDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
+        init() {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                this.systemDark = e.matches;
+            });
+        },
+        get isDark() {
+            return this.theme === 'dark' || (this.theme === 'system' && this.systemDark);
+        }
+    }"
+    
+>
+    
+    <header class="wf-header">
+    <div class="wf-shell wf-header-inner">
+        <a href="http://127.0.0.1:8080" class="wf-brand" wire:navigate>
+                            <span class="wf-brand-text">Paymenter</span>
+                    </a>
+
+        <div class="wf-header-actions">
+                                        
+                <div wire:key="lw-3281720086-0-3-9-0-9-0-9" wire:snapshot="{&quot;data&quot;:[],&quot;memo&quot;:{&quot;id&quot;:&quot;vlspXJs0MKdp2gSYhU5p&quot;,&quot;name&quot;:&quot;auth.logout&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;e09087627c8571287b9a43feb2119fbd0ad04ed22f1529d40b8469e2f1beb47f&quot;}" wire:effects="{&quot;partials&quot;:[]}" wire:id="vlspXJs0MKdp2gSYhU5p" wire:name="auth.logout" class="wf-logout">
+    <button type="button" wire:click="logout">Logout</button>
+</div>
+                    </div>
+    </div>
+</header>
+
+<nav class="wf-menubar" x-data="{ mobile: false }">
+    <div class="wf-shell wf-menubar-inner">
+        <button type="button" class="wf-burger" @click="mobile = !mobile" aria-label="Menu">☰</button>
+
+        <ul class="wf-menu" :class="{ 'wf-menu--open': mobile }">
+            
+                                                <li class="wf-menu-item">
+                        <a class="wf-menu-link "
+                            href="http://127.0.0.1:8080" wire:navigate>Home</a>
+                    </li>
+                                                                <li class="wf-menu-item" x-data="{ open: false }" @click.outside="open = false">
+                        <button type="button" class="wf-menu-link" @click="open = !open">
+                            Shop <span class="wf-caret">▾</span>
+                        </button>
+                        <ul class="wf-dropdown" x-show="open" x-transition x-cloak>
+                                                            <li><a href="http://127.0.0.1:8080/products/proxies" wire:navigate>Proxies</a></li>
+                                                    </ul>
+                    </li>
+                            
+            
+                            <li class="wf-menu-item">
+                    <a class="wf-menu-link is-active"
+                        href="http://127.0.0.1:8080/dashboard" wire:navigate>Dashboard</a>
+                </li>
+                            <li class="wf-menu-item">
+                    <a class="wf-menu-link "
+                        href="http://127.0.0.1:8080/services" wire:navigate>Services</a>
+                </li>
+                            <li class="wf-menu-item">
+                    <a class="wf-menu-link "
+                        href="http://127.0.0.1:8080/invoices" wire:navigate>Invoices</a>
+                </li>
+                            <li class="wf-menu-item">
+                    <a class="wf-menu-link "
+                        href="http://127.0.0.1:8080/tickets" wire:navigate>Tickets</a>
+                </li>
+                    </ul>
+
+        
+        <div class="wf-menu-right" x-data="{ open: false }" @click.outside="open = false">
+            <button type="button" class="wf-menu-link" @click="open = !open">
+                                    Welcome back, Admin!
+                                <span class="wf-caret">▾</span>
+            </button>
+            <ul class="wf-dropdown wf-dropdown--right" x-show="open" x-transition x-cloak>
+                
+                                    <li><a href="http://127.0.0.1:8080/dashboard" wire:navigate>Dashboard</a></li>
+                                            <li><a href="http://127.0.0.1:8080/account" wire:navigate>Personal Details</a></li>
+                                            <li><a href="http://127.0.0.1:8080/account/security" wire:navigate>Security</a></li>
+                                            <li><a href="http://127.0.0.1:8080/account/credits" wire:navigate>Credits</a></li>
+                                            <li><a href="http://127.0.0.1:8080/account/payment-methods" wire:navigate>Payment Methods</a></li>
+                                            <li><a href="http://127.0.0.1:8080/account/notifications" wire:navigate>Notifications</a></li>
+                                                                <li class="wf-dropdown-sep">
+                            <a href="http://127.0.0.1:8080/admin">Admin</a>
+                        </li>
+                                        <li class="wf-dropdown-sep wf-dropdown-logout">
+                        <div wire:key="lw-3281720086-1-3-9-0-9-0-9" wire:snapshot="{&quot;data&quot;:[],&quot;memo&quot;:{&quot;id&quot;:&quot;B2lwpNc47HLMLKndV8ey&quot;,&quot;name&quot;:&quot;auth.logout&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;544e98a708345bf508ecc60cf65f63c7ae0da10ed3325ccd09de2919ceae63d0&quot;}" wire:effects="{&quot;partials&quot;:[]}" wire:id="B2lwpNc47HLMLKndV8ey" wire:name="auth.logout" class="wf-logout">
+    <button type="button" wire:click="logout">Logout</button>
+</div>
+                    </li>
+                            </ul>
+        </div>
+    </div>
+</nav>
+    <div class="w-full flex flex-grow">
+        
+        <div class="flex flex-col flex-grow overflow-auto">
+            
+            <main class="grow">
+                <div wire:snapshot="{&quot;data&quot;:{&quot;activeComponent&quot;:&quot;services&quot;},&quot;memo&quot;:{&quot;id&quot;:&quot;C4OJklriySY0BGpgbuhW&quot;,&quot;name&quot;:&quot;dashboard&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:{&quot;lw-3460896327-0-2&quot;:[&quot;ul&quot;,&quot;V4GkjjrLNjyI2xrLZcuI&quot;],&quot;lw-3460896327-1-3-9&quot;:[&quot;ul&quot;,&quot;ei0GpKYufKvlJq7PH6NS&quot;],&quot;lw-3460896327-2-3-9-0-9&quot;:[&quot;ul&quot;,&quot;Vdkr7FL6G6SPZTBu1krd&quot;]},&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;d3a9c1a8fd6ccb4c593f4953177b6108689bb7df2a2cc80a58f57e9433bd8ce4&quot;}" wire:effects="{&quot;partials&quot;:[]}" wire:id="C4OJklriySY0BGpgbuhW" wire:name="dashboard" class="wf-page">
+    <div class="wf-layout">
+
+        
+        <div>
+            <!--[if BLOCK]><![endif]-->                <div class="wf-panel wf-panel--brand">
+                    <div class="wf-panel-heading">Account Credit Balance</div>
+                    <div class="wf-panel-body" style="text-align:center">
+                        <div class="wf-stat-num">
+                            No credit
+                        </div>
+                        <a class="wf-btn wf-btn--sm wf-btn--block" style="margin-top:.75rem"
+                           href="http://127.0.0.1:8080/account/credits" wire:navigate>
+                            Add Funds
+                        </a>
+                    </div>
+                </div>
+            <!--[if ENDBLOCK]><![endif]-->
+            <div class="wf-panel">
+                <div class="wf-panel-heading">Your Info</div>
+                <div class="wf-panel-body">
+                    <div class="wf-list-title">Admin Local</div>
+                    <span class="wf-list-sub">admin@local.test</span>
+                    <a class="wf-btn wf-btn--ghost wf-btn--sm wf-btn--block" style="margin-top:.75rem"
+                       href="http://127.0.0.1:8080/account" wire:navigate>
+                        Update Details
+                    </a>
+                </div>
+            </div>
+
+            <div class="wf-panel">
+                <div class="wf-panel-heading">Shortcuts</div>
+                <ul class="wf-list">
+                    <li><a href="http://127.0.0.1:8080" wire:navigate>Order New Services</a></li>
+                    <li><a href="http://127.0.0.1:8080/services" wire:navigate>Services</a></li>
+                    <li><a href="http://127.0.0.1:8080/invoices" wire:navigate>Invoices</a></li>
+                    <!--[if BLOCK]><![endif]-->                        <li><a href="http://127.0.0.1:8080/tickets/create" wire:navigate>Create Ticket</a></li>
+                    <!--[if ENDBLOCK]><![endif]-->                </ul>
+            </div>
+        </div>
+
+        
+        <div>
+            <div class="wf-pagehead">
+                <h1>Welcome back, Admin!</h1>
+                <p>Manage your active services, invoices, tickets, and stay updated here.</p>
+            </div>
+
+            <div class="wf-stats">
+                <a class="wf-stat" href="http://127.0.0.1:8080/services" wire:navigate>
+                    <div class="wf-stat-num">54</div>
+                    <div class="wf-stat-label">Active Services</div>
+                </a>
+                <a class="wf-stat" href="http://127.0.0.1:8080/invoices" wire:navigate>
+                    <div class="wf-stat-num">80</div>
+                    <div class="wf-stat-label">Unpaid Invoices</div>
+                </a>
+                <!--[if BLOCK]><![endif]-->                    <a class="wf-stat" href="http://127.0.0.1:8080/tickets" wire:navigate>
+                        <div class="wf-stat-num">18</div>
+                        <div class="wf-stat-label">Open Tickets</div>
+                    </a>
+                <!--[if ENDBLOCK]><![endif]-->                <a class="wf-stat" href="http://127.0.0.1:8080/invoices" wire:navigate>
+                    <div class="wf-stat-num">126</div>
+                    <div class="wf-stat-label">Invoices</div>
+                </a>
+            </div>
+
+            <!--[if BLOCK]><![endif]-->                <div class="wf-alert wf-alert--info" style="margin-bottom:1.25rem">
+                    You have 80 unpaid invoices.
+                    <a href="http://127.0.0.1:8080/invoices" wire:navigate>View invoices</a>
+                </div>
+            <!--[if ENDBLOCK]><![endif]-->
+            <div class="wf-panel">
+                <div class="wf-panel-heading">
+                    <span>Active Services</span>
+                    <a class="wf-btn wf-btn--sm wf-btn--ghost" href="http://127.0.0.1:8080/services" wire:navigate>
+                        My Services
+                    </a>
+                </div>
+                <ul wire:key="lw-3460896327-0-2" wire:snapshot="{&quot;data&quot;:{&quot;status&quot;:&quot;active&quot;,&quot;paginators&quot;:[{&quot;page&quot;:1},{&quot;s&quot;:&quot;arr&quot;}]},&quot;memo&quot;:{&quot;id&quot;:&quot;V4GkjjrLNjyI2xrLZcuI&quot;,&quot;name&quot;:&quot;services.widget&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;559e41fad3b1750c0a5ab24c06032d5b2c96e2d2827cde4d4161446da8340bc4&quot;}" wire:effects="{&quot;partials&quot;:[],&quot;url&quot;:{&quot;paginators.page&quot;:{&quot;as&quot;:&quot;page&quot;,&quot;use&quot;:&quot;push&quot;,&quot;alwaysShow&quot;:false,&quot;except&quot;:null}}}" wire:id="V4GkjjrLNjyI2xrLZcuI" wire:name="services.widget" class="wf-list">
+    <!--[if BLOCK]><![endif]-->                <li>
+            <a href="http://127.0.0.1:8080/services/13" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">IPv6 Proxy #13</span>
+                    <span class="wf-list-sub">
+                        Proxies
+                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Sep 12, 2026
+                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Active</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/services/24" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">IPv6 Proxy #24</span>
+                    <span class="wf-list-sub">
+                        Proxies
+                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Sep 13, 2026
+                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Active</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/services/25" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">IPv6 Proxy #25</span>
+                    <span class="wf-list-sub">
+                        Proxies
+                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Sep 13, 2026
+                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Active</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/services/26" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">IPv6 Proxy #26</span>
+                    <span class="wf-list-sub">
+                        Proxies
+                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Sep 13, 2026
+                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Active</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/services/27" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">IPv6 Proxy #27</span>
+                    <span class="wf-list-sub">
+                        Proxies
+                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Sep 13, 2026
+                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Active</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/services/30" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">IPv6 Proxy #30</span>
+                    <span class="wf-list-sub">
+                        Proxies
+                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Oct 13, 2026
+                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Active</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/services/32" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">IPv6 Proxy #32</span>
+                    <span class="wf-list-sub">
+                        Proxies
+                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Oct 14, 2026
+                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Active</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/services/34" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">IPv6 Proxy #34</span>
+                    <span class="wf-list-sub">
+                        Proxies
+                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Sep 14, 2026
+                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Active</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/services/35" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">IPv6 Proxy #35</span>
+                    <span class="wf-list-sub">
+                        Proxies
+                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Sep 14, 2026
+                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Active</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/services/37" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">IPv6 Proxy #37</span>
+                    <span class="wf-list-sub">
+                        Proxies
+                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Oct 14, 2026
+                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Active</span>
+            </a>
+        </li>
+    <!--[if ENDBLOCK]><![endif]--></ul>
+            </div>
+
+            <div class="wf-grid">
+                <div class="wf-panel">
+                    <div class="wf-panel-heading">
+                        <span>Invoices</span>
+                        <a class="wf-btn wf-btn--sm wf-btn--ghost" href="http://127.0.0.1:8080/invoices" wire:navigate>
+                            View All
+                        </a>
+                    </div>
+                    <ul wire:key="lw-3460896327-1-3-9" wire:snapshot="{&quot;data&quot;:{&quot;paginators&quot;:[{&quot;page&quot;:1},{&quot;s&quot;:&quot;arr&quot;}]},&quot;memo&quot;:{&quot;id&quot;:&quot;ei0GpKYufKvlJq7PH6NS&quot;,&quot;name&quot;:&quot;invoices.widget&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;attributes&quot;:{&quot;limit&quot;:3},&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;f9d11ae73f5de70943628b5968a6b7d52fae8d5bd36660170ef43eb6efa30612&quot;}" wire:effects="{&quot;partials&quot;:[],&quot;url&quot;:{&quot;paginators.page&quot;:{&quot;as&quot;:&quot;page&quot;,&quot;use&quot;:&quot;push&quot;,&quot;alwaysShow&quot;:false,&quot;except&quot;:null}}}" wire:id="ei0GpKYufKvlJq7PH6NS" wire:name="invoices.widget" class="wf-list">
+    <!--[if BLOCK]><![endif]-->                <li>
+            <a href="http://127.0.0.1:8080/invoices/INV-137" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">Invoice #INV-137</span>
+                    <span class="wf-list-sub">
+                        Invoice Date: 14 Aug 2026
+                    </span>
+                </span>
+                <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
+                    <span class="wf-list-title">$103.50</span>
+                    <span class="wf-label wf-label--warning">Pending</span>
+                </span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/invoices/INV-136" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">Invoice #INV-136</span>
+                    <span class="wf-list-sub">
+                        Invoice Date: 14 Aug 2026
+                    </span>
+                </span>
+                <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
+                    <span class="wf-list-title">$103.50</span>
+                    <span class="wf-label wf-label--warning">Pending</span>
+                </span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/invoices/INV-133" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">Invoice #INV-133</span>
+                    <span class="wf-list-sub">
+                        Invoice Date: 14 Aug 2026
+                    </span>
+                </span>
+                <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
+                    <span class="wf-list-title">$40.00</span>
+                    <span class="wf-label wf-label--warning">Pending</span>
+                </span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/invoices/INV-132" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">Invoice #INV-132</span>
+                    <span class="wf-list-sub">
+                        Invoice Date: 14 Aug 2026
+                    </span>
+                </span>
+                <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
+                    <span class="wf-list-title">$40.00</span>
+                    <span class="wf-label wf-label--warning">Pending</span>
+                </span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/invoices/INV-128" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">Invoice #INV-128</span>
+                    <span class="wf-list-sub">
+                        Invoice Date: 14 Aug 2026
+                    </span>
+                </span>
+                <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
+                    <span class="wf-list-title">$40.00</span>
+                    <span class="wf-label wf-label--warning">Pending</span>
+                </span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/invoices/INV-127" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">Invoice #INV-127</span>
+                    <span class="wf-list-sub">
+                        Invoice Date: 14 Aug 2026
+                    </span>
+                </span>
+                <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
+                    <span class="wf-list-title">$40.00</span>
+                    <span class="wf-label wf-label--warning">Pending</span>
+                </span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/invoices/INV-125" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">Invoice #INV-125</span>
+                    <span class="wf-list-sub">
+                        Invoice Date: 14 Aug 2026
+                    </span>
+                </span>
+                <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
+                    <span class="wf-list-title">$25.00</span>
+                    <span class="wf-label wf-label--warning">Pending</span>
+                </span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/invoices/INV-124" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">Invoice #INV-124</span>
+                    <span class="wf-list-sub">
+                        Invoice Date: 14 Aug 2026
+                    </span>
+                </span>
+                <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
+                    <span class="wf-list-title">$25.00</span>
+                    <span class="wf-label wf-label--warning">Pending</span>
+                </span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/invoices/INV-122" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">Invoice #INV-122</span>
+                    <span class="wf-list-sub">
+                        Invoice Date: 14 Aug 2026
+                    </span>
+                </span>
+                <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
+                    <span class="wf-list-title">$103.50</span>
+                    <span class="wf-label wf-label--warning">Pending</span>
+                </span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/invoices/INV-121" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">Invoice #INV-121</span>
+                    <span class="wf-list-sub">
+                        Invoice Date: 14 Aug 2026
+                    </span>
+                </span>
+                <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
+                    <span class="wf-list-title">$103.50</span>
+                    <span class="wf-label wf-label--warning">Pending</span>
+                </span>
+            </a>
+        </li>
+    <!--[if ENDBLOCK]><![endif]--></ul>
+                </div>
+
+                <!--[if BLOCK]><![endif]-->                    <div class="wf-panel">
+                        <div class="wf-panel-heading">
+                            <span>Tickets</span>
+                            <a class="wf-btn wf-btn--sm wf-btn--ghost" href="http://127.0.0.1:8080/tickets/create" wire:navigate>
+                                Create Ticket
+                            </a>
+                        </div>
+                        <ul wire:key="lw-3460896327-2-3-9-0-9" wire:snapshot="{&quot;data&quot;:{&quot;paginators&quot;:[{&quot;page&quot;:1},{&quot;s&quot;:&quot;arr&quot;}]},&quot;memo&quot;:{&quot;id&quot;:&quot;Vdkr7FL6G6SPZTBu1krd&quot;,&quot;name&quot;:&quot;tickets.widget&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;139948046dec8902c53c10f00446c4d980b87675afc7e26099a2d0f0e920affb&quot;}" wire:effects="{&quot;partials&quot;:[],&quot;url&quot;:{&quot;paginators.page&quot;:{&quot;as&quot;:&quot;page&quot;,&quot;use&quot;:&quot;push&quot;,&quot;alwaysShow&quot;:false,&quot;except&quot;:null}}}" wire:id="Vdkr7FL6G6SPZTBu1krd" wire:name="tickets.widget" class="wf-list">
+    <!--[if BLOCK]><![endif]-->                <li>
+            <a href="http://127.0.0.1:8080/tickets/18" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#18 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        45 seconds ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/17" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#17 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        46 seconds ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/16" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#16 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        10 minutes ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/15" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#15 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        11 minutes ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/14" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#14 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        1 hour ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/13" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#13 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        1 hour ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/12" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#12 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        4 hours ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/11" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#11 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        4 hours ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/10" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#10 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        4 hours ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/9" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#9 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        4 hours ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+    <!--[if ENDBLOCK]><![endif]--></ul>
+                    </div>
+                <!--[if ENDBLOCK]><![endif]-->            </div>
+
+            
+        </div>
+    </div>
+</div>
+            </main>
+            <div x-data>
+    <template x-for="(notification, index) in $store.notifications.notifications" :key="notification.id">
+        <div x-show="notification.show" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-90" @click="$store.notifications.removeNotification(notification.id)"
+            :class="notification.type === 'success' ? 'bg-secondary' : 'bg-red-500'"
+            class="fixed text-white px-4 py-2 rounded shadow-md mb-4 z-50"
+            :style="'top: ' + (20 + index * 60) + 'px;left: 50%; transform: translateX(-50%);'">
+            <p x-text="notification.message"></p>
+        </div>
+    </template>
+</div>
+            <template x-teleport="body">
+    <div class="fixed inset-0 z-30 flex items-center justify-center overflow-hidden bg-black/50"
+        x-show="$store.confirmation.show" 
+        x-on:keydown.escape.window="!$store.confirmation.loading && $store.confirmation.close()">
+        <!-- Modal inner -->
+        <div class="px-6 py-4 w-full mx-2 md:mx-auto text-left bg-background-secondary rounded shadow-lg max-h-screen overflow-y-auto mb-8 mt-8 max-w-2xl"
+            x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90"
+            x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90">
+            <div class="flex justify-between items-center">
+
+                <h2 class="text-2xl font-semibold text-primary-100" x-text="$store.confirmation.title"></h2>
+                <button @click="!$store.confirmation.loading && $store.confirmation.close()" 
+                        class="text-primary-100"
+                        :class="{ 'opacity-50 cursor-not-allowed': $store.confirmation.loading }">
+                    <svg class="size-6" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M11.9997 10.5865L16.9495 5.63672L18.3637 7.05093L13.4139 12.0007L18.3637 16.9504L16.9495 18.3646L11.9997 13.4149L7.04996 18.3646L5.63574 16.9504L10.5855 12.0007L5.63574 7.05093L7.04996 5.63672L11.9997 10.5865Z"/></svg>                </button>
+            </div>
+            <div class="mt-4" x-text="$store.confirmation.message"></div>
+            <div class="mt-5 sm:mt-4 flex-col sm:flex-row flex sm:flex-row-reverse gap-2">
+                <button 
+    class="flex items-center gap-2 justify-center bg-primary text-white text-sm font-semibold hover:bg-primary/80 py-2.5 lg:py-2 px-4.5 rounded-md w-full duration-300 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50" type="button" x-on:click="$store.confirmation.execute()" :disabled="$store.confirmation.loading">
+            <!-- Loading spinner -->
+                    <template x-if="$store.confirmation.loading">
+                        <div class="mr-2">
+                            <svg class="size-4 animate-spin" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 3C16.9706 3 21 7.02944 21 12H19C19 8.13401 15.866 5 12 5V3Z"/></svg>                        </div>
+                    </template>
+                    
+                    <span x-text="$store.confirmation.loading ? 'Loading...' : $store.confirmation.confirmText"></span>
+    </button>
+                
+                <button 
+    class="flex items-center gap-2 justify-center bg-primary text-white text-sm font-semibold hover:bg-primary/80 py-2.5 lg:py-2 px-4.5 rounded-md w-full duration-300 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 bg-red-700 bg-none text-white py-2 px-4 rounded hover:bg-red-600" type="button" x-text="$store.confirmation.cancelText" x-on:click="!$store.confirmation.loading && $store.confirmation.close()" :disabled="$store.confirmation.loading">
+            
+    </button>
+            </div>
+        </div>
+    </div>
+</template>            
+            <footer class="wf-footer">
+    <div class="wf-shell wf-footer-inner">
+        <p class="wf-footer-copy">
+            Copyright &copy; 2026 Paymenter. All Rights Reserved.
+        </p>
+        <button type="button" class="wf-totop" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
+            aria-label="Back to top">▲</button>
+    </div>
+</footer>
+        </div>
+            </div>
+    <script  data-navigate-once="true">window.livewireScriptConfig = {"csrf":"bUXChS4dwZ94bCr9fjTiKZiNQuoeUzyIm2qAj1Mi","uri":"http:\/\/127.0.0.1:8080\/paymenter\/update","moduleUrl":"http:\/\/127.0.0.1:8080\/livewire-77cd4cda","progressBar":"","nonce":""};</script>
+    <script>
+    (function () {
+        function onlyDigits(v) { return (v || '').replace(/\D/g, ''); }
+
+        function maskCpf(v) {
+            v = onlyDigits(v).slice(0, 11);
+            if (v.length > 9) return v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+            if (v.length > 6) return v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+            if (v.length > 3) return v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+            return v;
+        }
+
+        function maskCnpj(v) {
+            v = onlyDigits(v).slice(0, 14);
+            if (v.length > 12) return v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/, '$1.$2.$3/$4-$5');
+            if (v.length > 8) return v.replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})/, '$1.$2.$3/$4');
+            if (v.length > 5) return v.replace(/(\d{2})(\d{3})(\d{1,3})/, '$1.$2.$3');
+            if (v.length > 2) return v.replace(/(\d{2})(\d{1,3})/, '$1.$2');
+            return v;
+        }
+
+        function keyFor(el) {
+            var model = el.getAttribute('wire:model')
+                || el.getAttribute('wire:model.blur')
+                || el.getAttribute('wire:model.live')
+                || el.id || el.name || '';
+            return model.split('.').pop();
+        }
+
+        document.addEventListener('input', function (e) {
+            var el = e.target;
+            if (!el || el.tagName !== 'INPUT') return;
+            var key = keyFor(el);
+            var masked = null;
+            if (key === 'cpf') masked = maskCpf(el.value);
+            else if (key === 'cnpj') masked = maskCnpj(el.value);
+            if (masked !== null && masked !== el.value) {
+                el.value = masked;
+                // Keep Livewire's bound value in sync with the masked display.
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }, true);
+    })();
+</script>
+
+</body>
+
+</html>
