@@ -58,6 +58,7 @@ return [
     'gateway_error' => 'This payment method could not process the payment: :error',
     'amount_too_small' => 'the amount is below the minimum this payment method accepts. Please choose another method, or add more items to the order.',
     'amount_too_large' => 'the amount is above the maximum this payment method accepts. Please choose another method.',
+    'gateway_misconfigured' => 'this payment method is not correctly configured yet. Please choose another method or contact support.',
     'gateway_unavailable' => 'it is temporarily unavailable. Please try another method or contact support.',
     'apply_credits_and_continue' => 'Apply Credits and Continue',
     'apply_credits_and_pay' => 'Apply Credits and Pay',

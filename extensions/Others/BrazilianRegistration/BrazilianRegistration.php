@@ -97,10 +97,29 @@ class BrazilianRegistration extends Extension
         Validator::extend('cpf', fn ($attribute, $value) => $value === null || $value === '' || Documents::isValidCpf($value));
         Validator::extend('cnpj', fn ($attribute, $value) => $value === null || $value === '' || Documents::isValidCnpj($value));
 
-        Lang::addLines(['validation.cpf' => 'The :attribute is not a valid CPF.'], 'en');
-        Lang::addLines(['validation.cnpj' => 'The :attribute is not a valid CNPJ.'], 'en');
-        Lang::addLines(['validation.cpf' => 'O :attribute informado não é um CPF válido.'], 'pt_BR');
-        Lang::addLines(['validation.cnpj' => 'O :attribute informado não é um CNPJ válido.'], 'pt_BR');
+        $messages = [
+            'en' => [
+                'validation.cpf' => 'The :attribute is not a valid CPF.',
+                'validation.cnpj' => 'The :attribute is not a valid CNPJ.',
+            ],
+            'pt_BR' => [
+                'validation.cpf' => 'O :attribute informado não é um CPF válido.',
+                'validation.cnpj' => 'O :attribute informado não é um CNPJ válido.',
+            ],
+        ];
+
+        $translator = app('translator');
+
+        foreach ($messages as $locale => $lines) {
+            // Load `validation` from disk FIRST. addLines() writes straight into the
+            // translator's loaded-group cache and marks the group as loaded, so calling
+            // it on a group that has not been read yet permanently shadows the real
+            // lang/<locale>/validation.php — every other message in that file
+            // ("required", "max", …) then renders as the raw key app-wide.
+            $translator->load('*', 'validation', $locale);
+
+            Lang::addLines($lines, $locale);
+        }
     }
 
     /**
