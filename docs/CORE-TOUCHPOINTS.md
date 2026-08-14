@@ -144,5 +144,32 @@ the customer a translated explanation. Wording lives in `lang/en/invoices.php`
 
 ---
 
+## 6. Show gateway refusals on the credit-deposit page instead of a 500 (**applied**)
+
+**Why:** `addCredit()` calls `ExtensionHelper::pay()` with no error handling, so the credit
+page had the same defect #5 fixed on the invoice page. Any gateway refusal — a wrong API
+key, an unsupported currency, an amount below the gateway minimum — escaped as a bare
+**500 Server Error**. This is worse here than on an invoice: the deposit invoice is already
+committed by the time `pay()` runs, so the customer was left with an orphaned unpaid
+invoice, a stack trace, and no route back. Reproduced locally with a 999 USD deposit
+against a gateway holding a placeholder key.
+
+**File:** `app/Livewire/Client/Credits.php`, method `addCredit()` plus a new
+`gatewayErrorMessage()` helper.
+
+**Change:** wrap the `pay()` hand-off in try/catch, log the real error for the admin,
+notify the customer with a translated explanation, and redirect to the deposit invoice
+that was just created so they can retry or choose another method. Wording is reused from
+`lang/en/invoices.php`, with one key added (`gateway_misconfigured`) for bad or missing
+credentials — an operator problem the customer cannot fix by retrying.
+
+**Notes:**
+- Kept deliberately parallel to #5 so both payment entry points behave the same; if you
+  change the message mapping in one, change it in the other.
+- The raw exception is never shown — gateway errors can echo key fragments.
+- If not re-applied after an upgrade, credit-deposit failures go back to being 500 pages.
+
+---
+
 _(No other core touchpoints at this time. Everything else is implemented via extensions,
 themes, events, or configuration.)_

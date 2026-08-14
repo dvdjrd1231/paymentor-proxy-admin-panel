@@ -103,7 +103,24 @@ class Credits extends Component
 
             // Redirect to the invoices page and pay the invoice
             if ($this->gateway) {
-                $pay = ExtensionHelper::pay(Gateway::where('id', $this->gateway)->first(), $invoice->fresh());
+                // The deposit invoice is already committed above, so a gateway refusing
+                // the hand-off must not blow up as a bare 500 — that loses the customer
+                // with no way back. Send them to the invoice they just created so they
+                // can retry or pick another method. See docs/CORE-TOUCHPOINTS.md #6.
+                try {
+                    $pay = ExtensionHelper::pay(Gateway::where('id', $this->gateway)->first(), $invoice->fresh());
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::channel('stack')->error('[Credits] gateway refused the deposit', [
+                        'invoice' => $invoice->id,
+                        'gateway' => $this->gateway,
+                        'error' => $e->getMessage(),
+                    ]);
+
+                    $this->notify(__('invoices.gateway_error', ['error' => $this->gatewayErrorMessage($e)]), 'error');
+
+                    return $this->redirect(route('invoices.show', $invoice), true);
+                }
+
                 if (is_string($pay)) {
                     return $this->redirect($pay);
                 }
@@ -116,6 +133,37 @@ class Credits extends Component
             // Return error message
             throw $e;
         }
+    }
+
+    /**
+     * Turn a gateway exception into something a customer can act on. Mirrors the same
+     * mapping used on the invoice page so both payment entry points read alike; the raw
+     * exception (which can carry API detail) stays in the log, not on screen.
+     * See docs/CORE-TOUCHPOINTS.md #6.
+     */
+    private function gatewayErrorMessage(\Throwable $e): string
+    {
+        $raw = $e->getMessage();
+
+        if (str_contains($raw, 'amount_too_small')) {
+            return __('invoices.amount_too_small');
+        }
+
+        if (str_contains($raw, 'amount_too_large')) {
+            return __('invoices.amount_too_large');
+        }
+
+        // Bad or missing credentials are an operator problem, not something the customer
+        // can fix by trying again — say so plainly instead of leaking the API's wording.
+        if (preg_match('/invalid.{0,20}(api|public|secret|merchant|key|uuid)/i', $raw)) {
+            return __('invoices.gateway_misconfigured');
+        }
+
+        if (preg_match('/"message"\s*:\s*"([^"]{5,200})"/', $raw, $m)) {
+            return $m[1];
+        }
+
+        return __('invoices.gateway_unavailable');
     }
 
     public function render()
