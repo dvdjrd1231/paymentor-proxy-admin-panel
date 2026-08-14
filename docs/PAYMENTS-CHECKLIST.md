@@ -128,17 +128,36 @@ was shared over chat.
 | `merchant_id` | Merchant UUID, dashboard → Settings |
 | `payment_api_key` | dashboard → API |
 
-### Binance Pay
-| Field | Where to get it |
-|---|---|
-| `api_key` | Certificate SN, Binance Merchant portal |
-| `api_secret` | Binance Merchant portal |
-| `pay_currency` | business decision |
-| `sandbox_url` | only if testing against sandbox first |
+### Binance Pay — **blocked by geo-restriction** 🚫
 
-**Binance has never been exercised at all** — it signs webhooks with an RSA certificate,
-which cannot be simulated without real sandbox credentials. It carries the most risk of
-the four.
+Credentials are configured (gateway id 10), but Binance Pay refuses the connection before
+authentication is even attempted:
+
+```
+POST https://bpay.binanceapi.com/binancepay/openapi/certificates
+HTTP 451
+{"code":0,"msg":"Service unavailable from a restricted location according to
+ 'b. Eligibility' in https://www.binance.com/en/terms."}
+```
+
+Reproduced from **both** the VPS (`ipinfo` reports country `US`) and a developer machine,
+and it happens on an unauthenticated request too — so this is location, not credentials.
+The keys are untested rather than known-bad.
+
+Nothing in the code can work around a 451. The options are:
+
+1. **Run from a permitted region.** Either host the application somewhere Binance serves,
+   or route only the outbound Binance API calls through a proxy in a permitted region.
+   Inbound webhooks are unaffected — Binance calling us is not blocked, so a proxy for
+   outbound traffic alone is sufficient.
+2. **Ask Binance Merchant Operations** whether this merchant account can be enabled for the
+   regions in use.
+3. **Drop Binance** from the launch set.
+
+This is a decision for Leandro; it cannot be resolved in the codebase. Note also that
+Binance signs webhooks with its own RSA private key, so even once reachable, settlement can
+only be confirmed by a real payment — unlike CoinPayments and Cryptomus, whose callbacks
+are signed with a secret we also hold.
 
 ### Stripe — before go-live
 Currently **test** keys (`sk_test_…`). Live keys are required before taking real money,
