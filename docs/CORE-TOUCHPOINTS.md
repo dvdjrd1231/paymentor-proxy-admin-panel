@@ -140,6 +140,9 @@ the customer a translated explanation. Wording lives in `lang/en/invoices.php`
 
 **Notes:**
 - The raw exception is never shown — it can carry gateway internals and a stack trace.
+  This includes credential fragments: Stripe answers a bad key with
+  "Invalid API Key provided: sk_test_*ocal", so misconfiguration is matched and replaced
+  with `gateway_misconfigured` *before* the gateway's own wording is echoed.
 - If not re-applied after an upgrade, gateway refusals go back to being 500 pages.
 
 ---
@@ -168,6 +171,30 @@ credentials — an operator problem the customer cannot fix by retrying.
   change the message mapping in one, change it in the other.
 - The raw exception is never shown — gateway errors can echo key fragments.
 - If not re-applied after an upgrade, credit-deposit failures go back to being 500 pages.
+
+---
+
+## 7. Outstanding credit deposit is a notice, not a dead end (**applied**)
+
+**Why:** Paymenter allows only one unpaid credit deposit at a time. Core enforced that by
+throwing `DisplayException('You have an unpaid invoice for credits…')`, which renders as a
+red error banner over a form the customer cannot submit — with no link to the invoice they
+are being told to pay. The customer's intent at that moment is precisely to pay, so the
+rule is right but the handling turned it into a dead end.
+
+**File:** `app/Livewire/Client/Credits.php`, method `addCredit()`.
+
+**Change:** look up the outstanding deposit invoice instead of just testing for existence,
+roll back the open transaction, show an informational notice naming the invoice number and
+amount outstanding, and redirect to that invoice with `?pay` so the payment modal opens on
+arrival. Wording lives in `lang/en/account.php` (`credit_pending_invoice`).
+
+**Notes:**
+- The rollback matters: the check runs inside `DB::beginTransaction()`, so returning a
+  redirect without it would leave the connection mid-transaction.
+- `?pay` works because `Invoices\Show::$showPayModal` is URL-bound via `#[Url('pay')]`.
+- The one-outstanding-deposit rule itself is unchanged — only how it is communicated.
+- If not re-applied after an upgrade, the blocking error banner returns.
 
 ---
 

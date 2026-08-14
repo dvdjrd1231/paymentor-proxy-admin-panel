@@ -3,7 +3,6 @@
 namespace App\Livewire\Client;
 
 use App\Attributes\DisabledIf;
-use App\Exceptions\DisplayException;
 use App\Helpers\ExtensionHelper;
 use App\Livewire\Component;
 use App\Models\Credit;
@@ -75,13 +74,28 @@ class Credits extends Component
                 }
             }
 
-            // Check if the user has any unpaid invoice items referencing credits
-            $unpaidInvoiceItems = Auth::user()->invoices()->where('status', Invoice::STATUS_PENDING)->whereHas('items', function ($query) {
+            // Only one credit deposit may be outstanding at a time, otherwise a customer
+            // can stack unpaid deposit invoices. Rather than refusing with an error and
+            // leaving them on a form they cannot submit, treat it as a notice and take
+            // them to the invoice that is already waiting so they can pay it now.
+            // See docs/CORE-TOUCHPOINTS.md #7.
+            $pendingDeposit = Auth::user()->invoices()->where('status', Invoice::STATUS_PENDING)->whereHas('items', function ($query) {
                 $query->where('reference_type', Credit::class);
-            })->exists();
+            })->latest('id')->first();
 
-            if ($unpaidInvoiceItems) {
-                throw new DisplayException('You have an unpaid invoice for credits. Please pay the invoice before adding more credits.');
+            if ($pendingDeposit) {
+                // Nothing has been written yet, but the transaction is open — close it
+                // before redirecting so the connection is not left mid-transaction.
+                DB::rollBack();
+
+                $this->notify(__('account.credit_pending_invoice', [
+                    'number' => $pendingDeposit->number ?? $pendingDeposit->id,
+                    'amount' => $pendingDeposit->formattedRemaining,
+                ]), 'info');
+
+                // `?pay` opens the payment modal on arrival (Invoices\Show::$showPayModal
+                // is URL-bound), so the customer lands directly on the payment step.
+                return $this->redirect(route('invoices.show', $pendingDeposit) . '?pay', true);
             }
 
             $invoice = Invoice::create([
