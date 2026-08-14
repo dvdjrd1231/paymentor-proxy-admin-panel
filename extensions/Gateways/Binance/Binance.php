@@ -79,6 +79,13 @@ class Binance extends Gateway
     /** Respect Country-based Gateway Rules (item 5) natively if installed. */
     public function canUseGateway($total, $currency, $type, $items = [])
     {
+        // Do not offer a method that will refuse the amount. Showing it and then
+        // failing after the customer commits is worse than not offering it.
+        $minimum = (float) ($this->config('minimum_amount') ?? 0);
+        if ($minimum > 0 && (float) $total < $minimum) {
+            return false;
+        }
+
         $rules = '\\Paymenter\\Extensions\\Others\\GatewayRules\\GatewayRules';
         if (!class_exists($rules)) {
             return true;
@@ -126,6 +133,15 @@ class Binance extends Gateway
                 'label' => 'Sandbox API URL',
                 'type' => 'text',
                 'description' => 'Only used when Test Mode is on. Binance issues the sandbox host with your test merchant account; leave blank to use ' . self::DEFAULT_SANDBOX_URL . '.',
+                'required' => false,
+            ],
+            [
+                'name' => 'minimum_amount',
+                'label' => 'Minimum amount',
+                'type' => 'text',
+                'description' => 'Hide this method at checkout when the invoice total is below this. Binance Pay rejects very small orders. Zero disables the check.',
+                'validation' => 'numeric',
+                'default' => '1.00',
                 'required' => false,
             ],
         ];

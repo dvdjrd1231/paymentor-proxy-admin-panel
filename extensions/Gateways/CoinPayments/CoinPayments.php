@@ -57,6 +57,13 @@ class CoinPayments extends Gateway
      */
     public function canUseGateway($total, $currency, $type, $items = [])
     {
+        // Do not offer a method that will refuse the amount. Showing it and then
+        // failing after the customer commits is worse than not offering it.
+        $minimum = (float) ($this->config('minimum_amount') ?? 0);
+        if ($minimum > 0 && (float) $total < $minimum) {
+            return false;
+        }
+
         $rules = '\\Paymenter\\Extensions\\Others\\GatewayRules\\GatewayRules';
         if (!class_exists($rules)) {
             return true;
@@ -117,6 +124,15 @@ class CoinPayments extends Gateway
                 'description' => 'CoinPayments has no separate sandbox host — testing is done with testnet coins '
                     . '(set Receive Currency to LTCT). Enabling this validates that, labels transactions in the '
                     . 'payment log, and is required before the module will accept a testnet currency.',
+                'required' => false,
+            ],
+            [
+                'name' => 'minimum_amount',
+                'label' => 'Minimum amount',
+                'type' => 'text',
+                'description' => 'Hide this method at checkout when the invoice total is below this. CoinPayments will not settle dust amounts. Zero disables the check.',
+                'validation' => 'numeric',
+                'default' => '1.00',
                 'required' => false,
             ],
         ];
