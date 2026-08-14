@@ -119,7 +119,14 @@ class Cryptomus extends Gateway
             abort(404);
         }
 
-        return response($contents, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+        // Served byte-for-byte: Cryptomus compares the body exactly, so no trailing
+        // newline is added. `no-store` keeps a proxy or CDN from holding on to an earlier
+        // 404 (from before the value was set) and replaying it to their checker.
+        return response($contents, 200, [
+            'Content-Type' => 'text/html; charset=UTF-8',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+        ]);
     }
 
     /**
