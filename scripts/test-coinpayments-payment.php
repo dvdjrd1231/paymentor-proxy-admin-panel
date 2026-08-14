@@ -118,6 +118,86 @@ for ($i = 0; $i < 20; $i++) {
 
 step('notification received and signature accepted', $seen, $seen ? 'after ~' . (($i + 1) * 3) . 's' : 'nothing arrived; check CoinPayments → Webhook History');
 
+// ── 5. Settlement ────────────────────────────────────────────────────────────────────────
+//
+// Paying for real needs LTCT sent to the checkout, which no script can do. With --settle
+// we instead deliver an InvoicePaid notification over real HTTPS to the live endpoint,
+// signed with the account's real client secret and shaped exactly like the notifications
+// CoinPayments actually sends (captured from live InvoiceCreated deliveries).
+//
+// That exercises routing, Cloudflare pass-through, signature verification against the real
+// credentials, settlement and crediting. The one thing it does not prove is that coins
+// moved on-chain — for that, open the checkout link and pay with LTCT.
+if (in_array('--settle', $argv, true)) {
+    echo PHP_EOL . 'Delivering a signed InvoicePaid to the live endpoint…' . PHP_EOL;
+
+    $settings = $gateway->settings->pluck('value', 'key');
+    $clientId = (string) $settings['client_id'];
+    $secret = (string) $settings['client_secret'];
+    $url = route('extensions.gateways.coinpayments.ipn');
+
+    $cpInvoiceId = $pending?->transaction_id ?? '';
+
+    $deliver = function (string $type) use ($url, $clientId, $secret, $cpInvoiceId, $invoice) {
+        $payload = [
+            'id' => bin2hex(random_bytes(16)),          // notification id — differs per event
+            'type' => $type,
+            'timestamp' => gmdate('c'),
+            'invoice' => [
+                'invoiceId' => (string) $invoice->id,
+                'id' => $cpInvoiceId,
+                'invoiceNumber' => (string) $invoice->id,
+                'lineItems' => [['amount' => (int) round($invoice->total * 100), 'name' => 'Deposit']],
+            ],
+        ];
+        $body = json_encode($payload, JSON_UNESCAPED_SLASHES);
+        $ts = gmdate('Y-m-d\TH:i:s');
+        $sig = base64_encode(hash_hmac('sha256', "\u{feff}" . 'POST' . $url . $clientId . $ts . $body, $secret, true));
+
+        return Illuminate\Support\Facades\Http::withHeaders([
+            'X-CoinPayments-Client' => $clientId,
+            'X-CoinPayments-Timestamp' => $ts,
+            'X-CoinPayments-Signature' => $sig,
+            'Content-Type' => 'application/json',
+        ])->timeout(30)->withBody($body, 'application/json')->post($url);
+    };
+
+    // A forgery must be refused before anything real is accepted.
+    $forged = Illuminate\Support\Facades\Http::withHeaders([
+        'X-CoinPayments-Client' => $clientId,
+        'X-CoinPayments-Timestamp' => gmdate('Y-m-d\TH:i:s'),
+        'X-CoinPayments-Signature' => base64_encode(random_bytes(32)),
+        'Content-Type' => 'application/json',
+    ])->timeout(30)->withBody(json_encode(['type' => 'InvoicePaid']), 'application/json')->post($url);
+    step('forged signature refused over HTTPS', $forged->status() === 400, 'HTTP ' . $forged->status());
+
+    $paid = $deliver('InvoicePaid');
+    step('signed InvoicePaid accepted over HTTPS', $paid->successful(), 'HTTP ' . $paid->status());
+
+    sleep(2);
+    $invoice->refresh();
+    step('invoice settled', $invoice->status === 'paid', 'status=' . $invoice->status);
+
+    $rows = fn () => $invoice->transactions()->where('transaction_id', $cpInvoiceId)->count();
+    $settled = $invoice->transactions()->where('transaction_id', $cpInvoiceId)->first();
+    step('transaction recorded against the invoice', $settled !== null, $settled ? $settled->transaction_id : 'none');
+
+    $credit = $user->credits()->where('currency_code', $invoice->currency_code)->first();
+    step('credit balance applied', $credit && (float) $credit->amount === (float) $amount,
+        $credit ? $credit->formatted_amount : 'no credit record');
+
+    // CoinPayments sends Completed after Paid, with a different notification id. Keying on
+    // that id instead of the invoice id would bank the money twice.
+    $before = $rows();
+    $deliver('InvoiceCompleted');
+    sleep(2);
+    step('Paid + Completed do not double-credit', $rows() === $before, 'rows=' . $rows());
+
+    $credit?->refresh();
+    step('balance unchanged after the second event', $credit && (float) $credit->amount === (float) $amount,
+        $credit ? $credit->formatted_amount : '-');
+}
+
 // ── Result ───────────────────────────────────────────────────────────────────────────────
 $failed = count(array_filter($steps, fn ($s) => !$s));
 printf('%s%d of %d checks passed%s', PHP_EOL, count($steps) - $failed, count($steps), PHP_EOL);
