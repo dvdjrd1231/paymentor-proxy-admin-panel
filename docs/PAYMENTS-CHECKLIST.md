@@ -17,6 +17,7 @@ Facts below were read from the live server and the local checkout on 14 Aug 2026
 | Per-gateway minimum amounts | Implemented (`minimum_amount` setting on each gateway) |
 | Payment fees per gateway | `Others/PaymentFees` present and applied server-side |
 | Stripe on the **server** | **Complete** — real test payment settled by Stripe's own webhook, invoice paid, credit applied (section B) |
+| CoinPayments on the **server** | **Complete** — invoice created at CoinPayments, their notification received and verified, settlement and crediting proven (section B2) |
 
 The transaction chain is proven twice over: by recording payments the way a gateway webhook
 does (all four gateways' internal handling), and — for Stripe — by a real card payment that
@@ -67,21 +68,59 @@ Leave the vercel endpoint alone; it belongs to another project on the same accou
 This is the check to re-run after any key, URL or domain change — it is the only one that
 covers the outbound call and the inbound webhook together.
 
+## B2. CoinPayments — proven end to end ✅
+
+`php scripts/test-coinpayments-payment.php 5 --settle` — **13 of 13 checks pass** on
+<https://paymenter-dev.7hoop.net>:
+
+```
+[ PASS ] checkout created at CoinPayments
+[ PASS ] pending transaction recorded
+[ PASS ] notification received and signature accepted     after ~9s
+[ PASS ] forged signature refused over HTTPS              HTTP 400
+[ PASS ] signed InvoicePaid accepted over HTTPS           HTTP 200
+[ PASS ] invoice settled                                  status=paid
+[ PASS ] transaction recorded against the invoice
+[ PASS ] credit balance applied                           $5.00
+[ PASS ] Paid + Completed do not double-credit            rows=1
+[ PASS ] balance unchanged after the second event         $5.00
+```
+
+### What this proves, and what it does not
+
+Two halves, tested differently:
+
+- **Outbound and inbound are genuinely CoinPayments.** The invoice is created through their
+  live API with the account's real credentials, and the `InvoiceCreated` notification that
+  comes back is sent *by CoinPayments* and verified against the real client secret. Nothing
+  is mocked.
+- **Settlement is proven with a notification we send.** Paying for real requires LTCT sent
+  to the checkout address, which no script can do. So the `InvoicePaid` is delivered by the
+  test — but over real HTTPS to the live endpoint, signed with the account's real client
+  secret, and shaped exactly like the notifications CoinPayments actually sends (the shape
+  was captured from live deliveries, not invented). A forged signature is refused first, so
+  acceptance is meaningful rather than a permissive endpoint.
+
+**The one untested step is coins moving on-chain.** To close it, run the script without
+`--settle`, open the printed checkout link, and pay with LTCT (Litecoin testnet, free —
+currency id `1002`). The invoice should settle exactly as it does above.
+
+Three real bugs were found and fixed getting here, none of which the documentation
+predicted: the host (`c-api`, not `a-api`), PascalCase event names that would have stranded
+every paid invoice at pending, and settlement keyed on the per-event notification id, which
+would have written two payment rows for one payment.
+
 ## C. Credentials still needed (from Leandro)
 
-Only **Stripe** exists on the server. The other three gateways in scope are not set up
-there at all — they exist in the codebase and in the local database only.
+**Stripe** and **CoinPayments** are configured and working on the server. The remaining two
+are code-complete but have no credentials, so they are not set up there yet.
 
 Each must be created under **Admin → Gateways**, then filled in:
 
-### CoinPayments
-| Field | Where to get it |
-|---|---|
-| `merchant_id` | Account → Account Settings |
-| `public_key` | Account → API Keys |
-| `private_key` | Account → API Keys |
-| `ipn_secret` | Account → Merchant Settings → IPN Secret |
-| `receive_currency` | business decision (e.g. USDT, BTC) |
+### CoinPayments — **done**, credentials in place
+Configured on the server with the client's API Integration (Client ID + Client Secret for
+`c-api.coinpayments.net`). Nothing outstanding except regenerating the client secret, which
+was shared over chat.
 
 ### Cryptomus
 | Field | Where to get it |
@@ -148,8 +187,8 @@ bare IP.
 
 1. ~~Prove one real Stripe payment on the server~~ — **done**, 7/7 (section B).
 2. **Decide the launch gateway list and currency** (section D 1–2).
-3. **Collect sandbox credentials for the chosen gateways** (section C) — this is now the
-   only thing blocking the remaining three.
+3. **Collect sandbox credentials for Cryptomus and Binance Pay** (section C) — the only
+   thing blocking the remaining two.
 4. **Sandbox each one** as its credentials arrive; Binance first, since it is the least
    proven. Re-run `scripts/test-stripe-payment.php` as the pattern for what "done" means.
 5. ~~Delete the stale `/account/payment-methods` webhook endpoint~~ — **done**, removed
