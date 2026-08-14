@@ -1116,23 +1116,82 @@ class ProxyPanel extends Server
      * Cache the panel's view of a service so the client area and admin can show real
      * data without another round-trip. Tolerant of the response being wrapped in `data`.
      */
+    /**
+     * The customer's `host:port` endpoints, from whichever shape the panel used.
+     *
+     * Verified against the live panel, which returns three different shapes:
+     *
+     *  1. `"ips": [{"ip": null, "port": 10000, "out": "2a10:500:…"}]`
+     *     — right after create, before a node is assigned. `ip` is null and `out`
+     *       carries the outbound address.
+     *  2. `"ips": null`
+     *     — while the service is still undeployed.
+     *  3. `{"ip": "23.159.233.5", "first": 10000, "last": 10000, "amount": 1}`
+     *     — a deployed service: one host with a **port range**, not a list.
+     *
+     * @return array<int,string>
+     */
+    private function endpointsFrom(array $payload): array
+    {
+        // Shape 3: a single host plus a first..last port range.
+        $host = $payload['ip'] ?? null;
+        $first = $payload['first'] ?? null;
+        $last = $payload['last'] ?? null;
+
+        if ($host && is_numeric($first) && is_numeric($last) && (int) $last >= (int) $first) {
+            // Guard against a nonsense range returning an enormous list.
+            $count = min((int) $last - (int) $first + 1, 1000);
+            $out = [];
+            for ($i = 0; $i < $count; $i++) {
+                $out[] = $this->formatEndpoint((string) $host, (int) $first + $i);
+            }
+
+            return $out;
+        }
+
+        // Shapes 1 and 2: an ips[] list, possibly null.
+        if (!isset($payload['ips']) || !is_array($payload['ips'])) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($payload['ips'] as $entry) {
+            if (!is_array($entry)) {
+                $out[] = (string) $entry;
+                continue;
+            }
+
+            // `ip` is null until a node is assigned; `out` is the outbound address.
+            $addr = $entry['ip'] ?? ($entry['out'] ?? null);
+            if (!$addr) {
+                continue;                    // not deployed yet — nothing to show
+            }
+
+            $out[] = isset($entry['port'])
+                ? $this->formatEndpoint((string) $addr, (int) $entry['port'])
+                : (string) $addr;
+        }
+
+        return array_values(array_filter($out));
+    }
+
+    /** IPv6 hosts are bracketed so `host:port` stays unambiguous. */
+    private function formatEndpoint(string $host, int $port): string
+    {
+        return filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)
+            ? '[' . $host . ']:' . $port
+            : $host . ':' . $port;
+    }
+
     private function cachePanelState(Service $service, array $data): void
     {
         $payload = is_array($data['data'] ?? null) ? $data['data'] : $data;
 
-        if (isset($payload['ips']) && is_array($payload['ips'])) {
-            $endpoints = [];
-            foreach ($payload['ips'] as $entry) {
-                if (is_array($entry)) {
-                    $ip = $entry['ip'] ?? null;
-                    $port = $entry['port'] ?? null;
-                    $endpoints[] = $port ? $ip . ':' . $port : $ip;
-                } else {
-                    $endpoints[] = (string) $entry;
-                }
-            }
-            $this->setProp($service, self::IPS_KEY, implode(', ', array_filter($endpoints)));
-            $this->setProp($service, self::AMOUNT_KEY, (string) count(array_filter($endpoints)));
+        $endpoints = $this->endpointsFrom($payload);
+
+        if ($endpoints !== []) {
+            $this->setProp($service, self::IPS_KEY, implode(', ', $endpoints));
+            $this->setProp($service, self::AMOUNT_KEY, (string) count($endpoints));
         }
 
         foreach ([

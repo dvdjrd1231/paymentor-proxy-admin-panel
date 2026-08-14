@@ -104,6 +104,31 @@ Two consequences the mock could never have surfaced:
    to succeed while doing nothing. `request()` now rejects any non-JSON body and reports
    the token as invalid.
 
+### Live lifecycle test (service 1146, created and cancelled)
+
+One real service was provisioned on the dev panel and removed again. Results:
+
+| Call | Result |
+|---|---|
+| `POST /newIpv6` | ✅ `{"status":"ok","id":1146,…}` — created |
+| `GET /{id}` | ✅ works |
+| `POST /auth_ips/{id}` | ⚠️ `{"status":"error","description":"Unable to update this service (2)"}` |
+| `GET /rotate/{id}/1` | ⚠️ `{"status":"error","description":"This node is not configured."}` |
+| `GET /cancel/{id}` | ✅ `{"status":"ok","description":"Service is canceled and/or expired"}` |
+| **`GET /stop/{id}`** | ❌ **HTTP 500, HTML error page** |
+| **`GET /start/{id}`** | ❌ **HTTP 500, HTML error page** |
+| **`GET /extend/{id}/{ts}`** | ❌ **HTTP 500, HTML error page** |
+| **`GET /renew/{id}`** | ❌ **HTTP 404 — endpoint does not exist** |
+
+The two `error` responses are expected for a service whose node is not yet configured.
+The four failures are not: **suspend, unsuspend, renew and set-expiry cannot work against
+this panel as it stands.** Those are exactly the calls billing automation depends on —
+overdue suspension, reactivation on payment, and renewal.
+
+This is a panel-side issue, not a module one: the module reports them as errors rather
+than pretending they worked. **Open question for the client:** are `/stop`, `/start`,
+`/extend` and `/renew` available on production, or under different names?
+
 **Protocol selection (scope §8) is the plan tag.** `-HT` plans are HTTP, `-S5` are SOCKS5
 (`1GP-3Proxy-HT` vs `1GP-3Proxy-S5`), so the customer chooses protocol by choosing a plan.
 No separate field is required or supported.
