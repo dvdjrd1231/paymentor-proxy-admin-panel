@@ -64,6 +64,15 @@ services:
       # Overlay our full custom tree (CoinPayments, ProxyPanel, BrazilianRegistration, …):
       - "./extensions:/app/extensions"
       - "./themes:/app/themes"
+      # These are part of the build too, not just extensions/themes:
+      #   lang/               - wording added by our theme and modules
+      #   app/                - the core touchpoints in docs/CORE-TOUCHPOINTS.md
+      #   database/migrations - incl. the migration lost during vendoring
+      # Without them the upstream image's copies are used and those changes are
+      # silently absent — raw lang keys, no payment fees, no gateway-error handling.
+      - "./lang:/app/lang"
+      - "./app:/app/app"
+      - "./database/migrations:/app/database/migrations"
       - appvar:/app/var               # persists .env + APP_KEY across restarts
       - ./storage/logs:/app/storage/logs
     networks: [paymenter_nw]
