@@ -16,38 +16,56 @@ Facts below were read from the live server and the local checkout on 14 Aug 2026
 | Credential leakage in error text | Fixed — refusals no longer echo key fragments |
 | Per-gateway minimum amounts | Implemented (`minimum_amount` setting on each gateway) |
 | Payment fees per gateway | `Others/PaymentFees` present and applied server-side |
-| Stripe on the **server** | Real test keys, authenticates (`acct_1TWnmp4PybDAYlv3`), can create payment intents, webhook secret set, endpoint publicly reachable |
+| Stripe on the **server** | **Complete** — real test payment settled by Stripe's own webhook, invoice paid, credit applied (section B) |
 
-The transaction chain has been proven by recording payments the way a gateway webhook does.
-That exercises everything **except** the third-party call and the inbound webhook.
-
----
-
-## B. The one blocking gap — no real payment has ever completed
-
-Evidence from the live server:
-
-- `invoice_transactions` contains **one** row: `$1.00`, gateway `(none)`, `is_credit_transaction = 1`.
-  That is an internal credit entry, not a card charge.
-- **Zero** requests to `/extensions/stripe/webhook` in 30 days of container logs.
-
-So checkout → Stripe → **webhook** → invoice paid → credit/service applied has never run
-once, end to end, with a real card. Everything else is verified; this is not.
-
-**This needs no credentials from anyone and should be done first.**
-
-1. Open `http://69.197.186.115`, sign in, add a credit deposit (or order a service).
-2. Pay with Stripe using test card `4242 4242 4242 4242`, any future expiry, any CVC.
-3. Confirm afterwards:
-   - the invoice flips to **paid**,
-   - a transaction row appears with the Stripe gateway and a real `pi_…` id,
-   - the credit balance or the service state updates.
-
-Until that passes, the payment system is not proven regardless of how the code reads.
-If the invoice stays *pending* after a successful card, the webhook is the fault — check
-Stripe Dashboard → Developers → Webhooks for delivery attempts and response codes.
+The transaction chain is proven twice over: by recording payments the way a gateway webhook
+does (all four gateways' internal handling), and — for Stripe — by a real card payment that
+Stripe itself settled via webhook. The remaining gateways still need their third-party leg
+tested, which requires sandbox credentials.
 
 ---
+
+## B. Stripe — proven end to end ✅
+
+Run `php scripts/test-stripe-payment.php [amount]` on the server. It creates a deposit
+invoice, hands off to Stripe exactly as the checkout does, pays with a test card through
+Stripe's API, then waits for Stripe's own webhook to settle the invoice. It refuses to run
+against live keys.
+
+Result on 14 Aug 2026 (`http://69.197.186.115`):
+
+```
+[ PASS ] deposit invoice created                   #INV-12 for 25 USD
+[ PASS ] gateway hand-off (payment intent created)
+[ PASS ] intent carries invoice_id metadata        pi_3U4OGY4PybDAYlv30vAAgycS
+[ PASS ] card payment confirmed at Stripe          status=succeeded
+[ PASS ] webhook arrived and marked the invoice paid   after ~2s
+[ PASS ] transaction recorded against the invoice  pi_3U4OGY4PybDAYlv30vAAgycS (25.00)
+[ PASS ] credit balance applied                    $25.00
+7 of 7 steps passed
+```
+
+### The webhook was misconfigured — fixed
+
+The first run failed at the webhook: the card charged successfully at Stripe but the
+invoice stayed *pending*. Two endpoints were registered on the Stripe account and **neither
+was correct**:
+
+| Registered URL | Problem |
+|---|---|
+| `http://69.197.186.115/account/payment-methods` | wrong path — a client-area page, not the webhook route |
+| `https://ai4senior-info.vercel.app/api/stripe-webhook` | a different project sharing the same Stripe account |
+
+The route the extension actually serves is `/extensions/stripe/webhook`. A correct endpoint
+was registered (`we_1U4OFz4PybDAYlv3zOAcQ5Go`) and its signing secret stored, after which
+the loop closed in ~2 seconds.
+
+**Still to tidy:** the `/account/payment-methods` endpoint is this project's mistake and
+should be deleted in the Stripe dashboard — it will keep collecting failed deliveries.
+Leave the vercel endpoint alone; it belongs to another project on the same account.
+
+This is the check to re-run after any key, URL or domain change — it is the only one that
+covers the outbound call and the inbound webhook together.
 
 ## C. Credentials still needed (from Leandro)
 
@@ -126,9 +144,12 @@ bare IP.
 
 ## Priority order
 
-1. **Prove one real Stripe payment on the server** (section B) — no credentials needed.
+1. ~~Prove one real Stripe payment on the server~~ — **done**, 7/7 (section B).
 2. **Decide the launch gateway list and currency** (section D 1–2).
-3. **Collect credentials for the chosen gateways** (section C).
+3. **Collect sandbox credentials for the chosen gateways** (section C) — this is now the
+   only thing blocking the remaining three.
 4. **Sandbox each one** as its credentials arrive; Binance first, since it is the least
-   proven.
-5. **Switch Stripe to live keys, move to a domain with HTTPS, re-point webhooks.**
+   proven. Re-run `scripts/test-stripe-payment.php` as the pattern for what "done" means.
+5. **Delete the stale `/account/payment-methods` webhook endpoint** in Stripe.
+6. **Switch Stripe to live keys, move to a domain with HTTPS, re-point webhooks**, then
+   re-run the end-to-end test against the new domain.
