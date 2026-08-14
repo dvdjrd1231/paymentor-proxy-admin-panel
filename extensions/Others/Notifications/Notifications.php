@@ -11,6 +11,12 @@ use App\Models\Notification as NotificationModel;
 use App\Models\ServiceCancellation;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Events\Invoice\Paid as InvoicePaid;
+use App\Events\InvoiceTransaction\Created as TransactionCreated;
+use App\Events\Service\Updated as ServiceUpdated;
+use App\Events\TicketMessage\Created as TicketMessageCreated;
+use App\Events\User\Created as UserCreated;
+use App\Models\Service;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Paymenter\Extensions\Others\Notifications\Jobs\SendTelegramMessage;
@@ -78,6 +84,45 @@ class Notifications extends Extension
                 'type' => 'checkbox',
                 'required' => false,
             ],
+            [
+                'name' => 'notify_admin_payments',
+                'label' => 'Alert admins on payments',
+                'description' => 'Fires when an invoice is marked paid, whichever gateway settled it.',
+                'type' => 'checkbox',
+                'default' => true,
+                'required' => false,
+            ],
+            [
+                'name' => 'notify_admin_webhooks',
+                'label' => 'Alert admins on gateway webhooks',
+                'description' => 'Succeeded and failed gateway transactions (CoinPayments IPNs, Binance Pay, Cryptomus). '
+                    . 'Failures are sent as critical alerts. Pending states are ignored to avoid noise.',
+                'type' => 'checkbox',
+                'default' => true,
+                'required' => false,
+            ],
+            [
+                'name' => 'notify_admin_provisioning',
+                'label' => 'Alert admins on provisioning',
+                'description' => 'A service being provisioned, and — as a critical alert — any provisioning failure.',
+                'type' => 'checkbox',
+                'default' => true,
+                'required' => false,
+            ],
+            [
+                'name' => 'notify_admin_suspensions',
+                'label' => 'Alert admins on service suspensions',
+                'type' => 'checkbox',
+                'default' => true,
+                'required' => false,
+            ],
+            [
+                'name' => 'notify_admin_changes',
+                'label' => 'Alert admins on administrative changes',
+                'description' => 'New customer registrations.',
+                'type' => 'checkbox',
+                'required' => false,
+            ],
         ];
     }
 
@@ -116,6 +161,135 @@ class Notifications extends Extension
             }
             $this->notifyAdmins($this->formatCancellation($event->cancellation));
         });
+
+        // ── Payments ────────────────────────────────────────────────────────────
+        Event::listen(InvoicePaid::class, function (InvoicePaid $event) {
+            if (!$this->config('notify_admin_payments')) {
+                return;
+            }
+            $invoice = $event->invoice;
+            $this->notifyAdmins(sprintf(
+                "\u{1F4B0} <b>Invoice paid</b>\nInvoice #%s\nCustomer: %s\nAmount: %s",
+                $invoice->number ?? $invoice->id,
+                e((string) ($invoice->user?->email ?? 'unknown')),
+                e((string) $invoice->formattedTotal),
+            ));
+        });
+
+        // ── Webhooks / gateway activity ─────────────────────────────────────────
+        // Every gateway webhook lands as an InvoiceTransaction, so one listener covers
+        // CoinPayments IPNs, Binance Pay callbacks and Cryptomus alike.
+        Event::listen(TransactionCreated::class, function (TransactionCreated $event) {
+            if (!$this->config('notify_admin_webhooks')) {
+                return;
+            }
+            $transaction = $event->invoiceTransaction;
+            $status = $transaction->status instanceof \BackedEnum
+                ? $transaction->status->value
+                : (string) $transaction->status;
+
+            // Only the states an admin must act on — routine "processing" rows are noise.
+            if (!in_array(strtolower($status), ['failed', 'succeeded'], true)) {
+                return;
+            }
+
+            $failed = strtolower($status) === 'failed';
+            $message = sprintf(
+                "%s <b>Gateway %s</b>\nInvoice #%s\nGateway: %s\nRef: %s",
+                $failed ? "\u{26A0}" : "\u{2705}",
+                e($status),
+                $transaction->invoice_id,
+                e((string) ($transaction->gateway?->name ?? 'credits')),
+                e((string) $transaction->transaction_id),
+            );
+
+            $failed ? $this->notifyCritical($message) : $this->notifyAdmins($message);
+        });
+
+        // ── Provisioning and suspension ─────────────────────────────────────────
+        Event::listen(ServiceUpdated::class, function (ServiceUpdated $event) {
+            $service = $event->service;
+
+            if (!$service->isDirty('status')) {
+                return;
+            }
+
+            if ($service->status === Service::STATUS_SUSPENDED && $this->config('notify_admin_suspensions')) {
+                $this->notifyAdmins(sprintf(
+                    "\u{23F8} <b>Service suspended</b>\nService #%s (%s)\nCustomer: %s",
+                    $service->id,
+                    e((string) ($service->product?->name ?? '')),
+                    e((string) ($service->user?->email ?? '')),
+                ));
+            }
+
+            if ($service->status === Service::STATUS_ACTIVE && $this->config('notify_admin_provisioning')) {
+                $this->notifyAdmins(sprintf(
+                    "\u{1F680} <b>Service provisioned</b>\nService #%s (%s)\nCustomer: %s",
+                    $service->id,
+                    e((string) ($service->product?->name ?? '')),
+                    e((string) ($service->user?->email ?? '')),
+                ));
+            }
+        });
+
+        // ── Ticket replies ──────────────────────────────────────────────────────
+        Event::listen(TicketMessageCreated::class, function (TicketMessageCreated $event) {
+            if (!$this->config('notify_admin_tickets')) {
+                return;
+            }
+            $message = $event->ticketMessage;
+
+            // Staff replies are written by staff — only surface customer ones.
+            if ($message->user_id !== $message->ticket?->user_id) {
+                return;
+            }
+
+            $this->notifyAdmins(sprintf(
+                "\u{1F4AC} <b>Ticket reply</b>\n#%s %s\nFrom: %s",
+                $message->ticket?->id,
+                e((string) ($message->ticket?->subject ?? '')),
+                e((string) ($message->user?->email ?? '')),
+            ));
+        });
+
+        // ── Administrative changes ──────────────────────────────────────────────
+        Event::listen(UserCreated::class, function (UserCreated $event) {
+            if (!$this->config('notify_admin_changes')) {
+                return;
+            }
+            $this->notifyAdmins(sprintf(
+                "\u{1F464} <b>New customer</b>\n%s",
+                e((string) $event->user->email),
+            ));
+        });
+    }
+
+    /**
+     * Report a provisioning failure as a critical alert.
+     *
+     * Called by Others/ProvisioningOps so a panel outage reaches an admin immediately,
+     * rather than waiting to be spotted in the admin list. Safe to call when this
+     * extension is disabled or misconfigured — it never throws.
+     */
+    public static function provisioningFailed(string $extension, int $serviceId, string $error): void
+    {
+        try {
+            $instance = new self;
+
+            if (!$instance->config('notify_admin_provisioning')) {
+                return;
+            }
+
+            $instance->notifyCritical(sprintf(
+                "<b>Provisioning failed</b>\n%s — service #%d\n%s",
+                e($extension),
+                $serviceId,
+                e(\Str::limit($error, 300)),
+            ));
+        } catch (\Throwable $e) {
+            // A notification failure must never mask the provisioning failure.
+        }
     }
 
     // ── Public helpers other modules can call for critical/admin alerts ─────────
@@ -131,7 +305,18 @@ class Notifications extends Extension
         if ($token === '' || $chat === '') {
             return;
         }
-        SendTelegramMessage::dispatch($token, $chat, $message);
+
+        // A notification must never break the operation that triggered it. The job
+        // deliberately throws so the queue worker retries it — but on a `sync` queue
+        // that exception would propagate straight into the caller, so a Telegram
+        // outage could fail a provisioning run or a payment. Contain it here.
+        try {
+            SendTelegramMessage::dispatch($token, $chat, $message);
+        } catch (\Throwable $e) {
+            Log::channel('stack')->warning('[Notifications] Telegram dispatch failed', [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /** Convenience for critical failures (prefixed + always attempted). */
@@ -166,7 +351,16 @@ class Notifications extends Extension
             $text .= "\n" . e($notification->url);
         }
 
-        SendTelegramMessage::dispatch($token, (string) $chatId, $text);
+        // Same containment as notifyAdmins(): never let a delivery problem escape into
+        // whatever created the notification.
+        try {
+            SendTelegramMessage::dispatch($token, (string) $chatId, $text);
+        } catch (\Throwable $e) {
+            Log::channel('stack')->warning('[Notifications] Telegram dispatch failed', [
+                'user' => $notification->user_id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function formatTicket(Ticket $ticket): string

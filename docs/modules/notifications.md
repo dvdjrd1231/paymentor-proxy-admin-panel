@@ -94,3 +94,37 @@ Gateways and the ProxyPanel module can call it in their `catch` blocks.
 | Customer gets nothing | They haven't saved a **Telegram Chat ID**, or "notify customers" is off |
 | "chat not found" in logs | Wrong chat id, or the user/group never messaged the bot first |
 | Admin alerts missing | **Admin Chat ID** empty, or the specific toggle disabled |
+
+
+## Events (scope §11)
+
+All eight of the scope's minimum events reach the admin channel, each behind its own
+toggle in the extension settings:
+
+| Scope event | Source | Setting |
+|---|---|---|
+| Payments | `Invoice\Paid` | `notify_admin_payments` |
+| Support tickets | `Ticket\Created` + `TicketMessage\Created` (customer replies only) | `notify_admin_tickets` |
+| Service provisioning | `Service\Updated` → active | `notify_admin_provisioning` |
+| Service suspension | `Service\Updated` → suspended | `notify_admin_suspensions` |
+| Service cancellation | `ServiceCancellation\Created` | `notify_admin_cancellations` |
+| Critical failures | `ProvisioningOps::failed()` → `provisioningFailed()` | `notify_admin_provisioning` |
+| Webhooks | `InvoiceTransaction\Created` — succeeded/failed only | `notify_admin_webhooks` |
+| Administrative changes | `User\Created` | `notify_admin_changes` |
+
+Customers additionally receive every in-app notification mirrored to Telegram
+(`notify_customers`), once they link a chat id.
+
+Only terminal gateway states are announced — a webhook that merely moves a transaction to
+*processing* is not worth waking anyone for, and CoinPayments sends several per payment.
+Failed gateway transactions and provisioning failures go out as **critical** alerts.
+
+### Delivery never breaks the operation
+
+`SendTelegramMessage` throws on failure so the queue worker retries it with backoff. That
+is correct for a queued job, but on a `sync` queue the exception would propagate into
+whatever triggered it — a Telegram outage could fail a provisioning run or a payment.
+Dispatch is therefore wrapped: a delivery problem is logged and dropped, never raised.
+
+This was found by running the provisioning suite with Telegram configured but
+unreachable — every provisioning test failed until the dispatch was contained.
