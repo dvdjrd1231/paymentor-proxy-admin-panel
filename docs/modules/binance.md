@@ -16,11 +16,13 @@ A Binance **Merchant** account with Binance Pay enabled, and API credentials
 ## Configuration
 
 1. Enable **Binance Pay Gateway** under **Admin → Extensions → Gateways** (or
-   `php artisan app:extension:enable Gateways/Binance`).
+   **Admin → Extensions**; enabling there runs the extension's `installed()` hook).
 2. Create a Gateway using it and set:
    - **API Key (Certificate SN)** — encrypted,
    - **API Secret** — encrypted,
-   - **Order Currency** — e.g. `USDT`, `BUSD`, `EUR` (must be enabled on your account).
+   - **Order Currency** — e.g. `USDT`, `BUSD`, `EUR` (must be enabled on your account),
+   - **Test Mode** — see § Test mode below,
+   - **Sandbox API URL** — only used when Test Mode is on.
 3. In the Binance Merchant dashboard, set the **webhook URL** to:
    ```
    https://YOUR-DOMAIN/extensions/binance/webhook
@@ -48,10 +50,23 @@ A Binance **Merchant** account with Binance Pay enabled, and API credentials
 - Credentials are **encrypted** settings; never hard-coded; secrets never logged.
 - Honors the **Country-based Gateway Rules** module (`canUseGateway()`).
 
-## Testing
+## Test mode
 
-Binance Pay has no public sandbox for all merchants; test with a live merchant account
-and a small real order, watching `storage/logs/laravel-*.log` for `[Binance]` entries.
+Binance does **not** publish a single global sandbox host — sandbox access is issued per
+merchant along with test credentials. So the toggle works like this:
+
+| Setting | Effect |
+|---|---|
+| **Test Mode** off (default) | All API calls go to `https://bpay.binanceapi.com` (live). |
+| **Test Mode** on | Calls go to **Sandbox API URL**. If that is blank, it falls back to `https://bpay.binanceapi.com`. |
+
+Test Mode also stamps `test_mode` on the `[Binance]` "Created Binance Pay order" log line,
+so a test order is identifiable in the payment log.
+
+> Enter the sandbox host Binance gave you with your test merchant account in **Sandbox API
+> URL**, and use the matching test API key/secret. If you have no sandbox account, leave
+> Test Mode off and test with a live merchant account and a small real order, watching
+> `storage/logs/laravel-*.log` for `[Binance]` entries.
 
 ## Troubleshooting
 

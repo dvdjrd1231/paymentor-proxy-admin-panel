@@ -43,7 +43,32 @@ class Binance extends Gateway
 {
     private const BASE_URL = 'https://bpay.binanceapi.com';
 
+    /**
+     * Binance issues sandbox access per merchant rather than publishing one global test
+     * host, so test mode takes the base URL from a setting and only falls back to this
+     * documented default. See docs/modules/binance.md § Test mode.
+     */
+    private const DEFAULT_SANDBOX_URL = 'https://bpay.binanceapi.com';
+
     private const LOG_CHANNEL = 'stack';
+
+    /** Live vs sandbox host for every API call. */
+    private function baseUrl(): string
+    {
+        if (!$this->config('test_mode')) {
+            return self::BASE_URL;
+        }
+
+        $url = trim((string) $this->config('sandbox_url'));
+
+        return $url !== '' ? rtrim($url, '/') : self::DEFAULT_SANDBOX_URL;
+    }
+
+    /** True when this gateway is running against sandbox credentials. */
+    private function isTestMode(): bool
+    {
+        return (bool) $this->config('test_mode');
+    }
 
     public function boot()
     {
@@ -89,6 +114,20 @@ class Binance extends Gateway
                 'description' => 'Fiat/crypto currency for the order amount (e.g. USDT, BUSD, EUR). Must be supported by your Binance Pay merchant account.',
                 'required' => true,
             ],
+            [
+                'name' => 'test_mode',
+                'label' => 'Test Mode',
+                'type' => 'checkbox',
+                'description' => 'Use sandbox credentials and the sandbox host below. Orders created in test mode are labelled in the payment log.',
+                'required' => false,
+            ],
+            [
+                'name' => 'sandbox_url',
+                'label' => 'Sandbox API URL',
+                'type' => 'text',
+                'description' => 'Only used when Test Mode is on. Binance issues the sandbox host with your test merchant account; leave blank to use ' . self::DEFAULT_SANDBOX_URL . '.',
+                'required' => false,
+            ],
         ];
     }
 
@@ -128,6 +167,7 @@ class Binance extends Gateway
             'invoice_id' => $invoice->id,
             'merchantTradeNo' => $merchantTradeNo,
             'prepayId' => $data['prepayId'] ?? null,
+            'test_mode' => $this->isTestMode(),
         ]);
 
         return view('gateways.binance::pay', [
@@ -161,7 +201,7 @@ class Binance extends Gateway
             'BinancePay-Signature' => $signature,
         ])->withBody($payload, 'application/json')
             ->timeout(20)
-            ->post(self::BASE_URL . $path);
+            ->post($this->baseUrl() . $path);
 
         $json = $response->json() ?? [];
 

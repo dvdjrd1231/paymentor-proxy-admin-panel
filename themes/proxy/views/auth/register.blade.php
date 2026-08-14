@@ -37,7 +37,7 @@
         <span>Create an account with us&hellip;</span>
     </div>
     <p class="wf-crumbs">
-        <a href="{{ route('home') }}" wire:navigate>Portal Home</a><span>/</span>{{ __('auth.sign_up_title') }}
+        <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a><span>/</span>{{ __('auth.sign_up_title') }}
     </p>
     <hr class="wf-title-rule">
 
@@ -53,7 +53,7 @@
                 <ul class="wf-aside-list">
                     <li><a href="{{ route('login') }}" wire:navigate>{{ __('auth.sign_in') }} <span>&rsaquo;</span></a></li>
                     @if (Route::has('password.request'))
-                        <li><a href="{{ route('password.request') }}" wire:navigate>Lost Password Reset <span>&rsaquo;</span></a></li>
+                        <li><a href="{{ route('password.request') }}" wire:navigate>{{ __('theme.lost_password') }} <span>&rsaquo;</span></a></li>
                     @endif
                 </ul>
             </div>
@@ -61,7 +61,7 @@
 
         <form class="wf-card" wire:submit.prevent="submit" id="register">
         {{-- ─────────────── Personal Information ─────────────── --}}
-        <div class="wf-section">Personal Information</div>
+        <div class="wf-section">{{ __('theme.personal_information') }}</div>
         <div class="wf-grid">
             <div class="wf-field">
                 <label for="first_name">{{ __('general.input.first_name') }}<span class="wf-req">*</span></label>
@@ -86,7 +86,7 @@
 
             @if ($has('phone'))
                 <div class="wf-field">
-                    <label for="phone">Phone Number<span class="wf-req">*</span></label>
+                    <label for="phone">{{ __('theme.phone_number') }}<span class="wf-req">*</span></label>
                     <input id="phone" type="text" class="wf-input" wire:model="properties.phone" placeholder="Phone Number">
                     @error('properties.phone') <span class="wf-error">{{ $message }}</span> @enderror
                 </div>
@@ -94,11 +94,11 @@
         </div>
 
         {{-- ─────────────── Billing Address ─────────────── --}}
-        <div class="wf-section">Billing Address</div>
+        <div class="wf-section">{{ __('theme.billing_address') }}</div>
         <div class="wf-grid">
             @if ($has('company_name'))
                 <div class="wf-field wf-col-2">
-                    <label for="company_name">Company Name <span class="wf-section-note">(Optional)</span></label>
+                    <label for="company_name">{{ __('theme.company_name') }} <span class="wf-section-note">{{ __('theme.optional') }}</span></label>
                     <input id="company_name" type="text" class="wf-input" wire:model="properties.company_name"
                         placeholder="Company Name (Optional)">
                     @error('properties.company_name') <span class="wf-error">{{ $message }}</span> @enderror
@@ -107,7 +107,7 @@
 
             @if ($has('address'))
                 <div class="wf-field wf-col-2">
-                    <label for="address">Street Address<span class="wf-req">*</span></label>
+                    <label for="address">{{ __('theme.street_address') }}<span class="wf-req">*</span></label>
                     <input id="address" type="text" class="wf-input" wire:model="properties.address" placeholder="Street Address">
                     @error('properties.address') <span class="wf-error">{{ $message }}</span> @enderror
                 </div>
@@ -115,7 +115,7 @@
 
             @if ($has('address2'))
                 <div class="wf-field wf-col-2">
-                    <label for="address2">Street Address 2</label>
+                    <label for="address2">{{ __('theme.street_address_2') }}</label>
                     <input id="address2" type="text" class="wf-input" wire:model="properties.address2" placeholder="Street Address 2">
                     @error('properties.address2') <span class="wf-error">{{ $message }}</span> @enderror
                 </div>
@@ -123,7 +123,7 @@
 
             @if ($has('city'))
                 <div class="wf-field">
-                    <label for="city">City<span class="wf-req">*</span></label>
+                    <label for="city">{{ __('theme.city') }}<span class="wf-req">*</span></label>
                     <input id="city" type="text" class="wf-input" wire:model="properties.city" placeholder="City">
                     @error('properties.city') <span class="wf-error">{{ $message }}</span> @enderror
                 </div>
@@ -131,7 +131,7 @@
 
             @if ($has('state'))
                 <div class="wf-field">
-                    <label for="state">State/Region<span class="wf-req">*</span></label>
+                    <label for="state">{{ __('theme.state_region') }}<span class="wf-req">*</span></label>
                     <input id="state" type="text" class="wf-input" wire:model="properties.state" placeholder="State/Region">
                     @error('properties.state') <span class="wf-error">{{ $message }}</span> @enderror
                 </div>
@@ -139,7 +139,7 @@
 
             @if ($has('zip'))
                 <div class="wf-field">
-                    <label for="zip">Postcode<span class="wf-req">*</span></label>
+                    <label for="zip">{{ __('theme.postcode') }}<span class="wf-req">*</span></label>
                     <input id="zip" type="text" class="wf-input" wire:model="properties.zip" placeholder="Postcode">
                     @error('properties.zip') <span class="wf-error">{{ $message }}</span> @enderror
                 </div>
@@ -147,10 +147,10 @@
 
             @if ($countryProp)
                 <div class="wf-field">
-                    <label for="country">Country<span class="wf-req">*</span></label>
+                    <label for="country">{{ __('theme.country') }}<span class="wf-req">*</span></label>
                     {{-- .live so the Brazil block appears/disappears as soon as this changes --}}
                     <select id="country" class="wf-select" wire:model.live="properties.country">
-                        <option value="">Select a country</option>
+                        <option value="">{{ __('theme.select_country') }}</option>
                         @foreach ($countryOptions as $key => $label)
                             <option value="{{ $countryIsAssoc ? $key : $label }}">{{ $label }}</option>
                         @endforeach
@@ -193,7 +193,7 @@
 
                     @if ($has('cnpj'))
                         <div class="wf-field">
-                            <label for="cnpj">CNPJ</label>
+                            <label for="cnpj">{{ __('theme.cnpj') }}</label>
                             <input id="cnpj" type="text" class="wf-input" wire:model="properties.cnpj"
                                 placeholder="00.000.000/0000-00" inputmode="numeric" maxlength="18">
                             @error('properties.cnpj') <span class="wf-error">{{ $message }}</span> @enderror
@@ -202,7 +202,7 @@
 
                     @if ($has('trade_name'))
                         <div class="wf-field">
-                            <label for="trade_name">Nome Fantasia <span class="wf-section-note">(Trade Name)</span></label>
+                            <label for="trade_name">{{ __('theme.trade_name') }} <span class="wf-section-note">{{ __('theme.trade_name_hint') }}</span></label>
                             <input id="trade_name" type="text" class="wf-input" wire:model="properties.trade_name"
                                 placeholder="Nome Fantasia">
                             @error('properties.trade_name') <span class="wf-error">{{ $message }}</span> @enderror
@@ -232,7 +232,7 @@
         @endif
 
         {{-- ─────────────── Account Security ─────────────── --}}
-        <div class="wf-section">Account Security</div>
+        <div class="wf-section">{{ __('theme.account_security') }}</div>
         <div class="wf-grid">
             <div class="wf-field">
                 <label for="password">{{ __('general.input.password') }}<span class="wf-req">*</span></label>

@@ -13,11 +13,13 @@ Notifications) for settlement.
 
 The extension ships in this repository. Enable it in the admin panel:
 
-1. **Admin → Extensions → Gateways**, enable **CoinPayments Gateway**, or run:
-   ```bash
-   php artisan app:extension:enable Gateways/CoinPayments
-   ```
+1. **Admin → Extensions**, enable **CoinPayments Gateway**. Enabling there runs the
+   extension's `installed()` hook, which applies any extension migrations.
 2. Create a **Gateway** using this extension and fill the settings below.
+
+> There is no `app:extension:enable` artisan command. The CLI equivalent of only the
+> install hook (for an extension already registered in the database) is
+> `php artisan app:extension:install gateway CoinPayments`.
 
 ## Configuration
 
@@ -63,11 +65,42 @@ by the HMAC signature.
 - **No hardcoded secrets** — all credentials are encrypted extension settings.
 - **Logging** — every state transition and error is logged with `[CoinPayments]` context.
 
-## Testing
+## Test mode
 
-Use CoinPayments testnet coin `LTCT` as the **Receive Currency**, create an invoice, and pay it
-from a testnet wallet. Watch `storage/logs/laravel-*.log` for `[CoinPayments]` entries and
-confirm the invoice moves to *Paid*.
+CoinPayments has **no separate sandbox host** — testing is done on the live API using the
+testnet coin `LTCT` (Litecoin Testnet). Because the only thing separating a test payment
+from a real one is the currency, a mismatch is a real money bug in both directions, so the
+module refuses to create a transaction when the two disagree:
+
+| Test Mode | Receive Currency | Result |
+|---|---|---|
+| on | `LTCT` | ✅ testnet transaction |
+| off | anything but `LTCT` | ✅ live transaction |
+| on | not `LTCT` | ❌ refuses — "would create a live transaction from a test configuration" |
+| off | `LTCT` | ❌ refuses — "would settle a real invoice with testnet coins" |
+
+Test Mode also stamps `test_mode` on the `[CoinPayments]` "Created CoinPayments
+transaction" log line.
+
+To test: turn **Test Mode** on, set **Receive Currency** to `LTCT`, create an invoice and
+pay it from a testnet wallet. Watch `storage/logs/laravel-*.log` for `[CoinPayments]`
+entries and confirm the invoice moves to *Paid*.
+
+### Underpayment and timeouts
+
+CoinPayments reports both as a negative `status`. The module records a **failed** payment
+and leaves the invoice **unpaid** — a partial amount is never credited, because a
+partially-paid invoice would still trigger provisioning. When the IPN carries
+`received_amount` / `amount2`, an underpayment is logged at `warning` level with both
+figures:
+
+```
+[CoinPayments] CoinPayments payment underpaid — invoice left unpaid
+  {"invoice_id":42,"txn_id":"...","received":0.004,"expected":0.010,"currency":"LTCT"}
+```
+
+Statuses `0`–`99` (including `1`, "funds received, awaiting confirmations") stay
+*processing*, so the invoice shows *Payment processing* until it confirms.
 
 ## Troubleshooting
 
