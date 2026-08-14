@@ -42,13 +42,9 @@ return [
         ],
 
         'CoinPayments' => [
-            'merchant_id' => env('PAYMENT_DEV_COINPAYMENTS_MERCHANT_ID'),
-            'public_key' => env('PAYMENT_DEV_COINPAYMENTS_PUBLIC_KEY'),
-            'private_key' => env('PAYMENT_DEV_COINPAYMENTS_PRIVATE_KEY'),
-            'ipn_secret' => env('PAYMENT_DEV_COINPAYMENTS_IPN_SECRET'),
-            // LTCT is CoinPayments' free Litecoin-testnet currency, used for test buys.
-            'receive_currency' => env('PAYMENT_DEV_COINPAYMENTS_RECEIVE_CURRENCY'),
-            'test_mode' => env('PAYMENT_DEV_COINPAYMENTS_TEST_MODE'),
+            'client_id' => env('PAYMENT_DEV_COINPAYMENTS_CLIENT_ID'),
+            'client_secret' => env('PAYMENT_DEV_COINPAYMENTS_CLIENT_SECRET'),
+            'api_url' => env('PAYMENT_DEV_COINPAYMENTS_API_URL'),
         ],
 
         'Cryptomus' => [
