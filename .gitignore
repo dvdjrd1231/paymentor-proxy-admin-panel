@@ -34,3 +34,8 @@ Thumbs.db
 # The original client's business input files (kept out of delivery build,
 # but tracked here for context). Uncomment to exclude from delivery:
 # /File
+
+# Database exports containing local test data (incl. password hashes).
+# The clean export is committed; regenerate the full one with
+# `php scripts/export-database.php` when you need it.
+/database/export/paymenter-full.sql

@@ -7,14 +7,14 @@
 <div class="wf-page">
     <div class="wf-title">
         <h1>{{ __('auth.sign_in_title') }}</h1>
-        <span>This page is restricted</span>
+        <span>{{ __('theme.restricted') }}</span>
     </div>
     <hr class="wf-title-rule">
 
     <div class="wf-split">
         {{-- Sidebar, mirroring WHMCS's "Already Registered?" panel --}}
         <aside class="wf-aside">
-            <div class="wf-aside-head">Need an account?</div>
+            <div class="wf-aside-head">{{ __('theme.need_account') }}</div>
             <div class="wf-aside-body">
                 <p style="margin:0 0 .9rem">
                     Not registered with us yet? Create an account to order services and
@@ -49,7 +49,7 @@
 
             <label class="wf-check">
                 <input type="checkbox" wire:model="remember">
-                <span>Remember me</span>
+                <span>{{ __('theme.remember_me') }}</span>
             </label>
 
             <div style="margin-top:1rem">

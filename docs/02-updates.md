@@ -36,6 +36,6 @@ after every upstream merge.
 
 ## After updating
 
-- Re-run `php artisan app:extension:enable ...` if an extension was disabled by the update.
+- Re-enable any extension the update disabled under **Admin → Extensions** (this re-runs its `installed()` hook, applying any new extension migrations).
 - Verify webhooks still resolve (`php artisan route:list | grep extensions`).
 - Smoke-test a payment and a provisioning action in staging before production.

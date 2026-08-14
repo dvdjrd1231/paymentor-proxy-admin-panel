@@ -33,7 +33,10 @@ the repo root; our work is layered on top **without editing core**.
 - **Events:** subscribe in `boot()` via `Event::listen(App\Events\...)`.
 
 ## Commands
-- Enable/disable: `php artisan app:extension:enable Gateways/CoinPayments`.
+- Enable/disable: **Admin → Extensions** (this runs the extension's `installed()` hook,
+  which applies its migrations). There is **no** `app:extension:enable` command; the CLI only
+  has `app:extension:install {type} {name}` (e.g. `gateway CoinPayments`), `app:extension:disable`,
+  `app:extension:create`, `app:extension:upgrade`.
 - Routes: `php artisan route:list | grep extensions`.
 - Lint PHP quickly: `php -l <file>`.
 - Local dev needs **PHP 8.3+** (this workstation has 8.2 → boot on the server / a 8.3 container).

@@ -122,6 +122,10 @@ class AdminPanelProvider extends PanelProvider
                 $panel->discoverResources(in: base_path('extensions' . '/' . $extension->path . '/Admin/Resources'), for: $extension->namespace . '\\Admin\\Resources');
                 $panel->discoverPages(in: base_path('extensions' . '/' . $extension->path . '/Admin/Pages'), for: $extension->namespace . '\\Admin\\Pages');
                 $panel->discoverClusters(in: base_path('extensions' . '/' . $extension->path . '/Admin/Clusters'), for: $extension->namespace . '\\Admin\\Clusters');
+                // Core discovers Resources/Pages/Clusters from extensions but not Widgets,
+                // so extension dashboard widgets (Others/AdminOps) never load.
+                // See docs/CORE-TOUCHPOINTS.md #3.
+                $panel->discoverWidgets(in: base_path('extensions' . '/' . $extension->path . '/Admin/Widgets'), for: $extension->namespace . '\\Admin\\Widgets');
             }
         } catch (Exception $e) {
             // Do nothing

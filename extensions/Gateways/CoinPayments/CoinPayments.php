@@ -110,7 +110,47 @@ class CoinPayments extends Gateway
                 'description' => 'Coin you want to receive (currency2), e.g. BTC, LTCT (testnet), USDT.TRC20. CoinPayments auto-converts the buyer\'s coin.',
                 'required' => true,
             ],
+            [
+                'name' => 'test_mode',
+                'label' => 'Test Mode',
+                'type' => 'checkbox',
+                'description' => 'CoinPayments has no separate sandbox host — testing is done with testnet coins '
+                    . '(set Receive Currency to LTCT). Enabling this validates that, labels transactions in the '
+                    . 'payment log, and is required before the module will accept a testnet currency.',
+                'required' => false,
+            ],
         ];
+    }
+
+    /** True when this gateway is configured for testnet. */
+    private function isTestMode(): bool
+    {
+        return (bool) $this->config('test_mode');
+    }
+
+    /**
+     * CoinPayments testnet coins are worthless, and they are selected by currency rather
+     * than by endpoint — so a mismatch between Test Mode and Receive Currency is a real
+     * money bug in either direction. Fail loudly instead of taking the payment.
+     */
+    private function guardTestMode(): void
+    {
+        // LTCT is CoinPayments' testnet coin (Litecoin Testnet).
+        $isTestCurrency = strtoupper((string) $this->config('receive_currency')) === 'LTCT';
+
+        if ($this->isTestMode() && !$isTestCurrency) {
+            throw new \RuntimeException(
+                'CoinPayments is in Test Mode but Receive Currency is not a testnet coin (expected LTCT). '
+                . 'Refusing to create a live transaction from a test configuration.'
+            );
+        }
+
+        if (!$this->isTestMode() && $isTestCurrency) {
+            throw new \RuntimeException(
+                'CoinPayments Receive Currency is LTCT (testnet) but Test Mode is off. '
+                . 'Refusing to settle a real invoice with testnet coins.'
+            );
+        }
     }
 
     /**
@@ -122,6 +162,8 @@ class CoinPayments extends Gateway
      */
     public function pay($invoice, $total)
     {
+        $this->guardTestMode();
+
         $fields = [
             'version'     => 1,
             'cmd'         => 'create_transaction',
@@ -156,6 +198,7 @@ class CoinPayments extends Gateway
             'txn_id'     => $result->txn_id,
             'amount'     => $total,
             'currency'   => $invoice->currency_code,
+            'test_mode'  => $this->isTestMode(),
         ]);
 
         return view('gateways.coinpayments::pay', [
@@ -253,20 +296,47 @@ class CoinPayments extends Gateway
             return response('OK', 200);
         }
 
+        // How much the buyer actually sent, in the coin they paid with. Present on
+        // underpayments and on partially-confirmed transactions.
+        $received = $request->input('received_amount') !== null ? (float) $request->input('received_amount') : null;
+        $expected = $request->input('amount2') !== null ? (float) $request->input('amount2') : null;
+        $underpaid = $received !== null && $expected !== null && $received > 0 && $received < $expected;
+
         // CoinPayments status semantics:
         //   >= 100 or == 2 : payment complete
-        //   0..99          : pending / in progress
-        //   < 0            : cancelled / timed out / error
+        //   0..99          : pending / in progress (1 = funds received, awaiting confirms)
+        //   < 0            : cancelled / timed out / underpaid / error
         if ($status >= 100 || $status === 2) {
             // Idempotent: updateOrCreate keyed on txn_id inside a locked tx.
             ExtensionHelper::addPayment($invoice->id, 'CoinPayments', $amount, $fee, $txnId);
             $this->log('info', 'CoinPayments payment completed', ['invoice_id' => $invoice->id, 'txn_id' => $txnId, 'amount' => $amount]);
         } elseif ($status < 0) {
+            // Underpaid and timed-out both land here. Either way the invoice must stay
+            // unpaid — we never credit a partial amount, because a partially paid invoice
+            // would still provision the service.
             ExtensionHelper::addFailedPayment($invoice->id, 'CoinPayments', $amount, $fee, $txnId);
-            $this->log('info', 'CoinPayments payment failed/cancelled', ['invoice_id' => $invoice->id, 'txn_id' => $txnId, 'status_text' => $request->input('status_text')]);
+
+            $this->log($underpaid ? 'warning' : 'info', $underpaid
+                ? 'CoinPayments payment underpaid — invoice left unpaid'
+                : 'CoinPayments payment failed/cancelled', [
+                    'invoice_id' => $invoice->id,
+                    'txn_id' => $txnId,
+                    'status' => $status,
+                    'status_text' => $request->input('status_text'),
+                    'received' => $received,
+                    'expected' => $expected,
+                    'currency' => $request->input('currency2'),
+                ]);
         } else {
             ExtensionHelper::addProcessingPayment($invoice->id, 'CoinPayments', $amount, $fee, $txnId);
-            $this->log('debug', 'CoinPayments payment pending', ['invoice_id' => $invoice->id, 'txn_id' => $txnId, 'status' => $status]);
+            $this->log('debug', 'CoinPayments payment pending', [
+                'invoice_id' => $invoice->id,
+                'txn_id' => $txnId,
+                'status' => $status,
+                'status_text' => $request->input('status_text'),
+                'received' => $received,
+                'expected' => $expected,
+            ]);
         }
 
         return response('IPN OK', 200);

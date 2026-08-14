@@ -132,6 +132,17 @@ class Show extends Component
             return $this->notify(__('Invalid payment method.'), 'error');
         }
 
+        // Payment Method Fees (extensions/Others/PaymentFees) — apply gateway fee
+        // server-side. See docs/CORE-TOUCHPOINTS.md #1. Guarded so core still runs if
+        // the extension is removed; applyFee() is idempotent.
+        if (class_exists(\Paymenter\Extensions\Others\PaymentFees\PaymentFees::class)) {
+            $feeGateway = Gateway::find($methodId);
+            if ($feeGateway) {
+                \Paymenter\Extensions\Others\PaymentFees\PaymentFees::applyFee($feeGateway, $this->invoice);
+                $this->invoice->refresh();
+            }
+        }
+
         $this->pay = ExtensionHelper::pay(Gateway::where('id', $methodId)->first(), $this->invoice);
 
         if (is_string($this->pay)) {
