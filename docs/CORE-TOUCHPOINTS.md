@@ -123,5 +123,26 @@ Creating a user (`app:user:create`) fails for the same reason.
 
 ---
 
+## 5. Show gateway refusals instead of a 500 (**applied**)
+
+**Why:** `payWithMethod()` calls `ExtensionHelper::pay()` with no error handling. A gateway
+refusing a payment is normal — Stripe rejects anything under 50c with `amount_too_small`,
+gateways reject unsupported currencies, and any of them can be briefly down. Uncaught, the
+exception renders as a bare **500 Server Error** page: the customer is told nothing, and
+the sale is lost. Found on the live server with a $0.10 test invoice.
+
+**File:** `app/Livewire/Invoices/Show.php`, method `payWithMethod($methodId)` plus a new
+`gatewayErrorMessage()` helper.
+
+**Change:** wrap the `pay()` call in try/catch, log the real error for the admin, and show
+the customer a translated explanation. Wording lives in `lang/en/invoices.php`
+(`gateway_error`, `amount_too_small`, `amount_too_large`, `gateway_unavailable`).
+
+**Notes:**
+- The raw exception is never shown — it can carry gateway internals and a stack trace.
+- If not re-applied after an upgrade, gateway refusals go back to being 500 pages.
+
+---
+
 _(No other core touchpoints at this time. Everything else is implemented via extensions,
 themes, events, or configuration.)_

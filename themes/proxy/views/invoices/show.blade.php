@@ -43,7 +43,7 @@
                     @if ($invoice->status == 'pending' && !$checkPayment)
                         <button type="button" class="wf-btn wf-btn--sm" wire:click="$set('showPayModal', true)"
                             wire:loading.attr="disabled" wire:target="$set('showPayModal')">
-                            <span wire:loading.remove wire:target="pay">{{ __('invoices.pay') ?? 'Pay' }}</span>
+                            <span wire:loading.remove wire:target="pay">{{ __('invoices.pay_now') }}</span>
                             <span wire:loading wire:target="pay">…</span>
                         </button>
                     @endif

@@ -126,6 +126,34 @@ class Show extends Component
         return $this->payWithSavedMethod($this->selectedMethod);
     }
 
+    /**
+     * Turn a gateway exception into something a customer can act on.
+     *
+     * Gateways answer with a JSON error body; showing the raw exception would leak a
+     * stack trace and mean nothing to the buyer. The common refusals get a plain
+     * explanation, and anything unrecognised falls back to a generic line — the detail
+     * is in the log for the admin either way.
+     */
+    private function gatewayErrorMessage(\Throwable $e): string
+    {
+        $raw = $e->getMessage();
+
+        if (str_contains($raw, 'amount_too_small')) {
+            return __('invoices.amount_too_small');
+        }
+
+        if (str_contains($raw, 'amount_too_large')) {
+            return __('invoices.amount_too_large');
+        }
+
+        // Gateway JSON bodies carry a human-readable message; prefer it when present.
+        if (preg_match('/"message"\s*:\s*"([^"]{5,200})"/', $raw, $m)) {
+            return $m[1];
+        }
+
+        return __('invoices.gateway_unavailable');
+    }
+
     private function payWithMethod($methodId)
     {
         if (!in_array($methodId, array_column($this->gateways, 'id'))) {
@@ -143,7 +171,22 @@ class Show extends Component
             }
         }
 
-        $this->pay = ExtensionHelper::pay(Gateway::where('id', $methodId)->first(), $this->invoice);
+        // A gateway can legitimately refuse a payment — Stripe rejects anything under
+        // 50c with `amount_too_small`, gateways reject unsupported currencies, and any
+        // of them can be temporarily down. Without this the exception escapes as a bare
+        // 500 "Server Error" page, which tells the customer nothing and loses the sale.
+        // See docs/CORE-TOUCHPOINTS.md #5.
+        try {
+            $this->pay = ExtensionHelper::pay(Gateway::where('id', $methodId)->first(), $this->invoice);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::channel('stack')->error('[Checkout] gateway refused the payment', [
+                'invoice' => $this->invoice->id,
+                'gateway' => $methodId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->notify(__('invoices.gateway_error', ['error' => $this->gatewayErrorMessage($e)]), 'error');
+        }
 
         if (is_string($this->pay)) {
             $this->redirect($this->pay);
