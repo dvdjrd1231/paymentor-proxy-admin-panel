@@ -44,7 +44,7 @@
                 </div>
             @endif
 
-            <div class="wf-panel">
+            <div class="wf-panel wf-panel--brand">
                 <div class="wf-panel-heading">{{ __('dashboard.your_info') }}</div>
                 <div class="wf-panel-body">
                     <div class="wf-list-title">{{ $user->name }}</div>
@@ -76,23 +76,40 @@
                 <p>{{ __('dashboard.dashboard_description') }}</p>
             </div>
 
+            <div class="wf-crumb">
+                <a href="{{ route('home') }}" wire:navigate>{{ __('navigation.home') }}</a>
+                <span>/</span>{{ __('navigation.dashboard') }}
+            </div>
+
             <div class="wf-stats">
                 <a class="wf-stat" href="{{ route('services') }}" wire:navigate>
-                    <div class="wf-stat-num">{{ $activeServices }}</div>
+                    <div class="wf-stat-head">
+                        <span class="wf-stat-num">{{ $activeServices }}</span>
+                        <span class="wf-stat-icon"><x-ri-archive-stack-fill /></span>
+                    </div>
                     <div class="wf-stat-label">{{ __('dashboard.active_services') }}</div>
                 </a>
                 <a class="wf-stat" href="{{ route('invoices') }}" wire:navigate>
-                    <div class="wf-stat-num">{{ $unpaidInvoices }}</div>
+                    <div class="wf-stat-head">
+                        <span class="wf-stat-num">{{ $unpaidInvoices }}</span>
+                        <span class="wf-stat-icon"><x-ri-receipt-fill /></span>
+                    </div>
                     <div class="wf-stat-label">{{ __('dashboard.unpaid_invoices') }}</div>
                 </a>
                 @if ($ticketsEnabled)
                     <a class="wf-stat" href="{{ route('tickets') }}" wire:navigate>
-                        <div class="wf-stat-num">{{ $openTickets }}</div>
+                        <div class="wf-stat-head">
+                            <span class="wf-stat-num">{{ $openTickets }}</span>
+                            <span class="wf-stat-icon"><x-ri-customer-service-fill /></span>
+                        </div>
                         <div class="wf-stat-label">{{ __('dashboard.open_tickets') }}</div>
                     </a>
                 @endif
                 <a class="wf-stat" href="{{ route('invoices') }}" wire:navigate>
-                    <div class="wf-stat-num">{{ $totalInvoices }}</div>
+                    <div class="wf-stat-head">
+                        <span class="wf-stat-num">{{ $totalInvoices }}</span>
+                        <span class="wf-stat-icon"><x-ri-bank-card-fill /></span>
+                    </div>
                     <div class="wf-stat-label">{{ __('navigation.invoices') }}</div>
                 </a>
             </div>

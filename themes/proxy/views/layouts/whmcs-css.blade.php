@@ -245,8 +245,17 @@
 
     /* Page header: big thin title + grey subtitle, underlined */
     .wf-pagehead { margin: 0 0 1.25rem; }
-    .wf-pagehead h1 { color: var(--brand); font-size: 2.1rem; font-weight: 300; margin: 0 0 .25rem; }
+    .wf-pagehead h1 {
+        color: var(--brand); font-size: 2.1rem; font-weight: 300; margin: 0 0 .5rem;
+        padding-bottom: .5rem; border-bottom: 1px solid var(--wf-border);
+    }
     .wf-pagehead p { margin: 0; color: var(--wf-muted); font-size: .95rem; }
+
+    /* Breadcrumb — "Portal Home / Client Area" */
+    .wf-crumb { font-size: .85rem; color: var(--wf-muted); margin: -.25rem 0 1rem; }
+    .wf-crumb a { color: var(--brand); text-decoration: none; }
+    .wf-crumb a:hover { text-decoration: underline; }
+    .wf-crumb span { margin: 0 .4rem; color: var(--wf-border); }
 
     /* Two-column client area: sidebar + main */
     .wf-layout { display: grid; grid-template-columns: 260px 1fr; gap: 1.5rem; align-items: start; }
@@ -278,6 +287,11 @@
     .wf-list a:hover { background: var(--wf-section); color: var(--brand); }
     .wf-list a.is-active { background: var(--brand); color: var(--brand-contrast); }
     .wf-list-title { font-weight: 600; }
+    /* Row with a trailing action button (services / invoices lists) */
+    .wf-row-main { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+    .wf-row-link { color: var(--brand); text-decoration: none; }
+    .wf-row-link:hover { text-decoration: underline; }
+    .wf-list .wf-list-row { gap: 1rem; }
     .wf-list-sub { display: block; font-size: .8rem; color: var(--wf-muted); font-weight: 400; }
 
     /* Tables */
@@ -311,9 +325,22 @@
 
     /* Small stat tiles for the dashboard */
     .wf-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
-    .wf-stat { background: var(--wf-bg); border: 1px solid var(--wf-border); border-left: 3px solid var(--brand); border-radius: var(--wf-radius); padding: .9rem 1rem; }
-    .wf-stat-num { font-size: 1.6rem; font-weight: 600; color: var(--wf-text); line-height: 1.1; }
+    .wf-stat {
+        position: relative; display: block; text-decoration: none;
+        background: var(--wf-bg); border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); padding: .9rem 1rem 1.1rem;
+    }
+    .wf-stat:hover { border-color: var(--brand); }
+    /* The accent bar sits under the content rather than down the side. */
+    .wf-stat::after {
+        content: ''; position: absolute; left: 1rem; right: 1rem; bottom: .55rem;
+        height: 2px; background: var(--brand); border-radius: 2px; opacity: .85;
+    }
+    .wf-stat-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .wf-stat-num { font-size: 1.9rem; font-weight: 600; color: var(--wf-text); line-height: 1.1; }
     .wf-stat-label { font-size: .8rem; color: var(--wf-muted); text-transform: uppercase; letter-spacing: .04em; }
+    .wf-stat-icon { color: var(--brand); opacity: .85; flex: none; }
+    .wf-stat-icon svg { width: 1.6rem; height: 1.6rem; }
 
     .wf-btn--sm { padding: .35rem .8rem; font-size: .82rem; }
     .wf-btn--danger { background: #c9302c; border-color: #c9302c; color: #fff; }
