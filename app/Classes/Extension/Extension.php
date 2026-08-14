@@ -37,7 +37,35 @@ class Extension
             }
         }
 
+        // With PAYMENT_MODE=dev, sandbox credentials from .env take precedence over
+        // whatever an admin saved, so development never runs against the client's real
+        // keys. See docs/CORE-TOUCHPOINTS.md #8 and docs/PAYMENT-KEYS.md.
+        if (($development = $this->developmentConfig($key)) !== null) {
+            return $development;
+        }
+
         return $this->config[$key] ?? null;
+    }
+
+    /**
+     * Sandbox credential override for a gateway setting, or null when it does not apply.
+     *
+     * Only gateways are affected, and only when PAYMENT_MODE=dev. A blank entry falls
+     * through to the stored value, so a single field can be overridden on its own.
+     */
+    private function developmentConfig(string $key): ?string
+    {
+        if (strtolower((string) config('payments.mode', 'prod')) !== 'dev') {
+            return null;
+        }
+
+        if (!str_starts_with(static::class, 'Paymenter\\Extensions\\Gateways\\')) {
+            return null;
+        }
+
+        $value = config('payments.dev.' . class_basename(static::class) . '.' . $key);
+
+        return ($value === null || $value === '') ? null : (string) $value;
     }
 
     /**
