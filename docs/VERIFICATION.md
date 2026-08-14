@@ -125,6 +125,42 @@ Livewire, so they are not in the initial HTML).
 
 ---
 
+## 8. Stripe test-mode setup (local)
+
+Stripe test keys are free and instant, and do not require the client's live credentials —
+create any Stripe account and use its **test** keys. Until real keys are in place every
+gateway answers 401 and no deposit can complete.
+
+1. Copy the test keys from <https://dashboard.stripe.com/test/apikeys>.
+2. Paste them into **Admin → Gateways → Stripe** (`sk_test_…` and `pk_test_…`).
+3. Confirm the connection:
+
+   ```
+   php scripts/verify-stripe.php
+   ```
+
+   It checks the key authenticates, that it is a *test* key and not a live one, and that a
+   payment intent can be created (then cancels it). No key is ever printed.
+
+4. The webhook is what marks the invoice paid and adds the credit. Stripe cannot reach
+   `127.0.0.1`, so forward it locally:
+
+   ```
+   stripe listen --forward-to http://127.0.0.1:8080/extensions/stripe/webhook
+   ```
+
+   Paste the `whsec_…` the CLI prints into the gateway's webhook secret field.
+
+**Leave the webhook secret field non-empty.** `Stripe::updated()` only auto-creates a
+webhook endpoint on Stripe when that field is blank, and Stripe rejects local URLs — so
+clearing it makes saving the gateway settings fail.
+
+Without the webhook, a card payment succeeds at Stripe but the invoice stays *pending* and
+no credit is added. That is the one link the admin "add transaction" workaround never
+exercises, so it must be tested before go-live.
+
+---
+
 ## Not yet verified
 
 These need something only the client can provide:
