@@ -48,6 +48,13 @@ class Cryptomus extends Gateway
     /** Respect Country-based Gateway Rules (item 5) natively if installed. */
     public function canUseGateway($total, $currency, $type, $items = [])
     {
+        // Do not offer a method that will refuse the amount. Showing it and then
+        // failing after the customer commits is worse than not offering it.
+        $minimum = (float) ($this->config('minimum_amount') ?? 0);
+        if ($minimum > 0 && (float) $total < $minimum) {
+            return false;
+        }
+
         $rules = '\\Paymenter\\Extensions\\Others\\GatewayRules\\GatewayRules';
         if (!class_exists($rules)) {
             return true;
@@ -74,6 +81,15 @@ class Cryptomus extends Gateway
                 'description' => 'Cryptomus Payment API key. Stored encrypted; used to sign requests and verify webhooks.',
                 'required' => true,
                 'encrypted' => true,
+            ],
+            [
+                'name' => 'minimum_amount',
+                'label' => 'Minimum amount',
+                'type' => 'text',
+                'description' => 'Hide this method at checkout when the invoice total is below this. Cryptomus rejects amounts below its per-coin floor. Zero disables the check.',
+                'validation' => 'numeric',
+                'default' => '1.00',
+                'required' => false,
             ],
         ];
     }
