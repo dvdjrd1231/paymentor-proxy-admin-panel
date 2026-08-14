@@ -25,21 +25,13 @@
     $accountItem = $dash->first(fn ($l) => !empty($l['children']));
     $accountChildren = $accountItem['children'] ?? [];
 
-    if ($isAuth) {
-        $clientLinks = $dash->filter(fn ($l) => empty($l['children']))->values();
-    } else {
-        // Visitors still see Services / Invoices / Tickets in the bar. The routes are
-        // auth-protected, so clicking one simply sends them to the login page.
-        $clientLinks = collect([
-            ['name' => __('navigation.services'), 'url' => route('services')],
-            ['name' => __('navigation.invoices'), 'url' => route('invoices')],
-            [
-                'name' => __('navigation.tickets'),
-                'url' => route('tickets'),
-                'condition' => !config('settings.tickets_disabled', false),
-            ],
-        ])->filter(fn ($l) => $l['condition'] ?? true)->values();
-    }
+    // Client-area items are for signed-in customers only. Showing Services / Invoices /
+    // Tickets to a visitor just bounces them to the login page, which reads as a broken
+    // menu — the client called this out specifically. Guests get the public menu; the
+    // Login and Register actions live in the header.
+    $clientLinks = $isAuth
+        ? $dash->filter(fn ($l) => empty($l['children']))->values()
+        : collect();
 
     $isAdmin = $isAuth && auth()->user()->role_id !== null;
     $hasLogo = config('settings.logo') || config('settings.logo_dark');
