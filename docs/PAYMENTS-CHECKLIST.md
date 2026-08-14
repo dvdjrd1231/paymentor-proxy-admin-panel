@@ -32,7 +32,7 @@ invoice, hands off to Stripe exactly as the checkout does, pays with a test card
 Stripe's API, then waits for Stripe's own webhook to settle the invoice. It refuses to run
 against live keys.
 
-Result on 14 Aug 2026 (`http://69.197.186.115`):
+Result on 14 Aug 2026 (re-verified on `https://paymenter-dev.7hoop.net`):
 
 ```
 [ PASS ] deposit invoice created                   #INV-12 for 25 USD
@@ -119,8 +119,10 @@ bare IP.
    deposit, max balance). Confirm these are the intended commercial limits.
 4. **Per-gateway fees.** `PaymentFees` is active — confirm the fee per method, since it is
    added to the customer's invoice (a $500 deposit currently invoices $511.50).
-5. **Domain + TLS.** The site runs on `http://69.197.186.115` over plain HTTP. Card
-   payments and webhooks should be on HTTPS with a real domain before launch.
+5. ~~**Domain + TLS.**~~ **Done** — the site is on <https://paymenter-dev.7hoop.net> behind
+   Cloudflare, and both gateways were re-verified there. See `docs/05-domain-and-https.md`.
+   Remaining hardening: the origin is still reachable on port 80 at the bare IP, and
+   `trusted_proxies` is `*`; restrict both before production.
 
 ---
 
@@ -150,6 +152,7 @@ bare IP.
    only thing blocking the remaining three.
 4. **Sandbox each one** as its credentials arrive; Binance first, since it is the least
    proven. Re-run `scripts/test-stripe-payment.php` as the pattern for what "done" means.
-5. **Delete the stale `/account/payment-methods` webhook endpoint** in Stripe.
-6. **Switch Stripe to live keys, move to a domain with HTTPS, re-point webhooks**, then
-   re-run the end-to-end test against the new domain.
+5. ~~Delete the stale `/account/payment-methods` webhook endpoint~~ — **done**, removed
+   along with the old IP-based endpoint when the domain moved.
+6. **Switch Stripe to live keys** when going live, then re-run the end-to-end test.
+   Update the CoinPayments dashboard webhook URL to the new domain as well.
