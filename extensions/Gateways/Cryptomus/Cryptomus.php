@@ -91,7 +91,35 @@ class Cryptomus extends Gateway
                 'default' => '1.00',
                 'required' => false,
             ],
+            [
+                'name' => 'domain_verification',
+                'label' => 'Domain verification file contents',
+                'type' => 'textarea',
+                'description' => 'Cryptomus verifies the domain by fetching a file it generates from the site root '
+                    . '(https://your-site/cryptomus_<hash>.html). Download that file in the Cryptomus dashboard, '
+                    . 'paste its contents here, then press Check. Served from this setting because public/ is not '
+                    . 'a mounted volume, so a file placed there would be lost on the next deploy.',
+                'required' => false,
+            ],
         ];
+    }
+
+    /**
+     * Serve the Cryptomus domain-verification file from the stored setting.
+     *
+     * Any `cryptomus_<hash>.html` path resolves here — the hash is per-account and changes
+     * if Cryptomus reissues it, so matching the pattern rather than one literal filename
+     * means a reissued file needs no code change.
+     */
+    public function domainVerification()
+    {
+        $contents = (string) $this->config('domain_verification');
+
+        if (trim($contents) === '') {
+            abort(404);
+        }
+
+        return response($contents, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
     }
 
     /**
