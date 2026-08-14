@@ -95,6 +95,7 @@ class ProvisioningOps extends Extension
             $row->save();
 
             self::protectServiceStatus($service, $action);
+            self::alertAdmins($service, $extension, $e);
         } catch (\Throwable $inner) {
             // Never let bookkeeping mask the original provisioning error.
             Log::channel(self::LOG_CHANNEL)->error('[ProvisioningOps] could not record failure', [
@@ -137,6 +138,31 @@ class ProvisioningOps extends Extension
             Log::channel(self::LOG_CHANNEL)->error('[ProvisioningOps] could not record success', [
                 'service' => $service->id,
                 'action' => $action,
+                'error' => $inner->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Push the failure to the notification channels (scope §11 "critical failures"), so a
+     * panel outage reaches someone instead of sitting unnoticed in the admin list.
+     *
+     * Optional by design: the Notifications extension may not be installed, and a
+     * notification problem must never mask the provisioning problem.
+     */
+    private static function alertAdmins(Service $service, string $extension, \Throwable $e): void
+    {
+        $notifications = '\\Paymenter\\Extensions\\Others\\Notifications\\Notifications';
+
+        if (!class_exists($notifications) || !method_exists($notifications, 'provisioningFailed')) {
+            return;
+        }
+
+        try {
+            $notifications::provisioningFailed($extension, (int) $service->id, $e->getMessage());
+        } catch (\Throwable $inner) {
+            Log::channel(self::LOG_CHANNEL)->warning('[ProvisioningOps] could not send failure alert', [
+                'service' => $service->id,
                 'error' => $inner->getMessage(),
             ]);
         }
