@@ -53,6 +53,11 @@ return [
     'one_time_payment' => 'One-Time Payment',
     'use_for_recurring' => 'Use for Recurring Payments',
     'pay_now' => 'Pay Now',
+    // Shown when a gateway refuses the payment (e.g. Stripe's 50c minimum).
+    'gateway_error' => 'This payment method could not process the payment: :error',
+    'amount_too_small' => 'the amount is below the minimum this payment method accepts. Please choose another method, or add more items to the order.',
+    'amount_too_large' => 'the amount is above the maximum this payment method accepts. Please choose another method.',
+    'gateway_unavailable' => 'it is temporarily unavailable. Please try another method or contact support.',
     'apply_credits_and_continue' => 'Apply Credits and Continue',
     'apply_credits_and_pay' => 'Apply Credits and Pay',
     'amount_due' => 'Amount Due: :amount',
