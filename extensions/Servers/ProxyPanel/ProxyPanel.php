@@ -1236,7 +1236,28 @@ class ProxyPanel extends Server
             throw new \RuntimeException('ProxyPanel API error (HTTP ' . $response->status() . '): ' . $detail);
         }
 
-        $json = $response->json() ?? [];
+        $body = trim($response->body());
+        $json = $response->json();
+
+        // The panel answers an auth failure with **HTTP 200 and a plain-text body**
+        // ("Unable to authorize your request") rather than 401 + JSON. Verified against
+        // the live panel. Without this check a bad or expired token looks like success:
+        // json() returns null, the status check passes, and GET verbs such as
+        // /stop or /cancel would silently appear to have worked.
+        if (!is_array($json)) {
+            $detail = $body === '' ? 'empty response' : $body;
+            $this->log('error', 'ProxyPanel returned a non-JSON response', [
+                'path' => $path,
+                'status' => $response->status(),
+                'body' => \Str::limit($detail, 200),
+            ]);
+
+            throw new \RuntimeException(
+                stripos($detail, 'authoriz') !== false
+                    ? 'ProxyPanel rejected the API token — check the Panel Token setting.'
+                    : 'ProxyPanel returned an unexpected response: ' . \Str::limit($detail, 200)
+            );
+        }
 
         if ($throwOnApiError && ($json['status'] ?? 'ok') === 'error') {
             $msg = $json['description'] ?? 'Unknown panel error';

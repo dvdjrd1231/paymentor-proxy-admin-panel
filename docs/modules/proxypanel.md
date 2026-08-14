@@ -84,6 +84,30 @@ Mirrors the WHMCS module's `ConfigOptions`: **Amount proxies**, **Plan** (dropdo
 **Region** is a *checkout* option (dropdown from `/locations`, labelled `Country - City`)
 so one product can be sold in several locations — exactly as the WHMCS order form did.
 
+### Verified against the live panel
+
+Checked read-only against the client's dev panel. What it actually returns:
+
+| Call | Real response |
+|---|---|
+| `GET /plans` | a **flat JSON array of strings** — `["1GB-Squid-HT","1GP-3Proxy-S5", …]`, no `{status,data}` envelope |
+| `GET /locations` | a **flat array of `"Country - City"` strings** — `["Djibouti - Djibouti","Indonesia - Jakarta"]`. No tags and **no stock information** |
+| `GET /{id}` (unknown) | `{"status":"error","description":"Unable to find service_id 0"}` |
+| any call, bad/missing token | **HTTP 200** with the plain-text body `Unable to authorize your request` |
+
+Two consequences the mock could never have surfaced:
+
+1. **`location_name` is the literal `"Country - City"` string**, not a slug — which is why
+   the WHMCS module passes `$params['configoptions']['Region']` straight through.
+2. **An auth failure is HTTP 200 and not JSON.** Treating that as success would make a bad
+   token look like a working one, and GET verbs such as `/stop` or `/cancel` would appear
+   to succeed while doing nothing. `request()` now rejects any non-JSON body and reports
+   the token as invalid.
+
+**Protocol selection (scope §8) is the plan tag.** `-HT` plans are HTTP, `-S5` are SOCKS5
+(`1GP-3Proxy-HT` vs `1GP-3Proxy-S5`), so the customer chooses protocol by choosing a plan.
+No separate field is required or supported.
+
 ### Stock per region
 
 Inventory is the panel's to know, so availability is read from `GET /locations` rather than
@@ -100,7 +124,12 @@ The panel's field name for this is not documented, so these are accepted, in ord
 | Inverted | `out_of_stock` |
 
 Anything unrecognised is treated as **available** — failing open, so a sellable region is
-never hidden by a naming mismatch. Confirm the real field and the list can be tightened.
+never hidden by a naming mismatch.
+
+> **Currently inert.** The live `GET /locations` returns bare strings with no stock field
+> at all, so nothing is ever marked out of stock. The client's WHMCS order form does show
+> "(Out of stock)" per region, so that information exists somewhere — but not on this
+> endpoint. **Open question:** which call exposes per-region availability?
 
 ### Country flags on regions
 
