@@ -161,7 +161,57 @@ exercises, so it must be tested before go-live.
 
 ---
 
+## 9. Support tickets — PDF §3 (13/13)
+
+`php scripts/test-tickets.php` on the server:
+
+```
+[ PASS ] ticket created / department stored / priority stored
+[ PASS ] service association stored              service #9
+[ PASS ] customer reply recorded
+[ PASS ] quick reply available and usable        "Ask for auth IP"
+[ PASS ] internal note recorded
+[ PASS ] internal note is not a customer message
+[ PASS ] attachments supported                   file|max:10240 (10 MB)
+[ PASS ] another customer cannot see this ticket
+[ PASS ] email renders and reaches the mail transport
+[ PASS ] ticket can be closed
+```
+
+`TicketTools` and `Notifications` were present in the codebase but **not registered on the
+server** until now — so quick replies, internal notes and every notification were absent in
+production while passing locally. Both are enabled there now.
+
+Email is proven as far as it can be without credentials: one message is routed through the
+`log` transport for that process only and its render confirmed. `Mail::fake()` cannot show
+this — it records Mailable objects and misses a raw send entirely.
+
+---
+
+## 10. Domain functionality — PDF §10 (clean)
+
+```
+routes mentioning domain/whois/tld/nameserver/registrar : none
+tables domains, domain_pricing, tlds, registrars        : absent
+```
+
+---
+
+## 11. Server hygiene
+
+The end-to-end runs create throwaway customers. After the final pass these were removed —
+26 test users, 20 invoices and 3 tickets — leaving only the four real accounts, with zero
+orphaned invoice items or transactions. A backup is taken before any such cleanup
+(`/root/backups/pre-cleanup-*.sql.gz`).
+
+Sender identity was corrected from the shipped default (`hello@example.com`) to
+`noreply@paymenter-dev.7hoop.net`; this needs no SMTP credentials. The transport itself
+still points at `127.0.0.1` and requires real mail credentials before anything can send.
+
+---
+
 ## Not yet verified
+
 
 These need something only the client can provide:
 
