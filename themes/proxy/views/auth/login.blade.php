@@ -11,27 +11,8 @@
     </div>
     <hr class="wf-title-rule">
 
-    <div class="wf-split">
-        {{-- Sidebar, mirroring WHMCS's "Already Registered?" panel --}}
-        <aside class="wf-aside">
-            <div class="wf-aside-head">{{ __('theme.need_account') }}</div>
-            <div class="wf-aside-body">
-                <p style="margin:0 0 .9rem">
-                    Not registered with us yet? Create an account to order services and
-                    manage them from your client area.
-                </p>
-                @if (!config('settings.registration_disabled', false))
-                    <a href="{{ route('register') }}" wire:navigate class="wf-btn wf-btn--ghost wf-btn--block">
-                        {{ __('auth.sign_up') }}
-                    </a>
-                @endif
-                <a href="{{ route('password.request') }}" class="wf-btn wf-btn--ghost wf-btn--block" style="margin-top:.5rem">
-                    {{ __('auth.forgot_password') }}
-                </a>
-            </div>
-        </aside>
-
-        <form class="wf-card" wire:submit="submit" id="login">
+    <div class="wf-form-narrow">
+        <form wire:submit="submit" id="login">
             <div class="wf-field" style="margin-bottom:1rem">
                 <label for="email">{{ __('general.input.email') }}<span class="wf-req">*</span></label>
                 <input id="email" type="email" class="wf-input" wire:model="email" autocomplete="email"
@@ -56,9 +37,9 @@
                 <x-captcha :form="'login'" />
             </div>
 
-            <div class="wf-actions">
+            <div class="wf-actions wf-actions--center">
                 <button type="submit" class="wf-btn">{{ __('auth.sign_in') }}</button>
-                <a href="{{ route('password.request') }}" class="wf-btn wf-btn--ghost">
+                <a href="{{ route('password.request') }}" class="wf-btn">
                     {{ __('auth.forgot_password') }}
                 </a>
             </div>

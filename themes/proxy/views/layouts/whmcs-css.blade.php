@@ -246,12 +246,22 @@
     /* Page header: big thin title + grey subtitle, underlined */
     .wf-pagehead { margin: 0 0 1.25rem; }
     .wf-pagehead h1 {
-        color: var(--brand); font-size: 2.1rem; font-weight: 300; margin: 0 0 .5rem;
-        padding-bottom: .5rem; border-bottom: 1px solid var(--wf-border);
+        color: var(--brand); font-size: 2.7rem; font-weight: 300; margin: 0 0 .5rem;
+        padding-bottom: .6rem; border-bottom: 1px solid var(--wf-border);
+        letter-spacing: -.01em; line-height: 1.15;
     }
+    @media (max-width: 620px) { .wf-pagehead h1 { font-size: 2rem; } }
     .wf-pagehead p { margin: 0; color: var(--wf-muted); font-size: .95rem; }
 
     /* Breadcrumb — "Portal Home / Client Area" */
+    /* Centred auth form — the reference portal centres login/register in one column
+       rather than splitting them beside a sidebar. */
+    .wf-form-narrow { max-width: 540px; margin: 0 auto; }
+    .wf-actions--center { display: flex; justify-content: center; gap: .75rem; }
+    /* Field labels are brand-coloured on the reference. */
+    .wf-field label { color: var(--brand); font-weight: 600; font-size: .85rem; display: block; margin-bottom: .3rem; }
+    .wf-title h1 { font-weight: 300; }
+
     .wf-crumb { font-size: .85rem; color: var(--wf-muted); margin: -.25rem 0 1rem; }
     .wf-crumb a { color: var(--brand); text-decoration: none; }
     .wf-crumb a:hover { text-decoration: underline; }
@@ -272,6 +282,9 @@
         display: flex; align-items: center; justify-content: space-between; gap: .5rem;
     }
     .wf-panel--brand > .wf-panel-heading { background: var(--brand); color: var(--brand-contrast); border-bottom-color: var(--brand); }
+    .wf-panel-heading .wf-head-icon { display: inline-flex; margin-inline-end: .45rem; vertical-align: -2px; }
+    .wf-panel-heading .wf-head-icon svg { width: 1rem; height: 1rem; }
+    .wf-panel-heading .wf-chevron { margin-inline-start: auto; opacity: .8; font-size: .8rem; }
     .wf-panel-body { padding: 1rem; }
     .wf-panel-body > :first-child { margin-top: 0; }
     .wf-panel-body > :last-child { margin-bottom: 0; }
@@ -324,23 +337,37 @@
     .wf-empty { padding: 1.5rem 1rem; text-align: center; color: var(--wf-muted); font-size: .9rem; }
 
     /* Small stat tiles for the dashboard */
-    .wf-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    /* Stat strip — noxproxy shows one bordered panel with vertical dividers between
+       the figures, each with its own accent bar, rather than four separate cards. */
+    .wf-stats {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        background: var(--wf-bg); border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); margin-bottom: 1.25rem; overflow: hidden;
+    }
     .wf-stat {
         position: relative; display: block; text-decoration: none;
-        background: var(--wf-bg); border: 1px solid var(--wf-border);
-        border-radius: var(--wf-radius); padding: .9rem 1rem 1.1rem;
+        padding: 1.15rem 1.25rem 1.35rem;
+        border-inline-start: 1px solid var(--wf-border);
     }
-    .wf-stat:hover { border-color: var(--brand); }
-    /* The accent bar sits under the content rather than down the side. */
+    .wf-stat:first-child { border-inline-start: 0; }
+    .wf-stat:hover { background: var(--wf-section); }
+    /* Accent rule beneath each figure, as on the reference portal. */
     .wf-stat::after {
-        content: ''; position: absolute; left: 1rem; right: 1rem; bottom: .55rem;
-        height: 2px; background: var(--brand); border-radius: 2px; opacity: .85;
+        content: ''; position: absolute; left: 1.25rem; right: 1.25rem; bottom: .7rem;
+        height: 2px; background: var(--brand); border-radius: 2px;
     }
-    .wf-stat-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
-    .wf-stat-num { font-size: 1.9rem; font-weight: 600; color: var(--wf-text); line-height: 1.1; }
-    .wf-stat-label { font-size: .8rem; color: var(--wf-muted); text-transform: uppercase; letter-spacing: .04em; }
-    .wf-stat-icon { color: var(--brand); opacity: .85; flex: none; }
-    .wf-stat-icon svg { width: 1.6rem; height: 1.6rem; }
+    .wf-stat-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+    .wf-stat-num { font-size: 2.4rem; font-weight: 300; color: var(--wf-text); line-height: 1; }
+    .wf-stat-label {
+        margin-top: .35rem; font-size: .78rem; color: var(--wf-muted);
+        text-transform: uppercase; letter-spacing: .06em;
+    }
+    .wf-stat-icon { color: var(--brand); flex: none; }
+    .wf-stat-icon svg { width: 2rem; height: 2rem; }
+    @media (max-width: 620px) {
+        .wf-stat { border-inline-start: 0; border-top: 1px solid var(--wf-border); }
+        .wf-stat:first-child { border-top: 0; }
+    }
 
     .wf-btn--sm { padding: .35rem .8rem; font-size: .82rem; }
     .wf-btn--danger { background: #c9302c; border-color: #c9302c; color: #fff; }

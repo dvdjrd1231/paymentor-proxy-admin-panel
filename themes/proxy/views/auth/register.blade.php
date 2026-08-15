@@ -41,25 +41,8 @@
     </p>
     <hr class="wf-title-rule">
 
-    <div class="wf-split">
-        {{-- Left panel, mirroring WHMCS's "Already Registered?" sidebar --}}
-        <aside class="wf-aside">
-            <div class="wf-aside-head">{{ __('auth.already_have_account') }}</div>
-            <div class="wf-aside-body">
-                <p style="margin:0">
-                    Already registered with us? If so, click the button below to login to our
-                    client area from where you can manage your account.
-                </p>
-                <ul class="wf-aside-list">
-                    <li><a href="{{ route('login') }}" wire:navigate>{{ __('auth.sign_in') }} <span>&rsaquo;</span></a></li>
-                    @if (Route::has('password.request'))
-                        <li><a href="{{ route('password.request') }}" wire:navigate>{{ __('theme.lost_password') }} <span>&rsaquo;</span></a></li>
-                    @endif
-                </ul>
-            </div>
-        </aside>
-
-        <form class="wf-card" wire:submit.prevent="submit" id="register">
+    <div class="wf-form-narrow">
+        <form wire:submit.prevent="submit" id="register">
         {{-- ─────────────── Personal Information ─────────────── --}}
         <div class="wf-section">{{ __('theme.personal_information') }}</div>
         <div class="wf-grid">

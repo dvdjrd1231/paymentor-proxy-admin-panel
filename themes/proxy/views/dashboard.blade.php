@@ -31,7 +31,10 @@
         <div>
             @if ($creditsEnabled)
                 <div class="wf-panel wf-panel--brand">
-                    <div class="wf-panel-heading">{{ __('dashboard.credit_balance') }}</div>
+                    <div class="wf-panel-heading">
+                        <span><span class="wf-head-icon"><x-ri-wallet-3-fill /></span>{{ __('dashboard.credit_balance') }}</span>
+                        <span class="wf-chevron">&#9650;</span>
+                    </div>
                     <div class="wf-panel-body" style="text-align:center">
                         <div class="wf-stat-num">
                             {{ $credit?->formatted_amount ?? __('dashboard.no_credit') }}
@@ -45,7 +48,10 @@
             @endif
 
             <div class="wf-panel wf-panel--brand">
-                <div class="wf-panel-heading">{{ __('dashboard.your_info') }}</div>
+                <div class="wf-panel-heading">
+                    <span><span class="wf-head-icon"><x-ri-user-3-fill /></span>{{ __('dashboard.your_info') }}</span>
+                    <span class="wf-chevron">&#9650;</span>
+                </div>
                 <div class="wf-panel-body">
                     <div class="wf-list-title">{{ $user->name }}</div>
                     <span class="wf-list-sub">{{ $user->email }}</span>
@@ -57,7 +63,9 @@
             </div>
 
             <div class="wf-panel">
-                <div class="wf-panel-heading">{{ __('dashboard.shortcuts') }}</div>
+                <div class="wf-panel-heading">
+                    <span><span class="wf-head-icon"><x-ri-links-fill /></span>{{ __('dashboard.shortcuts') }}</span>
+                </div>
                 <ul class="wf-list">
                     <li><a href="{{ route('home') }}" wire:navigate>{{ __('dashboard.order_new_services') }}</a></li>
                     <li><a href="{{ route('services') }}" wire:navigate>{{ __('navigation.services') }}</a></li>
@@ -123,7 +131,7 @@
 
             <div class="wf-panel">
                 <div class="wf-panel-heading">
-                    <span>{{ __('dashboard.active_services') }}</span>
+                    <span><span class="wf-head-icon"><x-ri-archive-stack-fill /></span>{{ __('dashboard.active_services') }}</span>
                     <a class="wf-btn wf-btn--sm wf-btn--ghost" href="{{ route('services') }}" wire:navigate>
                         {{ __('dashboard.my_services') }}
                     </a>
