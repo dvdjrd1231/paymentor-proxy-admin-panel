@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="9a880IGche919PiLM4vUj1K4xL6qDrZQQXQrswhf">
+    <meta name="csrf-token" content="OSAQCKFGIPhqCGtTRcSeqNGYmpZGJJLIYJU2Ma3H">
     <title>
         Paymenter
             </title>
@@ -291,8 +291,27 @@
 
     /* Page header: big thin title + grey subtitle, underlined */
     .wf-pagehead { margin: 0 0 1.25rem; }
-    .wf-pagehead h1 { color: var(--brand); font-size: 2.1rem; font-weight: 300; margin: 0 0 .25rem; }
+    .wf-pagehead h1 {
+        color: var(--brand); font-size: 2.7rem; font-weight: 300; margin: 0 0 .5rem;
+        padding-bottom: .6rem; border-bottom: 1px solid var(--wf-border);
+        letter-spacing: -.01em; line-height: 1.15;
+    }
+    @media (max-width: 620px) { .wf-pagehead h1 { font-size: 2rem; } }
     .wf-pagehead p { margin: 0; color: var(--wf-muted); font-size: .95rem; }
+
+    /* Breadcrumb — "Portal Home / Client Area" */
+    /* Centred auth form — the reference portal centres login/register in one column
+       rather than splitting them beside a sidebar. */
+    .wf-form-narrow { max-width: 540px; margin: 0 auto; }
+    .wf-actions--center { display: flex; justify-content: center; gap: .75rem; }
+    /* Field labels are brand-coloured on the reference. */
+    .wf-field label { color: var(--brand); font-weight: 600; font-size: .85rem; display: block; margin-bottom: .3rem; }
+    .wf-title h1 { font-weight: 300; }
+
+    .wf-crumb { font-size: .85rem; color: var(--wf-muted); margin: -.25rem 0 1rem; }
+    .wf-crumb a { color: var(--brand); text-decoration: none; }
+    .wf-crumb a:hover { text-decoration: underline; }
+    .wf-crumb span { margin: 0 .4rem; color: var(--wf-border); }
 
     /* Two-column client area: sidebar + main */
     .wf-layout { display: grid; grid-template-columns: 260px 1fr; gap: 1.5rem; align-items: start; }
@@ -309,6 +328,9 @@
         display: flex; align-items: center; justify-content: space-between; gap: .5rem;
     }
     .wf-panel--brand > .wf-panel-heading { background: var(--brand); color: var(--brand-contrast); border-bottom-color: var(--brand); }
+    .wf-panel-heading .wf-head-icon { display: inline-flex; margin-inline-end: .45rem; vertical-align: -2px; }
+    .wf-panel-heading .wf-head-icon svg { width: 1rem; height: 1rem; }
+    .wf-panel-heading .wf-chevron { margin-inline-start: auto; opacity: .8; font-size: .8rem; }
     .wf-panel-body { padding: 1rem; }
     .wf-panel-body > :first-child { margin-top: 0; }
     .wf-panel-body > :last-child { margin-bottom: 0; }
@@ -324,6 +346,11 @@
     .wf-list a:hover { background: var(--wf-section); color: var(--brand); }
     .wf-list a.is-active { background: var(--brand); color: var(--brand-contrast); }
     .wf-list-title { font-weight: 600; }
+    /* Row with a trailing action button (services / invoices lists) */
+    .wf-row-main { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+    .wf-row-link { color: var(--brand); text-decoration: none; }
+    .wf-row-link:hover { text-decoration: underline; }
+    .wf-list .wf-list-row { gap: 1rem; }
     .wf-list-sub { display: block; font-size: .8rem; color: var(--wf-muted); font-weight: 400; }
 
     /* Tables */
@@ -356,10 +383,37 @@
     .wf-empty { padding: 1.5rem 1rem; text-align: center; color: var(--wf-muted); font-size: .9rem; }
 
     /* Small stat tiles for the dashboard */
-    .wf-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
-    .wf-stat { background: var(--wf-bg); border: 1px solid var(--wf-border); border-left: 3px solid var(--brand); border-radius: var(--wf-radius); padding: .9rem 1rem; }
-    .wf-stat-num { font-size: 1.6rem; font-weight: 600; color: var(--wf-text); line-height: 1.1; }
-    .wf-stat-label { font-size: .8rem; color: var(--wf-muted); text-transform: uppercase; letter-spacing: .04em; }
+    /* Stat strip — noxproxy shows one bordered panel with vertical dividers between
+       the figures, each with its own accent bar, rather than four separate cards. */
+    .wf-stats {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        background: var(--wf-bg); border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); margin-bottom: 1.25rem; overflow: hidden;
+    }
+    .wf-stat {
+        position: relative; display: block; text-decoration: none;
+        padding: 1.15rem 1.25rem 1.35rem;
+        border-inline-start: 1px solid var(--wf-border);
+    }
+    .wf-stat:first-child { border-inline-start: 0; }
+    .wf-stat:hover { background: var(--wf-section); }
+    /* Accent rule beneath each figure, as on the reference portal. */
+    .wf-stat::after {
+        content: ''; position: absolute; left: 1.25rem; right: 1.25rem; bottom: .7rem;
+        height: 2px; background: var(--brand); border-radius: 2px;
+    }
+    .wf-stat-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+    .wf-stat-num { font-size: 2.4rem; font-weight: 300; color: var(--wf-text); line-height: 1; }
+    .wf-stat-label {
+        margin-top: .35rem; font-size: .78rem; color: var(--wf-muted);
+        text-transform: uppercase; letter-spacing: .06em;
+    }
+    .wf-stat-icon { color: var(--brand); flex: none; }
+    .wf-stat-icon svg { width: 2rem; height: 2rem; }
+    @media (max-width: 620px) {
+        .wf-stat { border-inline-start: 0; border-top: 1px solid var(--wf-border); }
+        .wf-stat:first-child { border-top: 0; }
+    }
 
     .wf-btn--sm { padding: .35rem .8rem; font-size: .82rem; }
     .wf-btn--danger { background: #c9302c; border-color: #c9302c; color: #fff; }
@@ -521,7 +575,7 @@
 
         <div class="wf-header-actions">
                                         
-                <div wire:key="lw-3281720086-0-3-9-0-7-0-9" wire:snapshot="{&quot;data&quot;:[],&quot;memo&quot;:{&quot;id&quot;:&quot;xxJSpdEtWAdFRI7CJ0jM&quot;,&quot;name&quot;:&quot;auth.logout&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;dfb525fd5dc7db6a8a23b8e87d3ca4fb829752ecbe5d78fea2516ae71d75315b&quot;}" wire:effects="{&quot;partials&quot;:[]}" wire:id="xxJSpdEtWAdFRI7CJ0jM" wire:name="auth.logout" class="wf-logout">
+                <div wire:key="lw-3281720086-0-3-9-0-9-0-9" wire:snapshot="{&quot;data&quot;:[],&quot;memo&quot;:{&quot;id&quot;:&quot;ftoX8vSx4JlXTv79ym8d&quot;,&quot;name&quot;:&quot;auth.logout&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;396598c083052a6593c0d364bcdf7f8ec181ee4bb54a3caeabb2590f3dd86a68&quot;}" wire:effects="{&quot;partials&quot;:[]}" wire:id="ftoX8vSx4JlXTv79ym8d" wire:name="auth.logout" class="wf-logout">
     <button type="button" wire:click="logout">Logout</button>
 </div>
                     </div>
@@ -584,7 +638,7 @@
                             <a href="http://127.0.0.1:8080/admin">Admin</a>
                         </li>
                                         <li class="wf-dropdown-sep wf-dropdown-logout">
-                        <div wire:key="lw-3281720086-1-3-9-0-7-0-9" wire:snapshot="{&quot;data&quot;:[],&quot;memo&quot;:{&quot;id&quot;:&quot;FAho6Q7ZMaqnxj5SJJVj&quot;,&quot;name&quot;:&quot;auth.logout&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;d7ff5a4cc462c8f48094885bbc59e85b0ead86eed7cb7edc648325b41ca26b00&quot;}" wire:effects="{&quot;partials&quot;:[]}" wire:id="FAho6Q7ZMaqnxj5SJJVj" wire:name="auth.logout" class="wf-logout">
+                        <div wire:key="lw-3281720086-1-3-9-0-9-0-9" wire:snapshot="{&quot;data&quot;:[],&quot;memo&quot;:{&quot;id&quot;:&quot;Mn4t8UwUTxdlBOMQdnBH&quot;,&quot;name&quot;:&quot;auth.logout&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;b9d419611e92a0b46ebad0c555d248e9f08512b314d6fdaf10abe4414ba7e41a&quot;}" wire:effects="{&quot;partials&quot;:[]}" wire:id="Mn4t8UwUTxdlBOMQdnBH" wire:name="auth.logout" class="wf-logout">
     <button type="button" wire:click="logout">Logout</button>
 </div>
                     </li>
@@ -597,13 +651,16 @@
         <div class="flex flex-col flex-grow overflow-auto">
             
             <main class="grow">
-                <div wire:snapshot="{&quot;data&quot;:{&quot;activeComponent&quot;:&quot;services&quot;},&quot;memo&quot;:{&quot;id&quot;:&quot;fWTV00lTkZTycarwxMgj&quot;,&quot;name&quot;:&quot;dashboard&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:{&quot;lw-3460896327-0-2&quot;:[&quot;ul&quot;,&quot;sE5JrdVS5pwD7FeLhi1O&quot;],&quot;lw-3460896327-1-3-9&quot;:[&quot;ul&quot;,&quot;880EouHG36rEN0v00Oep&quot;],&quot;lw-3460896327-2-3-9-0-7&quot;:[&quot;ul&quot;,&quot;w4UQyF5WB7zIVjyhOm0w&quot;]},&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;a3f0bb0a3c35401e3832dbcbf2b8c7c1ad55f937351b69451046cf0d15c9e612&quot;}" wire:effects="{&quot;partials&quot;:[]}" wire:id="fWTV00lTkZTycarwxMgj" wire:name="dashboard" class="wf-page">
+                <div wire:snapshot="{&quot;data&quot;:{&quot;activeComponent&quot;:&quot;services&quot;},&quot;memo&quot;:{&quot;id&quot;:&quot;Uqhr2KyeAcj92BdWTkcG&quot;,&quot;name&quot;:&quot;dashboard&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:{&quot;lw-3460896327-0-2&quot;:[&quot;ul&quot;,&quot;WaZqK1O45faU7CFlIYZ3&quot;],&quot;lw-3460896327-1-3-9&quot;:[&quot;ul&quot;,&quot;Id5cfXTWCmuzunVYBjbc&quot;],&quot;lw-3460896327-2-3-9-0-9&quot;:[&quot;ul&quot;,&quot;uk0Dqykl6OR4Tc7CAA0m&quot;]},&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;b418c722265835e74a0bf7e14a9fe62c385cd68384cb503a151fd65d0872372c&quot;}" wire:effects="{&quot;partials&quot;:[]}" wire:id="Uqhr2KyeAcj92BdWTkcG" wire:name="dashboard" class="wf-page">
     <div class="wf-layout">
 
         
         <div>
             <!--[if BLOCK]><![endif]-->                <div class="wf-panel wf-panel--brand">
-                    <div class="wf-panel-heading">Account Credit Balance</div>
+                    <div class="wf-panel-heading">
+                        <span><span class="wf-head-icon"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M22.0049 5.99979H15.0049C11.6912 5.99979 9.00488 8.68608 9.00488 11.9998C9.00488 15.3135 11.6912 17.9998 15.0049 17.9998H22.0049V19.9998C22.0049 20.5521 21.5572 20.9998 21.0049 20.9998H3.00488C2.4526 20.9998 2.00488 20.5521 2.00488 19.9998V3.99979C2.00488 3.4475 2.4526 2.99979 3.00488 2.99979H21.0049C21.5572 2.99979 22.0049 3.4475 22.0049 3.99979V5.99979ZM15.0049 7.99979H23.0049V15.9998H15.0049C12.7957 15.9998 11.0049 14.2089 11.0049 11.9998C11.0049 9.79065 12.7957 7.99979 15.0049 7.99979ZM15.0049 10.9998V12.9998H18.0049V10.9998H15.0049Z"/></svg></span>Account Credit Balance</span>
+                        <span class="wf-chevron">&#9650;</span>
+                    </div>
                     <div class="wf-panel-body" style="text-align:center">
                         <div class="wf-stat-num">
                             No credit
@@ -615,8 +672,11 @@
                     </div>
                 </div>
             <!--[if ENDBLOCK]><![endif]-->
-            <div class="wf-panel">
-                <div class="wf-panel-heading">Your Info</div>
+            <div class="wf-panel wf-panel--brand">
+                <div class="wf-panel-heading">
+                    <span><span class="wf-head-icon"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M20 22H4V20C4 17.2386 6.23858 15 9 15H15C17.7614 15 20 17.2386 20 20V22ZM12 13C8.68629 13 6 10.3137 6 7C6 3.68629 8.68629 1 12 1C15.3137 1 18 3.68629 18 7C18 10.3137 15.3137 13 12 13Z"/></svg></span>Your Info</span>
+                    <span class="wf-chevron">&#9650;</span>
+                </div>
                 <div class="wf-panel-body">
                     <div class="wf-list-title">Admin Local</div>
                     <span class="wf-list-sub">admin@local.test</span>
@@ -628,7 +688,9 @@
             </div>
 
             <div class="wf-panel">
-                <div class="wf-panel-heading">Shortcuts</div>
+                <div class="wf-panel-heading">
+                    <span><span class="wf-head-icon"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M13.0607 8.11097L14.4749 9.52518C17.2086 12.2589 17.2086 16.691 14.4749 19.4247L14.1214 19.7782C11.3877 22.5119 6.95555 22.5119 4.22188 19.7782C1.48821 17.0446 1.48821 12.6124 4.22188 9.87874L5.6361 11.293C3.68348 13.2456 3.68348 16.4114 5.6361 18.364C7.58872 20.3166 10.7545 20.3166 12.7072 18.364L13.0607 18.0105C15.0133 16.0578 15.0133 12.892 13.0607 10.9394L11.6465 9.52518L13.0607 8.11097ZM19.7782 14.1214L18.364 12.7072C20.3166 10.7545 20.3166 7.58872 18.364 5.6361C16.4114 3.68348 13.2456 3.68348 11.293 5.6361L10.9394 5.98965C8.98678 7.94227 8.98678 11.1081 10.9394 13.0607L12.3536 14.4749L10.9394 15.8891L9.52518 14.4749C6.79151 11.7413 6.79151 7.30911 9.52518 4.57544L9.87874 4.22188C12.6124 1.48821 17.0446 1.48821 19.7782 4.22188C22.5119 6.95555 22.5119 11.3877 19.7782 14.1214Z"/></svg></span>Shortcuts</span>
+                </div>
                 <ul class="wf-list">
                     <li><a href="http://127.0.0.1:8080" wire:navigate>Order New Services</a></li>
                     <li><a href="http://127.0.0.1:8080/services" wire:navigate>Services</a></li>
@@ -645,157 +707,244 @@
                 <p>Manage your active services, invoices, tickets, and stay updated here.</p>
             </div>
 
+            <div class="wf-crumb">
+                <a href="http://127.0.0.1:8080" wire:navigate>Home</a>
+                <span>/</span>Dashboard
+            </div>
+
             <div class="wf-stats">
                 <a class="wf-stat" href="http://127.0.0.1:8080/services" wire:navigate>
-                    <div class="wf-stat-num">60</div>
+                    <div class="wf-stat-head">
+                        <span class="wf-stat-num">84</span>
+                        <span class="wf-stat-icon"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M4 5H20V3H4V5ZM20 9H4V7H20V9ZM9 13H15V11H21V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V11H9V13Z"/></svg></span>
+                    </div>
                     <div class="wf-stat-label">Active Services</div>
                 </a>
                 <a class="wf-stat" href="http://127.0.0.1:8080/invoices" wire:navigate>
-                    <div class="wf-stat-num">8</div>
+                    <div class="wf-stat-head">
+                        <span class="wf-stat-num">58</span>
+                        <span class="wf-stat-icon"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M9 4L6 2L3 4V16V19C3 20.6569 4.34315 22 6 22H20C21.6569 22 23 20.6569 23 19V17H7V19C7 19.5523 6.55228 20 6 20C5.44772 20 5 19.5523 5 19V15H21V4L18 2L15 4L12 2L9 4Z"/></svg></span>
+                    </div>
                     <div class="wf-stat-label">Unpaid Invoices</div>
                 </a>
                 <!--[if BLOCK]><![endif]-->                    <a class="wf-stat" href="http://127.0.0.1:8080/tickets" wire:navigate>
-                        <div class="wf-stat-num">20</div>
+                        <div class="wf-stat-head">
+                            <span class="wf-stat-num">28</span>
+                            <span class="wf-stat-icon"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M22 17.0022C21.999 19.8731 19.9816 22.2726 17.2872 22.8616L16.6492 20.9476C17.8532 20.7511 18.8765 20.0171 19.4649 19H17C15.8954 19 15 18.1046 15 17V13C15 11.8954 15.8954 11 17 11H19.9381C19.446 7.05369 16.0796 4 12 4C7.92038 4 4.55399 7.05369 4.06189 11H7C8.10457 11 9 11.8954 9 13V17C9 18.1046 8.10457 19 7 19H4C2.89543 19 2 18.1046 2 17V12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12V12.9987V13V17V17.0013V17.0022Z"/></svg></span>
+                        </div>
                         <div class="wf-stat-label">Open Tickets</div>
                     </a>
                 <!--[if ENDBLOCK]><![endif]-->                <a class="wf-stat" href="http://127.0.0.1:8080/invoices" wire:navigate>
-                    <div class="wf-stat-num">60</div>
+                    <div class="wf-stat-head">
+                        <span class="wf-stat-num">151</span>
+                        <span class="wf-stat-icon"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M22.0049 9.99979V19.9998C22.0049 20.5521 21.5572 20.9998 21.0049 20.9998H3.00488C2.4526 20.9998 2.00488 20.5521 2.00488 19.9998V9.99979H22.0049ZM22.0049 7.99979H2.00488V3.99979C2.00488 3.4475 2.4526 2.99979 3.00488 2.99979H21.0049C21.5572 2.99979 22.0049 3.4475 22.0049 3.99979V7.99979ZM15.0049 15.9998V17.9998H19.0049V15.9998H15.0049Z"/></svg></span>
+                    </div>
                     <div class="wf-stat-label">Invoices</div>
                 </a>
             </div>
 
             <!--[if BLOCK]><![endif]-->                <div class="wf-alert wf-alert--info" style="margin-bottom:1.25rem">
-                    You have 8 unpaid invoices.
+                    You have 58 unpaid invoices.
                     <a href="http://127.0.0.1:8080/invoices" wire:navigate>View invoices</a>
                 </div>
             <!--[if ENDBLOCK]><![endif]-->
             <div class="wf-panel">
                 <div class="wf-panel-heading">
-                    <span>Active Services</span>
+                    <span><span class="wf-head-icon"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M4 5H20V3H4V5ZM20 9H4V7H20V9ZM9 13H15V11H21V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V11H9V13Z"/></svg></span>Active Services</span>
                     <a class="wf-btn wf-btn--sm wf-btn--ghost" href="http://127.0.0.1:8080/services" wire:navigate>
                         My Services
                     </a>
                 </div>
-                <ul wire:key="lw-3460896327-0-2" wire:snapshot="{&quot;data&quot;:{&quot;status&quot;:&quot;active&quot;,&quot;paginators&quot;:[{&quot;page&quot;:1},{&quot;s&quot;:&quot;arr&quot;}]},&quot;memo&quot;:{&quot;id&quot;:&quot;sE5JrdVS5pwD7FeLhi1O&quot;,&quot;name&quot;:&quot;services.widget&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;a4a78783333f1c8a89a0a567657103c8db33e79c3f933a9e545e45a0af3c7853&quot;}" wire:effects="{&quot;partials&quot;:[],&quot;url&quot;:{&quot;paginators.page&quot;:{&quot;as&quot;:&quot;page&quot;,&quot;use&quot;:&quot;push&quot;,&quot;alwaysShow&quot;:false,&quot;except&quot;:null}}}" wire:id="sE5JrdVS5pwD7FeLhi1O" wire:name="services.widget" class="wf-list">
+                <ul wire:key="lw-3460896327-0-2" wire:snapshot="{&quot;data&quot;:{&quot;status&quot;:&quot;active&quot;,&quot;paginators&quot;:[{&quot;page&quot;:1},{&quot;s&quot;:&quot;arr&quot;}]},&quot;memo&quot;:{&quot;id&quot;:&quot;WaZqK1O45faU7CFlIYZ3&quot;,&quot;name&quot;:&quot;services.widget&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;f3f66484cbb266d9518f0740f17496c6391e057eb8828976ec1b4694dead8d0d&quot;}" wire:effects="{&quot;partials&quot;:[],&quot;url&quot;:{&quot;paginators.page&quot;:{&quot;as&quot;:&quot;page&quot;,&quot;use&quot;:&quot;push&quot;,&quot;alwaysShow&quot;:false,&quot;except&quot;:null}}}" wire:id="WaZqK1O45faU7CFlIYZ3" wire:name="services.widget" class="wf-list">
     <!--[if BLOCK]><![endif]-->                <li>
-            <a href="http://127.0.0.1:8080/services/13" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">IPv6 Proxy #13</span>
-                    <span class="wf-list-sub">
-                        Proxies
-                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Sep 12, 2026
-                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+            <div class="wf-list-row">
+                <span class="wf-row-main">
+                    <span class="wf-label wf-label--success">Active</span>
+                    <span style="min-width:0">
+                        <a class="wf-list-title wf-row-link" href="http://127.0.0.1:8080/services/13" wire:navigate>
+                            IPv6 Proxy #13
+                        </a>
+                        <span class="wf-list-sub">
+                            Proxies
+                            <!--[if BLOCK]><![endif]-->                                &middot; Renews on: Sep 12, 2026
+                            <!--[if ENDBLOCK]><![endif]-->                        </span>
+                    </span>
                 </span>
-                <span class="wf-label wf-label--success">Active</span>
-            </a>
+                <a class="wf-btn wf-btn--sm" href="http://127.0.0.1:8080/services/13" wire:navigate>
+                    View
+                </a>
+            </div>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/services/24" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">IPv6 Proxy #24</span>
-                    <span class="wf-list-sub">
-                        Proxies
-                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Sep 13, 2026
-                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+            <div class="wf-list-row">
+                <span class="wf-row-main">
+                    <span class="wf-label wf-label--success">Active</span>
+                    <span style="min-width:0">
+                        <a class="wf-list-title wf-row-link" href="http://127.0.0.1:8080/services/24" wire:navigate>
+                            IPv6 Proxy #24
+                        </a>
+                        <span class="wf-list-sub">
+                            Proxies
+                            <!--[if BLOCK]><![endif]-->                                &middot; Renews on: Sep 13, 2026
+                            <!--[if ENDBLOCK]><![endif]-->                        </span>
+                    </span>
                 </span>
-                <span class="wf-label wf-label--success">Active</span>
-            </a>
+                <a class="wf-btn wf-btn--sm" href="http://127.0.0.1:8080/services/24" wire:navigate>
+                    View
+                </a>
+            </div>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/services/25" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">IPv6 Proxy #25</span>
-                    <span class="wf-list-sub">
-                        Proxies
-                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Sep 13, 2026
-                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+            <div class="wf-list-row">
+                <span class="wf-row-main">
+                    <span class="wf-label wf-label--success">Active</span>
+                    <span style="min-width:0">
+                        <a class="wf-list-title wf-row-link" href="http://127.0.0.1:8080/services/25" wire:navigate>
+                            IPv6 Proxy #25
+                        </a>
+                        <span class="wf-list-sub">
+                            Proxies
+                            <!--[if BLOCK]><![endif]-->                                &middot; Renews on: Sep 13, 2026
+                            <!--[if ENDBLOCK]><![endif]-->                        </span>
+                    </span>
                 </span>
-                <span class="wf-label wf-label--success">Active</span>
-            </a>
+                <a class="wf-btn wf-btn--sm" href="http://127.0.0.1:8080/services/25" wire:navigate>
+                    View
+                </a>
+            </div>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/services/26" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">IPv6 Proxy #26</span>
-                    <span class="wf-list-sub">
-                        Proxies
-                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Sep 13, 2026
-                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+            <div class="wf-list-row">
+                <span class="wf-row-main">
+                    <span class="wf-label wf-label--success">Active</span>
+                    <span style="min-width:0">
+                        <a class="wf-list-title wf-row-link" href="http://127.0.0.1:8080/services/26" wire:navigate>
+                            IPv6 Proxy #26
+                        </a>
+                        <span class="wf-list-sub">
+                            Proxies
+                            <!--[if BLOCK]><![endif]-->                                &middot; Renews on: Sep 13, 2026
+                            <!--[if ENDBLOCK]><![endif]-->                        </span>
+                    </span>
                 </span>
-                <span class="wf-label wf-label--success">Active</span>
-            </a>
+                <a class="wf-btn wf-btn--sm" href="http://127.0.0.1:8080/services/26" wire:navigate>
+                    View
+                </a>
+            </div>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/services/27" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">IPv6 Proxy #27</span>
-                    <span class="wf-list-sub">
-                        Proxies
-                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Sep 13, 2026
-                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+            <div class="wf-list-row">
+                <span class="wf-row-main">
+                    <span class="wf-label wf-label--success">Active</span>
+                    <span style="min-width:0">
+                        <a class="wf-list-title wf-row-link" href="http://127.0.0.1:8080/services/27" wire:navigate>
+                            IPv6 Proxy #27
+                        </a>
+                        <span class="wf-list-sub">
+                            Proxies
+                            <!--[if BLOCK]><![endif]-->                                &middot; Renews on: Sep 13, 2026
+                            <!--[if ENDBLOCK]><![endif]-->                        </span>
+                    </span>
                 </span>
-                <span class="wf-label wf-label--success">Active</span>
-            </a>
+                <a class="wf-btn wf-btn--sm" href="http://127.0.0.1:8080/services/27" wire:navigate>
+                    View
+                </a>
+            </div>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/services/30" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">IPv6 Proxy #30</span>
-                    <span class="wf-list-sub">
-                        Proxies
-                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Oct 13, 2026
-                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+            <div class="wf-list-row">
+                <span class="wf-row-main">
+                    <span class="wf-label wf-label--success">Active</span>
+                    <span style="min-width:0">
+                        <a class="wf-list-title wf-row-link" href="http://127.0.0.1:8080/services/30" wire:navigate>
+                            IPv6 Proxy #30
+                        </a>
+                        <span class="wf-list-sub">
+                            Proxies
+                            <!--[if BLOCK]><![endif]-->                                &middot; Renews on: Oct 13, 2026
+                            <!--[if ENDBLOCK]><![endif]-->                        </span>
+                    </span>
                 </span>
-                <span class="wf-label wf-label--success">Active</span>
-            </a>
+                <a class="wf-btn wf-btn--sm" href="http://127.0.0.1:8080/services/30" wire:navigate>
+                    View
+                </a>
+            </div>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/services/32" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">IPv6 Proxy #32</span>
-                    <span class="wf-list-sub">
-                        Proxies
-                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Oct 14, 2026
-                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+            <div class="wf-list-row">
+                <span class="wf-row-main">
+                    <span class="wf-label wf-label--success">Active</span>
+                    <span style="min-width:0">
+                        <a class="wf-list-title wf-row-link" href="http://127.0.0.1:8080/services/32" wire:navigate>
+                            IPv6 Proxy #32
+                        </a>
+                        <span class="wf-list-sub">
+                            Proxies
+                            <!--[if BLOCK]><![endif]-->                                &middot; Renews on: Oct 14, 2026
+                            <!--[if ENDBLOCK]><![endif]-->                        </span>
+                    </span>
                 </span>
-                <span class="wf-label wf-label--success">Active</span>
-            </a>
+                <a class="wf-btn wf-btn--sm" href="http://127.0.0.1:8080/services/32" wire:navigate>
+                    View
+                </a>
+            </div>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/services/34" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">IPv6 Proxy #34</span>
-                    <span class="wf-list-sub">
-                        Proxies
-                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Sep 14, 2026
-                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+            <div class="wf-list-row">
+                <span class="wf-row-main">
+                    <span class="wf-label wf-label--success">Active</span>
+                    <span style="min-width:0">
+                        <a class="wf-list-title wf-row-link" href="http://127.0.0.1:8080/services/34" wire:navigate>
+                            IPv6 Proxy #34
+                        </a>
+                        <span class="wf-list-sub">
+                            Proxies
+                            <!--[if BLOCK]><![endif]-->                                &middot; Renews on: Sep 14, 2026
+                            <!--[if ENDBLOCK]><![endif]-->                        </span>
+                    </span>
                 </span>
-                <span class="wf-label wf-label--success">Active</span>
-            </a>
+                <a class="wf-btn wf-btn--sm" href="http://127.0.0.1:8080/services/34" wire:navigate>
+                    View
+                </a>
+            </div>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/services/35" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">IPv6 Proxy #35</span>
-                    <span class="wf-list-sub">
-                        Proxies
-                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Sep 14, 2026
-                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+            <div class="wf-list-row">
+                <span class="wf-row-main">
+                    <span class="wf-label wf-label--success">Active</span>
+                    <span style="min-width:0">
+                        <a class="wf-list-title wf-row-link" href="http://127.0.0.1:8080/services/35" wire:navigate>
+                            IPv6 Proxy #35
+                        </a>
+                        <span class="wf-list-sub">
+                            Proxies
+                            <!--[if BLOCK]><![endif]-->                                &middot; Renews on: Sep 14, 2026
+                            <!--[if ENDBLOCK]><![endif]-->                        </span>
+                    </span>
                 </span>
-                <span class="wf-label wf-label--success">Active</span>
-            </a>
+                <a class="wf-btn wf-btn--sm" href="http://127.0.0.1:8080/services/35" wire:navigate>
+                    View
+                </a>
+            </div>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/services/37" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">IPv6 Proxy #37</span>
-                    <span class="wf-list-sub">
-                        Proxies
-                        <!--[if BLOCK]><![endif]-->                            &middot; Renews on: Oct 14, 2026
-                        <!--[if ENDBLOCK]><![endif]-->                    </span>
+            <div class="wf-list-row">
+                <span class="wf-row-main">
+                    <span class="wf-label wf-label--success">Active</span>
+                    <span style="min-width:0">
+                        <a class="wf-list-title wf-row-link" href="http://127.0.0.1:8080/services/37" wire:navigate>
+                            IPv6 Proxy #37
+                        </a>
+                        <span class="wf-list-sub">
+                            Proxies
+                            <!--[if BLOCK]><![endif]-->                                &middot; Renews on: Oct 14, 2026
+                            <!--[if ENDBLOCK]><![endif]-->                        </span>
+                    </span>
                 </span>
-                <span class="wf-label wf-label--success">Active</span>
-            </a>
+                <a class="wf-btn wf-btn--sm" href="http://127.0.0.1:8080/services/37" wire:navigate>
+                    View
+                </a>
+            </div>
         </li>
     <!--[if ENDBLOCK]><![endif]--></ul>
             </div>
@@ -808,13 +957,13 @@
                             View All
                         </a>
                     </div>
-                    <ul wire:key="lw-3460896327-1-3-9" wire:snapshot="{&quot;data&quot;:{&quot;paginators&quot;:[{&quot;page&quot;:1},{&quot;s&quot;:&quot;arr&quot;}]},&quot;memo&quot;:{&quot;id&quot;:&quot;880EouHG36rEN0v00Oep&quot;,&quot;name&quot;:&quot;invoices.widget&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;attributes&quot;:{&quot;limit&quot;:3},&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;48984b167fb5e23aa58d94de370f87c0c46464775b495869270bec4973104a5a&quot;}" wire:effects="{&quot;partials&quot;:[],&quot;url&quot;:{&quot;paginators.page&quot;:{&quot;as&quot;:&quot;page&quot;,&quot;use&quot;:&quot;push&quot;,&quot;alwaysShow&quot;:false,&quot;except&quot;:null}}}" wire:id="880EouHG36rEN0v00Oep" wire:name="invoices.widget" class="wf-list">
+                    <ul wire:key="lw-3460896327-1-3-9" wire:snapshot="{&quot;data&quot;:{&quot;paginators&quot;:[{&quot;page&quot;:1},{&quot;s&quot;:&quot;arr&quot;}]},&quot;memo&quot;:{&quot;id&quot;:&quot;Id5cfXTWCmuzunVYBjbc&quot;,&quot;name&quot;:&quot;invoices.widget&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;attributes&quot;:{&quot;limit&quot;:3},&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;0f59a07f385953d8a741be0203dc9a4c8a56af0ac008d3d60cfb50884ca6460c&quot;}" wire:effects="{&quot;partials&quot;:[],&quot;url&quot;:{&quot;paginators.page&quot;:{&quot;as&quot;:&quot;page&quot;,&quot;use&quot;:&quot;push&quot;,&quot;alwaysShow&quot;:false,&quot;except&quot;:null}}}" wire:id="Id5cfXTWCmuzunVYBjbc" wire:name="invoices.widget" class="wf-list">
     <!--[if BLOCK]><![endif]-->                <li>
-            <a href="http://127.0.0.1:8080/invoices/INV-155" wire:navigate>
+            <a href="http://127.0.0.1:8080/invoices/INV-246" wire:navigate>
                 <span style="min-width:0">
-                    <span class="wf-list-title">Invoice #INV-155</span>
+                    <span class="wf-list-title">Invoice #INV-246</span>
                     <span class="wf-list-sub">
-                        Invoice Date: 14 Aug 2026
+                        Invoice Date: 15 Aug 2026
                     </span>
                 </span>
                 <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
@@ -824,11 +973,11 @@
             </a>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/invoices/INV-154" wire:navigate>
+            <a href="http://127.0.0.1:8080/invoices/INV-245" wire:navigate>
                 <span style="min-width:0">
-                    <span class="wf-list-title">Invoice #INV-154</span>
+                    <span class="wf-list-title">Invoice #INV-245</span>
                     <span class="wf-list-sub">
-                        Invoice Date: 14 Aug 2026
+                        Invoice Date: 15 Aug 2026
                     </span>
                 </span>
                 <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
@@ -838,11 +987,11 @@
             </a>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/invoices/INV-151" wire:navigate>
+            <a href="http://127.0.0.1:8080/invoices/INV-241" wire:navigate>
                 <span style="min-width:0">
-                    <span class="wf-list-title">Invoice #INV-151</span>
+                    <span class="wf-list-title">Invoice #INV-241</span>
                     <span class="wf-list-sub">
-                        Invoice Date: 14 Aug 2026
+                        Invoice Date: 15 Aug 2026
                     </span>
                 </span>
                 <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
@@ -852,11 +1001,11 @@
             </a>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/invoices/INV-150" wire:navigate>
+            <a href="http://127.0.0.1:8080/invoices/INV-240" wire:navigate>
                 <span style="min-width:0">
-                    <span class="wf-list-title">Invoice #INV-150</span>
+                    <span class="wf-list-title">Invoice #INV-240</span>
                     <span class="wf-list-sub">
-                        Invoice Date: 14 Aug 2026
+                        Invoice Date: 15 Aug 2026
                     </span>
                 </span>
                 <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
@@ -866,11 +1015,11 @@
             </a>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/invoices/INV-146" wire:navigate>
+            <a href="http://127.0.0.1:8080/invoices/INV-239" wire:navigate>
                 <span style="min-width:0">
-                    <span class="wf-list-title">Invoice #INV-146</span>
+                    <span class="wf-list-title">Invoice #INV-239</span>
                     <span class="wf-list-sub">
-                        Invoice Date: 14 Aug 2026
+                        Invoice Date: 15 Aug 2026
                     </span>
                 </span>
                 <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
@@ -880,11 +1029,11 @@
             </a>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/invoices/INV-145" wire:navigate>
+            <a href="http://127.0.0.1:8080/invoices/INV-234" wire:navigate>
                 <span style="min-width:0">
-                    <span class="wf-list-title">Invoice #INV-145</span>
+                    <span class="wf-list-title">Invoice #INV-234</span>
                     <span class="wf-list-sub">
-                        Invoice Date: 14 Aug 2026
+                        Invoice Date: 15 Aug 2026
                     </span>
                 </span>
                 <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
@@ -894,11 +1043,39 @@
             </a>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/invoices/INV-143" wire:navigate>
+            <a href="http://127.0.0.1:8080/invoices/INV-233" wire:navigate>
                 <span style="min-width:0">
-                    <span class="wf-list-title">Invoice #INV-143</span>
+                    <span class="wf-list-title">Invoice #INV-233</span>
                     <span class="wf-list-sub">
-                        Invoice Date: 14 Aug 2026
+                        Invoice Date: 15 Aug 2026
+                    </span>
+                </span>
+                <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
+                    <span class="wf-list-title">$40.00</span>
+                    <span class="wf-label wf-label--warning">Pending</span>
+                </span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/invoices/INV-232" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">Invoice #INV-232</span>
+                    <span class="wf-list-sub">
+                        Invoice Date: 15 Aug 2026
+                    </span>
+                </span>
+                <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
+                    <span class="wf-list-title">$40.00</span>
+                    <span class="wf-label wf-label--warning">Pending</span>
+                </span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/invoices/INV-230" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">Invoice #INV-230</span>
+                    <span class="wf-list-sub">
+                        Invoice Date: 15 Aug 2026
                     </span>
                 </span>
                 <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
@@ -908,11 +1085,11 @@
             </a>
         </li>
                     <li>
-            <a href="http://127.0.0.1:8080/invoices/INV-142" wire:navigate>
+            <a href="http://127.0.0.1:8080/invoices/INV-229" wire:navigate>
                 <span style="min-width:0">
-                    <span class="wf-list-title">Invoice #INV-142</span>
+                    <span class="wf-list-title">Invoice #INV-229</span>
                     <span class="wf-list-sub">
-                        Invoice Date: 14 Aug 2026
+                        Invoice Date: 15 Aug 2026
                     </span>
                 </span>
                 <span style="display:flex; align-items:center; gap:.6rem; white-space:nowrap">
@@ -931,14 +1108,118 @@
                                 Create Ticket
                             </a>
                         </div>
-                        <ul wire:key="lw-3460896327-2-3-9-0-7" wire:snapshot="{&quot;data&quot;:{&quot;paginators&quot;:[{&quot;page&quot;:1},{&quot;s&quot;:&quot;arr&quot;}]},&quot;memo&quot;:{&quot;id&quot;:&quot;w4UQyF5WB7zIVjyhOm0w&quot;,&quot;name&quot;:&quot;tickets.widget&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;2653b515af62b150ee9b47b78d838a76e66dddc662e49819c5010ae13aede54a&quot;}" wire:effects="{&quot;partials&quot;:[],&quot;url&quot;:{&quot;paginators.page&quot;:{&quot;as&quot;:&quot;page&quot;,&quot;use&quot;:&quot;push&quot;,&quot;alwaysShow&quot;:false,&quot;except&quot;:null}}}" wire:id="w4UQyF5WB7zIVjyhOm0w" wire:name="tickets.widget" class="wf-list">
+                        <ul wire:key="lw-3460896327-2-3-9-0-9" wire:snapshot="{&quot;data&quot;:{&quot;paginators&quot;:[{&quot;page&quot;:1},{&quot;s&quot;:&quot;arr&quot;}]},&quot;memo&quot;:{&quot;id&quot;:&quot;uk0Dqykl6OR4Tc7CAA0m&quot;,&quot;name&quot;:&quot;tickets.widget&quot;,&quot;path&quot;:&quot;dashboard&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;,&quot;islands&quot;:[]},&quot;checksum&quot;:&quot;db7fd733e0b123a22c09ee905e4bc991deeca81bbc4f31c2b24011cf8c9e721a&quot;}" wire:effects="{&quot;partials&quot;:[],&quot;url&quot;:{&quot;paginators.page&quot;:{&quot;as&quot;:&quot;page&quot;,&quot;use&quot;:&quot;push&quot;,&quot;alwaysShow&quot;:false,&quot;except&quot;:null}}}" wire:id="uk0Dqykl6OR4Tc7CAA0m" wire:name="tickets.widget" class="wf-list">
     <!--[if BLOCK]><![endif]-->                <li>
+            <a href="http://127.0.0.1:8080/tickets/28" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#28 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        1 minute ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/27" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#27 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        1 minute ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/26" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#26 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        13 hours ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/25" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#25 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        13 hours ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/24" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#24 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        16 hours ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/23" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#23 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        16 hours ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/22" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#22 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        18 hours ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
+            <a href="http://127.0.0.1:8080/tickets/21" wire:navigate>
+                <span style="min-width:0">
+                    <span class="wf-list-title">#21 &mdash; Notify test ticket</span>
+                    <span class="wf-list-sub">
+                        Last activity
+                        18 hours ago
+                        
+                    </span>
+                </span>
+                <span class="wf-label wf-label--success">Open</span>
+            </a>
+        </li>
+                    <li>
             <a href="http://127.0.0.1:8080/tickets/20" wire:navigate>
                 <span style="min-width:0">
                     <span class="wf-list-title">#20 &mdash; Notify test ticket</span>
                     <span class="wf-list-sub">
                         Last activity
-                        1 minute ago
+                        19 hours ago
                         
                     </span>
                 </span>
@@ -951,111 +1232,7 @@
                     <span class="wf-list-title">#19 &mdash; Notify test ticket</span>
                     <span class="wf-list-sub">
                         Last activity
-                        1 minute ago
-                        
-                    </span>
-                </span>
-                <span class="wf-label wf-label--success">Open</span>
-            </a>
-        </li>
-                    <li>
-            <a href="http://127.0.0.1:8080/tickets/18" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">#18 &mdash; Notify test ticket</span>
-                    <span class="wf-list-sub">
-                        Last activity
-                        2 hours ago
-                        
-                    </span>
-                </span>
-                <span class="wf-label wf-label--success">Open</span>
-            </a>
-        </li>
-                    <li>
-            <a href="http://127.0.0.1:8080/tickets/17" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">#17 &mdash; Notify test ticket</span>
-                    <span class="wf-list-sub">
-                        Last activity
-                        2 hours ago
-                        
-                    </span>
-                </span>
-                <span class="wf-label wf-label--success">Open</span>
-            </a>
-        </li>
-                    <li>
-            <a href="http://127.0.0.1:8080/tickets/16" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">#16 &mdash; Notify test ticket</span>
-                    <span class="wf-list-sub">
-                        Last activity
-                        2 hours ago
-                        
-                    </span>
-                </span>
-                <span class="wf-label wf-label--success">Open</span>
-            </a>
-        </li>
-                    <li>
-            <a href="http://127.0.0.1:8080/tickets/15" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">#15 &mdash; Notify test ticket</span>
-                    <span class="wf-list-sub">
-                        Last activity
-                        2 hours ago
-                        
-                    </span>
-                </span>
-                <span class="wf-label wf-label--success">Open</span>
-            </a>
-        </li>
-                    <li>
-            <a href="http://127.0.0.1:8080/tickets/14" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">#14 &mdash; Notify test ticket</span>
-                    <span class="wf-list-sub">
-                        Last activity
-                        3 hours ago
-                        
-                    </span>
-                </span>
-                <span class="wf-label wf-label--success">Open</span>
-            </a>
-        </li>
-                    <li>
-            <a href="http://127.0.0.1:8080/tickets/13" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">#13 &mdash; Notify test ticket</span>
-                    <span class="wf-list-sub">
-                        Last activity
-                        3 hours ago
-                        
-                    </span>
-                </span>
-                <span class="wf-label wf-label--success">Open</span>
-            </a>
-        </li>
-                    <li>
-            <a href="http://127.0.0.1:8080/tickets/12" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">#12 &mdash; Notify test ticket</span>
-                    <span class="wf-list-sub">
-                        Last activity
-                        6 hours ago
-                        
-                    </span>
-                </span>
-                <span class="wf-label wf-label--success">Open</span>
-            </a>
-        </li>
-                    <li>
-            <a href="http://127.0.0.1:8080/tickets/11" wire:navigate>
-                <span style="min-width:0">
-                    <span class="wf-list-title">#11 &mdash; Notify test ticket</span>
-                    <span class="wf-list-sub">
-                        Last activity
-                        7 hours ago
+                        19 hours ago
                         
                     </span>
                 </span>
@@ -1133,7 +1310,7 @@
 </footer>
         </div>
             </div>
-    <script  data-navigate-once="true">window.livewireScriptConfig = {"csrf":"9a880IGche919PiLM4vUj1K4xL6qDrZQQXQrswhf","uri":"http:\/\/127.0.0.1:8080\/paymenter\/update","moduleUrl":"http:\/\/127.0.0.1:8080\/livewire-77cd4cda","progressBar":"","nonce":""};</script>
+    <script  data-navigate-once="true">window.livewireScriptConfig = {"csrf":"OSAQCKFGIPhqCGtTRcSeqNGYmpZGJJLIYJU2Ma3H","uri":"http:\/\/127.0.0.1:8080\/paymenter\/update","moduleUrl":"http:\/\/127.0.0.1:8080\/livewire-77cd4cda","progressBar":"","nonce":""};</script>
     <script>
     (function () {
         function onlyDigits(v) { return (v || '').replace(/\D/g, ''); }
