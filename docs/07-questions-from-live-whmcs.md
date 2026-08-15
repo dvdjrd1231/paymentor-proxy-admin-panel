@@ -1,97 +1,58 @@
-# What we still need to see from the live WHMCS
+# Questions for Leandro
 
-Leandro is right that parts of the specification only resolve against a running system. The
-PDF describes *features*; a production install also encodes *behaviour* — routing rules,
-defaults, wording, who sees what — and that is where an implementation can be complete
-against the document and still feel wrong to the people using it.
+The PDF specifies features. A running WHMCS also encodes behaviour — routing, defaults,
+wording, who sees what. These are the points where we had to choose, and where a wrong
+choice means rework.
 
-This is the concrete list. Each item says what was built, what is ambiguous, and the
-smallest thing that would settle it.
-
-> **Access:** we are not asking for logins to the production billing system. Screenshots or
-> a short screen recording of each flow, or a read-only copy restored to a staging host, is
-> enough — and avoids putting live customer data at risk.
+**No production logins needed.** Screenshots, a short screen recording, or a read-only
+staging copy answers all of it without exposing live customer data.
 
 ---
 
-## §3 Support tickets
+## A. Blocked — needs action, not an answer
 
-| Question | Why it matters | Built today |
+| # | Blocker | Effect |
 |---|---|---|
-| What are the actual **departments**, and does each route to different staff or a different mailbox? | We store a department per ticket, but not routing. If tickets are auto-assigned by department, that is logic we have not written. | Free-text department on the ticket; assignment is manual (`assigned_to`) |
-| Are tickets **created by email** (mail piping)? | WHMCS commonly ingests replies from an inbox. If customers reply by email today, they will expect that to keep working. | Web only. There is a `ticket_mail_log_id` column but no ingestion |
-| Do tickets **auto-close** after inactivity, and after how long? | Changes reporting and customer expectation. | No auto-close |
-| Which **priorities** do staff actually use, and does priority drive anything (SLA, sorting, alerts)? | We store priority but nothing acts on it. | `priority` stored, no behaviour attached |
-| Are **quick replies** shared by all staff or per-department? | We key canned responses by department; if they are global that field is noise. | `canned_responses.department` |
-
-## §2 Administrative area — "optimized for daily operations"
-
-This is the least specifiable line in the PDF and the easiest to get wrong.
-
-- **Which screens does staff live in all day?** Orders queue, ticket queue, a specific
-  customer view? We have built an operations metrics widget, but not around a workflow we
-  have watched.
-- **What does a normal day look like** — new order arrives, then what? Which steps are
-  manual today and which are expected to become automatic?
-- **What is currently painful in WHMCS** that this project is meant to remove? That single
-  answer is worth more than the rest of this document.
-
-## §5 / §6 Gateway rules and fees
-
-- **Which gateways are offered to whom today?** We support rules by country, product,
-  product group, customer type, currency and amount — but we do not know the rules they
-  actually run.
-- **What fee does each method carry today**, and is it shown to the customer before they
-  choose? Our fee is added to the invoice at selection time.
-
-## §7 / §8 Provisioning
-
-- **What does the customer see between ordering and the proxies being ready?** We hold the
-  service Pending until the panel confirms; if WHMCS shows something else, expectations differ.
-- **How are renewals handled today** — automatic charge, invoice-then-suspend, grace period?
-  Paymenter has no renew hook, so renewal is billing-driven, and the grace behaviour is a
-  policy decision we have not been given.
-- **What happens on failure today?** Who is told, and how quickly?
-
-## §9 Brazilian registration
-
-- Is **CPF/CNPJ mandatory at signup**, or can an account exist without one?
-- Who may **see a stored document** — any admin, or a restricted role?
-- Is the document ever shown back to the customer, masked or in full?
-
-## §11 Notifications
-
-- **Which events actually notify today, and who receives each?** The PDF lists eight
-  minimum events; a live system usually has a longer list and specific recipients.
-- **What do the current emails look like?** Wording and branding are part of "similar to
-  WHMCS", and copying the existing templates is cheaper than inventing them.
-
-## §1 Deployment
-
-- **What is the current backup and restore routine**, and what recovery expectation exists?
-  We ship scripts; we do not know the retention or the RTO they assume.
+| A1 | **Panel has no locations.** `GET /locations` → `[]`; orders rejected with *"Requested location not available"* | **No proxy can be delivered.** Everything else is ready |
+| A2 | **SMTP credentials** missing (`mail.host` = `127.0.0.1`) | No customer email of any kind |
+| A3 | **Telegram** bot token + admin chat id missing | No Telegram alerts |
+| A4 | **Cryptomus**: API not activated in dashboard | Gateway configured, cannot charge |
+| A5 | **Binance**: HTTP 451 from US-hosted server | Needs a region/hosting decision |
 
 ---
 
-## The three that block delivery regardless
+## B. Answer these first — they change what gets built
 
-These are not questions — they are outstanding actions on the client side, and no amount of
-code moves them:
-
-1. **Panel has no locations.** `GET /locations` returns `[]` and orders are rejected with
-   *"Requested location not available"*. Until a location exists, no proxy can be delivered.
-2. **SMTP and Telegram credentials.** The notification system is built and wired to all
-   eight events, but nothing can send.
-3. **Cryptomus API activation** and a **Binance hosting-region decision** (HTTP 451).
+| # | Question | Built today |
+|---|---|---|
+| B1 | **What is painful in WHMCS today that this project must remove?** | — |
+| B2 | Are tickets **created/replied by email**? | Web only. Column exists, no ingestion |
+| B3 | Do tickets **auto-assign by department**? Which departments, to whom? | Department stored; assignment manual |
+| B4 | **Renewal policy** — auto-charge, invoice-then-suspend, grace period? | Billing-driven, no grace rule |
+| B5 | **Which gateway is offered to whom** today (country, product, amount)? | Engine supports all 6 rules; none configured |
+| B6 | **What fee** does each method carry, and is it shown before choosing? | Added to invoice at selection |
+| B7 | Is **CPF/CNPJ mandatory** at signup? Who may read a stored document? | Optional; any admin can read |
 
 ---
 
-## Suggested order
+## C. Answer before launch
 
-1. A **screen recording of one normal day** in the current WHMCS — an order arriving through
-   to the service being live, and one ticket handled start to finish. This answers most of
-   the questions above at once.
-2. The **current notification templates**, exported.
-3. The **gateway and fee rules** in force today.
+| # | Question | Built today |
+|---|---|---|
+| C1 | **Real prices** for the 9 plans, in USD and BRL | Placeholders (tier-derived, R$5.40/USD) |
+| C2 | Is **BRL** the selling currency, or display only? | Added alongside USD |
+| C3 | **Which events notify whom** today? Send current email templates | 8 events wired; wording is ours |
+| C4 | Do tickets **auto-close** after inactivity? After how long? | No auto-close |
+| C5 | Does **priority** drive anything (SLA, sorting, alerts)? | Stored, no behaviour |
+| C6 | Are **quick replies** global or per-department? | Per-department |
+| C7 | What does a customer **see between ordering and delivery**? | Service held *Pending* until panel confirms |
+| C8 | **Backup retention** and recovery expectation? | Scripts shipped, no policy set |
 
-Everything else can follow from those three.
+---
+
+## D. Fastest way to answer most of this
+
+1. **Screen recording of one normal day** — an order arriving through to the service going
+   live, and one ticket handled start to finish. Covers B2, B3, B4, C3, C7.
+2. **Export the current notification templates.** Covers C3.
+3. **Screenshot the gateway and fee rules** in force. Covers B5, B6.
