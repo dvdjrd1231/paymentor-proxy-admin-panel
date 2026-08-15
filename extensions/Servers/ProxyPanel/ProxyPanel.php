@@ -412,6 +412,27 @@ class ProxyPanel extends Server
     {
         $settings = array_merge($settings, $properties);
 
+        // Paying the invoice marks the service Active before provisioning is attempted, so
+        // the gate has to hold on *every* exit from this method — not just the happy path.
+        // If the panel refuses (no location, bad plan, outage) the exception used to escape
+        // with the service still Active, showing the customer a service that was never
+        // delivered. That is the fault the client reported. Force it back to Pending on the
+        // way out, then rethrow so ProvisioningOps still records and can retry the failure.
+        try {
+            return $this->createServerInternal($service, $settings);
+        } catch (\Throwable $e) {
+            try {
+                $this->awaitPanelConfirmation($service);
+            } catch (\Throwable $ignored) {
+                // Never let the guard mask the original provisioning error.
+            }
+
+            throw $e;
+        }
+    }
+
+    private function createServerInternal(Service $service, array $settings)
+    {
         return $this->withLock($service, 'create', function () use ($service, $settings) {
             // Idempotency: an InvoicePaid processed twice must not create two services.
             if ($remoteId = $this->remoteId($service)) {
