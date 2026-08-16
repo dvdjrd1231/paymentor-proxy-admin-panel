@@ -7,12 +7,10 @@
  * they actually sell today — rather than invented. Five IPv6 residential tiers, each in
  * HTTP and Socks5h, with Socks5h priced at exactly twice HTTP across every tier.
  *
- * What this deliberately does NOT set is the panel `plan` tag. The panel offers plans on a
- * different axis (bandwidth: 1G/2G/4G, backend: Squid/3Proxy) from the commercial line
- * (port count: 1,500 → 31,500), so only the client can say which panel plan backs which
- * product. Provisioning with the wrong tag would deliver the wrong service, which is worse
- * than not provisioning — an unmapped product fails fast with
- * "ProxyPanel: no Plan configured on this product."
+ * The panel `plan` tag is set provisionally. Protocol is certain — Squid is HTTP-only, so
+ * a Socks5h product must use a 3Proxy `-S5` plan — but the bandwidth tier is a judgement,
+ * because the store sells five tiers by port count while the panel offers three by
+ * bandwidth. See PANEL_PLAN below. The client must confirm it before real provisioning.
  *
  *   php scripts/seed-catalogue.php            # show what it would do
  *   php scripts/seed-catalogue.php --apply    # write it
@@ -33,13 +31,32 @@ use Illuminate\Support\Str;
 
 $apply = in_array('--apply', $argv, true);
 
-/** The live product line: tier => [ports, HTTP price USD]. */
+/** The live product line: tier => [ports, HTTP price USD, panel bandwidth tier]. */
 const TIERS = [
-    'Amethyst' => [1500, 70.00],
-    'Emerald' => [4500, 120.00],
-    'Jade' => [13500, 350.00],
-    'Onyx' => [22500, 580.00],
-    'Ruby' => [31500, 800.00],
+    'Amethyst' => [1500, 70.00, '1G'],
+    'Emerald' => [4500, 120.00, '1G'],
+    'Jade' => [13500, 350.00, '2G'],
+    'Onyx' => [22500, 580.00, '4G'],
+    'Ruby' => [31500, 800.00, '4G'],
+];
+
+/**
+ * Panel plan tag per bandwidth tier and protocol.
+ *
+ * Only part of this is derivable. Squid is an HTTP-only daemon — the panel has no
+ * `Squid-S5` plan — so every Socks5h product must use a 3Proxy `-S5` tag. That half is
+ * certain. 3Proxy is then used for HTTP too, so both variants of a tier run the same
+ * backend rather than mixing daemons.
+ *
+ * The bandwidth column in TIERS is a JUDGEMENT, not a fact: the store sells five tiers by
+ * port count while the panel offers three by bandwidth, so the mapping cannot be one to
+ * one. It is monotonic — more ports never gets less bandwidth — and must be confirmed by
+ * the client before real provisioning. Confirm in Admin → Products.
+ */
+const PANEL_PLAN = [
+    '1G' => ['http' => '1GP-3Proxy-HT', 'socks5' => '1GP-3Proxy-S5'],
+    '2G' => ['http' => '2GP-3Proxy-HT', 'socks5' => '2GP-3Proxy-S5'],
+    '4G' => ['http' => '4GP-3Proxy-HT', 'socks5' => '4GP-3Proxy-S5'],
 ];
 
 /** Socks5h is twice the HTTP price in every tier on the public store. */
@@ -84,7 +101,7 @@ if ($apply) {
 echo PHP_EOL;
 
 // ── The real product line ────────────────────────────────────────────────────────────────
-foreach (TIERS as $tier => [$ports, $httpPrice]) {
+foreach (TIERS as $tier => [$ports, $httpPrice, $bandwidth]) {
     $variants = [
         'HTTP Proxy' => ['http', $httpPrice],
         'Socks5h' => ['socks5', $httpPrice * SOCKS5_MULTIPLIER],
@@ -95,8 +112,12 @@ foreach (TIERS as $tier => [$ports, $httpPrice]) {
         $slug = Str::slug($name);
         $existing = Product::where('slug', $slug)->first();
 
-        printf("[ %s ] %-46s %7s ports  USD %s%s",
-            $existing ? 'sync' : ($apply ? ' ok ' : 'todo'), $name, number_format($ports), number_format($price, 2), PHP_EOL);
+        $planTag = PANEL_PLAN[$bandwidth][$protocol] ?? '';
+        $tagKnown = in_array($planTag, $planTags, true);
+
+        printf("[ %s ] %-46s %7s ports  USD %-9s %s%s",
+            $existing ? 'sync' : ($apply ? ' ok ' : 'todo'), $name, number_format($ports),
+            number_format($price, 2), $tagKnown ? $planTag : ($planTag . ' (NOT on panel!)'), PHP_EOL);
 
         if (!$apply) {
             continue;
@@ -115,8 +136,9 @@ foreach (TIERS as $tier => [$ports, $httpPrice]) {
             'hidden' => false,
         ]);
 
-        // Everything the ProxyPanel module needs except `plan`, which only the client can map.
+        // Everything the ProxyPanel module needs to provision this product.
         foreach ([
+            'plan' => $tagKnown ? $planTag : '',
             'amount' => (string) $ports,
             'protocol' => $protocol,
             'allow_rotation' => 'yes',
@@ -166,10 +188,24 @@ if (Currency::where('code', 'BRL')->exists()) {
 }
 
 echo PHP_EOL;
-echo "STILL TO MAP: each product needs its panel `plan` tag set in Admin -> Products.\n";
-printf("  panel plans available (%d): %s%s", count($planTags), implode(', ', $planTags), PHP_EOL);
-echo "  Until a product has a plan tag, provisioning fails fast with a clear error rather\n";
-echo "  than delivering the wrong service.\n";
+echo "PLAN TAGS — protocol is certain, bandwidth is a judgement.
+";
+echo "Squid is HTTP-only, so every Socks5h product must use a 3Proxy -S5 plan. The bandwidth
+";
+echo "tier is not derivable: the store sells 5 tiers by port count, the panel offers 3 by
+";
+echo "bandwidth. The mapping below is monotonic and NEEDS THE CLIENT'S CONFIRMATION:
+
+";
+
+foreach (TIERS as $t => [$p, , $bw]) {
+    printf("  %-9s %7s ports  ->  %-14s %s%s", $t, number_format($p),
+        PANEL_PLAN[$bw]['http'], PANEL_PLAN[$bw]['socks5'], PHP_EOL);
+}
+
+printf("%s  panel plans available (%d): %s%s", PHP_EOL, count($planTags), implode(', ', $planTags), PHP_EOL);
+echo "  Unused by this mapping: the Squid variants (1GB/2GB/4GB-Squid-HT).
+";
 
 if (!$locations) {
     echo PHP_EOL . "NOTE: the panel still lists no locations, so provisioning cannot complete yet.\n";
