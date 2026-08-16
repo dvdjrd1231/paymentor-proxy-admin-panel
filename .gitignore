@@ -39,3 +39,6 @@ Thumbs.db
 # The clean export is committed; regenerate the full one with
 # `php scripts/export-database.php` when you need it.
 /database/export/paymenter-full.sql
+
+# Render artefacts from local page checks
+dash*.html
