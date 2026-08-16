@@ -1,21 +1,18 @@
 <?php
 
 /**
- * Build the proxy catalogue from the plans the panel actually offers.
+ * Build the proxy catalogue from the client's real, published product line.
  *
- * The shipped catalogue is Paymenter demo data — a single "IPv6Proxy Test" product in a
- * "VPS Hosting" category, with plans named "Test Payment" and "Test Premium". This replaces
- * it with products mirroring the real plan tags returned by the panel's /plans endpoint, so
- * nothing here is invented: the names, and the `plan` tag each product sends when
- * provisioning, come from the panel itself.
+ * Prices and tiers are taken from the live store at my.noxproxy.com/store — the products
+ * they actually sell today — rather than invented. Five IPv6 residential tiers, each in
+ * HTTP and Socks5h, with Socks5h priced at exactly twice HTTP across every tier.
  *
- * It also registers BRL alongside USD. Paymenter has no exchange-rate column — every price
- * is stored per currency — so BRL prices are written explicitly.
- *
- * PRICES ARE PLACEHOLDERS. Only the client can set commercial prices; the figures here are
- * derived mechanically so the store is usable for testing and are meant to be edited in
- * Admin → Products. The script prints a reminder and never overwrites a price that has
- * already been changed.
+ * What this deliberately does NOT set is the panel `plan` tag. The panel offers plans on a
+ * different axis (bandwidth: 1G/2G/4G, backend: Squid/3Proxy) from the commercial line
+ * (port count: 1,500 → 31,500), so only the client can say which panel plan backs which
+ * product. Provisioning with the wrong tag would deliver the wrong service, which is worse
+ * than not provisioning — an unmapped product fails fast with
+ * "ProxyPanel: no Plan configured on this product."
  *
  *   php scripts/seed-catalogue.php            # show what it would do
  *   php scripts/seed-catalogue.php --apply    # write it
@@ -27,24 +24,29 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use App\Models\Category;
 use App\Models\Currency;
-use App\Models\Plan;
 use App\Models\Product;
 use App\Models\Server;
+use App\Models\Service;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 $apply = in_array('--apply', $argv, true);
 
-/** Placeholder monthly price per bandwidth tier, in USD. Edit in the admin afterwards. */
-const USD_BY_TIER = ['1G' => 9.99, '2G' => 17.99, '4G' => 32.99];
+/** The live product line: tier => [ports, HTTP price USD]. */
+const TIERS = [
+    'Amethyst' => [1500, 70.00],
+    'Emerald' => [4500, 120.00],
+    'Jade' => [13500, 350.00],
+    'Onyx' => [22500, 580.00],
+    'Ruby' => [31500, 800.00],
+];
 
-/** Placeholder BRL conversion. Not a live rate — set real BRL prices in the admin. */
-const BRL_PER_USD = 5.40;
+/** Socks5h is twice the HTTP price in every tier on the public store. */
+const SOCKS5_MULTIPLIER = 2;
 
 echo $apply ? "Applying.\n\n" : "Dry run — nothing will be written. Re-run with --apply.\n\n";
 
-// ── The panel is the source of truth for what can be sold ────────────────────────────────
 $server = Server::where('extension', 'ProxyPanel')->first();
 if (!$server) {
     echo "No ProxyPanel server configured.\n";
@@ -53,125 +55,125 @@ if (!$server) {
 
 $settings = $server->settings->pluck('value', 'key');
 $panel = rtrim((string) $settings['api_url'], '/');
+$headers = ['Panel' => (string) $settings['api_token'], 'Accept' => 'application/json'];
 
-$plansResponse = Http::withHeaders(['Panel' => (string) $settings['api_token'], 'Accept' => 'application/json'])
-    ->timeout(25)->get($panel . '/plans');
-$planTags = array_values(array_filter((array) $plansResponse->json(), 'is_string'));
+$planTags = array_values(array_filter((array) Http::withHeaders($headers)->timeout(25)->get($panel . '/plans')->json(), 'is_string'));
+$locations = (array) Http::withHeaders($headers)->timeout(25)->get($panel . '/locations')->json();
 
-if (!$planTags) {
-    echo "The panel returned no plans — cannot build a catalogue from it.\n";
-    exit(1);
-}
-printf("Panel offers %d plans: %s%s%s", count($planTags), implode(', ', $planTags), PHP_EOL, PHP_EOL);
+$category = Category::firstOrCreate(
+    ['name' => 'Proxies'],
+    ['slug' => 'proxies', 'description' => 'IPv6 residential proxy plans.'],
+);
 
-$locations = (array) Http::withHeaders(['Panel' => (string) $settings['api_token'], 'Accept' => 'application/json'])
-    ->timeout(25)->get($panel . '/locations')->json();
+// ── Retire the earlier placeholder products, but never one that has been sold ────────────
+$stale = Product::where('slug', 'like', 'proxy-%')->get()
+    ->filter(fn ($p) => !Service::where('product_id', $p->id)->exists());
 
-if (!$locations) {
-    echo "NOTE: the panel lists no locations. Products can be created and sold, but\n";
-    echo "      provisioning will fail with \"Requested location not available\" until a\n";
-    echo "      location exists on the panel. That is panel-side configuration.\n\n";
-}
+printf("[ %s ] retire %d placeholder product(s)%s", $apply ? ' ok ' : 'todo', $stale->count(), PHP_EOL);
 
-// ── Currency ─────────────────────────────────────────────────────────────────────────────
-$hasBrl = Currency::where('code', 'BRL')->exists();
-printf("[ %s ] BRL currency%s", $hasBrl ? 'skip' : ($apply ? ' ok ' : 'todo'), PHP_EOL);
-
-if (!$hasBrl && $apply) {
-    Currency::create(['code' => 'BRL', 'name' => 'Brazilian Real', 'prefix' => 'R$', 'suffix' => '', 'format' => '1.000,00']);
-}
-
-// ── Category ─────────────────────────────────────────────────────────────────────────────
-$category = Category::where('name', 'Proxies')->first();
-printf("[ %s ] \"Proxies\" category%s", $category ? 'skip' : ($apply ? ' ok ' : 'todo'), PHP_EOL);
-
-if (!$category && $apply) {
-    $category = Category::create(['name' => 'Proxies', 'slug' => 'proxies', 'description' => 'IPv6 and IPv4 proxy plans.']);
+if ($apply) {
+    foreach ($stale as $p) {
+        $planIds = DB::table('plans')->where('priceable_type', Product::class)->where('priceable_id', $p->id)->pluck('id');
+        DB::table('prices')->whereIn('plan_id', $planIds)->delete();
+        DB::table('plans')->whereIn('id', $planIds)->delete();
+        DB::table('settings')->where('settingable_type', Product::class)->where('settingable_id', $p->id)->delete();
+        $p->delete();
+    }
 }
 
 echo PHP_EOL;
 
-// ── One product per panel plan ───────────────────────────────────────────────────────────
-foreach ($planTags as $tag) {
-    // Tags look like "2GP-3Proxy-S5": bandwidth tier, backend, protocol.
-    $tier = strtoupper(substr($tag, 0, 2));
-    $usd = USD_BY_TIER[$tier] ?? 9.99;
-    $brl = round($usd * BRL_PER_USD, 2);
-    $protocol = str_contains($tag, 'S5') ? 'socks5' : 'http';
-    $name = 'Proxy ' . $tag;
-    $slug = Str::slug($name);
+// ── The real product line ────────────────────────────────────────────────────────────────
+foreach (TIERS as $tier => [$ports, $httpPrice]) {
+    $variants = [
+        'HTTP Proxy' => ['http', $httpPrice],
+        'Socks5h' => ['socks5', $httpPrice * SOCKS5_MULTIPLIER],
+    ];
 
-    $existing = Product::where('slug', $slug)->first();
-    printf("[ %s ] %-22s  plan_tag=%-16s %s USD %.2f / BRL %.2f%s",
-        $existing ? 'sync' : ($apply ? ' ok ' : 'todo'), $name, $tag, $protocol, $usd, $brl, PHP_EOL);
+    foreach ($variants as $label => [$protocol, $price]) {
+        $name = sprintf('IPv6 Residential %s - %s - M', $tier, $label);
+        $slug = Str::slug($name);
+        $existing = Product::where('slug', $slug)->first();
 
-    if (!$apply) {
-        continue;
-    }
+        printf("[ %s ] %-46s %7s ports  USD %s%s",
+            $existing ? 'sync' : ($apply ? ' ok ' : 'todo'), $name, number_format($ports), number_format($price, 2), PHP_EOL);
 
-    // Each step is repaired independently, so a half-finished run can simply be re-run.
-    $product = $existing ?: Product::create([
-        'category_id' => $category->id,
-        'name' => $name,
-        'slug' => $slug,
-        'description' => 'Proxy plan "' . $tag . '" provisioned automatically on the panel.',
-        'server_id' => $server->id,
-        'allow_quantity' => 'combined',
-        'hidden' => false,
-    ]);
-
-    // What the ProxyPanel module reads when provisioning. `plan` is the panel's own tag;
-    // Region/location is chosen at checkout and is deliberately not hardcoded here.
-    foreach ([
-        'plan' => $tag,
-        'amount' => '1',
-        'protocol' => $protocol,
-        'allow_rotation' => 'yes',
-        'change_rotation' => 'yes',
-        'auth_ips' => '5',
-        'amount_rotations' => '100',
-        'bwlimit' => '',
-    ] as $key => $value) {
-        DB::table('settings')->updateOrInsert(
-            ['settingable_type' => Product::class, 'settingable_id' => $product->id, 'key' => $key],
-            ['value' => $value, 'created_at' => now(), 'updated_at' => now()],
-        );
-    }
-
-    // priceable_type is not mass-assignable on Plan, so insert through the query builder.
-    $planId = DB::table('plans')->where('priceable_type', Product::class)
-        ->where('priceable_id', $product->id)->value('id');
-
-    if (!$planId) {
-        $planId = DB::table('plans')->insertGetId([
-            'name' => 'Monthly',
-            'priceable_type' => Product::class,
-            'priceable_id' => $product->id,
-            'type' => 'recurring',
-            'billing_period' => 1,
-            'billing_unit' => 'month',
-            'sort' => 0,
-        ]);
-    }
-
-    foreach (['USD' => $usd, 'BRL' => $brl] as $code => $amount) {
-        if (!Currency::where('code', $code)->exists()) {
+        if (!$apply) {
             continue;
         }
-        // Never overwrite a price someone has already adjusted in the admin.
-        $exists = DB::table('prices')->where('plan_id', $planId)->where('currency_code', $code)->exists();
-        if (!$exists) {
+
+        $product = $existing ?: Product::create([
+            'category_id' => $category->id,
+            'name' => $name,
+            'slug' => $slug,
+            'description' => sprintf(
+                '%s residential proxies — %s ports, private proxy server, rotating or static, IP or user/password authentication.',
+                $label, number_format($ports),
+            ),
+            'server_id' => $server->id,
+            'allow_quantity' => 'combined',
+            'hidden' => false,
+        ]);
+
+        // Everything the ProxyPanel module needs except `plan`, which only the client can map.
+        foreach ([
+            'amount' => (string) $ports,
+            'protocol' => $protocol,
+            'allow_rotation' => 'yes',
+            'change_rotation' => 'yes',
+            'auth_ips' => '5',
+            'amount_rotations' => '100',
+            'bwlimit' => '',
+        ] as $key => $value) {
+            DB::table('settings')->updateOrInsert(
+                ['settingable_type' => Product::class, 'settingable_id' => $product->id, 'key' => $key],
+                ['value' => $value, 'created_at' => now(), 'updated_at' => now()],
+            );
+        }
+
+        // priceable_type is not mass-assignable on Plan, so go through the query builder.
+        $planId = DB::table('plans')->where('priceable_type', Product::class)
+            ->where('priceable_id', $product->id)->value('id');
+
+        if (!$planId) {
+            $planId = DB::table('plans')->insertGetId([
+                'name' => 'Monthly',
+                'priceable_type' => Product::class,
+                'priceable_id' => $product->id,
+                'type' => 'recurring',
+                'billing_period' => 1,
+                'billing_unit' => 'month',
+                'sort' => 0,
+            ]);
+        }
+
+        // Never overwrite a price already adjusted in the admin.
+        if (!DB::table('prices')->where('plan_id', $planId)->where('currency_code', 'USD')->exists()) {
             DB::table('prices')->insert([
-                'plan_id' => $planId, 'currency_code' => $code,
-                'price' => $amount, 'setup_fee' => 0,
+                'plan_id' => $planId, 'currency_code' => 'USD',
+                'price' => $price, 'setup_fee' => 0,
             ]);
         }
     }
 }
 
 echo PHP_EOL;
-echo "Prices above are PLACEHOLDERS derived from bandwidth tier at R\$" . BRL_PER_USD . "/USD.\n";
-echo "Set the real commercial prices in Admin → Products before selling.\n";
+echo "Prices are the client's own published USD prices (my.noxproxy.com/store).\n";
+
+if (Currency::where('code', 'BRL')->exists()) {
+    echo "BRL is registered but deliberately left unpriced — the live store sells in USD only,\n";
+    echo "so any BRL figure would be invented. Add BRL prices in the admin if BRL selling is wanted.\n";
+}
+
+echo PHP_EOL;
+echo "STILL TO MAP: each product needs its panel `plan` tag set in Admin -> Products.\n";
+printf("  panel plans available (%d): %s%s", count($planTags), implode(', ', $planTags), PHP_EOL);
+echo "  Until a product has a plan tag, provisioning fails fast with a clear error rather\n";
+echo "  than delivering the wrong service.\n";
+
+if (!$locations) {
+    echo PHP_EOL . "NOTE: the panel still lists no locations, so provisioning cannot complete yet.\n";
+}
 
 if (!$apply) {
     echo PHP_EOL . "Nothing was written. Re-run with --apply.\n";
