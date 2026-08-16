@@ -100,3 +100,25 @@ C=paymentor-proxy-admin-panel-paymenter-1
 docker exec $C mkdir -p /app/scripts
 docker cp /opt/paymentor-proxy-admin-panel/scripts/test-stripe-payment.php $C:/app/scripts/
 ```
+
+---
+
+## Trap: running `artisan` as root breaks logging (and webhooks)
+
+`docker exec` runs as **root**, so any `php artisan` command run that way creates that day's
+log file owned by root. The web process runs as a different user and can then no longer
+append to it — and because a logging failure happens *inside* exception handling, the
+request returns **500** rather than its intended response.
+
+The symptom is confusing: pages keep working, but every endpoint that logs starts failing.
+All three of our gateway webhooks returned 500 while Stripe's kept working, purely because
+Stripe's handler returns 400 without writing a log line first.
+
+After running artisan inside the container, restore ownership:
+
+```bash
+C=paymentor-proxy-admin-panel-paymenter-1
+docker exec $C sh -c 'chown -R nginx:nginx /app/storage/logs; chmod -R 0775 /app/storage/logs'
+```
+
+Check with `ls -la storage/logs` — today's file should not be `root root`.

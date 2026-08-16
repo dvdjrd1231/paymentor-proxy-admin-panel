@@ -373,9 +373,26 @@ class CoinPayments extends Gateway
             return false;
         }
 
-        $expected = $this->signature('POST', route('extensions.gateways.coinpayments.ipn'), $timestamp, $raw);
+        // The signature covers the notification URL as registered on the invoice, not the
+        // site's current URL. Those differ whenever the site moves — when this deployment
+        // went from a bare IP to a domain, in-flight invoices began failing verification
+        // and CoinPayments retried them for hours.
+        //
+        // The URL CoinPayments called is the one it signed, so the incoming request is the
+        // authoritative candidate; route() is kept as a fallback for the case where a proxy
+        // rewrites the host.
+        $candidates = array_unique([
+            $request->url(),
+            route('extensions.gateways.coinpayments.ipn'),
+        ]);
 
-        return hash_equals($expected, $signature);
+        foreach ($candidates as $url) {
+            if (hash_equals($this->signature('POST', $url, $timestamp, $raw), $signature)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
