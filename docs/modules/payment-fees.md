@@ -77,3 +77,26 @@ Admin → Configuration → Payment Fee Rules   (create rules)
   nothing is trusted from the browser.
 - The fee is a normal invoice line item, so it flows through Paymenter's existing
   totals, tax, PDF and payment logic.
+
+---
+
+## Pre-filled rules from published provider rates
+
+`scripts/seed-payment-fees.php` creates one rule per gateway, pre-filled with that
+provider's own published merchant rate, and leaves every rule **inactive**:
+
+| Gateway | Rule | Source |
+|---|---|---|
+| Stripe | 2.9% + $0.30 | published card rate |
+| CoinPayments | 0.5% | 0.5% coins, 1% stablecoins and tokens |
+| Cryptomus | 0.4% | entry tier; up to 2% on some merchant tiers |
+| Binance Pay | 0% | no merchant fee to receive; payouts charged separately |
+
+Nothing is charged to a customer until a rule is switched on in **Admin → Payment Fees**.
+Whether to pass processing costs to the buyer at all — and at what margin — is a commercial
+decision, so the figures are prepared and the switch is left to the client. Re-running the
+script never overwrites a rule that has been edited or enabled.
+
+Sources: [CoinPayments fees](https://coinspot.io/en/reviews/coinpayments/) ·
+[Cryptomus fees](https://cryptomus.com/faq/how-much-is-a-fee-for-a-payer) ·
+[Binance Pay fees](https://www.binance.com/en/support/faq/binance-pay-fees-6ff1944867e54b9a9576bce3109c7f7a)
