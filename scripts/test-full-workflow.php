@@ -202,6 +202,9 @@ try {
 }
 
 foreach ([$invoice, $deposit, $next] as $inv) {
+    // The rendered PDF is not removed with the invoice row, so drop it explicitly —
+    // otherwise the invoices directory grows by a file per test run forever.
+    @unlink($base . '/storage/app/invoices/INV-' . $inv->id . '.pdf');
     $inv->transactions()->delete();
     $inv->items()->delete();
     $inv->delete();
