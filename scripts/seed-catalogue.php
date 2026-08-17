@@ -186,20 +186,24 @@ echo PHP_EOL;
 echo "Prices are the client's own published USD prices (my.noxproxy.com/store).\n";
 
 if (Currency::where('code', 'BRL')->exists()) {
-    echo "BRL is registered but deliberately left unpriced — the live store sells in USD only,\n";
-    echo "so any BRL figure would be invented. Add BRL prices in the admin if BRL selling is wanted.\n";
+    $brlPrices = DB::table('prices')->where('currency_code', 'BRL')->count();
+    if ($brlPrices === 0) {
+        echo "WARNING: BRL is registered but no product has a BRL price. A customer who selects\n";
+        echo "BRL then cannot buy anything. Add BRL prices in Admin -> Products, or remove the\n";
+        echo "currency until the BRL decision is made.\n";
+    }
+} else {
+    echo "BRL is not registered. The live store sells in USD only, and a currency with no prices\n";
+    echo "makes every product unbuyable for whoever selects it — so a currency is added together\n";
+    echo "with its prices, never before them.\n";
 }
 
 echo PHP_EOL;
-echo "PLAN TAGS — protocol is a fact, bandwidth is a judgement.
-";
-echo "Squid is HTTP-only, so Socks5h must use a 3Proxy -S5 plan. 3Proxy is used for HTTP too,
-";
-echo "so the *-Squid-HT plans are deliberately unused: one daemon serves both protocols.
-";
+echo "PLAN TAGS — protocol is a fact, bandwidth is a judgement.\n";
+echo "Squid is HTTP-only, so Socks5h must use a 3Proxy -S5 plan. 3Proxy is used for HTTP too,\n";
+echo "so the *-Squid-HT plans are deliberately unused: one daemon serves both protocols.\n";
 echo "The bandwidth pairing is monotonic; revisit it if the tiers do not match real capacity:
-
-";
+\n";
 
 foreach (TIERS as $t => [$p, , $bw]) {
     printf("  %-9s %7s ports  ->  %-14s %s%s", $t, number_format($p),
@@ -207,8 +211,7 @@ foreach (TIERS as $t => [$p, , $bw]) {
 }
 
 printf("%s  panel plans available (%d): %s%s", PHP_EOL, count($planTags), implode(', ', $planTags), PHP_EOL);
-echo "  Unused by this mapping: the Squid variants (1GB/2GB/4GB-Squid-HT).
-";
+echo "  Unused by this mapping: the Squid variants (1GB/2GB/4GB-Squid-HT).\n";
 
 if (!$locations) {
     echo PHP_EOL . "NOTE: the panel still lists no locations, so provisioning cannot complete yet.\n";
