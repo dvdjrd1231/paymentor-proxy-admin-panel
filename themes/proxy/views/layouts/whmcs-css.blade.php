@@ -250,6 +250,17 @@
         padding-bottom: .6rem; border-bottom: 1px solid var(--wf-border);
         letter-spacing: -.01em; line-height: 1.15;
     }
+    /* Touch targets — measured at 375px, breadcrumb and in-row links came out at
+       18-20px high, which is awkward to hit. Applied to narrow screens and to any coarse
+       pointer, so a tablet at 768px is covered too; desktop density is unchanged. */
+    @media (max-width: 820px), (pointer: coarse) {
+        .wf-crumb a,
+        .wf-crumb span { display: inline-block; padding-block: .4rem; }
+        .wf-list a,
+        .wf-table td > a { min-height: 2.75rem; display: inline-flex; align-items: center; }
+        .wf-list > li > a { min-height: 3rem; }
+    }
+
     @media (max-width: 620px) { .wf-pagehead h1 { font-size: 2rem; } }
     .wf-pagehead p { margin: 0; color: var(--wf-muted); font-size: .95rem; }
 
