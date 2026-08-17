@@ -147,4 +147,18 @@ $failed = count(array_filter($steps, fn ($s) => !$s));
 printf('%s%d of %d checks passed%s', PHP_EOL, count($steps) - $failed, count($steps), PHP_EOL);
 echo 'Ticket #' . $ticket->id . ' — customer ' . $customer->email . PHP_EOL;
 
+if ($failed === 0) {
+    // Success only — a failed run keeps the ticket and both accounts so the thread can be
+    // read. `scripts/cleanup-test-data.php` clears whatever is left.
+    $ticket->messages()->delete();
+    $ticket->delete();
+
+    foreach ([$customer, $other] as $u) {
+        $u->properties()->delete();
+        $u->delete();
+    }
+
+    echo 'Test data removed.' . PHP_EOL;
+}
+
 exit($failed === 0 ? 0 : 1);

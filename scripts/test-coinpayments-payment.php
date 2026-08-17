@@ -204,7 +204,21 @@ printf('%s%d of %d checks passed%s', PHP_EOL, count($steps) - $failed, count($st
 echo 'Test user : ' . $user->email . PHP_EOL;
 echo 'Invoice   : #' . ($invoice->number ?? $invoice->id) . PHP_EOL;
 echo 'Checkout  : ' . $checkout . PHP_EOL;
-echo PHP_EOL . 'To finish the loop, open the checkout link and pay with LTCT (Litecoin testnet, free).' . PHP_EOL;
-echo 'The invoice should then flip to paid and the credit appear on the account.' . PHP_EOL;
+
+// Only tear down a run that settled and passed. Without --settle the invoice is left open
+// on purpose so the checkout link can be paid by hand, and a failed run keeps its data for
+// inspection. `scripts/cleanup-test-data.php` clears whatever is left.
+if ($failed === 0 && in_array('--settle', $argv, true)) {
+    $invoice->transactions()->delete();
+    $invoice->items()->delete();
+    $invoice->delete();
+    $user->credits()->delete();
+    $user->properties()->delete();
+    $user->delete();
+    echo PHP_EOL . 'Test data removed.' . PHP_EOL;
+} else {
+    echo PHP_EOL . 'To finish the loop, open the checkout link and pay with LTCT (Litecoin testnet, free).' . PHP_EOL;
+    echo 'The invoice should then flip to paid and the credit appear on the account.' . PHP_EOL;
+}
 
 exit($failed === 0 ? 0 : 1);
