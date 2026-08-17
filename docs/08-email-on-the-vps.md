@@ -108,48 +108,69 @@ Then send a test from the application and confirm the receiving side reports
 
 ---
 
-## Inbound (email → ticket): server side built, blocked on DNS + a certificate
+---
 
-Also installed and working locally:
+## Inbound (email → ticket): working
+
+Customers can reply to a ticket by email and the reply lands on the ticket. Proven on the
+server:
+
+```
+ticket #15 messages: 2
+  [from email] Yes, the proxy is working again now. Thank you.
+  [web]        Original question
+mail logs: 1
+```
 
 | Piece | State |
 |---|---|
-| **Postfix inbound** | accepts mail for `paymenter-dev.7hoop.net`, delivers to `Maildir` |
-| **Dovecot IMAP** | `127.0.0.1:143` and `172.18.0.1:143`, not publicly exposed |
+| **Postfix inbound** | accepts mail for `paymenter-dev.7hoop.net`, delivers to Maildir |
+| **Dovecot IMAPS** | `127.0.0.1:993` and `172.18.0.1:993`, never public |
 | Mailbox | user `support`; password in `/root/.support-mailbox-password` |
-| Verified | a message delivered to `support@` appears over IMAP — `SELECT INBOX` → `* 1 EXISTS` |
+| Paymenter | `ticket_mail_piping` on, host `172.18.0.1`, port `993` |
+| Schedule | `app:fetch-emails` already runs every five minutes |
 
-**It still cannot be used, for a concrete reason.** Paymenter's importer builds its client as:
+### Why a certificate was needed
 
-```php
-new Mailbox(['host' => …, 'port' => …, 'username' => …, 'password' => …]);
+Paymenter builds its IMAP client as `new Mailbox([host, port, username, password])` and the
+library defaults to `encryption => 'ssl'`, `port => 993`, `validate_cert => true`, with no
+way to override it. A plaintext local Dovecot is therefore unusable — it fails with
+`Unable to connect to ssl://…`.
+
+So Dovecot serves IMAPS with a certificate from a local CA, and that CA is trusted inside
+the app container. The certificate carries `IP:172.18.0.1` as a SAN, because the importer
+connects by IP and validation checks the name it dialled.
+
+> Dovecot 2.4 renamed these settings: `ssl_server_cert_file` / `ssl_server_key_file`, not
+> `ssl_cert` / `ssl_key`.
+
+### After the container is recreated
+
+The CA lives in the container's trust store, which is **not** a mounted volume, so
+recreating the container removes it and the importer starts failing. Re-add it:
+
+```bash
+C=paymentor-proxy-admin-panel-paymenter-1
+docker cp /etc/dovecot/tls/ca.crt $C:/usr/local/share/ca-certificates/paymenter-mail-ca.crt
+docker exec $C update-ca-certificates
 ```
 
-and the library's defaults are `encryption => 'ssl'`, `port => 993`, `validate_cert => true`.
-`FetchEmails` passes no encryption option, so it always dials `ssl://host:port` and verifies
-the certificate. It cannot talk to a plaintext local Dovecot — confirmed:
+This goes away once a publicly-trusted certificate is in use — see below.
 
-```
-ImapConnectionFailedException: Unable to connect to ssl://172.18.0.1:143
-```
+### What replaces this for production
 
-To finish it, two things are needed, both DNS-side:
+The local CA is a development arrangement. For production:
 
-1. **A hostname pointing at the origin**, e.g. `mail.7hoop.net` → `69.197.186.115`
-   (an A record, *not* Cloudflare-proxied — Cloudflare does not proxy IMAP).
-2. **A valid TLS certificate** for that hostname on Dovecot (Let's Encrypt), so
-   `validate_cert => true` succeeds.
+1. An A record for a mail hostname pointing straight at the origin, e.g.
+   `mail.7hoop.net → 69.197.186.115`, **not** Cloudflare-proxied — Cloudflare does not
+   proxy IMAP.
+2. A Let's Encrypt certificate for that hostname on Dovecot.
+3. Set `ticket_mail_host` to the hostname; the CA trick is then unnecessary.
 
-Then set `ticket_mail_host` to that hostname, `ticket_mail_port` to `993`, and re-enable
-`ticket_mail_piping`.
-
-**Piping is currently disabled** so the five-minute scheduled fetch does not fail
-continuously against an endpoint that cannot work.
-
-### One behaviour worth knowing
+### One behaviour to know
 
 Paymenter's piping is **reply-only**. `FetchEmails` requires an `In-Reply-To` header matching
-`<ticketMessageId>@hostname`; an email with no such header is recorded and skipped rather
-than opening a ticket. So this feature lets customers **reply to existing tickets** by email —
-it does not let them **open** one by emailing support. Opening tickets by email would be
-additional development.
+`<ticketMessageId>@hostname`, and also checks the sender matches the ticket owner. An email
+with neither is recorded in `ticket_mail_logs` and skipped. So customers can **reply** to a
+ticket by email; they cannot **open** one by emailing support. Opening tickets by email would
+be additional development.
