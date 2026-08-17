@@ -16,6 +16,16 @@
 #
 set -Eeuo pipefail
 
+# --check runs every validation this script can make without changing the host: required
+# variables, OS, disk, RAM, port conflicts, package availability, and the files it copies.
+# Use it before provisioning, and to verify the script on a machine you must not modify.
+CHECK_ONLY=0
+for arg in "$@"; do
+  case "$arg" in
+    --check|--dry-run) CHECK_ONLY=1 ;;
+  esac
+done
+
 # ── Helpers ─────────────────────────────────────────────────────────────────
 log()  { printf '\033[1;34m[+]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[!]\033[0m %s\n' "$*"; }
@@ -45,6 +55,84 @@ prompt DOMAIN      "Domain (e.g. billing.example.com)"
 prompt ADMIN_EMAIL "Admin email (for Let's Encrypt & app)"
 prompt DB_PASSWORD "Database password for user '$DB_USER'" silent
 [[ -n "${DB_PASSWORD:-}" ]] || die "DB_PASSWORD is required."
+
+# ── 0. Preflight ────────────────────────────────────────────────────────────
+preflight() {
+  local fail=0
+  ok()   { printf '  [1;32m✓[0m %s
+' "$*"; }
+  bad()  { printf '  [1;31m✗[0m %s
+' "$*"; fail=1; }
+  note() { printf '  [1;33m![0m %s
+' "$*"; }
+
+  log "Preflight checks"
+
+  [[ $EUID -eq 0 ]] && ok "running as root" || bad "must run as root (use sudo)"
+
+  local id; id="$(. /etc/os-release 2>/dev/null && echo "${ID:-}")"
+  local ver; ver="$(. /etc/os-release 2>/dev/null && echo "${VERSION_ID:-}")"
+  if [[ "$id" == "debian" || "$id" == "ubuntu" ]]; then
+    ok "OS is ${id} ${ver}"
+  else
+    bad "unsupported OS '${id:-unknown}' — this script targets Debian 13 or Ubuntu LTS"
+  fi
+
+  # A full provision pulls PHP, MariaDB, nginx, Node and Composer dependencies.
+  local free_mb; free_mb=$(df -Pm / | awk 'NR==2 {print $4}')
+  if (( free_mb >= 3000 )); then ok "disk: ${free_mb}MB free"
+  elif (( free_mb >= 1500 )); then note "disk: only ${free_mb}MB free — tight, 3GB recommended"
+  else bad "disk: ${free_mb}MB free — needs at least 1.5GB, 3GB recommended"; fi
+
+  local mem_mb; mem_mb=$(free -m | awk '/^Mem:/ {print $2}')
+  (( mem_mb >= 1800 )) && ok "memory: ${mem_mb}MB" || note "memory: ${mem_mb}MB — composer and asset build may struggle under 2GB"
+
+  # Anything already bound to 80/443 will make nginx fail to start.
+  for port in 80 443; do
+    if ss -lnt 2>/dev/null | awk '{print $4}' | grep -qE "[:.]${port}$"; then
+      bad "port ${port} is already in use — free it or this install will clash"
+    else
+      ok "port ${port} is free"
+    fi
+  done
+
+  for v in DOMAIN ADMIN_EMAIL DB_PASSWORD; do
+    [[ -n "${!v:-}" ]] && ok "${v} is set" || bad "${v} is not set"
+  done
+
+  # The app is copied from this checkout unless REPO_URL is given.
+  local src; src="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  for f in composer.json artisan .env.example package.json scripts/backup.sh; do
+    [[ -f "$src/$f" ]] && ok "found $f" || bad "missing $f in $src"
+  done
+  [[ -f "$src/package-lock.json" ]] && ok "found package-lock.json (npm ci)"     || note "no package-lock.json — will fall back to npm install"
+
+  if [[ -e "$APP_DIR" ]]; then
+    note "$APP_DIR already exists — the script will reuse it and skip the copy"
+  else
+    ok "$APP_DIR is free"
+  fi
+
+  command -v systemctl >/dev/null 2>&1 && ok "systemd present"     || bad "systemd not found — the queue worker and scheduler units need it"
+
+  if getent hosts "${DOMAIN:-}" >/dev/null 2>&1; then
+    ok "${DOMAIN} resolves (Let's Encrypt can issue)"
+  else
+    note "${DOMAIN:-domain} does not resolve yet — certbot will be skipped with a warning"
+  fi
+
+  if (( fail )); then
+    die "Preflight failed. Fix the items marked ✗ and re-run."
+  fi
+  log "Preflight passed."
+}
+
+preflight
+
+if (( CHECK_ONLY )); then
+  log "--check specified: no changes were made."
+  exit 0
+fi
 
 # ── 1. Base packages ────────────────────────────────────────────────────────
 log "Updating apt and installing base packages…"
@@ -117,7 +205,12 @@ cd "$APP_DIR"
 log "Installing PHP & JS dependencies and building assets…"
 sudo -u "$APP_USER" -H composer install --no-dev --optimize-autoloader --no-interaction \
   || composer install --no-dev --optimize-autoloader --no-interaction
-npm ci && npm run build
+if [[ -f package-lock.json ]]; then
+  npm ci || die "npm ci failed — resolve it and re-run; the script is idempotent."
+else
+  npm install || die "npm install failed — resolve it and re-run."
+fi
+npm run build || die "Asset build failed — resolve it and re-run."
 
 # ── 6. Environment ──────────────────────────────────────────────────────────
 if [[ ! -f .env ]]; then
