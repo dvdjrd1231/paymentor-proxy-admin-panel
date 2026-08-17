@@ -157,6 +157,17 @@ printf('%s%d of %d steps passed%s', PHP_EOL, count($steps) - $failed, count($ste
 echo 'Test user: ' . $user->email . ' (id ' . $user->id . '), invoice #' . ($invoice->number ?? $invoice->id) . PHP_EOL;
 
 if ($failed === 0) {
+    // Remove the throwaway account on success only — a failed run keeps its data so the
+    // invoice, transactions and credit can be inspected. `scripts/cleanup-test-data.php`
+    // clears whatever is left once the diagnosis is done.
+    $invoice->transactions()->delete();
+    $invoice->items()->delete();
+    $invoice->delete();
+    $user->credits()->delete();
+    $user->properties()->delete();
+    $user->delete();
+    echo 'Test data removed.' . PHP_EOL;
+
     echo PHP_EOL . 'Stripe works end to end: checkout → Stripe → webhook → paid → credit applied.' . PHP_EOL;
 }
 
