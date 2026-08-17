@@ -209,6 +209,8 @@ echo 'Checkout  : ' . $checkout . PHP_EOL;
 // on purpose so the checkout link can be paid by hand, and a failed run keeps its data for
 // inspection. `scripts/cleanup-test-data.php` clears whatever is left.
 if ($failed === 0 && in_array('--settle', $argv, true)) {
+    // The rendered PDF is not removed with the invoice row, so drop it explicitly.
+    @unlink($base . '/storage/app/invoices/INV-' . $invoice->id . '.pdf');
     $invoice->transactions()->delete();
     $invoice->items()->delete();
     $invoice->delete();

@@ -160,6 +160,9 @@ if ($failed === 0) {
     // Remove the throwaway account on success only — a failed run keeps its data so the
     // invoice, transactions and credit can be inspected. `scripts/cleanup-test-data.php`
     // clears whatever is left once the diagnosis is done.
+    // The rendered PDF is not removed with the invoice row, so drop it explicitly —
+    // otherwise the invoices directory grows by a file per test run forever.
+    @unlink($base . '/storage/app/invoices/INV-' . $invoice->id . '.pdf');
     $invoice->transactions()->delete();
     $invoice->items()->delete();
     $invoice->delete();
