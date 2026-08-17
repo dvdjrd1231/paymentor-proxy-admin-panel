@@ -105,3 +105,51 @@ dig +short TXT _dmarc.paymenter-dev.7hoop.net
 
 Then send a test from the application and confirm the receiving side reports
 `spf=pass` and `dkim=pass` in the message headers.
+
+---
+
+## Inbound (email → ticket): server side built, blocked on DNS + a certificate
+
+Also installed and working locally:
+
+| Piece | State |
+|---|---|
+| **Postfix inbound** | accepts mail for `paymenter-dev.7hoop.net`, delivers to `Maildir` |
+| **Dovecot IMAP** | `127.0.0.1:143` and `172.18.0.1:143`, not publicly exposed |
+| Mailbox | user `support`; password in `/root/.support-mailbox-password` |
+| Verified | a message delivered to `support@` appears over IMAP — `SELECT INBOX` → `* 1 EXISTS` |
+
+**It still cannot be used, for a concrete reason.** Paymenter's importer builds its client as:
+
+```php
+new Mailbox(['host' => …, 'port' => …, 'username' => …, 'password' => …]);
+```
+
+and the library's defaults are `encryption => 'ssl'`, `port => 993`, `validate_cert => true`.
+`FetchEmails` passes no encryption option, so it always dials `ssl://host:port` and verifies
+the certificate. It cannot talk to a plaintext local Dovecot — confirmed:
+
+```
+ImapConnectionFailedException: Unable to connect to ssl://172.18.0.1:143
+```
+
+To finish it, two things are needed, both DNS-side:
+
+1. **A hostname pointing at the origin**, e.g. `mail.7hoop.net` → `69.197.186.115`
+   (an A record, *not* Cloudflare-proxied — Cloudflare does not proxy IMAP).
+2. **A valid TLS certificate** for that hostname on Dovecot (Let's Encrypt), so
+   `validate_cert => true` succeeds.
+
+Then set `ticket_mail_host` to that hostname, `ticket_mail_port` to `993`, and re-enable
+`ticket_mail_piping`.
+
+**Piping is currently disabled** so the five-minute scheduled fetch does not fail
+continuously against an endpoint that cannot work.
+
+### One behaviour worth knowing
+
+Paymenter's piping is **reply-only**. `FetchEmails` requires an `In-Reply-To` header matching
+`<ticketMessageId>@hostname`; an email with no such header is recorded and skipped rather
+than opening a ticket. So this feature lets customers **reply to existing tickets** by email —
+it does not let them **open** one by emailing support. Opening tickets by email would be
+additional development.
