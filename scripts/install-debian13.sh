@@ -48,13 +48,22 @@ prompt() { # prompt VAR "Question" [silent]
   local __var=$1 __q=$2 __silent=${3:-}
   local __cur="${!__var:-}"
   [[ -n "$__cur" ]] && return 0
+
+  # Without a terminal there is nobody to answer, and `read` would block for ever —
+  # which is exactly what happens when this script is run over ssh or from CI.
+  [[ -t 0 ]] || die "${__var} is not set and there is no terminal to ask on. Pass it as an environment variable, e.g. ${__var}=… $0"
+
   if [[ -n "$__silent" ]]; then read -rsp "$__q: " "$__var"; echo; else read -rp "$__q: " "$__var"; fi
 }
 
-prompt DOMAIN      "Domain (e.g. billing.example.com)"
-prompt ADMIN_EMAIL "Admin email (for Let's Encrypt & app)"
-prompt DB_PASSWORD "Database password for user '$DB_USER'" silent
-[[ -n "${DB_PASSWORD:-}" ]] || die "DB_PASSWORD is required."
+# --check reports missing variables as failed checks rather than asking for them, so it can
+# run unattended. Only a real install needs the answers up front.
+if (( ! CHECK_ONLY )); then
+  prompt DOMAIN      "Domain (e.g. billing.example.com)"
+  prompt ADMIN_EMAIL "Admin email (for Let's Encrypt & app)"
+  prompt DB_PASSWORD "Database password for user '$DB_USER'" silent
+  [[ -n "${DB_PASSWORD:-}" ]] || die "DB_PASSWORD is required."
+fi
 
 # ── 0. Preflight ────────────────────────────────────────────────────────────
 preflight() {
