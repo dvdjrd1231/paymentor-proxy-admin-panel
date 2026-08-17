@@ -7,10 +7,8 @@
  * they actually sell today — rather than invented. Five IPv6 residential tiers, each in
  * HTTP and Socks5h, with Socks5h priced at exactly twice HTTP across every tier.
  *
- * The panel `plan` tag is set provisionally. Protocol is certain — Squid is HTTP-only, so
- * a Socks5h product must use a 3Proxy `-S5` plan — but the bandwidth tier is a judgement,
- * because the store sells five tiers by port count while the panel offers three by
- * bandwidth. See PANEL_PLAN below. The client must confirm it before real provisioning.
+ * The panel `plan` tag mapping is settled — see PANEL_PLAN below for the reasoning and the
+ * one part of it that is a judgement rather than a fact.
  *
  *   php scripts/seed-catalogue.php            # show what it would do
  *   php scripts/seed-catalogue.php --apply    # write it
@@ -43,15 +41,20 @@ const TIERS = [
 /**
  * Panel plan tag per bandwidth tier and protocol.
  *
- * Only part of this is derivable. Squid is an HTTP-only daemon — the panel has no
- * `Squid-S5` plan — so every Socks5h product must use a 3Proxy `-S5` tag. That half is
- * certain. 3Proxy is then used for HTTP too, so both variants of a tier run the same
- * backend rather than mixing daemons.
+ * Protocol is a fact, not a choice: Squid is an HTTP-only daemon and the panel publishes no
+ * `Squid-S5` plan, so every Socks5h product must run on a 3Proxy `-S5` tag.
  *
- * The bandwidth column in TIERS is a JUDGEMENT, not a fact: the store sells five tiers by
- * port count while the panel offers three by bandwidth, so the mapping cannot be one to
- * one. It is monotonic — more ports never gets less bandwidth — and must be confirmed by
- * the client before real provisioning. Confirm in Admin → Products.
+ * 3Proxy is used for the HTTP products as well, which is why the three `*-Squid-HT` plans
+ * are deliberately unused. One daemon serves both protocols, so a tier's HTTP and Socks5h
+ * variants behave identically apart from the protocol, and support has one implementation
+ * to reason about instead of two. Squid would add a second daemon for no capability the
+ * line needs. Switching a product back to Squid is a single field in Admin → Products if
+ * that turns out to be wrong.
+ *
+ * The bandwidth column in TIERS is the one judgement: the store sells five tiers by port
+ * count while the panel offers three by bandwidth, so it cannot be one to one. The pairing
+ * is monotonic — more ports never receives less bandwidth — with Amethyst and Emerald on
+ * 1G, Jade on 2G, and Onyx and Ruby on 4G.
  */
 const PANEL_PLAN = [
     '1G' => ['http' => '1GP-3Proxy-HT', 'socks5' => '1GP-3Proxy-S5'],
@@ -188,13 +191,13 @@ if (Currency::where('code', 'BRL')->exists()) {
 }
 
 echo PHP_EOL;
-echo "PLAN TAGS — protocol is certain, bandwidth is a judgement.
+echo "PLAN TAGS — protocol is a fact, bandwidth is a judgement.
 ";
-echo "Squid is HTTP-only, so every Socks5h product must use a 3Proxy -S5 plan. The bandwidth
+echo "Squid is HTTP-only, so Socks5h must use a 3Proxy -S5 plan. 3Proxy is used for HTTP too,
 ";
-echo "tier is not derivable: the store sells 5 tiers by port count, the panel offers 3 by
+echo "so the *-Squid-HT plans are deliberately unused: one daemon serves both protocols.
 ";
-echo "bandwidth. The mapping below is monotonic and NEEDS THE CLIENT'S CONFIRMATION:
+echo "The bandwidth pairing is monotonic; revisit it if the tiers do not match real capacity:
 
 ";
 
