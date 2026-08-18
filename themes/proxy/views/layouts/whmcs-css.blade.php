@@ -9,8 +9,17 @@
 --}}
 <style>
     :root {
-        --brand: #e8365d;
-        --brand-dark: #c72b4c;
+        /*
+           --brand carries white text on every button, the menu bar and the active nav item,
+           so it has to be dark enough for white to be legible on it. The previous #e8365d
+           measured 4.10:1 against white — under the 4.5:1 WCAG AA minimum for normal text,
+           which is what made button labels look washed out rather than white. This is a
+           shade darker at 4.94:1 and reads as the same colour.
+
+           Changing it, check white still passes: contrast must stay at or above 4.5:1.
+        */
+        --brand: #d42a52;
+        --brand-dark: #ad2242;
         --brand-contrast: #ffffff;
 
         --wf-page-bg: #f0f2f5;
@@ -274,7 +283,10 @@
     .wf-title h1 { font-weight: 300; }
 
     .wf-crumb { font-size: .85rem; color: var(--wf-muted); margin: -.25rem 0 1rem; }
-    .wf-crumb a { color: var(--brand); text-decoration: none; }
+    /* Brand-on-grey is the one place the brand is used as text over the page background
+       rather than over white, and at this small size it lands just under 4.5:1. The darker
+       shade takes it to 6:1 and is indistinguishable at breadcrumb size. */
+    .wf-crumb a { color: var(--brand-dark); text-decoration: none; }
     .wf-crumb a:hover { text-decoration: underline; }
     .wf-crumb span { margin: 0 .4rem; color: var(--wf-border); }
 
