@@ -121,6 +121,8 @@ $marker = 'ticket-pipeline-' . Str::random(10);
 $logFile = storage_path('logs/laravel-' . date('Y-m-d') . '.log');
 $sizeBefore = is_file($logFile) ? filesize($logFile) : 0;
 
+$realMailer = config('mail.default');
+
 $mailWorks = false;
 try {
     config(['mail.default' => 'log']);
@@ -136,8 +138,30 @@ try {
 } catch (Throwable $e) {
     $mailWorks = false;
 }
-step('email renders and reaches the mail transport', $mailWorks,
-    'SMTP hop still needs real credentials');
+step('email renders and reaches the mail transport', $mailWorks, 'rendered and dispatched');
+
+// The render check above deliberately avoids SMTP. This one uses the transport the platform
+// is actually configured with, so a broken or unreachable mail server fails the suite rather
+// than passing quietly. Local delivery is proven; whether external providers accept the mail
+// depends on SPF/DKIM/DMARC and PTR, which are DNS, not code.
+config(['mail.default' => $realMailer]);
+app()->forgetInstance('mail.manager');
+
+$smtpWorks = false;
+$smtpDetail = '';
+
+try {
+    Mail::raw('Ticket #' . $ticket->id . ' SMTP delivery check ' . $marker, function ($m) use ($customer) {
+        $m->to($customer->email)->subject('Ticket SMTP delivery check');
+    });
+    $smtpWorks = true;
+    $smtpDetail = sprintf('%s via %s:%s', $realMailer,
+        config('mail.mailers.smtp.host'), config('mail.mailers.smtp.port'));
+} catch (Throwable $e) {
+    $smtpDetail = substr($e->getMessage(), 0, 90);
+}
+
+step('configured mail transport accepts the message', $smtpWorks, $smtpDetail);
 
 // ── Close ────────────────────────────────────────────────────────────────────────────────
 $ticket->update(['status' => 'closed']);
