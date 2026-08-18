@@ -20,10 +20,22 @@
 # Later, to move to a domain + HTTPS, put a reverse proxy (Caddy/Nginx/Traefik)
 # in front and set PUBLIC_URL=https://your-domain, or use scripts/install-debian13.sh.
 
+# Docker's json-file driver has no rotation by default, so a container that logs steadily
+# will fill the disk and take the site down. Setting log-opts in /etc/docker/daemon.json is
+# not enough on its own: a `systemctl reload docker` accepts log-driver and silently drops
+# log-opts, so the cap only applies after a full daemon restart. Declaring it per service
+# here applies as soon as the container is recreated, with no daemon restart at all.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   database:
     image: mariadb:lts
     restart: unless-stopped
+    logging: *logging
     environment:
       MYSQL_DATABASE: paymenter
       MYSQL_USER: paymenter
@@ -37,11 +49,13 @@ services:
   cache:
     image: redis:alpine
     restart: unless-stopped
+    logging: *logging
     networks: [paymenter_nw]
 
   paymenter:
     image: ghcr.io/paymenter/paymenter:master
     restart: unless-stopped
+    logging: *logging
     depends_on: [database, cache]
     ports:
       # 80 by default so generated URLs stay consistent. Override HTTP_PORT to run a
