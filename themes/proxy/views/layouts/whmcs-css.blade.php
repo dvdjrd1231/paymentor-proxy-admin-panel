@@ -316,12 +316,18 @@
     /* List group — sidebar menus and simple record lists */
     .wf-list { list-style: none; margin: 0; padding: 0; }
     .wf-list > li + li { border-top: 1px solid var(--wf-border); }
-    .wf-list a, .wf-list .wf-list-row {
+    /* :not(.wf-btn) matters: "a" here is an element, so ".wf-list a" (0,1,1) is MORE specific
+       than ".wf-btn" (0,1,0) and silently overrides a button's colour regardless of which
+       rule comes later in the file — a row-action button placed inside a .wf-list (e.g. the
+       "View" button on the dashboard's Active Services widget) rendered with dark text on
+       its coloured background instead of white. This scopes the row-link styling to plain
+       list links only, so a .wf-btn nested in a list stays a self-contained component. */
+    .wf-list a:not(.wf-btn), .wf-list .wf-list-row {
         display: flex; align-items: center; justify-content: space-between; gap: .75rem;
         padding: .7rem 1rem; color: var(--wf-text); text-decoration: none; font-size: .9rem;
     }
-    .wf-list a:hover { background: var(--wf-section); color: var(--brand); }
-    .wf-list a.is-active { background: var(--brand); color: var(--brand-contrast); }
+    .wf-list a:not(.wf-btn):hover { background: var(--wf-section); color: var(--brand); }
+    .wf-list a.is-active:not(.wf-btn) { background: var(--brand); color: var(--brand-contrast); }
     .wf-list-title { font-weight: 600; }
     /* Row with a trailing action button (services / invoices lists) */
     .wf-row-main { display: flex; align-items: center; gap: .75rem; min-width: 0; }
@@ -335,8 +341,11 @@
     .wf-table th, .wf-table td { padding: .65rem .75rem; text-align: start; border-bottom: 1px solid var(--wf-border); }
     .wf-table thead th { background: var(--wf-section); font-weight: 600; color: var(--wf-label); white-space: nowrap; }
     .wf-table tbody tr:hover { background: var(--wf-section); }
-    .wf-table td a { color: var(--brand); text-decoration: none; }
-    .wf-table td a:hover { text-decoration: underline; }
+    /* Same specificity trap as .wf-list above: ".wf-table td a" (0,1,2) beats ".wf-btn"
+       (0,1,0), so a button placed in a cell (e.g. cart's row-level Edit link) picks up this
+       rule's colour and hover underline instead of its own. */
+    .wf-table td a:not(.wf-btn) { color: var(--brand); text-decoration: none; }
+    .wf-table td a:not(.wf-btn):hover { text-decoration: underline; }
     .wf-table-wrap { overflow-x: auto; }
 
     /* Status labels */
