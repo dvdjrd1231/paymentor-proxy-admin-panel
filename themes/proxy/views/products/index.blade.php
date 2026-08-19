@@ -24,6 +24,19 @@
                     @endforeach
                 </ul>
             </div>
+
+            {{-- Actions panel — the reference portal shows this beneath Categories --}}
+            <div class="wf-panel">
+                <div class="wf-panel-heading">+ {{ __('theme.actions') }}</div>
+                <ul class="wf-list">
+                    <li>
+                        <a href="{{ route('cart') }}" wire:navigate>
+                            <span>{{ __('theme.view_cart') }}</span>
+                            <span class="wf-head-icon"><x-ri-shopping-cart-2-fill /></span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
 
         {{-- ── Products ────────────────────────────────────────────────── --}}
@@ -62,25 +75,25 @@
                             @if(theme('direct_checkout', false) && $product->description)
                                 <article class="prose dark:prose-invert">{!! $product->description !!}</article>
                             @endif
-                            <div class="wf-price">{{ $product->price()->formatted->price }}</div>
+                            {{-- "Starting from $X USD" — the reference portal's price presentation --}}
+                            <div class="wf-price-from">{{ __('theme.starting_from') }}</div>
+                            <div class="wf-price">{{ $product->price()->formatted->price }} {{ $product->price()->currency->code ?? '' }}</div>
                         </div>
                         <div class="wf-card-foot">
-                            @if($product->stock !== 0 && $product->price()->available && theme('direct_checkout', false))
-                                <a class="wf-btn wf-btn--sm wf-btn--block"
+                            @if ($product->stock !== 0 && $product->price()->available)
+                                <a class="wf-btn wf-btn--sm"
                                     href="{{ route('products.checkout', ['category' => $product->category, 'product' => $product->slug]) }}" wire:navigate>
-                                    {{ __('product.add_to_cart') }}
+                                    <span class="wf-btn-ico"><x-ri-shopping-cart-2-fill /></span>{{ __('theme.order_now') }}
+                                </a>
+                                <a class="wf-btn wf-btn--sm wf-btn--ghost"
+                                    href="{{ route('products.show', ['category' => $product->category, 'product' => $product->slug]) }}" wire:navigate>
+                                    {{ __('common.button.view') }}
                                 </a>
                             @else
                                 <a class="wf-btn wf-btn--sm"
                                     href="{{ route('products.show', ['category' => $product->category, 'product' => $product->slug]) }}" wire:navigate>
                                     {{ __('common.button.view') }}
                                 </a>
-                                @if ($product->stock !== 0 && $product->price()->available)
-                                    <a class="wf-btn wf-btn--sm wf-btn--ghost"
-                                        href="{{ route('products.checkout', ['category' => $category, 'product' => $product->slug]) }}" wire:navigate>
-                                        {{ __('product.add_to_cart') }}
-                                    </a>
-                                @endif
                             @endif
                         </div>
                     </div>

@@ -1,40 +1,46 @@
 {{--
-    WHMCS-style site chrome (overrides <x-navigation /> from the default theme).
+    WHMCS-style site chrome (overrides <x-navigation /> from the default theme), matched
+    against the client's reference portal:
 
-      1. White header  — logo left, Login/Register (guest) or Dashboard (auth) + View Cart
+      1. White header — logo left; right side changes with auth state exactly like the
+         reference: guest → Login / Register links + a filled "View Cart" button,
+         auth → Notifications link + a filled Logout button.
       2. Brand-coloured menu bar:
-           left  — Home / Store ▾ / extension items, plus Services, Invoices, Tickets
-                   once signed in (these are Auth-gated by Paymenter itself)
-           right — Account ▾ :  guest → Login / Register / Forgot Password
-                                auth  → Dashboard, Personal Details, Security,
-                                        Payment Methods, Notifications, Admin, Logout
+           guest — Home, Store ▾ (Browse All + one entry per category)  |  Account ▾
+           auth  — Home, Services ▾, Billing ▾, Support ▾, Open Ticket  |  Hello, {name}! ▾
+         Signed-in customers do not see the public Store menu; the reference puts the shop
+         behind Services ▾ → Order New Services instead.
 
-    All menu data comes from Paymenter's real Navigation API, so every link points at
-    a page that exists and respects Paymenter's own visibility conditions.
+    Public links come from Paymenter's Navigation API so category entries appear and
+    disappear with the catalogue; the client-area structure is explicit because the
+    reference portal's grouping (Services / Billing / Support) is a design decision,
+    not something derivable from route data.
 --}}
 @php
     use App\Classes\Navigation;
 
-    $links = Navigation::getLinks();                 // Home, Store, extension items
+    $links = Navigation::getLinks();                 // Home, Store ▾, extension items
     $isAuth = auth()->check();
 
-    // getDashboardLinks() is the client-area menu: Dashboard, Services, Invoices,
-    // Tickets, and an "Account" item holding the sub-pages. It is Auth-gated, so it
-    // comes back empty for guests.
+    // The store entry feeds two places: the guest Store ▾ menu, and the signed-in
+    // "Order New Services" item, which the reference points at the shop.
+    $storeLink = collect($links)->first(fn ($l) => !empty($l['children']));
+    $orderNewUrl = $storeLink['children'][0]['url'] ?? route('cart');
+
+    // Account sub-pages (Personal Details, Security, …) still come from the API so
+    // extension-added pages keep appearing in the account dropdown.
     $dash = collect($isAuth ? Navigation::getDashboardLinks() : []);
     $accountItem = $dash->first(fn ($l) => !empty($l['children']));
     $accountChildren = $accountItem['children'] ?? [];
 
-    // Client-area items are for signed-in customers only. Showing Services / Invoices /
-    // Tickets to a visitor just bounces them to the login page, which reads as a broken
-    // menu — the client called this out specifically. Guests get the public menu; the
-    // Login and Register actions live in the header.
-    $clientLinks = $isAuth
-        ? $dash->filter(fn ($l) => empty($l['children']))->values()
-        : collect();
-
     $isAdmin = $isAuth && auth()->user()->role_id !== null;
     $hasLogo = config('settings.logo') || config('settings.logo_dark');
+
+    // The signed-in menu bar, in the reference portal's order and grouping.
+    $clientMenu = $isAuth ? [
+        ['name' => __('theme.my_services'), 'url' => route('services')],
+        ['name' => __('theme.order_new_services'), 'url' => $orderNewUrl],
+    ] : [];
 @endphp
 
 <header class="wf-header">
@@ -51,10 +57,11 @@
             @guest
                 <a href="{{ route('login') }}" class="wf-hbtn" wire:navigate>{{ __('auth.sign_in') }}</a>
                 <a href="{{ route('register') }}" class="wf-hbtn" wire:navigate>{{ __('auth.sign_up') }}</a>
+                <a href="{{ route('cart') }}" class="wf-hbtn wf-hbtn--primary" wire:navigate>{{ __('theme.view_cart') }}</a>
             @endguest
             @auth
-                {{-- Logout lives here (WHMCS puts it top-right); Dashboard is reachable
-                     from the menu bar below. --}}
+                <a href="{{ route('account.notifications') }}" class="wf-hbtn" wire:navigate>{{ __('theme.notifications') }}</a>
+                {{-- Logout lives here (the reference puts it top-right). --}}
                 <livewire:auth.logout />
             @endauth
         </div>
@@ -66,41 +73,84 @@
         <button type="button" class="wf-burger" @click="mobile = !mobile" aria-label="Menu">☰</button>
 
         <ul class="wf-menu" :class="{ 'wf-menu--open': mobile }">
-            {{-- Public links: Home, Store ▾, extension-provided items --}}
+            {{-- Home + flat extension links (both states) --}}
             @foreach ($links as $link)
-                @if (!empty($link['children']))
-                    <li class="wf-menu-item" x-data="{ open: false }" @click.outside="open = false">
-                        <button type="button" class="wf-menu-link" @click="open = !open">
-                            {{ $link['name'] }} <span class="wf-caret">▾</span>
-                        </button>
-                        <ul class="wf-dropdown" x-show="open" x-transition x-cloak>
-                            @foreach ($link['children'] as $child)
-                                <li><a href="{{ $child['url'] }}" wire:navigate>{{ $child['name'] }}</a></li>
-                            @endforeach
-                        </ul>
-                    </li>
-                @else
-                    <li class="wf-menu-item">
-                        <a class="wf-menu-link {{ ($link['active'] ?? false) ? 'is-active' : '' }}"
-                            href="{{ $link['url'] }}" wire:navigate>{{ $link['name'] }}</a>
-                    </li>
-                @endif
-            @endforeach
-
-            {{-- Client-area links (signed in only): Dashboard, Services, Invoices, Tickets --}}
-            @foreach ($clientLinks as $link)
+                @continue(!empty($link['children']))
                 <li class="wf-menu-item">
                     <a class="wf-menu-link {{ ($link['active'] ?? false) ? 'is-active' : '' }}"
                         href="{{ $link['url'] }}" wire:navigate>{{ $link['name'] }}</a>
                 </li>
             @endforeach
+
+            @guest
+                {{-- Store ▾ — Browse All plus one entry per category, like the reference --}}
+                @if ($storeLink)
+                    <li class="wf-menu-item" x-data="{ open: false }" @click.outside="open = false">
+                        <button type="button" class="wf-menu-link" @click="open = !open">
+                            {{ $storeLink['name'] }} <span class="wf-caret">▾</span>
+                        </button>
+                        <ul class="wf-dropdown" x-show="open" x-transition x-cloak>
+                            {{-- Core's Store entry carries no URL of its own (it is a pure
+                                 container), so Browse All points at the first category —
+                                 the storefront landing page a visitor expects. --}}
+                            <li><a href="{{ $storeLink['url'] ?? $orderNewUrl }}" wire:navigate>{{ __('theme.browse_all') }}</a></li>
+                            <li class="wf-dropdown-sep"></li>
+                            @foreach ($storeLink['children'] as $child)
+                                <li><a href="{{ $child['url'] }}" wire:navigate>{{ $child['name'] }}</a></li>
+                            @endforeach
+                        </ul>
+                    </li>
+                @endif
+            @endguest
+
+            @auth
+                {{-- Services ▾ --}}
+                <li class="wf-menu-item" x-data="{ open: false }" @click.outside="open = false">
+                    <button type="button" class="wf-menu-link" @click="open = !open">
+                        {{ __('navigation.services') }} <span class="wf-caret">▾</span>
+                    </button>
+                    <ul class="wf-dropdown" x-show="open" x-transition x-cloak>
+                        @foreach ($clientMenu as $item)
+                            <li><a href="{{ $item['url'] }}" wire:navigate>{{ $item['name'] }}</a></li>
+                        @endforeach
+                    </ul>
+                </li>
+
+                {{-- Billing ▾ --}}
+                <li class="wf-menu-item" x-data="{ open: false }" @click.outside="open = false">
+                    <button type="button" class="wf-menu-link" @click="open = !open">
+                        {{ __('theme.billing') }} <span class="wf-caret">▾</span>
+                    </button>
+                    <ul class="wf-dropdown" x-show="open" x-transition x-cloak>
+                        <li><a href="{{ route('invoices') }}" wire:navigate>{{ __('theme.my_invoices') }}</a></li>
+                        <li><a href="{{ route('account.credits') }}" wire:navigate>{{ __('dashboard.add_funds') }}</a></li>
+                        <li><a href="{{ route('account.payment-methods') }}" wire:navigate>{{ __('theme.payment_methods') }}</a></li>
+                    </ul>
+                </li>
+
+                {{-- Support ▾ --}}
+                <li class="wf-menu-item" x-data="{ open: false }" @click.outside="open = false">
+                    <button type="button" class="wf-menu-link" @click="open = !open">
+                        {{ __('theme.support') }} <span class="wf-caret">▾</span>
+                    </button>
+                    <ul class="wf-dropdown" x-show="open" x-transition x-cloak>
+                        <li><a href="{{ route('tickets') }}" wire:navigate>{{ __('theme.my_tickets') }}</a></li>
+                        <li><a href="{{ route('tickets.create') }}" wire:navigate>{{ __('theme.open_ticket') }}</a></li>
+                    </ul>
+                </li>
+
+                {{-- Open Ticket — also a direct item, exactly like the reference --}}
+                <li class="wf-menu-item">
+                    <a class="wf-menu-link" href="{{ route('tickets.create') }}" wire:navigate>{{ __('theme.open_ticket') }}</a>
+                </li>
+            @endauth
         </ul>
 
-        {{-- Account dropdown, right-aligned — shown to guests and members alike --}}
+        {{-- Right-aligned dropdown: guest → Account ▾, auth → Hello, {name}! ▾ --}}
         <div class="wf-menu-right" x-data="{ open: false }" @click.outside="open = false">
             <button type="button" class="wf-menu-link" @click="open = !open">
                 @auth
-                    {{ __('dashboard.welcome_back', ['name' => auth()->user()->first_name]) }}
+                    {{ __('theme.hello', ['name' => auth()->user()->first_name]) }}
                 @else
                     {{ __('navigation.account') }}
                 @endauth
