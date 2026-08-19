@@ -85,7 +85,7 @@
             </div>
 
             <div class="wf-crumb">
-                <a href="{{ route('home') }}" wire:navigate>{{ __('navigation.home') }}</a>
+                <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a>
                 <span>/</span>{{ __('navigation.dashboard') }}
             </div>
 

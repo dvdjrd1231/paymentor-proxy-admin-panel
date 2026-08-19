@@ -435,6 +435,13 @@
     .wf-card-foot { padding: .7rem 1rem; border-top: 1px solid var(--wf-border); display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
     .wf-price { font-size: 1.1rem; font-weight: 600; color: var(--wf-text); }
     .wf-price small { font-size: .75rem; font-weight: 400; color: var(--wf-muted); }
+    /* "Starting from" above the price — the reference portal's price presentation */
+    .wf-price-from { margin-top: .6rem; font-size: .78rem; color: var(--wf-muted); }
+    /* Icon inside a button (🛒 Order Now); sized to the label, gap matches the glyph */
+    .wf-btn-ico { display: inline-flex; margin-inline-end: .4rem; vertical-align: -2px; }
+    .wf-btn-ico svg { width: .95em; height: .95em; }
+    /* List rows with a trailing icon (Actions → View Cart) keep the icon brand-coloured */
+    .wf-list a:not(.wf-btn) .wf-head-icon svg { width: 1rem; height: 1rem; color: var(--brand); }
 
     /* Totals block (cart, checkout, invoice) */
     .wf-total-row { display: flex; align-items: center; justify-content: space-between; padding: .45rem 0; font-size: .9rem; }

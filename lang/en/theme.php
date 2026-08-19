@@ -19,6 +19,25 @@ return [
     'portal_home' => 'Portal Home',
     'lost_password' => 'Lost Password Reset',
 
+    // Menu bar — the reference portal's wording (WHMCS defaults)
+    'hello' => 'Hello, :name!',
+    'my_services' => 'My Services',
+    'order_new_services' => 'Order New Services',
+    'billing' => 'Billing',
+    'my_invoices' => 'My Invoices',
+    'payment_methods' => 'Payment Methods',
+    'support' => 'Support',
+    'my_tickets' => 'My Support Tickets',
+    'open_ticket' => 'Open Ticket',
+    'view_cart' => 'View Cart',
+    'notifications' => 'Notifications',
+
+    // Store
+    'actions' => 'Actions',
+    'starting_from' => 'Starting from',
+    'order_now' => 'Order Now',
+    'browse_all' => 'Browse All',
+
     // Login
     'restricted' => 'This page is restricted',
     'remember_me' => 'Remember me',

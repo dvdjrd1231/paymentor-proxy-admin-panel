@@ -2,7 +2,8 @@
 
 return [
     'home' => 'Home',
-    'shop' => 'Shop',
+    // "Store" matches the client's reference portal; core's default is "Shop".
+    'shop' => 'Store',
     'cart' => 'Cart',
     'login' => 'Login',
     'register' => 'Register',
