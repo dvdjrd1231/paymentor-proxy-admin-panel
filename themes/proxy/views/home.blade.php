@@ -35,7 +35,7 @@
                     </div>
                 </div>
             @empty
-                <div class="wf-empty">{{ __('product.no_products') ?? 'Nothing available yet.' }}</div>
+                <div class="wf-empty">{{ __('theme.no_products') }}</div>
             @endforelse
         </div>
     </div>

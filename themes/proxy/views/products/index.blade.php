@@ -12,7 +12,10 @@
         {{-- ── Category sidebar ────────────────────────────────────────── --}}
         <div>
             <div class="wf-panel">
-                <div class="wf-panel-heading">{{ __('product.categories') ?? __('navigation.store') }}</div>
+                {{-- `__()` returns the key itself when a translation is missing, never null,
+                     so a `??` fallback here never fires — this rendered the literal string
+                     "product.categories" on the storefront. Use a key that exists. --}}
+                <div class="wf-panel-heading"><span class="wf-head-icon"><x-ri-shopping-cart-2-fill /></span>{{ __('theme.categories') }}</div>
                 <ul class="wf-list">
                     @foreach ($categories as $ccategory)
                         <li>
@@ -98,7 +101,7 @@
                         </div>
                     </div>
                 @empty
-                    <div class="wf-empty">{{ __('product.no_products') ?? 'No products in this category.' }}</div>
+                    <div class="wf-empty">{{ __('theme.no_products') }}</div>
                 @endforelse
             </div>
         </div>

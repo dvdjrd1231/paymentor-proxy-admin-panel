@@ -60,7 +60,7 @@
                                         <td style="text-align:end">
                                             <strong>{{ $item->price->format($item->price->total * $item->quantity) }}</strong>
                                             @if ($item->quantity > 1)
-                                                <span class="wf-list-sub">{{ $item->price }} {{ __('product.each') ?? 'each' }}</span>
+                                                <span class="wf-list-sub">{{ $item->price }} {{ __('theme.each') }}</span>
                                             @endif
                                         </td>
 
@@ -92,7 +92,7 @@
                     <div class="wf-panel-body">
                         @if(!$coupon)
                             <div class="wf-coupon">
-                                <x-form.input wire:model="coupon" name="coupon" label="{{ __('product.coupon') ?? 'Coupon' }}" />
+                                <x-form.input wire:model="coupon" name="coupon" label="{{ __('theme.coupon') }}" />
                                 <button type="button" class="wf-btn wf-btn--sm" wire:click="applyCoupon" wire:loading.attr="disabled">
                                     <span wire:loading.remove wire:target="applyCoupon">{{ __('product.apply') }}</span>
                                     <span wire:loading wire:target="applyCoupon">…</span>
