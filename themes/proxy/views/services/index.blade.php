@@ -1,11 +1,65 @@
-{{-- Services list — WHMCS "Six" style table in a panel. Same $services paginator. --}}
+{{-- Services list — WHMCS "Six" style: a status-filter rail beside the table, matching the
+     reference portal's "My Products & Services". Counts are queried live from the customer's
+     own services, so the rail never claims a status the account does not have. --}}
+@php
+    $user = Auth::user();
+    $statusCounts = [
+        'active' => $user->services()->where('status', 'active')->count(),
+        'pending' => $user->services()->where('status', 'pending')->count(),
+        'suspended' => $user->services()->where('status', 'suspended')->count(),
+        'terminated' => $user->services()->where('status', 'terminated')->count(),
+        'cancelled' => $user->services()->where('status', 'cancelled')->count(),
+    ];
+@endphp
+
 <div class="wf-page">
     <div class="wf-pagehead">
         <h1>{{ __('navigation.services') }}</h1>
     </div>
 
+    <div class="wf-crumb">
+        <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a>
+        <span>/</span><a href="{{ route('dashboard') }}" wire:navigate>{{ __('theme.client_area') }}</a>
+        <span>/</span>{{ __('navigation.services') }}
+    </div>
+
+    <div class="wf-layout">
+        {{-- ── Status rail ─────────────────────────────────────────────── --}}
+        <div>
+            <div class="wf-panel wf-panel--brand">
+                <div class="wf-panel-heading">
+                    <span><span class="wf-head-icon"><x-ri-archive-stack-fill /></span>{{ __('theme.view') }}</span>
+                    <span class="wf-chevron">&#9650;</span>
+                </div>
+                <ul class="wf-list">
+                    @foreach ($statusCounts as $status => $count)
+                        <li>
+                            <a href="{{ route('services') }}" wire:navigate>
+                                <span>{{ __('theme.status_' . $status) }}</span>
+                                <span class="wf-label">{{ $count }}</span>
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+
+            <div class="wf-panel">
+                <div class="wf-panel-heading">+ {{ __('theme.actions') }}</div>
+                <ul class="wf-list">
+                    <li>
+                        <a href="{{ route('home') }}" wire:navigate>
+                            <span>{{ __('theme.place_new_order') }}</span>
+                            <span class="wf-head-icon"><x-ri-shopping-cart-2-fill /></span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        {{-- ── Table ───────────────────────────────────────────────────── --}}
+        <div>
     <div class="wf-panel">
-        <div class="wf-panel-heading">{{ __('dashboard.active_services') }}</div>
+        <div class="wf-panel-heading">{{ __('theme.active_products_services') }}</div>
         <div class="wf-table-wrap">
             <table class="wf-table">
                 <thead>
@@ -43,5 +97,7 @@
         </div>
     </div>
 
-    {{ $services->links() }}
+            {{ $services->links() }}
+        </div>
+    </div>
 </div>
