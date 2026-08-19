@@ -14,7 +14,7 @@ the internet.
 
 ## Why a tunnel
 
-The MariaDB container listens only on the internal Docker network (`172.18.0.3:3306`). It
+The MariaDB container listens only on the internal Docker network (`172.18.0.2:3306`). It
 is not published to the host and not reachable from the internet — which is how it should
 stay. Publishing 3306 would expose the customer database to the world.
 
@@ -28,13 +28,13 @@ firewall rule, no port publishing, and no change to the database container.
 Leave this running for as long as you want the shared database. From PowerShell:
 
 ```powershell
-ssh -N -L 127.0.0.1:3307:172.18.0.3:3306 root@69.197.186.115
+ssh -N -L 127.0.0.1:3307:172.18.0.2:3306 root@69.197.186.115
 ```
 
 To run it detached instead:
 
 ```powershell
-Start-Process ssh -ArgumentList "-N","-L","127.0.0.1:3307:172.18.0.3:3306","root@69.197.186.115" -WindowStyle Hidden
+Start-Process ssh -ArgumentList "-N","-L","127.0.0.1:3307:172.18.0.2:3306","root@69.197.186.115" -WindowStyle Hidden
 ```
 
 Check it is listening:
@@ -107,3 +107,29 @@ Then close the tunnel (`Ctrl+C`, or `Stop-Process -Name ssh`).
   ```
   ssh root@69.197.186.115 "P=\$(docker inspect paymentor-proxy-admin-panel-database-1 --format '{{range .Config.Env}}{{println .}}{{end}}' | grep '^MYSQL_PASSWORD=' | cut -d= -f2-); docker exec -e MYSQL_PWD=\"\$P\" paymentor-proxy-admin-panel-database-1 mariadb-dump -u paymenter --single-transaction --routines paymenter | gzip > /root/backups/manual-\$(date +%Y%m%d-%H%M%S).sql.gz"
   ```
+
+---
+
+## The URL trap (added after this bit me)
+
+Sharing the database also shares the `app_url` **setting**, which `SettingsProvider` copies
+into `config('app.url')` and pins with `URL::forceRootUrl()`. Connected, that value is
+`https://paymenter-dev.7hoop.net`, so every generated link, form action, asset and redirect
+leaves your machine — the local site loads and nothing works; a login posts to the server.
+
+Changing the setting is not an option: it is the row the live site reads.
+
+Enable the **Local Dev Overrides** extension and set `LOCAL_APP_URL` in `.env`. It re-applies
+a local URL after settings load (extensions boot from `AppServiceProvider::boot()`, after
+`SettingsProvider`). It requires *both* `APP_ENV=local` and `LOCAL_APP_URL`, so it can never
+affect the server.
+
+```dotenv
+LOCAL_APP_URL=http://127.0.0.1:8081
+```
+
+Confirm no generated URL points at the server:
+
+```sh
+curl -s http://127.0.0.1:8081/login | grep -oE 'https?://[a-z0-9.:-]+' | sort -u
+```
