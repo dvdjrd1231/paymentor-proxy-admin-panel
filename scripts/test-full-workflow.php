@@ -146,10 +146,43 @@ if (!$remoteId) {
         . 'service in. This is panel-side configuration, not module code.');
 }
 
-// The activation gate: a service must not go active until the panel confirms.
+// The activation gate: a service must not go active until the panel confirms — even when
+// the create call itself succeeded (the panel deploys asynchronously).
 step('service not active without panel confirmation',
-    $remoteId !== null || $service->status !== Service::STATUS_ACTIVE,
+    $service->status !== Service::STATUS_ACTIVE,
     'status=' . $service->status);
+
+// When the panel accepted the order (mock panel, or the real one once it has locations),
+// complete the loop the way the panel does in production: a signed status callback. This
+// proves order → payment → provisioning → confirmation → ACTIVE end to end.
+if ($remoteId) {
+    $server = App\Models\Server::where('extension', 'ProxyPanel')->first();
+    $secretRow = Illuminate\Support\Facades\DB::table('settings')
+        ->where('settingable_type', App\Models\Server::class)
+        ->where('settingable_id', $server->id)->where('key', 'callback_secret')->first();
+    $secret = $secretRow && $secretRow->encrypted
+        ? Illuminate\Support\Facades\Crypt::decryptString($secretRow->value)
+        : ($secretRow->value ?? '');
+
+    if ($secret === '') {
+        note('Panel accepted the order but no callback_secret is configured, so the '
+            . 'confirmation callback cannot be simulated. Run scripts/panel-mode.php --mock.');
+    } else {
+        $resp = Illuminate\Support\Facades\Http::withHeaders(['X-Panel-Secret' => $secret])
+            ->timeout(20)
+            ->post(route('extensions.servers.proxypanel.callback'), [
+                'panel_id' => $remoteId, 'status' => 'active',
+            ]);
+        $service->refresh();
+
+        step('panel confirmation callback accepted', $resp->successful(), 'HTTP ' . $resp->status());
+        step('service ACTIVE after panel confirmation',
+            $service->status === Service::STATUS_ACTIVE, 'status=' . $service->status);
+        step('proxy credentials stored for the client area',
+            $service->properties()->where('key', 'proxy_username')->exists(),
+            'username + password properties present');
+    }
+}
 
 echo "\n── 5. Support ticket ───────────────────────────────────────────\n";
 
