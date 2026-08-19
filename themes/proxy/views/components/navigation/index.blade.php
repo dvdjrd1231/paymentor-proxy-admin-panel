@@ -73,35 +73,39 @@
         <button type="button" class="wf-burger" @click="mobile = !mobile" aria-label="Menu">☰</button>
 
         <ul class="wf-menu" :class="{ 'wf-menu--open': mobile }">
-            {{-- Home + flat extension links (both states) --}}
+            {{-- Rendered in the order the Navigation API returns them — Home, Store, then
+                 whatever extensions have added. Pulling the flat links out first would put
+                 Store last, which is not the order the reference portal uses. --}}
             @foreach ($links as $link)
-                @continue(!empty($link['children']))
-                <li class="wf-menu-item">
-                    <a class="wf-menu-link {{ ($link['active'] ?? false) ? 'is-active' : '' }}"
-                        href="{{ $link['url'] }}" wire:navigate>{{ $link['name'] }}</a>
-                </li>
-            @endforeach
+                @php $isStore = !empty($link['children']); @endphp
 
-            @guest
-                {{-- Store ▾ — Browse All plus one entry per category, like the reference --}}
-                @if ($storeLink)
+                {{-- A signed-in customer shops through Services → Order New Services, so the
+                     public Store menu is guest-only, as on the reference. --}}
+                @continue($isStore && $isAuth)
+
+                @if ($isStore)
                     <li class="wf-menu-item" x-data="{ open: false }" @click.outside="open = false">
                         <button type="button" class="wf-menu-link" @click="open = !open">
-                            {{ $storeLink['name'] }} <span class="wf-caret">▾</span>
+                            {{ $link['name'] }} <span class="wf-caret">▾</span>
                         </button>
                         <ul class="wf-dropdown" x-show="open" x-transition x-cloak>
                             {{-- Core's Store entry carries no URL of its own (it is a pure
                                  container), so Browse All points at the first category —
                                  the storefront landing page a visitor expects. --}}
-                            <li><a href="{{ $storeLink['url'] ?? $orderNewUrl }}" wire:navigate>{{ __('theme.browse_all') }}</a></li>
+                            <li><a href="{{ $link['url'] ?? $orderNewUrl }}" wire:navigate>{{ __('theme.browse_all') }}</a></li>
                             <li class="wf-dropdown-sep"></li>
-                            @foreach ($storeLink['children'] as $child)
+                            @foreach ($link['children'] as $child)
                                 <li><a href="{{ $child['url'] }}" wire:navigate>{{ $child['name'] }}</a></li>
                             @endforeach
                         </ul>
                     </li>
+                @else
+                    <li class="wf-menu-item">
+                        <a class="wf-menu-link {{ ($link['active'] ?? false) ? 'is-active' : '' }}"
+                            href="{{ $link['url'] }}" wire:navigate>{{ $link['name'] }}</a>
+                    </li>
                 @endif
-            @endguest
+            @endforeach
 
             @auth
                 {{-- Services ▾ --}}

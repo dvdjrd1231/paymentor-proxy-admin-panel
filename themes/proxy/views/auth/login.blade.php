@@ -4,7 +4,7 @@
     password, remember), and keeps the default theme's extension points:
     the hook('auth.login') render hook and the OAuth provider buttons.
 --}}
-<div class="wf-page">
+<div class="wf-page wf-page--auth">
     <div class="wf-title">
         <h1>{{ __('auth.sign_in_title') }}</h1>
         <span>{{ __('theme.restricted') }}</span>
@@ -14,17 +14,15 @@
     <div class="wf-form-narrow">
         <form wire:submit="submit" id="login">
             <div class="wf-field" style="margin-bottom:1rem">
-                <label for="email">{{ __('general.input.email') }}<span class="wf-req">*</span></label>
-                <input id="email" type="email" class="wf-input" wire:model="email" autocomplete="email"
-                    placeholder="{{ __('general.input.email_placeholder') }}" required>
+                <label for="email">{{ __('theme.email_address') }}</label>
+                <input id="email" type="email" class="wf-input" wire:model="email" autocomplete="email" required>
                 @error('email') <span class="wf-error">{{ $message }}</span> @enderror
             </div>
 
             <div class="wf-field" style="margin-bottom:1rem">
-                <label for="password">{{ __('general.input.password') }}<span class="wf-req">*</span></label>
+                <label for="password">{{ __('general.input.password') }}</label>
                 <input id="password" type="password" class="wf-input" wire:model="password"
-                    autocomplete="current-password"
-                    placeholder="{{ __('general.input.password_placeholder') }}" required>
+                    autocomplete="current-password" required>
                 @error('password') <span class="wf-error">{{ $message }}</span> @enderror
             </div>
 
@@ -61,12 +59,6 @@
                 </div>
             @endif
 
-            @if (!config('settings.registration_disabled', false))
-                <div class="wf-alt">
-                    {{ __('auth.dont_have_account') }}
-                    <a href="{{ route('register') }}" wire:navigate>{{ __('auth.sign_up') }}</a>
-                </div>
-            @endif
         </form>
     </div>
 </div>
