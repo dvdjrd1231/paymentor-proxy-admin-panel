@@ -48,5 +48,8 @@ class PortalBehavior extends Extension
         // Appending to the `web` group (not replacing anything) keeps this reversible and
         // free of core edits; the middleware ignores every request except GET /.
         app('router')->pushMiddlewareToGroup('web', RedirectPortalHome::class);
+
+        // Serves the theme's Open Sans webfont — see routes.php for why it lives here.
+        require __DIR__ . '/routes.php';
     }
 }

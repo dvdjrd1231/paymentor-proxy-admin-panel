@@ -29,12 +29,30 @@
     }
     @endif
 
-    /* Put the flag font first in the stack; unicode-range confines it to flags only. */
+    /*
+       Open Sans is the reference portal's typeface. Shipped with the theme rather than
+       fetched from a font CDN: no third-party request per page load, and it keeps working
+       offline and under a strict CSP. One variable file covers 300-800, so the whole
+       family is a single 48KB request.
+    */
+    @if (Route::has('extensions.others.portal.font'))
+    @font-face {
+        font-family: 'Open Sans';
+        src: url('{{ route('extensions.others.portal.font') }}') format('woff2');
+        font-weight: 300 800;          /* variable: one file, every weight */
+        font-style: normal;
+        font-display: swap;
+    }
+    @endif
+
+    /* Flag font first — unicode-range confines it to flag characters, so Open Sans still
+       renders every letter. Then Open Sans, then the system stack as a fallback. */
     body,
     select, option, .wf-input, .wf-select,
-    .wf-list, .wf-table, .wf-card, .wf-panel {
-        font-family: 'TwemojiCountryFlags', ui-sans-serif, system-ui, -apple-system,
-                     'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    .wf-list, .wf-table, .wf-card, .wf-panel,
+    .wf-title h1, .wf-pagehead h1, .wf-menu-link, .wf-btn {
+        font-family: 'TwemojiCountryFlags', 'Open Sans', ui-sans-serif, system-ui,
+                     -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
 
     :root {
