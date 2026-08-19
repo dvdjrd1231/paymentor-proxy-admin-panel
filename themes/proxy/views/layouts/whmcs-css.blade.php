@@ -358,6 +358,13 @@
     .wf-list a:not(.wf-btn):hover { background: var(--wf-section); color: var(--brand); }
     .wf-list a.is-active:not(.wf-btn) { background: var(--brand); color: var(--brand-contrast); }
     .wf-list-title { font-weight: 600; }
+    /* Panel footer — the reference portal's "View More…" strip under a list */
+    .wf-panel-foot {
+        padding: .55rem 1rem; border-top: 1px solid var(--wf-border);
+        background: var(--wf-section); text-align: end; font-size: .85rem;
+    }
+    .wf-panel-foot a { color: var(--wf-muted); text-decoration: none; }
+    .wf-panel-foot a:hover { color: var(--brand-dark); text-decoration: underline; }
     /* Row with a trailing action button (services / invoices lists) */
     .wf-row-main { display: flex; align-items: center; gap: .75rem; min-width: 0; }
     .wf-row-link { color: var(--brand); text-decoration: none; }

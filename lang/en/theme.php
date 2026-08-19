@@ -32,6 +32,29 @@ return [
     'view_cart' => 'View Cart',
     'notifications' => 'Notifications',
 
+    // Client area — the reference portal's own wording
+    'client_area' => 'Client Area',
+    'services_short' => 'Services',
+    'tickets_short' => 'Tickets',
+    'invoices_short' => 'Invoices',
+    'active_products_services' => 'Your Active Products/Services',
+    'overdue_invoices' => 'Overdue Invoices',
+    'recent_tickets' => 'Recent Support Tickets',
+    'open_new_ticket' => 'Open New Ticket',
+    'pay_now' => 'Pay Now',
+    'view_more' => 'View More…',
+    'no_services_yet' => 'It appears you do not have any products/services with us yet. Place an order to get started.',
+    'no_recent_tickets' => 'No Recent Tickets Found. If you need any help, please open a ticket.',
+
+    // My Products & Services — status filter rail
+    'view' => 'View',
+    'status_active' => 'Active',
+    'status_pending' => 'Pending',
+    'status_suspended' => 'Suspended',
+    'status_terminated' => 'Terminated',
+    'status_cancelled' => 'Cancelled',
+    'place_new_order' => 'Place a New Order',
+
     // Store
     'categories' => 'Categories',
     'actions' => 'Actions',

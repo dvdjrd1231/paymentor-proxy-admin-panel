@@ -86,7 +86,7 @@
 
             <div class="wf-crumb">
                 <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a>
-                <span>/</span>{{ __('navigation.dashboard') }}
+                <span>/</span>{{ __('theme.client_area') }}
             </div>
 
             <div class="wf-stats">
@@ -95,14 +95,14 @@
                         <span class="wf-stat-num">{{ $activeServices }}</span>
                         <span class="wf-stat-icon"><x-ri-archive-stack-fill /></span>
                     </div>
-                    <div class="wf-stat-label">{{ __('dashboard.active_services') }}</div>
+                    <div class="wf-stat-label">{{ __('theme.services_short') }}</div>
                 </a>
                 <a class="wf-stat" href="{{ route('invoices') }}" wire:navigate>
                     <div class="wf-stat-head">
                         <span class="wf-stat-num">{{ $unpaidInvoices }}</span>
                         <span class="wf-stat-icon"><x-ri-receipt-fill /></span>
                     </div>
-                    <div class="wf-stat-label">{{ __('dashboard.unpaid_invoices') }}</div>
+                    <div class="wf-stat-label">{{ __('theme.overdue_invoices') }}</div>
                 </a>
                 @if ($ticketsEnabled)
                     <a class="wf-stat" href="{{ route('tickets') }}" wire:navigate>
@@ -110,7 +110,7 @@
                             <span class="wf-stat-num">{{ $openTickets }}</span>
                             <span class="wf-stat-icon"><x-ri-customer-service-fill /></span>
                         </div>
-                        <div class="wf-stat-label">{{ __('dashboard.open_tickets') }}</div>
+                        <div class="wf-stat-label">{{ __('theme.tickets_short') }}</div>
                     </a>
                 @endif
                 <a class="wf-stat" href="{{ route('invoices') }}" wire:navigate>
@@ -118,7 +118,7 @@
                         <span class="wf-stat-num">{{ $totalInvoices }}</span>
                         <span class="wf-stat-icon"><x-ri-bank-card-fill /></span>
                     </div>
-                    <div class="wf-stat-label">{{ __('navigation.invoices') }}</div>
+                    <div class="wf-stat-label">{{ __('theme.invoices_short') }}</div>
                 </a>
             </div>
 
@@ -131,20 +131,23 @@
 
             <div class="wf-panel">
                 <div class="wf-panel-heading">
-                    <span><span class="wf-head-icon"><x-ri-archive-stack-fill /></span>{{ __('dashboard.active_services') }}</span>
+                    <span><span class="wf-head-icon"><x-ri-archive-stack-fill /></span>{{ __('theme.active_products_services') }}</span>
                     <a class="wf-btn wf-btn--sm wf-btn--ghost" href="{{ route('services') }}" wire:navigate>
                         {{ __('dashboard.my_services') }}
                     </a>
                 </div>
                 <livewire:services.widget status="active" />
+                <div class="wf-panel-foot">
+                    <a href="{{ route('services') }}" wire:navigate>{{ __('theme.view_more') }}</a>
+                </div>
             </div>
 
             <div class="wf-grid">
                 <div class="wf-panel">
                     <div class="wf-panel-heading">
-                        <span>{{ __('navigation.invoices') }}</span>
+                        <span><span class="wf-head-icon"><x-ri-receipt-fill /></span>{{ __('theme.overdue_invoices') }}</span>
                         <a class="wf-btn wf-btn--sm wf-btn--ghost" href="{{ route('invoices') }}" wire:navigate>
-                            {{ __('common.button.view_all') }}
+                            {{ __('theme.pay_now') }}
                         </a>
                     </div>
                     <livewire:invoices.widget :limit="3" />
@@ -153,9 +156,9 @@
                 @if ($ticketsEnabled)
                     <div class="wf-panel">
                         <div class="wf-panel-heading">
-                            <span>{{ __('navigation.tickets') }}</span>
+                            <span><span class="wf-head-icon"><x-ri-customer-service-fill /></span>{{ __('theme.recent_tickets') }}</span>
                             <a class="wf-btn wf-btn--sm wf-btn--ghost" href="{{ route('tickets.create') }}" wire:navigate>
-                                {{ __('ticket.create_ticket') }}
+                                + {{ __('theme.open_new_ticket') }}
                             </a>
                         </div>
                         <livewire:tickets.widget />
