@@ -8,6 +8,35 @@
     BRANDING: change --brand (and --brand-dark) below to your brand colour.
 --}}
 <style>
+    /*
+       Country flags on region labels ("🇬🇧  United Kingdom - Birmingham").
+
+       Windows ships no flag glyphs, so every browser there falls back to rendering the two
+       regional-indicator letters — "GB" instead of the flag. This loads a Twemoji subset
+       that contains only that range and, thanks to unicode-range, the browser downloads and
+       applies it *only* for those characters: all other text keeps the normal system font,
+       and there is no download at all on platforms that already have flags.
+
+       `local()` first so macOS/Android/Linux use their built-in flags and skip the request.
+    */
+    @if (Route::has('extensions.servers.proxypanel.flagfont'))
+    @font-face {
+        font-family: 'TwemojiCountryFlags';
+        src: local('Twemoji Country Flags'),
+             url('{{ route('extensions.servers.proxypanel.flagfont') }}') format('woff2');
+        unicode-range: U+1F1E6-1F1FF;   /* REGIONAL INDICATOR SYMBOL LETTER A–Z */
+        font-display: swap;
+    }
+    @endif
+
+    /* Put the flag font first in the stack; unicode-range confines it to flags only. */
+    body,
+    select, option, .wf-input, .wf-select,
+    .wf-list, .wf-table, .wf-card, .wf-panel {
+        font-family: 'TwemojiCountryFlags', ui-sans-serif, system-ui, -apple-system,
+                     'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
     :root {
         /*
            --brand carries white text on every button, the menu bar and the active nav item,
