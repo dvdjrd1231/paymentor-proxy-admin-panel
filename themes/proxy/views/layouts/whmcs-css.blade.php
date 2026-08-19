@@ -324,6 +324,30 @@
     /* Centred auth form — the reference portal centres login/register in one column
        rather than splitting them beside a sidebar. */
     .wf-form-narrow { max-width: 540px; margin: 0 auto; }
+
+    /* ── Auth pages, matched to the reference portal ────────────────────
+       The reference sits the login and register forms on white rather than the grey
+       canvas the rest of the client area uses, keeps the rule under the heading the
+       same width as the form, and tints the inputs. */
+    .wf-page--auth { background: var(--wf-bg); }
+    body:has(.wf-page--auth) { background: var(--wf-bg) !important; }
+
+    .wf-page--auth .wf-title { max-width: 540px; margin-inline: auto; }
+    .wf-page--auth .wf-title h1 { font-size: 2.9rem; }
+    .wf-page--auth .wf-title-rule { max-width: 540px; margin-inline: auto; opacity: .5; }
+
+    /* Brand-coloured field labels, and inputs with a tinted fill + brand border. */
+    .wf-page--auth .wf-field label { color: var(--brand); font-weight: 700; font-size: .92rem; }
+    .wf-page--auth .wf-input {
+        background: color-mix(in srgb, var(--brand) 4%, #fff);
+        border-color: color-mix(in srgb, var(--brand) 45%, var(--wf-border));
+    }
+    .wf-page--auth .wf-input:focus {
+        border-color: var(--brand);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 18%, transparent);
+    }
+    /* "Remember Me" is brand-coloured in the reference, not body text. */
+    .wf-page--auth .wf-check span { color: var(--brand); font-size: .92rem; }
     .wf-actions--center { display: flex; justify-content: center; gap: .75rem; }
     /* Field labels are brand-coloured on the reference. */
     .wf-field label { color: var(--brand); font-weight: 600; font-size: .85rem; display: block; margin-bottom: .3rem; }
@@ -420,6 +444,9 @@
         color: var(--wf-text); font-size: .9rem;
     }
     .wf-alert--info { background: color-mix(in srgb, var(--brand) 7%, #fff); border-color: color-mix(in srgb, var(--brand) 25%, transparent); }
+    /* The all-clear on Network Status. Green is the one place the theme steps outside the
+       brand palette, because "no issues" has to read as reassuring at a glance. */
+    .wf-alert--success { background: #eaf6ec; border-color: #bcdfc4; color: #2d6a38; }
     .wf-empty { padding: 1.5rem 1rem; text-align: center; color: var(--wf-muted); font-size: .9rem; }
 
     /* Small stat tiles for the dashboard */
