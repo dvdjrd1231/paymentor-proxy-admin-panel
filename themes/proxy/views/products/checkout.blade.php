@@ -10,7 +10,7 @@
         {{-- ── Configuration ───────────────────────────────────────────── --}}
         <div>
             <div class="wf-panel">
-                <div class="wf-panel-heading">{{ __('product.configure') ?? $product->name }}</div>
+                <div class="wf-panel-heading">{{ __('theme.configure') }} &mdash; {{ $product->name }}</div>
                 <div class="wf-panel-body">
                     @if ($product->image || $product->description)
                         <div class="wf-product-intro">
@@ -22,7 +22,7 @@
                     @endif
 
                     @if ($product->availablePlans()->count() > 1)
-                        <x-form.select wire:model.live="plan_id" name="plan_id" label="{{ __('product.select_plan') ?? 'Select a plan' }}">
+                        <x-form.select wire:model.live="plan_id" name="plan_id" label="{{ __('theme.select_plan') }}">
                             @foreach ($product->availablePlans() as $availablePlan)
                                 <option value="{{ $availablePlan->id }}">
                                     {{ $availablePlan->name }} -

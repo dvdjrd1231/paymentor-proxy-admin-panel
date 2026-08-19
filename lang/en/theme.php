@@ -33,6 +33,7 @@ return [
     'notifications' => 'Notifications',
 
     // Store
+    'categories' => 'Categories',
     'actions' => 'Actions',
     'starting_from' => 'Starting from',
     'order_now' => 'Order Now',
@@ -64,4 +65,17 @@ return [
     'cnpj' => 'CNPJ',
     'trade_name' => 'Nome Fantasia',
     'trade_name_hint' => '(Trade Name)',
+
+    // Wording core does not ship. These were written as `__('product.coupon') ?? 'Coupon'`,
+    // which never falls back — `__()` returns the key itself when a translation is missing,
+    // and a non-null string ignores `??`. The pages showed customers raw keys such as
+    // "product.coupon". Defined here so the theme owns them.
+    'cart_title' => 'Cart',
+    'each' => 'each',
+    'coupon' => 'Coupon',
+    'no_products' => 'No products in this category.',
+    'configure' => 'Configure',
+    'select_plan' => 'Select a plan',
+    'ticket_word' => 'Ticket',
+    'conversation' => 'Conversation',
 ];

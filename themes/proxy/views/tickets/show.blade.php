@@ -3,7 +3,7 @@
      and chrome are restyled. --}}
 <div class="wf-page">
     <div class="wf-pagehead">
-        <h1>{{ __('ticket.ticket') ?? 'Ticket' }} #{{ $ticket->id }}</h1>
+        <h1>{{ __('theme.ticket_word') }} #{{ $ticket->id }}</h1>
         <p>{{ $ticket->subject }}</p>
     </div>
 
@@ -11,7 +11,7 @@
         {{-- ── Conversation + reply ────────────────────────────────────── --}}
         <div>
             <div class="wf-panel">
-                <div class="wf-panel-heading">{{ __('ticket.ticket') ?? 'Conversation' }}</div>
+                <div class="wf-panel-heading">{{ __('theme.conversation') }}</div>
                 <div class="wf-panel-body wf-thread" wire:poll.10s>
                     @foreach ($ticket->messages()->with('user')->get() as $message)
                         @php $isStaff = $message->user_id !== $ticket->user_id; @endphp
