@@ -114,6 +114,7 @@ return [
     'password_weak' => 'Weak',
     'password_moderate' => 'Moderate',
     'password_strong' => 'Strong',
+    'terms_of_service' => 'Terms of Service',
     'additional_information' => 'Additional Information',
     'required_fields_marked' => '(required fields are marked with *)',
 
