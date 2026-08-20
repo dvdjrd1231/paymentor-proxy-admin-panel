@@ -21,7 +21,9 @@ class Affiliate extends Component
     public function mount()
     {
         $this->affiliate = Auth::user()->affiliate;
-        $this->signup_type = ExtensionHelper::getExtension('other', 'Affiliates')->config('type');
+        // Falls back to the setting's own default: the page 500'd whenever the
+        // extension was enabled without its settings having been saved once.
+        $this->signup_type = ExtensionHelper::getExtension('other', 'Affiliates')?->config('type') ?? 'random';
     }
 
     public function render()

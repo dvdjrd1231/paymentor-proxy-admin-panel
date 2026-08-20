@@ -1,5 +1,5 @@
 {{--
-    Client Area dashboard in the WHMCS "Six" layout the client uses on noxproxy:
+    Client Area dashboard in the WHMCS "Six" layout the reference portal uses:
     a left rail (credit balance, your info, shortcuts) beside the main column
     (welcome header, stat tiles, active services, unpaid invoices, tickets).
 

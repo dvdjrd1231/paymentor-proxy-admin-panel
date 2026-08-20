@@ -1,73 +1,75 @@
-<div class="container mt-14">
-    <x-navigation.breadcrumb />
-    <div class="px-2">
-
-        @isset($affiliate)
-            <div class="mt-4 md:grid-cols-3 grid gap-4">
-                <div class="flex flex-col gap-1 bg-background-secondary p-4 rounded-lg">
-                    <span class="text-xl font-semibold">{{ __('affiliates::affiliate.visitors') }}</span>
-                    <span class="text-gray-500">{{ __('affiliates::affiliate.total-visitors') }}</span>
-                    <span class="text-2xl font-semibold mt-1">{{ Number::format($affiliate->visitors) }}</span>
-                </div>
-                <div class="flex flex-col gap-1 bg-background-secondary p-4 rounded-lg">
-                    <span class="text-xl font-semibold">{{ __('affiliates::affiliate.signups') }}</span>
-                    <span class="text-gray-500">{{ __('affiliates::affiliate.total-signups') }}</span>
-                    <span class="text-2xl font-semibold mt-1">
-                        {{ Number::format($affiliate->signups) }}
-                    </span>
-                </div>
-                <div class="flex flex-col gap-1 bg-background-secondary p-4 rounded-lg">
-                    <span class="text-xl font-semibold">{{ __('affiliates::affiliate.earnings') }}</span>
-                    <span class="text-gray-500">{{ __('affiliates::affiliate.total-earnings') }}</span>
-                    <span class="text-2xl font-semibold mt-1">
-                        <ul>
-                            @foreach ($affiliate->earnings as $currency => $amount)
-                                <li>
-                                    {{ $currency }}: {{ $amount }}
-                                </li>
-                            @endforeach
-                        </ul>
-                    </span>
-                </div>
-                <div class="col-span-3 flex flex-col mt-4">
-                    <span class="text-xl font-semibold">{{ __('affiliates::affiliate.affiliate') }}</span>
-                    <span class="text-gray-500">{{ __('affiliates::affiliate.your-affiliate-link') }}</span>
-                    <div class="flex flex-row gap-2 mt-2">
-                        <x-form.input value="{{ url('/') }}?ref={{ $affiliate->code }}" name="ref"
-                            divClass="!mt-0" type="text" readonly />
-
-                        <x-button.primary class="!w-fit" type="button"
-                            onclick="copyToClipboard('{{ url('/?ref=' . $affiliate->code) }}')">{{ __('affiliates::affiliate.copy') }}</x-button.primary>
-                    </div>
-                </div>
-            </div>
-            <script>
-                function copyToClipboard(textToCopy) {
-                    const temp = document.createElement("input")
-                    temp.type = "text"
-                    temp.value = textToCopy
-
-                    document.body.appendChild(temp)
-                    temp.select()
-                    document.execCommand("Copy")
-                    document.body.removeChild(temp)
-                }
-            </script>
-        @else
-            <p class="mb-4">{{ __('affiliates::affiliate.you-havent-signed-up-yet') }}</p>
-            <h3 class="text-lg font-bold mb-4">{{ __('affiliates::affiliate.signup-for-affiliate') }}</h3>
-            <form wire:submit.prevent="signup" method="POST">
-
-                @if ($signup_type === 'custom')
-                    <x-form.input name="referral_code" type="text" :label="__('affiliates::affiliate.code')" wire:model="referral_code"
-                        required />
-                @endif
-
-                <x-button.primary type="submit" class="text-sm !w-fit mt-4">
-                    {{ __('auth.sign_up') }}
-                </x-button.primary>
-            </form>
-        @endisset
+{{-- Affiliate area, in the portal's page/panel chrome. --}}
+<div class="wf-page">
+    <div class="wf-pagehead">
+        <h1>{{ __('affiliates::affiliate.affiliate') }}</h1>
     </div>
 
+    <div class="wf-crumb">
+        <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a>
+        <span>/</span>
+        <a href="{{ route('account') }}" wire:navigate>{{ __('navigation.account') }}</a>
+        <span>/</span>{{ __('affiliates::affiliate.affiliate') }}
+    </div>
+
+    @isset($affiliate)
+        <div class="wf-stats">
+            <div class="wf-stat">
+                <div class="wf-stat-head"><span class="wf-stat-num">{{ Number::format($affiliate->visitors) }}</span></div>
+                <div class="wf-stat-label">{{ __('affiliates::affiliate.visitors') }}</div>
+            </div>
+            <div class="wf-stat">
+                <div class="wf-stat-head"><span class="wf-stat-num">{{ Number::format($affiliate->signups) }}</span></div>
+                <div class="wf-stat-label">{{ __('affiliates::affiliate.signups') }}</div>
+            </div>
+            <div class="wf-stat">
+                <div class="wf-stat-head">
+                    <span class="wf-stat-num">
+                        @forelse ($affiliate->earnings as $currency => $amount)
+                            {{ $currency }} {{ $amount }}@if (!$loop->last)<br>@endif
+                        @empty
+                            0
+                        @endforelse
+                    </span>
+                </div>
+                <div class="wf-stat-label">{{ __('affiliates::affiliate.earnings') }}</div>
+            </div>
+        </div>
+
+        <div class="wf-panel">
+            <div class="wf-panel-heading">{{ __('affiliates::affiliate.your-affiliate-link') }}</div>
+            <div class="wf-panel-body">
+                <div class="wf-inline-form" x-data="{
+                    copy() {
+                        navigator.clipboard?.writeText($refs.ref.value);
+                        $refs.ref.select();
+                    }
+                }">
+                    <input x-ref="ref" class="wf-input" type="text" readonly
+                        value="{{ url('/?ref=' . $affiliate->code) }}">
+                    <button type="button" class="wf-btn" x-on:click="copy">
+                        {{ __('affiliates::affiliate.copy') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    @else
+        <div class="wf-panel">
+            <div class="wf-panel-heading">{{ __('affiliates::affiliate.signup-for-affiliate') }}</div>
+            <div class="wf-panel-body">
+                <p class="wf-muted">{{ __('affiliates::affiliate.you-havent-signed-up-yet') }}</p>
+
+                <form wire:submit.prevent="signup" method="POST">
+                    @if ($signup_type === 'custom')
+                        <div class="wf-field">
+                            <label for="referral_code">{{ __('affiliates::affiliate.code') }}</label>
+                            <input id="referral_code" type="text" class="wf-input" wire:model="referral_code" required>
+                            @error('referral_code') <span class="wf-error">{{ $message }}</span> @enderror
+                        </div>
+                    @endif
+
+                    <button type="submit" class="wf-btn">{{ __('auth.sign_up') }}</button>
+                </form>
+            </div>
+        </div>
+    @endisset
 </div>
