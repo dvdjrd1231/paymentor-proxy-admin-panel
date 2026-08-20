@@ -38,6 +38,13 @@ return [
     'view_rss_feed' => 'View RSS Feed',
     'news' => 'News',
     'news_subtitle' => 'All the latest updates',
+    'add_funds_help' => 'Add funds to your account with us to avoid lots of small transactions and to automatically take care of any new invoices that are generated.',
+    'deposit_money_in_advance' => 'Deposit money in advance',
+    'minimum_deposit' => 'Minimum Deposit',
+    'maximum_deposit' => 'Maximum Deposit',
+    'maximum_balance' => 'Maximum Balance',
+    'amount_to_add' => 'Amount to Add',
+    'deposits_non_refundable' => 'All deposits are non-refundable.',
 
     // Client area — the reference portal's own wording
     'client_area' => 'Client Area',
