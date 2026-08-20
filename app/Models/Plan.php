@@ -54,10 +54,24 @@ class Plan extends Model implements Auditable
         $currency = $currency ?? session('currency', config('settings.default_currency'));
         $price = $this->prices->where('currency_code', $currency)->first();
 
+        // A plan has one price row per currency, so there is none when a visitor is browsing
+        // in a currency this plan was never priced in — a new product before the exchange-rate
+        // sync has run, or a currency added after the catalogue. Dereferencing $price here
+        // was a fatal "Attempt to read property on null" that took down the storefront and
+        // checkout entirely.
+        //
+        // `price` and `currency` are deliberately left null rather than substituted:
+        // PriceClass derives `available` from the currency being set (see Price::formatted,
+        // 'available' => $this->currency || $this->is_free), and renders "Not available in
+        // your currency" when it is not. Falling back to a looked-up Currency here would
+        // mark an unpriced plan *available at 0.00* and let it be ordered for free.
+        //
+        // setup_fee is the one value safe to default, since a plan with no price row has no
+        // setup fee to charge either.
         return new PriceClass((object) [
             'price' => $price,
-            'setup_fee' => $price->setup_fee,
-            'currency' => $price->currency,
+            'setup_fee' => $price->setup_fee ?? 0,
+            'currency' => $price->currency ?? null,
         ]);
     }
 

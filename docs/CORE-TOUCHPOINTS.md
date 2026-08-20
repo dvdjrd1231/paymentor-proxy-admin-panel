@@ -230,5 +230,33 @@ classes — one of them vendored — would have been four places to re-apply on 
 
 ---
 
-_(No other core touchpoints at this time. Everything else is implemented via extensions,
-themes, events, or configuration.)_
+## 9. `app/Models/Plan.php` — a plan with no price in the visitor's currency was fatal
+
+**What:** `Plan::price()` read `$price->setup_fee` and `$price->currency` straight off the
+result of a lookup that can legitimately return `null`.
+
+**Symptom:** `ErrorException: Attempt to read property "setup_fee" on null`, a 500 that took
+out the storefront, the product page and checkout — not a degraded price, the whole page.
+
+**When it happens:** a plan has one price row per currency, so there is none whenever a
+visitor browses in a currency that plan was never priced in. Reproducible any time a product
+is added before the hourly exchange-rate sync has written its BRL row, or a currency is
+enabled after the catalogue was built.
+
+**Fix:** `setup_fee` defaults to `0`; `price` and `currency` are left `null`.
+
+**Why `currency` must stay null — the part that matters:** `Price` derives availability from
+it (`'available' => $this->currency || $this->is_free`). Substituting a looked-up `Currency`
+here — the obvious-looking fix — makes an unpriced plan report **available at 0.00**, i.e.
+orderable for free. Leaving it null makes `available` false and renders "Not available in
+your currency", which is the behaviour `Price` was already written to handle.
+
+**Verified:** priced currencies unchanged (`USD $70.00`, `BRL R$370,62`, both available);
+an unpriced currency returns `available=false` with no exception.
+
+**If not re-applied after an upgrade:** the 500 returns for any product/currency combination
+that lacks a price row.
+
+---
+
+_(Everything else is implemented via extensions, themes, events, or configuration.)_
