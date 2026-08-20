@@ -95,6 +95,9 @@ return [
     'showing_entries' => 'Showing :from to :to of :total entries',
     'search' => 'Search',
 
+    // Dashboard knowledgebase search band
+    'kb_search_placeholder' => 'Enter a question here to search our knowledgebase for answers…',
+
     // Manage Product
     'manage_product' => 'Manage Product',
     'overview' => 'Overview',
@@ -120,6 +123,8 @@ return [
 
     // Login
     'restricted' => 'This page is restricted',
+    'reset_password_subtitle' => 'Enter your email address to request a password reset',
+    'reset_password_choose' => 'Choose a new password for your account',
     'remember_me' => 'Remember Me',
     'email_address' => 'Email Address',
     'enter_email' => 'Enter email',
@@ -159,4 +164,5 @@ return [
     'select_plan' => 'Select a plan',
     'ticket_word' => 'Ticket',
     'conversation' => 'Conversation',
+    'no_transactions' => 'No transactions yet.',
 ];
