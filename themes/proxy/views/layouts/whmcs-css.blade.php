@@ -398,7 +398,10 @@
         padding: .7rem 1rem; color: var(--wf-text); text-decoration: none; font-size: .9rem;
     }
     .wf-list a:not(.wf-btn):hover { background: var(--wf-section); color: var(--brand); }
-    .wf-list a.is-active:not(.wf-btn) { background: var(--brand); color: var(--brand-contrast); }
+    /* The reference marks the selected sidebar row in slate, not brand: the panel heading
+       above it is already brand-coloured, and brand-on-brand loses the row entirely. */
+    .wf-list a.is-active:not(.wf-btn) { background: #3d434d; color: #fff; }
+    .wf-list a.is-active:not(.wf-btn):hover { background: #333840; color: #fff; }
     .wf-list-title { font-weight: 600; }
     /* Panel footer — the reference portal's "View More…" strip under a list */
     .wf-panel-foot {
@@ -580,7 +583,189 @@
     .wf-coupon { display: flex; align-items: flex-end; gap: .5rem; margin-bottom: .5rem; }
     .wf-coupon > :first-child { flex: 1; min-width: 0; }
 
-    /* ── 5c. De-dark shim for not-yet-converted default pages ───────────────
+    /* ── 5b. Storefront product card ────────────────────────────────────────
+       The reference portal's product card is one row, not a stack: the feature
+       list on the left, and a right-hand buy column holding "Starting from",
+       the price, the billing cycle and the Order Now button. Two per row at
+       desktop width — `auto-fill, minmax(240px, …)` gave three narrow columns,
+       which is what made our cards look nothing like the reference even when
+       the contents matched. */
+    .wf-cards--products { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (max-width: 820px) { .wf-cards--products { grid-template-columns: 1fr; } }
+
+    .wf-prod-body { display: flex; gap: 1rem; align-items: flex-start; padding: 1rem; flex: 1; }
+    .wf-prod-feat { flex: 1 1 auto; min-width: 0; font-size: .82rem; line-height: 1.75; }
+    /* Descriptions are authored as a bullet list in the admin. Markers are replaced
+       with a brand tick so the list reads as a feature list rather than prose. */
+    .wf-prod-feat ul { list-style: none; margin: 0; padding: 0; }
+    .wf-prod-feat li { position: relative; padding-inline-start: 1.35rem; color: var(--brand); }
+    .wf-prod-feat li::before {
+        content: '✔'; position: absolute; inset-inline-start: 0;
+        color: var(--brand); font-size: .8em;
+    }
+    .wf-prod-feat p { margin: 0 0 .4rem; color: var(--brand); }
+
+    .wf-prod-buy { flex: 0 0 auto; width: 9.5rem; text-align: center; }
+    @media (max-width: 520px) {
+        .wf-prod-body { flex-direction: column; }
+        .wf-prod-buy { width: 100%; }
+    }
+    .wf-prod-buy .wf-price-from { margin-top: 0; }
+    .wf-prod-buy .wf-price { font-size: 1.35rem; font-weight: 400; display: block; margin: .1rem 0; }
+    .wf-prod-cycle { display: block; font-size: .8rem; color: var(--wf-muted); margin-bottom: .75rem; }
+    .wf-prod-buy .wf-btn { width: 100%; justify-content: center; }
+    .wf-prod-buy .wf-btn + .wf-btn { margin-top: .4rem; }
+
+    /* ── 5c. Order summary panel (cart / checkout) ──────────────────────────
+       Grey heading, not brand: the reference reserves the brand colour for the
+       Checkout call to action inside it, and a brand-on-brand panel buries it. */
+    .wf-summary { border: 1px solid var(--wf-border); border-radius: var(--wf-radius); background: var(--wf-bg); overflow: hidden; }
+    .wf-summary-head {
+        background: #6f7681; color: #fff; text-align: center;
+        padding: .7rem 1rem; font-size: 1.05rem; font-weight: 600;
+    }
+    .wf-summary-body { padding: 1rem; }
+    .wf-summary-total { text-align: center; margin: .9rem 0 .25rem; }
+    .wf-summary-total strong { display: block; font-size: 1.7rem; font-weight: 400; color: var(--wf-text); }
+    .wf-summary-total span { font-size: .8rem; color: var(--wf-muted); }
+    .wf-summary-body .wf-btn--checkout { width: 100%; justify-content: center; font-size: 1.05rem; padding: .8rem 1rem; }
+    .wf-summary-foot { text-align: center; padding: .5rem 1rem .9rem; }
+    .wf-summary-foot a { color: var(--wf-muted); font-size: .82rem; text-decoration: none; }
+    .wf-summary-foot a:hover { color: var(--brand); text-decoration: underline; }
+
+    /* Cart line-item table: brand header row, product name as a heading. */
+    .wf-table--cart thead th { background: var(--brand); color: var(--brand-contrast); font-weight: 600; }
+    .wf-cart-name { font-size: 1.05rem; color: var(--brand); }
+    .wf-cart-edit { margin-inline-start: .5rem; font-size: .82rem; }
+    .wf-cart-cat { display: block; font-size: .82rem; color: var(--brand); }
+    .wf-cart-opt { display: block; font-size: .78rem; color: var(--brand); }
+    .wf-cart-cycle { display: block; font-size: .78rem; color: var(--wf-muted); }
+    .wf-cart-remove {
+        background: none; border: 0; cursor: pointer; color: var(--wf-muted);
+        font-size: 1.2rem; line-height: 1; padding: 0 .25rem;
+    }
+    .wf-cart-remove:hover { color: #c9302c; }
+    .wf-cart-bar { display: flex; justify-content: flex-end; padding: .6rem 0; }
+
+    /* Promo-code block — a single open tab above a bordered body, as on the reference. */
+    .wf-promo { margin-top: .25rem; }
+    .wf-promo-tab {
+        display: inline-block; padding: .55rem 1rem; font-size: .88rem;
+        border: 1px solid var(--wf-border); border-bottom: 0;
+        border-radius: var(--wf-radius) var(--wf-radius) 0 0;
+        background: var(--wf-bg); color: var(--wf-label);
+    }
+    .wf-promo-body { border: 1px solid var(--wf-border); border-radius: 0 var(--wf-radius) var(--wf-radius); padding: 1rem; background: var(--wf-bg); }
+    .wf-promo-body .wf-input { margin-bottom: .5rem; }
+    .wf-promo-body .wf-btn { width: 100%; justify-content: center; }
+
+    /* ── 5d. Checkout: account picker, payment box, credit choice ───────────── */
+    .wf-legend {
+        display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0 1rem;
+        color: var(--brand); font-size: 1.05rem; white-space: nowrap;
+    }
+    .wf-legend::before, .wf-legend::after { content: ''; height: 1px; background: var(--wf-border); flex: 1; }
+
+    .wf-choice { border: 1px solid var(--wf-border); border-radius: var(--wf-radius); overflow: hidden; }
+    .wf-choice-opt { display: flex; gap: .75rem; padding: .9rem 1rem; align-items: flex-start; cursor: pointer; }
+    .wf-choice-opt + .wf-choice-opt { border-top: 1px solid var(--wf-border); background: var(--wf-section); }
+    .wf-choice-opt input { margin-top: .2rem; accent-color: var(--brand); width: 1.05rem; height: 1.05rem; }
+    .wf-choice-name { font-weight: 600; }
+    .wf-choice-sub { display: block; font-size: .82rem; color: var(--wf-muted); line-height: 1.5; }
+    .wf-badge {
+        display: inline-block; margin-inline-start: .4rem; padding: .05rem .4rem;
+        background: #79b93c; color: #fff; border-radius: 3px;
+        font-size: .68rem; font-weight: 700; vertical-align: 2px;
+    }
+
+    /* Payment total — the reference shows it in a green confirmation panel. */
+    .wf-paybox {
+        background: #eaf6ec; border: 1px solid #bcdfc4; border-radius: var(--wf-radius);
+        padding: 1rem; text-align: center; color: #2d6a38; font-size: .95rem; line-height: 1.9;
+    }
+    .wf-paybox strong { color: #24572e; }
+
+    .wf-creditbox { background: var(--wf-section); border: 1px solid var(--wf-border); border-radius: var(--wf-radius); padding: 1rem; }
+    .wf-creditbox > p { margin: 0 0 .6rem; color: var(--brand); font-size: .9rem; }
+
+    .wf-tos { display: flex; align-items: center; justify-content: center; gap: .5rem; margin: 1.5rem 0; font-size: .9rem; }
+    .wf-tos input { width: 1.15rem; height: 1.15rem; accent-color: var(--brand); }
+    .wf-tos a { color: var(--brand); }
+    .wf-center-action { text-align: center; margin: 1.25rem 0; }
+    .wf-center-action .wf-btn { font-size: 1.05rem; padding: .75rem 1.5rem; }
+
+    /* Order confirmation — the pink call-out holding the order number. */
+    .wf-confirm-num {
+        background: color-mix(in srgb, var(--brand) 8%, #fff);
+        border: 1px solid color-mix(in srgb, var(--brand) 20%, transparent);
+        border-radius: var(--wf-radius); padding: 1.1rem; text-align: center;
+        color: var(--brand); font-size: 1.05rem; margin: 1.25rem 0;
+    }
+    .wf-confirm-num b { font-size: 1.5rem; font-weight: 600; margin-inline-start: .4rem; }
+
+    /* ── 5e. Table toolbar ("Showing 1 to 1 of 1 entries" + search) ─────────── */
+    .wf-dt-bar {
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        flex-wrap: wrap; background: var(--brand); color: var(--brand-contrast);
+        padding: .6rem 1rem; border-radius: var(--wf-radius) var(--wf-radius) 0 0;
+        font-size: .85rem;
+    }
+    .wf-dt-bar .wf-input { max-width: 15rem; margin: 0; }
+    .wf-dt-foot {
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        flex-wrap: wrap; padding: .7rem 0; font-size: .85rem; color: var(--wf-muted);
+    }
+
+    /* ── 5f. Manage Product tile ────────────────────────────────────────────
+       Reference product page: a large tile on the left with the product name and
+       a status stripe along its bottom edge, and a centred key/value column on
+       the right. */
+    .wf-manage { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+    @media (max-width: 780px) { .wf-manage { grid-template-columns: 1fr; } }
+    .wf-prodtile { background: var(--wf-section); border-radius: var(--wf-radius); overflow: hidden; text-align: center; }
+    .wf-prodtile-body { padding: 2rem 1.25rem 2.25rem; }
+    .wf-prodtile-icon {
+        width: 8.5rem; height: 8.5rem; margin: 0 auto 1.5rem; border-radius: 50%;
+        background: var(--brand); color: var(--brand-contrast);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .wf-prodtile-icon svg { width: 4rem; height: 4rem; }
+    .wf-prodtile-name { font-size: 1.35rem; color: var(--brand); font-weight: 400; line-height: 1.35; }
+    .wf-prodtile-cat { font-size: .95rem; color: var(--brand); margin-top: .35rem; }
+    .wf-prodtile-status {
+        padding: .5rem 1rem; color: #fff; font-size: .82rem; font-weight: 700;
+        letter-spacing: .05em; text-transform: uppercase; background: #6b7280;
+    }
+    .wf-prodtile-status--active { background: #2e9e5b; }
+    .wf-prodtile-status--pending { background: #f0a020; }
+    .wf-prodtile-status--suspended { background: #d68102; }
+    .wf-prodtile-status--cancelled, .wf-prodtile-status--terminated { background: #c9302c; }
+
+    .wf-facts { text-align: center; }
+    .wf-facts dt { color: var(--brand); font-size: 1.05rem; margin-top: 1.1rem; }
+    .wf-facts dt:first-child { margin-top: 0; }
+    .wf-facts dd { margin: .2rem 0 0; color: var(--brand); font-size: .95rem; }
+
+    /* ── 5g. Auth side rail ("Already Registered?" / login help) ────────────── */
+    .wf-authgrid { display: grid; grid-template-columns: 240px 1fr; gap: 1.5rem; align-items: start; }
+    @media (max-width: 820px) { .wf-authgrid { grid-template-columns: 1fr; } }
+    .wf-rail-note { padding: 1rem; color: var(--brand); font-size: .85rem; line-height: 1.6; }
+
+    /* Icon inside a form control, as on the reference's registration form. */
+    .wf-input-ico { position: relative; }
+    .wf-input-ico > svg, .wf-input-ico > .wf-ico {
+        position: absolute; inset-inline-start: .7rem; top: 50%; transform: translateY(-50%);
+        width: 1rem; height: 1rem; color: var(--wf-muted); pointer-events: none;
+    }
+    .wf-input-ico .wf-input, .wf-input-ico .wf-select { padding-inline-start: 2.25rem; }
+
+    /* Password strength meter */
+    .wf-pw { margin-top: .5rem; }
+    .wf-pw-track { height: 6px; border-radius: 3px; background: var(--wf-border); overflow: hidden; }
+    .wf-pw-fill { height: 100%; width: 0; border-radius: 3px; transition: width .2s, background .2s; background: #c9302c; }
+    .wf-pw-label { display: block; margin-top: .3rem; font-size: .78rem; color: var(--wf-muted); }
+
+    /* ── 5h. De-dark shim for not-yet-converted default pages ───────────────
        The default theme uses `bg-primary-800` (a dark shade of the brand colour)
        as a *surface* on some detail pages (service/ticket show, invoice blocks),
        with light text on top. Under this light WHMCS design that reads as a dark

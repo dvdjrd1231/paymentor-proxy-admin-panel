@@ -1,6 +1,22 @@
 <?php
 
+use App\Classes\Cart;
 use Illuminate\Support\Facades\Route;
+
+// ── Empty Cart ──────────────────────────────────────────────────────────────
+// The reference portal's cart has a single "Empty Cart" button. Paymenter's Cart Livewire
+// component only exposes removeProduct($index), and wire:click calls exactly one method,
+// so a button bound to it would silently drop just the first line — worse than not having
+// the button. This clears the whole cart in one step without touching core.
+//
+// POST, and behind the web middleware group, so it carries CSRF protection: a GET would let
+// any third-party page empty a visitor's cart with an <img> tag. The cart lives in the
+// session and holds no money, so no auth is required — guests build carts before logging in.
+Route::post('/cart/empty', function () {
+    Cart::clear();
+
+    return back();
+})->middleware('web')->name('extensions.others.portal.cart.empty');
 
 // ── Theme webfont ───────────────────────────────────────────────────────────
 // The reference portal is set in Open Sans, so the theme ships it rather than pulling from
