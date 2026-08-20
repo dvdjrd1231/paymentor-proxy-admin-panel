@@ -65,6 +65,34 @@ const PANEL_PLAN = [
 /** Socks5h is twice the HTTP price in every tier on the public store. */
 const SOCKS5_MULTIPLIER = 2;
 
+/** Public IPv6 catalogue periods, with USD HTTP prices from the reference store. */
+const PERIODS = [
+    'monthly' => [
+        'category' => ['IPv6 Proxy Monthly Plans', 'ipv6-proxy-monthly-plans', 'Monthly subscription renewable IPv6 residential proxy plans.'],
+        'suffix' => 'M',
+        'type' => 'recurring',
+        'billing_period' => 1,
+        'billing_unit' => 'month',
+        'prices' => [70, 120, 350, 580, 800],
+    ],
+    'weekly' => [
+        'category' => ['IPv6 Proxy Weekly Plans', 'ipv6-proxy-weekly-plans', 'One time payment IPv6 residential proxy plans for seven days.'],
+        'suffix' => 'W',
+        'type' => 'one-time',
+        'billing_period' => 1,
+        'billing_unit' => 'week',
+        'prices' => [28, 35, 91, 154, 196],
+    ],
+    'daily' => [
+        'category' => ['IPv6 Proxy Daily Plans', 'ipv6-proxy-daily-plans', 'One time payment IPv6 residential proxy plans for one day.'],
+        'suffix' => 'D',
+        'type' => 'one-time',
+        'billing_period' => 1,
+        'billing_unit' => 'day',
+        'prices' => [4, 5, 13, 22, 28],
+    ],
+];
+
 echo $apply ? "Applying.\n\n" : "Dry run — nothing will be written. Re-run with --apply.\n\n";
 
 $server = Server::where('extension', 'ProxyPanel')->first();
@@ -80,10 +108,26 @@ $headers = ['Panel' => (string) $settings['api_token'], 'Accept' => 'application
 $planTags = array_values(array_filter((array) Http::withHeaders($headers)->timeout(25)->get($panel . '/plans')->json(), 'is_string'));
 $locations = (array) Http::withHeaders($headers)->timeout(25)->get($panel . '/locations')->json();
 
-$category = Category::firstOrCreate(
-    ['name' => 'Proxies'],
-    ['slug' => 'proxies', 'description' => 'IPv6 residential proxy plans.'],
-);
+$categories = [];
+foreach (PERIODS as $period) {
+    [$name, $slug, $description] = $period['category'];
+    $category = Category::where('slug', $slug)->first();
+
+    // Preserve the original monthly category and its product/service relationships.
+    if (!$category && $slug === 'ipv6-proxy-monthly-plans') {
+        $category = Category::where('slug', 'proxies')->first();
+    }
+
+    if (!$category) {
+        $category = Category::make(['name' => $name, 'slug' => $slug, 'description' => $description]);
+    }
+
+    if ($apply) {
+        $category->fill(['name' => $name, 'slug' => $slug, 'description' => $description])->save();
+    }
+
+    $categories[$period['suffix']] = $category;
+}
 
 // ── Retire the earlier placeholder products, but never one that has been sold ────────────
 $stale = Product::where('slug', 'like', 'proxy-%')->get()
@@ -104,43 +148,64 @@ if ($apply) {
 echo PHP_EOL;
 
 // ── The real product line ────────────────────────────────────────────────────────────────
-foreach (TIERS as $tier => [$ports, $httpPrice, $bandwidth]) {
-    $variants = [
-        'HTTP Proxy' => ['http', $httpPrice],
-        'Socks5h' => ['socks5', $httpPrice * SOCKS5_MULTIPLIER],
-    ];
+foreach (PERIODS as $period) {
+    $category = $categories[$period['suffix']];
 
-    foreach ($variants as $label => [$protocol, $price]) {
-        $name = sprintf('IPv6 Residential %s - %s - M', $tier, $label);
-        $slug = Str::slug($name);
-        $existing = Product::where('slug', $slug)->first();
+    foreach (TIERS as $tierIndex => [$ports, $httpPrice, $bandwidth]) {
+        $variants = [
+            'HTTP Proxy' => ['http', $period['prices'][$tierIndex]],
+            'Socks5h' => ['socks5', $period['prices'][$tierIndex] * SOCKS5_MULTIPLIER],
+        ];
+
+        foreach ($variants as $label => [$protocol, $price]) {
+            $name = sprintf('IPv6 Residential %s - %s - %s', $tier, $label, $period['suffix']);
+            $slug = Str::slug($name);
+            $existing = Product::where('slug', $slug)->first();
 
         $planTag = PANEL_PLAN[$bandwidth][$protocol] ?? '';
         $tagKnown = in_array($planTag, $planTags, true);
 
-        printf("[ %s ] %-46s %7s ports  USD %-9s %s%s",
-            $existing ? 'sync' : ($apply ? ' ok ' : 'todo'), $name, number_format($ports),
-            number_format($price, 2), $tagKnown ? $planTag : ($planTag . ' (NOT on panel!)'), PHP_EOL);
+            printf("[ %s ] %-46s %7s ports  USD %-9s %s%s",
+                $existing ? 'sync' : ($apply ? ' ok ' : 'todo'), $name, number_format($ports),
+                number_format($price, 2), $tagKnown ? $planTag : ($planTag . ' (NOT on panel!)'), PHP_EOL);
 
-        if (!$apply) {
-            continue;
-        }
+            if (!$apply) {
+                continue;
+            }
 
-        $product = $existing ?: Product::create([
-            'category_id' => $category->id,
-            'name' => $name,
-            'slug' => $slug,
-            'description' => sprintf(
-                '%s residential proxies — %s ports, private proxy server, rotating or static, IP or user/password authentication.',
-                $label, number_format($ports),
-            ),
-            'server_id' => $server->id,
-            'allow_quantity' => 'combined',
-            'hidden' => false,
-        ]);
+        $description = sprintf(
+            '<ul><li>Anonymous Residential IPv6 Proxy</li><li>%,d %s Ports</li><li>Private Proxy Server</li><li>Rotating Proxies or Static Proxies</li><li>IP Whitelist Authentication</li><li>User/Password Authentication</li><li>Up-To %d IP whitelist</li><li>Configurable IP Proxies rotation time</li></ul>',
+            $ports,
+            $protocol === 'socks5' ? 'Socks5h' : 'HTTP Proxy',
+            match (true) {
+                $ports <= 1500 => 5,
+                $ports <= 4500 => 7,
+                $ports <= 13500 => 10,
+                $ports <= 22500 => 15,
+                default => 20,
+            },
+        );
+
+            $product = $existing ?: Product::create([
+                'category_id' => $category->id,
+                'name' => $name,
+                'slug' => $slug,
+                'description' => $description,
+                'server_id' => $server->id,
+                'allow_quantity' => 'combined',
+                'hidden' => false,
+            ]);
+
+            if ($existing) {
+                $product->update([
+                    'category_id' => $category->id,
+                    'description' => $description,
+                    'hidden' => false,
+                ]);
+            }
 
         // Everything the ProxyPanel module needs to provision this product.
-        foreach ([
+            foreach ([
             'plan' => $tagKnown ? $planTag : '',
             'amount' => (string) $ports,
             'protocol' => $protocol,
@@ -149,35 +214,36 @@ foreach (TIERS as $tier => [$ports, $httpPrice, $bandwidth]) {
             'auth_ips' => '5',
             'amount_rotations' => '100',
             'bwlimit' => '',
-        ] as $key => $value) {
+            ] as $key => $value) {
             DB::table('settings')->updateOrInsert(
                 ['settingable_type' => Product::class, 'settingable_id' => $product->id, 'key' => $key],
                 ['value' => $value, 'created_at' => now(), 'updated_at' => now()],
             );
-        }
+            }
 
         // priceable_type is not mass-assignable on Plan, so go through the query builder.
-        $planId = DB::table('plans')->where('priceable_type', Product::class)
+            $planId = DB::table('plans')->where('priceable_type', Product::class)
             ->where('priceable_id', $product->id)->value('id');
 
-        if (!$planId) {
+            if (!$planId) {
             $planId = DB::table('plans')->insertGetId([
-                'name' => 'Monthly',
+                    'name' => ucfirst($period['type'] === 'recurring' ? 'Monthly' : $period['billing_unit']),
                 'priceable_type' => Product::class,
                 'priceable_id' => $product->id,
-                'type' => 'recurring',
-                'billing_period' => 1,
-                'billing_unit' => 'month',
+                    'type' => $period['type'],
+                    'billing_period' => $period['billing_period'],
+                    'billing_unit' => $period['billing_unit'],
                 'sort' => 0,
             ]);
-        }
+            }
 
         // Never overwrite a price already adjusted in the admin.
-        if (!DB::table('prices')->where('plan_id', $planId)->where('currency_code', 'USD')->exists()) {
+            if (!DB::table('prices')->where('plan_id', $planId)->where('currency_code', 'USD')->exists()) {
             DB::table('prices')->insert([
                 'plan_id' => $planId, 'currency_code' => 'USD',
                 'price' => $price, 'setup_fee' => 0,
             ]);
+            }
         }
     }
 }
