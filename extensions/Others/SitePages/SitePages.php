@@ -59,6 +59,30 @@ class SitePages extends Extension
         Livewire::component('sitepages.network-status', NetworkStatus::class);
         Livewire::component('sitepages.contact', ContactUs::class);
 
+        // The Announcements extension ships views built on the *default* theme's Tailwind
+        // components, which render a blue primary button — not the brand colour, and badly
+        // out of place next to the rest of the client area. Prepending our directory to its
+        // namespace makes these overrides win.
+        //
+        // Done on booted() rather than inline because extension boot order is not
+        // guaranteed: if Announcements booted after us it would call addNamespace() and
+        // replace the hints, silently undoing this.
+        // `app()` rather than `$this->app`: the Extension base class is not a service
+        // provider and has no $app property, and ExtensionHelper::call(mayFail: true)
+        // swallows the resulting error — so the override silently never registered.
+        $override = __DIR__ . '/resources/views/announcements';
+
+        app()->booted(function () use ($override) {
+            // Prepend first, and never call View::exists() before it: exists() resolves the
+            // view through find(), which *caches* the path it lands on. Checking first
+            // therefore cached the upstream file, and the later prepend changed the hints
+            // while the stale resolution kept winning — the override silently did nothing.
+            View::prependNamespace('announcements', $override);
+
+            // Drop anything resolved earlier in this request so the new hint order applies.
+            View::flushFinderCache();
+        });
+
         // Menu entries append in the order their listeners are registered, so these three
         // are registered in the order the reference portal shows them:
         // … Knowledgebase, Network Status, Affiliates, Contact Us.

@@ -66,6 +66,7 @@ return [
     'restricted' => 'This page is restricted',
     'remember_me' => 'Remember Me',
     'email_address' => 'Email Address',
+    'enter_email' => 'Enter email',
     'need_account' => 'Need an account?',
 
     // Registration — section headings
