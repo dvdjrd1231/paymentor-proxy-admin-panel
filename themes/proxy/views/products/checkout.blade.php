@@ -6,7 +6,10 @@
         <h1>{{ $product->name }}</h1>
     </div>
 
-    <div class="wf-layout wf-layout--reverse">
+    <div class="wf-layout">
+        <x-store-rail :active="$product->category" />
+
+        <div class="wf-layout wf-layout--reverse">
         {{-- ── Configuration ───────────────────────────────────────────── --}}
         <div>
             <div class="wf-panel">
@@ -125,6 +128,7 @@
                     @endif
                 </div>
             </div>
+        </div>
         </div>
     </div>
 </div>

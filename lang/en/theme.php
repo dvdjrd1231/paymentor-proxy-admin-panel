@@ -167,4 +167,5 @@ return [
     'no_transactions' => 'No transactions yet.',
     'no_announcements' => 'There are no announcements at this time.',
     'captcha_recheck' => 'Please confirm the CAPTCHA again before resubmitting.',
+    'captcha_protected' => 'Protected by reCAPTCHA.',
 ];

@@ -81,7 +81,11 @@
                 <a href="{{ route('cart') }}" class="wf-hbtn wf-hbtn--primary" wire:navigate>{{ __('theme.view_cart') }}</a>
             @endguest
             @auth
-                <a href="{{ route('account.notifications') }}" class="wf-hbtn" wire:navigate>{{ __('theme.notifications') }}</a>
+                <a href="{{ route('account.notifications') }}" class="wf-hbtn wf-notifications" wire:navigate>
+                    {{ __('theme.notifications') }}
+                    <span class="wf-notifications-badge">NEW</span>
+                    <span class="wf-notifications-caret" aria-hidden="true">▾</span>
+                </a>
                 {{-- Logout lives here (the reference puts it top-right). --}}
                 <livewire:auth.logout />
             @endauth

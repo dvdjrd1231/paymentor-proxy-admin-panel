@@ -10,6 +10,9 @@
         'terminated' => $user->services()->where('status', 'terminated')->count(),
         'cancelled' => $user->services()->where('status', 'cancelled')->count(),
     ];
+    $creditsEnabled = (bool) config('settings.credits_enabled', false);
+    $currency = session('currency', config('settings.default_currency'));
+    $credit = $creditsEnabled ? $user->credits()->where('currency_code', $currency)->first() : null;
 @endphp
 
 <div class="wf-page">
@@ -26,6 +29,20 @@
     <div class="wf-layout">
         {{-- ── Status rail ─────────────────────────────────────────────── --}}
         <div>
+            @if ($creditsEnabled)
+                <div class="wf-panel wf-panel--brand">
+                    <div class="wf-panel-heading">
+                        <span>{{ __('dashboard.credit_balance') }}</span>
+                        <span class="wf-chevron">▲</span>
+                    </div>
+                    <div class="wf-panel-body" style="text-align:center">
+                        <div class="wf-stat-num">{{ $credit?->formatted_amount ?? __('dashboard.no_credit') }}</div>
+                        <a class="wf-btn wf-btn--sm wf-btn--block" style="margin-top:.75rem"
+                           href="{{ route('account.credits') }}" wire:navigate>{{ __('dashboard.add_funds') }}</a>
+                    </div>
+                </div>
+            @endif
+
             <div class="wf-panel wf-panel--brand">
                 <div class="wf-panel-heading">
                     <span><span class="wf-head-icon"><x-ri-archive-stack-fill /></span>{{ __('theme.view') }}</span>
