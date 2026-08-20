@@ -41,7 +41,37 @@
     </p>
     <hr class="wf-title-rule">
 
-    <div class="wf-form-narrow">
+    <div class="wf-authgrid">
+        {{-- ── "Already Registered?" rail ─────────────────────────────────
+             The reference portal puts login and password recovery beside the form
+             rather than only at the bottom, so someone who already has an account
+             leaves the page at the top instead of filling it in first. --}}
+        <div>
+            <div class="wf-panel wf-panel--brand">
+                <div class="wf-panel-heading">
+                    <span class="wf-head-icon"><x-ri-user-line /></span>{{ __('theme.already_registered') }}
+                    <span class="wf-chevron">▲</span>
+                </div>
+                <p class="wf-rail-note">{{ __('theme.already_registered_help') }}</p>
+                <ul class="wf-list">
+                    <li>
+                        <a href="{{ route('login') }}" wire:navigate>
+                            <span>{{ __('auth.sign_in') }}</span>
+                            <span class="wf-head-icon"><x-ri-user-line /></span>
+                        </a>
+                    </li>
+                    @if (Route::has('password.request'))
+                        <li>
+                            <a href="{{ route('password.request') }}" wire:navigate>
+                                <span>{{ __('theme.lost_password') }}</span>
+                                <span class="wf-head-icon"><x-ri-asterisk /></span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </div>
+        </div>
+
         <form wire:submit.prevent="submit" id="register">
         {{-- ─────────────── Personal Information ─────────────── --}}
         <div class="wf-section">{{ __('theme.personal_information') }}</div>

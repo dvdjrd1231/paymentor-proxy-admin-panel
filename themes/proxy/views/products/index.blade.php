@@ -11,11 +11,14 @@
     <div class="wf-layout">
         {{-- ── Category sidebar ────────────────────────────────────────── --}}
         <div>
-            <div class="wf-panel">
+            <div class="wf-panel wf-panel--brand">
                 {{-- `__()` returns the key itself when a translation is missing, never null,
                      so a `??` fallback here never fires — this rendered the literal string
                      "product.categories" on the storefront. Use a key that exists. --}}
-                <div class="wf-panel-heading"><span class="wf-head-icon"><x-ri-shopping-cart-2-fill /></span>{{ __('theme.categories') }}</div>
+                <div class="wf-panel-heading">
+                    <span class="wf-head-icon"><x-ri-shopping-cart-2-fill /></span>{{ __('theme.categories') }}
+                    <span class="wf-chevron">▲</span>
+                </div>
                 <ul class="wf-list">
                     @foreach ($categories as $ccategory)
                         <li>
@@ -29,8 +32,8 @@
             </div>
 
             {{-- Actions panel — the reference portal shows this beneath Categories --}}
-            <div class="wf-panel">
-                <div class="wf-panel-heading">+ {{ __('theme.actions') }}</div>
+            <div class="wf-panel wf-panel--brand">
+                <div class="wf-panel-heading">+ {{ __('theme.actions') }}<span class="wf-chevron">▲</span></div>
                 <ul class="wf-list">
                     <li>
                         <a href="{{ route('cart') }}" wire:navigate>
@@ -67,37 +70,48 @@
                 </div>
             @endif
 
-            <div class="wf-cards">
+            {{-- Two cards per row, each laid out as feature list | buy column — the
+                 reference portal's product card. --}}
+            <div class="wf-cards wf-cards--products">
                 @forelse ($products as $product)
+                    @php
+                        $price = $product->price();
+                        // Cheapest available plan drives the cycle label under the price,
+                        // so "Starting from" and "Monthly" describe the same plan.
+                        $cheapest = $product->availablePlans()->first();
+                        $canOrder = $product->stock !== 0 && $price->available;
+                    @endphp
                     <div class="wf-card">
                         <div class="wf-card-head">{{ $product->name }}</div>
-                        <div class="wf-card-body">
-                            @if ($product->image)
-                                <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="wf-card-img">
-                            @endif
-                            @if(theme('direct_checkout', false) && $product->description)
-                                <article class="prose dark:prose-invert">{!! $product->description !!}</article>
-                            @endif
-                            {{-- "Starting from $X USD" — the reference portal's price presentation --}}
-                            <div class="wf-price-from">{{ __('theme.starting_from') }}</div>
-                            <div class="wf-price">{{ $product->price()->formatted->price }} {{ $product->price()->currency->code ?? '' }}</div>
-                        </div>
-                        <div class="wf-card-foot">
-                            @if ($product->stock !== 0 && $product->price()->available)
-                                <a class="wf-btn wf-btn--sm"
-                                    href="{{ route('products.checkout', ['category' => $product->category, 'product' => $product->slug]) }}" wire:navigate>
-                                    <span class="wf-btn-ico"><x-ri-shopping-cart-2-fill /></span>{{ __('theme.order_now') }}
-                                </a>
+                        <div class="wf-prod-body">
+                            <div class="wf-prod-feat">
+                                @if ($product->image)
+                                    <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="wf-card-img">
+                                @endif
+                                {{-- Always shown. This used to be gated on theme('direct_checkout'),
+                                     an unrelated setting that is off by default — which is why every
+                                     card rendered without its feature list. --}}
+                                @if ($product->description)
+                                    {!! $product->description !!}
+                                @endif
+                            </div>
+
+                            <div class="wf-prod-buy">
+                                <div class="wf-price-from">{{ __('theme.starting_from') }}</div>
+                                <div class="wf-price">{{ $price->formatted->price }} {{ $price->currency->code ?? '' }}</div>
+                                <x-cycle :plan="$cheapest" class="wf-prod-cycle" />
+
+                                @if ($canOrder)
+                                    <a class="wf-btn wf-btn--sm"
+                                        href="{{ route('products.checkout', ['category' => $product->category, 'product' => $product->slug]) }}" wire:navigate>
+                                        <span class="wf-btn-ico"><x-ri-shopping-cart-2-fill /></span>{{ __('theme.order_now') }}
+                                    </a>
+                                @endif
                                 <a class="wf-btn wf-btn--sm wf-btn--ghost"
                                     href="{{ route('products.show', ['category' => $product->category, 'product' => $product->slug]) }}" wire:navigate>
                                     {{ __('common.button.view') }}
                                 </a>
-                            @else
-                                <a class="wf-btn wf-btn--sm"
-                                    href="{{ route('products.show', ['category' => $product->category, 'product' => $product->slug]) }}" wire:navigate>
-                                    {{ __('common.button.view') }}
-                                </a>
-                            @endif
+                            </div>
                         </div>
                     </div>
                 @empty

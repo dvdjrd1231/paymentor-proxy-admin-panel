@@ -62,6 +62,61 @@ return [
     'order_now' => 'Order Now',
     'browse_all' => 'Browse All',
 
+    // Billing cycle as the reference portal words it — an adverb ("Monthly"), not the
+    // noun Paymenter uses in services.billing_cycles ("month"). Anything that isn't a
+    // period of one falls back to 'every'.
+    'cycle' => [
+        'day' => 'Daily',
+        'week' => 'Weekly',
+        'month' => 'Monthly',
+        'year' => 'Annually',
+        'one_time' => 'One Time',
+        'every' => 'Every :period :unit',
+    ],
+
+    // Cart / checkout — the reference portal's wording
+    'review_checkout' => 'Review & Checkout',
+    'product_options' => 'Product/Options',
+    'price_cycle' => 'Price/Cycle',
+    'empty_cart_button' => 'Empty Cart',
+    'apply_promo_code' => 'Apply Promo Code',
+    'promo_placeholder' => 'Enter promo code if you have one',
+    'validate_code' => 'Validate Code',
+    'totals' => 'Totals',
+    'total_due_today' => 'Total Due Today',
+    'continue_shopping' => 'Continue Shopping',
+    'checkout_intro' => 'Please enter your personal details and billing information to checkout.',
+    'choose_account' => 'Choose Account',
+    'payment_details' => 'Payment Details',
+    'complete_order' => 'Complete Order',
+    'order_confirmation' => 'Order Confirmation',
+
+    // My Products & Services — table toolbar
+    'showing_entries' => 'Showing :from to :to of :total entries',
+    'search' => 'Search',
+
+    // Manage Product
+    'manage_product' => 'Manage Product',
+    'overview' => 'Overview',
+    'information' => 'Information',
+    'registration_date' => 'Registration Date',
+    'first_payment_amount' => 'First Payment Amount',
+    'billing_cycle' => 'Billing Cycle',
+    'next_due_date' => 'Next Due Date',
+    'payment_method' => 'Payment Method',
+
+    // Register — side rail
+    'already_registered' => 'Already Registered?',
+    'already_registered_help' => 'Already registered with us? If so, click the button below to login to our client area from where you can manage your account.',
+    'generate_password' => 'Generate Password',
+    'password_strength' => 'Password Strength',
+    'password_strength_enter' => 'Enter a password',
+    'password_weak' => 'Weak',
+    'password_moderate' => 'Moderate',
+    'password_strong' => 'Strong',
+    'additional_information' => 'Additional Information',
+    'required_fields_marked' => '(required fields are marked with *)',
+
     // Login
     'restricted' => 'This page is restricted',
     'remember_me' => 'Remember Me',
