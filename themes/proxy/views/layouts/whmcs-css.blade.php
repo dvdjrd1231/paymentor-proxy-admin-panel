@@ -412,12 +412,12 @@
     .wf-panel-body > :last-child { margin-bottom: 0; }
     .wf-panel-footer { padding: .65rem 1rem; border-top: 1px solid var(--wf-border); background: var(--wf-section); }
 
-    /* Terms panel: outlined in the brand colour with a filled heading, so the
-       accept-terms checkbox reads as the gate it is. */
-    .wf-panel--tos { border-color: var(--brand); }
+    /* Terms panel — the reference's `panel-danger`: pale pink heading with dark red
+       text, so the accept-terms checkbox reads as the gate it is without competing
+       with the brand-coloured submit button below it. */
+    .wf-panel--tos { border-color: #ebccd1; }
     .wf-panel--tos > .wf-panel-heading {
-        background: var(--brand); color: var(--brand-contrast);
-        border-bottom-color: var(--brand);
+        background: #f2dede; color: #a94442; border-bottom-color: #ebccd1;
     }
 
     /* List group — sidebar menus and simple record lists */
