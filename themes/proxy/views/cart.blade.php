@@ -28,8 +28,48 @@
 
         <div>
             @if ($items->count() === 0)
-                <div class="wf-panel">
-                    <div class="wf-empty">{{ __('product.empty_cart') }}</div>
+                <div class="wf-layout wf-layout--reverse" style="align-items:start">
+                    <div>
+                        <div class="wf-table-wrap">
+                            <table class="wf-table wf-table--cart">
+                                <thead>
+                                    <tr>
+                                        <th>{{ __('theme.product_options') }}</th>
+                                        <th style="text-align:end">{{ __('theme.price_cycle') }}</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="3"><div class="wf-empty">{{ __('product.empty_cart') }}</div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="wf-promo">
+                            <div class="wf-promo-tab">{{ __('theme.apply_promo_code') }}</div>
+                            <div class="wf-promo-body">
+                                <input type="text" class="wf-input" wire:model="coupon"
+                                    placeholder="{{ __('theme.promo_placeholder') }}">
+                                <button type="button" class="wf-btn" wire:click="applyCoupon" wire:loading.attr="disabled">
+                                    <span wire:loading.remove wire:target="applyCoupon">{{ __('theme.validate_code') }}</span>
+                                    <span wire:loading wire:target="applyCoupon">…</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="wf-summary wf-sticky">
+                            <div class="wf-summary-head">{{ __('product.order_summary') }}</div>
+                            <div class="wf-summary-body">
+                                <div class="wf-total-row"><span>{{ __('invoices.subtotal') }}</span><span>{{ $total->format(0) }}</span></div>
+                                <div class="wf-total-row" style="border-top:1px solid var(--wf-border)"><span>{{ __('theme.totals') }}</span><span>{{ $total->format(0) }}</span></div>
+                                <div class="wf-summary-total"><strong>{{ $total->format(0) }}</strong><span>{{ __('theme.total_due_today') }}</span></div>
+                                <button type="button" class="wf-btn wf-btn--checkout" disabled>{{ __('product.checkout') }} &rarr;</button>
+                            </div>
+                            <div class="wf-summary-foot"><a href="{{ route('home') }}" wire:navigate>{{ __('theme.continue_shopping') }}</a></div>
+                        </div>
+                    </div>
                 </div>
             @else
                 <div class="wf-layout wf-layout--reverse" style="align-items:start">

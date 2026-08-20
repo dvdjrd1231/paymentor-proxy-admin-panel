@@ -3,7 +3,8 @@
      the shared x-form.* components are unchanged from the default theme. --}}
 <div class="wf-page">
     <div class="wf-pagehead">
-        <h1>{{ $product->name }}</h1>
+        <h1>{{ __('theme.configure') }}</h1>
+        <p>{{ __('theme.configure_intro') }}</p>
     </div>
 
     <div class="wf-layout">
@@ -71,7 +72,10 @@
                         <x-form.configoption :config="$configOption" :name="'checkoutConfig.' . $configOption->name">
                             @if ($configOption->type == 'select')
                                 @foreach ($configOption->options as $configOptionValue => $configOptionValueName)
-                                    <option value="{{ $configOptionValue }}">{{ $configOptionValueName }}</option>
+                                    <option value="{{ $configOptionValue }}"
+                                        @disabled(in_array((string) $configOptionValue, array_map('strval', $configOption->disabled_options ?? []), true))>
+                                        {{ $configOptionValueName }}
+                                    </option>
                                 @endforeach
                             @elseif($configOption->type == 'radio')
                                 @foreach ($configOption->options as $configOptionValue => $configOptionValueName)
@@ -91,9 +95,9 @@
 
         {{-- ── Order summary ───────────────────────────────────────────── --}}
         <div>
-            <div class="wf-panel wf-panel--brand wf-sticky">
-                <div class="wf-panel-heading">{{ __('product.order_summary') }}</div>
-                <div class="wf-panel-body">
+            <div class="wf-summary wf-sticky">
+                <div class="wf-summary-head">{{ __('product.order_summary') }}</div>
+                <div class="wf-summary-body">
                     @if ($total->total_tax > 0)
                         <div class="wf-total-row">
                             <span>{{ __('invoices.subtotal') }}</span>
@@ -105,9 +109,9 @@
                         </div>
                     @endif
 
-                    <div class="wf-total-row wf-total-row--grand">
-                        <span>{{ __('product.total_today') }}</span>
-                        <span>{{ $total }}</span>
+                    <div class="wf-summary-total">
+                        <strong>{{ $total }}</strong>
+                        <span>{{ __('theme.total_due_today') }}</span>
                     </div>
 
                     @if ($total->setup_fee > 0 && $plan->type == 'recurring')
@@ -118,7 +122,7 @@
                     @endif
 
                     @if (($product->stock > 0 || !$product->stock) && $product->price()->available)
-                        <button type="button" class="wf-btn wf-btn--block" style="margin-top:.9rem"
+                        <button type="button" class="wf-btn wf-btn--checkout" style="margin-top:.9rem"
                             wire:click="checkout" wire:loading.attr="disabled">
                             <span wire:loading.remove wire:target="checkout">{{ __('product.checkout') }}</span>
                             <span wire:loading wire:target="checkout">…</span>
@@ -127,6 +131,7 @@
                         <p class="wf-section-note" style="margin-top:.75rem">{{ __('product.out_of_stock') ?? 'Currently unavailable.' }}</p>
                     @endif
                 </div>
+                <div class="wf-summary-foot"><a href="{{ route('home') }}" wire:navigate>{{ __('theme.continue_shopping') }}</a></div>
             </div>
         </div>
         </div>

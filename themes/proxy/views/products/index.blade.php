@@ -9,41 +9,7 @@
     </div>
 
     <div class="wf-layout">
-        {{-- ── Category sidebar ────────────────────────────────────────── --}}
-        <div>
-            <div class="wf-panel wf-panel--brand">
-                {{-- `__()` returns the key itself when a translation is missing, never null,
-                     so a `??` fallback here never fires — this rendered the literal string
-                     "product.categories" on the storefront. Use a key that exists. --}}
-                <div class="wf-panel-heading">
-                    <span class="wf-head-icon"><x-ri-shopping-cart-2-fill /></span>{{ __('theme.categories') }}
-                    <span class="wf-chevron">▲</span>
-                </div>
-                <ul class="wf-list">
-                    @foreach ($categories as $ccategory)
-                        <li>
-                            <a href="{{ route('category.show', ['category' => $ccategory->slug]) }}" wire:navigate
-                                class="{{ $category->id == $ccategory->id ? 'is-active' : '' }}">
-                                <span>{{ $ccategory->name }}</span>
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
-
-            {{-- Actions panel — the reference portal shows this beneath Categories --}}
-            <div class="wf-panel wf-panel--brand">
-                <div class="wf-panel-heading">+ {{ __('theme.actions') }}<span class="wf-chevron">▲</span></div>
-                <ul class="wf-list">
-                    <li>
-                        <a href="{{ route('cart') }}" wire:navigate>
-                            <span>{{ __('theme.view_cart') }}</span>
-                            <span class="wf-head-icon"><x-ri-shopping-cart-2-fill /></span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
+        <x-store-rail :active="$category" />
 
         {{-- ── Products ────────────────────────────────────────────────── --}}
         <div>

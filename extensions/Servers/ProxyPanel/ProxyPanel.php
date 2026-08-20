@@ -302,9 +302,11 @@ class ProxyPanel extends Server
         // form did — an unavailable region is shown but marked, not silently hidden, so
         // the customer can see it exists and pick another.
         $stock = $this->safeOptions(fn () => $this->fetchLocationStock());
+        $unavailable = [];
 
         foreach ($regions as $tag => $label) {
             if (($stock[$tag] ?? null) === false) {
+                $unavailable[] = (string) $tag;
                 $regions[$tag] = $label . ' ' . __('proxypanel.out_of_stock');
             }
         }
@@ -321,6 +323,7 @@ class ProxyPanel extends Server
                 'type' => 'select',
                 'required' => true,
                 'options' => $regions,
+                'disabled_options' => $unavailable,
             ],
         ];
     }
@@ -460,6 +463,16 @@ class ProxyPanel extends Server
                 'authenticate' => ['username' => $username, 'password' => $password],
                 'bwlimit' => $bwlimit > 0 ? $bwlimit : null,
             ];
+
+            $location = $payload['location_name'];
+            if (!$location || !array_key_exists($location, $this->fetchOptions('/locations'))) {
+                throw new \RuntimeException('ProxyPanel: selected Region is no longer available.');
+            }
+
+            $locationStock = $this->fetchLocationStock();
+            if (($locationStock[$location] ?? null) === false) {
+                throw new \RuntimeException('ProxyPanel: selected Region is out of stock.');
+            }
 
             if (empty($payload['plan_tag'])) {
                 throw new \RuntimeException('ProxyPanel: no Plan configured on this product.');

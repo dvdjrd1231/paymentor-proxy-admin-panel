@@ -52,7 +52,12 @@
     $isAffiliate = fn ($l) => str_contains($l['url'] ?? '', 'affiliate');
     $isHome = fn ($l) => ($l['url'] ?? null) === route('home');
 
-    $barLinks = $isAuth ? array_filter($links, $isHome) : $links;
+    $barLinks = $isAuth
+        ? array_filter($links, $isHome)
+        : collect($links)
+            ->sortBy(fn ($link) => $isHome($link) ? 0 : (!empty($link['children']) ? 1 : 2))
+            ->values()
+            ->all();
     // Affiliates is rendered separately because the reference places it last, after Open
     // Ticket, not in the position the Navigation API returns it in.
     $affiliateLink = $isAuth ? collect($links)->first($isAffiliate) : null;
