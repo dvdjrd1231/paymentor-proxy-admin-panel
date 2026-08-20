@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'announcements' => 'Announcements',
+    'no_announcements' => 'No announcements yet.',
+    'news' => 'News',
+    'news_subtitle' => 'All the latest updates',
     'network_status' => 'Network Status',
     'network_status_subtitle' => 'News & Information',
     'no_issues' => 'There are no Network Issues Currently',

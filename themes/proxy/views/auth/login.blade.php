@@ -15,14 +15,16 @@
         <form wire:submit="submit" id="login">
             <div class="wf-field" style="margin-bottom:1rem">
                 <label for="email">{{ __('theme.email_address') }}</label>
-                <input id="email" type="email" class="wf-input" wire:model="email" autocomplete="email" required>
+                <input id="email" type="email" class="wf-input" wire:model="email" autocomplete="email"
+                    placeholder="{{ __('theme.enter_email') }}" required>
                 @error('email') <span class="wf-error">{{ $message }}</span> @enderror
             </div>
 
             <div class="wf-field" style="margin-bottom:1rem">
                 <label for="password">{{ __('general.input.password') }}</label>
                 <input id="password" type="password" class="wf-input" wire:model="password"
-                    autocomplete="current-password" required>
+                    autocomplete="current-password"
+                    placeholder="{{ __('general.input.password') }}" required>
                 @error('password') <span class="wf-error">{{ $message }}</span> @enderror
             </div>
 
