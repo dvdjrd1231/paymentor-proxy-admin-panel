@@ -31,6 +31,13 @@ return [
     'open_ticket' => 'Open Ticket',
     'view_cart' => 'View Cart',
     'notifications' => 'Notifications',
+    'downloads' => 'Downloads',
+    'network_status' => 'Network Status',
+    'by_month' => 'By Month',
+    'older_announcements' => 'Older Announcements',
+    'view_rss_feed' => 'View RSS Feed',
+    'news' => 'News',
+    'news_subtitle' => 'All the latest updates',
 
     // Client area — the reference portal's own wording
     'client_area' => 'Client Area',
@@ -161,6 +168,7 @@ return [
     'coupon' => 'Coupon',
     'no_products' => 'No products in this category.',
     'configure' => 'Configure',
+    'configure_intro' => 'Configure your desired options and continue to checkout.',
     'select_plan' => 'Select a plan',
     'ticket_word' => 'Ticket',
     'conversation' => 'Conversation',

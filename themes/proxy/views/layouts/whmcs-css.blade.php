@@ -104,6 +104,7 @@
         padding: 10px;
         font-size: 14px;
         line-height: 1.42857143;
+        overflow-x: hidden;
     }
     /* Everything between the menu bar and the footer is white, as on the reference,
        rather than cards floating on grey. */
@@ -214,7 +215,7 @@
         background: var(--wf-bg);
         border: 1px solid var(--wf-border);
         border-radius: var(--wf-radius);
-        padding: 1.75rem;
+        padding: 0;
         color: var(--wf-text);
         box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
     }
@@ -391,7 +392,7 @@
     /* ── Auth pages, matched to the reference portal ────────────────────
        The reference keeps the heading, its rule and the form in one narrow centred
        column rather than running the heading the full page width. */
-    .wf-page--auth { background: var(--wf-bg); }
+    .wf-page--auth { background: var(--wf-bg); min-height: 420px; }
 
     /* Heading, rule and form share one 480px column, centred — the reference's
        login layout. */
@@ -534,6 +535,7 @@
         color: var(--wf-text); font-size: .9rem;
     }
     .wf-alert--info { background: color-mix(in srgb, var(--brand) 7%, #fff); border-color: color-mix(in srgb, var(--brand) 25%, transparent); }
+    .wf-alert--notice { background: #fcebf0; border-color: #f7d1dc; color: var(--brand); text-align: center; }
     /* The all-clear on Network Status. Green is the one place the theme steps outside the
        brand palette, because "no issues" has to read as reassuring at a glance. */
     .wf-alert--success { background: #eaf6ec; border-color: #bcdfc4; color: #2d6a38; }
@@ -712,29 +714,29 @@
        desktop width — `auto-fill, minmax(240px, …)` gave three narrow columns,
        which is what made our cards look nothing like the reference even when
        the contents matched. */
-    .wf-cards--products { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .wf-cards--products { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
     @media (max-width: 820px) { .wf-cards--products { grid-template-columns: 1fr; } }
 
-    .wf-prod-body { display: flex; gap: 1rem; align-items: flex-start; padding: 1rem; flex: 1; }
-    .wf-prod-feat { flex: 1 1 auto; min-width: 0; font-size: .82rem; line-height: 1.75; }
+    .wf-prod-body { display: flex; gap: .8rem; align-items: flex-start; padding: .75rem 1rem 1rem; flex: 1; }
+    .wf-prod-feat { flex: 1 1 auto; min-width: 0; font-size: .72rem; line-height: 1.35; }
     /* Descriptions are authored as a bullet list in the admin. Markers are replaced
        with a brand tick so the list reads as a feature list rather than prose. */
     .wf-prod-feat ul { list-style: none; margin: 0; padding: 0; }
-    .wf-prod-feat li { position: relative; padding-inline-start: 1.35rem; color: var(--brand); }
+    .wf-prod-feat li { position: relative; padding-inline-start: 1.05rem; color: var(--brand); }
     .wf-prod-feat li::before {
         content: '✔'; position: absolute; inset-inline-start: 0;
-        color: var(--brand); font-size: .8em;
+        color: var(--brand); font-size: .75em;
     }
-    .wf-prod-feat p { margin: 0 0 .4rem; color: var(--brand); }
+    .wf-prod-feat p { margin: 0 0 .2rem; color: var(--brand); }
 
-    .wf-prod-buy { flex: 0 0 auto; width: 9.5rem; text-align: center; }
+    .wf-prod-buy { flex: 0 0 auto; width: 8.5rem; text-align: center; }
     @media (max-width: 520px) {
         .wf-prod-body { flex-direction: column; }
         .wf-prod-buy { width: 100%; }
     }
     .wf-prod-buy .wf-price-from { margin-top: 0; }
-    .wf-prod-buy .wf-price { font-size: 1.35rem; font-weight: 400; display: block; margin: .1rem 0; }
-    .wf-prod-cycle { display: block; font-size: .8rem; color: var(--wf-muted); margin-bottom: .75rem; }
+    .wf-prod-buy .wf-price { font-size: 1.15rem; font-weight: 400; display: block; margin: .1rem 0; }
+    .wf-prod-cycle { display: block; font-size: .75rem; color: var(--wf-muted); margin-bottom: .55rem; }
     .wf-prod-buy .wf-btn { width: 100%; justify-content: center; }
     .wf-prod-buy .wf-btn + .wf-btn { margin-top: .4rem; }
 

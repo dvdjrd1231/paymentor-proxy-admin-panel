@@ -14,7 +14,7 @@ class RedirectPortalHome
 {
     public function handle(Request $request, Closure $next)
     {
-        if ($request->isMethod('GET') && $request->path() === '/') {
+        if ($request->isMethod('GET') && trim($request->path(), '/') === '') {
             return redirect()->to(
                 $request->user() ? route('dashboard') : route('login')
             );

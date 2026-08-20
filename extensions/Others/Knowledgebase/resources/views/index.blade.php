@@ -36,6 +36,7 @@
                     @endforeach
                 </ul>
             </div>
+            <x-support-rail active="knowledgebase" />
         </div>
 
         <div>
@@ -64,7 +65,7 @@
                             </a>
                         </li>
                     @empty
-                        <li><div class="wf-empty">{{ __('knowledgebase.no_articles') }}</div></li>
+                        <li><div class="wf-alert wf-alert--notice">{{ __('knowledgebase.no_articles') }}</div></li>
                     @endforelse
                 </ul>
             </div>
