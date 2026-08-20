@@ -41,6 +41,25 @@
         ['name' => __('theme.my_services'), 'url' => route('services')],
         ['name' => __('theme.order_new_services'), 'url' => $orderNewUrl],
     ] : [];
+
+    // Signed in, the reference bar carries only Home, the three grouped menus, Open Ticket
+    // and Affiliates — the informational pages (Announcements, Knowledgebase, Network
+    // Status, Contact Us) live inside Support ▾. Those entries are contributed by
+    // extensions, so they are split by URL rather than by label: an extension may rename
+    // its entry, but the route it points at still identifies it.
+    $isAffiliate = fn ($l) => str_contains($l['url'] ?? '', 'affiliate');
+    $isHome = fn ($l) => ($l['url'] ?? null) === route('home');
+
+    $barLinks = $isAuth ? array_filter($links, $isHome) : $links;
+    // Affiliates is rendered separately because the reference places it last, after Open
+    // Ticket, not in the position the Navigation API returns it in.
+    $affiliateLink = $isAuth ? collect($links)->first($isAffiliate) : null;
+
+    // Everything else the API offered (plus anything an extension adds later) is folded
+    // into Support ▾, after the two ticket entries.
+    $supportLinks = $isAuth
+        ? array_filter($links, fn ($l) => !$isHome($l) && !$isAffiliate($l) && empty($l['children']))
+        : [];
 @endphp
 
 <header class="wf-header">
@@ -76,7 +95,7 @@
             {{-- Rendered in the order the Navigation API returns them — Home, Store, then
                  whatever extensions have added. Pulling the flat links out first would put
                  Store last, which is not the order the reference portal uses. --}}
-            @foreach ($links as $link)
+            @foreach ($barLinks as $link)
                 @php $isStore = !empty($link['children']); @endphp
 
                 {{-- A signed-in customer shops through Services → Order New Services, so the
@@ -127,8 +146,10 @@
                     </button>
                     <ul class="wf-dropdown" x-show="open" x-transition x-cloak>
                         <li><a href="{{ route('invoices') }}" wire:navigate>{{ __('theme.my_invoices') }}</a></li>
-                        <li><a href="{{ route('account.credits') }}" wire:navigate>{{ __('dashboard.add_funds') }}</a></li>
                         <li><a href="{{ route('account.payment-methods') }}" wire:navigate>{{ __('theme.payment_methods') }}</a></li>
+                        @if (config('settings.credits_enabled'))
+                            <li><a href="{{ route('account.credits') }}" wire:navigate>{{ __('dashboard.add_funds') }}</a></li>
+                        @endif
                     </ul>
                 </li>
 
@@ -140,6 +161,11 @@
                     <ul class="wf-dropdown" x-show="open" x-transition x-cloak>
                         <li><a href="{{ route('tickets') }}" wire:navigate>{{ __('theme.my_tickets') }}</a></li>
                         <li><a href="{{ route('tickets.create') }}" wire:navigate>{{ __('theme.open_ticket') }}</a></li>
+                        @foreach ($supportLinks as $link)
+                            <li @class(['wf-dropdown-sep' => $loop->first])>
+                                <a href="{{ $link['url'] }}" wire:navigate>{{ $link['name'] }}</a>
+                            </li>
+                        @endforeach
                     </ul>
                 </li>
 
@@ -147,6 +173,12 @@
                 <li class="wf-menu-item">
                     <a class="wf-menu-link" href="{{ route('tickets.create') }}" wire:navigate>{{ __('theme.open_ticket') }}</a>
                 </li>
+
+                @if ($affiliateLink)
+                    <li class="wf-menu-item">
+                        <a class="wf-menu-link" href="{{ $affiliateLink['url'] }}" wire:navigate>{{ $affiliateLink['name'] }}</a>
+                    </li>
+                @endif
             @endauth
         </ul>
 

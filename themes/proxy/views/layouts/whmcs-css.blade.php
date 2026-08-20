@@ -171,11 +171,12 @@
         box-shadow: 0 6px 18px rgba(0, 0, 0, .12);
     }
     .wf-dropdown--right { left: auto; right: 0; }
+    /* The reference prints dropdown entries in the brand colour, not body grey. */
     .wf-dropdown a {
         display: block; padding: .55rem 1rem; font-size: .9rem;
-        color: var(--wf-text); text-decoration: none;
+        color: var(--brand); text-decoration: none;
     }
-    .wf-dropdown a:hover { background: var(--wf-section); color: var(--brand); }
+    .wf-dropdown a:hover { background: var(--wf-section); color: var(--brand-dark); }
     .wf-dropdown-sep { border-top: 1px solid var(--wf-border); margin-top: .35rem; padding-top: .35rem; }
 
     /* Paymenter's logout is a Livewire component, so normalise whatever it renders
@@ -183,7 +184,7 @@
     .wf-dropdown-logout :is(a, button) {
         display: block; width: 100%; text-align: left;
         padding: .55rem 1rem; font-size: .9rem; font-family: inherit;
-        color: var(--wf-text); background: transparent; border: 0; cursor: pointer;
+        color: var(--brand); background: transparent; border: 0; cursor: pointer;
     }
     .wf-dropdown-logout :is(a, button):hover { background: var(--wf-section); color: var(--brand); }
 
@@ -278,6 +279,21 @@
     }
     .wf-input[aria-invalid="true"] { border-color: var(--brand); }
     .wf-error { color: var(--brand); font-size: .8rem; }
+
+    /* Alpine hides these itself once it boots; without the rule the markup it
+       controls (e.g. the register form's Brazil block) flashes on first paint. */
+    [x-cloak] { display: none !important; }
+
+    /* CAPTCHA — centred under the form fields, as on the reference */
+    .wf-captcha { display: flex; flex-direction: column; align-items: center; gap: .35rem; margin: 1rem 0; }
+    /* The widget iframe is a fixed 304px; let it shrink rather than push the form
+       into a horizontal scroll on a phone. */
+    .wf-captcha-widget { max-width: 100%; overflow: hidden; }
+
+    /* One-time-code inputs on the 2FA prompt */
+    .wf-otp { display: inline-flex; align-items: center; gap: .35rem; margin-bottom: .75rem; }
+    .wf-otp-box { width: 2.5rem; text-align: center; padding-left: .25rem; padding-right: .25rem; }
+    .wf-otp-sep { color: var(--wf-muted); }
 
     .wf-check { display: flex; align-items: flex-start; gap: .5rem; font-size: .9rem; color: var(--wf-text); }
     .wf-check input { margin-top: .2rem; }
@@ -403,6 +419,8 @@
         background: var(--wf-section); border-bottom: 1px solid var(--wf-panel-border);
         display: flex; align-items: center; justify-content: space-between; gap: .5rem;
     }
+    /* Widget panels on the reference carry a brand rule along their top edge. */
+    .wf-panel--top { border-top: 2px solid var(--brand); }
     .wf-panel--brand > .wf-panel-heading { background: var(--brand); color: var(--brand-contrast); border-bottom-color: var(--brand); }
     .wf-panel-heading .wf-head-icon { display: inline-flex; margin-inline-end: .45rem; vertical-align: -2px; }
     .wf-panel-heading .wf-head-icon svg { width: 1rem; height: 1rem; }
@@ -464,6 +482,7 @@
     .wf-table td a:not(.wf-btn) { color: var(--brand); text-decoration: none; }
     .wf-table td a:not(.wf-btn):hover { text-decoration: underline; }
     .wf-table-wrap { overflow-x: auto; }
+    .wf-muted { color: var(--wf-muted); }
 
     /* Status labels */
     .wf-label {
@@ -487,6 +506,15 @@
        brand palette, because "no issues" has to read as reassuring at a glance. */
     .wf-alert--success { background: #eaf6ec; border-color: #bcdfc4; color: #2d6a38; }
     .wf-empty { padding: 1.5rem 1rem; text-align: center; color: var(--wf-muted); font-size: .9rem; }
+
+    /* Record row inside a panel body (payment methods, transactions) */
+    .wf-row {
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        padding: .65rem 0; border-bottom: 1px solid var(--wf-border);
+        color: var(--wf-text); text-decoration: none;
+    }
+    .wf-row:last-child { border-bottom: 0; }
+    a.wf-row:hover { background: var(--wf-section); }
 
     /* Small stat tiles for the dashboard */
     /* Stat strip — noxproxy shows one bordered panel with vertical dividers between
@@ -522,6 +550,23 @@
     }
 
     .wf-btn--sm { padding: .35rem .8rem; font-size: .82rem; }
+    /* Submit spinner for the shared button component (the default theme's icon is a
+       Tailwind-styled SVG; this keeps the same affordance without the utility classes). */
+    .wf-btn-spin {
+        width: 1rem; height: 1rem; border-radius: 50%; display: inline-block;
+        border: 2px solid color-mix(in srgb, currentColor 35%, transparent);
+        border-top-color: currentColor; animation: wf-spin .7s linear infinite;
+    }
+    @keyframes wf-spin { to { transform: rotate(360deg); } }
+
+    /* Multi-line variant of .wf-input (fixed height controls don't apply). */
+    .wf-textarea { height: auto; min-height: 6rem; padding: .5rem 12px; line-height: 1.6; resize: vertical; }
+    .wf-input--dirty { border-color: #d68102; }
+
+    /* Knowledgebase search band under the dashboard counters, as on the reference. */
+    .wf-kbsearch { margin-bottom: 1.25rem; }
+    .wf-kbsearch form { display: flex; gap: .5rem; }
+    .wf-kbsearch .wf-input { flex: 1; min-width: 0; }
     .wf-btn--danger { background: #c9302c; border-color: #c9302c; color: #fff; }
     .wf-btn--danger:hover { background: #a82824; border-color: #a82824; }
 
@@ -800,6 +845,7 @@
         position: absolute; inset-inline-start: .7rem; top: 50%; transform: translateY(-50%);
         width: 1rem; height: 1rem; color: var(--wf-muted); pointer-events: none;
     }
+    .wf-input-ico > .wf-ico svg { width: 100%; height: 100%; }
     .wf-input-ico .wf-input, .wf-input-ico .wf-select { padding-inline-start: 2.25rem; }
 
     /* Password strength meter */
