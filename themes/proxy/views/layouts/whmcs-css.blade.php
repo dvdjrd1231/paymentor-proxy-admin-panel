@@ -131,6 +131,12 @@
     .wf-hbtn:hover { color: var(--brand-soft); }
     .wf-hbtn--primary { padding: 6px 15px; background: var(--brand); color: var(--brand-contrast); }
     .wf-hbtn--primary:hover { background: var(--brand-dark); color: var(--brand-contrast); }
+    .wf-notifications { display: inline-flex; align-items: center; gap: .3rem; }
+    .wf-notifications-badge {
+        padding: 1px 4px; color: #fff; background: #a8c83b; border-radius: 1px;
+        font-size: 10px; line-height: 13px; font-weight: 700;
+    }
+    .wf-notifications-caret { color: #888; font-size: 11px; }
 
     /* Logout (Livewire component) rendered in the header → primary button look */
     .wf-header-actions .wf-logout button {

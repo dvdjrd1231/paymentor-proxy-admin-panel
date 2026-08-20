@@ -13,7 +13,44 @@
         <h1>{{ $service->label ?? $service->product?->name }}</h1>
     </div>
 
-    <div class="wf-grid">
+    <div class="wf-crumb">
+        <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a>
+        <span>/</span><a href="{{ route('dashboard') }}" wire:navigate>{{ __('theme.client_area') }}</a>
+        <span>/</span><a href="{{ route('services') }}" wire:navigate>{{ __('navigation.services') }}</a>
+        <span>/</span>{{ $service->label ?? $service->product?->name }}
+    </div>
+
+    @php
+        $creditsEnabled = (bool) config('settings.credits_enabled', false);
+        $currency = session('currency', config('settings.default_currency'));
+        $credit = $creditsEnabled ? Auth::user()->credits()->where('currency_code', $currency)->first() : null;
+    @endphp
+
+    <div class="wf-layout">
+        @if ($creditsEnabled)
+            <div>
+                <div class="wf-panel wf-panel--brand">
+                    <div class="wf-panel-heading">
+                        <span>{{ __('dashboard.credit_balance') }}</span>
+                        <span class="wf-chevron">▲</span>
+                    </div>
+                    <div class="wf-panel-body" style="text-align:center">
+                        <div class="wf-stat-num">{{ $credit?->formatted_amount ?? __('dashboard.no_credit') }}</div>
+                        <a class="wf-btn wf-btn--sm wf-btn--block" style="margin-top:.75rem"
+                           href="{{ route('account.credits') }}" wire:navigate>{{ __('dashboard.add_funds') }}</a>
+                    </div>
+                </div>
+                <div class="wf-panel">
+                    <div class="wf-panel-heading">{{ __('services.actions') }}</div>
+                    <ul class="wf-list">
+                        <li><a href="{{ route('services') }}" wire:navigate>{{ __('navigation.services') }}</a></li>
+                        <li><a href="{{ route('home') }}" wire:navigate>{{ __('theme.place_new_order') }}</a></li>
+                    </ul>
+                </div>
+            </div>
+        @endif
+
+        <div class="wf-grid">
         {{-- ── Details ─────────────────────────────────────────────────── --}}
         <div class="wf-panel">
             <div class="wf-panel-heading">{{ __('services.product_details') }}</div>
@@ -128,6 +165,7 @@
                 </div>
             </div>
         @endif
+        </div>
     </div>
 
     {{-- ── Module-provided views (tabs) ─────────────────────────────────── --}}

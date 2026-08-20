@@ -30,53 +30,51 @@
     $widgetId = 'g-recaptcha-' . ($form ?? 'form');
 @endphp
 
-<script src="https://www.google.com/recaptcha/api.js?render=explicit" data-navigate-once="true" async defer></script>
+@once
+    <script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
+@endonce
 
 <div id="{{ $widgetId }}" class="wf-captcha-widget"></div>
 <span class="wf-error" data-wf-captcha-notice hidden>{{ __('theme.captcha_recheck') }}</span>
 
 <script>
     (() => {
-        const el = document.getElementById(@js($widgetId));
-        if (!el || el.dataset.wfRendered) return;
-
+        const widgetId = @js($widgetId);
         const registry = (window.wfCaptcha ??= { widgets: new Map(), hooked: false });
-        const componentId = el.closest('[wire\\:id]')?.getAttribute('wire:id');
-
-        const notice = el.parentElement?.querySelector('[data-wf-captcha-notice]');
-        const setNotice = (visible) => notice && (notice.hidden = !visible);
 
         const render = () => {
-            el.dataset.wfRendered = '1';
+            const el = document.getElementById(widgetId);
+            if (!el || el.dataset.wfRendered || !window.grecaptcha?.render || !window.Livewire) return;
 
+            const componentId = el.closest('[wire\\:id]')?.getAttribute('wire:id');
             const wire = componentId ? Livewire.find(componentId) : null;
+            if (!wire) return;
 
+            const notice = el.parentElement?.querySelector('[data-wf-captcha-notice]');
+            const setNotice = (visible) => notice && (notice.hidden = !visible);
             const widget = grecaptcha.render(el, {
                 sitekey: @js(config('settings.captcha_site_key')),
                 callback: (token) => {
                     setNotice(false);
-                    wire?.set('captcha', token, false);
+                    wire.set('captcha', token, false);
                 },
-                'expired-callback': () => wire?.set('captcha', '', false),
-                'error-callback': () => wire?.set('captcha', '', false),
+                'expired-callback': () => wire.set('captcha', '', false),
+                'error-callback': () => wire.set('captcha', '', false),
             });
 
-            if (wire) registry.widgets.set(componentId, { el, widget, wire, setNotice });
+            el.dataset.wfRendered = '1';
+            registry.widgets.set(componentId, { el, widget, wire, setNotice });
         };
 
-        // The API script is async, so it may still be in flight at this point.
         const whenReady = () => {
             if (window.grecaptcha?.render && window.Livewire) return render();
-            setTimeout(whenReady, 100);
+            window.setTimeout(whenReady, 100);
         };
         whenReady();
 
-        // Registered once for the page rather than once per render, so navigating
-        // back and forth doesn't stack duplicate handlers.
-        if (registry.hooked) return;
-        registry.hooked = true;
-
-        document.addEventListener('livewire:init', () => {
+        const hookCommits = () => {
+            if (registry.hooked || !window.Livewire) return;
+            registry.hooked = true;
             Livewire.hook('commit', ({ component, commit, succeed }) => {
                 const entry = registry.widgets.get(component.id);
                 if (!entry || !commit.calls?.length) return;
@@ -84,12 +82,8 @@
                 succeed(({ effect }) => {
                     if (!document.body.contains(entry.el)) {
                         registry.widgets.delete(component.id);
-
                         return;
                     }
-
-                    // Nothing was spent (never solved), or the browser is leaving
-                    // for the post-submit page — either way, leave the widget alone.
                     if (!entry.wire.get('captcha') || effect?.redirect) return;
 
                     grecaptcha.reset(entry.widget);
@@ -97,6 +91,10 @@
                     entry.setNotice(true);
                 });
             });
-        });
+        };
+
+        if (window.Livewire) hookCommits();
+        document.addEventListener('livewire:init', hookCommits, { once: true });
+        document.addEventListener('livewire:navigated', whenReady);
     })();
 </script>
