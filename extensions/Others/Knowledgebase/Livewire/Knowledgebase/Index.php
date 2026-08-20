@@ -2,6 +2,7 @@
 
 namespace Paymenter\Extensions\Others\Knowledgebase\Livewire\Knowledgebase;
 
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Paymenter\Extensions\Others\Knowledgebase\Models\KbArticle;
@@ -11,7 +12,13 @@ class Index extends Component
 {
     use WithPagination;
 
-    /** Bound to the search box; `live` on the input keeps results updating as you type. */
+    /**
+     * Bound to the search box; `live` on the input keeps results updating as you type.
+     *
+     * Mirrored to `?q=` so the dashboard's knowledgebase search box can hand a question
+     * straight to this page as a plain GET, and so a result list stays shareable.
+     */
+    #[Url(except: '')]
     public string $q = '';
 
     public ?string $category = null;
