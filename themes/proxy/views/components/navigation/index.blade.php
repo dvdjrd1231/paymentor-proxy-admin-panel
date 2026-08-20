@@ -31,7 +31,9 @@
     // extension-added pages keep appearing in the account dropdown.
     $dash = collect($isAuth ? Navigation::getDashboardLinks() : []);
     $accountItem = $dash->first(fn ($l) => !empty($l['children']));
-    $accountChildren = $accountItem['children'] ?? [];
+    // Core filters `condition` on top-level entries only, so a disabled feature's child
+    // (Credits with credits_enabled off) would otherwise link at a 404.
+    $accountChildren = array_filter($accountItem['children'] ?? [], fn ($c) => $c['condition'] ?? true);
 
     $isAdmin = $isAuth && auth()->user()->role_id !== null;
     $hasLogo = config('settings.logo') || config('settings.logo_dark');

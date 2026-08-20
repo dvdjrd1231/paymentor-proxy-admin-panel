@@ -484,6 +484,32 @@
     .wf-table-wrap { overflow-x: auto; }
     .wf-muted { color: var(--wf-muted); }
 
+    /* Rich text coming from the admin editor (announcements, knowledgebase articles) */
+    .wf-prose { line-height: 1.7; }
+    .wf-prose h1, .wf-prose h2, .wf-prose h3, .wf-prose h4 {
+        font-family: Raleway, 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--wf-text);
+        margin: 1.25rem 0 .5rem; line-height: 1.3;
+    }
+    .wf-prose h1 { font-size: 1.5rem; }
+    .wf-prose h2 { font-size: 1.3rem; }
+    .wf-prose h3 { font-size: 1.1rem; }
+    .wf-prose p, .wf-prose ul, .wf-prose ol, .wf-prose blockquote, .wf-prose pre { margin: 0 0 1rem; }
+    .wf-prose ul, .wf-prose ol { padding-inline-start: 1.5rem; }
+    .wf-prose ul { list-style: disc; }
+    .wf-prose ol { list-style: decimal; }
+    .wf-prose a { color: var(--brand); text-decoration: none; }
+    .wf-prose a:hover { text-decoration: underline; }
+    .wf-prose img { max-width: 100%; height: auto; }
+    .wf-prose blockquote {
+        padding: .25rem 1rem; border-inline-start: 3px solid var(--brand);
+        color: var(--wf-muted);
+    }
+    .wf-prose code { background: var(--wf-section); padding: .1rem .3rem; border-radius: 3px; font-size: .9em; }
+    .wf-prose pre { background: var(--wf-section); padding: .75rem 1rem; border-radius: var(--wf-radius); overflow-x: auto; }
+    .wf-prose pre code { background: none; padding: 0; }
+    .wf-prose table { width: 100%; border-collapse: collapse; margin: 0 0 1rem; }
+    .wf-prose th, .wf-prose td { border: 1px solid var(--wf-border); padding: .5rem .65rem; text-align: start; }
+
     /* Status labels */
     .wf-label {
         display: inline-block; padding: .2rem .55rem; border-radius: 999px;
@@ -517,7 +543,7 @@
     a.wf-row:hover { background: var(--wf-section); }
 
     /* Small stat tiles for the dashboard */
-    /* Stat strip — noxproxy shows one bordered panel with vertical dividers between
+    /* Stat strip — the reference portal shows one bordered panel with vertical dividers between
        the figures, each with its own accent bar, rather than four separate cards. */
     .wf-stats {
         display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -550,6 +576,9 @@
     }
 
     .wf-btn--sm { padding: .35rem .8rem; font-size: .82rem; }
+    /* Input with a trailing button (affiliate link, inline search) */
+    .wf-inline-form { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+    .wf-inline-form .wf-input { flex: 1 1 16rem; }
     /* Submit spinner for the shared button component (the default theme's icon is a
        Tailwind-styled SVG; this keeps the same affordance without the utility classes). */
     .wf-btn-spin {
