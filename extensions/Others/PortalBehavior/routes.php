@@ -36,3 +36,16 @@ Route::get('/extensions/portal/opensans.woff2', function () {
         'Cache-Control' => 'public, max-age=31536000, immutable',
     ]);
 })->name('extensions.others.portal.font');
+
+// Raleway carries the reference portal's menu bar and page headings, and is shipped the
+// same way and for the same reasons as Open Sans above.
+Route::get('/extensions/portal/raleway.woff2', function () {
+    $path = __DIR__ . '/resources/fonts/Raleway-Variable.woff2';
+
+    abort_unless(is_file($path), 404);
+
+    return response()->file($path, [
+        'Content-Type' => 'font/woff2',
+        'Cache-Control' => 'public, max-age=31536000, immutable',
+    ]);
+})->name('extensions.others.portal.font.heading');
