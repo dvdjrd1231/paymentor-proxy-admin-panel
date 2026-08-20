@@ -15,6 +15,12 @@
 @php
     $items = Cart::items();
     $hasQuantity = $items->contains(fn ($i) => $i->product->allow_quantity == 'combined');
+    $emptyTotal = $items->isEmpty()
+        ? new \App\Classes\Price([
+            'price' => 0,
+            'currency' => Cart::get()->currency,
+        ])
+        : $total;
 @endphp
 
 <div class="wf-page">
@@ -62,9 +68,9 @@
                         <div class="wf-summary wf-sticky">
                             <div class="wf-summary-head">{{ __('product.order_summary') }}</div>
                             <div class="wf-summary-body">
-                                <div class="wf-total-row"><span>{{ __('invoices.subtotal') }}</span><span>{{ $total->format(0) }}</span></div>
-                                <div class="wf-total-row" style="border-top:1px solid var(--wf-border)"><span>{{ __('theme.totals') }}</span><span>{{ $total->format(0) }}</span></div>
-                                <div class="wf-summary-total"><strong>{{ $total->format(0) }}</strong><span>{{ __('theme.total_due_today') }}</span></div>
+                                <div class="wf-total-row"><span>{{ __('invoices.subtotal') }}</span><span>{{ $emptyTotal->format(0) }}</span></div>
+                                <div class="wf-total-row" style="border-top:1px solid var(--wf-border)"><span>{{ __('theme.totals') }}</span><span>{{ $emptyTotal->format(0) }}</span></div>
+                                <div class="wf-summary-total"><strong>{{ $emptyTotal->format(0) }}</strong><span>{{ __('theme.total_due_today') }}</span></div>
                                 <button type="button" class="wf-btn wf-btn--checkout" disabled>{{ __('product.checkout') }} &rarr;</button>
                             </div>
                             <div class="wf-summary-foot"><a href="{{ route('home') }}" wire:navigate>{{ __('theme.continue_shopping') }}</a></div>

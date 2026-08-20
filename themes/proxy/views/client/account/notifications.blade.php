@@ -3,9 +3,12 @@
     subscription Alpine component and every wire: binding are the core component's.
 --}}
 <div class="wf-page">
-    <div class="wf-pagehead">
-        <h1>{{ __('navigation.notifications') }}</h1>
-    </div>
+    <div class="wf-layout">
+        <x-account-rail active="notifications" />
+        <div>
+            <div class="wf-pagehead">
+                <h1>{{ __('navigation.notifications') }}</h1>
+            </div>
 
     @if ($this->supportsPush())
         <div class="wf-panel" x-data="pushNotifications">
@@ -132,6 +135,8 @@
             <x-button.primary wire:click="savePreferences" wire:loading.attr="disabled">
                 {{ __('general.save') }}
             </x-button.primary>
+        </div>
+    </div>
         </div>
     </div>
 </div>

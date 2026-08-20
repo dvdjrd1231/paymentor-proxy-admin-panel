@@ -4,9 +4,12 @@
     optional Telegram Chat ID) are kept exactly, so bindings/validation are intact.
 --}}
 <div class="wf-page">
-    <div class="wf-pagehead">
-        <h1>{{ __('navigation.personal_details') }}</h1>
-    </div>
+    <div class="wf-layout">
+        <x-account-rail active="account" />
+        <div>
+            <div class="wf-pagehead">
+                <h1>{{ __('navigation.personal_details') }}</h1>
+            </div>
 
     <div class="wf-panel">
         <div class="wf-panel-heading">{{ __('navigation.personal_details') }}</div>
@@ -26,6 +29,7 @@
             <button type="button" wire:click="submit" class="wf-btn wf-btn--block" style="margin-top:1rem">
                 {{ __('general.update') }}
             </button>
+        </div>
         </div>
     </div>
 </div>
