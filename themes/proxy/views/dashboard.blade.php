@@ -1,5 +1,5 @@
 {{--
-    Client Area dashboard in the WHMCS "Six" layout the client uses on noxproxy:
+    Client Area dashboard in the WHMCS "Six" layout the reference portal uses:
     a left rail (credit balance, your info, shortcuts) beside the main column
     (welcome header, stat tiles, active services, unpaid invoices, tickets).
 
@@ -55,7 +55,7 @@
                 <div class="wf-panel-body">
                     <div class="wf-list-title">{{ $user->name }}</div>
                     <span class="wf-list-sub">{{ $user->email }}</span>
-                    <a class="wf-btn wf-btn--ghost wf-btn--sm wf-btn--block" style="margin-top:.75rem"
+                    <a class="wf-btn wf-btn--sm wf-btn--block" style="margin-top:.75rem"
                        href="{{ route('account') }}" wire:navigate>
                         {{ __('dashboard.update_details') }}
                     </a>
@@ -79,9 +79,10 @@
 
         {{-- ── Main column ─────────────────────────────────────────────── --}}
         <div>
+            {{-- No strapline under the heading: the reference goes straight from the
+                 welcome to the breadcrumb. --}}
             <div class="wf-pagehead">
                 <h1>{{ __('dashboard.welcome_back', ['name' => $user->first_name]) }}</h1>
-                <p>{{ __('dashboard.dashboard_description') }}</p>
             </div>
 
             <div class="wf-crumb">
@@ -122,6 +123,23 @@
                 </a>
             </div>
 
+            @if (Route::has('knowledgebase.index'))
+                {{-- Ask-a-question band under the counters, as on the reference. A plain GET
+                     into the knowledgebase page (whose `q` is URL-bound), so it works
+                     without JavaScript and the result list stays linkable. --}}
+                <div class="wf-kbsearch">
+                    <form action="{{ route('knowledgebase.index') }}" method="GET" role="search">
+                        <div class="wf-input-ico" style="flex:1">
+                            <span class="wf-ico"><x-ri-search-line /></span>
+                            <input type="search" name="q" class="wf-input"
+                                   placeholder="{{ __('theme.kb_search_placeholder') }}"
+                                   aria-label="{{ __('theme.kb_search_placeholder') }}">
+                        </div>
+                        <button type="submit" class="wf-btn">{{ __('theme.search') }}</button>
+                    </form>
+                </div>
+            @endif
+
             @if ($unpaidInvoices > 0)
                 <div class="wf-alert wf-alert--info" style="margin-bottom:1.25rem">
                     {{ trans_choice('dashboard.unpaid_summary', $unpaidInvoices, ['count' => $unpaidInvoices]) }}
@@ -129,11 +147,11 @@
                 </div>
             @endif
 
-            <div class="wf-panel">
+            <div class="wf-panel wf-panel--top">
                 <div class="wf-panel-heading">
                     <span><span class="wf-head-icon"><x-ri-archive-stack-fill /></span>{{ __('theme.active_products_services') }}</span>
-                    <a class="wf-btn wf-btn--sm wf-btn--ghost" href="{{ route('services') }}" wire:navigate>
-                        {{ __('dashboard.my_services') }}
+                    <a class="wf-btn wf-btn--sm" href="{{ route('services') }}" wire:navigate>
+                        &rarr; {{ __('dashboard.my_services') }}
                     </a>
                 </div>
                 <livewire:services.widget status="active" />
@@ -143,21 +161,21 @@
             </div>
 
             <div class="wf-grid">
-                <div class="wf-panel">
+                <div class="wf-panel wf-panel--top">
                     <div class="wf-panel-heading">
                         <span><span class="wf-head-icon"><x-ri-receipt-fill /></span>{{ __('theme.overdue_invoices') }}</span>
-                        <a class="wf-btn wf-btn--sm wf-btn--ghost" href="{{ route('invoices') }}" wire:navigate>
-                            {{ __('theme.pay_now') }}
+                        <a class="wf-btn wf-btn--sm" href="{{ route('invoices') }}" wire:navigate>
+                            &rarr; {{ __('theme.pay_now') }}
                         </a>
                     </div>
                     <livewire:invoices.widget :limit="3" />
                 </div>
 
                 @if ($ticketsEnabled)
-                    <div class="wf-panel">
+                    <div class="wf-panel wf-panel--top">
                         <div class="wf-panel-heading">
                             <span><span class="wf-head-icon"><x-ri-customer-service-fill /></span>{{ __('theme.recent_tickets') }}</span>
-                            <a class="wf-btn wf-btn--sm wf-btn--ghost" href="{{ route('tickets.create') }}" wire:navigate>
+                            <a class="wf-btn wf-btn--sm" href="{{ route('tickets.create') }}" wire:navigate>
                                 + {{ __('theme.open_new_ticket') }}
                             </a>
                         </div>

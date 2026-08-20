@@ -12,9 +12,14 @@
         seeded by CustomPropertySeeder (phone, company_name, address, address2, city,
         state, zip, country) and by the BrazilianRegistration extension (cpf, rg, cnpj,
         trade_name, state_registration, state_registration_exempt).
-      * The country <select> uses wire:model.live so changing it re-renders and
-        toggles the Brazil block. Server-side validation still comes from each
-        custom property's own rules, so hiding a field can't bypass anything.
+      * The country <select> toggles the Brazil block in Alpine rather than with
+        wire:model.live. A live binding round-trips to the server, and the core
+        Captchable trait verifies the CAPTCHA on *every* property update — so
+        picking a country before solving the CAPTCHA raised "The CAPTCHA is
+        required." halfway through the form. Toggling client-side keeps the
+        binding deferred, so the only commit is the submit. Server-side validation
+        still comes from each custom property's own rules, so hiding a field
+        can't bypass anything.
 --}}
 @php
     $props = collect($custom_properties ?? []);
@@ -24,8 +29,6 @@
     $countryIsAssoc = $countryOptions && array_keys($countryOptions) !== range(0, count($countryOptions) - 1);
 
     $selectedCountry = $properties['country'] ?? '';
-    // Match however the country happens to be stored (name or ISO code).
-    $isBrazil = in_array($selectedCountry, ['BR', 'Brazil', 'Brasil'], true);
 
     // Only render Brazilian fields the extension actually installed.
     $has = fn (string $key) => $props->contains(fn ($p) => $p->key === $key);
@@ -34,7 +37,7 @@
 {{-- The reference portal pulls the heading over the form column, leaving the
      "Already Registered?" rail alongside it rather than below it, so heading,
      breadcrumb and form all live in the right-hand column. --}}
-<div class="wf-page">
+<div class="wf-page" x-data="{ country: @js($selectedCountry) }">
     <div class="wf-authgrid">
         {{-- ── "Already Registered?" rail ─────────────────────────────────
              The reference portal puts login and password recovery beside the form
@@ -164,8 +167,8 @@
             @if ($countryProp)
                 <div class="wf-field">
                     <label for="country">{{ __('theme.country') }}<span class="wf-req">*</span></label>
-                    {{-- .live so the Brazil block appears/disappears as soon as this changes --}}
-                    <select id="country" class="wf-select" wire:model.live="properties.country">
+                    <select id="country" class="wf-select" wire:model="properties.country"
+                            x-on:change="country = $event.target.value">
                         <option value="">{{ __('theme.select_country') }}</option>
                         @foreach ($countryOptions as $key => $label)
                             <option value="{{ $countryIsAssoc ? $key : $label }}">{{ $label }}</option>
@@ -176,8 +179,10 @@
             @endif
         </div>
 
-        {{-- ─────────────── Additional Information (Brazil only) ─────────────── --}}
-        @if ($isBrazil)
+        {{-- ─────────────── Additional Information (Brazil only) ───────────────
+             Rendered always, revealed by Alpine, so choosing Brazil costs no
+             round-trip. The country may be stored as an ISO code or as a name. --}}
+        <div x-show="['BR', 'Brazil', 'Brasil'].includes(country)" x-cloak>
             <div class="wf-section">
                 Additional Information
                 <span class="wf-section-note">(Brazil)</span>
@@ -245,7 +250,7 @@
                     @endif
                 </div>
             </div>
-        @endif
+        </div>
 
         {{-- ─────────────── Account Security ─────────────── --}}
         <div class="wf-section">{{ __('theme.account_security') }}</div>

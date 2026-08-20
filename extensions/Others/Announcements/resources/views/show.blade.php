@@ -1,11 +1,23 @@
-<div class="container mt-14">
-    <div class="bg-background-secondary hover:bg-background-secondary/80 border border-neutral p-4 rounded-lg">
-        <div class="flex flex-row justify-between mb-6">
-            <h2 class="text-xl font-bold">{{ $announcement->title }}</h2>
-            <p class="text-sm text-base">{{ $announcement->published_at->diffForHumans() }}</p>
+{{-- Single announcement, in the portal's panel chrome. --}}
+<div class="wf-page">
+    <div class="wf-pagehead">
+        <h1>{{ $announcement->title }}</h1>
+    </div>
+
+    <div class="wf-crumb">
+        <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a>
+        <span>/</span>
+        <a href="{{ route('announcements.index') }}" wire:navigate>{{ __('Announcements') }}</a>
+        <span>/</span>{{ $announcement->title }}
+    </div>
+
+    <div class="wf-panel">
+        <div class="wf-panel-heading">
+            <span>{{ $announcement->title }}</span>
+            <span class="wf-muted">{{ $announcement->published_at->diffForHumans() }}</span>
         </div>
-        <article class="prose dark:prose-invert mb-2 max-w-full">
+        <div class="wf-panel-body wf-prose">
             {!! $announcement->content !!}
-        </article>
+        </div>
     </div>
 </div>
