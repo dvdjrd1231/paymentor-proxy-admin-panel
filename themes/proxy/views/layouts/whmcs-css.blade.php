@@ -45,37 +45,49 @@
     }
     @endif
 
+    /* Raleway carries the menu bar and every page heading on the reference portal. */
+    @if (Route::has('extensions.others.portal.font.heading'))
+    @font-face {
+        font-family: 'Raleway';
+        src: url('{{ route('extensions.others.portal.font.heading') }}') format('woff2');
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+    }
+    @endif
+
     /* Flag font first — unicode-range confines it to flag characters, so Open Sans still
        renders every letter. Then Open Sans, then the system stack as a fallback. */
     body,
     select, option, .wf-input, .wf-select,
     .wf-list, .wf-table, .wf-card, .wf-panel,
     .wf-title h1, .wf-pagehead h1, .wf-menu-link, .wf-btn {
-        font-family: 'TwemojiCountryFlags', 'Open Sans', ui-sans-serif, system-ui,
-                     -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        font-family: 'TwemojiCountryFlags', 'Open Sans', Verdana, Tahoma, ui-sans-serif,
+                     system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
 
     :root {
         /*
-           --brand carries white text on every button, the menu bar and the active nav item,
-           so it has to be dark enough for white to be legible on it. The previous #e8365d
-           measured 4.10:1 against white — under the 4.5:1 WCAG AA minimum for normal text,
-           which is what made button labels look washed out rather than white. This is a
-           shade darker at 4.94:1 and reads as the same colour.
-
-           Changing it, check white still passes: contrast must stay at or above 4.5:1.
+           Taken from the reference portal's stylesheet: --brand is its #ED2F59, and
+           --brand-dark its hover/border shade #e2627e. --brand-soft is the lighter
+           #f16e8a it uses for menu-bar hover and input borders.
         */
-        --brand: #d42a52;
-        --brand-dark: #ad2242;
+        --brand: #ED2F59;
+        --brand-dark: #e2627e;
+        --brand-soft: #f16e8a;
         --brand-contrast: #ffffff;
 
-        --wf-page-bg: #f0f2f5;
-        --wf-border: #e3e6ea;
-        --wf-label: #4a5260;
-        --wf-muted: #7b8494;
+        /* The page sits on a light grey canvas with the white document inset 10px inside
+           it — the frame that runs round the reference portal. */
+        --wf-page-bg: #f8f8f8;
+        --wf-border: #dddddd;
+        --wf-panel-border: #eeeeee;
+        --wf-label: #ED2F59;
+        --wf-muted: #777777;
         --wf-bg: #ffffff;
-        --wf-section: #f7f8fa;
-        --wf-text: #2b3038;
+        --wf-section: #f8f8f8;
+        --wf-text: #727376;         /* body copy; headings and links use --brand */
+        --wf-ink: #555555;          /* text inside form controls */
         --wf-radius: 4px;
         --wf-shell: 1170px;
     }
@@ -84,28 +96,41 @@
        we neutralise it here too so a stray toggle can't darken the chrome. */
     .dark { color-scheme: light; }
 
-    /* WHMCS pages sit on a light grey canvas, not the base theme's dark background. */
-    body { background: var(--wf-page-bg) !important; color: var(--wf-text); }
+    /* The reference portal frames the whole document: a grey canvas with 10px showing
+       round a white page. Header, content and footer all sit inside that inset. */
+    body {
+        background: var(--wf-page-bg) !important;
+        color: var(--wf-text);
+        padding: 10px;
+        font-size: 14px;
+        line-height: 1.42857143;
+    }
+    /* Everything between the menu bar and the footer is white, as on the reference,
+       rather than cards floating on grey. */
+    main.grow { background: var(--wf-bg); }
 
-    .wf-shell { max-width: var(--wf-shell); margin: 0 auto; padding: 0 1rem; width: 100%; box-sizing: border-box; }
+    .wf-shell { max-width: var(--wf-shell); margin: 0 auto; padding: 0 15px; width: 100%; box-sizing: border-box; }
 
     /* ── 1. Header bar (white; logo left, actions right) ───────────────── */
-    .wf-header { background: var(--wf-bg); border-bottom: 1px solid var(--wf-border); }
-    .wf-header-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 78px; flex-wrap: wrap; }
+    /* No rule under the header on the reference — the brand-coloured menu bar is the
+       divider. */
+    .wf-header { background: var(--wf-bg); padding: 10px 0; }
+    .wf-header-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 50px; flex-wrap: wrap; }
     .wf-brand { display: inline-flex; align-items: center; gap: .6rem; text-decoration: none; }
     .wf-logo { height: 42px; width: auto; }
     .wf-brand-text { font-size: 1.6rem; font-weight: 700; color: var(--brand); letter-spacing: -.01em; }
-    .wf-header-actions { display: flex; align-items: center; gap: .5rem; }
+    .wf-header-actions { display: flex; align-items: center; gap: .25rem; }
 
+    /* Header links are plain brand-coloured text on the reference; only "View Cart"
+       is a filled button. */
     .wf-hbtn {
-        display: inline-block; padding: .5rem 1rem; font-size: .9rem; text-decoration: none;
-        color: var(--brand); background: transparent;
-        border: 1px solid var(--wf-border); border-radius: var(--wf-radius);
-        transition: background .15s, color .15s, border-color .15s;
+        display: inline-block; padding: 6px 10px; font-size: 14px; text-decoration: none;
+        color: var(--brand); background: transparent; border: 0; border-radius: 3px;
+        transition: color .15s;
     }
-    .wf-hbtn:hover { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 8%, transparent); }
-    .wf-hbtn--primary { background: var(--brand); border-color: var(--brand); color: var(--brand-contrast); }
-    .wf-hbtn--primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); color: var(--brand-contrast); }
+    .wf-hbtn:hover { color: var(--brand-soft); }
+    .wf-hbtn--primary { padding: 6px 15px; background: var(--brand); color: var(--brand-contrast); }
+    .wf-hbtn--primary:hover { background: var(--brand-dark); color: var(--brand-contrast); }
 
     /* Logout (Livewire component) rendered in the header → primary button look */
     .wf-header-actions .wf-logout button {
@@ -117,7 +142,10 @@
     .wf-header-actions .wf-logout button:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
 
     /* ── 2. Brand-coloured menu bar ────────────────────────────────────── */
-    .wf-menubar { background: var(--brand); }
+    .wf-menubar {
+        background: var(--brand); min-height: 38px;
+        font-family: Raleway, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 15px;
+    }
     .wf-menubar-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 
     .wf-menu { display: flex; align-items: center; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
@@ -126,12 +154,12 @@
 
     .wf-menu-link {
         display: inline-flex; align-items: center; gap: .35rem;
-        padding: .95rem 1.1rem; font-size: .95rem; line-height: 1;
+        padding: 9px 15px; font-size: 15px; line-height: 20px;
         color: var(--brand-contrast); text-decoration: none;
         background: transparent; border: 0; cursor: pointer; font-family: inherit;
         transition: background .15s;
     }
-    .wf-menu-link:hover, .wf-menu-link.is-active { background: rgba(0, 0, 0, .14); color: var(--brand-contrast); }
+    .wf-menu-link:hover, .wf-menu-link.is-active { background: var(--brand-soft); color: #eee; }
     .wf-caret { font-size: .7rem; opacity: .85; }
 
     .wf-dropdown {
@@ -185,22 +213,32 @@
     }
 
     /* Breadcrumbs: "Portal Home / Register" */
-    .wf-crumbs { font-size: .82rem; color: var(--wf-muted); margin: 0 0 1.25rem; }
-    .wf-crumbs a { color: var(--wf-muted); text-decoration: none; }
+    .wf-crumbs { font-size: 11px; color: #888; margin: -15px 0 20px; padding: 8px 15px 8px 0; }
+    .wf-crumbs a { color: #888; text-decoration: none; }
     .wf-crumbs a:hover { color: var(--brand); }
     .wf-crumbs span { margin: 0 .4rem; opacity: .6; }
 
-    /* Page heading: big thin brand title + grey subtitle */
-    .wf-title { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; margin-bottom: .35rem; }
-    .wf-title h1 { color: var(--brand); font-size: 2.3rem; font-weight: 300; line-height: 1.1; margin: 0; }
-    .wf-title span { color: var(--wf-muted); font-size: 1.05rem; font-weight: 300; }
-    .wf-title-rule { border: 0; border-top: 1px solid var(--brand); opacity: .35; margin: .75rem 0 1.5rem; }
+    /* Page heading: brand title with an inline grey subtitle, over a thin rule —
+       WHMCS's `header-lined` block. */
+    .wf-title {
+        display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap;
+        margin: 0 0 15px; padding: 6px 0; border-bottom: 1px solid var(--brand-dark);
+    }
+    .wf-title h1 {
+        color: var(--brand); font-size: 36px; font-weight: 400; line-height: 1.1; margin: 0;
+        font-family: Raleway, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    .wf-title span { color: var(--wf-muted); font-size: 23px; font-weight: 400; }
+    /* The rule now lives on .wf-title itself; the element is kept so existing views
+       don't have to change, but it no longer draws a second line. */
+    .wf-title-rule { display: none; }
 
-    /* Centered section divider */
+    /* Centered section divider — the reference's `sub-heading`: 16px brand text
+       sitting on a 1px #ddd rule. */
     .wf-section {
-        display: flex; align-items: center; gap: 1rem;
-        margin: 1.75rem 0 1.1rem; color: var(--brand);
-        font-size: 1.15rem; font-weight: 300; text-align: center;
+        display: flex; align-items: center; gap: 17px;
+        margin: 20px 0 30px; color: var(--brand);
+        font-size: 16px; font-weight: 400; text-align: center;
     }
     .wf-section::before, .wf-section::after { content: ""; flex: 1; border-top: 1px solid var(--wf-border); }
     .wf-section-note { display: block; font-size: .8rem; color: var(--wf-muted); font-style: italic; }
@@ -212,7 +250,7 @@
     @media (max-width: 720px) { .wf-grid, .wf-grid-3 { grid-template-columns: 1fr; } }
 
     .wf-field { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
-    .wf-field label { font-size: .85rem; font-weight: 600; color: var(--wf-label); }
+    .wf-field label { font-size: 14px; font-weight: 700; color: var(--wf-label); }
     .wf-req { color: var(--brand); margin-left: .15rem; }
 
     /* Icon-prefixed input group (WHMCS "input-group addon" look) */
@@ -227,10 +265,10 @@
 
     .wf-input, .wf-select {
         width: 100%; box-sizing: border-box;
-        padding: .6rem .75rem;
-        border: 1px solid var(--wf-border); border-radius: var(--wf-radius);
-        background: var(--wf-bg); color: var(--wf-text);
-        font-size: .95rem; line-height: 1.3;
+        padding: 6px 12px;
+        border: 1px solid var(--brand-soft); border-radius: var(--wf-radius);
+        background: var(--wf-bg); color: var(--wf-ink);
+        font-size: 14px; line-height: 1.42857143; min-height: 34px;
         transition: border-color .15s, box-shadow .15s;
     }
     .wf-input::placeholder { color: var(--wf-muted); }
@@ -260,13 +298,15 @@
     /* ── 5. Buttons + sidebar panel ────────────────────────────────────── */
     .wf-actions { display: flex; align-items: center; gap: .75rem; margin-top: 1.75rem; flex-wrap: wrap; }
     .wf-btn {
-        display: inline-block; padding: .6rem 1.5rem;
+        display: inline-block; padding: 6px 12px;
         background: var(--brand); color: var(--brand-contrast);
-        border: 1px solid var(--brand); border-radius: var(--wf-radius);
-        font-size: .95rem; cursor: pointer; text-decoration: none; font-family: inherit;
+        border: 1px solid var(--brand-dark); border-radius: var(--wf-radius);
+        font-size: 14px; line-height: 1.42857143; cursor: pointer;
+        text-decoration: none; font-family: inherit;
         transition: background .15s;
     }
-    .wf-btn:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+    .wf-btn:hover { background: var(--brand-dark); border-color: var(--brand-dark); color: var(--brand-contrast); }
+    .wf-btn--lg { padding: 10px 16px; font-size: 18px; line-height: 1.3333333; border-radius: 6px; }
     .wf-btn--ghost { background: transparent; color: var(--brand); }
     .wf-btn--ghost:hover { background: color-mix(in srgb, var(--brand) 10%, transparent); color: var(--brand); }
     .wf-btn--block { width: 100%; text-align: center; }
@@ -302,9 +342,10 @@
     /* Page header: big thin title + grey subtitle, underlined */
     .wf-pagehead { margin: 0 0 1.25rem; }
     .wf-pagehead h1 {
-        color: var(--brand); font-size: 2.7rem; font-weight: 300; margin: 0 0 .5rem;
-        padding-bottom: .6rem; border-bottom: 1px solid var(--wf-border);
-        letter-spacing: -.01em; line-height: 1.15;
+        color: var(--brand); font-size: 36px; font-weight: 400; margin: 0 0 15px;
+        padding: 6px 0; border-bottom: 1px solid var(--brand-dark);
+        font-family: Raleway, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        line-height: 1.1;
     }
     /* Touch targets — measured at 375px, breadcrumb and in-row links came out at
        18-20px high, which is awkward to hit. Applied to narrow screens and to any coarse
@@ -317,47 +358,34 @@
         .wf-list > li > a { min-height: 3rem; }
     }
 
-    @media (max-width: 620px) { .wf-pagehead h1 { font-size: 2rem; } }
+    @media (max-width: 620px) { .wf-pagehead h1 { font-size: 28px; } }
     .wf-pagehead p { margin: 0; color: var(--wf-muted); font-size: .95rem; }
 
     /* Breadcrumb — "Portal Home / Client Area" */
     /* Centred auth form — the reference portal centres login/register in one column
        rather than splitting them beside a sidebar. */
-    .wf-form-narrow { max-width: 540px; margin: 0 auto; }
+    .wf-form-narrow { max-width: 480px; margin: 0 auto; }
 
     /* ── Auth pages, matched to the reference portal ────────────────────
-       The reference sits the login and register forms on white rather than the grey
-       canvas the rest of the client area uses, keeps the rule under the heading the
-       same width as the form, and tints the inputs. */
+       The reference keeps the heading, its rule and the form in one narrow centred
+       column rather than running the heading the full page width. */
     .wf-page--auth { background: var(--wf-bg); }
-    body:has(.wf-page--auth) { background: var(--wf-bg) !important; }
 
-    .wf-page--auth .wf-title { max-width: 540px; margin-inline: auto; }
-    .wf-page--auth .wf-title h1 { font-size: 2.9rem; }
-    .wf-page--auth .wf-title-rule { max-width: 540px; margin-inline: auto; opacity: .5; }
+    /* Heading, rule and form share one 480px column, centred — the reference's
+       login layout. */
+    .wf-page--auth .wf-title { max-width: 480px; margin-inline: auto; }
 
-    /* Brand-coloured field labels, and inputs with a tinted fill + brand border. */
-    .wf-page--auth .wf-field label { color: var(--brand); font-weight: 700; font-size: .92rem; }
-    .wf-page--auth .wf-input {
-        background: color-mix(in srgb, var(--brand) 4%, #fff);
-        border-color: color-mix(in srgb, var(--brand) 45%, var(--wf-border));
-    }
-    .wf-page--auth .wf-input:focus {
-        border-color: var(--brand);
-        box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 18%, transparent);
-    }
     /* "Remember Me" is brand-coloured in the reference, not body text. */
-    .wf-page--auth .wf-check span { color: var(--brand); font-size: .92rem; }
+    .wf-page--auth .wf-check span { color: var(--brand); font-size: 14px; }
     .wf-actions--center { display: flex; justify-content: center; gap: .75rem; }
     /* Field labels are brand-coloured on the reference. */
-    .wf-field label { color: var(--brand); font-weight: 600; font-size: .85rem; display: block; margin-bottom: .3rem; }
-    .wf-title h1 { font-weight: 300; }
+    .wf-field label { color: var(--brand); font-weight: 700; font-size: 14px; display: block; margin-bottom: .3rem; }
 
-    .wf-crumb { font-size: .85rem; color: var(--wf-muted); margin: -.25rem 0 1rem; }
+    .wf-crumb { font-size: 11px; color: #888; margin: -15px 0 20px; padding: 8px 15px 8px 0; }
     /* Brand-on-grey is the one place the brand is used as text over the page background
        rather than over white, and at this small size it lands just under 4.5:1. The darker
        shade takes it to 6:1 and is indistinguishable at breadcrumb size. */
-    .wf-crumb a { color: var(--brand-dark); text-decoration: none; }
+    .wf-crumb a { color: #888; text-decoration: none; }
     .wf-crumb a:hover { text-decoration: underline; }
     .wf-crumb span { margin: 0 .4rem; color: var(--wf-border); }
 
@@ -367,12 +395,12 @@
 
     /* Panel — the core Six building block */
     .wf-panel {
-        background: var(--wf-bg); border: 1px solid var(--wf-border);
+        background: var(--wf-bg); border: 1px solid var(--wf-panel-border);
         border-radius: var(--wf-radius); margin-bottom: 1.25rem; overflow: hidden;
     }
     .wf-panel-heading {
-        padding: .7rem 1rem; font-size: .95rem; font-weight: 600;
-        background: var(--wf-section); border-bottom: 1px solid var(--wf-border);
+        padding: 10px 15px; font-size: 15px; font-weight: 400;
+        background: var(--wf-section); border-bottom: 1px solid var(--wf-panel-border);
         display: flex; align-items: center; justify-content: space-between; gap: .5rem;
     }
     .wf-panel--brand > .wf-panel-heading { background: var(--brand); color: var(--brand-contrast); border-bottom-color: var(--brand); }
@@ -384,9 +412,17 @@
     .wf-panel-body > :last-child { margin-bottom: 0; }
     .wf-panel-footer { padding: .65rem 1rem; border-top: 1px solid var(--wf-border); background: var(--wf-section); }
 
+    /* Terms panel: outlined in the brand colour with a filled heading, so the
+       accept-terms checkbox reads as the gate it is. */
+    .wf-panel--tos { border-color: var(--brand); }
+    .wf-panel--tos > .wf-panel-heading {
+        background: var(--brand); color: var(--brand-contrast);
+        border-bottom-color: var(--brand);
+    }
+
     /* List group — sidebar menus and simple record lists */
     .wf-list { list-style: none; margin: 0; padding: 0; }
-    .wf-list > li + li { border-top: 1px solid var(--wf-border); }
+    .wf-list > li + li { border-top: 1px solid #f5f5f5; }
     /* :not(.wf-btn) matters: "a" here is an element, so ".wf-list a" (0,1,1) is MORE specific
        than ".wf-btn" (0,1,0) and silently overrides a button's colour regardless of which
        rule comes later in the file — a row-action button placed inside a .wf-list (e.g. the
@@ -395,7 +431,7 @@
        list links only, so a .wf-btn nested in a list stays a self-contained component. */
     .wf-list a:not(.wf-btn), .wf-list .wf-list-row {
         display: flex; align-items: center; justify-content: space-between; gap: .75rem;
-        padding: .7rem 1rem; color: var(--wf-text); text-decoration: none; font-size: .9rem;
+        padding: 7px 15px; color: var(--wf-text); text-decoration: none; font-size: 13.5px;
     }
     .wf-list a:not(.wf-btn):hover { background: var(--wf-section); color: var(--brand); }
     /* The reference marks the selected sidebar row in slate, not brand: the panel heading
@@ -573,9 +609,15 @@
     /* Storefront hero band */
     .wf-hero {
         background: var(--wf-bg); border-bottom: 1px solid var(--wf-border);
-        padding: 2.5rem 0;
+        padding: 30px 0;
     }
-    .wf-hero h1, .wf-hero h2 { color: var(--brand); font-weight: 300; margin-top: 0; }
+    .wf-hero h1, .wf-hero h2 {
+        color: var(--brand); font-weight: 400; margin-top: 0;
+        font-family: Raleway, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    /* Markdown authored in the admin renders as plain prose — links follow the
+       reference, where every anchor is brand-coloured. */
+    .wf-hero a, .wf-page article a { color: var(--brand); }
 
     /* Cart quantity stepper + coupon row */
     .wf-qty { display: inline-flex; align-items: center; gap: .4rem; }
@@ -747,9 +789,10 @@
     .wf-facts dd { margin: .2rem 0 0; color: var(--brand); font-size: .95rem; }
 
     /* ── 5g. Auth side rail ("Already Registered?" / login help) ────────────── */
-    .wf-authgrid { display: grid; grid-template-columns: 240px 1fr; gap: 1.5rem; align-items: start; }
+    /* 3/9 split of the container, matching the reference's col-md-3 + col-md-9 row. */
+    .wf-authgrid { display: grid; grid-template-columns: 25% 1fr; gap: 30px; align-items: start; }
     @media (max-width: 820px) { .wf-authgrid { grid-template-columns: 1fr; } }
-    .wf-rail-note { padding: 1rem; color: var(--brand); font-size: .85rem; line-height: 1.6; }
+    .wf-rail-note { padding: 15px; margin: 0; color: var(--brand); font-size: 13.5px; line-height: 1.6; }
 
     /* Icon inside a form control, as on the reference's registration form. */
     .wf-input-ico { position: relative; }
@@ -791,14 +834,15 @@
        flex-basis of 100% would stretch the footer down the whole page.
        margin-top:auto keeps it pinned to the bottom when content is short. */
     .wf-footer {
-        background: var(--wf-bg); border-top: 3px solid var(--brand);
-        margin-top: auto; width: 100%; flex: 0 0 auto;
+        background: var(--wf-section); border-top: 1px solid var(--brand);
+        color: var(--brand); margin-top: auto; width: 100%; flex: 0 0 auto;
+        padding: 20px 10px;
     }
-    .wf-footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 1.1rem; padding-bottom: 1.1rem; }
-    .wf-footer-copy { margin: 0; font-size: .85rem; color: var(--wf-muted); }
+    .wf-footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .wf-footer-copy { margin: 0; font-size: 12.6px; color: var(--brand); }
     .wf-totop {
         background: var(--brand); color: var(--brand-contrast); border: 0;
-        border-radius: var(--wf-radius); width: 34px; height: 34px; cursor: pointer; font-size: .8rem;
+        border-radius: 3px; width: 31px; height: 33px; cursor: pointer; font-size: 12.6px;
     }
     .wf-totop:hover { background: var(--brand-dark); }
 </style>

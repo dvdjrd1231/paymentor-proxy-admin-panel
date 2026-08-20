@@ -31,16 +31,10 @@
     $has = fn (string $key) => $props->contains(fn ($p) => $p->key === $key);
 @endphp
 
+{{-- The reference portal pulls the heading over the form column, leaving the
+     "Already Registered?" rail alongside it rather than below it, so heading,
+     breadcrumb and form all live in the right-hand column. --}}
 <div class="wf-page">
-    <div class="wf-title">
-        <h1>{{ __('auth.sign_up_title') }}</h1>
-        <span>Create an account with us&hellip;</span>
-    </div>
-    <p class="wf-crumbs">
-        <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a><span>/</span>{{ __('auth.sign_up_title') }}
-    </p>
-    <hr class="wf-title-rule">
-
     <div class="wf-authgrid">
         {{-- ── "Already Registered?" rail ─────────────────────────────────
              The reference portal puts login and password recovery beside the form
@@ -71,6 +65,15 @@
                 </ul>
             </div>
         </div>
+
+        <div>
+        <div class="wf-title">
+            <h1>{{ __('auth.sign_up_title') }}</h1>
+            <span>Create an account with us&hellip;</span>
+        </div>
+        <p class="wf-crumbs">
+            <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a><span>/</span>{{ __('auth.sign_up_title') }}
+        </p>
 
         <form wire:submit.prevent="submit" id="register">
         {{-- ─────────────── Personal Information ─────────────── --}}
@@ -261,27 +264,34 @@
             </div>
         </div>
 
-        @if (config('settings.tos'))
-            <div style="margin-top:1.25rem">
-                <label class="wf-check">
-                    <input type="checkbox" wire:model="tos" required>
-                    <span>
-                        {{ __('product.tos') }}
-                        <a href="{{ config('settings.tos') }}" target="_blank" style="color:var(--brand)">
-                            {{ __('product.tos_link') }}
-                        </a>
-                    </span>
-                </label>
-                @error('tos') <span class="wf-error">{{ $message }}</span> @enderror
-            </div>
-        @endif
-
         <div style="margin-top:1.25rem">
             <x-captcha :form="'register'" />
         </div>
 
-        <div class="wf-actions">
-            <button type="submit" class="wf-btn">{{ __('auth.sign_up') }}</button>
+        {{-- Terms sit in their own outlined panel, as on the reference, so the one
+             checkbox that blocks submission is not lost among the fields. --}}
+        @if (config('settings.tos'))
+            <div class="wf-panel wf-panel--tos">
+                <div class="wf-panel-heading">
+                    <span>&#9888; {{ __('theme.terms_of_service') }}</span>
+                </div>
+                <div class="wf-panel-body">
+                    <label class="wf-check">
+                        <input type="checkbox" wire:model="tos" required>
+                        <span>
+                            {{ __('product.tos') }}
+                            <a href="{{ config('settings.tos') }}" target="_blank" style="color:var(--brand)">
+                                {{ __('product.tos_link') }}
+                            </a>
+                        </span>
+                    </label>
+                    @error('tos') <span class="wf-error">{{ $message }}</span> @enderror
+                </div>
+            </div>
+        @endif
+
+        <div class="wf-actions wf-actions--center">
+            <button type="submit" class="wf-btn wf-btn--lg">{{ __('auth.sign_up') }}</button>
         </div>
 
             <div class="wf-alt">
@@ -289,5 +299,6 @@
                 <a href="{{ route('login') }}" wire:navigate>{{ __('auth.sign_in') }}</a>
             </div>
         </form>
+        </div>
     </div>
 </div>
