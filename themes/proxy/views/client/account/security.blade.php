@@ -4,9 +4,12 @@
     core component, including the confirmation store used for disabling 2FA.
 --}}
 <div class="wf-page">
-    <div class="wf-pagehead">
-        <h1>{{ __('navigation.security') }}</h1>
-    </div>
+    <div class="wf-layout">
+        <x-account-rail active="security" />
+        <div>
+            <div class="wf-pagehead">
+                <h1>{{ __('navigation.security') }}</h1>
+            </div>
 
     {{-- ── Sessions ───────────────────────────────────────────────────── --}}
     <div class="wf-panel">
@@ -111,6 +114,9 @@
                     </x-modal>
                 @endif
             @endif
+        </div>
+    </div>
+</div>
         </div>
     </div>
 </div>

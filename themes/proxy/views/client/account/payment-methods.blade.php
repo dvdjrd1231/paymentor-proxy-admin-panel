@@ -4,9 +4,12 @@
     are the core component's — only the markup around them changes.
 --}}
 <div class="wf-page">
-    <div class="wf-pagehead">
-        <h1>{{ __('account.payment_methods') }}</h1>
-    </div>
+    <div class="wf-layout">
+        <x-account-rail active="payment-methods" />
+        <div>
+            <div class="wf-pagehead">
+                <h1>{{ __('account.payment_methods') }}</h1>
+            </div>
 
     @if ($setupModalVisible)
         <x-modal :title="__('account.payment_methods')" open="true">
@@ -105,6 +108,7 @@
             @endforelse
 
             {{ $transactions->links() }}
+        </div>
         </div>
     </div>
 </div>
