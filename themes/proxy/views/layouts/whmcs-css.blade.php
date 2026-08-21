@@ -809,6 +809,36 @@
     /* ── 5c. Order summary panel (cart / checkout) ──────────────────────────
        Grey heading, not brand: the reference reserves the brand colour for the
        Checkout call to action inside it, and a brand-on-brand panel buries it. */
+    /* ── Invoice head ───────────────────────────────────────────────────────
+       The reference states the invoice's condition in words rather than a small badge:
+       number on the left, a large status word on the right with the due date and the pay
+       action under it. */
+    .wf-inv-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+    .wf-inv-number { font-size: 1.9rem; font-weight: 400; color: var(--wf-ink); margin: 0; }
+    .wf-inv-status-block { text-align: center; min-width: 12rem; }
+    .wf-inv-status { font-size: 1.65rem; font-weight: 700; letter-spacing: .01em; text-transform: uppercase; }
+    .wf-inv-status--unpaid { color: #c9302c; }
+    .wf-inv-status--paid { color: #3c9763; }
+    .wf-inv-status--other { color: #ec971f; }
+    .wf-inv-due { font-size: .82rem; color: var(--wf-text); margin-top: .15rem; }
+
+    /* Green pay action: on the reference the brand colour carries navigation, and paying
+       is the one green control on the page. */
+    .wf-btn--pay { background: #5cb85c; border-color: #4cae4c; }
+    .wf-btn--pay:hover { background: #4cae4c; border-color: #449d44; }
+
+    .wf-inv-meta { margin-bottom: 1.25rem; }
+    .wf-inv-meta-right { text-align: end; }
+    .wf-inv-meta-right .wf-select { max-width: 16rem; margin-inline-start: auto; }
+    .wf-inv-label { font-weight: 700; color: var(--wf-ink); margin-bottom: .2rem; }
+
+    /* Apply Credit reads as an offer rather than a warning, so the reference gives it a
+       green band instead of the brand colour. */
+    .wf-creditbox .wf-panel-heading { background: #dff0d8; border-color: #d6e9c6; color: #3c763d; }
+    .wf-creditbox .wf-panel-heading .wf-head-icon { color: #3c763d; }
+    .wf-creditbox .wf-btn { background: #5cb85c; border-color: #4cae4c; }
+    .wf-creditbox .wf-btn:hover { background: #4cae4c; border-color: #449d44; }
+
     /* Itemised block above the totals: product name, its category, then one row per
        configured option — the reference's summary, which shows what makes up the figure. */
     .wf-summary-item { padding-bottom: .5rem; margin-bottom: .5rem; border-bottom: 1px solid var(--wf-panel-border); }
