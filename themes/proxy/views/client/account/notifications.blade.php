@@ -4,7 +4,7 @@
 --}}
 <div class="wf-page">
     <div class="wf-layout">
-        <x-account-rail active="notifications" />
+        <x-profile-rail active="profile" />
         <div>
             <div class="wf-pagehead">
                 <h1>{{ __('navigation.notifications') }}</h1>

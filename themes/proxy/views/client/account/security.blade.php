@@ -5,7 +5,7 @@
 --}}
 <div class="wf-page">
     <div class="wf-layout">
-        <x-account-rail active="security" />
+        <x-profile-rail active="security" />
         <div>
             <div class="wf-pagehead">
                 <h1>{{ __('navigation.security') }}</h1>
@@ -49,7 +49,10 @@
                 <x-form.input name="current_password" type="password" :label="__('account.input.current_password')"
                     :placeholder="__('account.input.current_password_placeholder')" wire:model="current_password" required />
 
-                <div class="grid md:grid-cols-2 gap-3">
+                {{-- wf-grid, not Tailwind's `grid md:grid-cols-2`: the Tailwind bundle is
+                     not loaded by this theme, so that class had no effect and the two
+                     password fields stacked instead of sitting side by side. --}}
+                <div class="wf-grid">
                     <x-form.input name="password" type="password" :label="__('account.input.new_password')"
                         :placeholder="__('account.input.new_password_placeholder')" wire:model="password" required />
                     <x-form.input name="password_confirmation" type="password" :label="__('account.input.confirm_password')"
@@ -116,7 +119,6 @@
             @endif
         </div>
     </div>
-</div>
         </div>
     </div>
 </div>
