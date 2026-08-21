@@ -201,10 +201,20 @@ foreach (PERIODS as $period) {
                 continue;
             }
 
+        // Feature bullets, worded and ordered as the reference storefront lists them.
+        //
+        // %s throughout: this used to carry a `%,d` specifier, which PHP does not have —
+        // it is Java's grouping flag — so sprintf threw "Unknown format specifier ','" and
+        // --apply aborted on the first product it tried to create. The thousands separator
+        // is applied with number_format instead, using '.' to match the reference ("1.500
+        // HTTP Proxy Ports").
         $description = sprintf(
-            '<ul><li>Dedicated Residential %s Proxy</li><li>%,d %s Proxies</li><li>Private Proxy Server</li><li>Rotating Proxies or Static Proxies</li><li>IP Whitelist Authentication</li><li>User/Password Authentication</li><li>Up-To %d IP whitelist</li><li>Configurable IP Proxies rotation time</li></ul>',
-            $family,
-            $ports,
+            '<ul><li>Anonymous Residential %s Proxy</li><li>%s %s Ports</li>'
+            . '<li>Private Proxy Server</li><li>Rotating Proxies or Static Proxies</li>'
+            . '<li>IP Whitelist Authentication</li><li>User/Password Authentication</li>'
+            . '<li>Up-To %d IP whitelist</li><li>Configurable IP Proxies rotation time</li></ul>',
+            str_contains($family, 'IPv4') ? 'IPv4' : 'IPv6',
+            number_format($ports, 0, ',', '.'),
             $protocol === 'socks5' ? 'Socks5h' : 'HTTP Proxy',
             match (true) {
                 $ports <= 1500 => 5,
