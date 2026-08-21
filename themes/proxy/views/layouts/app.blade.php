@@ -58,13 +58,15 @@
 >
     {!! hook('body') !!}
     <x-navigation />
-    <div class="w-full flex flex-grow">
+    {{-- wf-frame / wf-frame-col carry the actual flex layout: the Tailwind classes beside
+         them are inert here because this theme does not load the Tailwind bundle. --}}
+    <div class="w-full flex flex-grow wf-frame">
         {{-- Paymenter's default client sidebar is deliberately NOT rendered: the
              WHMCS-style menu bar already carries Dashboard / Services / Invoices /
              Tickets / Account, so the sidebar was duplicate navigation. The
              md:ml-64 offset it required is dropped with it, otherwise every client
              page would keep a 16rem empty gutter on the left. --}}
-        <div class="flex flex-col flex-grow overflow-auto">
+        <div class="flex flex-col flex-grow overflow-auto wf-frame-col">
             {{-- No top offset: the WHMCS-style header/menu bars are static, not fixed. --}}
             <main class="grow">
                 {{ $slot }}

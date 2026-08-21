@@ -72,14 +72,6 @@ return [
     'status' => 'Status',
     'date' => 'Date',
 
-    // ── Downloads ─────────────────────────────────────────────────────────────────
-    'downloads' => 'Downloads',
-    'downloads_subtitle' => 'Guides, configuration files and tools',
-    'downloads_empty' => 'There are no downloads available.',
-    'downloads_uncategorised' => 'General',
-    'download' => 'Download',
-    'download_unavailable' => 'That download is not available.',
-
     // ── Addons ────────────────────────────────────────────────────────────────────
     'addons' => 'Available Addons',
     'addons_subtitle' => 'Extend the services you already have',

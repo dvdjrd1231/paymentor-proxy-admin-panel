@@ -4,9 +4,16 @@ use Illuminate\Support\Facades\Route;
 use Paymenter\Extensions\Others\SitePages\Livewire\ContactUs;
 use Paymenter\Extensions\Others\SitePages\Livewire\NetworkStatus;
 
-// Public: a visitor checks status or asks a question before they have an account.
-Route::group(['middleware' => ['web']], function () {
+// Network Status is behind auth, matching the reference portal: it reports on the service
+// customers are paying for, so a signed-out visitor is sent to the login page rather than
+// shown the incident feed.
+Route::group(['middleware' => ['web', 'auth']], function () {
     Route::get('/network-status', NetworkStatus::class)->name('network-status');
+});
+
+// Contact Us stays public: it is the one page someone without an account needs in order to
+// reach anybody, and gating it would leave a locked-out customer with nowhere to go.
+Route::group(['middleware' => ['web']], function () {
     Route::get('/contact', ContactUs::class)->name('contact');
 
     // The reference portal's "View RSS Feed" link.
