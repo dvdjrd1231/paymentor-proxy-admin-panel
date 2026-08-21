@@ -98,6 +98,11 @@ class Settings extends Page implements HasForms
         foreach ($data as $key => $value) {
             // Get only the settings that have changed
             $avSetting = (object) collect(ClassesSettings::settings())->flatten(1)->firstWhere('name', $key);
+            if (!$avSetting) {
+                // Ignore stale fields from a previous settings schema instead of breaking the
+                // entire Livewire save request.
+                continue;
+            }
             $avSetting->value = $settings[$key]->value ?? $avSetting->default ?? null;
 
             if ($value !== $avSetting->value || (($avSetting->database_type ?? 'string') === 'boolean' && (bool) $value !== (bool) $avSetting->value)) {
@@ -118,6 +123,10 @@ class Settings extends Page implements HasForms
                 }
             }
         }
+
+        // SettingsProvider caches the complete settings collection. Flush it so the next
+        // request, queue worker, and auth page see the values just saved.
+        ClassesSettings::flushCache();
 
         Notification::make()
             ->title('Saved successfully!')

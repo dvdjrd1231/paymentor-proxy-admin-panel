@@ -149,6 +149,7 @@ class Settings
                     'name' => 'captcha_secret',
                     'label' => 'Captcha Secret',
                     'type' => 'text',
+                    'encrypted' => true,
                     'required' => fn (Get $get) => $get('captcha') && $get('captcha') !== 'disabled',
                 ],
 
