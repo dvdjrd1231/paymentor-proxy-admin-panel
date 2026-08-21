@@ -11,11 +11,17 @@
     <div class="wf-panel wf-panel--brand">
         <div class="wf-panel-heading"><span>{{ __('dashboard.credit_balance') }}</span><span class="wf-chevron">▲</span></div>
         <div class="wf-panel-body" style="text-align:center">
-            {{-- A full @php block, not the inline @php(...) form. Blade compiled that
-                 expression into an unterminated PHP open tag — no semicolon and no closing
-                 tag — so every line after it was parsed as PHP and the component died with
-                 "syntax error, unexpected token class". The inline form cannot cope with
-                 calls nested this deep. --}}
+            {{-- Deliberately a full block form below, not the single-expression inline
+                 form: Blade compiled that into an unterminated PHP open tag (no semicolon,
+                 no closing tag), so every line after it was parsed as PHP and the whole
+                 component died with "syntax error, unexpected token class". The inline
+                 form cannot cope with calls nested this deep.
+
+                 Note also that this comment must not spell that inline directive out
+                 literally. Blade compiles directives before it strips comments, so the
+                 name written in full here is matched as a real directive and swallows the
+                 markup that follows — which is what emptied this panel and left the rail's
+                 wrapper unclosed, dropping every page's content into the sidebar. --}}
             @php
                 $accountCredit = Auth::user()
                     ->credits()

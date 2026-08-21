@@ -14,7 +14,7 @@
      no styling and every field stacked full width. --}}
 <div class="wf-page">
     <div class="wf-title">
-        <h1>{{ __('ticket.create_ticket') }}</h1>
+        <h1>{{ __('theme.open_ticket') }}</h1>
     </div>
     <hr class="wf-title-rule">
 
