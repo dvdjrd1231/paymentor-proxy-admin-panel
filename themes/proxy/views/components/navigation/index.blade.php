@@ -69,8 +69,16 @@
 
     // Everything else the API offered (plus anything an extension adds later) is folded
     // into Support ▾, after the two ticket entries.
+    // Support ▾ carries the informational pages only. Contact Us is excluded because the
+    // reference's signed-in bar does not list it (it is a page for people who cannot get
+    // in); it stays reachable at its own URL and in the guest bar.
+    $isContact = fn ($l) => Route::has('contact') && ($l['url'] ?? null) === route('contact');
+
     $supportLinks = $isAuth
-        ? array_filter($links, fn ($l) => !$isHome($l) && !$isAffiliate($l) && empty($l['children']))
+        ? array_filter(
+            $links,
+            fn ($l) => !$isHome($l) && !$isAffiliate($l) && !$isContact($l) && empty($l['children'])
+        )
         : [];
 @endphp
 
@@ -148,9 +156,14 @@
                     <button type="button" class="wf-menu-link" @click="open = !open">
                         {{ __('navigation.services') }} <span class="wf-caret">▾</span>
                     </button>
+                    {{-- Reference grouping: My Services | Order New Services, View
+                         Available Addons — the rule separating what is owned from what can
+                         be bought. --}}
                     <ul class="wf-dropdown" x-show="open" x-transition x-cloak>
                         @foreach ($clientMenu as $item)
-                            <li><a href="{{ $item['url'] }}" wire:navigate>{{ $item['name'] }}</a></li>
+                            <li @class(['wf-dropdown-sep' => $loop->index === 1])>
+                                <a href="{{ $item['url'] }}" wire:navigate>{{ $item['name'] }}</a>
+                            </li>
                         @endforeach
                     </ul>
                 </li>
@@ -185,13 +198,14 @@
                     <button type="button" class="wf-menu-link" @click="open = !open">
                         {{ __('theme.support') }} <span class="wf-caret">▾</span>
                     </button>
+                    {{-- The reference lists Support as: Tickets, Announcements,
+                         Knowledgebase, Network Status — one flat group. Open Ticket is not
+                         repeated here because it is already a top-level item beside this
+                         menu, and Contact Us is not in the signed-in bar at all. --}}
                     <ul class="wf-dropdown" x-show="open" x-transition x-cloak>
-                        <li><a href="{{ route('tickets') }}" wire:navigate>{{ __('theme.my_tickets') }}</a></li>
-                        <li><a href="{{ route('tickets.create') }}" wire:navigate>{{ __('theme.open_ticket') }}</a></li>
+                        <li><a href="{{ route('tickets') }}" wire:navigate>{{ __('theme.tickets') }}</a></li>
                         @foreach ($supportLinks as $link)
-                            <li @class(['wf-dropdown-sep' => $loop->first])>
-                                <a href="{{ $link['url'] }}" wire:navigate>{{ $link['name'] }}</a>
-                            </li>
+                            <li><a href="{{ $link['url'] }}" wire:navigate>{{ $link['name'] }}</a></li>
                         @endforeach
                     </ul>
                 </li>
@@ -231,28 +245,68 @@
                 @endguest
 
                 @auth
-                    <li><a href="{{ route('dashboard') }}" wire:navigate>{{ __('navigation.dashboard') }}</a></li>
-                    @foreach ($accountChildren as $child)
-                        <li><a href="{{ $child['url'] }}" wire:navigate>{{ $child['name'] }}</a></li>
+                    {{-- The reference's "Hello, {name}!" menu, in its three groups:
+
+                           Account Details, User Management, Payment Methods, Contacts, Email History
+                           ── Your Profile, Change Password, Security Settings
+                           ── Logout
+
+                         Built from lists rather than inline markup so the rules fall exactly
+                         where the reference puts them, and an entry whose extension is
+                         disabled drops out instead of leaving a stray separator.
+
+                         Change Password and Security Settings share /account/security:
+                         Paymenter keeps the password form on its security page rather than
+                         splitting the two as WHMCS does. --}}
+                    @php
+                        $urlFor = fn (string $name) => Route::has($name) ? route($name) : null;
+
+                        $group1 = array_values(array_filter([
+                            ['name' => __('theme.account_details'), 'url' => $urlFor('account')],
+                            ['name' => __('clienttools.user_management'), 'url' => $urlFor('account.users')],
+                            ['name' => __('theme.payment_methods'), 'url' => $urlFor('account.payment-methods')],
+                            ['name' => __('clienttools.contacts'), 'url' => $urlFor('account.contacts')],
+                            ['name' => __('clienttools.email_history'), 'url' => $urlFor('account.email-history')],
+                        ], fn ($i) => $i['url']));
+
+                        $group2 = array_values(array_filter([
+                            ['name' => __('theme.your_profile'), 'url' => $urlFor('account.notifications')],
+                            ['name' => __('theme.change_password'), 'url' => $urlFor('account.security')],
+                            ['name' => __('theme.security_settings'), 'url' => $urlFor('account.security')],
+                        ], fn ($i) => $i['url']));
+
+                        // Anything core or an extension put in the account menu that is not
+                        // already placed above — Credits, Affiliate, and whatever a future
+                        // extension contributes — so nothing silently disappears.
+                        $placed = array_column(array_merge($group1, $group2), 'url');
+                        $extra = array_values(array_filter(
+                            $accountChildren,
+                            fn ($c) => !in_array($c['url'], $placed, true)
+                        ));
+                    @endphp
+
+                    @foreach ($group1 as $item)
+                        <li><a href="{{ $item['url'] }}" wire:navigate>{{ $item['name'] }}</a></li>
                     @endforeach
 
-                    {{-- The reference's account menu also carries User Management, Contacts
-                         and Email History. They come from the Client Tools extension, so each
-                         is guarded on its route rather than assumed. --}}
-                    @if (Route::has('account.users'))
-                        <li><a href="{{ route('account.users') }}" wire:navigate>{{ __('clienttools.user_management') }}</a></li>
-                    @endif
-                    @if (Route::has('account.contacts'))
-                        <li><a href="{{ route('account.contacts') }}" wire:navigate>{{ __('clienttools.contacts') }}</a></li>
-                    @endif
-                    @if (Route::has('account.email-history'))
-                        <li><a href="{{ route('account.email-history') }}" wire:navigate>{{ __('clienttools.email_history') }}</a></li>
-                    @endif
+                    @foreach ($group2 as $item)
+                        <li @class(['wf-dropdown-sep' => $loop->first])>
+                            <a href="{{ $item['url'] }}" wire:navigate>{{ $item['name'] }}</a>
+                        </li>
+                    @endforeach
+
+                    @foreach ($extra as $item)
+                        <li @class(['wf-dropdown-sep' => $loop->first])>
+                            <a href="{{ $item['url'] }}" wire:navigate>{{ $item['name'] }}</a>
+                        </li>
+                    @endforeach
+
                     @if ($isAdmin)
                         <li class="wf-dropdown-sep">
                             <a href="{{ route('filament.admin.pages.dashboard') }}">{{ __('navigation.admin') }}</a>
                         </li>
                     @endif
+
                     <li class="wf-dropdown-sep wf-dropdown-logout">
                         <livewire:auth.logout />
                     </li>

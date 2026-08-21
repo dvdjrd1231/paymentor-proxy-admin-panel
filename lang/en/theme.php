@@ -176,6 +176,13 @@ return [
     'each' => 'each',
     'coupon' => 'Coupon',
     'no_products' => 'No products in this category.',
+    // Signed-in account menu, in the reference portal's wording
+    'account_details' => 'Account Details',
+    'your_profile' => 'Your Profile',
+    'change_password' => 'Change Password',
+    'security_settings' => 'Security Settings',
+    'tickets' => 'Tickets',
+
     'configure' => 'Configure',
     'continue' => 'Continue',
     'not_selected' => 'Not selected',
