@@ -38,12 +38,14 @@
        we neutralise it here too so a stray toggle can't darken the chrome. */
     .dark { color-scheme: light; }
 
-    /* The reference portal frames the whole document: a grey canvas with 10px showing
-       round a white page. Header, content and footer all sit inside that inset. */
+    /* No inset: the page runs to the edges of the window. This used to carry 10px of
+       padding so the grey canvas showed as a frame around a white page, but the header,
+       menu bar and footer are full-bleed bands, and a border around them read as a gap
+       rather than as framing. */
     body {
         background: var(--wf-page-bg) !important;
         color: var(--wf-text);
-        padding: 10px;
+        padding: 0;
         font-size: 14px;
         line-height: 1.42857143;
         overflow-x: hidden;
