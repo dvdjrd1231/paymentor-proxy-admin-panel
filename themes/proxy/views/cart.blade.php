@@ -223,11 +223,38 @@
                                     </label>
                                 @endif
 
-                                <button type="button" class="wf-btn wf-btn--checkout"
-                                    wire:click="checkout" wire:loading.attr="disabled">
-                                    <span wire:loading.remove wire:target="checkout">{{ __('product.checkout') }} &rarr;</span>
-                                    <span wire:loading wire:target="checkout">…</span>
-                                </button>
+                                @guest
+                                    {{-- A guest pressing Checkout was bounced to a bare login
+                                         page with no way to create an account, and had to find
+                                         their way back and press it a second time. The order
+                                         needs an account -- Paymenter issues the invoice and
+                                         the service against a user -- so the choice is offered
+                                         here instead, before the buyer commits to the click,
+                                         which is how the reference handles it too.
+
+                                         The cart itself is safe either way: it lives in the
+                                         database keyed by a 30-day cookie, not the session, so
+                                         signing in or registering does not empty it. --}}
+                                    <p class="wf-section-note" style="margin-bottom:.6rem">
+                                        {{ __('theme.checkout_needs_account') }}
+                                    </p>
+
+                                    <a class="wf-btn wf-btn--checkout"
+                                       href="{{ route('cart.continue', ['to' => 'register']) }}">
+                                        {{ __('theme.create_account_continue') }} &rarr;
+                                    </a>
+
+                                    <a class="wf-btn wf-btn--ghost wf-btn--block" style="margin-top:.5rem"
+                                       href="{{ route('cart.continue', ['to' => 'login']) }}">
+                                        {{ __('theme.already_have_account') }}
+                                    </a>
+                                @else
+                                    <button type="button" class="wf-btn wf-btn--checkout"
+                                        wire:click="checkout" wire:loading.attr="disabled">
+                                        <span wire:loading.remove wire:target="checkout">{{ __('product.checkout') }} &rarr;</span>
+                                        <span wire:loading wire:target="checkout">…</span>
+                                    </button>
+                                @endguest
                             </div>
                             <div class="wf-summary-foot">
                                 <a href="{{ route('home') }}" wire:navigate>{{ __('theme.continue_shopping') }}</a>
