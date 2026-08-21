@@ -217,7 +217,12 @@
     .wf-col-2 { grid-column: 1 / -1; }
     @media (max-width: 720px) { .wf-grid, .wf-grid-3 { grid-template-columns: 1fr; } }
 
-    .wf-field { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+    /* The shared form components render this as a <fieldset>, which browsers give a default
+       border, padding and margin. That drew a box around every field the components
+       produced — Subject, Department, Service and Priority each sat in their own frame,
+       while hand-written fields using a <div> did not. Reset here so both render alike. */
+    .wf-field { display: flex; flex-direction: column; gap: .35rem; min-width: 0;
+                border: 0; margin: 0; padding: 0; min-inline-size: 0; }
     .wf-field label { font-size: 14px; font-weight: 700; color: var(--wf-label); }
     .wf-req { color: var(--brand); margin-left: .15rem; }
 
@@ -993,31 +998,38 @@
        Awesome. This theme does not load Font Awesome, so every button rendered as a blank
        square. The glyphs are supplied here as text instead: no icon font to ship, and it
        matches the reference, whose toolbar is lettered (B, I, H) with symbols for the rest. */
-    .editor-toolbar button { color: #fff !important; background: var(--brand); border: 0; border-radius: 3px; min-width: 30px; height: 30px; margin: 0 2px; }
-    .editor-toolbar button:hover { background: var(--brand-dark); opacity: 1; }
-    .editor-toolbar button.active { background: var(--brand-dark); }
+    .editor-toolbar button {
+        color: #fff !important; background: var(--brand) !important;
+        border: 0 !important; border-radius: 3px !important;
+        min-width: 30px; height: 30px; margin: 0 2px !important;
+    }
+    .editor-toolbar button:hover { background: var(--brand-dark) !important; opacity: 1; }
+    .editor-toolbar button.active { background: var(--brand-dark) !important; }
     .editor-toolbar i.separator { border-left: 1px solid var(--wf-border); border-right: 0; margin: 0 4px; }
 
-    /* The icon element is emptied and the glyph attached to the button, so a missing font
-       cannot leave a blank control. */
-    .editor-toolbar button i.fa { display: none; }
-    .editor-toolbar button::after { font-size: .82rem; font-weight: 700; line-height: 1; }
-    .editor-toolbar button.bold::after { content: 'B'; }
-    .editor-toolbar button.italic::after { content: 'I'; font-style: italic; }
-    .editor-toolbar button.heading::after { content: 'H'; }
-    .editor-toolbar button.quote::after { content: '\201C'; }
-    .editor-toolbar button.unordered-list::after { content: '\2022\2009\2013'; }
-    .editor-toolbar button.ordered-list::after { content: '1.'; }
-    .editor-toolbar button.link::after { content: '\1F517'; }
-    .editor-toolbar button.image::after { content: '\1F5BC'; }
-    .editor-toolbar button.code::after { content: '</>'; }
-    .editor-toolbar button.table::after { content: '\25A6'; }
-    .editor-toolbar button.horizontal-rule::after { content: '\2015'; }
-    .editor-toolbar button.preview::after { content: 'Preview'; }
-    .editor-toolbar button.side-by-side::after { content: '\25A5'; }
-    .editor-toolbar button.fullscreen::after { content: '\26F6'; }
-    .editor-toolbar button.guide::after { content: '?'; }
-    .editor-toolbar button.preview { min-width: auto; padding: 0 .55rem; }
+    /* The glyph is attached to the <i class="fa fa-…"> element EasyMDE renders, not to the
+       button: the icon class is the one thing guaranteed to be there (EasyMDE maps every
+       toolbar name to one), whereas the button's own class varies by version. `!important`
+       because EasyMDE injects its stylesheet at runtime, after this file, so it would
+       otherwise win the cascade. */
+    .editor-toolbar button i.fa {
+        font-family: inherit !important; font-style: normal !important;
+        font-size: .82rem !important; font-weight: 700 !important; line-height: 1 !important;
+    }
+    .editor-toolbar button i.fa::before { content: '?'; }
+    .editor-toolbar button i.fa-bold::before { content: 'B'; }
+    .editor-toolbar button i.fa-italic::before { content: 'I'; font-style: italic; }
+    .editor-toolbar button i.fa-strikethrough::before { content: 'S'; text-decoration: line-through; }
+    .editor-toolbar button i.fa-link::before { content: '\1F517'; }
+    .editor-toolbar button i.fa-header::before,
+    .editor-toolbar button i.fa-heading::before { content: 'H'; }
+    .editor-toolbar button i.fa-quote-left::before { content: '\201C'; }
+    .editor-toolbar button i.fa-code::before { content: '</>'; }
+    .editor-toolbar button i.fa-list-ul::before { content: '\2022\2009\2261'; }
+    .editor-toolbar button i.fa-list-ol::before { content: '1.'; }
+    .editor-toolbar button i.fa-undo::before { content: '\21B6'; }
+    .editor-toolbar button i.fa-repeat::before,
+    .editor-toolbar button i.fa-redo::before { content: '\21B7'; }
 
     /* ── Notifications panel ────────────────────────────────────────────────
        Anchored under the header link, as on the reference: a white card with one
