@@ -1,0 +1,104 @@
+<?php
+
+/**
+ * Wording for the Client Tools pages. Kept here (rather than inside the extension) to
+ * match how Knowledgebase and Site Pages ship their strings, so all client-area wording
+ * is editable from one directory.
+ */
+return [
+    // ── Quotes ────────────────────────────────────────────────────────────────────
+    'quotes' => 'My Quotes',
+    'quotes_short' => 'Quotes',
+    'quotes_subtitle' => 'Quotes issued to you',
+    'quotes_empty' => 'There are no quotes to display',
+
+    // ── Mass Payment ──────────────────────────────────────────────────────────────
+    'mass_payment' => 'Mass Payment',
+    'mass_payment_subtitle' => 'Settle several invoices at once',
+    'mass_nothing_due' => 'You have no unpaid invoices.',
+    'mass_unpaid_invoices' => 'Unpaid Invoices',
+    'mass_toggle_all' => 'Select / deselect all',
+    'mass_selected_total' => 'Selected Total',
+    'mass_credit_balance' => 'Your credit balance is :amount.',
+    'mass_credit_note' => 'Credit is applied to the selected invoices oldest first. An invoice is only settled when your balance covers it in full; anything left over stays on your account.',
+    'mass_pay_with_credit' => 'Apply Credit to Selected',
+    'mass_none_selected' => 'Select at least one invoice first.',
+    'mass_no_credit' => 'Your credit balance does not cover any of the selected invoices.',
+    'mass_paid' => ':count invoice(s) paid from your credit balance.',
+    'mass_partial' => ':count invoice(s) paid. Your remaining balance does not cover the next one.',
+
+    // ── Contacts ──────────────────────────────────────────────────────────────────
+    'contacts' => 'Contacts',
+    'contacts_subtitle' => 'People listed on your account',
+    'contacts_empty' => 'No Contacts Found',
+    'contact_new' => 'New Contact',
+    'contact_edit' => 'Edit Contact',
+    'contact_save' => 'Save Contact',
+    'contact_saved' => 'Contact saved.',
+    'contact_deleted' => 'Contact deleted.',
+    'contact_delete_confirm' => 'Delete this contact?',
+    'contact_access' => 'Account Access',
+    'contact_is_sub_account' => 'Allow this contact to sign in as a sub-account',
+    'contact_sub_account' => 'Sub-Account',
+
+    'perm_invoices' => 'View & pay invoices',
+    'perm_services' => 'View services',
+    'perm_tickets' => 'Open & manage tickets',
+    'perm_account' => 'Manage account details',
+    'perm_affiliates' => 'View affiliate details',
+
+    // ── User Management ───────────────────────────────────────────────────────────
+    'user_management' => 'User Management',
+    'user_management_subtitle' => 'Who can access this account',
+    'account_owner' => 'Account Owner',
+    'owner' => 'Owner',
+    'sub_accounts' => 'Users With Access',
+    'sub_accounts_empty' => 'No other users have access to this account.',
+    'manage_contacts' => 'Manage Contacts',
+    'no_permissions' => 'no permissions granted',
+    'revoke_access' => 'Revoke Access',
+    'revoke_confirm' => 'Revoke this user\'s access? Their contact details are kept.',
+    'access_revoked' => 'Access revoked.',
+    'active_sessions' => 'Active Sessions',
+    'sessions_empty' => 'No active sessions.',
+
+    // ── Email History ─────────────────────────────────────────────────────────────
+    'email_history' => 'Email History',
+    'email_history_subtitle' => 'Messages we have sent you',
+    'email_history_empty' => 'No emails have been sent to you yet.',
+    'messages_sent' => 'Messages Sent',
+    'subject' => 'Subject',
+    'sent_to' => 'Sent To',
+    'status' => 'Status',
+    'date' => 'Date',
+
+    // ── Downloads ─────────────────────────────────────────────────────────────────
+    'downloads' => 'Downloads',
+    'downloads_subtitle' => 'Guides, configuration files and tools',
+    'downloads_empty' => 'There are no downloads available.',
+    'downloads_uncategorised' => 'General',
+    'download' => 'Download',
+    'download_unavailable' => 'That download is not available.',
+
+    // ── Addons ────────────────────────────────────────────────────────────────────
+    'addons' => 'Available Addons',
+    'addons_subtitle' => 'Extend the services you already have',
+    'addons_empty' => 'There are no addons available for your services.',
+    'addons_order' => 'Order Now',
+    'addons_service' => 'Service',
+
+    // ── Apply Credit (invoice) ────────────────────────────────────────────────────
+    'apply_credit' => 'Apply Credit',
+    'credit_balance_is' => 'Your credit balance is :amount.',
+    'credit_help' => 'This can be applied to the invoice using the form below. Enter the amount to apply:',
+    'credit_amount' => 'Amount to apply',
+    'credit_applied' => 'Credit applied to this invoice.',
+    'credit_none' => 'There is no credit available to apply.',
+    'credit_too_much' => 'You can apply at most :max to this invoice.',
+    'credit_not_payable' => 'This invoice can no longer be paid.',
+
+    // ── Shared ────────────────────────────────────────────────────────────────────
+    'edit' => 'Edit',
+    'delete' => 'Delete',
+    'cancel' => 'Cancel',
+];

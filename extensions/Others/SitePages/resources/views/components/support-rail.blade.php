@@ -15,6 +15,9 @@
     if (Route::has('knowledgebase.index')) {
         $items[] = ['key' => 'knowledgebase', 'label' => __('knowledgebase.title'), 'url' => route('knowledgebase.index'), 'icon' => 'info'];
     }
+    if (Route::has('downloads')) {
+        $items[] = ['key' => 'downloads', 'label' => __('clienttools.downloads'), 'url' => route('downloads'), 'icon' => 'download'];
+    }
     if (Route::has('network-status')) {
         $items[] = ['key' => 'network-status', 'label' => __('sitepages.network_status'), 'url' => route('network-status'), 'icon' => 'pulse'];
     }

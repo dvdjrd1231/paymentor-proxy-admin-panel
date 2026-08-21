@@ -38,11 +38,16 @@
     $isAdmin = $isAuth && auth()->user()->role_id !== null;
     $hasLogo = config('settings.logo') || config('settings.logo_dark');
 
-    // The signed-in menu bar, in the reference portal's order and grouping.
-    $clientMenu = $isAuth ? [
+    // The signed-in menu bar, in the reference portal's order and grouping. Entries whose
+    // page comes from an extension are guarded on the route existing, so disabling that
+    // extension drops the row instead of raising "route not defined" on every page.
+    $clientMenu = $isAuth ? array_values(array_filter([
         ['name' => __('theme.my_services'), 'url' => route('services')],
         ['name' => __('theme.order_new_services'), 'url' => $orderNewUrl],
-    ] : [];
+        Route::has('addons')
+            ? ['name' => __('clienttools.addons'), 'url' => route('addons')]
+            : null,
+    ])) : [];
 
     // Signed in, the reference bar carries only Home, the three grouped menus, Open Ticket
     // and Affiliates — the informational pages (Announcements, Knowledgebase, Network
@@ -155,8 +160,19 @@
                     <button type="button" class="wf-menu-link" @click="open = !open">
                         {{ __('theme.billing') }} <span class="wf-caret">▾</span>
                     </button>
+                    {{-- The reference groups Billing as: My Invoices, My Quotes | Mass
+                         Payment, Payment Methods, Add Funds — the separator marking where
+                         the list moves from "what I owe" to "how I pay". --}}
                     <ul class="wf-dropdown" x-show="open" x-transition x-cloak>
                         <li><a href="{{ route('invoices') }}" wire:navigate>{{ __('theme.my_invoices') }}</a></li>
+                        @if (Route::has('quotes'))
+                            <li><a href="{{ route('quotes') }}" wire:navigate>{{ __('clienttools.quotes') }}</a></li>
+                        @endif
+                        @if (Route::has('mass-payment'))
+                            <li class="wf-dropdown-sep">
+                                <a href="{{ route('mass-payment') }}" wire:navigate>{{ __('clienttools.mass_payment') }}</a>
+                            </li>
+                        @endif
                         <li><a href="{{ route('account.payment-methods') }}" wire:navigate>{{ __('theme.payment_methods') }}</a></li>
                         @if (config('settings.credits_enabled'))
                             <li><a href="{{ route('account.credits') }}" wire:navigate>{{ __('dashboard.add_funds') }}</a></li>
@@ -219,6 +235,19 @@
                     @foreach ($accountChildren as $child)
                         <li><a href="{{ $child['url'] }}" wire:navigate>{{ $child['name'] }}</a></li>
                     @endforeach
+
+                    {{-- The reference's account menu also carries User Management, Contacts
+                         and Email History. They come from the Client Tools extension, so each
+                         is guarded on its route rather than assumed. --}}
+                    @if (Route::has('account.users'))
+                        <li><a href="{{ route('account.users') }}" wire:navigate>{{ __('clienttools.user_management') }}</a></li>
+                    @endif
+                    @if (Route::has('account.contacts'))
+                        <li><a href="{{ route('account.contacts') }}" wire:navigate>{{ __('clienttools.contacts') }}</a></li>
+                    @endif
+                    @if (Route::has('account.email-history'))
+                        <li><a href="{{ route('account.email-history') }}" wire:navigate>{{ __('clienttools.email_history') }}</a></li>
+                    @endif
                     @if ($isAdmin)
                         <li class="wf-dropdown-sep">
                             <a href="{{ route('filament.admin.pages.dashboard') }}">{{ __('navigation.admin') }}</a>
