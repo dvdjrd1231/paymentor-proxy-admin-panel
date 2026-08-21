@@ -5,6 +5,7 @@ namespace Paymenter\Extensions\Servers\ProxyPanel;
 use App\Classes\Extension\Server;
 use App\Models\Product;
 use App\Models\Service;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -294,6 +295,21 @@ class ProxyPanel extends Server
     {
         $regions = $this->safeOptions(fn () => $this->fetchOptions('/locations'));
 
+        $serverId = $product->server_id;
+
+        if (!empty($regions)) {
+            // Keep the last good list so the option survives the panel being unreachable.
+            $this->rememberRegions($serverId, $regions);
+        } else {
+            // The panel is down or answering oddly. Falling through with an empty list used
+            // to drop the whole Configurable Options block off the order form — the Region
+            // selector simply vanished, and with it the customer's ability to choose where
+            // their proxies live. Worse, core then bounced the configure page to /cart, so
+            // "Order Now" led nowhere. Serve the last known regions instead: a stale list is
+            // recoverable, a missing one loses the order.
+            $regions = $this->rememberedRegions($serverId);
+        }
+
         if (empty($regions)) {
             return [];
         }
@@ -395,6 +411,54 @@ class ProxyPanel extends Server
         }
 
         return $stock;
+    }
+
+    /**
+     * The last region list the panel gave us, kept so the order form keeps working when the
+     * panel is unreachable.
+     *
+     * Stored against the server row in `settings`, the same table the extension's own
+     * credentials live in, so it survives a cache flush and a container restart — a
+     * memory-only cache would be empty exactly when it is needed, right after a deploy.
+     */
+    private function rememberRegions(?int $serverId, array $regions): void
+    {
+        if (!$serverId) {
+            return;
+        }
+
+        try {
+            DB::table('settings')->updateOrInsert(
+                [
+                    'settingable_type' => \App\Models\Server::class,
+                    'settingable_id' => $serverId,
+                    'key' => 'cached_regions',
+                ],
+                ['value' => json_encode($regions), 'updated_at' => now(), 'created_at' => now()],
+            );
+        } catch (\Throwable $e) {
+            // Caching is an optimisation; never let it break the order form.
+            $this->log('warning', 'ProxyPanel could not cache regions', ['error' => $e->getMessage()]);
+        }
+    }
+
+    private function rememberedRegions(?int $serverId): array
+    {
+        if (!$serverId) {
+            return [];
+        }
+
+        try {
+            $raw = DB::table('settings')
+                ->where('settingable_type', \App\Models\Server::class)
+                ->where('settingable_id', $serverId)
+                ->where('key', 'cached_regions')
+                ->value('value');
+
+            return $raw ? (array) json_decode($raw, true) : [];
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     /** A catalogue fetch must never break the admin form when the panel is unreachable. */

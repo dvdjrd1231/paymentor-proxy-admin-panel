@@ -41,6 +41,19 @@
                         </a>
                     </li>
                 @endforeach
+
+                {{-- The reference closes this list with Product Addons, which is not a
+                     catalogue category but the page listing what an existing service can be
+                     extended with. Guarded on the route, so it disappears with the
+                     extension rather than leaving a dead entry. --}}
+                @if (Route::has('addons'))
+                    <li>
+                        <a href="{{ route('addons') }}" wire:navigate
+                            class="{{ request()->routeIs('addons') ? 'is-active' : '' }}">
+                            <span>{{ __('clienttools.addons_short') }}</span>
+                        </a>
+                    </li>
+                @endif
             </ul>
         </div>
     @endif

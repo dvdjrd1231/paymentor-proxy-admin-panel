@@ -90,6 +90,7 @@ return [
 
     // ── Addons ────────────────────────────────────────────────────────────────────
     'addons' => 'Available Addons',
+    'addons_short' => 'Product Addons',
     'addons_subtitle' => 'Extend the services you already have',
     'addons_empty' => 'There are no addons available for your services.',
     'addons_order' => 'Order Now',
