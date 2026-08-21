@@ -9,30 +9,9 @@ Route::group(['middleware' => ['web']], function () {
     Route::get('/network-status', NetworkStatus::class)->name('network-status');
     Route::get('/contact', ContactUs::class)->name('contact');
 
-    // The reference portal's "View RSS Feed" link beside the news list.
-    //
-    // Deliberately NOT /announcements/rss: the Announcements extension registers
-    // `announcements/{announcement}` and boot order is not guaranteed, so that path could
-    // be captured as an announcement slug and 404 instead of returning the feed.
-    Route::get('/rss/announcements', function () {
-        $model = 'Paymenter\Extensions\Others\Announcements\Models\Announcement';
-
-        $items = collect();
-        if (class_exists($model)) {
-            try {
-                $items = $model::where('is_active', true)
-                    ->whereNotNull('published_at')
-                    ->where('published_at', '<=', now())
-                    ->orderByDesc('published_at')
-                    ->limit(50)
-                    ->get();
-            } catch (\Throwable $e) {
-                $items = collect();
-            }
-        }
-
-        return response()
-            ->view('sitepages::announcements.rss', ['items' => $items])
-            ->header('Content-Type', 'application/rss+xml; charset=UTF-8');
-    })->name('announcements.rss');
+    // No RSS route here: the Announcements extension already registers one at
+    // /announcements/rss under the name `announcements.rss`. Adding a second route with
+    // the same name is not an error Laravel reports — the later registration simply wins
+    // route() lookups — so the "View RSS Feed" link would have resolved to whichever
+    // extension happened to boot last. The archive rail links the shipped feed instead.
 });
