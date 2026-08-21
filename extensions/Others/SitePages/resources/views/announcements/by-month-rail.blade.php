@@ -51,9 +51,11 @@
             </li>
         @endif
 
-        @if (Route::has('announcements.rss'))
+        {{-- Our own feed, not the upstream `announcements.rss`: that one is shadowed by
+             `announcements/{announcement:slug}` and 404s. See SitePages/routes/web.php. --}}
+        @if (Route::has('sitepages.announcements.rss'))
             <li>
-                <a href="{{ route('announcements.rss') }}">
+                <a href="{{ route('sitepages.announcements.rss') }}">
                     <span>{{ __('sitepages.view_rss') }}</span>
                     <span class="wf-head-icon"><x-ri-rss-fill /></span>
                 </a>
