@@ -12,9 +12,9 @@
         @endisset
     </title>
     @livewireStyles
-    {{-- This child theme reuses the `default` theme's compiled Vite assets, so it needs
-         no separate asset build. Our WHMCS-style styling is added in whmcs.css below. --}}
-    @vite(['themes/default/js/app.js', 'themes/default/css/app.css'], 'default')
+    {{-- Livewire and Alpine come from the default JS bundle. The proxy theme owns its
+         styling in whmcs-css, so the default Tailwind CSS bundle is intentionally omitted. --}}
+    @vite('themes/default/js/app.js', 'default')
     @include('layouts.colors')
     @include('layouts.whmcs-css')
 
