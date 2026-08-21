@@ -62,6 +62,22 @@ return [
     'active_sessions' => 'Active Sessions',
     'sessions_empty' => 'No active sessions.',
 
+    'users_found' => '{1} :count User Found|[2,*] :count Users Found',
+    'email_last_login' => 'Email Address / Last Login',
+    'actions' => 'Actions',
+    'last_login' => 'Last Login',
+    'never' => 'never',
+    'manage_permissions' => 'Manage Permissions',
+    'owner_note' => '* Account owners always have full permissions over a client account.',
+    'invite_new_user' => 'Invite New User',
+    'invite_help' => 'Inviting a new user adds them to this account with the permissions you choose. They are listed here and can be edited from Contacts at any time.',
+    'all_permissions' => 'All Permissions',
+    'choose_permissions' => 'Choose Permissions',
+    'send_invite' => 'Send Invite',
+    'invite_sent' => 'User added to this account.',
+    'invite_duplicate' => 'Someone with that email address is already on this account.',
+    'invite_is_owner' => 'That is the account owner\'s own address.',
+
     // ── Email History ─────────────────────────────────────────────────────────────
     'email_history' => 'Email History',
     'email_history_subtitle' => 'Messages we have sent you',

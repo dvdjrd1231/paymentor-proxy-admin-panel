@@ -9,8 +9,14 @@
 
     <div class="wf-crumb">
         <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a>
+        <span>/</span><a href="{{ route('dashboard') }}" wire:navigate>{{ __('theme.client_area') }}</a>
         <span>/</span>{{ __('clienttools.email_history') }}
     </div>
+
+{{-- The Account rail beside the content, as on every account page of the reference. --}}
+<div class="wf-layout">
+    <x-account-rail active="email-history" />
+    <div>
 
     <div class="wf-panel">
         <div class="wf-panel-heading">
@@ -81,4 +87,6 @@
             <div class="wf-panel-foot">{{ $emails->links() }}</div>
         @endif
     </div>
+    </div>
+</div>
 </div>

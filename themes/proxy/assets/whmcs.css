@@ -987,3 +987,13 @@
         border-radius: 3px; width: 31px; height: 33px; cursor: pointer; font-size: 12.6px;
     }
     .wf-totop:hover { background: var(--brand-dark); }
+
+    /* ── User Management ────────────────────────────────────────────────────
+       The reference states the count above the table and puts the address, its
+       badges and the last-login line in one cell. */
+    .wf-count { color: var(--brand); margin: 0 0 .6rem; }
+    .wf-user-email { color: var(--brand); font-weight: 700; margin-inline-end: .4rem; }
+    .wf-owner-mark { color: var(--brand); margin-inline-start: .25rem; }
+    .wf-table td .wf-list-sub { display: block; margin-top: .15rem; }
+    .wf-table td .wf-btn + .wf-btn { margin-inline-start: .35rem; }
+    .wf-btn[disabled] { opacity: .55; cursor: not-allowed; }

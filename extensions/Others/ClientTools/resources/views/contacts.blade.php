@@ -8,8 +8,14 @@
 
     <div class="wf-crumb">
         <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a>
+        <span>/</span><a href="{{ route('dashboard') }}" wire:navigate>{{ __('theme.client_area') }}</a>
         <span>/</span>{{ __('clienttools.contacts') }}
     </div>
+
+{{-- The Account rail beside the content, as on every account page of the reference. --}}
+<div class="wf-layout">
+    <x-account-rail active="contacts" />
+    <div>
 
     @if ($showForm)
         <div class="wf-panel">
@@ -138,4 +144,6 @@
             <div class="wf-empty">{{ __('clienttools.contacts_empty') }}</div>
         @endforelse
     </div>
+    </div>
+</div>
 </div>

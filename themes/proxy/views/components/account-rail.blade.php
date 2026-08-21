@@ -19,16 +19,34 @@
         </div>
     </div>
 
+    {{-- The reference portal's "Account" rail, in its order: Account Details, User
+         Management, Payment Methods, Contacts, Email History. It replaces a Billing panel
+         that duplicated the Billing menu in the bar above.
+
+         Built from a list so an entry whose extension is disabled drops out instead of
+         producing a dead link. --}}
+    @php
+        $accountRail = array_values(array_filter([
+            ['key' => 'details', 'name' => __('theme.account_details'), 'route' => 'account'],
+            ['key' => 'users', 'name' => __('clienttools.user_management'), 'route' => 'account.users'],
+            ['key' => 'payment-methods', 'name' => __('theme.payment_methods'), 'route' => 'account.payment-methods'],
+            ['key' => 'contacts', 'name' => __('clienttools.contacts'), 'route' => 'account.contacts'],
+            ['key' => 'email-history', 'name' => __('clienttools.email_history'), 'route' => 'account.email-history'],
+        ], fn ($i) => Route::has($i['route'])));
+    @endphp
+
     <div class="wf-panel wf-panel--brand">
-        <div class="wf-panel-heading"><span><span class="wf-head-icon"><x-ri-bank-card-fill /></span>{{ __('theme.billing') }}</span><span class="wf-chevron">▲</span></div>
+        <div class="wf-panel-heading">
+            <span><span class="wf-head-icon"><x-ri-account-box-fill /></span>{{ __('navigation.account') }}</span>
+            <span class="wf-chevron">▲</span>
+        </div>
         <ul class="wf-list">
-            <li><a class="{{ $active === 'invoices' ? 'is-active' : '' }}" href="{{ route('invoices') }}" wire:navigate>{{ __('theme.my_invoices') }}</a></li>
-            @if (Route::has('account.payment-methods'))
-                <li><a class="{{ $active === 'payment-methods' ? 'is-active' : '' }}" href="{{ route('account.payment-methods') }}" wire:navigate>{{ __('theme.payment_methods') }}</a></li>
-            @endif
-            @if (Route::has('account.credits') && config('settings.credits_enabled'))
-                <li><a class="{{ $active === 'credits' ? 'is-active' : '' }}" href="{{ route('account.credits') }}" wire:navigate>{{ __('dashboard.add_funds') }}</a></li>
-            @endif
+            @foreach ($accountRail as $item)
+                <li>
+                    <a class="{{ $active === $item['key'] ? 'is-active' : '' }}"
+                       href="{{ route($item['route']) }}" wire:navigate>{{ $item['name'] }}</a>
+                </li>
+            @endforeach
         </ul>
     </div>
 </div>
