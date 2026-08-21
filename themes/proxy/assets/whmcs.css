@@ -685,11 +685,13 @@
     @media (max-width: 820px) { .wf-cards--products { grid-template-columns: 1fr; } }
 
     .wf-prod-body { display: flex; gap: .8rem; align-items: flex-start; padding: .75rem 1rem 1rem; flex: 1; }
-    .wf-prod-feat { flex: 1 1 auto; min-width: 0; font-size: .72rem; line-height: 1.35; }
+    .wf-prod-feat { flex: 1 1 auto; min-width: 0; font-size: .78rem; line-height: 1.5; }
     /* Descriptions are authored as a bullet list in the admin. Markers are replaced
        with a brand tick so the list reads as a feature list rather than prose. */
     .wf-prod-feat ul { list-style: none; margin: 0; padding: 0; }
-    .wf-prod-feat li { position: relative; padding-inline-start: 1.25rem; color: var(--brand); }
+    /* Indent tracks the icon width above, so the text column stays aligned when the glyph
+       size changes. */
+    .wf-prod-feat li { position: relative; padding-inline-start: 1.6em; color: var(--brand); }
 
     /* Default marker for any description authored by hand in the admin, which has no
        icon class on its items. */
@@ -711,7 +713,10 @@
     .wf-prod-feat li.f-sync::before,
     .wf-prod-feat li.f-check::before,
     .wf-prod-feat li.f-history::before {
-        content: ''; width: .95em; height: .95em; top: .12em;
+        /* Sized against the reference card: the glyphs read as icons rather than
+           punctuation, so they are set noticeably larger than the text they sit beside and
+           nudged down to centre on the first line. */
+        content: ''; width: 1.25em; height: 1.25em; top: .02em;
         background: currentColor;
         -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
         -webkit-mask-position: center; mask-position: center;
@@ -985,7 +990,9 @@
     .wf-footer {
         background: var(--wf-section); border-top: 1px solid var(--brand);
         color: var(--brand); margin-top: auto; width: 100%; flex: 0 0 auto;
-        padding: 20px 10px;
+        /* Shallow band: it carries one line of copyright and the back-to-top button, so
+           the height only needs to clear that button. */
+        padding: 8px 10px;
     }
     .wf-footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
     .wf-footer-copy { margin: 0; font-size: 12.6px; color: var(--brand); }
