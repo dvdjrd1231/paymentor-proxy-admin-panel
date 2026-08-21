@@ -1,0 +1,989 @@
+    /* Flag font first — unicode-range confines it to flag characters, so Open Sans still
+       renders every letter. Then Open Sans, then the system stack as a fallback. */
+    body,
+    select, option, .wf-input, .wf-select,
+    .wf-list, .wf-table, .wf-card, .wf-panel,
+    .wf-title h1, .wf-pagehead h1, .wf-menu-link, .wf-btn {
+        font-family: 'TwemojiCountryFlags', 'Open Sans', Verdana, Tahoma, ui-sans-serif,
+                     system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    :root {
+        /*
+           Taken from the reference portal's stylesheet: --brand is its #ED2F59, and
+           --brand-dark its hover/border shade #e2627e. --brand-soft is the lighter
+           #f16e8a it uses for menu-bar hover and input borders.
+        */
+        --brand: #ED2F59;
+        --brand-dark: #e2627e;
+        --brand-soft: #f16e8a;
+        --brand-contrast: #ffffff;
+
+        /* The page sits on a light grey canvas with the white document inset 10px inside
+           it — the frame that runs round the reference portal. */
+        --wf-page-bg: #f8f8f8;
+        --wf-border: #dddddd;
+        --wf-panel-border: #eeeeee;
+        --wf-label: #ED2F59;
+        --wf-muted: #777777;
+        --wf-bg: #ffffff;
+        --wf-section: #f8f8f8;
+        --wf-text: #727376;         /* body copy; headings and links use --brand */
+        --wf-ink: #555555;          /* text inside form controls */
+        --wf-radius: 4px;
+        --wf-shell: 1170px;
+    }
+
+    /* The WHMCS design is light-only. The layout never applies the `dark` class, but
+       we neutralise it here too so a stray toggle can't darken the chrome. */
+    .dark { color-scheme: light; }
+
+    /* The reference portal frames the whole document: a grey canvas with 10px showing
+       round a white page. Header, content and footer all sit inside that inset. */
+    body {
+        background: var(--wf-page-bg) !important;
+        color: var(--wf-text);
+        padding: 10px;
+        font-size: 14px;
+        line-height: 1.42857143;
+        overflow-x: hidden;
+
+        /* Full-height column so the footer can sit at the bottom of the window.
+           This has to be declared here: layouts/app.blade.php marks the structure up with
+           `min-h-screen flex flex-col flex-grow`, but this theme deliberately does not load
+           the Tailwind bundle (only the default theme's JS), so those class names carry no
+           styling whatsoever. Without a flex column the footer's `margin-top: auto` had
+           nothing to push against and, on a page shorter than the window, it rendered
+           directly under the content with blank canvas beneath it. */
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+    }
+
+    /* The two wrappers between <body> and the footer, for the same reason. `min-height: 0`
+       lets the column shrink below its content instead of forcing the page taller, and
+       `min-width: 0` stops long unbreakable content (a wide table) widening the column. */
+    .wf-frame { display: flex; flex: 1 1 auto; width: 100%; min-height: 0; }
+    .wf-frame-col { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
+    /* Everything between the menu bar and the footer is white, as on the reference,
+       rather than cards floating on grey. */
+    main.grow { background: var(--wf-bg); }
+
+    .wf-shell { max-width: var(--wf-shell); margin: 0 auto; padding: 0 15px; width: 100%; box-sizing: border-box; }
+
+    /* ── 1. Header bar (white; logo left, actions right) ───────────────── */
+    /* No rule under the header on the reference — the brand-coloured menu bar is the
+       divider. */
+    .wf-header { background: var(--wf-bg); padding: 10px 0; }
+    .wf-header-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 50px; flex-wrap: wrap; }
+    .wf-brand { display: inline-flex; align-items: center; gap: .6rem; text-decoration: none; }
+    .wf-logo { height: 42px; width: auto; }
+    .wf-brand-text { font-size: 1.6rem; font-weight: 700; color: var(--brand); letter-spacing: -.01em; }
+    .wf-header-actions { display: flex; align-items: center; gap: .25rem; }
+
+    /* Header links are plain brand-coloured text on the reference; only "View Cart"
+       is a filled button. */
+    .wf-hbtn {
+        display: inline-block; padding: 6px 10px; font-size: 14px; text-decoration: none;
+        color: var(--brand); background: transparent; border: 0; border-radius: 3px;
+        transition: color .15s;
+    }
+    .wf-hbtn:hover { color: var(--brand-soft); }
+    .wf-hbtn--primary { padding: 6px 15px; background: var(--brand); color: var(--brand-contrast); }
+    .wf-hbtn--primary:hover { background: var(--brand-dark); color: var(--brand-contrast); }
+    .wf-notifications { display: inline-flex; align-items: center; gap: .3rem; }
+    .wf-notifications-badge {
+        padding: 1px 4px; color: #fff; background: #a8c83b; border-radius: 1px;
+        font-size: 10px; line-height: 13px; font-weight: 700;
+    }
+    .wf-notifications-caret { color: #888; font-size: 11px; }
+
+    /* Logout (Livewire component) rendered in the header → primary button look */
+    .wf-header-actions .wf-logout button {
+        display: inline-block; padding: .5rem 1.15rem; font-size: .9rem; font-family: inherit;
+        background: var(--brand); color: var(--brand-contrast);
+        border: 1px solid var(--brand); border-radius: var(--wf-radius);
+        cursor: pointer; transition: background .15s;
+    }
+    .wf-header-actions .wf-logout button:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+
+    /* ── 2. Brand-coloured menu bar ────────────────────────────────────── */
+    .wf-menubar {
+        background: var(--brand); min-height: 38px;
+        font-family: Raleway, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 15px;
+    }
+    .wf-menubar-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+
+    .wf-menu { display: flex; align-items: center; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
+    .wf-menu-item { position: relative; }
+    .wf-menu-right { position: relative; }
+
+    .wf-menu-link {
+        display: inline-flex; align-items: center; gap: .35rem;
+        padding: 9px 15px; font-size: 15px; line-height: 20px;
+        color: var(--brand-contrast); text-decoration: none;
+        background: transparent; border: 0; cursor: pointer; font-family: inherit;
+        transition: background .15s;
+    }
+    .wf-menu-link:hover, .wf-menu-link.is-active { background: var(--brand-soft); color: #eee; }
+    .wf-caret { font-size: .7rem; opacity: .85; }
+
+    .wf-dropdown {
+        position: absolute; top: 100%; left: 0; z-index: 60; min-width: 220px;
+        list-style: none; margin: 0; padding: .35rem 0;
+        background: var(--wf-bg); border: 1px solid var(--wf-border);
+        border-top: 2px solid var(--brand);
+        border-radius: 0 0 var(--wf-radius) var(--wf-radius);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, .12);
+    }
+    .wf-dropdown--right { left: auto; right: 0; }
+    /* The reference prints dropdown entries in the brand colour, not body grey. */
+    .wf-dropdown a {
+        display: block; padding: .55rem 1rem; font-size: .9rem;
+        color: var(--brand); text-decoration: none;
+    }
+    .wf-dropdown a:hover { background: var(--wf-section); color: var(--brand-dark); }
+    .wf-dropdown-sep { border-top: 1px solid var(--wf-border); margin-top: .35rem; padding-top: .35rem; }
+
+    /* Paymenter's logout is a Livewire component, so normalise whatever it renders
+       (button/link) to look like the other dropdown entries. */
+    .wf-dropdown-logout :is(a, button) {
+        display: block; width: 100%; text-align: left;
+        padding: .55rem 1rem; font-size: .9rem; font-family: inherit;
+        color: var(--brand); background: transparent; border: 0; cursor: pointer;
+    }
+    .wf-dropdown-logout :is(a, button):hover { background: var(--wf-section); color: var(--brand); }
+
+    .wf-burger { display: none; background: transparent; border: 0; color: var(--brand-contrast); font-size: 1.3rem; padding: .8rem .6rem; cursor: pointer; }
+
+    @media (max-width: 820px) {
+        .wf-burger { display: inline-block; }
+        .wf-menu { display: none; width: 100%; flex-direction: column; align-items: stretch; }
+        .wf-menu--open { display: flex; }
+        .wf-menu-link { width: 100%; justify-content: space-between; }
+        .wf-dropdown { position: static; box-shadow: none; border: 0; background: rgba(0, 0, 0, .12); border-radius: 0; }
+        .wf-dropdown a { color: var(--brand-contrast); }
+        .wf-menubar-inner { flex-wrap: wrap; }
+    }
+
+    /* ── 3. Page + card ────────────────────────────────────────────────── */
+    .wf-page { max-width: var(--wf-shell); margin: 0 auto; padding: 1.75rem 1rem 3rem; }
+    .wf-page--narrow { max-width: 560px; }
+
+    .wf-card {
+        background: var(--wf-bg);
+        border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius);
+        padding: 0;
+        color: var(--wf-text);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+    }
+
+    /* Breadcrumbs: "Portal Home / Register" */
+    .wf-crumbs { font-size: 11px; color: #888; margin: -15px 0 20px; padding: 8px 15px 8px 0; }
+    .wf-crumbs a { color: #888; text-decoration: none; }
+    .wf-crumbs a:hover { color: var(--brand); }
+    .wf-crumbs span { margin: 0 .4rem; opacity: .6; }
+
+    /* Page heading: brand title with an inline grey subtitle, over a thin rule —
+       WHMCS's `header-lined` block. */
+    .wf-title {
+        display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap;
+        margin: 0 0 15px; padding: 6px 0; border-bottom: 1px solid var(--brand-dark);
+    }
+    .wf-title h1 {
+        color: var(--brand); font-size: 36px; font-weight: 400; line-height: 1.1; margin: 0;
+        font-family: Raleway, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    .wf-title span { color: var(--wf-muted); font-size: 23px; font-weight: 400; }
+    /* The rule now lives on .wf-title itself; the element is kept so existing views
+       don't have to change, but it no longer draws a second line. */
+    .wf-title-rule { display: none; }
+
+    /* Centered section divider — the reference's `sub-heading`: 16px brand text
+       sitting on a 1px #ddd rule. */
+    .wf-section {
+        display: flex; align-items: center; gap: 17px;
+        margin: 20px 0 30px; color: var(--brand);
+        font-size: 16px; font-weight: 400; text-align: center;
+    }
+    .wf-section::before, .wf-section::after { content: ""; flex: 1; border-top: 1px solid var(--wf-border); }
+    .wf-section-note { display: block; font-size: .8rem; color: var(--wf-muted); font-style: italic; }
+
+    /* ── 4. Forms ──────────────────────────────────────────────────────── */
+    .wf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .wf-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+    .wf-col-2 { grid-column: 1 / -1; }
+    @media (max-width: 720px) { .wf-grid, .wf-grid-3 { grid-template-columns: 1fr; } }
+
+    .wf-field { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+    .wf-field label { font-size: 14px; font-weight: 700; color: var(--wf-label); }
+    .wf-req { color: var(--brand); margin-left: .15rem; }
+
+    /* Icon-prefixed input group (WHMCS "input-group addon" look) */
+    .wf-ig { display: flex; align-items: stretch; }
+    .wf-ig-icon {
+        display: inline-flex; align-items: center; justify-content: center; min-width: 40px;
+        background: var(--wf-section); border: 1px solid var(--wf-border); border-right: 0;
+        border-radius: var(--wf-radius) 0 0 var(--wf-radius);
+        color: var(--wf-muted); font-size: .9rem;
+    }
+    .wf-ig .wf-input, .wf-ig .wf-select { border-radius: 0 var(--wf-radius) var(--wf-radius) 0; }
+
+    .wf-input, .wf-select {
+        width: 100%; box-sizing: border-box;
+        padding: 6px 12px;
+        border: 1px solid var(--brand-soft); border-radius: var(--wf-radius);
+        background: var(--wf-bg); color: var(--wf-ink);
+        font-size: 14px; line-height: 1.42857143; min-height: 34px;
+        transition: border-color .15s, box-shadow .15s;
+    }
+    .wf-input::placeholder { color: var(--wf-muted); }
+    .wf-input:focus, .wf-select:focus {
+        outline: none; border-color: var(--brand);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent);
+    }
+    .wf-input[aria-invalid="true"] { border-color: var(--brand); }
+    .wf-error { color: var(--brand); font-size: .8rem; }
+
+    /* Alpine hides these itself once it boots; without the rule the markup it
+       controls (e.g. the register form's Brazil block) flashes on first paint. */
+    [x-cloak] { display: none !important; }
+
+    /* CAPTCHA — centred under the form fields, as on the reference */
+    .wf-captcha { display: flex; flex-direction: column; align-items: center; gap: .35rem; margin: 1rem 0; }
+    /* The widget iframe is a fixed 304px; let it shrink rather than push the form
+       into a horizontal scroll on a phone. */
+    .wf-captcha-widget { max-width: 100%; overflow: hidden; }
+
+    /* One-time-code inputs on the 2FA prompt */
+    .wf-otp { display: inline-flex; align-items: center; gap: .35rem; margin-bottom: .75rem; }
+    .wf-otp-box { width: 2.5rem; text-align: center; padding-left: .25rem; padding-right: .25rem; }
+    .wf-otp-sep { color: var(--wf-muted); }
+
+    .wf-check { display: flex; align-items: flex-start; gap: .5rem; font-size: .9rem; color: var(--wf-text); }
+    .wf-check input { margin-top: .2rem; }
+
+    /* Password strength meter */
+    .wf-meter { height: 6px; background: var(--wf-section); border-radius: 999px; overflow: hidden; }
+    .wf-meter-bar { height: 100%; width: 0; background: var(--brand); transition: width .2s, background .2s; }
+
+    /* Brazil-only tax block */
+    .wf-br {
+        border: 1px solid var(--wf-border); border-left: 3px solid var(--brand);
+        background: var(--wf-section); border-radius: var(--wf-radius);
+        padding: 1.1rem; margin-top: .5rem;
+    }
+    .wf-br-head { display: flex; align-items: center; gap: .5rem; margin-bottom: .9rem; font-weight: 600; color: var(--wf-text); }
+    .wf-br-flag { font-size: 1.15rem; }
+
+    /* ── 5. Buttons + sidebar panel ────────────────────────────────────── */
+    .wf-actions { display: flex; align-items: center; gap: .75rem; margin-top: 1.75rem; flex-wrap: wrap; }
+    .wf-btn {
+        display: inline-block; padding: 6px 12px;
+        background: var(--brand); color: var(--brand-contrast);
+        border: 1px solid var(--brand-dark); border-radius: var(--wf-radius);
+        font-size: 14px; line-height: 1.42857143; cursor: pointer;
+        text-decoration: none; font-family: inherit;
+        transition: background .15s;
+    }
+    .wf-btn:hover { background: var(--brand-dark); border-color: var(--brand-dark); color: var(--brand-contrast); }
+    .wf-btn--lg { padding: 10px 16px; font-size: 18px; line-height: 1.3333333; border-radius: 6px; }
+    .wf-btn--ghost { background: transparent; color: var(--brand); }
+    .wf-btn--ghost:hover { background: color-mix(in srgb, var(--brand) 10%, transparent); color: var(--brand); }
+    .wf-btn--block { width: 100%; text-align: center; }
+
+    .wf-alt { margin-top: 1.25rem; font-size: .9rem; color: var(--wf-muted); text-align: center; }
+    .wf-alt a { color: var(--brand); text-decoration: none; }
+    .wf-alt a:hover { text-decoration: underline; }
+
+    /* Left sidebar panel with coloured header ("Already Registered?") */
+    .wf-split { display: grid; grid-template-columns: 300px 1fr; gap: 1.5rem; align-items: start; }
+    @media (max-width: 860px) { .wf-split { grid-template-columns: 1fr; } }
+    .wf-aside { border: 1px solid var(--wf-border); border-radius: var(--wf-radius); overflow: hidden; background: var(--wf-bg); }
+    .wf-aside-head {
+        background: var(--brand); color: var(--brand-contrast);
+        padding: .8rem 1rem; font-weight: 600; font-size: .95rem;
+        display: flex; align-items: center; gap: .5rem;
+    }
+    .wf-aside-body { padding: 1rem; font-size: .9rem; color: var(--wf-text); }
+    .wf-aside-list { list-style: none; margin: .75rem 0 0; padding: 0; border-top: 1px solid var(--wf-border); }
+    .wf-aside-list li { border-bottom: 1px solid var(--wf-border); }
+    .wf-aside-list a {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: .65rem .25rem; color: var(--wf-text); text-decoration: none; font-size: .9rem;
+    }
+    .wf-aside-list a:hover { color: var(--brand); }
+
+    /* ── 5b. Client-area components (WHMCS "Six" / Bootstrap-3 design language) ──
+       Rebuilt from scratch in plain CSS against Paymenter's data. We deliberately
+       do NOT ship WHMCS's own template files: they are Smarty .tpl bound to WHMCS
+       PHP variables and carry no open-source licence. Bootstrap 3 — the design
+       language Six is built on — is MIT, so recreating the look is fine.        */
+
+    /* Page header: big thin title + grey subtitle, underlined */
+    .wf-pagehead { margin: 0 0 1.25rem; }
+    .wf-pagehead h1 {
+        color: var(--brand); font-size: 36px; font-weight: 400; margin: 0 0 15px;
+        padding: 6px 0; border-bottom: 1px solid var(--brand-dark);
+        font-family: Raleway, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        line-height: 1.1;
+    }
+    /* Touch targets — measured at 375px, breadcrumb and in-row links came out at
+       18-20px high, which is awkward to hit. Applied to narrow screens and to any coarse
+       pointer, so a tablet at 768px is covered too; desktop density is unchanged. */
+    @media (max-width: 820px), (pointer: coarse) {
+        .wf-crumb a,
+        .wf-crumb span { display: inline-block; padding-block: .4rem; }
+        .wf-list a,
+        .wf-table td > a { min-height: 2.75rem; display: inline-flex; align-items: center; }
+        .wf-list > li > a { min-height: 3rem; }
+    }
+
+    @media (max-width: 620px) { .wf-pagehead h1 { font-size: 28px; } }
+    .wf-pagehead p { margin: 0; color: var(--wf-muted); font-size: .95rem; }
+
+    /* Breadcrumb — "Portal Home / Client Area" */
+    /* Centred auth form — the reference portal centres login/register in one column
+       rather than splitting them beside a sidebar. */
+    .wf-form-narrow { max-width: 480px; margin: 0 auto; }
+
+    /* ── Auth pages, matched to the reference portal ────────────────────
+       The reference keeps the heading, its rule and the form in one narrow centred
+       column rather than running the heading the full page width. */
+    .wf-page--auth { background: var(--wf-bg); min-height: 420px; }
+
+    /* Heading, rule and form share one 480px column, centred — the reference's
+       login layout. */
+    .wf-page--auth .wf-title { max-width: 480px; margin-inline: auto; }
+
+    /* "Remember Me" is brand-coloured in the reference, not body text. */
+    .wf-page--auth .wf-check span { color: var(--brand); font-size: 14px; }
+    .wf-actions--center { display: flex; justify-content: center; gap: .75rem; }
+    /* Field labels are brand-coloured on the reference. */
+    .wf-field label { color: var(--brand); font-weight: 700; font-size: 14px; display: block; margin-bottom: .3rem; }
+
+    .wf-crumb { font-size: 11px; color: #888; margin: -15px 0 20px; padding: 8px 15px 8px 0; }
+    /* Brand-on-grey is the one place the brand is used as text over the page background
+       rather than over white, and at this small size it lands just under 4.5:1. The darker
+       shade takes it to 6:1 and is indistinguishable at breadcrumb size. */
+    .wf-crumb a { color: #888; text-decoration: none; }
+    .wf-crumb a:hover { text-decoration: underline; }
+    .wf-crumb span { margin: 0 .4rem; color: var(--wf-border); }
+
+    /* Two-column client area: sidebar + main */
+    .wf-layout { display: grid; grid-template-columns: 260px 1fr; gap: 1.5rem; align-items: start; }
+    @media (max-width: 900px) { .wf-layout { grid-template-columns: 1fr; } }
+
+    /* Panel — the core Six building block */
+    .wf-panel {
+        background: var(--wf-bg); border: 1px solid var(--wf-panel-border);
+        border-radius: var(--wf-radius); margin-bottom: 1.25rem; overflow: hidden;
+    }
+    .wf-panel-heading {
+        padding: 10px 15px; font-size: 15px; font-weight: 400;
+        background: var(--wf-section); border-bottom: 1px solid var(--wf-panel-border);
+        display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+    }
+    /* Widget panels on the reference carry a brand rule along their top edge. */
+    .wf-panel--top { border-top: 2px solid var(--brand); }
+    .wf-panel--brand > .wf-panel-heading { background: var(--brand); color: var(--brand-contrast); border-bottom-color: var(--brand); }
+    .wf-panel-heading .wf-head-icon { display: inline-flex; margin-inline-end: .45rem; vertical-align: -2px; }
+    .wf-panel-heading .wf-head-icon svg { width: 1rem; height: 1rem; }
+    .wf-panel-heading .wf-chevron { margin-inline-start: auto; opacity: .8; font-size: .8rem; }
+    .wf-panel-body { padding: 1rem; }
+    .wf-panel-body > :first-child { margin-top: 0; }
+    .wf-panel-body > :last-child { margin-bottom: 0; }
+    .wf-panel-footer { padding: .65rem 1rem; border-top: 1px solid var(--wf-border); background: var(--wf-section); }
+
+    /* Terms panel — the reference's `panel-danger`: pale pink heading with dark red
+       text, so the accept-terms checkbox reads as the gate it is without competing
+       with the brand-coloured submit button below it. */
+    .wf-panel--tos { border-color: #ebccd1; }
+    .wf-panel--tos > .wf-panel-heading {
+        background: #f2dede; color: #a94442; border-bottom-color: #ebccd1;
+    }
+
+    /* List group — sidebar menus and simple record lists */
+    .wf-list { list-style: none; margin: 0; padding: 0; }
+    .wf-list > li + li { border-top: 1px solid #f5f5f5; }
+    /* :not(.wf-btn) matters: "a" here is an element, so ".wf-list a" (0,1,1) is MORE specific
+       than ".wf-btn" (0,1,0) and silently overrides a button's colour regardless of which
+       rule comes later in the file — a row-action button placed inside a .wf-list (e.g. the
+       "View" button on the dashboard's Active Services widget) rendered with dark text on
+       its coloured background instead of white. This scopes the row-link styling to plain
+       list links only, so a .wf-btn nested in a list stays a self-contained component. */
+    .wf-list a:not(.wf-btn), .wf-list .wf-list-row {
+        display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+        padding: 7px 15px; color: var(--wf-text); text-decoration: none; font-size: 13.5px;
+    }
+    .wf-list a:not(.wf-btn):hover { background: var(--wf-section); color: var(--brand); }
+    /* The reference marks the selected sidebar row in slate, not brand: the panel heading
+       above it is already brand-coloured, and brand-on-brand loses the row entirely. */
+    .wf-list a.is-active:not(.wf-btn) { background: #3d434d; color: #fff; }
+    .wf-list a.is-active:not(.wf-btn):hover { background: #333840; color: #fff; }
+    .wf-list-title { font-weight: 600; }
+    /* Panel footer — the reference portal's "View More…" strip under a list */
+    .wf-panel-foot {
+        padding: .55rem 1rem; border-top: 1px solid var(--wf-border);
+        background: var(--wf-section); text-align: end; font-size: .85rem;
+    }
+    .wf-panel-foot a { color: var(--wf-muted); text-decoration: none; }
+    .wf-panel-foot a:hover { color: var(--brand-dark); text-decoration: underline; }
+    /* Row with a trailing action button (services / invoices lists) */
+    .wf-row-main { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+    .wf-row-link { color: var(--brand); text-decoration: none; }
+    .wf-row-link:hover { text-decoration: underline; }
+    .wf-list .wf-list-row { gap: 1rem; }
+    .wf-list-sub { display: block; font-size: .8rem; color: var(--wf-muted); font-weight: 400; }
+
+    /* Tables */
+    .wf-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    .wf-table th, .wf-table td { padding: .65rem .75rem; text-align: start; border-bottom: 1px solid var(--wf-border); }
+    .wf-table thead th { background: var(--wf-section); font-weight: 600; color: var(--wf-label); white-space: nowrap; }
+    .wf-table tbody tr:hover { background: var(--wf-section); }
+    /* Same specificity trap as .wf-list above: ".wf-table td a" (0,1,2) beats ".wf-btn"
+       (0,1,0), so a button placed in a cell (e.g. cart's row-level Edit link) picks up this
+       rule's colour and hover underline instead of its own. */
+    .wf-table td a:not(.wf-btn) { color: var(--brand); text-decoration: none; }
+    .wf-table td a:not(.wf-btn):hover { text-decoration: underline; }
+    .wf-table-wrap { overflow-x: auto; }
+    .wf-muted { color: var(--wf-muted); }
+
+    /* Rich text coming from the admin editor (announcements, knowledgebase articles) */
+    .wf-prose { line-height: 1.7; }
+    .wf-prose h1, .wf-prose h2, .wf-prose h3, .wf-prose h4 {
+        font-family: Raleway, 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--wf-text);
+        margin: 1.25rem 0 .5rem; line-height: 1.3;
+    }
+    .wf-prose h1 { font-size: 1.5rem; }
+    .wf-prose h2 { font-size: 1.3rem; }
+    .wf-prose h3 { font-size: 1.1rem; }
+    .wf-prose p, .wf-prose ul, .wf-prose ol, .wf-prose blockquote, .wf-prose pre { margin: 0 0 1rem; }
+    .wf-prose ul, .wf-prose ol { padding-inline-start: 1.5rem; }
+    .wf-prose ul { list-style: disc; }
+    .wf-prose ol { list-style: decimal; }
+    .wf-prose a { color: var(--brand); text-decoration: none; }
+    .wf-prose a:hover { text-decoration: underline; }
+    .wf-prose img { max-width: 100%; height: auto; }
+    .wf-prose blockquote {
+        padding: .25rem 1rem; border-inline-start: 3px solid var(--brand);
+        color: var(--wf-muted);
+    }
+    .wf-prose code { background: var(--wf-section); padding: .1rem .3rem; border-radius: 3px; font-size: .9em; }
+    .wf-prose pre { background: var(--wf-section); padding: .75rem 1rem; border-radius: var(--wf-radius); overflow-x: auto; }
+    .wf-prose pre code { background: none; padding: 0; }
+    .wf-prose table { width: 100%; border-collapse: collapse; margin: 0 0 1rem; }
+    .wf-prose th, .wf-prose td { border: 1px solid var(--wf-border); padding: .5rem .65rem; text-align: start; }
+
+    /* Status labels */
+    .wf-label {
+        display: inline-block; padding: .2rem .55rem; border-radius: 999px;
+        font-size: .75rem; font-weight: 600; line-height: 1.4; white-space: nowrap;
+        background: #6b7280; color: #fff;
+    }
+    .wf-label--success { background: #2e9e5b; }
+    .wf-label--warning { background: #d68102; }
+    .wf-label--danger  { background: #c9302c; }
+    .wf-label--info    { background: #2f7ecb; }
+
+    /* Alerts / empty states */
+    .wf-alert {
+        padding: .85rem 1rem; border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); background: var(--wf-section);
+        color: var(--wf-text); font-size: .9rem;
+    }
+    .wf-alert--info { background: color-mix(in srgb, var(--brand) 7%, #fff); border-color: color-mix(in srgb, var(--brand) 25%, transparent); }
+    .wf-alert--notice { background: #fcebf0; border-color: #f7d1dc; color: var(--brand); text-align: center; }
+    /* The all-clear on Network Status. Green is the one place the theme steps outside the
+       brand palette, because "no issues" has to read as reassuring at a glance. */
+    .wf-alert--success { background: #eaf6ec; border-color: #bcdfc4; color: #2d6a38; }
+    .wf-empty { padding: 1.5rem 1rem; text-align: center; color: var(--wf-muted); font-size: .9rem; }
+
+    /* Record row inside a panel body (payment methods, transactions) */
+    .wf-row {
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        padding: .65rem 0; border-bottom: 1px solid var(--wf-border);
+        color: var(--wf-text); text-decoration: none;
+    }
+    .wf-row:last-child { border-bottom: 0; }
+    a.wf-row:hover { background: var(--wf-section); }
+
+    /* Small stat tiles for the dashboard */
+    /* Stat strip — the reference portal shows one bordered panel with vertical dividers between
+       the figures, each with its own accent bar, rather than four separate cards. */
+    .wf-stats {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        background: var(--wf-bg); border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); margin-bottom: 1.25rem; overflow: hidden;
+    }
+    .wf-stat {
+        position: relative; display: block; text-decoration: none;
+        padding: 1.15rem 1.25rem 1.35rem;
+        border-inline-start: 1px solid var(--wf-border);
+    }
+    .wf-stat:first-child { border-inline-start: 0; }
+    .wf-stat:hover { background: var(--wf-section); }
+    /* Accent rule beneath each figure, as on the reference portal. */
+    .wf-stat::after {
+        content: ''; position: absolute; left: 1.25rem; right: 1.25rem; bottom: .7rem;
+        height: 2px; background: var(--brand); border-radius: 2px;
+    }
+    .wf-stat-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+    .wf-stat-num { font-size: 2.4rem; font-weight: 300; color: var(--wf-text); line-height: 1; }
+    .wf-stat-label {
+        margin-top: .35rem; font-size: .78rem; color: var(--wf-muted);
+        text-transform: uppercase; letter-spacing: .06em;
+    }
+    .wf-stat-icon { color: var(--brand); flex: none; }
+    .wf-stat-icon svg { width: 2rem; height: 2rem; }
+    @media (max-width: 620px) {
+        .wf-stat { border-inline-start: 0; border-top: 1px solid var(--wf-border); }
+        .wf-stat:first-child { border-top: 0; }
+    }
+
+    .wf-btn--sm { padding: .35rem .8rem; font-size: .82rem; }
+    /* Input with a trailing button (affiliate link, inline search) */
+    .wf-inline-form { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+    .wf-inline-form .wf-input { flex: 1 1 16rem; }
+    /* Submit spinner for the shared button component (the default theme's icon is a
+       Tailwind-styled SVG; this keeps the same affordance without the utility classes). */
+    .wf-btn-spin {
+        width: 1rem; height: 1rem; border-radius: 50%; display: inline-block;
+        border: 2px solid color-mix(in srgb, currentColor 35%, transparent);
+        border-top-color: currentColor; animation: wf-spin .7s linear infinite;
+    }
+    @keyframes wf-spin { to { transform: rotate(360deg); } }
+
+    /* Multi-line variant of .wf-input (fixed height controls don't apply). */
+    .wf-textarea { height: auto; min-height: 6rem; padding: .5rem 12px; line-height: 1.6; resize: vertical; }
+    .wf-input--dirty { border-color: #d68102; }
+
+    /* Knowledgebase search band under the dashboard counters, as on the reference. */
+    .wf-kbsearch { margin-bottom: 1.25rem; }
+    .wf-kbsearch form { display: flex; gap: .5rem; }
+    .wf-kbsearch .wf-input { flex: 1; min-width: 0; }
+    .wf-btn--danger { background: #c9302c; border-color: #c9302c; color: #fff; }
+    .wf-btn--danger:hover { background: #a82824; border-color: #a82824; }
+
+    /* Key/value table — detail pages (service, invoice, ticket summaries) */
+    .wf-table--kv th {
+        width: 38%; background: transparent; font-weight: 600;
+        color: var(--wf-label); white-space: normal;
+    }
+    .wf-table--kv tbody tr:hover { background: transparent; }
+    .wf-table--kv tr:last-child th, .wf-table--kv tr:last-child td { border-bottom: 0; }
+    /* Proxy addresses / credentials can be long — keep them readable, not clipped. */
+    .wf-kv-value { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; word-break: break-all; }
+
+    /* Tabs inside a panel heading (provisioning module views) */
+    .wf-tabs { gap: 0; padding: 0; justify-content: flex-start; flex-wrap: wrap; }
+    .wf-tab {
+        padding: .7rem 1rem; border: 0; background: transparent; cursor: pointer;
+        font: inherit; font-size: .9rem; color: var(--wf-muted); border-bottom: 2px solid transparent;
+    }
+    .wf-tab:hover { color: var(--brand); }
+    .wf-tab--active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+
+    /* Product / order cards */
+    .wf-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+    .wf-card {
+        background: var(--wf-bg); border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); display: flex; flex-direction: column; overflow: hidden;
+    }
+    .wf-card-head { padding: .7rem 1rem; background: var(--wf-section); border-bottom: 1px solid var(--wf-border); font-weight: 600; font-size: .95rem; }
+    .wf-card-body { padding: 1rem; font-size: .88rem; color: var(--wf-text); flex: 1; }
+    .wf-card-foot { padding: .7rem 1rem; border-top: 1px solid var(--wf-border); display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .wf-price { font-size: 1.1rem; font-weight: 600; color: var(--wf-text); }
+    .wf-price small { font-size: .75rem; font-weight: 400; color: var(--wf-muted); }
+    /* "Starting from" above the price — the reference portal's price presentation */
+    .wf-price-from { margin-top: .6rem; font-size: .78rem; color: var(--wf-muted); }
+    /* Icon inside a button (🛒 Order Now); sized to the label, gap matches the glyph */
+    .wf-btn-ico { display: inline-flex; margin-inline-end: .4rem; vertical-align: -2px; }
+    .wf-btn-ico svg { width: .95em; height: .95em; }
+    /* List rows with a trailing icon (Actions → View Cart) keep the icon brand-coloured */
+    .wf-list a:not(.wf-btn) .wf-head-icon svg { width: 1rem; height: 1rem; color: var(--brand); }
+
+    /* Totals block (cart, checkout, invoice) */
+    .wf-total-row { display: flex; align-items: center; justify-content: space-between; padding: .45rem 0; font-size: .9rem; }
+    .wf-total-row + .wf-total-row { border-top: 1px solid var(--wf-border); }
+    .wf-total-row--grand { font-size: 1.05rem; font-weight: 700; border-top: 2px solid var(--wf-border); margin-top: .25rem; padding-top: .65rem; }
+
+    /* Ticket conversation */
+    .wf-msg { border: 1px solid var(--wf-border); border-radius: var(--wf-radius); margin-bottom: .85rem; overflow: hidden; }
+    .wf-msg-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .55rem .85rem; background: var(--wf-section); border-bottom: 1px solid var(--wf-border); font-size: .85rem; }
+    .wf-msg-who { font-weight: 600; }
+    .wf-msg-when { color: var(--wf-muted); font-size: .8rem; }
+    .wf-msg-body { padding: .85rem; font-size: .9rem; line-height: 1.55; }
+    .wf-msg--staff { border-left: 3px solid var(--brand); }
+    .wf-msg--staff .wf-msg-head { background: color-mix(in srgb, var(--brand) 8%, #fff); }
+    .wf-thread { max-height: 60vh; overflow-y: auto; }
+
+    /* Main content left, detail sidebar right (ticket detail) */
+    .wf-layout--reverse { grid-template-columns: 1fr 280px; }
+    @media (max-width: 900px) { .wf-layout--reverse { grid-template-columns: 1fr; } }
+
+    /* Attachment drop zone */
+    .wf-drop {
+        display: flex; justify-content: center; align-items: center;
+        border: 1px dashed var(--wf-border); border-radius: var(--wf-radius);
+        background: var(--wf-section); padding: 1rem; margin-top: .35rem;
+    }
+    .wf-drop.is-over { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 6%, #fff); }
+    .wf-drop-cta { color: var(--brand); font-weight: 600; cursor: pointer; font-size: .9rem; }
+    .wf-drop-hint { display: block; color: var(--wf-muted); font-size: .8rem; margin-top: .2rem; }
+
+    /* Invoice status bar + totals block */
+    .wf-invoice-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .wf-totals { margin-left: auto; width: min(320px, 100%); }
+
+    /* Product card image + order-form intro */
+    .wf-card-img { width: 100%; height: auto; border-radius: var(--wf-radius); margin-bottom: .6rem; display: block; }
+    .wf-product-intro { display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1rem; }
+    .wf-product-intro img { max-width: 140px; height: auto; border-radius: var(--wf-radius); }
+    @media (max-width: 620px) { .wf-product-intro { flex-direction: column; } }
+
+    /* Order summary follows the form on long config pages */
+    .wf-sticky { position: sticky; top: 1rem; }
+    @media (max-width: 900px) { .wf-sticky { position: static; } }
+
+    /* Storefront hero band */
+    .wf-hero {
+        background: var(--wf-bg); border-bottom: 1px solid var(--wf-border);
+        padding: 30px 0;
+    }
+    .wf-hero h1, .wf-hero h2 {
+        color: var(--brand); font-weight: 400; margin-top: 0;
+        font-family: Raleway, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    /* Markdown authored in the admin renders as plain prose — links follow the
+       reference, where every anchor is brand-coloured. */
+    .wf-hero a, .wf-page article a { color: var(--brand); }
+
+    /* Cart quantity stepper + coupon row */
+    .wf-qty { display: inline-flex; align-items: center; gap: .4rem; }
+    .wf-qty-value { min-width: 2rem; text-align: center; font-weight: 600; }
+    .wf-coupon { display: flex; align-items: flex-end; gap: .5rem; margin-bottom: .5rem; }
+    .wf-coupon > :first-child { flex: 1; min-width: 0; }
+
+    /* ── 5b. Storefront product card ────────────────────────────────────────
+       The reference portal's product card is one row, not a stack: the feature
+       list on the left, and a right-hand buy column holding "Starting from",
+       the price, the billing cycle and the Order Now button. Two per row at
+       desktop width — `auto-fill, minmax(240px, …)` gave three narrow columns,
+       which is what made our cards look nothing like the reference even when
+       the contents matched. */
+    .wf-cards--products { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    @media (max-width: 820px) { .wf-cards--products { grid-template-columns: 1fr; } }
+
+    .wf-prod-body { display: flex; gap: .8rem; align-items: flex-start; padding: .75rem 1rem 1rem; flex: 1; }
+    .wf-prod-feat { flex: 1 1 auto; min-width: 0; font-size: .72rem; line-height: 1.35; }
+    /* Descriptions are authored as a bullet list in the admin. Markers are replaced
+       with a brand tick so the list reads as a feature list rather than prose. */
+    .wf-prod-feat ul { list-style: none; margin: 0; padding: 0; }
+    .wf-prod-feat li { position: relative; padding-inline-start: 1.25rem; color: var(--brand); }
+
+    /* Default marker for any description authored by hand in the admin, which has no
+       icon class on its items. */
+    .wf-prod-feat li::before {
+        content: '✔'; position: absolute; inset-inline-start: 0;
+        color: var(--brand); font-size: .75em;
+    }
+
+    /* The reference storefront gives each feature row its own Font Awesome glyph rather
+       than a repeated tick. Font Awesome is not loaded here — the theme's icons are
+       inline SVG Blade components — and a product description is raw HTML from the
+       database, so it cannot render a Blade component. The shapes are therefore attached
+       from CSS, keyed off the class seed-catalogue.php puts on each <li>.
+       `mask` rather than `background-image` so a single monochrome SVG picks up the brand
+       colour from currentColor, and changing the brand needs no new assets. */
+    .wf-prod-feat li.f-shield::before,
+    .wf-prod-feat li.f-ports::before,
+    .wf-prod-feat li.f-server::before,
+    .wf-prod-feat li.f-sync::before,
+    .wf-prod-feat li.f-check::before,
+    .wf-prod-feat li.f-history::before {
+        content: ''; width: .95em; height: .95em; top: .12em;
+        background: currentColor;
+        -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+        -webkit-mask-position: center; mask-position: center;
+        -webkit-mask-size: contain; mask-size: contain;
+    }
+
+    .wf-prod-feat li.f-shield::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1 3 5v6c0 5.25 3.84 10.16 9 11.4 5.16-1.24 9-6.15 9-11.4V5l-9-4zm0 5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm0 11.6a7.6 7.6 0 0 1-4.2-2.5c.05-1.6 3.2-2.5 4.2-2.5s4.15.9 4.2 2.5a7.6 7.6 0 0 1-4.2 2.5z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1 3 5v6c0 5.25 3.84 10.16 9 11.4 5.16-1.24 9-6.15 9-11.4V5l-9-4zm0 5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm0 11.6a7.6 7.6 0 0 1-4.2-2.5c.05-1.6 3.2-2.5 4.2-2.5s4.15.9 4.2 2.5a7.6 7.6 0 0 1-4.2 2.5z'/%3E%3C/svg%3E");
+    }
+    .wf-prod-feat li.f-ports::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 18.5a1.75 1.75 0 1 1 0 3.5 1.75 1.75 0 0 1 0-3.5zm0-5a6 6 0 0 1 4.24 1.76l-1.77 1.77a3.5 3.5 0 0 0-4.94 0l-1.77-1.77A6 6 0 0 1 12 13.5zm0-5a11 11 0 0 1 7.78 3.22l-1.77 1.77a8.5 8.5 0 0 0-12.02 0L4.22 11.72A11 11 0 0 1 12 8.5zm0-5a16 16 0 0 1 11.31 4.69l-1.77 1.77a13.5 13.5 0 0 0-19.08 0L.69 8.19A16 16 0 0 1 12 3.5z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 18.5a1.75 1.75 0 1 1 0 3.5 1.75 1.75 0 0 1 0-3.5zm0-5a6 6 0 0 1 4.24 1.76l-1.77 1.77a3.5 3.5 0 0 0-4.94 0l-1.77-1.77A6 6 0 0 1 12 13.5zm0-5a11 11 0 0 1 7.78 3.22l-1.77 1.77a8.5 8.5 0 0 0-12.02 0L4.22 11.72A11 11 0 0 1 12 8.5zm0-5a16 16 0 0 1 11.31 4.69l-1.77 1.77a13.5 13.5 0 0 0-19.08 0L.69 8.19A16 16 0 0 1 12 3.5z'/%3E%3C/svg%3E");
+    }
+    .wf-prod-feat li.f-server::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3h18a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm2 3v2h2V6H5zm-2 7h18a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1zm2 3v2h2v-2H5z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3h18a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm2 3v2h2V6H5zm-2 7h18a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1zm2 3v2h2v-2H5z'/%3E%3C/svg%3E");
+    }
+    .wf-prod-feat li.f-sync::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 4V1L8 5l4 4V6a6 6 0 1 1-5.66 4H4.26A8 8 0 1 0 12 4z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 4V1L8 5l4 4V6a6 6 0 1 1-5.66 4H4.26A8 8 0 1 0 12 4z'/%3E%3C/svg%3E");
+    }
+    .wf-prod-feat li.f-check::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+    }
+    .wf-prod-feat li.f-history::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 3a9 9 0 0 0-9 9H1l3.9 3.9.07.14L9 12H6a7 7 0 1 1 2.05 4.95l-1.42 1.42A9 9 0 1 0 13 3zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 3a9 9 0 0 0-9 9H1l3.9 3.9.07.14L9 12H6a7 7 0 1 1 2.05 4.95l-1.42 1.42A9 9 0 1 0 13 3zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z'/%3E%3C/svg%3E");
+    }
+    .wf-prod-feat p { margin: 0 0 .2rem; color: var(--brand); }
+
+    .wf-prod-buy { flex: 0 0 auto; width: 8.5rem; text-align: center; }
+    @media (max-width: 520px) {
+        .wf-prod-body { flex-direction: column; }
+        .wf-prod-buy { width: 100%; }
+    }
+    .wf-prod-buy .wf-price-from { margin-top: 0; }
+    .wf-prod-buy .wf-price { font-size: 1.15rem; font-weight: 400; display: block; margin: .1rem 0; }
+    .wf-prod-cycle { display: block; font-size: .75rem; color: var(--wf-muted); margin-bottom: .55rem; }
+    .wf-prod-buy .wf-btn { width: 100%; justify-content: center; }
+    .wf-prod-buy .wf-btn + .wf-btn { margin-top: .4rem; }
+
+    /* ── 5c. Order summary panel (cart / checkout) ──────────────────────────
+       Grey heading, not brand: the reference reserves the brand colour for the
+       Checkout call to action inside it, and a brand-on-brand panel buries it. */
+    /* ── Invoice head ───────────────────────────────────────────────────────
+       The reference states the invoice's condition in words rather than a small badge:
+       number on the left, a large status word on the right with the due date and the pay
+       action under it. */
+    .wf-inv-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+    .wf-inv-number { font-size: 1.9rem; font-weight: 400; color: var(--wf-ink); margin: 0; }
+    .wf-inv-status-block { text-align: center; min-width: 12rem; }
+    .wf-inv-status { font-size: 1.65rem; font-weight: 700; letter-spacing: .01em; text-transform: uppercase; }
+    .wf-inv-status--unpaid { color: #c9302c; }
+    .wf-inv-status--paid { color: #3c9763; }
+    .wf-inv-status--other { color: #ec971f; }
+    .wf-inv-due { font-size: .82rem; color: var(--wf-text); margin-top: .15rem; }
+
+    /* Green pay action: on the reference the brand colour carries navigation, and paying
+       is the one green control on the page. */
+    .wf-btn--pay { background: #5cb85c; border-color: #4cae4c; }
+    .wf-btn--pay:hover { background: #4cae4c; border-color: #449d44; }
+
+    .wf-inv-meta { margin-bottom: 1.25rem; }
+    .wf-inv-meta-right { text-align: end; }
+    .wf-inv-meta-right .wf-select { max-width: 16rem; margin-inline-start: auto; }
+    .wf-inv-label { font-weight: 700; color: var(--wf-ink); margin-bottom: .2rem; }
+
+    /* Apply Credit reads as an offer rather than a warning, so the reference gives it a
+       green band instead of the brand colour. */
+    .wf-creditbox .wf-panel-heading { background: #dff0d8; border-color: #d6e9c6; color: #3c763d; }
+    .wf-creditbox .wf-panel-heading .wf-head-icon { color: #3c763d; }
+    .wf-creditbox .wf-btn { background: #5cb85c; border-color: #4cae4c; }
+    .wf-creditbox .wf-btn:hover { background: #4cae4c; border-color: #449d44; }
+
+    /* Itemised block above the totals: product name, its category, then one row per
+       configured option — the reference's summary, which shows what makes up the figure. */
+    .wf-summary-item { padding-bottom: .5rem; margin-bottom: .5rem; border-bottom: 1px solid var(--wf-panel-border); }
+    .wf-summary-item-name { display: block; color: var(--brand); font-weight: 700; }
+    .wf-summary-item-cat { display: block; color: var(--brand); font-style: italic; font-size: .8rem; }
+    .wf-total-row--opt { font-size: .8rem; color: var(--wf-muted); }
+    .wf-total-row--opt span:first-child { padding-inline-start: .25rem; }
+
+    /* Sales-help note under the configure column, as on the reference: a pale amber band
+       rather than a brand-coloured one, so it reads as help and not as an error. */
+    .wf-help-note {
+        margin-top: 1rem; padding: 12px 15px; border: 1px solid #faebcc; border-radius: var(--wf-radius);
+        background: #fcf8e3; color: #8a6d3b; font-size: .82rem;
+    }
+    .wf-help-note a { color: var(--brand); font-weight: 700; }
+    .wf-help-ico {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 1.05rem; height: 1.05rem; margin-inline-end: .35rem; border-radius: 50%;
+        background: #8a6d3b; color: #fcf8e3; font-size: .7rem; font-weight: 700;
+    }
+
+    .wf-summary { border: 1px solid var(--wf-border); border-radius: var(--wf-radius); background: var(--wf-bg); overflow: hidden; }
+    .wf-summary-head {
+        background: #6f7681; color: #fff; text-align: center;
+        padding: .7rem 1rem; font-size: 1.05rem; font-weight: 600;
+    }
+    .wf-summary-body { padding: 1rem; }
+    .wf-summary-total { text-align: center; margin: .9rem 0 .25rem; }
+    .wf-summary-total strong { display: block; font-size: 1.7rem; font-weight: 400; color: var(--wf-text); }
+    .wf-summary-total span { font-size: .8rem; color: var(--wf-muted); }
+    .wf-summary-body .wf-btn--checkout { width: 100%; justify-content: center; font-size: 1.05rem; padding: .8rem 1rem; }
+    .wf-summary-foot { text-align: center; padding: .5rem 1rem .9rem; }
+    .wf-summary-foot a { color: var(--wf-muted); font-size: .82rem; text-decoration: none; }
+    .wf-summary-foot a:hover { color: var(--brand); text-decoration: underline; }
+
+    /* Cart line-item table: brand header row, product name as a heading. */
+    .wf-table--cart thead th { background: var(--brand); color: var(--brand-contrast); font-weight: 600; }
+    .wf-cart-name { font-size: 1.05rem; color: var(--brand); }
+    .wf-cart-edit { margin-inline-start: .5rem; font-size: .82rem; }
+    .wf-cart-cat { display: block; font-size: .82rem; color: var(--brand); }
+    .wf-cart-opt { display: block; font-size: .78rem; color: var(--brand); }
+    .wf-cart-cycle { display: block; font-size: .78rem; color: var(--wf-muted); }
+    .wf-cart-remove {
+        background: none; border: 0; cursor: pointer; color: var(--wf-muted);
+        font-size: 1.2rem; line-height: 1; padding: 0 .25rem;
+    }
+    .wf-cart-remove:hover { color: #c9302c; }
+    .wf-cart-bar { display: flex; justify-content: flex-end; padding: .6rem 0; }
+
+    /* Promo-code block — a single open tab above a bordered body, as on the reference. */
+    .wf-promo { margin-top: .25rem; }
+    .wf-promo-tab {
+        display: inline-block; padding: .55rem 1rem; font-size: .88rem;
+        border: 1px solid var(--wf-border); border-bottom: 0;
+        border-radius: var(--wf-radius) var(--wf-radius) 0 0;
+        background: var(--wf-bg); color: var(--wf-label);
+    }
+    .wf-promo-body { border: 1px solid var(--wf-border); border-radius: 0 var(--wf-radius) var(--wf-radius); padding: 1rem; background: var(--wf-bg); }
+    .wf-promo-body .wf-input { margin-bottom: .5rem; }
+    .wf-promo-body .wf-btn { width: 100%; justify-content: center; }
+
+    /* ── 5d. Checkout: account picker, payment box, credit choice ───────────── */
+    .wf-legend {
+        display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0 1rem;
+        color: var(--brand); font-size: 1.05rem; white-space: nowrap;
+    }
+    .wf-legend::before, .wf-legend::after { content: ''; height: 1px; background: var(--wf-border); flex: 1; }
+
+    .wf-choice { border: 1px solid var(--wf-border); border-radius: var(--wf-radius); overflow: hidden; }
+    .wf-choice-opt { display: flex; gap: .75rem; padding: .9rem 1rem; align-items: flex-start; cursor: pointer; }
+    .wf-choice-opt + .wf-choice-opt { border-top: 1px solid var(--wf-border); background: var(--wf-section); }
+    .wf-choice-opt input { margin-top: .2rem; accent-color: var(--brand); width: 1.05rem; height: 1.05rem; }
+    .wf-choice-name { font-weight: 600; }
+    .wf-choice-sub { display: block; font-size: .82rem; color: var(--wf-muted); line-height: 1.5; }
+    .wf-badge {
+        display: inline-block; margin-inline-start: .4rem; padding: .05rem .4rem;
+        background: #79b93c; color: #fff; border-radius: 3px;
+        font-size: .68rem; font-weight: 700; vertical-align: 2px;
+    }
+
+    /* Payment total — the reference shows it in a green confirmation panel. */
+    .wf-paybox {
+        background: #eaf6ec; border: 1px solid #bcdfc4; border-radius: var(--wf-radius);
+        padding: 1rem; text-align: center; color: #2d6a38; font-size: .95rem; line-height: 1.9;
+    }
+    .wf-paybox strong { color: #24572e; }
+
+    .wf-creditbox { background: var(--wf-section); border: 1px solid var(--wf-border); border-radius: var(--wf-radius); padding: 1rem; }
+    .wf-creditbox > p { margin: 0 0 .6rem; color: var(--brand); font-size: .9rem; }
+
+    .wf-tos { display: flex; align-items: center; justify-content: center; gap: .5rem; margin: 1.5rem 0; font-size: .9rem; }
+    .wf-tos input { width: 1.15rem; height: 1.15rem; accent-color: var(--brand); }
+    .wf-tos a { color: var(--brand); }
+    .wf-center-action { text-align: center; margin: 1.25rem 0; }
+    .wf-center-action .wf-btn { font-size: 1.05rem; padding: .75rem 1.5rem; }
+
+    /* Order confirmation — the pink call-out holding the order number. */
+    .wf-confirm-num {
+        background: color-mix(in srgb, var(--brand) 8%, #fff);
+        border: 1px solid color-mix(in srgb, var(--brand) 20%, transparent);
+        border-radius: var(--wf-radius); padding: 1.1rem; text-align: center;
+        color: var(--brand); font-size: 1.05rem; margin: 1.25rem 0;
+    }
+    .wf-confirm-num b { font-size: 1.5rem; font-weight: 600; margin-inline-start: .4rem; }
+
+    /* ── 5e. Table toolbar ("Showing 1 to 1 of 1 entries" + search) ─────────── */
+    .wf-dt-bar {
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        flex-wrap: wrap; background: var(--brand); color: var(--brand-contrast);
+        padding: .6rem 1rem; border-radius: var(--wf-radius) var(--wf-radius) 0 0;
+        font-size: .85rem;
+    }
+    .wf-dt-bar .wf-input { max-width: 15rem; margin: 0; }
+    .wf-dt-foot {
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        flex-wrap: wrap; padding: .7rem 0; font-size: .85rem; color: var(--wf-muted);
+    }
+
+    /* ── 5f. Manage Product tile ────────────────────────────────────────────
+       Reference product page: a large tile on the left with the product name and
+       a status stripe along its bottom edge, and a centred key/value column on
+       the right. */
+    .wf-manage { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+    @media (max-width: 780px) { .wf-manage { grid-template-columns: 1fr; } }
+    .wf-prodtile { background: var(--wf-section); border-radius: var(--wf-radius); overflow: hidden; text-align: center; }
+    .wf-prodtile-body { padding: 2rem 1.25rem 2.25rem; }
+    .wf-prodtile-icon {
+        width: 8.5rem; height: 8.5rem; margin: 0 auto 1.5rem; border-radius: 50%;
+        background: var(--brand); color: var(--brand-contrast);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .wf-prodtile-icon svg { width: 4rem; height: 4rem; }
+    .wf-prodtile-name { font-size: 1.35rem; color: var(--brand); font-weight: 400; line-height: 1.35; }
+    .wf-prodtile-cat { font-size: .95rem; color: var(--brand); margin-top: .35rem; }
+    .wf-prodtile-status {
+        padding: .5rem 1rem; color: #fff; font-size: .82rem; font-weight: 700;
+        letter-spacing: .05em; text-transform: uppercase; background: #6b7280;
+    }
+    .wf-prodtile-status--active { background: #2e9e5b; }
+    .wf-prodtile-status--pending { background: #f0a020; }
+    .wf-prodtile-status--suspended { background: #d68102; }
+    .wf-prodtile-status--cancelled, .wf-prodtile-status--terminated { background: #c9302c; }
+
+    .wf-facts { text-align: center; }
+    .wf-facts dt { color: var(--brand); font-size: 1.05rem; margin-top: 1.1rem; }
+    .wf-facts dt:first-child { margin-top: 0; }
+    .wf-facts dd { margin: .2rem 0 0; color: var(--brand); font-size: .95rem; }
+
+    /* ── 5g. Auth side rail ("Already Registered?" / login help) ────────────── */
+    /* 3/9 split of the container, matching the reference's col-md-3 + col-md-9 row. */
+    .wf-authgrid { display: grid; grid-template-columns: 25% 1fr; gap: 30px; align-items: start; }
+    @media (max-width: 820px) { .wf-authgrid { grid-template-columns: 1fr; } }
+    .wf-rail-note { padding: 15px; margin: 0; color: var(--brand); font-size: 13.5px; line-height: 1.6; }
+
+    /* Icon inside a form control, as on the reference's registration form. */
+    .wf-input-ico { position: relative; }
+    .wf-input-ico > svg, .wf-input-ico > .wf-ico {
+        position: absolute; inset-inline-start: .7rem; top: 50%; transform: translateY(-50%);
+        width: 1rem; height: 1rem; color: var(--wf-muted); pointer-events: none;
+    }
+    .wf-input-ico > .wf-ico svg { width: 100%; height: 100%; }
+    .wf-input-ico .wf-input, .wf-input-ico .wf-select { padding-inline-start: 2.25rem; }
+
+    /* Password strength meter */
+    .wf-pw { margin-top: .5rem; }
+    .wf-pw-track { height: 6px; border-radius: 3px; background: var(--wf-border); overflow: hidden; }
+    .wf-pw-fill { height: 100%; width: 0; border-radius: 3px; transition: width .2s, background .2s; background: #c9302c; }
+    .wf-pw-label { display: block; margin-top: .3rem; font-size: .78rem; color: var(--wf-muted); }
+
+    /* ── 5h. De-dark shim for not-yet-converted default pages ───────────────
+       The default theme uses `bg-primary-800` (a dark shade of the brand colour)
+       as a *surface* on some detail pages (service/ticket show, invoice blocks),
+       with light text on top. Under this light WHMCS design that reads as a dark
+       box on a light page. Remap those surfaces to a light Six panel and restore
+       readable text, so every page is consistent even before it's individually
+       converted to explicit .wf-panel markup. Converted pages don't use these
+       classes, so this only affects the remainder. */
+    .bg-primary-800,
+    .bg-primary-700 {
+        background-color: var(--wf-bg) !important;
+        border: 1px solid var(--wf-border);
+        color: var(--wf-text) !important;
+    }
+    .bg-primary-600 { background-color: var(--wf-section) !important; }
+    /* The default puts near-white text (text-primary-100) on those dark surfaces;
+       darken it so it's legible on the new light background. */
+    .bg-primary-800 .text-primary-100,
+    .bg-primary-700 .text-primary-100,
+    .text-primary-100 { color: var(--wf-label) !important; }
+
+    /* ── 6. Footer ─────────────────────────────────────────────────────── */
+    /* full width, but never grow: the parent is a COLUMN flex container, so a
+       flex-basis of 100% would stretch the footer down the whole page.
+       margin-top:auto keeps it pinned to the bottom when content is short. */
+    .wf-footer {
+        background: var(--wf-section); border-top: 1px solid var(--brand);
+        color: var(--brand); margin-top: auto; width: 100%; flex: 0 0 auto;
+        padding: 20px 10px;
+    }
+    .wf-footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .wf-footer-copy { margin: 0; font-size: 12.6px; color: var(--brand); }
+    .wf-totop {
+        background: var(--brand); color: var(--brand-contrast); border: 0;
+        border-radius: 3px; width: 31px; height: 33px; cursor: pointer; font-size: 12.6px;
+    }
+    .wf-totop:hover { background: var(--brand-dark); }
