@@ -72,8 +72,31 @@
                     <span class="wf-chevron">&#9650;</span>
                 </div>
                 <div class="wf-panel-body">
-                    <div class="wf-list-title">{{ $user->name }}</div>
+                    {{-- The reference shows the customer's billing identity here, not just a
+                         name: company, contact, street, city/state/postcode, country. Every
+                         line is a custom property, so it appears only once the customer has
+                         filled it in and nothing is invented for an empty account. --}}
+                    @php
+                        $props = $user->properties()->pluck('value', 'key');
+                        $cityLine = collect([$props['city'] ?? null, $props['state'] ?? null, $props['zip'] ?? null])
+                            ->filter()->implode(', ');
+                    @endphp
+
+                    @if (!empty($props['company_name']))
+                        <div class="wf-list-title">{{ $props['company_name'] }}</div>
+                        <span class="wf-list-sub"><em>{{ $user->name }}</em></span>
+                    @else
+                        <div class="wf-list-title">{{ $user->name }}</div>
+                    @endif
+
                     <span class="wf-list-sub">{{ $user->email }}</span>
+
+                    @foreach ([$props['address'] ?? null, $props['address2'] ?? null, $cityLine, $props['country'] ?? null] as $line)
+                        @if (filled($line))
+                            <span class="wf-list-sub">{{ $line }}</span>
+                        @endif
+                    @endforeach
+
                     <a class="wf-btn wf-btn--sm wf-btn--block" style="margin-top:.75rem"
                        href="{{ route('account') }}" wire:navigate>
                         {{ __('dashboard.update_details') }}
