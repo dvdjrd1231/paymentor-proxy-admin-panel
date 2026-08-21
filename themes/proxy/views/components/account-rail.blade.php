@@ -11,7 +11,17 @@
     <div class="wf-panel wf-panel--brand">
         <div class="wf-panel-heading"><span>{{ __('dashboard.credit_balance') }}</span><span class="wf-chevron">▲</span></div>
         <div class="wf-panel-body" style="text-align:center">
-            @php($accountCredit = Auth::user()->credits()->where('currency_code', session('currency', config('settings.default_currency')))->first())
+            {{-- A full @php block, not the inline @php(...) form. Blade compiled that
+                 expression into an unterminated PHP open tag — no semicolon and no closing
+                 tag — so every line after it was parsed as PHP and the component died with
+                 "syntax error, unexpected token class". The inline form cannot cope with
+                 calls nested this deep. --}}
+            @php
+                $accountCredit = Auth::user()
+                    ->credits()
+                    ->where('currency_code', session('currency', config('settings.default_currency')))
+                    ->first();
+            @endphp
             <div class="wf-stat-num">{{ $accountCredit?->formatted_amount ?? __('dashboard.no_credit') }}</div>
             @if (Route::has('account.credits') && config('settings.credits_enabled'))
                 <a class="wf-btn wf-btn--sm wf-btn--block" href="{{ route('account.credits') }}" wire:navigate>{{ __('dashboard.add_funds') }}</a>
