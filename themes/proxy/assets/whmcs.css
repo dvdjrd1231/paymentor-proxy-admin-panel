@@ -757,8 +757,20 @@
     .wf-prod-buy .wf-price-from { margin-top: 0; }
     .wf-prod-buy .wf-price { font-size: 1.15rem; font-weight: 400; display: block; margin: .1rem 0; }
     .wf-prod-cycle { display: block; font-size: .75rem; color: var(--wf-muted); margin-bottom: .55rem; }
-    .wf-prod-buy .wf-btn { width: 100%; justify-content: center; }
+    /* The reference renders this as Bootstrap's `btn btn-sm`: a small control sized to its
+       own label, not stretched to the column. Ours filled the full 8.5rem, which is what
+       made the button read as oversized next to the reference card. Metrics below are
+       btn-sm's — 5px/10px padding at 12px — so the two match. */
+    .wf-prod-buy .wf-btn {
+        width: auto; display: inline-flex; justify-content: center;
+        padding: 5px 10px; font-size: 12px; line-height: 1.5;
+    }
     .wf-prod-buy .wf-btn + .wf-btn { margin-top: .4rem; }
+    @media (max-width: 520px) {
+        /* Stacked on a narrow screen, where a content-width button next to nothing else
+           looks stranded. */
+        .wf-prod-buy .wf-btn { width: 100%; }
+    }
 
     /* ── 5c. Order summary panel (cart / checkout) ──────────────────────────
        Grey heading, not brand: the reference reserves the brand colour for the
