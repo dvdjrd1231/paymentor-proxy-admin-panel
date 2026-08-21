@@ -8,21 +8,26 @@
 --}}
 @if (config('settings.captcha') && config('settings.captcha') !== 'disabled')
     <div class="wf-captcha">
-        <div wire:ignore>
-            @switch(config('settings.captcha'))
-                @case('recaptcha-v2')
-                    <x-captcha.recaptcha-v2 :$form />
-                    @break
-                @case('recaptcha-v3')
-                    <x-captcha.recaptcha-v3 :$form />
-                    @break
-                @case('turnstile')
-                    <x-captcha.turnstile :$form />
-                    @break
-                @case('hcaptcha')
-                    <x-captcha.hcaptcha :$form />
-                    @break
-            @endswitch
+        @if (config('settings.captcha_site_key') && config('settings.captcha_secret'))
+            <div wire:ignore>
+                @switch(config('settings.captcha'))
+                    @case('recaptcha-v2')
+                        <x-captcha.recaptcha-v2 :$form />
+                        @break
+                    @case('recaptcha-v3')
+                        <x-captcha.recaptcha-v3 :$form />
+                        @break
+                    @case('turnstile')
+                        <x-captcha.turnstile :$form />
+                        @break
+                    @case('hcaptcha')
+                        <x-captcha.hcaptcha :$form />
+                        @break
+                @endswitch
+            </div>
+        @else
+            <span class="wf-error">CAPTCHA is enabled but its site key and secret are not configured.</span>
+        @endif
         </div>
 
         @error('captcha')

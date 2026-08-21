@@ -39,7 +39,7 @@
                     <div class="wf-panel-footer">
                         <a class="wf-btn" wire:navigate
                             href="{{ route('products.checkout', ['category' => $category, 'product' => $product->slug]) }}">
-                            {{ __('product.add_to_cart') }}
+                            <span class="wf-btn-ico"><x-ri-shopping-cart-2-fill /></span>{{ __('theme.order_now') }}
                         </a>
                     </div>
                 @endif

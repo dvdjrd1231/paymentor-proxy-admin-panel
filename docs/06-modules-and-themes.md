@@ -84,6 +84,34 @@ dropped** — take a backup first (`scripts/backup.sh`).
 
 ## Themes
 
+## Catalogue management
+
+Categories and products are database records, so the storefront and product detail pages
+always use the current values saved in the admin panel. Edit them from the admin catalogue
+screens; changes to names, descriptions, category placement, prices, and visibility are
+immediately reflected on the client area after clearing the view cache if needed.
+
+The optional `scripts/seed-catalogue.php --apply` command only creates missing proxy
+categories/products and initializes their ProxyPanel settings. Existing category and product
+content is preserved, including admin edits and hidden products. It is safe to use as a
+bootstrap/synchronization command without making the script the source of truth for storefront
+copy.
+
+## Login and registration CAPTCHA
+
+CAPTCHA is rendered on the login and registration forms and verified server-side on every
+submission. Configure it in **Admin → Settings → Security**:
+
+1. Select a provider and version.
+2. Enter the matching site key and secret from that provider's dashboard.
+3. Clear the application/config cache and reload the auth page.
+
+The message `This reCAPTCHA is for testing purposes only` is emitted by Google when the
+configured site key is one of Google's public test keys. It is expected for local testing,
+but it must be replaced with a site key registered for the application's real host before
+production. The site's allowed domain must include the exact hostname, without the scheme or
+port.
+
 Themes use `qirolab/laravel-themer`. Views are overridden by file path; no core file is
 edited.
 

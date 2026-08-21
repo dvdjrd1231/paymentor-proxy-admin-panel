@@ -73,10 +73,6 @@
                                         <span class="wf-btn-ico"><x-ri-shopping-cart-2-fill /></span>{{ __('theme.order_now') }}
                                     </a>
                                 @endif
-                                <a class="wf-btn wf-btn--sm wf-btn--ghost"
-                                    href="{{ route('products.show', ['category' => $product->category, 'product' => $product->slug]) }}" wire:navigate>
-                                    {{ __('common.button.view') }}
-                                </a>
                             </div>
                         </div>
                     </div>
