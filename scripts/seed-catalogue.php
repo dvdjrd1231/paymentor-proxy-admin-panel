@@ -38,6 +38,13 @@ const TIERS = [
     'Ruby' => [31500, 800.00, '4G'],
 ];
 
+/** IPv4 tiers shown by the reference storefront. */
+const IPV4_TIERS = [
+    '/26 (Dedicated)' => [64, 190.00, '1G'],
+    '/25 (Dedicated)' => [128, 350.00, '2G'],
+    '/24 (Dedicated)' => [256, 640.00, '4G'],
+];
+
 /**
  * Panel plan tag per bandwidth tier and protocol.
  *
@@ -91,6 +98,14 @@ const PERIODS = [
         'billing_unit' => 'day',
         'prices' => [4, 5, 13, 22, 28],
     ],
+    'ipv4-monthly' => [
+        'category' => ['IPv4 Proxy Monthly Plans', 'ipv4-proxy-monthly-plans', 'Dedicated IPv4 residential proxy plans billed monthly.'],
+        'suffix' => 'I4M',
+        'type' => 'recurring',
+        'billing_period' => 1,
+        'billing_unit' => 'month',
+        'tiers' => IPV4_TIERS,
+    ],
 ];
 
 echo $apply ? "Applying.\n\n" : "Dry run — nothing will be written. Re-run with --apply.\n\n";
@@ -119,11 +134,9 @@ foreach (PERIODS as $period) {
     }
 
     if (!$category) {
-        $category = Category::make(['name' => $name, 'slug' => $slug, 'description' => $description]);
-    }
-
-    if ($apply) {
-        $category->fill(['name' => $name, 'slug' => $slug, 'description' => $description])->save();
+        $category = $apply
+            ? Category::create(['name' => $name, 'slug' => $slug, 'description' => $description])
+            : Category::make(['name' => $name, 'slug' => $slug, 'description' => $description]);
     }
 
     $categories[$period['suffix']] = $category;
@@ -150,15 +163,22 @@ echo PHP_EOL;
 // ── The real product line ────────────────────────────────────────────────────────────────
 foreach (PERIODS as $period) {
     $category = $categories[$period['suffix']];
+    $tiers = $period['tiers'] ?? TIERS;
 
-    foreach (TIERS as $tierIndex => [$ports, $httpPrice, $bandwidth]) {
-        $variants = [
-            'HTTP Proxy' => ['http', $period['prices'][$tierIndex]],
-            'Socks5h' => ['socks5', $period['prices'][$tierIndex] * SOCKS5_MULTIPLIER],
-        ];
+    foreach ($tiers as $tier => [$ports, $httpPrice, $bandwidth]) {
+        $periodPrice = $period['prices'][$tier] ?? $httpPrice;
+        $variants = isset($period['tiers'])
+            ? ['HTTP Proxy' => ['http', $periodPrice]]
+            : [
+                'HTTP Proxy' => ['http', $periodPrice],
+                'Socks5h' => ['socks5', $periodPrice * SOCKS5_MULTIPLIER],
+            ];
 
         foreach ($variants as $label => [$protocol, $price]) {
-            $name = sprintf('IPv6 Residential %s - %s - %s', $tier, $label, $period['suffix']);
+            $family = isset($period['tiers']) ? 'IPv4 Residential' : 'IPv6 Residential';
+            $name = isset($period['tiers'])
+                ? sprintf('%s %s - M', $family, $tier)
+                : sprintf('%s %s - %s - %s', $family, $tier, $label, $period['suffix']);
             $slug = Str::slug($name);
             $existing = Product::where('slug', $slug)->first();
 
@@ -174,7 +194,8 @@ foreach (PERIODS as $period) {
             }
 
         $description = sprintf(
-            '<ul><li>Anonymous Residential IPv6 Proxy</li><li>%,d %s Ports</li><li>Private Proxy Server</li><li>Rotating Proxies or Static Proxies</li><li>IP Whitelist Authentication</li><li>User/Password Authentication</li><li>Up-To %d IP whitelist</li><li>Configurable IP Proxies rotation time</li></ul>',
+            '<ul><li>Dedicated Residential %s Proxy</li><li>%,d %s Proxies</li><li>Private Proxy Server</li><li>Rotating Proxies or Static Proxies</li><li>IP Whitelist Authentication</li><li>User/Password Authentication</li><li>Up-To %d IP whitelist</li><li>Configurable IP Proxies rotation time</li></ul>',
+            $family,
             $ports,
             $protocol === 'socks5' ? 'Socks5h' : 'HTTP Proxy',
             match (true) {
@@ -195,14 +216,6 @@ foreach (PERIODS as $period) {
                 'allow_quantity' => 'combined',
                 'hidden' => false,
             ]);
-
-            if ($existing) {
-                $product->update([
-                    'category_id' => $category->id,
-                    'description' => $description,
-                    'hidden' => false,
-                ]);
-            }
 
         // Everything the ProxyPanel module needs to provision this product.
             foreach ([
