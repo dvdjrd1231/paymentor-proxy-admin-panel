@@ -988,6 +988,37 @@
     }
     .wf-totop:hover { background: var(--brand-dark); }
 
+    /* ── Markdown editor toolbar ────────────────────────────────────────────
+       EasyMDE draws each toolbar button as an empty <i class="fa fa-…">, expecting Font
+       Awesome. This theme does not load Font Awesome, so every button rendered as a blank
+       square. The glyphs are supplied here as text instead: no icon font to ship, and it
+       matches the reference, whose toolbar is lettered (B, I, H) with symbols for the rest. */
+    .editor-toolbar button { color: #fff !important; background: var(--brand); border: 0; border-radius: 3px; min-width: 30px; height: 30px; margin: 0 2px; }
+    .editor-toolbar button:hover { background: var(--brand-dark); opacity: 1; }
+    .editor-toolbar button.active { background: var(--brand-dark); }
+    .editor-toolbar i.separator { border-left: 1px solid var(--wf-border); border-right: 0; margin: 0 4px; }
+
+    /* The icon element is emptied and the glyph attached to the button, so a missing font
+       cannot leave a blank control. */
+    .editor-toolbar button i.fa { display: none; }
+    .editor-toolbar button::after { font-size: .82rem; font-weight: 700; line-height: 1; }
+    .editor-toolbar button.bold::after { content: 'B'; }
+    .editor-toolbar button.italic::after { content: 'I'; font-style: italic; }
+    .editor-toolbar button.heading::after { content: 'H'; }
+    .editor-toolbar button.quote::after { content: '\201C'; }
+    .editor-toolbar button.unordered-list::after { content: '\2022\2009\2013'; }
+    .editor-toolbar button.ordered-list::after { content: '1.'; }
+    .editor-toolbar button.link::after { content: '\1F517'; }
+    .editor-toolbar button.image::after { content: '\1F5BC'; }
+    .editor-toolbar button.code::after { content: '</>'; }
+    .editor-toolbar button.table::after { content: '\25A6'; }
+    .editor-toolbar button.horizontal-rule::after { content: '\2015'; }
+    .editor-toolbar button.preview::after { content: 'Preview'; }
+    .editor-toolbar button.side-by-side::after { content: '\25A5'; }
+    .editor-toolbar button.fullscreen::after { content: '\26F6'; }
+    .editor-toolbar button.guide::after { content: '?'; }
+    .editor-toolbar button.preview { min-width: auto; padding: 0 .55rem; }
+
     /* ── Notifications panel ────────────────────────────────────────────────
        Anchored under the header link, as on the reference: a white card with one
        row per fact and a coloured round glyph carrying the severity. */

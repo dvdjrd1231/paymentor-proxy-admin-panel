@@ -169,11 +169,15 @@
             </div>
             <div class="wf-panel-footer">
                 <div class="wf-totals">
+                    {{-- Sub Total is always shown, as on the reference. It used to be inside
+                         the tax condition, so a zero-rated invoice jumped straight from the
+                         line items to Credit and Total with nothing to add up. --}}
+                    <div class="wf-total-row">
+                        <span>{{ __('invoices.subtotal') }}</span>
+                        <span>{{ $invoice->formattedTotal->format($invoice->formattedTotal->subtotal) }}</span>
+                    </div>
+
                     @if ($invoice->formattedTotal->tax > 0)
-                        <div class="wf-total-row">
-                            <span>{{ __('invoices.subtotal') }}</span>
-                            <span>{{ $invoice->formattedTotal->format($invoice->formattedTotal->subtotal) }}</span>
-                        </div>
                         <div class="wf-total-row">
                             <span>{{ $invoice->tax->name }} ({{ $invoice->tax->rate }}%)</span>
                             <span>{{ $invoice->formattedTotal->formatted->tax }}</span>
