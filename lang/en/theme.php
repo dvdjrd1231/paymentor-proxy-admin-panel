@@ -201,6 +201,11 @@ return [
     'security_settings' => 'Security Settings',
     'tickets' => 'Tickets',
 
+    // Cart — guest checkout choice
+    'checkout_needs_account' => 'Your order is placed against an account, so you will need one to continue. Your cart is kept either way.',
+    'create_account_continue' => 'Create Account & Continue',
+    'already_have_account' => 'Already registered? Sign in',
+
     'configure' => 'Configure',
     'continue' => 'Continue',
     'not_selected' => 'Not selected',

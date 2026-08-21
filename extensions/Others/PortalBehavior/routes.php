@@ -18,6 +18,27 @@ Route::post('/cart/empty', function () {
     return back();
 })->middleware('web')->name('extensions.others.portal.cart.empty');
 
+// ── Leave the cart to sign in, and come back to it ──────────────────────────
+// Paymenter issues the invoice and the service against a user, so an order cannot be
+// completed anonymously. Core handles that by bouncing a guest who presses Checkout to the
+// login page — which offers no way to create an account, and drops the buyer somewhere they
+// then have to navigate back from and press Checkout a second time.
+//
+// The cart offers the choice up front instead, and sends the buyer through here so the
+// return trip is recorded: `url.intended` is what both the login and the registration
+// screens redirect to once they are done, putting the buyer back on the cart ready to
+// complete the order.
+//
+// The cart survives regardless — it is a database row keyed by a 30-day cookie rather than
+// session state — so this is about not losing the buyer, not about not losing the cart.
+Route::get('/cart/continue/{to}', function (string $to) {
+    abort_unless(in_array($to, ['login', 'register'], true), 404);
+
+    redirect()->setIntendedUrl(route('cart'));
+
+    return redirect()->route($to);
+})->middleware('web')->name('cart.continue');
+
 // ── Theme stylesheet ────────────────────────────────────────────────────────
 // The proxy theme's design system, ~60KB of static CSS.
 //
