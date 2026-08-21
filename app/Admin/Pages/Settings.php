@@ -17,6 +17,7 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class Settings extends Page implements HasForms
 {
@@ -84,6 +85,40 @@ class Settings extends Page implements HasForms
             ->statePath('data');
     }
 
+    /**
+     * Say which field blocked the save, and where it lives.
+     *
+     * Every tab is validated on submit, but only the open tab is on screen. A bad value on
+     * another tab — `ticket_mail_email` set to "support" is the one that prompted this —
+     * therefore rejected the form while the admin, sitting on Security, saw a Save button
+     * that simply did nothing: no message, no highlight, nothing in the log, because the
+     * request never reached save().
+     *
+     * Filament's own inline error still renders on the offending field; this adds the
+     * pointer to it, naming the setting and the tab so it can be found without hunting
+     * through all eleven.
+     */
+    public function onValidationError(ValidationException $exception): void
+    {
+        $tabs = collect(ClassesSettings::settings())
+            ->flatMap(fn ($settings, $group) => collect($settings)->mapWithKeys(
+                fn ($setting) => [$setting['name'] => ucwords(str_replace('-', ' ', $group))]
+            ));
+
+        $fields = collect($exception->validator->errors()->keys())
+            // Errors are keyed by the form's state path, e.g. `data.ticket_mail_email`.
+            ->map(fn ($key) => str_contains($key, '.') ? substr($key, strrpos($key, '.') + 1) : $key)
+            ->unique()
+            ->map(fn ($name) => isset($tabs[$name]) ? "{$name} ({$tabs[$name]} tab)" : $name);
+
+        Notification::make()
+            ->title('Not saved — check ' . $fields->implode(', '))
+            ->body($exception->validator->errors()->first())
+            ->danger()
+            ->persistent()
+            ->send();
+    }
+
     public function save(): void
     {
         Gate::authorize('has-permission', 'admin.settings.update');
@@ -96,13 +131,20 @@ class Settings extends Page implements HasForms
             ->keyBy('key');
 
         foreach ($data as $key => $value) {
-            // Get only the settings that have changed
-            $avSetting = (object) collect(ClassesSettings::settings())->flatten(1)->firstWhere('name', $key);
-            if (!$avSetting) {
+            // Get only the settings that have changed.
+            //
+            // The null check has to happen before the object cast, not after: `(object) null`
+            // produces an empty stdClass, which is truthy, so the guard as written never
+            // fired once and a stale field still reached the property writes below.
+            $definition = collect(ClassesSettings::settings())->flatten(1)->firstWhere('name', $key);
+
+            if (!$definition) {
                 // Ignore stale fields from a previous settings schema instead of breaking the
                 // entire Livewire save request.
                 continue;
             }
+
+            $avSetting = (object) $definition;
             $avSetting->value = $settings[$key]->value ?? $avSetting->default ?? null;
 
             if ($value !== $avSetting->value || (($avSetting->database_type ?? 'string') === 'boolean' && (bool) $value !== (bool) $avSetting->value)) {
