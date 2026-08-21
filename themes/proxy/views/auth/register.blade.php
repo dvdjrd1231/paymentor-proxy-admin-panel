@@ -252,20 +252,83 @@
             </div>
         </div>
 
-        {{-- ─────────────── Account Security ─────────────── --}}
+        {{-- ─────────────── Account Security ───────────────
+             The reference portal offers a generator and a live strength bar here. Both run
+             entirely in Alpine: the score is only a hint for the person filling the form,
+             and the rules that actually decide whether a password is accepted stay
+             server-side in core's validation, where they cannot be bypassed.
+
+             Generated characters come from crypto.getRandomValues rather than Math.random,
+             and after writing to the inputs an `input` event is dispatched so Livewire's
+             binding sees the new value — assigning `.value` alone would leave the component
+             holding an empty password and the form would fail validation. --}}
         <div class="wf-section">{{ __('theme.account_security') }}</div>
-        <div class="wf-grid">
+        <div class="wf-grid" x-data="{
+            score: 0,
+            reveal: false,
+            get label() {
+                return [
+                    @js(__('theme.password_strength_enter')), @js(__('theme.password_weak')),
+                    @js(__('theme.password_moderate')), @js(__('theme.password_moderate')),
+                    @js(__('theme.password_strong')),
+                ][this.score];
+            },
+            get colour() {
+                return ['#c9302c', '#c9302c', '#ec971f', '#5bc0de', '#3c9763'][this.score];
+            },
+            rate(value) {
+                if (!value) return this.score = 0;
+                let s = 0;
+                if (value.length >= 8) s++;
+                if (value.length >= 12) s++;
+                if (/[a-z]/.test(value) && /[A-Z]/.test(value)) s++;
+                if (/[0-9]/.test(value) && /[^A-Za-z0-9]/.test(value)) s++;
+                this.score = Math.min(s, 4);
+            },
+            generate() {
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*';
+                const bytes = new Uint32Array(16);
+                crypto.getRandomValues(bytes);
+                const pw = Array.from(bytes, b => chars[b % chars.length]).join('');
+
+                for (const ref of [$refs.pw, $refs.pw2]) {
+                    ref.value = pw;
+                    ref.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                this.reveal = true;
+                this.rate(pw);
+            },
+        }">
             <div class="wf-field">
                 <label for="password">{{ __('general.input.password') }}<span class="wf-req">*</span></label>
-                <input id="password" type="password" class="wf-input" wire:model="password"
+                <input id="password" x-ref="pw" :type="reveal ? 'text' : 'password'" class="wf-input"
+                    wire:model="password" x-on:input="rate($event.target.value)"
                     placeholder="{{ __('general.input.password_placeholder') }}" required>
                 @error('password') <span class="wf-error">{{ $message }}</span> @enderror
+
+                <div class="wf-pw">
+                    <div class="wf-pw-track">
+                        <div class="wf-pw-fill" :style="`width:${score * 25}%;background:${colour}`"></div>
+                    </div>
+                    <span class="wf-pw-label">{{ __('theme.password_strength') }}: <span x-text="label"></span></span>
+                </div>
             </div>
 
             <div class="wf-field">
                 <label for="password_confirmation">{{ __('general.input.password_confirmation') }}<span class="wf-req">*</span></label>
-                <input id="password_confirmation" type="password" class="wf-input" wire:model="password_confirmation"
+                <input id="password_confirmation" x-ref="pw2" :type="reveal ? 'text' : 'password'" class="wf-input"
+                    wire:model="password_confirmation"
                     placeholder="{{ __('general.input.password_confirmation_placeholder') }}" required>
+
+                <div class="wf-actions" style="margin-top:.5rem">
+                    <button type="button" class="wf-btn wf-btn--sm wf-btn--ghost" x-on:click="generate()">
+                        {{ __('theme.generate_password') }}
+                    </button>
+                    <button type="button" class="wf-btn wf-btn--sm wf-btn--ghost" x-on:click="reveal = !reveal">
+                        <span x-text="reveal ? @js(__('theme.password_hide')) : @js(__('theme.password_show'))"></span>
+                    </button>
+                </div>
             </div>
         </div>
 

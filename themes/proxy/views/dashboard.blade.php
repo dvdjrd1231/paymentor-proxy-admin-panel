@@ -17,6 +17,25 @@
     $ticketsEnabled = !config('settings.tickets_disabled', false);
     $creditsEnabled = (bool) config('settings.credits_enabled', false);
 
+    // Quotes: no quoting system exists, so the counter is honest at zero rather than
+    // borrowing another figure. See the Client Tools extension.
+    $quotes = 0;
+
+    // Contacts come from Client Tools; resolved dynamically so the dashboard still renders
+    // if that extension is disabled.
+    // The class can exist while its table does not — between enabling the extension and
+    // its migration running — and the dashboard must not 500 in that window.
+    $contactModel = 'Paymenter\Extensions\Others\ClientTools\Models\Contact';
+    $contacts = collect();
+
+    if (class_exists($contactModel)) {
+        try {
+            $contacts = $contactModel::where('user_id', $user->id)->orderBy('first_name')->get();
+        } catch (\Throwable $e) {
+            $contacts = collect();
+        }
+    }
+
     // Balance in the currency the customer is browsing in, falling back to the default.
     $currency = session('currency', config('settings.default_currency'));
     $credit = $creditsEnabled
@@ -62,6 +81,30 @@
                 </div>
             </div>
 
+            {{-- Contacts sits between Your Info and Shortcuts on the reference, showing
+                 "No Contacts Found" with a New Contact button when the list is empty. --}}
+            @if (Route::has('account.contacts'))
+                <div class="wf-panel wf-panel--brand">
+                    <div class="wf-panel-heading">
+                        <span><span class="wf-head-icon"><x-ri-contacts-book-2-fill /></span>{{ __('clienttools.contacts') }}</span>
+                        <span class="wf-chevron">&#9650;</span>
+                    </div>
+                    <div class="wf-panel-body">
+                        @forelse ($contacts as $contact)
+                            <div class="wf-list-title">{{ $contact->name }}</div>
+                            <span class="wf-list-sub">{{ $contact->email }}</span>
+                        @empty
+                            <div class="wf-muted">{{ __('clienttools.contacts_empty') }}</div>
+                        @endforelse
+
+                        <a class="wf-btn wf-btn--sm wf-btn--block" style="margin-top:.75rem"
+                           href="{{ route('account.contacts') }}" wire:navigate>
+                            + {{ __('clienttools.contact_new') }}
+                        </a>
+                    </div>
+                </div>
+            @endif
+
             <div class="wf-panel">
                 <div class="wf-panel-heading">
                     <span><span class="wf-head-icon"><x-ri-links-fill /></span>{{ __('dashboard.shortcuts') }}</span>
@@ -98,6 +141,18 @@
                     </div>
                     <div class="wf-stat-label">{{ __('theme.services_short') }}</div>
                 </a>
+                {{-- The reference's second tile is QUOTES. Paymenter has no quoting system,
+                     so it reads zero — which is what the reference shows for this account
+                     too. Rendered only when the Client Tools page exists to link at. --}}
+                @if (Route::has('quotes'))
+                    <a class="wf-stat" href="{{ route('quotes') }}" wire:navigate>
+                        <div class="wf-stat-head">
+                            <span class="wf-stat-num">{{ $quotes }}</span>
+                            <span class="wf-stat-icon"><x-ri-file-list-3-fill /></span>
+                        </div>
+                        <div class="wf-stat-label">{{ __('clienttools.quotes_short') }}</div>
+                    </a>
+                @endif
                 <a class="wf-stat" href="{{ route('invoices') }}" wire:navigate>
                     <div class="wf-stat-head">
                         <span class="wf-stat-num">{{ $unpaidInvoices }}</span>

@@ -94,6 +94,15 @@
             </table>
         </div>
 
+        {{-- ── Apply Credit ────────────────────────────────────────────────
+             The reference portal puts this between the invoice header and the line items.
+             Provided by the Client Tools extension (core can only spend the whole balance),
+             so it is rendered only when that extension is enabled, and it hides itself when
+             there is no credit to apply or the invoice is already settled. --}}
+        @if ($invoice->status === 'pending' && class_exists(\Paymenter\Extensions\Others\ClientTools\ClientTools::class))
+            <livewire:clienttools.apply-credit :invoice="$invoice" :key="'credit-' . $invoice->id" />
+        @endif
+
         {{-- ── Line items ──────────────────────────────────────────────── --}}
         <div class="wf-panel">
             <div class="wf-panel-heading">{{ __('invoices.invoice', ['id' => $invoice->number ?? $invoice->id]) }}</div>

@@ -14,4 +14,9 @@ return [
     'contact_intro' => 'Open a ticket and our team will get back to you. Signed-in customers get a faster response because we can see the affected service.',
     'open_ticket' => 'Open a Ticket',
     'browse_kb' => 'Browse the Knowledgebase',
+
+    // Announcements archive rail
+    'by_month' => 'By Month',
+    'all_announcements' => 'All Announcements',
+    'view_rss' => 'View RSS Feed',
 ];

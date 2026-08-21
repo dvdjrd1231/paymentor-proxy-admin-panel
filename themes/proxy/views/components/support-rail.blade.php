@@ -19,11 +19,15 @@
         @if (Route::has('knowledgebase.index'))
             <li><a class="{{ $isActive('knowledgebase') ? 'is-active' : '' }}" href="{{ route('knowledgebase.index') }}" wire:navigate><span>{{ __('knowledgebase.title') }}</span><span class="wf-head-icon"><x-ri-information-fill /></span></a></li>
         @endif
-        @if (Route::has('extensions.others.portal.downloads'))
-            <li><a href="{{ route('extensions.others.portal.downloads') }}" wire:navigate><span>{{ __('theme.downloads') }}</span><span class="wf-head-icon"><x-ri-download-2-fill /></span></a></li>
+        {{-- Both of these were guarded on route names that do not exist — the Downloads
+             page had no route at all until ClientTools added one, and Network Status is
+             registered by SitePages as `network-status`, not `network.status` — so neither
+             row ever rendered. --}}
+        @if (Route::has('downloads'))
+            <li><a class="{{ $isActive('downloads') ? 'is-active' : '' }}" href="{{ route('downloads') }}" wire:navigate><span>{{ __('clienttools.downloads') }}</span><span class="wf-head-icon"><x-ri-download-2-fill /></span></a></li>
         @endif
-        @if (Route::has('network.status'))
-            <li><a href="{{ route('network.status') }}" wire:navigate><span>{{ __('theme.network_status') }}</span><span class="wf-head-icon"><x-ri-rocket-2-fill /></span></a></li>
+        @if (Route::has('network-status'))
+            <li><a class="{{ $isActive('network-status') ? 'is-active' : '' }}" href="{{ route('network-status') }}" wire:navigate><span>{{ __('sitepages.network_status') }}</span><span class="wf-head-icon"><x-ri-rocket-2-fill /></span></a></li>
         @endif
         @if (Route::has('tickets.create'))
             <li><a href="{{ route('tickets.create') }}" wire:navigate><span>{{ __('theme.open_ticket') }}</span><span class="wf-head-icon"><x-ri-chat-3-fill /></span></a></li>
