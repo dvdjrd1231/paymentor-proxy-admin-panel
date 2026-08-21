@@ -165,8 +165,16 @@ foreach (PERIODS as $period) {
     $category = $categories[$period['suffix']];
     $tiers = $period['tiers'] ?? TIERS;
 
+    $tierNames = array_keys($tiers);
+
     foreach ($tiers as $tier => [$ports, $httpPrice, $bandwidth]) {
-        $periodPrice = $period['prices'][$tier] ?? $httpPrice;
+        // `prices` is a positional list (one entry per tier, in TIERS order) while $tier is
+        // the tier *name*, so `$period['prices'][$tier]` never matched and every period
+        // silently fell back to the monthly price: weekly and daily plans would have been
+        // created at $70 instead of $28 and $4. Monthly only looked correct because its
+        // list repeats the same figures TIERS already carries.
+        $tierIndex = array_search($tier, $tierNames, true);
+        $periodPrice = $period['prices'][$tierIndex] ?? $httpPrice;
         $variants = isset($period['tiers'])
             ? ['HTTP Proxy' => ['http', $periodPrice]]
             : [
