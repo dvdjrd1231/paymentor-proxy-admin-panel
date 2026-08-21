@@ -14,7 +14,6 @@
 --}}
 @php
     $items = Cart::items();
-    $hasQuantity = $items->contains(fn ($i) => $i->product->allow_quantity == 'combined');
     $emptyTotal = $items->isEmpty()
         ? new \App\Classes\Price([
             'price' => 0,
@@ -85,10 +84,12 @@
                             <table class="wf-table wf-table--cart">
                                 <thead>
                                     <tr>
+                                        {{-- Two columns, as the reference has them: Product/Options
+                                             and Price/Cycle. Quantity is not a column of its own
+                                             there; the stepper sits under the product it belongs
+                                             to, which also stops the row widening for the many
+                                             products that are sold one at a time. --}}
                                         <th>{{ __('theme.product_options') }}</th>
-                                        @if ($hasQuantity)
-                                            <th>{{ __('invoices.quantity') }}</th>
-                                        @endif
                                         <th style="text-align:end">{{ __('theme.price_cycle') }}</th>
                                         <th></th>
                                     </tr>
@@ -107,23 +108,23 @@
                                                 @foreach ($item->config_options as $option)
                                                     <span class="wf-cart-opt">&raquo; {{ $option['option_name'] }}: {{ $option['value_name'] }}</span>
                                                 @endforeach
-                                            </td>
 
-                                            @if ($hasQuantity)
-                                                <td>
-                                                    @if ($item->product->allow_quantity == 'combined')
-                                                        <div class="wf-qty">
-                                                            <button type="button" class="wf-btn wf-btn--ghost wf-btn--sm"
-                                                                wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})">−</button>
-                                                            <span class="wf-qty-value">{{ $item->quantity }}</span>
-                                                            <button type="button" class="wf-btn wf-btn--ghost wf-btn--sm"
-                                                                wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})">+</button>
-                                                        </div>
-                                                    @else
-                                                        {{ $item->quantity }}
-                                                    @endif
-                                                </td>
-                                            @endif
+                                                {{-- Quantity lives with its product rather than in a
+                                                     column of its own, so the stepper only appears
+                                                     for the items that can actually be bought in
+                                                     multiples. --}}
+                                                @if ($item->product->allow_quantity == 'combined')
+                                                    <div class="wf-qty">
+                                                        <button type="button" class="wf-btn wf-btn--ghost wf-btn--sm"
+                                                            wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})">−</button>
+                                                        <span class="wf-qty-value">{{ $item->quantity }}</span>
+                                                        <button type="button" class="wf-btn wf-btn--ghost wf-btn--sm"
+                                                            wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})">+</button>
+                                                    </div>
+                                                @elseif ($item->quantity > 1)
+                                                    <span class="wf-cart-opt">&times; {{ $item->quantity }}</span>
+                                                @endif
+                                            </td>
 
                                             <td style="text-align:end">
                                                 <span class="wf-price">{{ $item->price->format($item->price->total * $item->quantity) }}</span>
