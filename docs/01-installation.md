@@ -47,6 +47,20 @@ php artisan storage:link
 php artisan optimize
 ```
 
+`artisan optimize` warms the config, route, event, and view caches. Run it after every code
+or configuration deployment, then restart the queue worker so long-lived workers load the
+new application code:
+
+```bash
+php artisan optimize
+sudo systemctl restart paymenter-queue
+sudo systemctl reload nginx
+```
+
+The generated Nginx vhost enables gzip for text responses and one-year immutable caching for
+Vite-hashed assets. HTML, authenticated pages, and Livewire requests are deliberately not
+browser-cached because they contain session and account state.
+
 - **Queue:** run `php artisan queue:work` under a process supervisor (systemd unit provided).
 - **Scheduler:** add cron `* * * * * php /var/www/paymenter/artisan schedule:run` (or the
   provided systemd timer).

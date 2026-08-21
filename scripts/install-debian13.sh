@@ -262,6 +262,20 @@ server {
     charset utf-8;
     client_max_body_size 20M;
 
+    # Vite filenames are content-hashed, so these assets can be cached for a year.
+    # HTML and Livewire endpoints remain uncached and always reach Laravel.
+    location ^~ /default/assets/ {
+      try_files \$uri =404;
+      expires 1y;
+      add_header Cache-Control "public, immutable";
+      access_log off;
+    }
+
+    gzip on;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml application/json application/javascript application/xml+rss image/svg+xml;
+
     location / { try_files \$uri \$uri/ /index.php?\$query_string; }
     location = /favicon.ico { access_log off; log_not_found off; }
     location = /robots.txt  { access_log off; log_not_found off; }

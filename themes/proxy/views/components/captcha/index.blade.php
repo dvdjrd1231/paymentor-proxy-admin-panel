@@ -28,7 +28,6 @@
         @else
             <span class="wf-error">CAPTCHA is enabled but its site key and secret are not configured.</span>
         @endif
-        </div>
 
         @error('captcha')
             <span class="wf-error">{{ $message }}</span>
