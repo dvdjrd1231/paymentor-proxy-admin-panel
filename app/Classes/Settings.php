@@ -8,11 +8,13 @@ use App\Models\Currency;
 use App\Models\Setting;
 use App\Models\TaxRate;
 use App\Models\User;
+use App\Providers\SettingsProvider;
 use App\Rules\Cidr;
 use DateTimeZone;
 use Exception;
 use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\HtmlString;
 use Minishlink\WebPush\VAPID;
 use Ramsey\Uuid\Uuid;
@@ -697,6 +699,28 @@ class Settings
         $setting->value = Setting::where('settingable_type', null)->where('key', $key)->value('value') ?? $setting->default ?? null;
 
         return $setting;
+    }
+
+    /**
+     * Drop the cached settings collection and re-read it.
+     *
+     * SettingsProvider stores every non-scoped setting under the `settings` cache key and
+     * only falls back to the database when that key is empty, so a value written in the
+     * admin stayed invisible to the next request, the queue workers and the auth pages
+     * until the cache happened to expire. Admin\Pages\Settings::save() calls this straight
+     * after writing.
+     *
+     * The forget alone is enough for later requests — they rebuild from the database on a
+     * miss. getSettings(true) is passed as well so the request that just saved also sees
+     * its own change, rather than finishing on the stale config it booted with.
+     *
+     * @see docs/CORE-TOUCHPOINTS.md
+     */
+    public static function flushCache(): void
+    {
+        Cache::forget('settings');
+
+        SettingsProvider::getSettings(true);
     }
 
     public static function getTelemetry()
