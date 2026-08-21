@@ -259,4 +259,30 @@ that lacks a price row.
 
 ---
 
+## `App\Classes\Settings::flushCache()` — saved settings were invisible until the cache expired
+
+**File:** `app/Classes/Settings.php` (new static method), called from
+`app/Admin/Pages/Settings.php::save()`.
+
+**Symptom:** two of them. Before the method existed, `save()` already called
+`ClassesSettings::flushCache()` — on a plain class with no such method and no
+`__callStatic`, so **every settings save fatalled** with
+`Call to undefined method App\Classes\Settings::flushCache()`. With the call removed
+instead, the original bug returns: a value written in the admin stays invisible.
+
+**When it happens:** `SettingsProvider::getSettings()` reads every non-scoped setting from
+the `settings` cache key and only falls back to the database when that key is empty. Saving
+writes the row but left the cache intact, so the next request, the queue workers and the
+auth pages all kept serving the old value until the key happened to expire.
+
+**Fix:** `flushCache()` does `Cache::forget('settings')` and then
+`SettingsProvider::getSettings(true)`. The forget alone is what fixes later requests — they
+rebuild from the database on a miss. The forced reload is so the request that just saved
+also sees its own change instead of finishing on the config it booted with.
+
+**If not re-applied after an upgrade:** if `Admin\Pages\Settings::save()` still calls it,
+every settings save is a 500. If both are reverted together, settings appear not to save.
+
+---
+
 _(Everything else is implemented via extensions, themes, events, or configuration.)_
