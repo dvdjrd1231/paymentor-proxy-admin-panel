@@ -105,7 +105,25 @@
         font-size: 14px;
         line-height: 1.42857143;
         overflow-x: hidden;
+
+        /* Full-height column so the footer can sit at the bottom of the window.
+           This has to be declared here: layouts/app.blade.php marks the structure up with
+           `min-h-screen flex flex-col flex-grow`, but this theme deliberately does not load
+           the Tailwind bundle (only the default theme's JS), so those class names carry no
+           styling whatsoever. Without a flex column the footer's `margin-top: auto` had
+           nothing to push against and, on a page shorter than the window, it rendered
+           directly under the content with blank canvas beneath it. */
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
     }
+
+    /* The two wrappers between <body> and the footer, for the same reason. `min-height: 0`
+       lets the column shrink below its content instead of forcing the page taller, and
+       `min-width: 0` stops long unbreakable content (a wide table) widening the column. */
+    .wf-frame { display: flex; flex: 1 1 auto; width: 100%; min-height: 0; }
+    .wf-frame-col { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
     /* Everything between the menu bar and the footer is white, as on the reference,
        rather than cards floating on grey. */
     main.grow { background: var(--wf-bg); }
@@ -722,10 +740,58 @@
     /* Descriptions are authored as a bullet list in the admin. Markers are replaced
        with a brand tick so the list reads as a feature list rather than prose. */
     .wf-prod-feat ul { list-style: none; margin: 0; padding: 0; }
-    .wf-prod-feat li { position: relative; padding-inline-start: 1.05rem; color: var(--brand); }
+    .wf-prod-feat li { position: relative; padding-inline-start: 1.25rem; color: var(--brand); }
+
+    /* Default marker for any description authored by hand in the admin, which has no
+       icon class on its items. */
     .wf-prod-feat li::before {
         content: '✔'; position: absolute; inset-inline-start: 0;
         color: var(--brand); font-size: .75em;
+    }
+
+    /* The reference storefront gives each feature row its own Font Awesome glyph rather
+       than a repeated tick. Font Awesome is not loaded here — the theme's icons are
+       inline SVG Blade components — and a product description is raw HTML from the
+       database, so it cannot render a Blade component. The shapes are therefore attached
+       from CSS, keyed off the class seed-catalogue.php puts on each <li>.
+       `mask` rather than `background-image` so a single monochrome SVG picks up the brand
+       colour from currentColor, and changing the brand needs no new assets. */
+    .wf-prod-feat li.f-shield::before,
+    .wf-prod-feat li.f-ports::before,
+    .wf-prod-feat li.f-server::before,
+    .wf-prod-feat li.f-sync::before,
+    .wf-prod-feat li.f-check::before,
+    .wf-prod-feat li.f-history::before {
+        content: ''; width: .95em; height: .95em; top: .12em;
+        background: currentColor;
+        -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+        -webkit-mask-position: center; mask-position: center;
+        -webkit-mask-size: contain; mask-size: contain;
+    }
+
+    .wf-prod-feat li.f-shield::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1 3 5v6c0 5.25 3.84 10.16 9 11.4 5.16-1.24 9-6.15 9-11.4V5l-9-4zm0 5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm0 11.6a7.6 7.6 0 0 1-4.2-2.5c.05-1.6 3.2-2.5 4.2-2.5s4.15.9 4.2 2.5a7.6 7.6 0 0 1-4.2 2.5z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1 3 5v6c0 5.25 3.84 10.16 9 11.4 5.16-1.24 9-6.15 9-11.4V5l-9-4zm0 5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm0 11.6a7.6 7.6 0 0 1-4.2-2.5c.05-1.6 3.2-2.5 4.2-2.5s4.15.9 4.2 2.5a7.6 7.6 0 0 1-4.2 2.5z'/%3E%3C/svg%3E");
+    }
+    .wf-prod-feat li.f-ports::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 18.5a1.75 1.75 0 1 1 0 3.5 1.75 1.75 0 0 1 0-3.5zm0-5a6 6 0 0 1 4.24 1.76l-1.77 1.77a3.5 3.5 0 0 0-4.94 0l-1.77-1.77A6 6 0 0 1 12 13.5zm0-5a11 11 0 0 1 7.78 3.22l-1.77 1.77a8.5 8.5 0 0 0-12.02 0L4.22 11.72A11 11 0 0 1 12 8.5zm0-5a16 16 0 0 1 11.31 4.69l-1.77 1.77a13.5 13.5 0 0 0-19.08 0L.69 8.19A16 16 0 0 1 12 3.5z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 18.5a1.75 1.75 0 1 1 0 3.5 1.75 1.75 0 0 1 0-3.5zm0-5a6 6 0 0 1 4.24 1.76l-1.77 1.77a3.5 3.5 0 0 0-4.94 0l-1.77-1.77A6 6 0 0 1 12 13.5zm0-5a11 11 0 0 1 7.78 3.22l-1.77 1.77a8.5 8.5 0 0 0-12.02 0L4.22 11.72A11 11 0 0 1 12 8.5zm0-5a16 16 0 0 1 11.31 4.69l-1.77 1.77a13.5 13.5 0 0 0-19.08 0L.69 8.19A16 16 0 0 1 12 3.5z'/%3E%3C/svg%3E");
+    }
+    .wf-prod-feat li.f-server::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3h18a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm2 3v2h2V6H5zm-2 7h18a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1zm2 3v2h2v-2H5z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 3h18a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm2 3v2h2V6H5zm-2 7h18a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1zm2 3v2h2v-2H5z'/%3E%3C/svg%3E");
+    }
+    .wf-prod-feat li.f-sync::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 4V1L8 5l4 4V6a6 6 0 1 1-5.66 4H4.26A8 8 0 1 0 12 4z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 4V1L8 5l4 4V6a6 6 0 1 1-5.66 4H4.26A8 8 0 1 0 12 4z'/%3E%3C/svg%3E");
+    }
+    .wf-prod-feat li.f-check::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+    }
+    .wf-prod-feat li.f-history::before {
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 3a9 9 0 0 0-9 9H1l3.9 3.9.07.14L9 12H6a7 7 0 1 1 2.05 4.95l-1.42 1.42A9 9 0 1 0 13 3zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 3a9 9 0 0 0-9 9H1l3.9 3.9.07.14L9 12H6a7 7 0 1 1 2.05 4.95l-1.42 1.42A9 9 0 1 0 13 3zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z'/%3E%3C/svg%3E");
     }
     .wf-prod-feat p { margin: 0 0 .2rem; color: var(--brand); }
 
@@ -743,6 +809,27 @@
     /* ── 5c. Order summary panel (cart / checkout) ──────────────────────────
        Grey heading, not brand: the reference reserves the brand colour for the
        Checkout call to action inside it, and a brand-on-brand panel buries it. */
+    /* Itemised block above the totals: product name, its category, then one row per
+       configured option — the reference's summary, which shows what makes up the figure. */
+    .wf-summary-item { padding-bottom: .5rem; margin-bottom: .5rem; border-bottom: 1px solid var(--wf-panel-border); }
+    .wf-summary-item-name { display: block; color: var(--brand); font-weight: 700; }
+    .wf-summary-item-cat { display: block; color: var(--brand); font-style: italic; font-size: .8rem; }
+    .wf-total-row--opt { font-size: .8rem; color: var(--wf-muted); }
+    .wf-total-row--opt span:first-child { padding-inline-start: .25rem; }
+
+    /* Sales-help note under the configure column, as on the reference: a pale amber band
+       rather than a brand-coloured one, so it reads as help and not as an error. */
+    .wf-help-note {
+        margin-top: 1rem; padding: 12px 15px; border: 1px solid #faebcc; border-radius: var(--wf-radius);
+        background: #fcf8e3; color: #8a6d3b; font-size: .82rem;
+    }
+    .wf-help-note a { color: var(--brand); font-weight: 700; }
+    .wf-help-ico {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 1.05rem; height: 1.05rem; margin-inline-end: .35rem; border-radius: 50%;
+        background: #8a6d3b; color: #fcf8e3; font-size: .7rem; font-weight: 700;
+    }
+
     .wf-summary { border: 1px solid var(--wf-border); border-radius: var(--wf-radius); background: var(--wf-bg); overflow: hidden; }
     .wf-summary-head {
         background: #6f7681; color: #fff; text-align: center;

@@ -91,6 +91,17 @@
                     @endforeach
                 </div>
             </div>
+
+            {{-- The reference closes the configure column with a sales-help note. It links
+                 Contact Us, which is the one informational page still reachable signed
+                 out. --}}
+            @if (Route::has('contact'))
+                <div class="wf-help-note">
+                    <span class="wf-help-ico">?</span>
+                    {{ __('theme.sales_help') }}
+                    <a href="{{ route('contact') }}" wire:navigate>{{ __('theme.click_here') }}</a>
+                </div>
+            @endif
         </div>
 
         {{-- ── Order summary ───────────────────────────────────────────── --}}
@@ -98,6 +109,39 @@
             <div class="wf-summary wf-sticky">
                 <div class="wf-summary-head">{{ __('product.order_summary') }}</div>
                 <div class="wf-summary-body">
+                    {{-- The reference itemises the order before the totals: what is being
+                         bought, which category it came from, the line price, then one row
+                         per configured option — so the figure at the bottom is traceable
+                         rather than a bare number. --}}
+                    <div class="wf-summary-item">
+                        <span class="wf-summary-item-name">{{ $product->name }}</span>
+                        @if ($product->category)
+                            <span class="wf-summary-item-cat">{{ $product->category->name }}</span>
+                        @endif
+                    </div>
+
+                    <div class="wf-total-row">
+                        <span>{{ $product->name }}</span>
+                        <span>{{ $total->format($total->price) }}</span>
+                    </div>
+
+                    @foreach ($product->configOptions as $configOption)
+                        @php
+                            $chosenId = $configOptions[$configOption->id] ?? null;
+                            $chosen = $chosenId ? $configOption->children->firstWhere('id', $chosenId) : null;
+                            $chosenPrice = $chosen?->price(billing_period: $plan->billing_period, billing_unit: $plan->billing_unit);
+                        @endphp
+                        <div class="wf-total-row wf-total-row--opt">
+                            <span>&raquo; {{ $configOption->name }}: {{ $chosen->name ?? __('theme.not_selected') }}</span>
+                            <span>{{ $chosenPrice && $chosenPrice->available ? (string) $chosenPrice : $total->format(0) }}</span>
+                        </div>
+                    @endforeach
+
+                    <div class="wf-total-row">
+                        <span>{{ __('product.setup_fee') }}</span>
+                        <span>{{ $total->format($total->setup_fee ?? 0) }}</span>
+                    </div>
+
                     @if ($total->total_tax > 0)
                         <div class="wf-total-row">
                             <span>{{ __('invoices.subtotal') }}</span>
@@ -124,7 +168,7 @@
                     @if (($product->stock > 0 || !$product->stock) && $product->price()->available)
                         <button type="button" class="wf-btn wf-btn--checkout" style="margin-top:.9rem"
                             wire:click="checkout" wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="checkout">{{ __('product.checkout') }}</span>
+                            <span wire:loading.remove wire:target="checkout">{{ __('theme.continue') }} &rarr;</span>
                             <span wire:loading wire:target="checkout">…</span>
                         </button>
                     @else

@@ -212,7 +212,12 @@ foreach (PERIODS as $period) {
                 continue;
             }
 
-        // Feature bullets, worded and ordered as the reference storefront lists them.
+        // Feature bullets, worded and ordered exactly as the reference storefront lists
+        // them, each carrying the class the theme maps to that row's icon. The reference
+        // uses eight rows with six distinct Font Awesome glyphs (user-shield, wifi, server,
+        // sync-alt, check ×3, history); the class names below are what
+        // themes/proxy/.../whmcs-css turns back into those shapes, so the data stays
+        // readable in the admin instead of carrying markup for icons.
         //
         // %s throughout: this used to carry a `%,d` specifier, which PHP does not have —
         // it is Java's grouping flag — so sprintf threw "Unknown format specifier ','" and
@@ -220,10 +225,16 @@ foreach (PERIODS as $period) {
         // is applied with number_format instead, using '.' to match the reference ("1.500
         // HTTP Proxy Ports").
         $description = sprintf(
-            '<ul><li>Anonymous Residential %s Proxy</li><li>%s %s Ports</li>'
-            . '<li>Private Proxy Server</li><li>Rotating Proxies or Static Proxies</li>'
-            . '<li>IP Whitelist Authentication</li><li>User/Password Authentication</li>'
-            . '<li>Up-To %d IP whitelist</li><li>Configurable IP Proxies rotation time</li></ul>',
+            '<ul>'
+            . '<li class="f-shield">Anonymous Residential %s Proxy</li>'
+            . '<li class="f-ports">%s %s Ports</li>'
+            . '<li class="f-server">Private Proxy Server</li>'
+            . '<li class="f-sync">Rotating Proxies or Static Proxies</li>'
+            . '<li class="f-check">IP Whitelist Authentication</li>'
+            . '<li class="f-check">User/Password Authentication</li>'
+            . '<li class="f-check">Up-To %d IP whitelist</li>'
+            . '<li class="f-history">Configurable IP Proxies rotation time</li>'
+            . '</ul>',
             str_contains($family, 'IPv4') ? 'IPv4' : 'IPv6',
             number_format($ports, 0, ',', '.'),
             $protocol === 'socks5' ? 'Socks5h' : 'HTTP Proxy',
@@ -236,15 +247,31 @@ foreach (PERIODS as $period) {
             },
         );
 
-            $product = $existing ?: Product::create([
-                'category_id' => $category->id,
-                'name' => $name,
-                'slug' => $slug,
-                'description' => $description,
-                'server_id' => $server->id,
-                'allow_quantity' => 'combined',
-                'hidden' => false,
-            ]);
+            // The description is written on sync as well as on create. It used to be set
+            // only inside Product::create(), so the ten monthly products that predate this
+            // script kept the one-line prose they were imported with while every product
+            // the script created got the reference's bullet list — the same storefront
+            // showing two different card layouts side by side.
+            //
+            // Category is re-asserted for the same reason; name and slug are not touched,
+            // since the slug is how the product is found in the first place.
+            if ($existing) {
+                $product = $existing;
+                $product->update([
+                    'category_id' => $category->id,
+                    'description' => $description,
+                ]);
+            } else {
+                $product = Product::create([
+                    'category_id' => $category->id,
+                    'name' => $name,
+                    'slug' => $slug,
+                    'description' => $description,
+                    'server_id' => $server->id,
+                    'allow_quantity' => 'combined',
+                    'hidden' => false,
+                ]);
+            }
 
         // Everything the ProxyPanel module needs to provision this product.
         //
