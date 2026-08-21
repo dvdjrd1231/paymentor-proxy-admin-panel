@@ -137,6 +137,17 @@ foreach (PERIODS as $period) {
         $category = $apply
             ? Category::create(['name' => $name, 'slug' => $slug, 'description' => $description])
             : Category::make(['name' => $name, 'slug' => $slug, 'description' => $description]);
+    } elseif ($category->slug !== $slug || $category->name !== $name) {
+        // The reused "proxies" category kept its old name and slug, so the storefront
+        // showed a category called "Proxies" where the reference shows "IPv6 Proxy Monthly
+        // Plans". Renaming it here keeps its existing products and services attached —
+        // creating a second category instead would orphan them.
+        printf("[ %s ] rename category %s -> %s (%s)%s",
+            $apply ? ' ok ' : 'todo', $category->slug, $slug, $name, PHP_EOL);
+
+        if ($apply) {
+            $category->update(['name' => $name, 'slug' => $slug, 'description' => $description]);
+        }
     }
 
     $categories[$period['suffix']] = $category;
