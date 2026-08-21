@@ -208,6 +208,8 @@ return [
     'click_here' => 'Click here',
     'configure_intro' => 'Configure your desired options and continue to checkout.',
     'select_plan' => 'Select a plan',
+    'choose_billing_cycle' => 'Choose Billing Cycle',
+    'configurable_options' => 'Configurable Options',
     'ticket_word' => 'Ticket',
     'conversation' => 'Conversation',
     'no_transactions' => 'No transactions yet.',

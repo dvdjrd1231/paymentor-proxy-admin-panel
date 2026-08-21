@@ -25,18 +25,29 @@
                         </div>
                     @endif
 
-                    @if ($product->availablePlans()->count() > 1)
-                        <x-form.select wire:model.live="plan_id" name="plan_id" label="{{ __('theme.select_plan') }}">
+                    {{-- Shown even when there is only one plan, as on the reference, where a
+                         single-cycle product still displays "Choose Billing Cycle" reading
+                         "$70.00 USD Monthly". Hiding it left the customer with no statement
+                         of what they were about to be billed. --}}
+                    @if ($product->availablePlans()->count() > 0)
+                        <x-form.select wire:model.live="plan_id" name="plan_id" label="{{ __('theme.choose_billing_cycle') }}">
                             @foreach ($product->availablePlans() as $availablePlan)
                                 <option value="{{ $availablePlan->id }}">
-                                    {{ $availablePlan->name }} -
-                                    {{ $availablePlan->price()->formatted->price }}
+                                    {{ $availablePlan->price()->formatted->price }} {{ $availablePlan->name }}
                                     @if ($availablePlan->price()->has_setup_fee)
                                         + {{ $availablePlan->price()->formatted->setup_fee }} {{ __('product.setup_fee') }}
                                     @endif
                                 </option>
                             @endforeach
                         </x-form.select>
+                    @endif
+
+                    {{-- The reference divides the form with a centred "Configurable Options"
+                         rule before the per-product choices. Rendered only when there is
+                         something under it, so a product with no options gets no empty
+                         heading. --}}
+                    @if ($product->configOptions->isNotEmpty() || count($this->getCheckoutConfig()) > 0)
+                        <div class="wf-legend">{{ __('theme.configurable_options') }}</div>
                     @endif
 
                     @foreach ($product->configOptions as $configOption)
