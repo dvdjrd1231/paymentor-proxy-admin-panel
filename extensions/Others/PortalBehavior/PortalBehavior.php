@@ -43,6 +43,30 @@ class PortalBehavior extends Extension
         ];
     }
 
+    /**
+     * Cache-busting token for the theme stylesheet.
+     *
+     * The file is served with a one-year immutable cache, so without this a CSS change
+     * would not reach anyone who had already loaded the site. Derived from the file's
+     * own contents rather than a hand-maintained version, so it cannot be forgotten.
+     *
+     * The hash is memoised for the request and falls back to a fixed string when the file
+     * is missing — the stylesheet 404s in that case anyway, and throwing here would take
+     * down every page instead of just the styling.
+     */
+    public static function styleVersion(): string
+    {
+        static $version = null;
+
+        if ($version !== null) {
+            return $version;
+        }
+
+        $path = base_path('themes/proxy/assets/whmcs.css');
+
+        return $version = is_file($path) ? substr(md5_file($path), 0, 8) : 'missing';
+    }
+
     public function boot()
     {
         // Appending to the `web` group (not replacing anything) keeps this reversible and
