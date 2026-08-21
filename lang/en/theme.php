@@ -176,6 +176,24 @@ return [
     'each' => 'each',
     'coupon' => 'Coupon',
     'no_products' => 'No products in this category.',
+    // Notifications panel
+    'notif_unpaid' => '{1} You have 1 unpaid invoice. Pay it early for peace of mind.|[2,*] You have :count unpaid invoices. Pay them early for peace of mind.',
+    'notif_overdue' => '{1} You have 1 overdue invoice with a total balance due of :amount. Pay it now to avoid any interruptions in service.|[2,*] You have :count overdue invoices with a total balance due of :amount. Pay them now to avoid any interruptions in service.',
+    'notif_credit' => 'You have a credit balance of :amount.',
+    'notif_none' => 'Nothing needs your attention right now.',
+
+    // Affiliates — before activation
+    'activate_affiliate' => 'Activate Affiliate Account',
+    'affiliate_pitch' => 'Get Paid for Referring Customers to Us',
+    'affiliate_pitch_sub' => 'Activate your affiliate account and start earning money today...',
+    'affiliate_point_commission' => 'We pay commissions for every signup that comes via your custom signup link.',
+    'affiliate_point_cookie' => 'We track the visitors you refer to us using cookies, so users you refer don\'t have to purchase instantly for you to receive your commission. Cookies last for up to :days days following the initial visit.',
+    'affiliate_point_more' => 'If you would like to find out more, please',
+
+    // Open Ticket
+    'name' => 'Name',
+    'ticket_intro' => 'If you can\'t find a solution to your problems in our knowledgebase, you can submit a ticket by selecting the appropriate department below.',
+
     // Signed-in account menu, in the reference portal's wording
     'account_details' => 'Account Details',
     'your_profile' => 'Your Profile',

@@ -988,6 +988,38 @@
     }
     .wf-totop:hover { background: var(--brand-dark); }
 
+    /* ── Notifications panel ────────────────────────────────────────────────
+       Anchored under the header link, as on the reference: a white card with one
+       row per fact and a coloured round glyph carrying the severity. */
+    .wf-notif { position: relative; }
+    .wf-notif-panel {
+        position: absolute; inset-inline-end: 0; top: calc(100% + 6px); z-index: 60;
+        min-width: 20rem; max-width: 24rem; background: var(--wf-bg);
+        border: 1px solid var(--wf-border); border-radius: var(--wf-radius);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, .12); text-align: start;
+    }
+    .wf-notif-row {
+        display: flex; gap: .6rem; align-items: flex-start;
+        padding: 12px 14px; font-size: .82rem; color: var(--wf-ink);
+    }
+    .wf-notif-row + .wf-notif-row { border-top: 1px solid var(--wf-panel-border); }
+    .wf-notif-ico {
+        flex: 0 0 auto; width: 1.15rem; height: 1.15rem; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: .72rem; font-weight: 700; color: #fff;
+    }
+    .wf-notif-ico--info { background: #5bc0de; }
+    .wf-notif-ico--warning { background: #ec971f; }
+    .wf-notif-ico--success { background: #5cb85c; }
+
+    /* Identity fields shown but not editable (Open Ticket's name and email). */
+    .wf-input--locked { background: var(--wf-section); color: var(--wf-muted); cursor: not-allowed; }
+
+    /* The affiliate pitch lists its terms as plain points, not a definition list. */
+    .wf-facts ul, ul.wf-facts { text-align: start; }
+    ul.wf-facts { margin: 1.2rem 0; padding-inline-start: 1.4rem; }
+    ul.wf-facts li { color: var(--brand); margin-bottom: .45rem; list-style: disc; }
+
     /* ── User Management ────────────────────────────────────────────────────
        The reference states the count above the table and puts the address, its
        badges and the last-login line in one cell. */

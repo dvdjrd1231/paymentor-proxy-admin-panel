@@ -99,11 +99,62 @@
                 <a href="{{ route('cart') }}" class="wf-hbtn wf-hbtn--primary" wire:navigate>{{ __('theme.view_cart') }}</a>
             @endguest
             @auth
-                <a href="{{ route('account.notifications') }}" class="wf-hbtn wf-notifications" wire:navigate>
-                    {{ __('theme.notifications') }}
-                    <span class="wf-notifications-badge">NEW</span>
-                    <span class="wf-notifications-caret" aria-hidden="true">▾</span>
-                </a>
+                {{-- Notifications panel. The reference shows three standing facts about the
+                     account rather than a message feed: what is unpaid, what is overdue,
+                     and what credit is on hand. All three are derived live here, so the
+                     badge only appears when there is genuinely something to report. --}}
+                @php
+                    $notifUser = auth()->user();
+                    $notifCurrency = session('currency', config('settings.default_currency'));
+
+                    $notifUnpaid = $notifUser->invoices()->where('status', 'pending')->count();
+                    $notifOverdue = $notifUser->invoices()
+                        ->where('status', 'pending')
+                        ->whereNotNull('due_at')
+                        ->where('due_at', '<', now())
+                        ->get();
+                    $notifCredit = config('settings.credits_enabled')
+                        ? $notifUser->credits()->where('currency_code', $notifCurrency)->first()
+                        : null;
+
+                    $notifications = [];
+
+                    if ($notifUnpaid > 0) {
+                        $notifications[] = ['type' => 'info', 'text' => trans_choice('theme.notif_unpaid', $notifUnpaid, ['count' => $notifUnpaid])];
+                    }
+                    if ($notifOverdue->isNotEmpty()) {
+                        $notifications[] = ['type' => 'warning', 'text' => trans_choice('theme.notif_overdue', $notifOverdue->count(), [
+                            'count' => $notifOverdue->count(),
+                            'amount' => $notifOverdue->first()->formattedTotal->format($notifOverdue->sum('remaining')),
+                        ])];
+                    }
+                    if ($notifCredit && $notifCredit->amount > 0) {
+                        $notifications[] = ['type' => 'success', 'text' => __('theme.notif_credit', ['amount' => $notifCredit->formatted_amount])];
+                    }
+                @endphp
+
+                <div class="wf-notif" x-data="{ open: false }" @click.outside="open = false">
+                    <button type="button" class="wf-hbtn wf-notifications" @click="open = !open">
+                        {{ __('theme.notifications') }}
+                        @if (count($notifications))
+                            <span class="wf-notifications-badge">NEW</span>
+                        @endif
+                        <span class="wf-notifications-caret" aria-hidden="true">▾</span>
+                    </button>
+
+                    <div class="wf-notif-panel" x-show="open" x-transition x-cloak>
+                        @forelse ($notifications as $n)
+                            <div class="wf-notif-row">
+                                <span class="wf-notif-ico wf-notif-ico--{{ $n['type'] }}" aria-hidden="true">
+                                    {{ ['info' => 'i', 'warning' => '!', 'success' => '✓'][$n['type']] }}
+                                </span>
+                                <span>{{ $n['text'] }}</span>
+                            </div>
+                        @empty
+                            <div class="wf-notif-row"><span>{{ __('theme.notif_none') }}</span></div>
+                        @endforelse
+                    </div>
+                </div>
                 {{-- Logout lives here (the reference puts it top-right). --}}
                 <livewire:auth.logout />
             @endauth
