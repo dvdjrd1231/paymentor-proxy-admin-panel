@@ -6,16 +6,48 @@
     them, so bindings and the editor keep working. Only the surrounding container
     changes: dark bg-primary-800 box → light Six panel.
 --}}
+{{-- Laid out as the reference portal's Open Ticket form: the signed-in identity shown but
+     locked, then the subject, then Department / Related Service / Priority across one row.
+
+     The grid is wf-* rather than Tailwind's `grid-cols-2` / `col-span-2`, which is what was
+     here before: this theme does not load the Tailwind bundle, so those class names carried
+     no styling and every field stacked full width. --}}
 <div class="wf-page">
-    <div class="wf-pagehead">
+    <div class="wf-title">
         <h1>{{ __('ticket.create_ticket') }}</h1>
     </div>
+    <hr class="wf-title-rule">
+
+    <div class="wf-crumb">
+        <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a>
+        <span>/</span><a href="{{ route('dashboard') }}" wire:navigate>{{ __('theme.client_area') }}</a>
+        <span>/</span><a href="{{ route('tickets') }}" wire:navigate>{{ __('theme.my_tickets') }}</a>
+        <span>/</span>{{ __('ticket.create_ticket') }}
+    </div>
+
+    <p>{{ __('theme.ticket_intro') }}</p>
 
     <div class="wf-panel">
         <div class="wf-panel-heading">{{ __('ticket.ticket_details') }}</div>
         <div class="wf-panel-body">
-            <div class="grid grid-cols-2 gap-4">
-                <x-form.input wire:model="subject" label="{{ __('ticket.subject') }}" name="subject" required />
+            {{-- Who the ticket comes from. Read-only: it is taken from the session, and an
+                 editable copy would only invite a mismatch with the account it is filed on. --}}
+            <div class="wf-grid">
+                <div class="wf-field">
+                    <label for="ticket-name">{{ __('theme.name') }}</label>
+                    <input id="ticket-name" type="text" class="wf-input wf-input--locked"
+                           value="{{ Auth::user()->name }}" readonly>
+                </div>
+                <div class="wf-field">
+                    <label for="ticket-email">{{ __('theme.email_address') }}</label>
+                    <input id="ticket-email" type="email" class="wf-input wf-input--locked"
+                           value="{{ Auth::user()->email }}" readonly>
+                </div>
+            </div>
+
+            <x-form.input wire:model="subject" label="{{ __('ticket.subject') }}" name="subject" required />
+
+            <div class="wf-grid-3">
                 @if (count($departments) > 0)
                     <x-form.select wire:model="department" label="{{ __('ticket.department') }}" name="department" required>
                         <option value="">{{ __('ticket.select_department') }}</option>
@@ -24,12 +56,6 @@
                         @endforeach
                     </x-form.select>
                 @endif
-                <x-form.select wire:model="priority" label="{{ __('ticket.priority') }}" name="priority" required>
-                    <option value="">{{ __('ticket.select_priority') }}</option>
-                    <option value="low" selected>{{ __('ticket.low') }}</option>
-                    <option value="medium">{{ __('ticket.medium') }}</option>
-                    <option value="high">{{ __('ticket.high') }}</option>
-                </x-form.select>
                 <x-form.select wire:model="service" label="{{ __('ticket.service') }}" name="service">
                     <option value="">{{ __('ticket.select_service') }}</option>
                     @foreach ($services as $product)
@@ -40,8 +66,15 @@
                         </option>
                     @endforeach
                 </x-form.select>
+                {{-- High first, as the reference orders it. --}}
+                <x-form.select wire:model="priority" label="{{ __('ticket.priority') }}" name="priority" required>
+                    <option value="high">{{ __('ticket.high') }}</option>
+                    <option value="medium" selected>{{ __('ticket.medium') }}</option>
+                    <option value="low">{{ __('ticket.low') }}</option>
+                </x-form.select>
+            </div>
 
-                <div class="col-span-2">
+            <div>
                     <div class="mt-4">
                         <form wire:submit.prevent="create" wire:ignore>
                             <label for="editor" class="block text-sm font-medium">{{ __('ticket.reply') }}</label>
@@ -107,7 +140,6 @@
                         <x-easymde-editor />
                     </div>
                 </div>
-            </div>
         </div>
     </div>
 </div>
