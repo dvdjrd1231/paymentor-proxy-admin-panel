@@ -293,13 +293,23 @@ class ProxyPanel extends Server
      */
     public function getCheckoutConfig(Product $product): array
     {
-        $regions = $this->safeOptions(fn () => $this->fetchOptions('/locations'));
-
         $serverId = $product->server_id;
+        $live = $this->safeOptions(fn () => $this->fetchOptions('/locations'));
 
-        if (!empty($regions)) {
-            // Keep the last good list so the option survives the panel being unreachable.
-            $this->rememberRegions($serverId, $regions);
+        if (!empty($live)) {
+            // The panel answered. Availability is read in the same pass and cached with the
+            // labels: a region whose tunnels are down must stay marked when the panel is
+            // next unreachable, otherwise a location with nothing behind it is offered as
+            // available — which is exactly what was being reported.
+            $stock = $this->safeOptions(fn () => $this->fetchLocationStock());
+
+            $unavailable = array_values(array_intersect(
+                array_keys(array_filter($stock, fn ($ok) => $ok === false)),
+                array_keys($live),
+            ));
+
+            $this->rememberRegions($serverId, $live, $unavailable);
+            $regions = $live;
         } else {
             // The panel is down or answering oddly. Falling through with an empty list used
             // to drop the whole Configurable Options block off the order form — the Region
@@ -307,23 +317,19 @@ class ProxyPanel extends Server
             // their proxies live. Worse, core then bounced the configure page to /cart, so
             // "Order Now" led nowhere. Serve the last known regions instead: a stale list is
             // recoverable, a missing one loses the order.
-            $regions = $this->rememberedRegions($serverId);
+            [$regions, $unavailable] = $this->rememberedRegions($serverId);
         }
 
         if (empty($regions)) {
             return [];
         }
 
-        // Reflect per-region availability reported by the panel, the way the WHMCS order
-        // form did — an unavailable region is shown but marked, not silently hidden, so
-        // the customer can see it exists and pick another.
-        $stock = $this->safeOptions(fn () => $this->fetchLocationStock());
-        $unavailable = [];
-
-        foreach ($regions as $tag => $label) {
-            if (($stock[$tag] ?? null) === false) {
-                $unavailable[] = (string) $tag;
-                $regions[$tag] = $label . ' ' . __('proxypanel.out_of_stock');
+        // An unavailable region is shown but marked and disabled, the way the WHMCS order
+        // form did it, so the customer can see it exists and pick another rather than
+        // wondering where it went.
+        foreach ($unavailable as $tag) {
+            if (isset($regions[$tag])) {
+                $regions[$tag] .= ' ' . __('proxypanel.out_of_stock');
             }
         }
 
@@ -421,7 +427,7 @@ class ProxyPanel extends Server
      * credentials live in, so it survives a cache flush and a container restart — a
      * memory-only cache would be empty exactly when it is needed, right after a deploy.
      */
-    private function rememberRegions(?int $serverId, array $regions): void
+    private function rememberRegions(?int $serverId, array $regions, array $unavailable = []): void
     {
         if (!$serverId) {
             return;
@@ -434,7 +440,14 @@ class ProxyPanel extends Server
                     'settingable_id' => $serverId,
                     'key' => 'cached_regions',
                 ],
-                ['value' => json_encode($regions), 'updated_at' => now(), 'created_at' => now()],
+                [
+                    // Labels and availability together. Storing labels alone meant a cached
+                    // list came back with every region looking available, however many of
+                    // them had no working tunnel.
+                    'value' => json_encode(['regions' => $regions, 'unavailable' => array_values($unavailable)]),
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ],
             );
         } catch (\Throwable $e) {
             // Caching is an optimisation; never let it break the order form.
@@ -442,10 +455,13 @@ class ProxyPanel extends Server
         }
     }
 
+    /**
+     * @return array{0: array<string,string>, 1: array<int,string>} labels, unavailable tags
+     */
     private function rememberedRegions(?int $serverId): array
     {
         if (!$serverId) {
-            return [];
+            return [[], []];
         }
 
         try {
@@ -455,9 +471,19 @@ class ProxyPanel extends Server
                 ->where('key', 'cached_regions')
                 ->value('value');
 
-            return $raw ? (array) json_decode($raw, true) : [];
+            $data = $raw ? (array) json_decode($raw, true) : [];
+
+            // Entries written before availability was cached are a flat tag => label map.
+            // Those are read as "availability unknown", and unknown is treated as
+            // unavailable below rather than assumed good: offering a region with no tunnel
+            // behind it is the failure being fixed here.
+            if (!array_key_exists('regions', $data)) {
+                return [$data, array_keys($data)];
+            }
+
+            return [(array) ($data['regions'] ?? []), array_values((array) ($data['unavailable'] ?? []))];
         } catch (\Throwable $e) {
-            return [];
+            return [[], []];
         }
     }
 

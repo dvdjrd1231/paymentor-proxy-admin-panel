@@ -170,7 +170,10 @@
     }
 
     /* ── 3. Page + card ────────────────────────────────────────────────── */
-    .wf-page { max-width: var(--wf-shell); margin: 0 auto; padding: 1.75rem 1rem 3rem; }
+    /* The 3rem tail left a band of empty white between the last panel and the footer rule.
+       It is the page's own bottom padding, not the footer's, which is why trimming the
+       footer did not close it. */
+    .wf-page { max-width: var(--wf-shell); margin: 0 auto; padding: 1.75rem 1rem 1.25rem; }
     .wf-page--narrow { max-width: 560px; }
 
     .wf-card {
