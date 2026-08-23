@@ -285,4 +285,33 @@ every settings save is a 500. If both are reverted together, settings appear not
 
 ---
 
+## `config/logging.php` — daily log file mode, or the site 500s once a day
+
+**File:** `config/logging.php`, `'permission' => 0666` on the `daily` channel.
+
+**Symptom:** intermittent 500s on product and checkout pages, with **nothing in the log** —
+because the logger is what failed. Reproducible by checking the day's file:
+`ls -la storage/logs/laravel-$(date +%F).log` showing `root` ownership and mode `0644`.
+
+**When it happens:** whichever process writes the first line of the day creates that day's
+file and it keeps that process's ownership. In this container the scheduler and every
+`php artisan` run are **root**, while web requests run as **nginx**. On any day root gets
+there first, the file is `0644 root` and nginx can no longer append.
+
+Writing the log is part of handling the request, so the failed write throws and the
+response becomes a 500. It only shows on pages that log something — here that is any
+product or checkout page, which logs the "ProxyPanel unreachable" warning — which is why
+it looked like a fault in the order flow.
+
+**Fix:** set the file mode explicitly so both users can share the file regardless of who
+creates it. Ownership still varies; the mode is what matters.
+
+**Not a substitute:** `chmod 666` on today's file fixes it until midnight only. Restarting
+the container also clears it, because the entrypoint resets storage permissions — which is
+what made this look intermittent and unrelated to any change.
+
+**If not re-applied after an upgrade:** the 500s return, on a schedule, with an empty log.
+
+---
+
 _(Everything else is implemented via extensions, themes, events, or configuration.)_

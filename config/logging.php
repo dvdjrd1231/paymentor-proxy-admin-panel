@@ -70,6 +70,23 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
+
+            // Whichever process writes the first line of the day creates that day's file,
+            // and it keeps that process's ownership. In this container the scheduler and
+            // any `artisan` run are root while the web requests are nginx, so on the days
+            // root got there first the file landed as 0644 root-owned and the web user
+            // could no longer append to it.
+            //
+            // That is not a quiet degradation: writing the log is part of handling the
+            // request, so the failed write threw and the page became a 500 — and nothing
+            // was recorded about it, because the logger was what had broken. It surfaced
+            // as random 500s on exactly the pages that log something, which here is any
+            // product page (the panel-unreachable warning). See docs/CORE-TOUCHPOINTS.md.
+            //
+            // Setting the mode explicitly makes the file writable no matter who creates
+            // it, so the two users can share it.
+            'permission' => 0666,
+
             'replace_placeholders' => true,
         ],
 
