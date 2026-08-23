@@ -92,6 +92,13 @@ services:
       # Verification and maintenance tooling. Without this the scripts have to be copied
       # in by hand after every pull, and a stale copy silently tests the wrong code.
       - "./scripts:/app/scripts"
+      #   config/            - same reason as app/ and lang/ above. Without it the image's
+      #                        own copies win and a committed config change is silently
+      #                        absent from the running site. That is not hypothetical:
+      #                        logging.channels.daily.permission was set in the repo and
+      #                        read back as null in the container, which left the daily log
+      #                        unwritable and 500'd the order pages once a day.
+      - "./config:/app/config"
       - appvar:/app/var               # persists .env + APP_KEY across restarts
       - ./storage/logs:/app/storage/logs
     networks: [paymenter_nw]
