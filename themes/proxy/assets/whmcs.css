@@ -70,7 +70,11 @@
     .wf-frame-col { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
     /* Everything between the menu bar and the footer is white, as on the reference,
        rather than cards floating on grey. */
-    main.grow { background: var(--wf-bg); }
+    /* `grow` on <main> is a Tailwind class and this theme does not load Tailwind, so it
+       carried no styling: main stopped at its content height and the grey body showed
+       through between the last element and the footer. Growing it here means the white
+       page runs all the way down to the footer rule on a short page. */
+    main.grow { background: var(--wf-bg); flex: 1 1 auto; min-width: 0; }
 
     .wf-shell { max-width: var(--wf-shell); margin: 0 auto; padding: 0 15px; width: 100%; box-sizing: border-box; }
 
@@ -362,7 +366,10 @@
     /* ── Auth pages, matched to the reference portal ────────────────────
        The reference keeps the heading, its rule and the form in one narrow centred
        column rather than running the heading the full page width. */
-    .wf-page--auth { background: var(--wf-bg); min-height: 420px; }
+    /* No min-height: 420px reserved a block of empty page under the login form, which is
+       the gap that kept showing above the footer. Main now grows to fill instead, so the
+       height comes from the window rather than from a fixed number. */
+    .wf-page--auth { background: var(--wf-bg); }
 
     /* Heading, rule and form share one 480px column, centred — the reference's
        login layout. */
