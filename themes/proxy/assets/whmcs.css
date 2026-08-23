@@ -38,6 +38,14 @@
        we neutralise it here too so a stray toggle can't darken the chrome. */
     .dark { color-scheme: light; }
 
+    /* The browser's own default `body { margin: 8px }`. Normally Tailwind's preflight
+       zeroes it, but this theme deliberately does not load the Tailwind bundle, so nothing
+       reset it: every page carried an 8px band of grey canvas down all four edges, and the
+       full-bleed header/menu/footer bands stopped short of the window. It also made the
+       document 100vh + 16px tall, which is why a vertical scrollbar appeared on pages that
+       otherwise fit — the 16px of margin was the only thing to scroll. */
+    html, body { margin: 0; }
+
     /* No inset: the page runs to the edges of the window. This used to carry 10px of
        padding so the grey canvas showed as a frame around a white page, but the header,
        menu bar and footer are full-bleed bands, and a border around them read as a gap
@@ -58,6 +66,10 @@
            nothing to push against and, on a page shorter than the window, it rendered
            directly under the content with blank canvas beneath it. */
         min-height: 100vh;
+        /* Mobile browsers count the collapsing address bar in 100vh, so the page is taller
+           than the visible area and scrolls by that much. dvh measures what is actually
+           visible; the 100vh line above stays as the fallback for browsers without it. */
+        min-height: 100dvh;
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
