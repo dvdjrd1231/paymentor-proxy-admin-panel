@@ -294,13 +294,16 @@ class ProxyPanel extends Server
     public function getCheckoutConfig(Product $product): array
     {
         $serverId = $product->server_id;
-        $live = $this->safeOptions(fn () => $this->fetchOptions('/locations'));
 
-        if (!empty($live)) {
-            // The panel answered. Availability is read in the same pass and cached with the
-            // labels: a region whose tunnels are down must stay marked when the panel is
-            // next unreachable, otherwise a location with nothing behind it is offered as
-            // available — which is exactly what was being reported.
+        // null means the call failed; [] means the panel answered and has nothing to offer.
+        // Those are different facts and must not be handled alike — conflating them is what
+        // kept regions on sale after every tunnel had been allocated.
+        $live = $this->tryOptions('/locations');
+
+        if ($live !== null && $live !== []) {
+            // The panel answered with locations. Availability is read in the same pass and
+            // cached with the labels, so a region whose tunnels are down stays marked when
+            // the panel is next unreachable.
             $stock = $this->safeOptions(fn () => $this->fetchLocationStock());
 
             $unavailable = array_values(array_intersect(
@@ -310,13 +313,21 @@ class ProxyPanel extends Server
 
             $this->rememberRegions($serverId, $live, $unavailable);
             $regions = $live;
+        } elseif ($live === []) {
+            // The panel answered and offered nothing: every tunnel is allocated, or the
+            // operator has disabled the lot. That is a real answer about stock, not a
+            // failure, so the cached availability must not override it.
+            //
+            // The regions are still listed — from the last known labels — because the
+            // reference marks a sold-out location rather than hiding it, and because
+            // returning no options at all drops the Configurable Options block and bounces
+            // the order form to the cart. Every one is marked out of stock and disabled.
+            [$regions] = $this->rememberedRegions($serverId);
+            $unavailable = array_keys($regions);
         } else {
-            // The panel is down or answering oddly. Falling through with an empty list used
-            // to drop the whole Configurable Options block off the order form — the Region
-            // selector simply vanished, and with it the customer's ability to choose where
-            // their proxies live. Worse, core then bounced the configure page to /cart, so
-            // "Order Now" led nowhere. Serve the last known regions instead: a stale list is
-            // recoverable, a missing one loses the order.
+            // The call failed outright — the panel is unreachable, not empty. Nothing has
+            // been learned about stock, so the last known state is the best available
+            // answer: a stale list is recoverable, a missing one loses the order.
             [$regions, $unavailable] = $this->rememberedRegions($serverId);
         }
 
@@ -484,6 +495,27 @@ class ProxyPanel extends Server
             return [(array) ($data['regions'] ?? []), array_values((array) ($data['unavailable'] ?? []))];
         } catch (\Throwable $e) {
             return [[], []];
+        }
+    }
+
+    /**
+     * Fetch a catalogue list, distinguishing "could not ask" from "asked, and the answer is
+     * none".
+     *
+     * safeOptions() collapses both into [], which is fine for the admin dropdowns it was
+     * written for but wrong at checkout: an empty answer is a statement about stock and
+     * must override the cache, whereas a failed call has learned nothing and must not.
+     *
+     * @return array<string,string>|null null when the call failed
+     */
+    private function tryOptions(string $path): ?array
+    {
+        try {
+            return $this->fetchOptions($path);
+        } catch (\Throwable $e) {
+            $this->log('warning', 'ProxyPanel option fetch failed', ['error' => $e->getMessage()]);
+
+            return null;
         }
     }
 
