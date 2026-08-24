@@ -18,7 +18,10 @@ class ImpersonateMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         if (session()->has('impersonating')) {
-            if ($request->is('admin/*')) {
+            // Follows settings.admin_path, so renaming the panel does not leave this
+            // matching a path that no longer exists — which would keep impersonation
+            // active inside the admin panel itself.
+            if ($request->is((config('settings.admin_path') ?: 'admin') . '/*')) {
                 // Unset session
                 session()->forget('impersonating');
             } else {

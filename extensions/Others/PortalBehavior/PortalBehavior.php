@@ -5,6 +5,7 @@ namespace Paymenter\Extensions\Others\PortalBehavior;
 use App\Attributes\ExtensionMeta;
 use App\Classes\Extension\Extension;
 use Illuminate\Support\HtmlString;
+use Paymenter\Extensions\Others\PortalBehavior\Middleware\KeepStaffOutOfClientArea;
 use Paymenter\Extensions\Others\PortalBehavior\Middleware\RedirectPortalHome;
 
 /**
@@ -65,9 +66,11 @@ class PortalBehavior extends Extension
 
     public function boot()
     {
-        // Appending to the `web` group (not replacing anything) keeps this reversible and
-        // free of core edits; the middleware ignores every request except GET /.
+        // Appended to the `web` group (nothing is replaced), so both are reversible and
+        // need no core edit. RedirectPortalHome ignores everything except GET /;
+        // KeepStaffOutOfClientArea ignores everything except staff in the client area.
         app('router')->pushMiddlewareToGroup('web', RedirectPortalHome::class);
+        app('router')->pushMiddlewareToGroup('web', KeepStaffOutOfClientArea::class);
 
         // Serves the theme's Open Sans webfont — see routes.php for why it lives here.
         require __DIR__ . '/routes.php';

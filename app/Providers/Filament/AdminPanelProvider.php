@@ -46,7 +46,16 @@ class AdminPanelProvider extends PanelProvider
         $panel
             ->default()
             ->id('admin')
-            ->path('admin')
+            // Renameable, WHMCS-style: an admin panel that is not at a guessable URL is not
+            // worth probing. Change it with
+            //   php artisan app:settings:change admin_path <new-path>
+            // `settings.admin_path` is the single source of truth — ImpersonateMiddleware
+            // and the client-area guard read the same key rather than repeating 'admin'.
+            ->path(config('settings.admin_path') ?: 'admin')
+            // Admins sign in at the panel itself rather than through the customer login.
+            // Without this Filament has no login route and bounces staff to /login, which
+            // is the client area — the thing they are meant to be kept out of.
+            ->login()
             ->spa()
             ->colors([
                 'primary' => Color::Blue,
