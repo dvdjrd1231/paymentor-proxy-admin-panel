@@ -275,19 +275,15 @@ class ProxyPanel extends Server
     }
 
     /**
-     * Region is chosen by the customer at checkout and sent as `location_name`, exactly as
-     * the WHMCS order form did (`$params['configoptions']['Region']`) — so the option *value*
-     * is the "Country - City" label the panel expects, not the location tag.
+     * The Region select, built from `GET /v0/locations/list` — the only endpoint that reports
+     * capacity (`total` tunnels, `free` of them unused, enabled/disabled `status`).
+     * `/v0/services/locations` returns only the in-stock names, so it cannot mark the rest.
      *
-     * The catalogue comes from `GET /v0/locations/list` (File/locations.md), which is the only
-     * endpoint that reports capacity: `total` tunnels, `free` of them unused, and an
-     * enabled/disabled `status`. `/v0/services/locations` lists just the in-stock names and is
-     * not used here — on the live panel it answers `[]` even while locations have free
-     * capacity, so relying on it would hide every sellable region.
+     * Offered once a location has capacity at all (`total > 0`); sellable only while enabled
+     * with `free > 0`. The rest are listed, marked and disabled, as the reference does.
      *
-     * A location is offered once it has capacity at all (`total > 0`); it is sellable only
-     * while enabled with `free > 0`. The rest are listed but marked and disabled, which is
-     * what the reference storefront shows.
+     * Option values are the "Country - City" label, not the tag: that is what the panel
+     * expects back as `location_name`.
      */
     public function getCheckoutConfig(Product $product): array
     {
@@ -336,9 +332,8 @@ class ProxyPanel extends Server
             $regions = array_map(fn ($label) => CountryFlag::decorate((string) $label), $regions);
         }
 
-        // Placeholder first, as the reference storefront has it. Its key is '' so core seeds
-        // the field with it (`array_key_first`) and the `required` rule then refuses a submit
-        // until a real region is chosen — the equivalent of the reference disabling Continue.
+        // Placeholder first. Its key is '' so core seeds the field with it (array_key_first)
+        // and `required` then refuses the submit until a real region is chosen.
         $regions = ['' => __('proxypanel.region_placeholder')] + $regions;
 
         return [
@@ -354,21 +349,16 @@ class ProxyPanel extends Server
     }
 
     /**
-     * The full location catalogue from `GET /v0/locations/list`, every page of it.
+     * Every page of `GET /v0/locations/list` (File/locations.md).
      *
-     * Pagination is driven by `total` / `items_per_page`, never by `total_pages`: the live
-     * panel reports `total_pages: 2` for 246 locations at 100 per page, so trusting it drops
-     * the last 46. Page 3 does return them, so the count is what is wrong, not the data.
-     * The loop also stops on a short or empty page, and is bounded so a panel that keeps
-     * answering can never spin forever.
+     * Paged on `total`/`items_per_page`, never `total_pages`: the panel reports 2 pages for
+     * 246 locations at 100 each, and page 3 does return the missing 46. Memoised per
+     * instance — ExtensionHelper builds a fresh one per resolution, so it cannot go stale.
      *
      * @return array<int, array<string, mixed>>
      */
     private function fetchLocationCatalogue(): array
     {
-        // The catalogue is three round trips; provisioning asks for it twice (once to check
-        // stock, once via the checkout config on the same instance). Memoised per instance —
-        // ExtensionHelper builds a fresh one per resolution, so it cannot go stale.
         if ($this->locationCatalogue !== null) {
             return $this->locationCatalogue;
         }
@@ -384,15 +374,13 @@ class ProxyPanel extends Server
 
             if ($expected === null) {
                 $perPage = max(1, (int) ($body['items_per_page'] ?? 100));
-                $total = (int) ($body['total'] ?? count($batch));
-                $expected = (int) ceil($total / $perPage);
+                $expected = (int) ceil((int) ($body['total'] ?? count($batch)) / $perPage);
             }
 
             foreach ($batch as $row) {
-                // Tags are unique; guard anyway so a repeated page cannot double the list.
                 $tag = $row['tag'] ?? null;
                 if ($tag !== null && isset($seen[$tag])) {
-                    continue;
+                    continue;               // a repeated page must not double the list
                 }
                 $seen[$tag] = true;
                 $rows[] = (array) $row;
@@ -404,10 +392,7 @@ class ProxyPanel extends Server
         return $this->locationCatalogue = $rows;
     }
 
-    /**
-     * The catalogue endpoints live one level up from the service API: `api_url` points at
-     * `…/v0/services`, and locations are at `…/v0/locations/list`.
-     */
+    /** `api_url` points at `…/v0/services`; the location API is its sibling `…/v0/locations`. */
     private function locationsBase(): string
     {
         $url = rtrim((string) $this->config('api_url'), '/');
@@ -427,7 +412,7 @@ class ProxyPanel extends Server
         }
     }
 
-    /** Is this region currently sellable — enabled, with at least one free tunnel? */
+    /** Enabled, with at least one free tunnel. */
     private function locationIsSellable(string $label): bool
     {
         foreach ($this->fetchLocationCatalogue() as $row) {
@@ -611,10 +596,8 @@ class ProxyPanel extends Server
                 'bwlimit' => $bwlimit > 0 ? $bwlimit : null,
             ];
 
-            // Re-check stock against the catalogue, not /services/locations: that endpoint
-            // answers [] on the live panel even where tunnels are free, and would reject
-            // every order. Checked again here because the cart can sit for a long time
-            // between the region being chosen and the invoice being paid.
+            // Re-checked here, not just at checkout: a cart can sit for days between the
+            // region being picked and the invoice being paid.
             $location = $payload['location_name'];
             if (!$location || !$this->locationIsSellable($location)) {
                 throw new \RuntimeException('ProxyPanel: selected Region is out of stock.');

@@ -3,34 +3,18 @@
 use App\Classes\Cart;
 use Illuminate\Support\Facades\Route;
 
-// ── Empty Cart ──────────────────────────────────────────────────────────────
-// The reference portal's cart has a single "Empty Cart" button. Paymenter's Cart Livewire
-// component only exposes removeProduct($index), and wire:click calls exactly one method,
-// so a button bound to it would silently drop just the first line — worse than not having
-// the button. This clears the whole cart in one step without touching core.
-//
-// POST, and behind the web middleware group, so it carries CSRF protection: a GET would let
-// any third-party page empty a visitor's cart with an <img> tag. The cart lives in the
-// session and holds no money, so no auth is required — guests build carts before logging in.
+// Empty Cart — core's Cart component only exposes removeProduct($index), and wire:click
+// calls one method, so a button bound to it would drop just the first line. POST behind
+// `web` for CSRF: a GET would let any page empty a visitor's cart with an <img> tag.
 Route::post('/cart/empty', function () {
     Cart::clear();
 
     return back();
 })->middleware('web')->name('extensions.others.portal.cart.empty');
 
-// ── Leave the cart to sign in, and come back to it ──────────────────────────
-// Paymenter issues the invoice and the service against a user, so an order cannot be
-// completed anonymously. Core handles that by bouncing a guest who presses Checkout to the
-// login page — which offers no way to create an account, and drops the buyer somewhere they
-// then have to navigate back from and press Checkout a second time.
-//
-// The cart offers the choice up front instead, and sends the buyer through here so the
-// return trip is recorded: `url.intended` is what both the login and the registration
-// screens redirect to once they are done, putting the buyer back on the cart ready to
-// complete the order.
-//
-// The cart survives regardless — it is a database row keyed by a 30-day cookie rather than
-// session state — so this is about not losing the buyer, not about not losing the cart.
+// Leave the cart to sign in, and come back to it. Core bounces a guest who presses Checkout
+// to a login page that offers no way to register and no way back. Recording `url.intended`
+// here means both login and registration return the buyer to the cart.
 Route::get('/cart/continue/{to}', function (string $to) {
     abort_unless(in_array($to, ['login', 'register'], true), 404);
 
@@ -39,20 +23,15 @@ Route::get('/cart/continue/{to}', function (string $to) {
     return redirect()->route($to);
 })->middleware('web')->name('cart.continue');
 
-// ── Theme stylesheet ────────────────────────────────────────────────────────
-// The proxy theme's design system, ~60KB of static CSS.
+// The theme's design system and its two webfonts.
 //
-// It used to be inlined into every page by layouts/whmcs-css.blade.php, which made it 76%
-// of each response (63KB of an 83KB login page), re-sent on every request and impossible
-// for a browser to cache. Serving it as a file means one download and a 304 thereafter.
+// These live in the extension, not public/, because public/ is not bind-mounted into the
+// container while extensions/ and themes/ are — assets dropped in public/ work locally and
+// 404 on the server. Themes cannot register routes of their own.
 //
-// The route lives here rather than in the theme for two reasons: a theme cannot register
-// routes, and public/ is not bind-mounted into the container while themes/ is — a
-// stylesheet dropped in public/ works locally and 404s on the server, exactly as noted for
-// the fonts below.
-//
-// Cached immutable for a year and busted by the ?v= content hash the theme appends, so an
-// edit is picked up immediately and an unchanged file is never re-fetched.
+// All three are immutable for a year; the stylesheet is busted by the ?v= content hash the
+// theme appends. Serving the CSS as a file rather than inlining it cut the login page from
+// 83KB to 20KB and made it cacheable.
 Route::get('/extensions/portal/theme.css', function () {
     $path = base_path('themes/proxy/assets/whmcs.css');
 
@@ -64,14 +43,9 @@ Route::get('/extensions/portal/theme.css', function () {
     ]);
 })->name('extensions.others.portal.css');
 
-// ── Theme webfont ───────────────────────────────────────────────────────────
-// The reference portal is set in Open Sans, so the theme ships it rather than pulling from
-// a font CDN: no third-party request on every page load, and it keeps working offline and
-// behind a strict CSP. One variable file covers weights 300-800, which is why there is a
-// single 48KB request instead of four.
-//
-// Served from the extension because public/ is not bind-mounted into the container while
-// extensions/ is — a font dropped in public/ works locally and 404s on the server.
+// Open Sans and Raleway are shipped rather than fetched from a font CDN: no third-party
+// request per page load, and they keep working offline and under a strict CSP. One variable
+// file covers every weight.
 Route::get('/extensions/portal/opensans.woff2', function () {
     $path = __DIR__ . '/resources/fonts/OpenSans-Variable.woff2';
 
@@ -83,8 +57,6 @@ Route::get('/extensions/portal/opensans.woff2', function () {
     ]);
 })->name('extensions.others.portal.font');
 
-// Raleway carries the reference portal's menu bar and page headings, and is shipped the
-// same way and for the same reasons as Open Sans above.
 Route::get('/extensions/portal/raleway.woff2', function () {
     $path = __DIR__ . '/resources/fonts/Raleway-Variable.woff2';
 
