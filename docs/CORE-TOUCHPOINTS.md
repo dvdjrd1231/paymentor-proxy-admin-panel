@@ -314,4 +314,36 @@ what made this look intermittent and unrelated to any change.
 
 ---
 
+## Admin panel: own login, renameable path
+
+**Files:** `app/Providers/Filament/AdminPanelProvider.php`, `app/Http/Middleware/ImpersonateMiddleware.php`
+
+**Why:** the client asked for the WHMCS separation — administrators sign in at the admin
+panel, reach a customer's account only by impersonating, and never browse the client area as
+themselves. Two of the three pieces cannot be done from an extension:
+
+- **`->login()`** — without it Filament registers no login route, so an unauthenticated
+  `/admin` redirects to `/login`, the customer login. Staff were being sent into the client
+  area to reach the admin panel.
+- **`->path(config('settings.admin_path') ?: 'admin')`** — the panel path is read when the
+  panel registers its routes, which happens before any extension boots, so an extension
+  cannot change it afterwards.
+
+`ImpersonateMiddleware` hardcoded `admin/*`; it now reads the same setting, or renaming the
+panel would leave impersonation active inside the admin panel itself.
+
+**Rename the panel:**
+
+```bash
+php artisan app:settings:change admin_path myadmin
+```
+
+**Not a core edit:** keeping staff out of the client area is
+`Others/PortalBehavior/Middleware/KeepStaffOutOfClientArea`, appended to the `web` group.
+
+**If not re-applied after an upgrade:** the panel returns to `/admin` with no login page, and
+staff are bounced through the customer login again. Impersonation still works either way.
+
+---
+
 _(Everything else is implemented via extensions, themes, events, or configuration.)_
