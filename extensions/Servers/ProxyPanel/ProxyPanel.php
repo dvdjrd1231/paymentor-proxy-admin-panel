@@ -97,6 +97,21 @@ class ProxyPanel extends Server
 
     private const LOG_CHANNEL = 'stack';
 
+    /**
+     * Catalogue GET responses (`/plans`, `/locations`), memoised for the life of this
+     * instance.
+     *
+     * The labels and the stock flags come from the same `/locations` payload but are read by
+     * two different methods, so rendering the order form fetched it twice, and so did every
+     * provisioning attempt — two round trips to a panel that gets a 20s timeout and three
+     * retries, for one answer. ExtensionHelper builds a fresh instance per resolution
+     * (`new $extension($config)`), so this never outlives the call chain that filled it and
+     * cannot serve a stale stock reading to a later request.
+     *
+     * @var array<string, array>
+     */
+    private array $catalogue = [];
+
     // ── Module configuration (Admin → Servers → ProxyPanel) ──────────────────
 
     public function getConfig($values = []): array
@@ -361,10 +376,20 @@ class ProxyPanel extends Server
         ];
     }
 
+    /**
+     * A catalogue endpoint's raw payload, fetched at most once per instance.
+     *
+     * @see self::$catalogue
+     */
+    private function catalogue(string $path): array
+    {
+        return $this->catalogue[$path] ??= $this->request('get', $path);
+    }
+
     /** The panel returns plans/locations either as a flat list or a keyed map. */
     private function fetchOptions(string $path): array
     {
-        $data = $this->request('get', $path);
+        $data = $this->catalogue($path);
         $rows = $data['data'] ?? $data;
         $out = [];
 
@@ -397,7 +422,7 @@ class ProxyPanel extends Server
      */
     private function fetchLocationStock(): array
     {
-        $data = $this->request('get', '/locations');
+        $data = $this->catalogue('/locations');
         $rows = $data['data'] ?? $data;
         $stock = [];
 
