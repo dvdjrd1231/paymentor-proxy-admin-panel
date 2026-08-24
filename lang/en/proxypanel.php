@@ -47,6 +47,7 @@ return [
     'rotation_time_hint' => 'Minutes between automatic rotations. Zero disables automatic rotation.',
     'save' => 'Save',
     'out_of_stock' => '(Out of stock)',
+    'region_placeholder' => 'Select Geographic Region for IPv6 Proxies',
 
     // Confirmations
     'auth_ips_updated' => 'Authorized IPs updated.',
