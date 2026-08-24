@@ -8,15 +8,11 @@ use Illuminate\Support\HtmlString;
 use Paymenter\Extensions\Others\PortalBehavior\Middleware\RedirectPortalHome;
 
 /**
- * Portal entry behaviour, matched to the client's current WHMCS portal.
+ * Portal entry behaviour: on the reference portal `/` is never a page of its own — guests
+ * go to login, customers to their dashboard. Paymenter renders a storefront there instead.
  *
- * On the reference portal the home URL is never a page of its own: a visitor is sent to
- * the login screen, a signed-in customer to their dashboard. Paymenter instead renders a
- * public storefront on `/`, which the client flagged in review.
- *
- * Done as middleware from an extension rather than a route so no core file changes: the
- * core `/` route stays registered and untouched, this simply answers first. Disabling the
- * extension restores the storefront homepage instantly.
+ * Middleware from an extension rather than a route, so the core `/` route stays untouched
+ * and disabling the extension restores the storefront immediately.
  *
  * @link docs/modules/portal-behavior.md
  */

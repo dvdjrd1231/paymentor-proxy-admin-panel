@@ -10,16 +10,9 @@ use Illuminate\Support\HtmlString;
 use Paymenter\Extensions\Others\PaymentFees\Support\FeeCalculator;
 
 /**
- * Payment Method Fees (spec item 6).
- *
- * Adds an additional fee based on the selected payment gateway — fixed, percentage,
- * or fixed+percentage — scoped by country, currency, product, customer type and
- * invoice-amount range. All calculation is server-side (Support\FeeCalculator);
- * rules are managed in the admin panel (Admin\Resources\PaymentFeeRuleResource,
- * auto-discovered when the extension is enabled).
- *
- * Applying the fee to an invoice is a one-line call (see feeFor()/applyFee()); the
- * single integration point in core is documented in docs/CORE-TOUCHPOINTS.md.
+ * Per-gateway payment fees — fixed, percentage or both — scoped by country, currency,
+ * product, customer type and invoice amount. Calculated server-side in Support\FeeCalculator,
+ * managed in the admin panel. The single core integration point is in docs/CORE-TOUCHPOINTS.md.
  *
  * @link docs/modules/payment-fees.md
  */
@@ -66,22 +59,17 @@ class PaymentFees extends Extension
     }
 
     /**
-     * Idempotently apply the gateway fee to the invoice as a line item.
-     *
-     * Any previously-applied payment fee is removed first, so switching gateways
-     * never stacks fees. Returns the fee amount applied (0 if none / removed).
+     * Apply the gateway fee as a line item, idempotently: any prior fee line is removed
+     * first, so switching gateways never stacks fees. Returns the amount applied.
      */
     public static function applyFee(Gateway $gateway, Invoice $invoice): float
     {
-        // Remove any prior fee line (idempotent).
         $invoice->items()
             ->where('description', 'like', self::FEE_ITEM_PREFIX . '%')
             ->delete();
 
-        // The invoice (and its cached items/total) still holds the fee line we just
-        // deleted. Without this refresh a percentage fee is calculated on a total that
-        // already includes the previous fee, so switching gateways in the payment modal
-        // compounds the fee on every switch.
+        // The cached items/total still hold the line just deleted; without this refresh a
+        // percentage fee compounds on every gateway switch in the payment modal.
         $invoice->refresh();
         $invoice->load('items');
 

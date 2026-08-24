@@ -17,23 +17,14 @@ use Paymenter\Extensions\Others\BrazilianRegistration\Support\Documents;
 /**
  * Brazilian customer registration.
  *
- * Adds Brazilian tax fields to the customer registration + account forms using
- * Paymenter's native Custom Properties system (so the fields render and persist
- * with no core edits), and layers on:
+ * Tax fields on the registration and account forms via Paymenter's Custom Properties, so
+ * they render and persist with no core edits. On top of that: CPF/CNPJ checksum validation
+ * as `cpf` and `cnpj` rules, encryption at rest for CPF/RG/CNPJ through model events on
+ * Property (the form sees plaintext, the database stores ciphertext), input masks via the
+ * theme's footer hook, and an admin permission for viewing the documents.
  *
- *   - Server-side CPF / CNPJ **checksum validation** (registered as `cpf` and
- *     `cnpj` Laravel validation rules, referenced by the seeded field defs).
- *   - **Encryption at rest** for the sensitive documents (CPF, RG, CNPJ) via
- *     transparent Eloquent model events on the core Property model — the form
- *     still sees plaintext; the database stores ciphertext.
- *   - **Input masks** injected via the theme's `footer` render hook.
- *   - **Access-control permissions** for viewing sensitive documents in admin.
- *
- * Fields seeded (model = User):
- *   Individual: CPF, RG
- *   Business:   Company Name (Razão Social), Trade Name (Nome Fantasia), CNPJ,
- *               State Registration (Inscrição Estadual), SR-Exempt (IE Isento)
- *   Plus a Person Type selector.
+ * Seeded on User: a Person Type selector, CPF and RG for individuals, and Razão Social,
+ * Nome Fantasia, CNPJ, Inscrição Estadual and IE Isento for businesses.
  *
  * @see docs/modules/brazilian-registration.md
  */
@@ -88,9 +79,8 @@ class BrazilianRegistration extends Extension
     }
 
     /**
-     * Register `cpf` and `cnpj` validation rules + human messages. The seeded
-     * Custom Properties reference these by name in their `validation` column,
-     * so they run on both the registration and the account forms.
+     * Register the `cpf` and `cnpj` rules. The seeded Custom Properties reference them by
+     * name, so they run on both the registration and the account forms.
      */
     private function registerValidators(): void
     {

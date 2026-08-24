@@ -9,17 +9,12 @@ use Illuminate\Support\HtmlString;
 use Paymenter\Extensions\Others\GatewayRules\Support\GatewayRuleEngine;
 
 /**
- * Country-based (and product / group / currency / customer / amount) gateway
- * availability rules (spec item 5). Enforced server-side.
+ * Gateway availability rules by country, product, group, currency, customer or amount.
+ * Managed in the admin panel, evaluated by Support\GatewayRuleEngine, enforced server-side.
  *
- * Rules are managed in the admin panel (auto-discovered Payment... resource) and
- * evaluated by Support\GatewayRuleEngine. Enforcement happens at the point Paymenter
- * builds the checkout gateway list:
- *
- *  - Our own gateways (CoinPayments, Binance) call GatewayRules::allows() from their
- *    native canUseGateway() hook, so they respect the rules with no core change.
- *  - To enforce across ALL gateways (Stripe, Cryptomus, …) centrally, one documented
- *    line filters ExtensionHelper::getCheckoutGateways() — see docs/CORE-TOUCHPOINTS.md.
+ * Our own gateways call allows() from their canUseGateway() hook. Covering every gateway
+ * takes one documented line in ExtensionHelper::getCheckoutGateways() — see
+ * docs/CORE-TOUCHPOINTS.md.
  *
  * @link docs/modules/gateway-rules.md
  */

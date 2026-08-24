@@ -168,6 +168,7 @@ sudo crontab -e
 ```bash
 php scripts/export-database.php --clean   # database/export/paymenter-clean.sql
 php scripts/export-database.php           # database/export/paymenter-full.sql
+# note: reads database/database.sqlite — run it from a local checkout, not the server
 ```
 
 | File | Contains | Use it when |
