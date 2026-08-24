@@ -11,8 +11,7 @@ panel's documented `api.md` (RotatingServices).
 ## API
 
 Scope §8 is *"convert the existing WHMCS proxyPanel module"*, so the endpoints this module
-calls are the ones that module calls in production against
-`https://admpx.melodyproxy.com/v0/services`.
+calls are the ones that module calls in production.
 
 Several are **not written up in `api.md`** — `/plans`, `/locations`, `/stop`, `/start`,
 `/credentials`, `/auth_ips`, `/rotate`, `/setRotate` — but the working module calls them,
@@ -35,7 +34,7 @@ so the module is treated as authoritative and `api.md` as an incomplete descript
 | Manual rotation | `GET /rotate/{id}/1` |
 | Rotation interval | `GET /setRotate/{id}/{minutes}` |
 | Reboot | `GET /reboot/{id}[/hard]` |
-| Catalogue | `GET /plans` · `GET /locations` — populate the Plan and Region dropdowns |
+| Catalogue | `GET /plans` — Plan dropdown · `GET /v0/locations/list` — Region dropdown |
 | Blacklist | `GET /blacklist/{blacklist_id}/{enabled\|disabled}` |
 
 All responses are JSON with a `status` field (`ok`/`error`) and an optional `description`.
@@ -80,7 +79,7 @@ Mirrors the WHMCS module's `ConfigOptions`: **Amount proxies**, **Plan** (dropdo
 **How many auth_ips can be allowed**, **How many rotations per period are allowed**,
 **Bandwidth limit**.
 
-**Region** is a *checkout* option (dropdown from `/locations`, labelled `Country - City`)
+**Region** is a *checkout* option (dropdown from `/v0/locations/list`, labelled `Country - City`)
 so one product can be sold in several locations — exactly as the WHMCS order form did.
 
 ### Verified against the live panel
@@ -90,7 +89,8 @@ Checked read-only against the client's dev panel. What it actually returns:
 | Call | Real response |
 |---|---|
 | `GET /plans` | a **flat JSON array of strings** — `["1GB-Squid-HT","1GP-3Proxy-S5", …]`, no `{status,data}` envelope |
-| `GET /locations` | a **flat array of `"Country - City"` strings** — `["Djibouti - Djibouti","Indonesia - Jakarta"]`. No tags and **no stock information** |
+| `GET /services/locations` | a **flat array of `"Country - City"` strings** — the in-stock names only, no tags and no capacity |
+| `GET /v0/locations/list` | the full catalogue with `total`/`used`/`free`/`status` per location, paged 100 at a time |
 | `GET /{id}` (unknown) | `{"status":"error","description":"Unable to find service_id 0"}` |
 | any call, bad/missing token | **HTTP 200** with the plain-text body `Unable to authorize your request` |
 
@@ -134,26 +134,35 @@ No separate field is required or supported.
 
 ### Stock per region
 
-Inventory is the panel's to know, so availability is read from `GET /locations` rather than
-Paymenter's manual **Stock** field. A region the panel reports as unavailable is shown but
-labelled `(Out of stock)` — visible, not hidden, so the customer can see it exists and pick
-another. This matches the client's WHMCS order form.
+Inventory is the panel's to know, so availability comes from the panel rather than
+Paymenter's manual **Stock** field.
 
-The panel's field name for this is not documented, so these are accepted, in order:
+The source is `GET /v0/locations/list` (documented in `File/locations.md`), a sibling of the
+service API — `api_url` points at `…/v0/services`, this lives at `…/v0/locations`. It is the
+only endpoint that reports capacity:
 
-| Kind | Fields |
+```json
+{ "tag": "us-kan-1", "country_name": "United States", "city": "Kansas City",
+  "total": 2, "used": 1, "free": 1, "status": "enabled" }
+```
+
+| Condition | Result |
 |---|---|
-| Boolean | `available`, `in_stock`, `has_stock`, `enabled` |
-| Count | `stock`, `free`, `available_count`, `remaining`, `free_proxies` |
-| Inverted | `out_of_stock` |
+| `total = 0` | not listed — no tunnels were ever provisioned there |
+| `total > 0`, and `free = 0` or `status = disabled` | listed, suffixed `(Out of stock)`, disabled |
+| `status = enabled` and `free > 0` | selectable |
 
-Anything unrecognised is treated as **available** — failing open, so a sellable region is
-never hidden by a naming mismatch.
+Out-of-stock regions are shown rather than hidden, so the customer can see the location
+exists and pick another. This matches the client's WHMCS order form.
 
-> **Currently inert.** The live `GET /locations` returns bare strings with no stock field
-> at all, so nothing is ever marked out of stock. The client's WHMCS order form does show
-> "(Out of stock)" per region, so that information exists somewhere — but not on this
-> endpoint. **Open question:** which call exposes per-region availability?
+`GET /v0/services/locations` returns only the in-stock names as a flat array of strings, so
+it cannot mark the rest and is not used for the dropdown.
+
+**Paging must follow `total` / `items_per_page`, not `total_pages`.** The live panel reports
+`total_pages: 2` for 246 locations at 100 per page; page 3 exists and returns the last 46.
+
+The same check runs again in `createServer()` — a cart can sit for days between the region
+being picked and the invoice being paid.
 
 ### Country flags on regions
 
