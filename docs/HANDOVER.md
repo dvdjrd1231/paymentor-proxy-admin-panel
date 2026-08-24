@@ -143,18 +143,11 @@ To translate, copy the file to `lang/<locale>/`.
 
 ---
 
-## 4. Testing without live credentials
+## 4. Checking the panel connection
 
-`scripts/mock-proxy-panel.php` is a test double for the proxy panel, with fault injection:
-
-```bash
-php -S 127.0.0.1:9000 scripts/mock-proxy-panel.php
-# Panel API URL: http://127.0.0.1:9000/v0/services   Panel Token: test-token
-
-curl "http://127.0.0.1:9000/_control/fail?on=1"   # break the panel on purpose
-curl "http://127.0.0.1:9000/_control/state"       # what it thinks is provisioned
-curl "http://127.0.0.1:9000/_control/reset"
-```
+The module talks to the real panel only. URL, token and callback secret are encrypted
+settings under **Admin → Servers → ProxyPanel** — never hard-coded. To check the panel by
+hand, see the curl snippets in [`modules/proxypanel.md`](modules/proxypanel.md).
 
 With it in failure mode you can confirm the important safety property yourself: order a
 service, watch it appear in **Services → Provisioning** as failed, confirm the service is

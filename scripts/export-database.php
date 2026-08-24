@@ -6,7 +6,7 @@
  *   php scripts/export-database.php [--clean] [--out=FILE]
  *
  *   --clean   omit local test data (test services, invoices, transactions,
- *             provisioning failures, the mock-panel server and test users).
+ *             provisioning failures and test users).
  *             Keeps settings, roles, currencies, notification templates,
  *             categories/products/plans and the extension registry.
  *   --out     output file (default: database/export/paymenter-<mode>.sql)

@@ -275,13 +275,10 @@ foreach (PERIODS as $period) {
 
         // Everything the ProxyPanel module needs to provision this product.
         //
-        // The plan tag is written whether or not the panel confirmed it. It is computed
-        // from PANEL_PLAN, which is a fixed mapping, so it is already the right answer;
-        // querying the panel only sanity-checks it, and an unreachable panel (or one
-        // answering in a different shape, as the mock does) is not evidence the tag is
-        // wrong. Blanking it on a failed check overwrote every live product's correct tag
-        // with an empty string and silently broke provisioning for the whole catalogue.
-        // The "(NOT on panel!)" warning above still flags anything unconfirmed.
+        // The plan tag is written whether or not the panel confirmed it: it comes from the
+        // fixed PANEL_PLAN mapping, so querying the panel only sanity-checks it and an
+        // unreachable panel is not evidence the tag is wrong. Blanking it on a failed check
+        // would wipe every live product's tag. "(NOT on panel!)" above flags the unconfirmed.
             foreach ([
             'plan' => $planTag,
             'amount' => (string) $ports,

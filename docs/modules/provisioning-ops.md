@@ -95,4 +95,4 @@ failures collapse into a single row rather than flooding the list.
 ## Verified
 
 See `docs/VERIFICATION.md` — the "panel broken → failure recorded → order not left active
-→ retry resolves it" sequence is exercised end-to-end against `scripts/mock-proxy-panel.php`.
+→ retry resolves it" sequence is exercised end-to-end.

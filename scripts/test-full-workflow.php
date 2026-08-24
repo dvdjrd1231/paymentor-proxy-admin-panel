@@ -152,9 +152,8 @@ step('service not active without panel confirmation',
     $service->status !== Service::STATUS_ACTIVE,
     'status=' . $service->status);
 
-// When the panel accepted the order (mock panel, or the real one once it has locations),
-// complete the loop the way the panel does in production: a signed status callback. This
-// proves order → payment → provisioning → confirmation → ACTIVE end to end.
+// When the panel accepted the order, complete the loop the way it does in production: a
+// signed status callback. Proves order → payment → provisioning → confirmation → ACTIVE.
 if ($remoteId) {
     $server = App\Models\Server::where('extension', 'ProxyPanel')->first();
     $secretRow = Illuminate\Support\Facades\DB::table('settings')
@@ -166,7 +165,7 @@ if ($remoteId) {
 
     if ($secret === '') {
         note('Panel accepted the order but no callback_secret is configured, so the '
-            . 'confirmation callback cannot be simulated. Run scripts/panel-mode.php --mock.');
+            . 'confirmation callback cannot be simulated. Set one in Admin → Servers → ProxyPanel.');
     } else {
         $resp = Illuminate\Support\Facades\Http::withHeaders(['X-Panel-Secret' => $secret])
             ->timeout(20)
