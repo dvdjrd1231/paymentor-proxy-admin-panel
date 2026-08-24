@@ -169,7 +169,7 @@ credentials.
 | `install-docker.sh` | Docker + compose install, for the containerised path |
 | `harden-disk.sh` | Disk and permission hardening on the VPS |
 | `backup.sh` / `restore.sh` | Database and storage backup, and restore |
-| `export-database.php` | Writes `database/export/paymenter-{clean,full}.sql`. Use `--clean` for a real deployment; the full export contains local test data and is git-ignored |
+| `export-database.php` | Writes `database/export/paymenter-{clean,full}.sql`. Use `--clean` for a real deployment; the full export contains local test data and is git-ignored. **Reads a local SQLite database only** — it cannot run against the MariaDB server, so regenerate it from a local checkout, or use `mysqldump` on the server |
 
 **Setup and maintenance**
 
