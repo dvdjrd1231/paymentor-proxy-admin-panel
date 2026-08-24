@@ -290,9 +290,10 @@ class ProxyPanel extends Server
         $serverId = $product->server_id;
 
         [$regions, $unavailable] = $this->rememberedRegions($serverId);
+        $stale = false;
 
-        // null means the call failed — nothing has been learned about stock, so the last
-        // known state stands. A stale list is recoverable; a missing one loses the order.
+        // null means the call failed. Nothing is invented to fill the gap: the last answer
+        // the panel actually gave is reused and the customer is told it may be out of date.
         if (($live = $this->safeLocationCatalogue()) !== null) {
             $regions = [];
             $unavailable = [];
@@ -313,10 +314,24 @@ class ProxyPanel extends Server
 
             ksort($regions);
             $this->rememberRegions($serverId, $regions, $unavailable);
+        } else {
+            $stale = true;
         }
 
+        // No regions and no usable cache: return an empty select carrying the notice rather
+        // than nothing at all. Returning [] drops the Configurable Options block entirely and
+        // bounces the order form to the cart with no explanation.
         if (empty($regions)) {
-            return [];
+            return [
+                [
+                    'name' => 'Region',
+                    'label' => 'Region',
+                    'type' => 'select',
+                    'required' => true,
+                    'options' => ['' => __($stale ? 'proxypanel.regions_unavailable' : 'proxypanel.regions_none')],
+                    'disabled_options' => [],
+                ],
+            ];
         }
 
         // Shown but marked and disabled, as the WHMCS order form did it: the customer sees
@@ -333,8 +348,9 @@ class ProxyPanel extends Server
         }
 
         // Placeholder first. Its key is '' so core seeds the field with it (array_key_first)
-        // and `required` then refuses the submit until a real region is chosen.
-        $regions = ['' => __('proxypanel.region_placeholder')] + $regions;
+        // and `required` then refuses the submit until a real region is chosen. When the
+        // panel could not be reached it doubles as the notice that this list may be stale.
+        $regions = ['' => __($stale ? 'proxypanel.regions_stale' : 'proxypanel.region_placeholder')] + $regions;
 
         return [
             [
