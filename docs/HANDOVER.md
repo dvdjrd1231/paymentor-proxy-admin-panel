@@ -64,13 +64,14 @@ Then in `/admin`:
 
 | Field | Notes |
 |---|---|
-| **Panel API URL** | e.g. `https://admpx.melodyproxy.com/v0/services` |
+| **Panel API URL** | e.g. `https://<panel-host>/v0/services` |
 | **Panel Token** | sent as the `Panel:` header. Encrypted at rest. |
 | **Callback Secret** | shared secret the panel must present when calling back. Encrypted. **Leave blank to disable the callback endpoint.** |
 
 Per product (**Admin → Product → this server**): **Amount of proxies**, **Plan**,
-**Location/Region**, **Bandwidth limit**, **Max authorized IPs**. Plan and Location are
-populated live from the panel's `/plans` and `/locations`.
+**Bandwidth limit**, **Max authorized IPs**. **Region** is chosen by the customer at
+checkout. Plans come from `/plans`; regions from `/v0/locations/list`, which is the only
+endpoint reporting capacity (`total`/`free`/`status`).
 
 Panel callback URL to give the panel:
 
@@ -155,7 +156,47 @@ service, watch it appear in **Services → Provisioning** as failed, confirm the
 
 ---
 
-## 5. Open questions — I need these from you
+## 5. Scripts
+
+Everything in `scripts/`. All read configuration from the database or `.env` — none hold
+credentials.
+
+**Deployment**
+
+| Script | What it does |
+|---|---|
+| `install-debian13.sh` | Provisions a fresh Debian 13 host |
+| `install-docker.sh` | Docker + compose install, for the containerised path |
+| `harden-disk.sh` | Disk and permission hardening on the VPS |
+| `backup.sh` / `restore.sh` | Database and storage backup, and restore |
+| `export-database.php` | Writes `database/export/paymenter-{clean,full}.sql`. Use `--clean` for a real deployment; the full export contains local test data and is git-ignored |
+
+**Setup and maintenance**
+
+| Script | What it does |
+|---|---|
+| `seed-catalogue.php` | Creates the product/plan catalogue and maps each product to its panel plan tag |
+| `tidy-catalogue.php` | Normalises names and pricing across the catalogue after edits |
+| `seed-payment-fees.php` | Seeds the per-gateway fee table |
+| `set-branding.php` | Applies the store name, logo and colours |
+| `cleanup-test-data.php` | Removes `@example.test` accounts and their invoices, orphaned invoice PDFs and failed jobs. Dry-run by default; `--apply` to write |
+
+**Verification**
+
+| Script | What it does |
+|---|---|
+| `test-full-workflow.php` | Register → order → pay by real Stripe test card → webhook settles → provisioning → ticket → credit. 13 checks |
+| `test-tickets.php` | Departments, replies, canned responses, internal notes, attachments, isolation, notifications. 14 checks |
+| `test-stripe-payment.php` | Drives one real test-mode payment and waits for Stripe's webhook |
+| `verify-stripe.php` | Confirms the Stripe keys authenticate before you try a payment |
+| `test-binance-payment.php`, `test-coinpayments-payment.php`, `test-cryptomus-payment.php` | Same, per gateway |
+| `responsive-audit.mjs` | Measures real layout over CDP at five device widths — horizontal overflow, column collapse, tap-target size. Needs headless Chrome on `--remote-debugging-port=9222`. Exits non-zero on overflow |
+
+```bash
+node scripts/responsive-audit.mjs https://paymenter-dev.7hoop.net
+```
+
+## 6. Open questions — I need these from you
 
 ### A. Proxy panel API
 

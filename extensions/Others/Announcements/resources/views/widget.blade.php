@@ -1,4 +1,9 @@
-{{-- Dashboard announcements panel, in the portal's panel chrome. --}}
+{{-- Dashboard announcements panel, in the portal's panel chrome.
+
+     Wrapped in a root element because this is also mounted as the Livewire component
+     `announcements.widget`: with no active announcements the @if alone rendered nothing and
+     Livewire threw RootTagMissingFromViewException, 500-ing the dashboard. --}}
+<div>
 @if ($announcements->count() > 0)
     <div class="wf-panel">
         <div class="wf-panel-heading">
@@ -22,3 +27,4 @@
         </div>
     </div>
 @endif
+</div>

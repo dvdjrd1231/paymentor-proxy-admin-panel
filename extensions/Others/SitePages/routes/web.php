@@ -4,28 +4,19 @@ use Illuminate\Support\Facades\Route;
 use Paymenter\Extensions\Others\SitePages\Livewire\ContactUs;
 use Paymenter\Extensions\Others\SitePages\Livewire\NetworkStatus;
 
-// Network Status is behind auth, matching the reference portal: it reports on the service
-// customers are paying for, so a signed-out visitor is sent to the login page rather than
-// shown the incident feed.
+// Behind auth, matching the reference: it reports on the service customers pay for.
 Route::group(['middleware' => ['web', 'auth']], function () {
     Route::get('/network-status', NetworkStatus::class)->name('network-status');
 });
 
-// Contact Us stays public: it is the one page someone without an account needs in order to
-// reach anybody, and gating it would leave a locked-out customer with nowhere to go.
+// Contact Us stays public — a locked-out customer needs one way to reach somebody.
 Route::group(['middleware' => ['web']], function () {
     Route::get('/contact', ContactUs::class)->name('contact');
 
-    // The reference portal's "View RSS Feed" link.
-    //
-    // Announcements ships its own feed, but it is dead: its routes file registers
-    // `announcements/{announcement:slug}` *before* `announcements/rss`, so the slug route
-    // captures "rss", route-model binding finds no such announcement and the feed 404s.
-    // That extension is vendored upstream, so it is not edited here.
-    //
-    // This route is mounted at /rss/announcements, which no wildcard can shadow, and under
-    // its own name — reusing `announcements.rss` would collide with the upstream name and
-    // route() would resolve to whichever extension booted last.
+    // The reference's "View RSS Feed" link. Announcements ships a feed but it 404s: its
+    // slug route `announcements/{announcement:slug}` is registered before `announcements/rss`
+    // and captures "rss". Mounted at /rss/announcements, which no wildcard can shadow, under
+    // its own name — reusing `announcements.rss` would collide with the upstream name.
     Route::get('/rss/announcements', function () {
         $model = 'Paymenter\Extensions\Others\Announcements\Models\Announcement';
 

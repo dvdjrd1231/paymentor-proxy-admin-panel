@@ -13,16 +13,11 @@ use Paymenter\Extensions\Others\SitePages\Livewire\ContactUs;
 use Paymenter\Extensions\Others\SitePages\Livewire\NetworkStatus;
 
 /**
- * The two remaining public pages the reference portal has in its menu bar.
+ * The two public pages the reference portal has in its menu bar.
  *
- * **Network Status** reuses published announcements as its incident feed, which is what the
- * reference portal does — its status page is a filtered announcement list, not a separate
- * system. With nothing published it shows the green all-clear.
- *
- * **Contact Us** routes people into the ticket system rather than at an unmonitored inbox,
- * so every request is tracked and answerable.
- *
- * Neither needs a table, so there are no migrations: this extension is pages and routes.
+ * Network Status reuses published announcements as its incident feed, as the reference does;
+ * with none published it shows the all-clear. Contact Us routes into the ticket system
+ * rather than an unmonitored inbox. Neither needs a table, so there are no migrations.
  *
  * @link docs/modules/site-pages.md
  */
@@ -59,47 +54,32 @@ class SitePages extends Extension
         Livewire::component('sitepages.network-status', NetworkStatus::class);
         Livewire::component('sitepages.contact', ContactUs::class);
 
-        // The Announcements extension ships views built on the *default* theme's Tailwind
-        // components, which render a blue primary button — not the brand colour, and badly
-        // out of place next to the rest of the client area. Prepending our directory to its
-        // namespace makes these overrides win.
+        // Announcements ships views built on the default theme's Tailwind components, which
+        // look wrong in this theme. Prepending our directory to its namespace overrides them.
         //
-        // Done on booted() rather than inline because extension boot order is not
-        // guaranteed: if Announcements booted after us it would call addNamespace() and
-        // replace the hints, silently undoing this.
-        // `app()` rather than `$this->app`: the Extension base class is not a service
-        // provider and has no $app property, and ExtensionHelper::call(mayFail: true)
-        // swallows the resulting error — so the override silently never registered.
+        // On booted(), not inline: extension boot order is not guaranteed, and Announcements
+        // booting later would call addNamespace() and replace the hints. `app()` rather than
+        // `$this->app` because Extension is not a service provider.
         $override = __DIR__ . '/resources/views/announcements';
 
         app()->booted(function () use ($override) {
-            // Prepend first, and never call View::exists() before it: exists() resolves the
-            // view through find(), which *caches* the path it lands on. Checking first
-            // therefore cached the upstream file, and the later prepend changed the hints
-            // while the stale resolution kept winning — the override silently did nothing.
+            // Never call View::exists() before this: exists() resolves through find(), which
+            // caches the path it lands on, so the upstream file wins despite the prepend.
             View::prependNamespace('announcements', $override);
-
-            // Drop anything resolved earlier in this request so the new hint order applies.
-            View::flushFinderCache();
+            View::flushFinderCache();       // drop anything resolved earlier this request
         });
 
-        // Menu entries append in the order their listeners are registered, so these three
-        // are registered in the order the reference portal shows them:
-        // … Knowledgebase, Network Status, Affiliates, Contact Us.
-        //
-        // Both of our pages always exist once enabled — unlike Knowledgebase or
-        // Announcements, there is no "empty" state that would make an entry lead nowhere.
+        // Menu entries append in listener-registration order, so these follow the reference:
+        // Knowledgebase, Network Status, Affiliates, Contact Us.
         Event::listen('navigation', fn () => [
             'name' => __('sitepages.network_status'),
             'route' => 'network-status',
             'icon' => 'ri-pulse-line',
         ]);
 
-        // Affiliates ships with Paymenter but only registers itself in the account
-        // dropdown, whereas the reference has it in the menu bar. Added here rather than by
-        // editing that extension, so an upstream update cannot undo it. Guarded on the
-        // route existing, so disabling Affiliates removes the entry instead of breaking
-        // every page with a "route not defined" error.
+        // Affiliates only registers itself in the account dropdown; the reference has it in
+        // the menu bar. Added here so an upstream update cannot undo it, and guarded on the
+        // route so disabling Affiliates removes the entry rather than 500-ing every page.
         Event::listen('navigation', function () {
             if (!Route::has('affiliate.index')) {
                 return;
