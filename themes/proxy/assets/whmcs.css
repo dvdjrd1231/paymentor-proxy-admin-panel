@@ -1027,6 +1027,9 @@
         /* Shallow band: it carries one line of copyright and the back-to-top button, so
            the height only needs to clear that button. */
         padding: 8px 10px;
+        /* Without this the footer computes to 100% + 20px of padding and is wider than the
+           window — the theme loads no Tailwind preflight, so nothing sets it globally. */
+        box-sizing: border-box;
     }
     .wf-footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
     .wf-footer-copy { margin: 0; font-size: 12.6px; color: var(--brand); }
