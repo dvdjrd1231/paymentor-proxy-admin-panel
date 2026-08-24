@@ -48,6 +48,10 @@ return [
     'save' => 'Save',
     'out_of_stock' => '(Out of stock)',
     'region_placeholder' => 'Select Geographic Region for IPv6 Proxies',
+    // Shown instead of invented data when the panel cannot be reached or has nothing to offer.
+    'regions_stale' => 'Select Geographic Region — list may be out of date',
+    'regions_unavailable' => 'Regions unavailable — could not reach the proxy panel',
+    'regions_none' => 'No regions are currently available',
 
     // Confirmations
     'auth_ips_updated' => 'Authorized IPs updated.',

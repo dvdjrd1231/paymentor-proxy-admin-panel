@@ -1,6 +1,12 @@
 {{-- The reference portal's "Apply Credit" panel: a green band above the invoice items
      stating the balance, with an amount box and one button. Hidden entirely when there is
      no credit to apply, so a paid invoice or an empty balance shows nothing. --}}
+{{-- Livewire requires a single root element in every component view, including when the
+     component renders nothing. Without this wrapper the @if below was the root, so an
+     invoice with no applicable credit produced an empty render and Livewire threw
+     RootTagMissingFromViewException — a 500 on the whole invoice page, which is where the
+     customer pays. --}}
+<div>
 @if ($credit && $credit->amount > 0 && $max > 0)
     <div class="wf-panel wf-creditbox">
         <div class="wf-panel-heading">
@@ -25,3 +31,4 @@
         </div>
     </div>
 @endif
+</div>
