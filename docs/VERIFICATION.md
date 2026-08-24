@@ -4,7 +4,7 @@ What has actually been executed against a running install, and what has not. Any
 listed here as verified should be treated as unverified.
 
 **Environment used:** PHP 8.4.24, SQLite, `php artisan serve`, all extensions enabled,
-theme `proxy`, proxy panel served by `scripts/mock-proxy-panel.php`.
+theme `proxy`.
 
 ---
 
@@ -34,7 +34,7 @@ theme `proxy`, proxy panel served by `scripts/mock-proxy-panel.php`.
 
 ## 2. Provisioning lifecycle (16/16 checks)
 
-Run against the mock panel, including deliberate fault injection.
+Run with deliberate fault injection (panel unreachable / returning errors).
 
 | Check | Result |
 |---|---|

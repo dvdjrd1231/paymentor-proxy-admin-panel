@@ -13,13 +13,11 @@ use Paymenter\Extensions\Others\ProvisioningOps\ProvisioningOps;
 use Paymenter\Extensions\Servers\ProxyPanel\Support\CountryFlag;
 
 /**
- * ProxyPanel — native Paymenter server (provisioning) module for the IPv6/IPv4 proxy
- * admin panel. Conversion of the client's existing WHMCS "proxyPanel" module (scope §8).
+ * ProxyPanel — native Paymenter server (provisioning) module, converted from the client's
+ * WHMCS "proxyPanel" module.
  *
- * The endpoints below are the ones the WHMCS module calls in production against
- * https://admpx.melodyproxy.com/v0/services. Several are not written up in `api.md`
- * (/plans, /locations, /stop, /start, /credentials, /auth_ips, /rotate, /setRotate) but
- * are demonstrably live, so the working module is treated as authoritative:
+ * /plans, /locations, /stop, /start, /credentials, /auth_ips, /rotate and /setRotate are
+ * absent from api.md but live in production, so the working WHMCS module is authoritative:
  *
  *   GET  /{id}                          service info (expiration, rotation, ips[])
  *   POST /newIpv6                       create
@@ -39,23 +37,7 @@ use Paymenter\Extensions\Servers\ProxyPanel\Support\CountryFlag;
  * Auth: every call sends the `Panel: <token>` header. Responses are JSON with a
  * `status` field (`ok`/`error`) and an optional `description`.
  *
- * WHMCS → Paymenter mapping:
- *   CreateAccount    → createServer      POST /newIpv6 (client_id = Paymenter service id,
- *                                        matching the WHMCS module and its callback)
- *   SuspendAccount   → suspendServer     GET  /stop/{id}
- *   UnsuspendAccount → unsuspendServer   GET  /start/{id}
- *   TerminateAccount → terminateServer   GET  /cancel/{id}
- *   ChangePackage    → upgradeServer     GET  /expand|shrink/{id}/{delta}
- *   ChangePassword   → changePassword    POST /credentials/{id}
- *   ClientArea       → getView/getActions  proxies, export, rotate, rotation time,
- *                                        auth IPs, password, API key, reboot
- *   Renewal          → billing-driven (Paymenter has no renew hook): a Service\Updated
- *                      listener calls GET /renew/{id} then GET /extend/{id}/{ts}.
- *
- * Robustness (scope §7-8): per-service/per-action locks, idempotent create/terminate,
- * HTTP retry with backoff, structured logging, and every failure recorded to
- * Others/ProvisioningOps so the admin can see and retry it — a failed create never
- * leaves an order silently active.
+ * Renewal has no Paymenter hook: a Service\Updated listener calls /renew then /extend.
  *
  * @link docs/modules/proxypanel.md
  */
@@ -96,21 +78,6 @@ class ProxyPanel extends Server
     private const MAX_AUTH_IPS = 3;
 
     private const LOG_CHANNEL = 'stack';
-
-    /**
-     * Catalogue GET responses (`/plans`, `/locations`), memoised for the life of this
-     * instance.
-     *
-     * The labels and the stock flags come from the same `/locations` payload but are read by
-     * two different methods, so rendering the order form fetched it twice, and so did every
-     * provisioning attempt — two round trips to a panel that gets a 20s timeout and three
-     * retries, for one answer. ExtensionHelper builds a fresh instance per resolution
-     * (`new $extension($config)`), so this never outlives the call chain that filled it and
-     * cannot serve a stale stock reading to a later request.
-     *
-     * @var array<string, array>
-     */
-    private array $catalogue = [];
 
     // ── Module configuration (Admin → Servers → ProxyPanel) ──────────────────
 
@@ -303,56 +270,34 @@ class ProxyPanel extends Server
 
     /**
      * Region is chosen by the customer at checkout and sent as `location_name`, exactly as
-     * the WHMCS order form did (`$params['configoptions']['Region']`). Options come live
-     * from the panel's /locations endpoint.
+     * the WHMCS order form did (`$params['configoptions']['Region']`).
+     *
+     * `GET /locations` returns the regions that are *in stock right now*, not the full
+     * catalogue — the WHMCS module treats it that way too, disabling any configurable option
+     * absent from the response. Paymenter has no hand-maintained option list, so the
+     * catalogue is the union of every region the panel has ever offered, persisted per
+     * server; anything in it but missing from the live answer is shown out of stock.
      */
     public function getCheckoutConfig(Product $product): array
     {
         $serverId = $product->server_id;
 
-        // null means the call failed; [] means the panel answered and has nothing to offer.
-        // Those are different facts and must not be handled alike — conflating them is what
-        // kept regions on sale after every tunnel had been allocated.
-        $live = $this->tryOptions('/locations');
+        [$regions, $unavailable] = $this->rememberedRegions($serverId);
 
-        if ($live !== null && $live !== []) {
-            // The panel answered with locations. Availability is read in the same pass and
-            // cached with the labels, so a region whose tunnels are down stays marked when
-            // the panel is next unreachable.
-            $stock = $this->safeOptions(fn () => $this->fetchLocationStock());
-
-            $unavailable = array_values(array_intersect(
-                array_keys(array_filter($stock, fn ($ok) => $ok === false)),
-                array_keys($live),
-            ));
-
-            $this->rememberRegions($serverId, $live, $unavailable);
-            $regions = $live;
-        } elseif ($live === []) {
-            // The panel answered and offered nothing: every tunnel is allocated, or the
-            // operator has disabled the lot. That is a real answer about stock, not a
-            // failure, so the cached availability must not override it.
-            //
-            // The regions are still listed — from the last known labels — because the
-            // reference marks a sold-out location rather than hiding it, and because
-            // returning no options at all drops the Configurable Options block and bounces
-            // the order form to the cart. Every one is marked out of stock and disabled.
-            [$regions] = $this->rememberedRegions($serverId);
-            $unavailable = array_keys($regions);
-        } else {
-            // The call failed outright — the panel is unreachable, not empty. Nothing has
-            // been learned about stock, so the last known state is the best available
-            // answer: a stale list is recoverable, a missing one loses the order.
-            [$regions, $unavailable] = $this->rememberedRegions($serverId);
+        // null means the call failed — nothing has been learned about stock, so the last
+        // known state stands. A stale list is recoverable; a missing one loses the order.
+        if (($live = $this->tryOptions('/locations')) !== null) {
+            $regions += $live;
+            $unavailable = array_values(array_diff(array_keys($regions), array_keys($live)));
+            $this->rememberRegions($serverId, $regions, $unavailable);
         }
 
         if (empty($regions)) {
             return [];
         }
 
-        // An unavailable region is shown but marked and disabled, the way the WHMCS order
-        // form did it, so the customer can see it exists and pick another rather than
-        // wondering where it went.
+        // Shown but marked and disabled, as the WHMCS order form did it: the customer sees
+        // the region exists and picks another, rather than wondering where it went.
         foreach ($unavailable as $tag) {
             if (isset($regions[$tag])) {
                 $regions[$tag] .= ' ' . __('proxypanel.out_of_stock');
@@ -377,19 +322,14 @@ class ProxyPanel extends Server
     }
 
     /**
-     * A catalogue endpoint's raw payload, fetched at most once per instance.
+     * `GET /plans` and `GET /locations` as `[tag => label]`.
      *
-     * @see self::$catalogue
+     * The live panel answers with a bare JSON array of label strings; `data`-wrapped and
+     * object-row forms are accepted too, since neither endpoint is in api.md.
      */
-    private function catalogue(string $path): array
-    {
-        return $this->catalogue[$path] ??= $this->request('get', $path);
-    }
-
-    /** The panel returns plans/locations either as a flat list or a keyed map. */
     private function fetchOptions(string $path): array
     {
-        $data = $this->catalogue($path);
+        $data = $this->request('get', $path);
         $rows = $data['data'] ?? $data;
         $out = [];
 
@@ -409,59 +349,9 @@ class ProxyPanel extends Server
     }
 
     /**
-     * Per-region availability from `GET /locations`, as `[server_tag => bool]`.
-     *
-     * Inventory is the panel's to know, not something the admin should maintain by hand —
-     * so availability is read from the catalogue rather than from Paymenter's own Stock
-     * field. The panel's exact field name is not documented, so the common spellings are
-     * accepted and anything unrecognised is treated as available (fail open: never hide a
-     * region that is actually sellable).
-     *
-     * A region counts as out of stock when the panel reports a false-y availability flag
-     * or a remaining count of zero.
-     */
-    private function fetchLocationStock(): array
-    {
-        $data = $this->catalogue('/locations');
-        $rows = $data['data'] ?? $data;
-        $stock = [];
-
-        foreach ((array) $rows as $key => $value) {
-            if (!is_array($value)) {
-                continue;                  // a bare string carries no stock information
-            }
-
-            $tag = $value['tag'] ?? $value['name'] ?? $value['id'] ?? $key;
-
-            foreach (['available', 'in_stock', 'has_stock', 'enabled'] as $flag) {
-                if (array_key_exists($flag, $value)) {
-                    $stock[$tag] = (bool) $value[$flag];
-                    continue 2;
-                }
-            }
-
-            foreach (['stock', 'free', 'available_count', 'remaining', 'free_proxies'] as $count) {
-                if (array_key_exists($count, $value) && is_numeric($value[$count])) {
-                    $stock[$tag] = (int) $value[$count] > 0;
-                    continue 2;
-                }
-            }
-
-            if (isset($value['out_of_stock'])) {
-                $stock[$tag] = !$value['out_of_stock'];
-            }
-        }
-
-        return $stock;
-    }
-
-    /**
-     * The last region list the panel gave us, kept so the order form keeps working when the
-     * panel is unreachable.
-     *
-     * Stored against the server row in `settings`, the same table the extension's own
-     * credentials live in, so it survives a cache flush and a container restart — a
-     * memory-only cache would be empty exactly when it is needed, right after a deploy.
+     * The last region list the panel gave us, so the order form survives an outage. Kept in
+     * `settings` rather than the cache: a memory-only copy would be empty right after a
+     * deploy, exactly when it is needed.
      */
     private function rememberRegions(?int $serverId, array $regions, array $unavailable = []): void
     {
@@ -477,9 +367,8 @@ class ProxyPanel extends Server
                     'key' => 'cached_regions',
                 ],
                 [
-                    // Labels and availability together. Storing labels alone meant a cached
-                    // list came back with every region looking available, however many of
-                    // them had no working tunnel.
+                    // Availability alongside the labels: labels alone meant a cached list
+                    // came back with every region looking available.
                     'value' => json_encode(['regions' => $regions, 'unavailable' => array_values($unavailable)]),
                     'updated_at' => now(),
                     'created_at' => now(),
@@ -510,9 +399,7 @@ class ProxyPanel extends Server
             $data = $raw ? (array) json_decode($raw, true) : [];
 
             // Entries written before availability was cached are a flat tag => label map.
-            // Those are read as "availability unknown", and unknown is treated as
-            // unavailable below rather than assumed good: offering a region with no tunnel
-            // behind it is the failure being fixed here.
+            // Unknown availability is treated as unavailable, not assumed good.
             if (!array_key_exists('regions', $data)) {
                 return [$data, array_keys($data)];
             }
@@ -524,12 +411,8 @@ class ProxyPanel extends Server
     }
 
     /**
-     * Fetch a catalogue list, distinguishing "could not ask" from "asked, and the answer is
-     * none".
-     *
-     * safeOptions() collapses both into [], which is fine for the admin dropdowns it was
-     * written for but wrong at checkout: an empty answer is a statement about stock and
-     * must override the cache, whereas a failed call has learned nothing and must not.
+     * Like safeOptions(), but tells "could not ask" apart from "asked, answer is none" —
+     * a distinction checkout needs and the admin dropdowns do not.
      *
      * @return array<string,string>|null null when the call failed
      */
@@ -563,11 +446,9 @@ class ProxyPanel extends Server
         $settings = array_merge($settings, $properties);
 
         // Paying the invoice marks the service Active before provisioning is attempted, so
-        // the gate has to hold on *every* exit from this method — not just the happy path.
-        // If the panel refuses (no location, bad plan, outage) the exception used to escape
-        // with the service still Active, showing the customer a service that was never
-        // delivered. That is the fault the client reported. Force it back to Pending on the
-        // way out, then rethrow so ProvisioningOps still records and can retry the failure.
+        // the gate has to hold on *every* exit — not just the happy path. Otherwise a panel
+        // refusal (no location, bad plan, outage) leaves the customer an Active service that
+        // was never delivered. Rethrow after, so ProvisioningOps records and can retry it.
         try {
             return $this->createServerInternal($service, $settings);
         } catch (\Throwable $e) {
@@ -599,8 +480,7 @@ class ProxyPanel extends Server
             $amount = max(1, (int) ($settings['amount'] ?? 1));
             $bwlimit = (int) ($settings['bwlimit'] ?? 0);
 
-            // `client_id` is the Paymenter service id — the WHMCS module states this
-            // explicitly (`// clientid === $params['serviceid']`) and its callback looks
+            // `client_id` is the Paymenter service id — the WHMCS module's callback looks
             // the service up by that same id.
             $payload = [
                 'client_id' => (int) $service->id,
@@ -611,13 +491,10 @@ class ProxyPanel extends Server
                 'bwlimit' => $bwlimit > 0 ? $bwlimit : null,
             ];
 
+            // Membership of /locations *is* the stock check — the panel lists only what it
+            // can currently deliver.
             $location = $payload['location_name'];
             if (!$location || !array_key_exists($location, $this->fetchOptions('/locations'))) {
-                throw new \RuntimeException('ProxyPanel: selected Region is no longer available.');
-            }
-
-            $locationStock = $this->fetchLocationStock();
-            if (($locationStock[$location] ?? null) === false) {
                 throw new \RuntimeException('ProxyPanel: selected Region is out of stock.');
             }
 
@@ -644,12 +521,9 @@ class ProxyPanel extends Server
 
             $this->cachePanelState($service, $res);
 
-            // The panel provisions asynchronously: `POST /newIpv6` returning ok means the
-            // request was accepted, NOT that the proxies are deployed — the panel lists the
-            // service as "pending / deployed: none" until it finishes. The WHMCS module
-            // therefore sets the service Pending here and waits for the panel's callback to
-            // mark it Active. Do the same, so a customer is never shown an active service
-            // the panel has not actually delivered.
+            // Provisioning is asynchronous: an ok from /newIpv6 means accepted, not
+            // deployed. Stay Pending until the panel's callback says otherwise, so a
+            // customer is never shown a service the panel has not delivered.
             $this->awaitPanelConfirmation($service);
 
             $this->log('info', 'Service provisioning requested — awaiting panel confirmation', [
@@ -777,11 +651,9 @@ class ProxyPanel extends Server
     }
 
     /**
-     * The proxy management panel rendered on the customer's service page.
-     *
-     * Core echoes the returned HTML raw, and its `goto()` helper passes no arguments — so
-     * the interactive forms post to this extension's own routes (see routes.php), which
-     * authorize against the Service policy and call the `client*` methods below.
+     * The proxy management panel on the customer's service page. Core echoes the HTML raw
+     * and its `goto()` helper passes no arguments, so the forms post to this extension's own
+     * routes, which authorize against the Service policy and call the `client*` methods.
      */
     public function getView(Service $service, $settings = [], $properties = [], $view = null)
     {
@@ -809,10 +681,8 @@ class ProxyPanel extends Server
     }
 
     // ── Client-initiated actions (called via this extension's routes) ────────
-    //
-    // These follow ExtensionHelper::callService()'s convention — ($service, $settings,
-    // $properties, ...$args) — so per-product permission flags are enforced here on the
-    // server, never trusted from the form.
+    // Signature follows ExtensionHelper::callService(): ($service, $settings, $properties,
+    // ...$args). Permission flags are enforced here, never trusted from the form.
 
     public function clientUpdateAuthIps(Service $service, $settings, $properties, array $ips)
     {
@@ -1007,12 +877,8 @@ class ProxyPanel extends Server
     }
 
     /**
-     * The proxy list for the client-area export, one per line as
-     * `host:port:username:password`.
-     *
-     * IPv6 addresses contain colons, so a bare `ip:port:user:pass` line is impossible to
-     * parse. IPv6 hosts are therefore wrapped in brackets — `[2a01:4f8::1]:10000:user:pass`
-     * — which is the standard notation proxy clients expect.
+     * The client-area export, one `host:port:username:password` per line. IPv6 hosts are
+     * bracketed — `[2a01:4f8::1]:10000:user:pass` — or the colons make the line unparseable.
      */
     public function exportProxies(Service $service): string
     {
@@ -1043,22 +909,12 @@ class ProxyPanel extends Server
     // ── Activation gating ────────────────────────────────────────────────────
 
     /**
-     * Hold the service at `pending` until the panel confirms deployment.
-     *
-     * Paymenter activates a service in `RenewServiceService` independently of the
-     * provisioning job, so simply returning from createServer() is not enough — core
-     * will set `active` either just before the queued job runs or just after it. The
-     * `Service\Updated` listener in boot() therefore reverts any activation that is not
-     * backed by a panel confirmation, which covers both orderings.
-     */
-    /**
      * Write a status straight to the row.
      *
-     * The guard runs inside the model's own `updated` event, where the attribute has been
-     * written but `original` still holds the pre-save value. Assigning the old value back
-     * therefore leaves the model *not dirty*, and `save()` would silently write nothing —
-     * so go through the query builder and then re-sync the in-memory attribute. This also
-     * avoids re-entering the observer.
+     * The guard runs inside the model's own `updated` event, where the attribute is written
+     * but `original` still holds the pre-save value — so assigning the old value back leaves
+     * the model *not dirty* and `save()` would write nothing. Go through the query builder
+     * and re-sync the attribute; this also avoids re-entering the observer.
      */
     private function forceStatus(Service $service, string $status): void
     {
@@ -1068,6 +924,12 @@ class ProxyPanel extends Server
         $service->syncOriginalAttribute('status');
     }
 
+    /**
+     * Hold the service at `pending` until the panel confirms deployment. Core activates in
+     * RenewServiceService independently of the provisioning job — before or after it — so
+     * returning from createServer() is not enough; the Service\Updated listener in boot()
+     * reverts any activation the panel has not confirmed, covering both orderings.
+     */
     private function awaitPanelConfirmation(Service $service): void
     {
         $this->clearProp($service, self::CONFIRMED_KEY);
@@ -1099,12 +961,8 @@ class ProxyPanel extends Server
     // ── Panel callback ───────────────────────────────────────────────────────
 
     /**
-     * Handle a status callback from the panel.
-     *
-     * The WHMCS module's callback posted `id` + `status`, marking the service Active on
-     * success and raising `AfterModuleCreateFailed` on error. This is the Paymenter
-     * equivalent: it resolves the service, applies the status, and records failures so
-     * they surface in the admin with a retry.
+     * Handle a status callback from the panel: resolve the service, apply the status, and
+     * record failures so they surface in the admin with a retry.
      *
      * Authentication (either, constant-time compared):
      *   X-Panel-Secret: <callback_secret>
@@ -1165,12 +1023,8 @@ class ProxyPanel extends Server
 
     private function resolveServiceFromCallback(array $payload): ?Service
     {
-        // The panel's own service id (what it calls `id`), matched against what we stored.
-        //
-        // A panel id is not guaranteed unique over time — panels can recycle ids after a
-        // service is cancelled, and a stale row can outlive its service. So take the most
-        // recently provisioned match, and prefer one that is not already cancelled, rather
-        // than whichever row happens to come first.
+        // Panel ids are not unique over time — they can be recycled after a cancellation —
+        // so take the most recently provisioned match, preferring one not already cancelled.
         foreach (['id', 'service_id', 'panel_id'] as $key) {
             if (!isset($payload[$key])) {
                 continue;
@@ -1298,17 +1152,13 @@ class ProxyPanel extends Server
      * data without another round-trip. Tolerant of the response being wrapped in `data`.
      */
     /**
-     * The customer's `host:port` endpoints, from whichever shape the panel used.
+     * The customer's `host:port` endpoints. The live panel returns three shapes:
      *
-     * Verified against the live panel, which returns three different shapes:
-     *
-     *  1. `"ips": [{"ip": null, "port": 10000, "out": "2a10:500:…"}]`
-     *     — right after create, before a node is assigned. `ip` is null and `out`
-     *       carries the outbound address.
-     *  2. `"ips": null`
-     *     — while the service is still undeployed.
-     *  3. `{"ip": "23.159.233.5", "first": 10000, "last": 10000, "amount": 1}`
-     *     — a deployed service: one host with a **port range**, not a list.
+     *  1. `"ips": [{"ip": null, "port": 10000, "out": "2a10:500:…"}]` — just after create,
+     *     before a node is assigned; `out` carries the outbound address.
+     *  2. `"ips": null` — still undeployed.
+     *  3. `{"ip": "23.159.233.5", "first": 10000, "last": 10000, "amount": 1}` — deployed:
+     *     one host with a port *range*, not a list.
      *
      * @return array<int,string>
      */
@@ -1479,11 +1329,9 @@ class ProxyPanel extends Server
         $body = trim($response->body());
         $json = $response->json();
 
-        // The panel answers an auth failure with **HTTP 200 and a plain-text body**
-        // ("Unable to authorize your request") rather than 401 + JSON. Verified against
-        // the live panel. Without this check a bad or expired token looks like success:
-        // json() returns null, the status check passes, and GET verbs such as
-        // /stop or /cancel would silently appear to have worked.
+        // The panel answers an auth failure with HTTP 200 and a plain-text body ("Unable to
+        // authorize your request"), not 401 + JSON — verified live. Without this check a bad
+        // token looks like success and /stop or /cancel appear to have worked.
         if (!is_array($json)) {
             $detail = $body === '' ? 'empty response' : $body;
             $this->log('error', 'ProxyPanel returned a non-JSON response', [

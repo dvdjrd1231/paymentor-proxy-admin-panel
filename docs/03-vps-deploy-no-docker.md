@@ -176,7 +176,7 @@ php scripts/export-database.php           # database/export/paymenter-full.sql
 | `paymenter-full.sql` | Everything, **including local test data** — 21 test services, test invoices and transactions, test users | Reproducing the local environment for debugging only |
 
 **Use `--clean` for a real deployment.** The full export contains services pointing at the
-mock panel on `127.0.0.1:9000`, test invoices, and test accounts.
+test services, test invoices, and test accounts.
 
 The clean export deliberately omits **users** and all **Server/Gateway credentials**: those
 are per-deployment secrets, and exporting users would carry a known password hash into

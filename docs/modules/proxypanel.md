@@ -6,8 +6,7 @@ panel's documented `api.md` (RotatingServices).
 
 - **Location:** `extensions/Servers/ProxyPanel/`
 - **Type:** Server (provisioning)
-- **Status:** all `api.md` endpoints implemented; verified end-to-end (32 checks) against
-  `scripts/mock-proxy-panel.php`.
+- **Status:** all `api.md` endpoints implemented; runs against the real panel only.
 
 ## API
 
@@ -95,7 +94,7 @@ Checked read-only against the client's dev panel. What it actually returns:
 | `GET /{id}` (unknown) | `{"status":"error","description":"Unable to find service_id 0"}` |
 | any call, bad/missing token | **HTTP 200** with the plain-text body `Unable to authorize your request` |
 
-Two consequences the mock could never have surfaced:
+Two consequences:
 
 1. **`location_name` is the literal `"Country - City"` string**, not a slug — which is why
    the WHMCS module passes `$params['configoptions']['Region']` straight through.
@@ -297,19 +296,19 @@ so the panel can safely retry.
   [`provisioning-ops.md`](provisioning-ops.md).
 - **No hard-coded secrets** — API URL + token + callback secret are settings, all encrypted.
 
-## Testing without the real panel
-
-`scripts/mock-proxy-panel.php` is a drop-in test double implementing this exact contract,
-including fault injection:
+## Checking the panel by hand
 
 ```bash
-php -S 127.0.0.1:9000 scripts/mock-proxy-panel.php
-# Panel API URL: http://127.0.0.1:9000/v0/services      Panel Token: test-token
+TOKEN='<panel token>'
+BASE='https://adminproxies-dev.melodyproxy.com/v0/services'
 
-curl "http://127.0.0.1:9000/_control/fail?on=1"   # every call now returns HTTP 500
-curl "http://127.0.0.1:9000/_control/state"       # inspect provisioned services
-curl "http://127.0.0.1:9000/_control/reset"       # wipe state
+curl -s -w '\nHTTP %{http_code}\n' -H "Panel: $TOKEN" "$BASE/locations"
+curl -s -w '\nHTTP %{http_code}\n' -H "Panel: $TOKEN" "$BASE/plans"
 ```
+
+Send only the `Panel` header, and do not pipe to `jq` on a first run: a bad token answers
+HTTP 200 with the plain-text body `Unable to authorize your request`, which `jq` reports as
+a parse error rather than the auth failure it is.
 
 ## Enable
 
@@ -335,7 +334,7 @@ token, and attach it to your proxy products.
 ## Open questions for the client
 
 These are the only things still unknown about the panel integration. Everything else is
-built and verified against `scripts/mock-proxy-panel.php`.
+implemented against the real panel's observed behaviour.
 
 1. **Does the panel send callbacks at all?** If yes:
    - what URL/method does it call, and can the callback URL be configured per-deployment?

@@ -3,22 +3,16 @@
 namespace Paymenter\Extensions\Servers\ProxyPanel\Support;
 
 /**
- * Turns a "Country - City" region label into a flag-prefixed label.
+ * Turns a "Country - City" region label into a flag-prefixed one:
+ * "United States - Kansas City" -> "🇺🇸  United States - Kansas City".
  *
- *   "United States - Kansas City"  ->  "🇺🇸  United States - Kansas City"
+ * Country names are matched against Paymenter's own ISO-3166 list
+ * (`config('app.countries')`) plus the alias table below, so there is no second list to
+ * maintain. The flag is two regional-indicator symbols — the only way to get one into a
+ * native <select>, which cannot hold images.
  *
- * The country name is matched against Paymenter's own ISO-3166 list
- * (`config('app.countries')`, 249 entries) so there is no second list to maintain,
- * plus a small alias table for the spellings panels commonly use.
- *
- * The flag itself is two Unicode regional-indicator symbols — the only way to show a
- * flag inside a native <select>, which cannot contain images.
- *
- * ⚠ Windows renders these as the two letters ("US") rather than a flag: it ships no
- * flag glyphs, so Chrome, Edge and Firefox on Windows all fall back to the letters.
- * macOS, iOS, Android and most Linux desktops show the flag. Nothing can change that
- * from the server side short of replacing the native select with an image-based
- * custom dropdown.
+ * ⚠ Windows ships no flag glyphs and renders these as the two letters ("US") in every
+ * browser. Only an image-based custom dropdown could change that.
  */
 class CountryFlag
 {
@@ -67,15 +61,12 @@ class CountryFlag
     /** name (lower-cased) => ISO-3166 alpha-2, built once per request. */
     private static ?array $byName = null;
 
-    /**
-     * Prefix a "Country - City" label with its flag. Returns the label unchanged when
-     * the country cannot be identified — never guesses, and never loses the label.
-     */
+    /** Prefix a label with its flag, or return it unchanged if the country is unknown. */
     public static function decorate(string $label): string
     {
         $flag = self::forLabel($label);
 
-        // Two spaces read better than one: the flag glyph is visually wide.
+        // Two spaces: the flag glyph is visually wide.
         return $flag ? $flag . '  ' . $label : $label;
     }
 
@@ -106,10 +97,7 @@ class CountryFlag
         return self::nameIndex()[$key] ?? null;
     }
 
-    /**
-     * Convert an ISO-3166 alpha-2 code into its flag: each letter becomes the matching
-     * REGIONAL INDICATOR SYMBOL (U+1F1E6 is 'A'), and the pair renders as one flag.
-     */
+    /** Each letter becomes its REGIONAL INDICATOR SYMBOL (U+1F1E6 = 'A'); the pair renders as one flag. */
     public static function emoji(string $iso2): string
     {
         $iso2 = strtoupper(trim($iso2));
