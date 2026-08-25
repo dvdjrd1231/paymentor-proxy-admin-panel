@@ -35,7 +35,12 @@ class Rail
      * Reuses the menu groups rather than repeating them, so a screen can never appear in one
      * and not the other, and so the permission checks behind them are applied once.
      *
-     * @return array{label: string, items: array<int, array{label: string, url: string, badge: ?string}>}|null
+     * The group's own icon comes along with it. On the reference every rail heading carries
+     * one, and taking it from the menu group means the icon beside "Support" in the rail is
+     * by construction the same idea as the one the menu uses — there is no second list of
+     * icons to keep in step.
+     *
+     * @return array{label: string, icon: string|\BackedEnum|null, items: array<int, array{label: string, url: string, badge: ?string}>}|null
      */
     public static function section(): ?array
     {
@@ -55,7 +60,13 @@ class Rail
             ];
         }
 
-        return ['label' => $group->getLabel(), 'items' => $items];
+        return [
+            'label' => $group->getLabel(),
+            // String or BackedEnum, whichever the group was given — the icon component
+            // resolves both, so neither is normalised away here.
+            'icon' => $group->getIcon(),
+            'items' => $items,
+        ];
     }
 
     /**

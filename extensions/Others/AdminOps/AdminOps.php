@@ -84,6 +84,19 @@ class AdminOps extends Extension
             fn (): string => Blade::render('@include(\'adminops::skin\')'),
         );
 
+        // The reference's two icon clusters, one at each end of the menu bar. The `+` goes
+        // after the brand and before the menus; the utility icons go inside `.fi-topbar-end`,
+        // after the search field and before the user menu — the reference's own order.
+        FilamentView::registerRenderHook(
+            'panels::topbar.logo.after',
+            fn (): string => Blade::render('@include(\'adminops::quick-create\')'),
+        );
+
+        FilamentView::registerRenderHook(
+            'panels::global-search.after',
+            fn (): string => Blade::render('@include(\'adminops::toolbar\')'),
+        );
+
         // Inside `.fi-layout`, immediately before Filament's own sidebar — which
         // `.fi-body-has-top-navigation` translates off-screen — so the rail becomes the
         // page's left column rather than a second one beside it.

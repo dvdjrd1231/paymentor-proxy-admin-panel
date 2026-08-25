@@ -95,9 +95,36 @@ strips, dark table headers, square buttons, a footer.
 | Piece | Where |
 |---|---|
 | **Menu bar** — Clients · Orders · Billing · Support · Reports & Logs · Setup · Addons | `Support/WhmcsNavigation.php` |
+| **Toolbar icons** — the `+` at the start of the bar, and system health / updates / setup / help at its end | `Support/Toolbar.php` + `resources/views/quick-create.blade.php`, `toolbar.blade.php` |
 | **Left rail** — Shortcuts, System Information, Advanced Search, Staff Online, and the *Minimise Sidebar* bar | `Support/Rail.php` + `resources/views/rail.blade.php` |
-| **Skin** — topbar, dropdowns, panels, tables, buttons, inputs, tiles | `resources/views/skin.blade.php` |
+| **Skin** — topbar, dropdowns, panels, tables, pagination, forms, stat tiles, buttons, inputs | `resources/views/skin.blade.php` |
 | **Footer** | `resources/views/footer.blade.php` |
+
+#### The icons at each end of the bar
+
+The reference bar is not only menus. It opens with a **+** that creates any record from
+wherever you happen to be, and closes with five icons — search, system health, updates,
+setup, help — which is where you go when the thing you want is not a customer record.
+
+- **`+`** — new client, order, invoice, service, ticket, product. Injected at
+  `panels::topbar.logo.after`, so it sits between the brand and the menus.
+- **Search** — Filament's own global search, which was already in that slot. The skin
+  collapses it to the reference's bare magnifier and grows it into a field on focus, so
+  core's resource-aware results and its ⌘K binding are kept rather than reimplemented.
+- **System health** — error log, failed jobs, HTTP log, email log, audit log, cron status,
+  carrying the reference's red badge. It counts failed jobs plus exceptions from the last
+  seven days: `debug_logs` is never pruned, so an unwindowed badge would only ever grow.
+- **Updates** and **Setup** — the Updates page and extensions; the Setup menu's own screens.
+- **Help** — Paymenter's documentation and community, in a new tab.
+
+Every entry is permission-checked and its URL is resolved while the list is built, for the
+reason at `WhmcsNavigation::resolveUrl()`: this renders on **every** admin page, so a link
+that cannot be built has to disappear rather than throw mid-topbar. A cluster whose entries
+are all filtered out is dropped, not shown empty.
+
+The menu labels themselves lost their icons, because the reference's are text only. The
+group icons are still set — the rail now reads them for its section heading, so the icon
+beside *Support* in the rail is by construction the same one the menu means.
 
 All of it is plain CSS injected at `panels::head.end` and markup injected at
 `panels::layout.start` / `panels::footer`. The admin theme only scans `app/Admin` and
