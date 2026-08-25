@@ -384,4 +384,37 @@ instead of adding its own. A Livewire component hook was also tried and did not 
 
 ---
 
+## 11. `->topNavigation()` on the admin panel (**applied**)
+
+**File:** `app/Providers/Filament/AdminPanelProvider.php`
+
+**Why:** the client asked for the WHMCS admin layout, which puts its menus in a bar across
+the top rather than down the left side. Filament renders navigation groups as topbar
+dropdowns when top navigation is on — the exact shape WHMCS's Clients / Orders / Billing /
+Support menus need — and it is the one part of the skin that cannot be set from outside the
+panel, because it is read while the panel is being constructed.
+
+**Change:** one line, after `->spa()`:
+
+```php
+->topNavigation()
+```
+
+**Why it cannot be done from the extension:** `Panel::topNavigation()` is evaluated during
+panel construction in the provider. Everything else the skin needs — the menus themselves,
+the CSS, the left rail, the footer — is registered afterwards from
+`Others/AdminOps` through `Filament::serving()` and render hooks, and needs no core change.
+
+**Notes:**
+- Filament keeps the sidebar in the DOM and translates it off-screen
+  (`.fi-body-has-top-navigation .fi-sidebar { translate: -100% }`), where it still serves as
+  the mobile drawer. There is no duplicated navigation column.
+- Safe on its own: with AdminOps disabled this is a plain top bar carrying core's own
+  navigation groups. Nothing becomes unreachable.
+- If not re-applied after an upgrade: the panel reverts to a left sidebar carrying the WHMCS
+  menu groups. Everything still works and every screen is still reachable — it just stops
+  looking like the reference.
+
+---
+
 _(Everything else is implemented via extensions, themes, events, or configuration.)_

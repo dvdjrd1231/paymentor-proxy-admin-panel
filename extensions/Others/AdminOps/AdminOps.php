@@ -2,17 +2,15 @@
 
 namespace Paymenter\Extensions\Others\AdminOps;
 
-use App\Admin\Resources\ServiceCancellationResource;
-use App\Admin\Resources\ServiceResource;
 use App\Attributes\ExtensionMeta;
 use App\Classes\Extension\Extension;
 use Filament\Facades\Filament;
-use Filament\Navigation\NavigationItem;
+use Filament\Navigation\NavigationBuilder;
 use Filament\Support\Facades\FilamentView;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\HtmlString;
-use Paymenter\Extensions\Others\AdminOps\Support\Metrics;
+use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
  * Admin-area usability, built to the WHMCS admin the client asked us to match.
@@ -65,83 +63,49 @@ class AdminOps extends Extension
         View::addNamespace('adminops', __DIR__ . '/resources/views');
 
         $this->registerStyles();
-        $this->registerQueueNavigation();
+        $this->registerWhmcsSkin();
         $this->keepTheDailyLogWritable();
     }
 
     /**
-     * WHMCS's sidebar queues: the filtered service lists staff live in, always one click
-     * away and carrying their count.
+     * The WHMCS admin look: menu bar, left rail, panels, tables.
      *
-     * Deliberately only two. Core already badges **Invoices** with the unpaid count and
-     * **Tickets** with the open count, and its ticket list opens on the Open tab by default,
-     * so "unpaid invoices" and "awaiting reply" entries would put the same two numbers in
-     * the sidebar twice — clutter, and the opposite of what was asked for. Services is the
-     * gap: no badge, no default filter, and the two states that actually need chasing in a
-     * provisioning business are a backlog waiting to be set up and an account suspended for
-     * non-payment.
+     * Three pieces, all registered from here so the whole skin arrives and leaves with the
+     * extension. Disable AdminOps and the panel is stock Filament again — including its
+     * navigation, because {@see WhmcsNavigation} is only installed while this runs.
      *
-     * Registered through `Filament::serving()` because the panel does not exist yet when
-     * extensions boot. Unlike record actions and table filters, navigation items *are*
-     * addable from outside the panel — `navigationItems()` appends rather than resets.
+     * The one thing it cannot do from here is `->topNavigation()`, which is a panel
+     * construction-time call; that is the single core line, documented as touchpoint #11.
      */
-    private function registerQueueNavigation(): void
+    private function registerWhmcsSkin(): void
     {
+        FilamentView::registerRenderHook(
+            'panels::head.end',
+            fn (): string => Blade::render('@include(\'adminops::skin\')'),
+        );
+
+        // Inside `.fi-layout`, immediately before Filament's own sidebar — which
+        // `.fi-body-has-top-navigation` translates off-screen — so the rail becomes the
+        // page's left column rather than a second one beside it.
+        FilamentView::registerRenderHook(
+            'panels::layout.start',
+            fn (): string => Blade::render('@include(\'adminops::rail\')'),
+        );
+
+        // Core's own admin footer renders at `panels::sidebar.nav.end`, inside the sidebar
+        // that top navigation moves off-screen, so it would never be seen again.
+        FilamentView::registerRenderHook(
+            'panels::footer',
+            fn (): string => Blade::render('@include(\'adminops::footer\')'),
+        );
+
+        // Replaces the panel's whole navigation with WHMCS's menus. Registered through
+        // `Filament::serving()` because the panel does not exist yet when extensions boot.
         Filament::serving(function (): void {
-            if (!ServiceResource::canViewAny()) {
-                return;
-            }
-
-            $items = [
-                NavigationItem::make('Pending services')
-                    ->icon('heroicon-o-clock')
-                    ->group('Queues')
-                    ->sort(1)
-                    ->url(fn (): string => ServiceResource::getUrl('index', [
-                        'filters' => ['status' => ['value' => 'pending']],
-                    ]))
-                    ->badge(fn () => static::badge(Metrics::servicesPending()), color: 'info'),
-
-                NavigationItem::make('Suspended services')
-                    ->icon('heroicon-o-pause-circle')
-                    ->group('Queues')
-                    ->sort(2)
-                    ->url(fn (): string => ServiceResource::getUrl('index', [
-                        'filters' => ['status' => ['value' => 'suspended']],
-                    ]))
-                    ->badge(fn () => static::badge(Metrics::servicesSuspended()), color: 'warning'),
-            ];
-
-            // Cancellation requests live inside the Services cluster, two clicks in and with
-            // no badge, so a request sat waiting is invisible until somebody goes looking.
-            // Checked separately because the resource has its own policy: a role that may
-            // see services is not automatically allowed these.
-            if (ServiceCancellationResource::canViewAny()) {
-                $items[] = NavigationItem::make('Pending cancellations')
-                    ->icon('heroicon-o-no-symbol')
-                    ->group('Queues')
-                    ->sort(3)
-                    ->url(fn (): string => ServiceCancellationResource::getUrl('index'))
-                    ->badge(fn () => static::badge(Metrics::cancellationsPending()), color: 'danger');
-            }
-
-            Filament::getCurrentOrDefaultPanel()?->navigationItems($items);
+            Filament::getCurrentOrDefaultPanel()?->navigation(
+                fn (NavigationBuilder $builder): NavigationBuilder => WhmcsNavigation::build($builder),
+            );
         });
-    }
-
-    /**
-     * A badge shows a number or nothing — never a zero.
-     *
-     * Filament hides the badge entirely for null, which is what an empty queue should look
-     * like: a grey "0" on four menu items reads as clutter you learn to ignore, and the
-     * whole point of these is that a number here means something needs doing.
-     *
-     * Counted once per request: the sidebar renders on every admin page, and each of these
-     * is a `COUNT` over a table that is not indexed on `status`.
-     */
-    private static function badge(int $count): ?string
-    {
-        return $count > 0 ? (string) $count : null;
     }
 
     /**
