@@ -53,6 +53,7 @@ return [
     'one_time_payment' => 'Pagamento Único',
     'use_for_recurring' => 'Usar para Pagamentos Recorrentes',
     'pay_now' => 'Pagar Agora',
+    'select_method_to_pay' => 'Escolha uma forma de pagamento para ativar Pagar Agora.',
     'apply_credits_and_continue' => 'Aplicar Créditos e Continuar',
     'apply_credits_and_pay' => 'Apply Credits and Pay',
     'amount_due' => 'Amount Due: :amount',

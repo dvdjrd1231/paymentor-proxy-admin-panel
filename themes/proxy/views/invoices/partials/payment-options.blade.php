@@ -1,175 +1,154 @@
-<div>
-    <!-- Show apply credits button if available -->
+{{--
+    The payment method picker inside the pay modal.
+
+    Same options and the same Livewire bindings as the default theme — account credit,
+    saved cards/agreements, then one-time gateways — restyled onto this theme's design
+    system. It used to be the default's markup with its Tailwind class names left in place;
+    since this theme does not load the Tailwind bundle none of them resolved, so the whole
+    picker rendered as a bare list of labels with no selected state and no hit target.
+
+    The submit stays disabled until a method is chosen: `processPayment()` returns silently
+    on a null `selectedMethod`, so an always-enabled button was a control that did nothing.
+--}}
+<div class="wf-pay">
     @php
-    $credit = Auth::user()->credits()
-    ->where('currency_code', $invoice->currency_code)
-    ->where('amount', '>', 0)
-    ->first();
-    $itemHasCredit = $invoice->items()->where('reference_type', App\Models\Credit::class)->exists();
+        $credit = Auth::user()->credits()
+            ->where('currency_code', $invoice->currency_code)
+            ->where('amount', '>', 0)
+            ->first();
+        $itemHasCredit = $invoice->items()->where('reference_type', App\Models\Credit::class)->exists();
     @endphp
-    @if($credit && !$itemHasCredit)
-    <div class="mb-6">
-        <h3 class="text-lg font-semibold mb-2">{{ __('invoices.pay_with_credits') }}</h3>
-        <div wire:click="$set('selectedMethod', 'credit')"
-            wire:loading.class="opacity-50 pointer-events-none" wire:target="selectedMethod,processPayment"
-            class="flex items-center justify-between p-4 bg-background-secondary border border-neutral rounded-lg cursor-pointer transition-all {{ $selectedMethod === 'credit' ? 'border-primary ring-2 ring-primary' : 'border-neutral hover:border-neutral-focus' }}">
-            <div class="flex items-center space-x-4">
-                <div class="text-xl">
-                    <x-ri-copper-coin-line class="size-6 text-primary" />
-                </div>
-                <div>
-                    <p class="font-medium">{{ __('invoices.account_credits') }}</p>
-                    <p class="text-sm text-base/50">{{ __('invoices.available_credits', ['amount' => $credit->formattedAmount]) }}</p>
-                </div>
-            </div>
-            <div
-                class="size-5 rounded-full bg-background-secondary border border-neutral flex items-center justify-center {{ $selectedMethod === 'credit' ? 'border-primary bg-primary' : 'border-neutral-focus' }}">
-                @if($selectedMethod === 'credit')
-                <x-ri-check-line class="size-4 text-white" /> @endif
-            </div>
+
+    {{-- Account credit. Hidden when the invoice is itself a credit top-up, which would
+         otherwise offer to buy credit with credit. --}}
+    @if ($credit && !$itemHasCredit)
+        <div class="wf-pay-group">
+            <div class="wf-pay-group-title">{{ __('invoices.pay_with_credits') }}</div>
+            <button type="button" @class(['wf-pay-option', 'wf-pay-option--on' => $selectedMethod === 'credit'])
+                wire:click="$set('selectedMethod', 'credit')"
+                wire:loading.attr="disabled" wire:target="selectedMethod,processPayment">
+                <span class="wf-pay-ico"><x-ri-copper-coin-line /></span>
+                <span class="wf-pay-text">
+                    <span class="wf-pay-name">{{ __('invoices.account_credits') }}</span>
+                    <span class="wf-pay-sub">{{ __('invoices.available_credits', ['amount' => $credit->formattedAmount]) }}</span>
+                </span>
+                <span class="wf-pay-mark" aria-hidden="true"></span>
+            </button>
         </div>
-    </div>
     @endif
 
-    @if($this->savedPaymentMethods)
-    <div class="mb-6">
-        <h3 class="text-lg font-semibold mb-2">{{ __('account.saved_payment_methods') }}</h3>
-        <div class="space-y-3">
-            @foreach($this->savedPaymentMethods as $method)
-            <div wire:click="$set('selectedMethod', '{{ $method->ulid }}')"
-                class="flex items-center justify-between p-4 bg-background-secondary border rounded-lg cursor-pointer transition-all
-                    {{ $selectedMethod === $method->ulid ? 'border-primary ring-2 ring-primary' : 'border-neutral hover:border-neutral-focus' }}"
-                    wire:loading.class="opacity-50 pointer-events-none" wire:target="selectedMethod,processPayment">
-                <div class="flex items-center gap-4">
-                    <div>
+    {{-- Cards and agreements already on file. --}}
+    @if ($this->savedPaymentMethods->isNotEmpty())
+        <div class="wf-pay-group">
+            <div class="wf-pay-group-title">{{ __('account.saved_payment_methods') }}</div>
+            @foreach ($this->savedPaymentMethods as $method)
+                <button type="button" @class(['wf-pay-option', 'wf-pay-option--on' => $selectedMethod === $method->ulid])
+                    wire:click="$set('selectedMethod', '{{ $method->ulid }}')"
+                    wire:loading.attr="disabled" wire:target="selectedMethod,processPayment">
+                    <span class="wf-pay-ico wf-pay-ico--brand">
                         @switch(strtolower($method->type))
-                        @case('visa')
-                        <x-icons.visa class="size-9" /> @break
-                        @case('mastercard')
-                        <x-icons.mastercard class="size-9" /> @break
-                        @case('amex')
-                        <x-icons.amex class="size-9" /> @break
-                        @case('american express')
-                        <x-icons.american-express class="size-9" /> @break
-                        @case('discover')
-                        <x-icons.discover class="size-9" /> @break
-                        @case('paypal')
-                        <x-icons.paypal class="size-9" /> @break
-                        @case('sepa_debit')
-                        <x-icons.sepa class="size-9" /> @break
-                        @case('ideal')
-                        <x-icons.ideal class="size-9" /> @break
-                        @case('bancontact')
-                        <x-icons.bancontact class="size-9" /> @break
-                        @case('sofort')
-                        <x-icons.sofort class="size-9" /> @break
-                        @case('us_bank_account')
-                        @case('bacs_debit')
-                        @case('au_becs_debit')
-                        <x-icons.bank-debit class="size-9" /> @break
-                        @default
-                        <x-ri-bank-card-line class="size-6 text-primary" />
+                            @case('visa') <x-icons.visa /> @break
+                            @case('mastercard') <x-icons.mastercard /> @break
+                            @case('amex') <x-icons.amex /> @break
+                            @case('american express') <x-icons.american-express /> @break
+                            @case('discover') <x-icons.discover /> @break
+                            @case('paypal') <x-icons.paypal /> @break
+                            @case('sepa_debit') <x-icons.sepa /> @break
+                            @case('ideal') <x-icons.ideal /> @break
+                            @case('bancontact') <x-icons.bancontact /> @break
+                            @case('sofort') <x-icons.sofort /> @break
+                            @case('us_bank_account')
+                            @case('bacs_debit')
+                            @case('au_becs_debit') <x-icons.bank-debit /> @break
+                            @default <x-ri-bank-card-line />
                         @endswitch
-                    </div>
-                    <div>
-                        <div class="font-semibold text-base"> {{ $method->name }} </div>
-                        @if($method->expiry)
-                        <div class="text-sm text-neutral-500">
-                            {{ __('account.expires', ['date' => \Carbon\Carbon::parse($method->expiry)->format('m/Y')]) }}
-                        </div>
+                    </span>
+                    <span class="wf-pay-text">
+                        <span class="wf-pay-name">{{ $method->name }}</span>
+                        @if ($method->expiry)
+                            <span class="wf-pay-sub">
+                                {{ __('account.expires', ['date' => \Carbon\Carbon::parse($method->expiry)->format('m/Y')]) }}
+                            </span>
                         @endif
-                    </div>
-                </div>
-                <div
-                    class="size-5 rounded-full border border-neutral flex items-center justify-center
-                                    {{ $selectedMethod === $method->ulid ? 'border-primary bg-primary' : 'border-neutral-focus' }}">
-                    @if($selectedMethod === $method->ulid)
-                    <x-ri-check-line class="size-4 text-white" /> @endif
-                </div>
-            </div>
+                    </span>
+                    <span class="wf-pay-mark" aria-hidden="true"></span>
+                </button>
             @endforeach
-            <a href="{{ route('account.payment-methods') }}" wire:navigate>
-                <x-button.secondary>
-                    <x-ri-add-line class="size-4" />
-                    {{ __('account.add_payment_method') }}
-                </x-button.secondary>
+
+            <a href="{{ route('account.payment-methods') }}" wire:navigate class="wf-btn wf-btn--ghost wf-btn--sm">
+                {{ __('account.add_payment_method') }}
             </a>
         </div>
-    </div>
     @endif
 
     {{-- No method can take this amount: say so, with the figure, instead of showing an
          empty box. Gateways enforce their own floor in canUseGateway(), so an invoice
          below every minimum legitimately has nothing to offer. --}}
-    @if((!$this->gateways || count($this->gateways) === 0) && $this->savedPaymentMethods->count() === 0)
-        <div class="wf-alert wf-alert--danger" style="margin-bottom:1rem">
+    @if (count($this->gateways) === 0 && $this->savedPaymentMethods->isEmpty())
+        <div class="wf-alert wf-alert--danger">
             {{ __('invoices.no_methods_for_amount', ['amount' => $invoice->formattedTotal]) }}
         </div>
     @endif
 
-    @if($this->gateways && count($this->gateways) > 0)
-    <div class="mb-6" x-data="{ showOneTime: @if($this->savedPaymentMethods->count() == 0) true @else false @endif }">
-        <button @click="showOneTime = !showOneTime"
-            class="flex items-center justify-between w-full p-3 text-left rounded-lg border border-neutral transition-colors @if($this->savedPaymentMethods->count() == 0) hidden @endif">
-            <span class="text-sm font-medium">
-                {{ __('invoices.pay_with_one_time_method') }}
-            </span>
-            <x-ri-arrow-down-s-line class="size-5 text-gray-500 transition-transform duration-200"
-                x-bind:class="{ 'rotate-180': showOneTime }" />
-        </button>
-        <div class="space-y-3 mt-3" x-show="showOneTime" x-transition>
-            @foreach($this->gateways as $method)
-            <div wire:click="$set('selectedMethod', 'gateway-{{ $method->id }}')"
-                class="flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-all {{ $selectedMethod === 'gateway-' . $method->id ? 'border-primary ring-2 ring-primary' : 'border-neutral hover:border-neutral-focus' }}"
-                wire:loading.class="opacity-50 pointer-events-none" wire:target="selectedMethod,processPayment">
-                <div class="flex items-center space-x-4">
-                    <div
-                        class="bg-background-secondary border border-neutral rounded-lg overflow-hidden flex items-center justify-center h-9 w-9">
-                        @if($method->meta?->icon)
-                        <img src="{{ $method->meta->icon }}" alt="{{ $method->name }} Icon"
-                            class="h-9 w-9 object-contain" />
-                        @else
-                        <x-ri-secure-payment-line class="size-5 text-primary" />
-                        @endif
-                    </div>
-                    <div>
-                        <p class="font-medium">{{ $method->name }}</p>
-                        <p class="text-sm text-base/50">{{ __('invoices.one_time_payment') }}</p>
-                    </div>
-                </div>
-                <div
-                    class="size-5 rounded-full bg-background-secondary border border-neutral flex items-center justify-center {{ $selectedMethod === 'gateway-' . $method->id ? 'border-primary bg-primary' : 'border-neutral-focus' }}">
-                    @if($selectedMethod === 'gateway-' . $method->id)
-                    <x-ri-check-line class="size-4 text-white" /> @endif
-                </div>
+    {{-- One-time gateways. Collapsed behind a disclosure only when there are saved methods
+         to prefer; with nothing on file it is the whole picker and opens expanded. --}}
+    @if (count($this->gateways) > 0)
+        <div class="wf-pay-group" x-data="{ showOneTime: {{ $this->savedPaymentMethods->isEmpty() ? 'true' : 'false' }} }">
+            @if ($this->savedPaymentMethods->isNotEmpty())
+                <button type="button" class="wf-pay-toggle" @click="showOneTime = !showOneTime"
+                    :aria-expanded="showOneTime ? 'true' : 'false'">
+                    <span>{{ __('invoices.pay_with_one_time_method') }}</span>
+                    <span class="wf-chevron" aria-hidden="true">&#9662;</span>
+                </button>
+            @endif
+
+            <div x-show="showOneTime" x-transition.opacity>
+                @foreach ($this->gateways as $method)
+                    <button type="button" @class(['wf-pay-option', 'wf-pay-option--on' => $selectedMethod === 'gateway-' . $method->id])
+                        wire:click="$set('selectedMethod', 'gateway-{{ $method->id }}')"
+                        wire:loading.attr="disabled" wire:target="selectedMethod,processPayment">
+                        <span class="wf-pay-ico wf-pay-ico--brand">
+                            @if ($method->meta?->icon)
+                                <img src="{{ $method->meta->icon }}" alt="">
+                            @else
+                                <x-ri-secure-payment-line />
+                            @endif
+                        </span>
+                        <span class="wf-pay-text">
+                            <span class="wf-pay-name">{{ $method->name }}</span>
+                            <span class="wf-pay-sub">{{ __('invoices.one_time_payment') }}</span>
+                        </span>
+                        <span class="wf-pay-mark" aria-hidden="true"></span>
+                    </button>
+                @endforeach
             </div>
-            @endforeach
         </div>
-    </div>
     @endif
 
-    @if($selectedMethod && $selectedMethod !== 'credit' && !str_starts_with($selectedMethod, 'gateway-') && $this->recurringServices()->exists())
-    <div class="mt-4 p-2">
-        <x-form.toggle :label="__('invoices.use_for_recurring')" wire:model.live="setAsDefault" />
-    </div>
+    {{-- Only a saved agreement can become the default for renewals; a one-time gateway and
+         account credit have nothing to store. --}}
+    @if ($selectedMethod && $selectedMethod !== 'credit' && !str_starts_with($selectedMethod, 'gateway-') && $this->recurringServices()->exists())
+        <div class="wf-pay-recurring">
+            <x-form.checkbox name="setAsDefault" wire:model.live="setAsDefault" :label="__('invoices.use_for_recurring')" />
+        </div>
     @endif
 
-    <div class="mt-6">
-        <x-button.primary class="w-full" wire:click="processPayment" wire:loading.attr="disabled"
-            :disabled="!$selectedMethod">
-            <x-loading target="processPayment" />
-            <div wire:loading.remove wire:target="processPayment">
-                @if($selectedMethod === 'credit' && $credit && $credit->amount >= $invoice->formattedRemaining->total)
+    <button type="button" class="wf-btn wf-btn--pay wf-btn--block wf-btn--lg" wire:click="processPayment"
+        wire:loading.attr="disabled" wire:target="processPayment" @disabled(!$selectedMethod)>
+        <span role="status" class="wf-btn-spin" wire:loading wire:target="processPayment" aria-hidden="true"></span>
+        <span wire:loading.remove wire:target="processPayment">
+            @if (!$selectedMethod)
+                {{ __('invoices.select_payment_method') }}
+            @elseif ($selectedMethod === 'credit' && $credit && $credit->amount >= $invoice->formattedRemaining->total)
                 {{ __('invoices.apply_credits_and_pay') }}
-                @elseif($selectedMethod === 'credit' && $credit)
+            @elseif ($selectedMethod === 'credit' && $credit)
                 {{-- Key is plural: `apply_credits_and_continue`. The singular form does not
                      exist, so this button rendered the raw key to a customer paying partly
                      by credit. --}}
                 {{ __('invoices.apply_credits_and_continue', ['amount' => $credit->formattedAmount]) }}
-                @else
+            @else
                 {{ __('invoices.pay_now', ['amount' => $invoice->formattedRemaining]) }}
-                @endif
-            </div>
-        </x-button.primary>
-    </div>
+            @endif
+        </span>
+    </button>
 </div>

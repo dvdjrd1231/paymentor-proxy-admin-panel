@@ -1118,3 +1118,109 @@
     .wf-table td .wf-list-sub { display: block; margin-top: .15rem; }
     .wf-table td .wf-btn + .wf-btn { margin-inline-start: .35rem; }
     .wf-btn[disabled] { opacity: .55; cursor: not-allowed; }
+    /* A disabled pay action must not still look hoverable — .wf-btn--pay:hover would
+       otherwise darken it under the cursor and read as clickable. */
+    .wf-btn[disabled]:hover { background: var(--brand); border-color: var(--brand-dark); }
+    .wf-btn--pay[disabled]:hover { background: #5cb85c; border-color: #4cae4c; }
+
+    /* ── Modals ──────────────────────────────────────────────────────────────
+       <x-modal> teleports itself to the end of <body>. The default theme positions it
+       with Tailwind (`fixed inset-0 z-30 … bg-black/50`), and this theme does not load the
+       Tailwind bundle — so with nothing here every modal in the client area (invoice
+       payment, service cancellation, 2FA setup, saved payment methods) lost its
+       positioning and rendered as loose text underneath the footer. */
+    .wf-modal {
+        position: fixed; inset: 0; z-index: 1050;
+        display: flex; align-items: flex-start; justify-content: center;
+        padding: 2.5rem 1rem; overflow-y: auto;
+        background: rgba(0, 0, 0, .5);
+    }
+    .wf-modal-dialog {
+        width: 100%; margin: auto;
+        background: var(--wf-bg); border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); box-shadow: 0 5px 15px rgba(0, 0, 0, .5);
+        text-align: start;
+    }
+    .wf-modal-head {
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        padding: 12px 15px; border-bottom: 1px solid var(--wf-panel-border);
+        background: var(--wf-section);
+    }
+    .wf-modal-title { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--brand); }
+    .wf-modal-head-right { display: flex; align-items: center; gap: .85rem; }
+    .wf-modal-due { font-size: .9rem; color: var(--wf-text); white-space: nowrap; }
+    .wf-modal-close {
+        border: 0; background: none; padding: 0 .15rem; line-height: 1;
+        font-size: 1.6rem; color: var(--wf-muted); cursor: pointer;
+    }
+    .wf-modal-close:hover { color: var(--brand); }
+    .wf-modal-body { padding: 1rem; }
+    .wf-modal-body > :first-child { margin-top: 0; }
+    .wf-modal-body > :last-child { margin-bottom: 0; }
+
+    /* ── Payment method picker (inside the pay modal) ────────────────────────
+       One selectable row per method: icon, name and a mark on the end that fills in when
+       the row is the chosen one. Rows are <button>s, so keyboard and screen readers get a
+       real control rather than a clickable <div>. */
+    .wf-pay-group { margin-bottom: 1.1rem; }
+    .wf-pay-group-title { font-weight: 700; color: var(--wf-ink); margin-bottom: .45rem; }
+
+    .wf-pay-option {
+        display: flex; align-items: center; gap: .75rem; width: 100%;
+        padding: .7rem .9rem; margin-bottom: .5rem;
+        background: var(--wf-bg); border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); cursor: pointer; text-align: start;
+        font-family: inherit; font-size: 14px; color: var(--wf-text);
+        transition: border-color .15s, background .15s;
+    }
+    .wf-pay-option:hover { border-color: var(--brand-soft); background: var(--wf-section); }
+    .wf-pay-option--on { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
+    .wf-pay-option[disabled] { opacity: .55; cursor: not-allowed; }
+
+    /* Blade icon components render a bare <svg> with no intrinsic size — their `size-6`
+       class is Tailwind and inert here — so without this each one would expand to fill
+       the row. */
+    .wf-pay-ico {
+        flex: none; display: inline-flex; align-items: center; justify-content: center;
+        width: 2.25rem; height: 2.25rem; color: var(--brand);
+    }
+    .wf-pay-ico svg, .wf-pay-ico img { width: 1.5rem; height: 1.5rem; object-fit: contain; }
+    .wf-pay-ico--brand {
+        border: 1px solid var(--wf-border); border-radius: var(--wf-radius);
+        background: var(--wf-section); overflow: hidden;
+    }
+
+    .wf-pay-text { flex: 1 1 auto; min-width: 0; }
+    .wf-pay-name { display: block; font-weight: 600; color: var(--wf-ink); }
+    .wf-pay-sub { display: block; font-size: .8rem; color: var(--wf-muted); }
+
+    .wf-pay-mark {
+        flex: none; width: 1.15rem; height: 1.15rem; border-radius: 50%;
+        border: 1px solid var(--wf-border); background: var(--wf-bg);
+    }
+    .wf-pay-option--on .wf-pay-mark {
+        border-color: var(--brand); background: var(--brand);
+        box-shadow: inset 0 0 0 3px var(--wf-bg);
+    }
+
+    .wf-pay-toggle {
+        display: flex; align-items: center; justify-content: space-between; width: 100%;
+        padding: .55rem .9rem; margin-bottom: .5rem;
+        background: var(--wf-section); border: 1px solid var(--wf-border);
+        border-radius: var(--wf-radius); cursor: pointer;
+        font-family: inherit; font-size: .9rem; font-weight: 600; color: var(--wf-ink);
+    }
+    .wf-pay-toggle .wf-chevron { color: var(--wf-muted); font-size: .8rem; }
+    .wf-pay-toggle[aria-expanded="true"] .wf-chevron { transform: rotate(180deg); }
+
+    .wf-pay-recurring { margin: .75rem 0 1rem; }
+
+    /* Whatever the gateway handed back to render in place — a card form, a QR code. */
+    .wf-pay-embed { min-height: 4rem; }
+
+    /* Nothing on the invoice can take this amount. Uses the danger palette the labels
+       already use, so a refusal reads the same everywhere. */
+    .wf-alert--danger { background: #f2dede; border-color: #ebccd1; color: #a94442; }
+
+    /* Why Pay Now is greyed out, sat under the method select that clears it. */
+    .wf-inv-hint { margin: .4rem 0 0; font-size: .8rem; color: var(--wf-muted); }
