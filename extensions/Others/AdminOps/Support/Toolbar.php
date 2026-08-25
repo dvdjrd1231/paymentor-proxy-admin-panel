@@ -7,7 +7,10 @@ use App\Admin\Pages\Settings;
 use App\Admin\Pages\Updates;
 use App\Admin\Resources\ApiResource;
 use App\Admin\Resources\Audits\AuditResource;
+use App\Admin\Resources\CategoryResource;
+use App\Admin\Resources\ConfigOptionResource;
 use App\Admin\Resources\CurrencyResource;
+use App\Admin\Resources\CustomPropertyResource;
 use App\Admin\Resources\EmailLogResource;
 use App\Admin\Resources\ErrorLogResource;
 use App\Admin\Resources\ExtensionResource;
@@ -16,15 +19,18 @@ use App\Admin\Resources\GatewayResource;
 use App\Admin\Resources\HttpLogResource;
 use App\Admin\Resources\InvoiceResource;
 use App\Admin\Resources\NotificationTemplateResource;
+use App\Admin\Resources\OauthClientResource;
 use App\Admin\Resources\OrderResource;
 use App\Admin\Resources\ProductResource;
 use App\Admin\Resources\RoleResource;
+use App\Admin\Resources\ServerResource;
 use App\Admin\Resources\ServiceResource;
 use App\Admin\Resources\TicketResource;
 use App\Admin\Resources\UserResource;
 use App\Models\DebugLog;
 use App\Models\FailedJob;
 use Illuminate\Support\Facades\Schema;
+use Paymenter\Extensions\Servers\ProxyPanel\Admin\Pages\PanelLocations;
 
 /**
  * The two icon clusters that flank WHMCS's menu bar.
@@ -92,14 +98,24 @@ class Toolbar
                 static::page(Updates::class, 'Check for Updates'),
                 static::index(ExtensionResource::class, 'Extensions'),
             ]),
+            // The whole Setup menu, because the bar no longer has one: the reference keeps
+            // setup behind this wrench, so {@see WhmcsNavigation::groups()} drops the Setup
+            // group and everything it held has to be reachable from here instead.
             static::cluster('setup', 'heroicon-o-wrench-screwdriver', 'Setup', null, [
                 static::page(Settings::class, 'General Settings'),
                 static::index(ProductResource::class, 'Products'),
+                static::index(CategoryResource::class, 'Categories'),
+                static::index(ConfigOptionResource::class, 'Configurable Options'),
+                static::index(ServerResource::class, 'Servers'),
+                static::page(PanelLocations::class, 'Panel Locations'),
                 static::index(GatewayResource::class, 'Payment Gateways'),
                 static::index(CurrencyResource::class, 'Currencies'),
+                static::index(CustomPropertyResource::class, 'Custom Properties'),
                 static::index(NotificationTemplateResource::class, 'Email Templates'),
                 static::index(RoleResource::class, 'Administrator Roles'),
                 static::index(ApiResource::class, 'API Keys'),
+                static::index(OauthClientResource::class, 'OAuth Clients'),
+                static::index(ExtensionResource::class, 'Extensions'),
             ]),
             static::cluster('help', 'heroicon-o-question-mark-circle', 'Help', null, [
                 ['label' => 'Paymenter Documentation', 'url' => 'https://paymenter.org/docs', 'target' => '_blank'],

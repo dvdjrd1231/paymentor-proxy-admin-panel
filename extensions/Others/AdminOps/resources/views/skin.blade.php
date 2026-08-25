@@ -652,16 +652,66 @@
     }
 
     /* ── Headline tiles ──────────────────────────────────────────────────────
-       Squarer and flatter here than the rounded cards the default panel gets, to
-       match the reference's four blocks. */
+       The reference's four blocks are two-tone: the icon sits in a darker square at the
+       start of the tile, the figure on the lighter body. Both colours of all four were
+       sampled from the reference rather than taken from Bootstrap's palette, which is
+       what they were before and why they read as the wrong colours. */
     .fi-body .ao-tile {
         border-radius: var(--wa-radius);
+        padding: 0;
+        gap: 0;
+        align-items: stretch;
+        overflow: hidden;
     }
 
-    .fi-body .ao-tile-success { background-color: #5cb85c; }
-    .fi-body .ao-tile-warning { background-color: #f0ad4e; }
-    .fi-body .ao-tile-info    { background-color: #5bc0de; }
-    .fi-body .ao-tile-brand   { background-color: #d9534f; }
+    /* The icon becomes the darker block: stretched to the tile's full height, padded
+       rather than sized, so the block grows with the tile instead of floating in it. */
+    .fi-body .ao-tile .ao-tile-icon {
+        flex: none;
+        width: 4.5rem;
+        height: auto;
+        padding: 1rem 1.25rem;
+        opacity: 1;
+        align-self: stretch;
+    }
+
+    .fi-body .ao-tile-figure {
+        padding: 0.9rem 1.15rem;
+    }
+
+    .fi-body .ao-tile-success { background-color: #5dc560; }
+    .fi-body .ao-tile-success .ao-tile-icon { background-color: #49a94d; }
+
+    .fi-body .ao-tile-brand { background-color: #ea5395; }
+    .fi-body .ao-tile-brand .ao-tile-icon { background-color: #d61a6c; }
+
+    .fi-body .ao-tile-warning { background-color: #eaae53; }
+    .fi-body .ao-tile-warning .ao-tile-icon { background-color: #d28818; }
+
+    .fi-body .ao-tile-info { background-color: #8dd5d9; }
+    .fi-body .ao-tile-info .ao-tile-icon { background-color: #68b1b5; }
+
+    /* ── Forms ───────────────────────────────────────────────────────────────
+       The reference lays a form out as alternating #ffffff / #efefef bands with the
+       label right-aligned against its field. Filament renders each field as a
+       `.fi-fo-field`, so the banding is `:nth-child` over those rather than markup this
+       skin would have to introduce.
+
+       Applied only where fields are stacked in a single column — Filament's own grid
+       layouts put two fields on one row, and banding those would stripe half a row. */
+    .fi-fo-field:nth-child(even) {
+        background: #efefef;
+    }
+
+    .fi-fo-field {
+        padding: 0.5rem 0.75rem;
+    }
+
+    /* Inline labels get the reference's right alignment; stacked ones are left alone,
+       because right-aligning a label that sits *above* its field just looks broken. */
+    .fi-fo-field-has-inline-label .fi-fo-field-label-col {
+        text-align: end;
+    }
 
     /* ── Footer ──────────────────────────────────────────────────────────────
        Copyright at the start, links at the end — the reference's split bar. It wraps
