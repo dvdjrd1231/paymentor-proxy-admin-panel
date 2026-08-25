@@ -1,6 +1,6 @@
 # Project Plan — Paymenter Commercial Platform
 
-This document maps every requirement in the client brief (`File/`) to a concrete,
+This document maps every requirement in the client brief (`docs/client-brief/`) to a concrete,
 **upgrade-safe** implementation approach using Paymenter's native architecture, and sequences
 the work into phases.
 

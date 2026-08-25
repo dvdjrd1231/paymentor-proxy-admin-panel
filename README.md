@@ -58,7 +58,7 @@ design decision behind each item.
 ├── scripts/                      # Deployment / backup / maintenance automation
 │   └── install-debian13.sh
 ├── docs/                         # Delivery documentation (install, modules, ops)
-├── File/                         # Original client brief (context; not part of runtime)
+│   └── client-brief/             # Original brief + panel API docs (context, not runtime)
 └── custom/                       # Non-runtime authored assets (specs, mockups)
 ```
 
