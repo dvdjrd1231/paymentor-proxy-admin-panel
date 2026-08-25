@@ -11,6 +11,9 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 
 ## Provisioning
 - `extensions/Servers/ProxyPanel/ProxyPanel.php` — native proxyPanel provisioning module
+- `extensions/Servers/ProxyPanel/Support/PanelApi.php` — panel API client for admin pages (locations, tunnels)
+- `extensions/Servers/ProxyPanel/Admin/Pages/PanelLocations.php` — Admin → Panel → Locations console
+- `extensions/Servers/ProxyPanel/resources/views/admin/` — console page + location detail modal
 - `extensions/Servers/ProxyPanel/README.md`
 
 ## Customer registration

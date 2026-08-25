@@ -266,6 +266,128 @@ the right measure in Paymenter regardless.
 
 ---
 
+## 13. Panel API coverage and the Locations console (2026-08-25)
+
+Run against the **live** panel (`adminproxies-dev.melodyproxy.com`) from the production
+container, and against the production database. A verified backup was taken first:
+`/root/backups/pre-mockdata-cleanup-2026-08-25-014258.sql.gz` (69 tables, gzip-tested).
+
+| Check | Result |
+|---|---|
+| `GET /services/plans` | ✅ 200 — 9 plans |
+| `GET /services/locations` | ✅ 200 — 6 in-stock names |
+| `GET /locations/list` paging | ✅ 246 rows in 0.42s, 3 pages, 0 duplicates |
+| `GET /locations/{tag}` | ✅ 200 with provider priorities |
+| `POST /locations/new` | ✅ created `aq-pay-1` |
+| `POST /locations/update/{tag}` | ✅ city changed and re-read |
+| `GET /locations/status/{tag}/disabled` → `/enabled` | ✅ both, re-read confirms |
+| `GET /locations/delete/{tag}` | ✅ removed |
+| **Catalogue restored after the round trip** | ✅ 246 → 247 → 246, zero leftovers |
+| Cross-check: sellable count vs `/services/locations` | ✅ both 6 |
+| Console renders on production | ✅ 641 KB, 0.63s, real rows |
+| Search / sort / filters / pagination | ✅ see below |
+| Filter partition `sellable+out+empty` | ✅ 6+0+240 = 246 |
+| Nav group **Panel → Locations** resolves | ✅ |
+| `GET /tunnels/*` | ❌ `list` 500, per-tunnel routes 404 |
+| Regenerated `paymenter-clean.sql` | ✅ 299 rows / 11 tables, structure validated |
+| Export contains no test product, emails, hashes, or credentials | ✅ all zero |
+
+Table behaviour, on live data: page 1 `ad-and-1…br-cam-1` (25 rows), page 2
+`br-cur-1…ch-zur-1` (25), page 10 (21) = 246; sort by free desc gives
+`dj-dji-1(256), us-los-1(3), id-jak-1(2)…`; search `kansas` → 3; search + sellable filter → 1;
+continent filter `Oceania` → 4, all matching.
+
+> **Found and fixed while verifying — four defects, none visible from reading the code:**
+>
+> - **The client's `locations.md` is wrong.** `linode` is rejected outright, undocumented
+>   `sevencloud` is mandatory, and every provider priority is required at an exact width
+>   (`do` 4, `vultr` 3, `sevencloud` 6). The form was built to the document and could not have
+>   created a single location. Now built to the panel.
+> - **The console rendered 5.5 MB of HTML** — Filament renders exactly what a `records()`
+>   closure returns, and returning all 246 rows paginated nothing. Now returns a
+>   `LengthAwarePaginator`; 641 KB.
+> - **A slash in a page slug broke the sidebar.** `panel/locations` became the route name
+>   `…pages.panel.locations`, which the navigation item could not resolve — the page rendered
+>   but the sidebar 500'd. Slug is now one segment.
+> - **The first regenerated export was corrupt.** A hand-rolled escaper mangled
+>   `settings.mail_header`, a multi-line HTML document, leaving an unterminated string literal
+>   that would have failed the import. Values are now quoted by the PDO driver.
+>
+> **Could not be verified, and why:** a real import test of the export needs a scratch
+> database. The app DB user is granted `ALL ON paymenter.*` only and MariaDB `root` is not
+> reachable even over TCP — correct hardening, but it means the export is validated
+> structurally (every INSERT's arity and quoting parsed) rather than by importing it.
+
+---
+
+## 14. Client-area audit (2026-08-25)
+
+Driven from the production logs and the live site rather than from reading templates.
+
+| Check | Result |
+|---|---|
+| All 21 extensions present; 20 enabled | ✅ only DiscordNotifications off, deliberately |
+| `LocalDevOverrides` enabled in production | ✅ inert — needs `APP_ENV=local` **and** `LOCAL_APP_URL`; server is `production` |
+| Guest pages: `/`, `/login`, `/register`, `/announcements`, `/contact`, `/cart` | ✅ 302 to login (portal behaviour) / 200 |
+| `/knowledgebase`, `/network-status` redirect guests to login | ✅ **intended** — matches the reference's "This page is restricted" |
+| `/account/affiliate` behind auth | ✅ (an earlier `/affiliates` 404 was a wrong URL guess, not a defect) |
+| Catalogue integrity | ✅ 34 products, 0 without a plan, 0 plans without a price, USD + BRL complete |
+| Live site `/`, `/login`, `/admin` | ✅ 200 |
+
+> **Found — the most serious defect in the project so far. Every order was failing.**
+>
+> ```
+> [ProxyPanel] ProxyPanel create failed
+> SQLSTATE[22001]: String data, right truncated: 1406 Data too long for column 'value'
+> insert into `properties` (`key`, `value`, …) values (proxy_ips, [2a10:500:…]:10000, …)
+> ```
+>
+> The module stored a service's proxies as one comma-joined string in `properties.value`,
+> which is `TEXT` — about **1,213 endpoints**. Measured against the live catalogue:
+>
+> | Tier | Ports | Joined size | vs TEXT |
+> |---|---|---|---|
+> | Amethyst | 1,500 | 81 KB | **over** |
+> | Emerald | 4,500 | 243 KB | **over** |
+> | Jade | 13,500 | 729 KB | **over** |
+> | Onyx | 22,500 | 1.2 MB | **over** |
+> | Ruby | 31,500 | 1.7 MB | **26× over** |
+>
+> **No product in the catalogue could complete provisioning.** Worse, the panel had already
+> allocated the proxies before the write failed, so every attempt leaked capacity — which is
+> consistent with the successful-then-reverted services in the provisioning log.
+>
+> It went unnoticed because ticket-email piping is misconfigured and logs ~413 failures a day
+> (see `PANEL-QUESTIONS.md` B3), burying two real errors among hundreds of noise lines.
+>
+> **Fixed** by `Support/Endpoints.php` + `proxypanel_endpoints`, one row per proxy.
+> Verified against the failing size on the production database:
+>
+> | Check | Result |
+> |---|---|
+> | 1,500 endpoints joined = 68,998 bytes | ✅ confirms it exceeded TEXT |
+> | `replace()` stores 1,500 rows | ✅ 0.06s |
+> | Round-trip identical to input | ✅ |
+> | `replace()` twice → still 1,500 | ✅ idempotent |
+> | `all(limit)` / `each()` chunking | ✅ 100; 1,500 over 3 batches |
+> | `split()` on bracketed IPv6, bare IPv6, IPv4, garbage, empty | ✅ all correct |
+> | Legacy `proxy_ips` property still read when the table is empty or absent | ✅ by design |
+>
+> The scratch table used for that test was dropped afterwards, and no migration row was
+> written, so the migration creates it cleanly on deploy.
+
+**Deploy step — this one is required, not optional.** The migration ships in the extension and
+Paymenter only runs those on enable, so on the existing install run it once:
+
+```bash
+php artisan tinker --execute="\App\Helpers\ExtensionHelper::runMigrations('extensions/Servers/ProxyPanel/database/migrations');"
+```
+
+Until it runs, everything falls back to the old property — nothing breaks, but large services
+still cannot provision.
+
+---
+
 ## Not yet verified
 
 

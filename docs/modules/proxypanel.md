@@ -35,9 +35,55 @@ so the module is treated as authoritative and `api.md` as an incomplete descript
 | Rotation interval | `GET /setRotate/{id}/{minutes}` |
 | Reboot | `GET /reboot/{id}[/hard]` |
 | Catalogue | `GET /plans` — Plan dropdown · `GET /v0/locations/list` — Region dropdown |
-| Blacklist | `GET /blacklist/{blacklist_id}/{enabled\|disabled}` |
+| Blacklist | `GET /blacklist/{blacklist_id}/{enabled\|disabled}` — implemented, **not wired**: see § Open questions |
 
 All responses are JSON with a `status` field (`ok`/`error`) and an optional `description`.
+
+### Locations API — the panel admin console
+
+`extensions/Servers/ProxyPanel/Admin/Pages/PanelLocations.php`, reached at **Admin → Panel →
+Locations**, manages the panel's location catalogue: the capacity every Region at checkout is
+built from. All six endpoints are used.
+
+| Action | Method / path |
+|---|---|
+| List | `GET /v0/locations/list?page={n}` |
+| Read | `GET /v0/locations/{tag}` — the only call that returns provider priorities |
+| Create | `POST /v0/locations/new` |
+| Update | `POST /v0/locations/update/{tag}` |
+| Enable / disable | `GET /v0/locations/status/{tag}/{enabled\|disabled}` |
+| Delete | `GET /v0/locations/delete/{tag}` |
+
+**`docs/client-brief/locations.md` is out of date; the live panel is authoritative.** All six
+were round-tripped against it on 2026-08-25 (create → read → update → disable → enable →
+delete, catalogue restored to its original 246 rows). What the document gets wrong:
+
+- **`linode` does not exist.** Sending it fails the whole request: *"Unexpected item 'linode'"*.
+- **`sevencloud` is mandatory** and is not documented at all: *"The mandatory item
+  'sevencloud › prio1' is missing"*.
+- **Every provider priority is required and length-checked exactly** — an empty string fails
+  with *"expects to be in range 4..4, 0 bytes given"*. The widths are
+  `do` **4** (`nyc1`), `vultr` **3** (`ewr`), `sevencloud` **6** (`mci-00`).
+- The **tag is derived by the panel** from country + city — `Antarctica` + `Paymenter
+  Roundtrip` produced `aq-pay-1` — and cannot be set or changed by the caller.
+- `list` under-reports paging: it answers `total_pages: 2` for 246 rows at 100 a page, and
+  page 3 does return the missing 46. Both this module and the console page on
+  `total`/`items_per_page` instead.
+
+### Tunnels API — unavailable
+
+The seven endpoints in `docs/client-brief/tunnels.md` are written up in
+`Support/PanelApi.php` but **nothing calls them**, because the panel does not serve them:
+
+```
+GET /v0/tunnels/list?page=1              → HTTP 500 (Tracy error page, no detail)
+GET /v0/tunnels/{id}/class/{class}       → HTTP 404 (route not registered)
+GET /v0/tunnels/info/{id}/class/{class}  → HTTP 404
+```
+
+Auth is not the cause — a deliberately invalid token answers `200 "Unable to authorize your
+request"`, so the 500 happens after authentication. `PanelApi::tunnelsAvailable()` probes this,
+so the console can light up without a code change once the panel is fixed. See § Open questions.
 
 `client_id` is the **Paymenter service id**, matching the WHMCS module — its source says
 so explicitly (`// clientid === $params['serviceid']`), and its callback looks the service
@@ -361,3 +407,19 @@ implemented against the real panel's observed behaviour.
    `setRotate/{id}/{minutes}` should be exposed to customers.
 5. **Credentials** — confirm `POST /credentials/{id}` accepts `{username, password}` and
    whether changing them interrupts active sessions.
+6. **The tunnels API is down.** `GET /v0/tunnels/list` answers HTTP 500 and every per-tunnel
+   route answers 404, so the seven endpoints in `tunnels.md` cannot be used. Are they meant
+   to be enabled on this panel? The client-side console is written and will work as soon as
+   they answer.
+7. **Where does a `blacklist_id` come from?** `GET /blacklist/{blacklist_id}/{status}` takes a
+   blacklist id, not a service id, and no endpoint we can see returns one. Until that is
+   known the call cannot be given a UI — `ProxyPanel::setBlacklist()` exists but nothing
+   reaches it.
+8. **Is `POST /v0/services/aa/{id}` live?** It is documented as a single call that replaces
+   `auth_ips` + `credentials`. This module uses the latter pair because the production WHMCS
+   module did, and `aa` has not been exercised — testing it would rewrite a real customer's
+   proxy authentication, which is not something to try speculatively.
+9. **Panel hardening, unrelated to this module but visible from it:** the panel serves
+   **Tracy debug pages in production** (any 500 returns a debug-bar page to an unauthenticated
+   caller), and it answers authentication failures with **HTTP 200** and a plain-text body
+   rather than 401 + JSON. Both are worth fixing panel-side.
