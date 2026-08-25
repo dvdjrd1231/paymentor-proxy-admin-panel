@@ -29,29 +29,39 @@ class Rail
      */
     public static function shortcuts(): array
     {
-        $shortcuts = [];
+        return array_values(array_filter([
+            static::shortcut(UserResource::class, 'Add New Client'),
+            static::shortcut(OrderResource::class, 'Add New Order'),
+            static::shortcut(InvoiceResource::class, 'Create Invoice'),
+            static::shortcut(TicketResource::class, 'Open New Ticket'),
+            static::shortcut(ServiceResource::class, 'Add New Service'),
+        ]));
+    }
 
-        if (UserResource::canCreate()) {
-            $shortcuts[] = ['label' => 'Add New Client', 'url' => UserResource::getUrl('create')];
+    /**
+     * One shortcut, or nothing if the role may not create that record — or if the resource
+     * has no create page to link to.
+     *
+     * `canCreate()` answers whether the *policy* allows it, not whether a `create` route
+     * exists; a resource can authorise creation and still only offer it through a modal.
+     * Asking for a route that was never registered throws, and this rail renders on **every**
+     * admin page, so that would be a 500 across the whole panel rather than one absent link.
+     * The same oversight in the menus is what took the admin down once — see
+     * {@see WhmcsNavigation::resolveUrl()}.
+     *
+     * @return array{label: string, url: string}|null
+     */
+    private static function shortcut(string $resource, string $label): ?array
+    {
+        if (!class_exists($resource) || !$resource::canCreate()) {
+            return null;
         }
 
-        if (OrderResource::canCreate()) {
-            $shortcuts[] = ['label' => 'Add New Order', 'url' => OrderResource::getUrl('create')];
+        try {
+            return ['label' => $label, 'url' => $resource::getUrl('create')];
+        } catch (\Throwable $e) {
+            return null;
         }
-
-        if (InvoiceResource::canCreate()) {
-            $shortcuts[] = ['label' => 'Create Invoice', 'url' => InvoiceResource::getUrl('create')];
-        }
-
-        if (TicketResource::canCreate()) {
-            $shortcuts[] = ['label' => 'Open New Ticket', 'url' => TicketResource::getUrl('create')];
-        }
-
-        if (ServiceResource::canCreate()) {
-            $shortcuts[] = ['label' => 'Add New Service', 'url' => ServiceResource::getUrl('create')];
-        }
-
-        return $shortcuts;
     }
 
     /**
@@ -85,6 +95,20 @@ class Rail
      * @return array<int, array{label: string, count: int, url: string}>
      */
     public static function searches(): array
+    {
+        try {
+            return static::buildSearches();
+        } catch (\Throwable $e) {
+            // Same rule as the shortcuts: this rail is on every admin page, so a counting
+            // query or a route that fails must cost the panel a box, not a 500.
+            return [];
+        }
+    }
+
+    /**
+     * @return array<int, array{label: string, count: int, url: string}>
+     */
+    private static function buildSearches(): array
     {
         $searches = [];
 
