@@ -118,18 +118,29 @@ class WhmcsNavigation
         // a persistent worker and silently empty the Addons menu.
         static::$placed = [];
 
-        return static::$groups = array_values(array_filter([
+        $groups = array_values(array_filter([
             static::clients(),
             static::orders(),
             static::billing(),
             static::support(),
             static::reports(),
             static::utilities(),
+            // Built, then dropped below. See the note before the return.
             static::setup(),
             // Last, and only last: it can only work out the remainder once the rest have
             // claimed what they wanted.
             static::addons(),
         ]));
+
+        // The reference has no Setup menu — its setup screens live behind the wrench in the
+        // toolbar, which is where {@see Toolbar::utilities()} now puts ours. The group is
+        // still *built* rather than simply deleted, because building it is what marks its
+        // resources as placed; skip that and the Addons catch-all would sweep every setup
+        // screen into one long dropdown.
+        return static::$groups = array_values(array_filter(
+            $groups,
+            fn (NavigationGroup $group): bool => $group->getLabel() !== 'Setup',
+        ));
     }
 
     /**
