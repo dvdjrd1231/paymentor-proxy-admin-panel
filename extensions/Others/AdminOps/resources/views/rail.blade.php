@@ -28,7 +28,12 @@
              On the dashboard there is no section, so Shortcuts takes the slot instead. --}}
         @if ($section)
             <section class="ao-rail-panel">
-                <h2 class="ao-rail-heading">{{ $section['label'] }}</h2>
+                <h2 class="ao-rail-heading">
+                    @if ($section['icon'])
+                        <x-filament::icon :icon="$section['icon']" class="ao-rail-heading-icon" />
+                    @endif
+                    {{ $section['label'] }}
+                </h2>
                 <ul class="ao-rail-list ao-rail-list-counted">
                     @foreach ($section['items'] as $item)
                         <li>
@@ -44,7 +49,10 @@
             </section>
         @elseif ($shortcuts)
             <section class="ao-rail-panel">
-                <h2 class="ao-rail-heading">Shortcuts</h2>
+                <h2 class="ao-rail-heading">
+                    <x-filament::icon icon="ri-star-line" class="ao-rail-heading-icon" />
+                    Shortcuts
+                </h2>
                 <ul class="ao-rail-list">
                     @foreach ($shortcuts as $shortcut)
                         <li><a href="{{ $shortcut['url'] }}">{{ $shortcut['label'] }}</a></li>
@@ -54,7 +62,10 @@
         @endif
 
         <section class="ao-rail-panel">
-            <h2 class="ao-rail-heading">System Information</h2>
+            <h2 class="ao-rail-heading">
+                <x-filament::icon icon="ri-home-4-line" class="ao-rail-heading-icon" />
+                System Information
+            </h2>
             <dl class="ao-rail-facts">
                 @foreach (Rail::systemInformation() as $label => $value)
                     <dt>{{ $label }}</dt>
@@ -65,7 +76,10 @@
 
         @if ($searches)
             <section class="ao-rail-panel">
-                <h2 class="ao-rail-heading">Advanced Search</h2>
+                <h2 class="ao-rail-heading">
+                    <x-filament::icon icon="ri-search-eye-line" class="ao-rail-heading-icon" />
+                    Advanced Search
+                </h2>
                 <ul class="ao-rail-list ao-rail-list-counted">
                     @foreach ($searches as $search)
                         <li>
@@ -82,7 +96,10 @@
         @endif
 
         <section class="ao-rail-panel">
-            <h2 class="ao-rail-heading">Staff Online</h2>
+            <h2 class="ao-rail-heading">
+                <x-filament::icon icon="ri-group-line" class="ao-rail-heading-icon" />
+                Staff Online
+            </h2>
             <ul class="ao-rail-staff">
                 @foreach ($staff as $member)
                     <li>

@@ -74,19 +74,114 @@
         color: #ffffff;
     }
 
-    /* Icons sit at the reference's size and never dominate the label. */
+    /* The reference's menu labels are text only — the icons live in the left rail's section
+       headings instead, which is where {@see Rail::section()} now puts them. The group icon
+       is still set on the navigation group, because that is where the rail reads it from;
+       only its appearance in the bar is dropped. */
     nav.fi-topbar .fi-topbar-item-icon {
-        width: 1rem;
-        height: 1rem;
-        opacity: 0.9;
+        display: none;
     }
 
-    /* Global search: a plain white field on the blue, as on the reference. */
+    /* Global search: a bare magnifier on the blue that grows into a field when you reach for
+       it, which is how the reference's search behaves. Collapsing the input rather than
+       replacing the component keeps core's resource-aware results and its ⌘K binding —
+       the keystroke focuses the input, and focus is what opens it. */
     nav.fi-topbar .fi-global-search-field .fi-input-wrp {
-        background: #ffffff;
-        border: 1px solid var(--wa-blue-dark);
+        background: transparent;
+        border: 1px solid transparent;
         border-radius: var(--wa-radius);
         box-shadow: none;
+        transition: background-color 120ms ease, border-color 120ms ease;
+    }
+
+    nav.fi-topbar .fi-global-search-field .fi-input-wrp .fi-icon {
+        color: #ffffff;
+    }
+
+    nav.fi-topbar .fi-global-search-field .fi-input {
+        width: 0;
+        min-width: 0;
+        padding-inline: 0;
+        transition: width 140ms ease, padding-inline 140ms ease;
+    }
+
+    nav.fi-topbar .fi-global-search-field:hover .fi-input-wrp,
+    nav.fi-topbar .fi-global-search-field:focus-within .fi-input-wrp {
+        background: #ffffff;
+        border-color: var(--wa-blue-dark);
+    }
+
+    nav.fi-topbar .fi-global-search-field:hover .fi-input-wrp .fi-icon,
+    nav.fi-topbar .fi-global-search-field:focus-within .fi-input-wrp .fi-icon {
+        color: var(--wa-muted);
+    }
+
+    nav.fi-topbar .fi-global-search-field:hover .fi-input,
+    nav.fi-topbar .fi-global-search-field:focus-within .fi-input {
+        width: 14rem;
+        padding-inline-end: 0.5rem;
+    }
+
+    /* ── Toolbar icons ───────────────────────────────────────────────────────
+       The `+` at the start of the bar and the utility icons at its end, both
+       injected by AdminOps through the topbar render hooks. Square, flat, and
+       shading the whole cell on hover — the same treatment as a menu entry, so
+       the two clusters read as part of the bar rather than as buttons on it. */
+    .ao-tool {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        padding: 0.6rem 0.7rem;
+        border: 0;
+        background: transparent;
+        color: #ffffff;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .ao-tool:hover {
+        background: var(--wa-blue-dark);
+    }
+
+    /* Selected through the button, not on its own: `generate_icon_html()` adds
+       `fi-icon fi-size-md`, which sets a size at two-class specificity, so a lone
+       `.ao-tool-icon` would lose to it however late this sheet loads. */
+    .ao-tool .ao-tool-icon {
+        width: 1.15rem;
+        height: 1.15rem;
+    }
+
+    /* The reference tints two of them: its updates arrow is amber, and the `+` is the
+       heaviest mark in the bar because it is the one thing there you press rather than
+       browse. */
+    .ao-tool.ao-tool-create .ao-tool-icon {
+        width: 1.3rem;
+        height: 1.3rem;
+        stroke-width: 2.5;
+    }
+
+    .ao-tool.ao-tool-updates .ao-tool-icon {
+        color: #f0ad4e;
+    }
+
+    /* The red marker on the reference's gear. Positioned on the icon rather than beside it
+       so the bar's height never changes when a failure appears. */
+    .ao-tool-badge {
+        position: absolute;
+        top: 0.3rem;
+        inset-inline-end: 0.25rem;
+        min-width: 1rem;
+        padding: 0 0.2rem;
+        border-radius: 999px;
+        background: #d9534f;
+        color: #ffffff;
+        font-size: 9px;
+        font-weight: 700;
+        line-height: 1rem;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
     }
 
     /* Menu entries: white on blue, the whole cell shading on hover, as on the reference. */
@@ -168,6 +263,9 @@
        Panels butt directly against each other with no gap, so the top rule is dropped on
        every panel after the first to avoid a 2px seam. */
     .ao-rail-heading {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
         margin: 0;
         padding: 6px 10px;
         background: var(--wa-section);
@@ -176,6 +274,15 @@
         font-weight: 700;
         color: var(--wa-ink);
         line-height: 1.35;
+    }
+
+    /* Grey, never coloured: on the reference these mark the section, they do not compete
+       with the links underneath them. */
+    .ao-rail-heading .ao-rail-heading-icon {
+        width: 0.95rem;
+        height: 0.95rem;
+        flex: none;
+        color: var(--wa-muted);
     }
 
     .ao-rail-panel + .ao-rail-panel .ao-rail-heading {
@@ -331,37 +438,166 @@
     }
 
     /* ── Tables ──────────────────────────────────────────────────────────────
-       The reference's dark header row with white labels, and tight zebra rows. */
+       The reference's solid blue header row with centred white labels, hairline-separated
+       cells, and plain white rows underneath. */
     .fi-ta-header-cell {
         background: var(--wa-blue);
         color: #ffffff;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        padding-block: 0.55rem;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: 0;
+        text-align: center;
+        padding-block: 0.6rem;
+        border-inline-start: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .fi-ta-header-cell:first-child {
+        border-inline-start: 0;
     }
 
     .fi-ta-header-cell button,
     .fi-ta-header-cell .fi-ta-header-cell-label {
         color: #ffffff;
+        justify-content: center;
+        width: 100%;
     }
 
-    .fi-ta-row:nth-child(even) {
-        background: #fafafa;
+    /* The reference's rows are plain white with a hairline under each — no zebra. Its
+       weight comes from the header, and striping on top of that reads as two competing
+       grids. Hover still shades, because a wide row needs somewhere to put your eye. */
+    .fi-ta-row {
+        background: #ffffff;
+        border-bottom: 1px solid #eeeeee;
     }
 
     .fi-ta-row:hover {
-        background: #eef4fa;
+        background: #f5f9fd;
     }
 
     .fi-ta-cell {
         font-size: 12.5px;
-        padding-block: 0.45rem;
+        padding-block: 0.5rem;
     }
 
     .fi-ta-text-item-label {
         color: var(--wa-text);
+    }
+
+    /* The toolbar above a list — search box, filters, per-page — as the reference's grey
+       strip rather than Filament's white one. */
+    .fi-ta-header-ctn,
+    .fi-ta-header-toolbar {
+        background: var(--wa-section);
+        border-bottom: 1px solid var(--wa-panel-border);
+    }
+
+    .fi-ta-header-toolbar {
+        padding: 0.55rem 0.75rem;
+        gap: 0.5rem;
+    }
+
+    /* Empty lists: the reference states the fact in one grey line, centred, with no
+       illustration above it. */
+    .fi-ta-empty-state-icon-bg {
+        display: none;
+    }
+
+    .fi-ta-empty-state-heading {
+        font-size: 13px;
+        font-weight: 400;
+        color: var(--wa-muted);
+    }
+
+    .fi-ta-empty-state-description {
+        font-size: 12px;
+        color: var(--wa-muted);
+    }
+
+    /* ── Pagination ──────────────────────────────────────────────────────────
+       Bordered square boxes, the current page filled in WHMCS blue — the reference's
+       « Previous Page · 1 · Next Page » strip. */
+    .fi-pagination {
+        padding-block: 0.6rem;
+        font-size: 12.5px;
+    }
+
+    .fi-pagination-item-btn,
+    .fi-pagination-previous-btn,
+    .fi-pagination-next-btn {
+        border-radius: var(--wa-radius);
+        border: 1px solid var(--wa-border);
+        background: #ffffff;
+        color: #337ab7;
+        box-shadow: none;
+        font-weight: 400;
+    }
+
+    .fi-pagination-item-btn:hover,
+    .fi-pagination-previous-btn:hover,
+    .fi-pagination-next-btn:hover {
+        background: var(--wa-section);
+        color: #23527c;
+    }
+
+    /* Filament marks the current page with its primary colour; the reference fills the
+       box. `aria-current` is the only reliable handle — the active item carries no class
+       of its own. */
+    .fi-pagination-item-btn[aria-current='page'] {
+        background: var(--wa-blue);
+        border-color: var(--wa-blue-dark);
+        color: #ffffff;
+    }
+
+    .fi-pagination-overview,
+    .fi-pagination-records-per-page-select-ctn {
+        color: var(--wa-text);
+        font-size: 12.5px;
+    }
+
+    /* ── Forms ───────────────────────────────────────────────────────────────
+       The reference labels a field to the left of it in plain dark text, on a panel with
+       no rounding. Filament's own layout is kept — only the type and the chrome change,
+       because moving every field to a two-column grid would fight the responsive rules
+       each resource form already declares. */
+    .fi-fo-field-label,
+    .fi-fo-field-label-content {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--wa-ink);
+    }
+
+    .fi-fo-field-label-required-mark {
+        color: #d9534f;
+    }
+
+    .fi-input,
+    .fi-select-input {
+        font-size: 12.5px;
+    }
+
+    /* ── Stat tiles ──────────────────────────────────────────────────────────
+       The row of figures the reference puts above a report — a pale card, small grey
+       label, large navy number. */
+    .fi-wi-stats-overview-stat {
+        border-radius: var(--wa-radius);
+        border: 1px solid var(--wa-panel-border);
+        background: #fffdf5;
+        box-shadow: none;
+        text-align: center;
+        padding: 0.9rem 0.75rem;
+    }
+
+    .fi-wi-stats-overview-stat-label {
+        font-size: 12.5px;
+        font-weight: 400;
+        color: var(--wa-text);
+    }
+
+    .fi-wi-stats-overview-stat-value {
+        font-size: 1.75rem;
+        font-weight: 400;
+        color: var(--wa-blue-deep);
     }
 
     /* ── Buttons ─────────────────────────────────────────────────────────────
@@ -403,14 +639,34 @@
     .fi-body .ao-tile-info    { background-color: #5bc0de; }
     .fi-body .ao-tile-brand   { background-color: #d9534f; }
 
-    /* ── Footer ──────────────────────────────────────────────────────────── */
+    /* ── Footer ──────────────────────────────────────────────────────────────
+       Copyright at the start, links at the end — the reference's split bar. It wraps
+       rather than shrinks on a narrow window, so neither half is ever truncated. */
     .ao-admin-footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem 1rem;
         padding: 0.6rem 1rem;
         border-top: 1px solid var(--wa-border);
         background: var(--wa-blue-deep);
         color: #ffffff;
         font-size: 11.5px;
-        text-align: center;
+    }
+
+    .ao-admin-footer-links {
+        display: flex;
+        gap: 0.9rem;
+    }
+
+    .ao-admin-footer a {
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    .ao-admin-footer a:hover {
+        text-decoration: underline;
     }
 
     /* Dark mode is deliberately left alone rather than forced off. The reference has no
