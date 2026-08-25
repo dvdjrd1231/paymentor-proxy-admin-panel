@@ -388,6 +388,35 @@ still cannot provision.
 
 ---
 
+## 15. Production deploy of `bde6e98` (2026-08-25)
+
+The server was **8 commits behind** — it had none of the admin work, so this deploy carried
+`b007535`…`bde6e98`, not just the two most recent commits.
+
+Backup `/root/backups/pre-deploy-2026-08-25-114306.sql.gz` (verified), rollback point
+`abe1d3d` recorded at `/root/deploy-rollback-commit`. Pull was fast-forward and left the
+tree clean. No dependency or config changes; three core files (`UserResource`,
+`ImpersonateMiddleware`, `AdminPanelProvider`), all previously verified locally.
+
+| Check | Result |
+|---|---|
+| `ExtensionHelper::runMigrations(...)` for ProxyPanel | ✅ `proxypanel_endpoints` created, migration row recorded |
+| Admin panel path / login route | ✅ `admin`, `filament.admin.auth.login` registered |
+| Dashboard widgets, in order | ✅ Shortcuts → AtAGlance → ActionQueue, ahead of core's four |
+| Navigation groups | ✅ **Queues** (Pending services 8) and **Panel → Locations** |
+| Pages render | ✅ Dashboard, ListUsers, ClientSummary, all 3 widgets, PanelLocations (641 KB) |
+| `Summary` link on the customer list | ✅ 4 links, core Edit links intact (24) |
+| Endpoints store | ✅ table present; legacy `proxy_ips` still readable |
+| Public pages | ✅ `/`, `/login`, `/register`, `/announcements`, `/contact`, `/cart`, `/admin` all 200 |
+| Post-deploy errors | ✅ none new — only the pre-existing `FetchEmails` noise |
+
+**Not done in this session, and why:** the production mock-data cleanup. A backup was taken
+(`pre-cleanup-2026-08-25-115112.sql.gz`) and the dry run completed, but cancelling the three
+live panel services (`1145`, `1147`, `1148`) is an irreversible third-party call and was
+blocked by a permission rule. Nothing was deleted or cancelled. See `docs/OUTSTANDING.md` 2.2.
+
+---
+
 ## Not yet verified
 
 
