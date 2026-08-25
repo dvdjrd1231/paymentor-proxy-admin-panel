@@ -10,6 +10,7 @@
 @php
     use Paymenter\Extensions\Others\AdminOps\Support\Rail;
 
+    $section = Rail::section();
     $shortcuts = Rail::shortcuts();
     $searches = Rail::searches();
     $staff = Rail::staffOnline();
@@ -23,7 +24,25 @@
     x-effect="localStorage.setItem('ao_rail_open', open ? '1' : '0')"
     x-bind:class="{ 'ao-rail-collapsed': ! open }">
     <div class="ao-rail-inner">
-        @if ($shortcuts)
+        {{-- The section you are in, top of the column — the reference's contextual rail.
+             On the dashboard there is no section, so Shortcuts takes the slot instead. --}}
+        @if ($section)
+            <section class="ao-rail-panel">
+                <h2 class="ao-rail-heading">{{ $section['label'] }}</h2>
+                <ul class="ao-rail-list ao-rail-list-counted">
+                    @foreach ($section['items'] as $item)
+                        <li>
+                            <a href="{{ $item['url'] }}">
+                                <span>{{ $item['label'] }}</span>
+                                @if ($item['badge'])
+                                    <span class="ao-rail-count">{{ $item['badge'] }}</span>
+                                @endif
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+        @elseif ($shortcuts)
             <section class="ao-rail-panel">
                 <h2 class="ao-rail-heading">Shortcuts</h2>
                 <ul class="ao-rail-list">

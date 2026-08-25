@@ -138,14 +138,17 @@
        Injected at `panels::layout.start`, so it is the first child of `.fi-layout`
        and becomes the page's left column. Filament's own sidebar is translated
        off-screen by `.fi-body-has-top-navigation`, so there is no second column. */
+    /* 192px, measured off the reference rather than guessed — content begins at 208px,
+       i.e. the column plus its 1px rule and the content's own padding. */
     .ao-rail {
         flex: none;
-        width: 13rem;
+        width: 192px;
         background: #ffffff;
         border-inline-end: 1px solid var(--wa-border);
         display: flex;
         flex-direction: column;
         min-height: 100%;
+        font-size: 12px;
     }
 
     .ao-rail-collapsed {
@@ -161,14 +164,18 @@
         overflow-y: auto;
     }
 
+    /* Grey band, 1px rules top and bottom, bold dark label — the reference's section head.
+       Panels butt directly against each other with no gap, so the top rule is dropped on
+       every panel after the first to avoid a 2px seam. */
     .ao-rail-heading {
         margin: 0;
-        padding: 0.5rem 0.75rem;
+        padding: 6px 10px;
         background: var(--wa-section);
         border-block: 1px solid var(--wa-border);
         font-size: 12px;
         font-weight: 700;
         color: var(--wa-ink);
+        line-height: 1.35;
     }
 
     .ao-rail-panel + .ao-rail-panel .ao-rail-heading {
@@ -179,19 +186,20 @@
     .ao-rail-staff {
         list-style: none;
         margin: 0;
-        padding: 0.4rem 0.75rem;
-        font-size: 12px;
+        padding: 6px 10px;
     }
 
+    /* Underlined blue links on white, tight leading, as on the reference. */
     .ao-rail-list a {
         display: block;
-        padding: 0.15rem 0;
-        color: var(--wa-blue);
+        padding: 2px 0;
+        color: #337ab7;
         text-decoration: underline;
+        line-height: 1.5;
     }
 
     .ao-rail-list a:hover {
-        color: var(--wa-blue-dark);
+        color: #23527c;
     }
 
     .ao-rail-list-counted a {
@@ -246,22 +254,22 @@
         margin-inline-start: 0.3rem;
     }
 
-    /* WHMCS's "Minimise Sidebar" bar, pinned to the bottom of the column. */
+    /* "Minimise Sidebar", pinned to the bottom of the column on a dark band. */
     .ao-rail-toggle {
         flex: none;
         width: 100%;
-        padding: 0.4rem;
+        padding: 5px 8px;
         border: 0;
-        border-top: 1px solid var(--wa-border);
-        background: #555555;
+        background: #5b5b5b;
         color: #ffffff;
         font-size: 11px;
         cursor: pointer;
         text-align: center;
+        font-family: inherit;
     }
 
     .ao-rail-toggle:hover {
-        background: var(--wa-ink);
+        background: #444444;
     }
 
     @media (max-width: 1024px) {

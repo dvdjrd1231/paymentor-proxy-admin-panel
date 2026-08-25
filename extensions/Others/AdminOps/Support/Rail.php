@@ -25,6 +25,40 @@ use Illuminate\Support\Facades\Auth;
 class Rail
 {
     /**
+     * The section the current page is in — the reference's contextual rail.
+     *
+     * On WHMCS the left column is not fixed furniture: open a Support page and it lists the
+     * Support screens, open Reports and it lists the reports. It is the menu you are already
+     * inside, kept in reach so you can move around a section without going back up to the
+     * menu bar.
+     *
+     * Reuses the menu groups rather than repeating them, so a screen can never appear in one
+     * and not the other, and so the permission checks behind them are applied once.
+     *
+     * @return array{label: string, items: array<int, array{label: string, url: string, badge: ?string}>}|null
+     */
+    public static function section(): ?array
+    {
+        $group = WhmcsNavigation::activeGroup();
+
+        if (!$group) {
+            return null;
+        }
+
+        $items = [];
+
+        foreach ($group->getItems() as $item) {
+            $items[] = [
+                'label' => $item->getLabel(),
+                'url' => (string) $item->getUrl(),
+                'badge' => $item->getBadge(),
+            ];
+        }
+
+        return ['label' => $group->getLabel(), 'items' => $items];
+    }
+
+    /**
      * @return array<int, array{label: string, url: string}>
      */
     public static function shortcuts(): array

@@ -84,14 +84,41 @@ class WhmcsNavigation
      */
     private static array $placed = [];
 
+    /**
+     * The built menus, memoised for the request.
+     *
+     * @var array<int, NavigationGroup>|null
+     */
+    private static ?array $groups = null;
+
     public static function build(NavigationBuilder $builder): NavigationBuilder
     {
-        // Reset per build, not per process: the navigation is built once a request, but a
-        // stale array would leak between requests under a persistent worker and silently
-        // empty the Addons menu.
+        return $builder->groups(static::groups());
+    }
+
+    /**
+     * The WHMCS menus, built once per request.
+     *
+     * Public and memoised because the left rail needs them too: on the reference, the rail
+     * lists the section you are *in* — Support pages show the Support links, Reports pages
+     * show the reports — so it is the same structure viewed a second way. Building it once
+     * and sharing it means the menu and the rail cannot disagree about what exists or about
+     * who may see it, and the permission checks and URL resolution behind it run once rather
+     * than twice per page.
+     *
+     * @return array<int, NavigationGroup>
+     */
+    public static function groups(): array
+    {
+        if (static::$groups !== null) {
+            return static::$groups;
+        }
+
+        // Reset per build, not per process: a stale array would leak between requests under
+        // a persistent worker and silently empty the Addons menu.
         static::$placed = [];
 
-        return $builder->groups(array_values(array_filter([
+        return static::$groups = array_values(array_filter([
             static::clients(),
             static::orders(),
             static::billing(),
@@ -101,7 +128,40 @@ class WhmcsNavigation
             // Last, and only last: it can only work out the remainder once the rest have
             // claimed what they wanted.
             static::addons(),
-        ])));
+        ]));
+    }
+
+    /**
+     * The group the current page belongs to, or null on the dashboard.
+     *
+     * Matched on path rather than on Filament's own "active" flag: menu entries deliberately
+     * report themselves inactive ({@see link()}) because several of them point at the same
+     * resource under different filters, so there is nothing to ask. The longest matching
+     * path wins, so `/admin/services/cancellations` picks the cancellations entry rather
+     * than the `/admin/services` one it happens to start with.
+     */
+    public static function activeGroup(): ?NavigationGroup
+    {
+        $path = rtrim(parse_url(request()->url(), PHP_URL_PATH) ?? '', '/');
+        $best = null;
+        $bestLength = 0;
+
+        foreach (static::groups() as $group) {
+            foreach ($group->getItems() as $item) {
+                $itemPath = rtrim(parse_url((string) $item->getUrl(), PHP_URL_PATH) ?? '', '/');
+
+                if ($itemPath === '' || !str_starts_with($path, $itemPath)) {
+                    continue;
+                }
+
+                if (strlen($itemPath) > $bestLength) {
+                    $best = $group;
+                    $bestLength = strlen($itemPath);
+                }
+            }
+        }
+
+        return $best;
     }
 
     private static function clients(): ?NavigationGroup
