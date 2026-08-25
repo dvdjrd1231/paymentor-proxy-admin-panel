@@ -210,6 +210,62 @@ still points at `127.0.0.1` and requires real mail credentials before anything c
 
 ---
 
+## 12. Admin area — WHMCS usability pass (spec item 2)
+
+Run against the development SQLite dataset (59 users, 352 invoices, 314 services, 42
+tickets, 9 unresolved provisioning failures) on PHP 8.3.33, every component rendered
+through Livewire as a signed-in administrator.
+
+| Check | Result |
+|---|---|
+| All three widgets discovered and ordered ahead of core's | ✅ Shortcuts, At a glance, Needs attention |
+| Widget figures match the same queries run independently | ✅ income $8,523.70 · outstanding $7,393.70 · 139 active |
+| Action-queue rows omit zero counts | ✅ overdue + failed-payment rows absent, correctly |
+| Every queue link lands on a correctly filtered list | ✅ invoices → all `pending`; services → all `suspended`; tickets → all `open` |
+| Client summary renders for a customer with data | ✅ 314 services, 348 invoices, 42 tickets, credit + lifetime + outstanding |
+| Client summary renders for a customer with none | ✅ empty states, "Unverified" badge |
+| **Log in as customer** hidden for your own account, shown otherwise | ✅ |
+| `Summary` link present on every customer row, core `Edit` intact | ✅ 10 summary links + 60 edit links on page 1 |
+| Sidebar **Queues** group with live badges | ✅ Pending services (134), Suspended services (41) |
+| Widget stylesheet reaches the panel `<head>` with theme variables | ✅ 5,575 bytes alongside `--color-primary` |
+| Core admin pages still render | ✅ Dashboard, Users, Invoices, Services, Tickets, Products |
+| Client area unaffected | ✅ Dashboard, Services, Invoices, Account, Credits, Security all render |
+| Multi-currency money rendering | ✅ `$1,234.50 · R$5.678,90` — per-currency grouping honoured |
+| Money edge cases | ✅ all-zero and empty collapse to `$0.00`; unknown/absent currency degrades to a plain number instead of throwing |
+
+> **Found and fixed while verifying — three real defects, none of which a syntax check
+> would have caught:**
+>
+> - `pluck('total', …)` on an `Invoice` aggregate returned **0**, not the SUM. Eloquent's
+>   `pluck` runs a column through the model's accessors, and `Invoice::total()` recomputes
+>   the figure from the invoice's items — on a model with none, that is zero. The
+>   outstanding total silently read `$0.00` against 163 unpaid invoices. Aggregates are now
+>   aliased `amount_sum`.
+> - A widget that both `use`d `CanPoll` and redeclared its `$pollingInterval` property was a
+>   **fatal** composition error on PHP 8.3. Core's widgets inherit that property rather than
+>   composing the trait, which is why they get away with it. Now overridden as a method.
+> - `public User $record` on the summary page was assigned the raw `{record}` string from
+>   the URL — Livewire fills same-named public properties *before* `mount()` runs — and
+>   threw a `TypeError` on every visit. The property is now `$customer`.
+>
+> **Worth knowing:** an extension **cannot** add a record action or a filter to a core
+> table. `Table::configureUsing()` runs inside `Table::make()`, and the resource's `table()`
+> method runs afterwards with `->recordActions([])` / `->filters([])`, both of which reset
+> the array first. This is why the `Summary` link is core touchpoint #10 and why the action
+> queue links to filters core already ships.
+
+**How the thin parts of the dataset were covered:** it holds only USD, and 348 of its 352
+invoices have no due date, so nothing in it is overdue and nothing spans currencies. Both
+paths were exercised by inserting a second currency and back-dating invoices **inside a
+rolled-back transaction**, then confirming the original figures returned afterwards. What
+this does *not* prove is the behaviour over months of real multi-currency trading.
+
+The `orders` table is also empty here (314 services exist without them), which is why the
+"new orders" figure is counted from services — see `Metrics::newServices()` for why that is
+the right measure in Paymenter regardless.
+
+---
+
 ## Not yet verified
 
 

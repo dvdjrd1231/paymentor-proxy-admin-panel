@@ -6,7 +6,7 @@ so they can be **re-applied after every upstream update** (see `docs/02-updates.
 
 > After `git merge upstream/*`, check each entry here and re-apply if the merge reverted it.
 >
-> **All four touchpoints below are currently applied in this repository.** Each was
+> **Every touchpoint below is currently applied in this repository.** Each was
 > verified after applying — see `docs/VERIFICATION.md`.
 
 ---
@@ -74,8 +74,8 @@ return $gateways;
 ## 3. Discover admin widgets from extensions (**applied**)
 
 **Why:** Paymenter auto-discovers `Resources` and `Pages` from enabled extensions, but
-**not** `Widgets`. To show the `Others/AdminOps` Operations metrics widget (spec item 2)
-on the admin dashboard, discover extension widgets too. See `docs/02b-admin-area.md`.
+**not** `Widgets`. To show the `Others/AdminOps` dashboard widgets (spec item 2) — Shortcuts,
+At a glance, Needs attention — discover extension widgets too. See `docs/02b-admin-area.md`.
 
 **File:** `app/Providers/Filament/AdminPanelProvider.php`, inside the loop over enabled
 extensions (next to the existing `discoverResources` / `discoverPages` calls).
@@ -87,10 +87,10 @@ $panel->discoverWidgets(in: base_path('extensions/' . $extension->path . '/Admin
 ```
 
 **Notes:**
-- Applied. Without it the widget class is never loaded, so the dashboard silently
-  omits it (verified: `Filament::getPanel('admin')->getWidgets()` now includes
-  `Paymenter\Extensions\Others\AdminOps\Admin\Widgets\OperationsOverview`).
-- Stat values load lazily over Livewire, so they are not in the initial page HTML.
+- Applied. Without it the widget classes are never loaded, so the dashboard silently
+  omits them (verified: `Filament::getPanel('admin')->getWidgets()` now lists
+  `…\AdminOps\Admin\Widgets\Shortcuts`, `…\AtAGlance` and `…\ActionQueue` ahead of core's).
+- Widget bodies load lazily over Livewire, so they are not in the initial page HTML.
 - Admin primary **colour**: to match the brand, change `->colors(['primary' => Color::Blue])`
   to e.g. `->colors(['primary' => Color::hex('#e8365d')])` in the same provider. Purely
   cosmetic; optional.
@@ -343,6 +343,44 @@ php artisan app:settings:change admin_path myadmin
 
 **If not re-applied after an upgrade:** the panel returns to `/admin` with no login page, and
 staff are bounced through the customer login again. Impersonation still works either way.
+
+---
+
+## 10. `Summary` link on the customer list (**applied**)
+
+**Why:** the WHMCS-style client summary (spec item 2 — `Others/AdminOps`, see
+`docs/02b-admin-area.md`) needs an entry point, and the natural one is the customer list:
+click a customer, see everything about them. The page itself is an extension page and needs
+no core edit; only the link into it does.
+
+**File:** `app/Admin/Resources/UserResource.php`, `table()` → `recordActions([...])`, plus
+the `Filament\Actions\Action` and `…\AdminOps\Admin\Pages\ClientSummary` imports.
+
+**Change:** spread a guarded action in ahead of `EditAction::make()`:
+
+```php
+...(class_exists(ClientSummary::class) ? [
+    Action::make('summary')
+        ->label('Summary')
+        ->icon('heroicon-m-identification')
+        ->url(fn (User $record): string => ClientSummary::getUrl(['record' => $record->getKey()])),
+] : []),
+```
+
+**Why it cannot be done from the extension** — this was tried first, and it silently does
+nothing. `Table::configureUsing()` is Filament's supported way to reach a table you do not
+own, but it runs inside `Table::make()`; the resource's `table()` method runs *afterwards*
+and calls `->recordActions([...])`, whose first statement is `$this->recordActions = []`.
+Anything pushed from outside is discarded before the table renders. `->filters([...])` resets
+the same way, which is why AdminOps' dashboard queue links to filters core already has
+instead of adding its own. A Livewire component hook was also tried and did not fire in time.
+
+**Notes:**
+- Guarded by `class_exists`, so core still runs if AdminOps is removed.
+- Verified: the rendered customer list carries one `/admin/client-summary/{id}` link per row
+  and core's Edit action is untouched.
+- If not re-applied after an upgrade: the summary page still exists and is still reachable
+  by URL, but nothing links to it.
 
 ---
 

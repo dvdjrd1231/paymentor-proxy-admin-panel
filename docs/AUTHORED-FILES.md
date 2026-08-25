@@ -21,6 +21,19 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 - `extensions/Others/BrazilianRegistration/README.md`
 - `docs/modules/brazilian-registration.md`
 
+## Admin area (WHMCS-style usability — spec item 2)
+- `extensions/Others/AdminOps/AdminOps.php` — widget styles, sidebar service queues
+- `extensions/Others/AdminOps/Admin/Widgets/Shortcuts.php` — dashboard quick actions
+- `extensions/Others/AdminOps/Admin/Widgets/AtAGlance.php` — income/services/customers/tickets by period
+- `extensions/Others/AdminOps/Admin/Widgets/ActionQueue.php` — "Needs attention" work queue
+- `extensions/Others/AdminOps/Admin/Pages/ClientSummary.php` — one-screen customer view + log in as customer
+- `extensions/Others/AdminOps/Support/Metrics.php` — every dashboard figure, defined once
+- `extensions/Others/AdminOps/Support/Money.php` — multi-currency-safe money formatting
+- `extensions/Others/AdminOps/Support/Links.php` — cross-extension admin URLs
+- `extensions/Others/AdminOps/resources/views/` — widget/page templates and their stylesheet
+- `extensions/Others/AdminOps/README.md`
+- `docs/02b-admin-area.md`
+
 ## Deployment / operations
 - `scripts/install-debian13.sh` — automated Debian 13 installer
 - `scripts/backup.sh` — DB + files backup
