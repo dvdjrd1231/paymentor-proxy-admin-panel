@@ -13,6 +13,7 @@ use App\Admin\Resources\UserResource\Pages\ShowServices;
 use App\Admin\Resources\UserResource\Pages\ShowTickets;
 use App\Models\Credit;
 use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -27,6 +28,7 @@ use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary;
 
 class UserResource extends Resource
 {
@@ -116,6 +118,16 @@ class UserResource extends Resource
                     })),
             ])
             ->recordActions([
+                // Client Summary (extensions/Others/AdminOps) — the WHMCS-style one-screen
+                // view of a customer. It has to be added here: an extension cannot push a
+                // record action onto this table, because `recordActions()` below resets the
+                // array after `Table::configureUsing()` has run. See docs/CORE-TOUCHPOINTS.md.
+                ...(class_exists(ClientSummary::class) ? [
+                    Action::make('summary')
+                        ->label('Summary')
+                        ->icon('heroicon-m-identification')
+                        ->url(fn (User $record): string => ClientSummary::getUrl(['record' => $record->getKey()])),
+                ] : []),
                 EditAction::make(),
             ])
             ->defaultSort('created_at', 'desc');
