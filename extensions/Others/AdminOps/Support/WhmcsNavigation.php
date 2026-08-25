@@ -337,8 +337,14 @@ class WhmcsNavigation
         // the Addons catch-all must not add a third, unfiltered copy of it.
         static::$placed[$resource] = true;
 
+        $url = static::resolveUrl(fn (): string => $resource::getUrl($page, $params));
+
+        if ($url === null) {
+            return null;
+        }
+
         $item = NavigationItem::make($label)
-            ->url(fn (): string => $resource::getUrl($page, $params))
+            ->url($url)
             // Two links to the same resource would otherwise both highlight. Nothing here
             // can tell which filter is applied, so neither claims to be the active one.
             ->isActiveWhen(fn (): bool => false);
@@ -361,9 +367,42 @@ class WhmcsNavigation
 
         static::$placed[$page] = true;
 
+        $url = static::resolveUrl(fn (): string => $page::getUrl());
+
+        if ($url === null) {
+            return null;
+        }
+
         return NavigationItem::make($label)
-            ->url(fn (): string => $page::getUrl())
-            ->isActiveWhen(fn (): bool => request()->url() === $page::getUrl());
+            ->url($url)
+            ->isActiveWhen(fn (): bool => request()->url() === $url);
+    }
+
+    /**
+     * Resolve a menu URL now, and drop the entry if it cannot be built.
+     *
+     * **This is the guard that took the admin down once.** `NavigationItem::url()` accepts a
+     * closure, so a URL that cannot be generated does not fail while the menu is being
+     * assembled — it fails later, while the topbar is being *rendered*, and a route error
+     * there is an unhandled 500 on every admin page. Verifying that the navigation "builds"
+     * therefore proves nothing; the URLs have to be resolved too, which is what this does.
+     *
+     * The concrete case: `ClientSummary` is a per-customer screen at
+     * `admin/client-summary/{record}`. It is reached from a row on the customer list, never
+     * from a menu, so `getUrl()` with no record throws "Missing required parameter". The
+     * Addons catch-all, whose whole job is to sweep up pages nobody filed, swept it in.
+     *
+     * Catching rather than special-casing that one page: any resource or page whose route
+     * takes a parameter has the same problem, including ones that do not exist yet, and a
+     * menu entry that cannot be linked is simply not a menu entry.
+     */
+    private static function resolveUrl(\Closure $url): ?string
+    {
+        try {
+            return $url();
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     /**
@@ -377,8 +416,19 @@ class WhmcsNavigation
         }
 
         // Colour is the second argument of badge(), not a setter of its own.
+        //
+        // Wrapped for the same reason as resolveUrl(): a badge closure is evaluated while
+        // the topbar renders, so a counting query that throws — a table an extension has
+        // not migrated yet, say — would be a 500 on every admin page rather than a missing
+        // number. A menu that cannot count is still a usable menu.
         return $item->badge(
-            fn () => ($count = $badge()) ? (string) $count : null,
+            function () use ($badge): ?string {
+                try {
+                    return ($count = $badge()) ? (string) $count : null;
+                } catch (\Throwable $e) {
+                    return null;
+                }
+            },
             $color,
         );
     }
