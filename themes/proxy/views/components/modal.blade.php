@@ -23,6 +23,15 @@
     'closeTrigger' => '',
     'open' => false,
     'width' => 'max-w-3xl',
+    // Teleporting to <body> escapes any ancestor that would clip or re-stack the dialog,
+    // which is why the default theme does it and why it is still the default here.
+    //
+    // It must be turned OFF for anything that mounts a third-party widget, though.
+    // `<template>` content is inert — it is a document fragment, not the page — and Alpine
+    // only clones it into <body> when it initialises. A gateway's `@script` runs on Livewire
+    // component boot and calls `mount('#payment-element')`, which at that moment matches
+    // nothing, so Stripe's form silently never appears and its Pay button stays dead.
+    'teleport' => true,
 ])
 
 @php
@@ -40,23 +49,32 @@
     ][$width] ?? '48rem';
 @endphp
 
+{{-- The wrapper is opened and closed conditionally so the dialog markup exists once. When
+     not teleported it simply stays in the document; `.wf-modal` is `position: fixed`, so it
+     still covers the page. --}}
 <div x-data="{ open: {{ $open ? 'true' : 'false' }} }">
-    <template x-teleport="body">
-        <div class="wf-modal" x-show="open" x-cloak x-transition.opacity role="dialog" aria-modal="true">
-            <div class="wf-modal-dialog" style="max-width: {{ $maxWidth }}">
-                <div class="wf-modal-head">
-                    <h2 class="wf-modal-title">{{ $title }}</h2>
-                    @if ($closable && !$closeTrigger)
-                        <button type="button" class="wf-modal-close" @click="open = false"
-                            aria-label="{{ __('Close') }}">&times;</button>
-                    @elseif ($closable && $closeTrigger)
-                        {{ $closeTrigger }}
-                    @endif
-                </div>
-                <div class="wf-modal-body">
-                    {{ $slot }}
-                </div>
+    @if ($teleport)
+        <template x-teleport="body">
+    @endif
+
+    <div class="wf-modal" x-show="open" x-cloak x-transition.opacity role="dialog" aria-modal="true">
+        <div class="wf-modal-dialog" style="max-width: {{ $maxWidth }}">
+            <div class="wf-modal-head">
+                <h2 class="wf-modal-title">{{ $title }}</h2>
+                @if ($closable && !$closeTrigger)
+                    <button type="button" class="wf-modal-close" @click="open = false"
+                        aria-label="{{ __('Close') }}">&times;</button>
+                @elseif ($closable && $closeTrigger)
+                    {{ $closeTrigger }}
+                @endif
+            </div>
+            <div class="wf-modal-body">
+                {{ $slot }}
             </div>
         </div>
-    </template>
+    </div>
+
+    @if ($teleport)
+        </template>
+    @endif
 </div>

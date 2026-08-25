@@ -216,32 +216,6 @@
         color: hsl(var(--color-muted));
     }
 
-    /* --- Shortcuts: the handful of things staff start from --- */
-
-    .ao-shortcuts {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-        gap: 0.5rem;
-    }
-
-    .ao-shortcut {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.4rem;
-        padding: 0.6rem 0.5rem;
-        text-align: center;
-        font-weight: 500;
-        border: 1px solid hsl(var(--color-neutral));
-        border-radius: 0.5rem;
-        transition: border-color 120ms ease, color 120ms ease;
-    }
-
-    .ao-shortcut:hover {
-        border-color: hsl(var(--color-primary));
-        color: hsl(var(--color-primary));
-    }
-
     /* --- Client summary --- */
 
     .ao-summary-grid {

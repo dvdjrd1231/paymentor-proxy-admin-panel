@@ -11,10 +11,16 @@
     component redirects to it — so this is the on-page payment surface and nothing else may
     take its place.
 --}}
+{{-- `:teleport="false"` is required, not cosmetic. Gateways render their form here and mount
+     it from a Livewire `@script` — Stripe does `paymentElement.mount('#payment-element')`.
+     Inside `<template x-teleport>` that element is in an inert fragment, not the document,
+     so the selector matches nothing: the card form never appears and the gateway's own Pay
+     button stays dead. Rendering in place puts the mount target in the real DOM. --}}
 <x-modal
     :title="config('settings.invoice_proforma', false)
         ? __('invoices.payment_for_proforma_invoice', ['id' => $invoice->id])
         : __('invoices.payment_for_invoice', ['number' => $invoice->number])"
+    :teleport="false"
     open
 >
     <x-slot name="closeTrigger">
