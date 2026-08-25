@@ -57,6 +57,10 @@ return [
     'one_time_payment' => 'One-Time Payment',
     'use_for_recurring' => 'Use for Recurring Payments',
     'pay_now' => 'Pay Now',
+    // Why Pay Now is greyed out: the button sits at the top of the invoice and the method
+    // select further down, so the disabled state needs a stated cause next to the control
+    // that clears it.
+    'select_method_to_pay' => 'Choose a payment method to enable Pay Now.',
     // Shown when a gateway refuses the payment (e.g. Stripe's 50c minimum).
     'no_methods_for_amount' => 'No payment method can process :amount — it is below the minimum every available method accepts. Please add more items to the order, or contact support.',
     'gateway_error' => 'This payment method could not process the payment: :error',

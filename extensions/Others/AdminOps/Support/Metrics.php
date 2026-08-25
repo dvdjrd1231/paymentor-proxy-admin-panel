@@ -6,6 +6,7 @@ use App\Enums\InvoiceTransactionStatus;
 use App\Models\Invoice;
 use App\Models\InvoiceTransaction;
 use App\Models\Service;
+use App\Models\ServiceCancellation;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -220,6 +221,21 @@ class Metrics
     }
 
     /**
+     * Cancellation requests still waiting on someone — WHMCS's "Pending Cancellations".
+     *
+     * A `service_cancellations` row carries no status of its own; it is a request, and it
+     * stops being outstanding when the service it names actually reaches `cancelled`. An
+     * end-of-period request therefore stays in this count for the rest of the term, which
+     * is right: it is work that has not happened yet.
+     */
+    public static function cancellationsPending(): int
+    {
+        return static::remember(__FUNCTION__, fn () => ServiceCancellation::query()
+            ->whereHas('service', fn ($query) => $query->where('status', '!=', Service::STATUS_CANCELLED))
+            ->count());
+    }
+
+    /**
      * Customers, i.e. everyone without a staff role.
      *
      * Staff accounts live in the same table, so counting `users` outright would report
@@ -228,5 +244,60 @@ class Metrics
     public static function customers()
     {
         return User::query()->whereNull('role_id');
+    }
+
+    /** Staff, i.e. everyone with a role. The inverse of {@see customers()}. */
+    public static function staff()
+    {
+        return User::query()->whereNotNull('role_id');
+    }
+
+    /**
+     * Administrators seen in the last few minutes — WHMCS's "Staff Online" panel.
+     *
+     * Read from `user_sessions`, which core's session middleware stamps with
+     * `last_activity` at most once a minute (UserSession::LAST_ACTIVITY_UPDATE). The window
+     * has to be comfortably wider than that stamp interval or a colleague reading a page
+     * would blink out of the list between writes.
+     *
+     * Grouped in PHP rather than SQL because one person signed in from two devices has two
+     * sessions and should appear once, at whichever is the more recent.
+     *
+     * @return \Illuminate\Support\Collection<int, object{name: string, last_activity: Carbon}>
+     */
+    public static function staffOnline(int $withinMinutes = 15)
+    {
+        return static::staff()
+            ->whereHas('sessions', fn ($query) => $query->where('last_activity', '>=', now()->subMinutes($withinMinutes)))
+            ->with(['sessions' => fn ($query) => $query->orderByDesc('last_activity')->limit(1)])
+            ->get()
+            ->map(fn (User $user) => (object) [
+                'name' => $user->name,
+                'last_activity' => $user->sessions->first()?->last_activity,
+            ])
+            ->sortByDesc('last_activity')
+            ->values();
+    }
+
+    /** Customers seen in the last hour — WHMCS's "Users Online". */
+    public static function customersOnline(int $withinMinutes = 60): int
+    {
+        return static::customers()
+            ->whereHas('sessions', fn ($query) => $query->where('last_activity', '>=', now()->subMinutes($withinMinutes)))
+            ->count();
+    }
+
+    /**
+     * Customers with at least one running service — WHMCS's "Active Clients".
+     *
+     * Not "customers who have ever bought": someone whose only service was cancelled two
+     * years ago is a past customer, and counting them makes the figure grow forever and
+     * mean nothing.
+     */
+    public static function customersActive(): int
+    {
+        return static::remember(__FUNCTION__, fn () => static::customers()
+            ->whereHas('services', fn ($query) => $query->where('status', Service::STATUS_ACTIVE))
+            ->count());
     }
 }

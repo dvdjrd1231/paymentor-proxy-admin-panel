@@ -50,9 +50,18 @@
                 <div class="wf-actions wf-actions--center" style="margin-top:.6rem">
                     @if ($invoice->status === 'pending' && !$checkPayment)
                         {{-- Green, as on the reference, where the brand colour is reserved for
-                             navigation and the pay action is the one green control. --}}
+                             navigation and the pay action is the one green control.
+
+                             Disabled until a method is chosen in the select below.
+                             `processPayment()` returns silently when `selectedMethod` is
+                             null, so an always-enabled Pay Now was a button that looked
+                             live, did nothing when pressed, and gave no reason why. The
+                             select is `wire:model.live`, so choosing one re-renders this
+                             and enables it in the same round trip. --}}
                         <button type="button" class="wf-btn wf-btn--pay" wire:click="processPayment"
-                            wire:loading.attr="disabled" wire:target="processPayment">
+                            wire:loading.attr="disabled" wire:target="processPayment"
+                            @disabled(!$selectedMethod)
+                            @if (!$selectedMethod) title="{{ __('invoices.select_payment_method') }}" @endif>
                             <span wire:loading.remove wire:target="processPayment">{{ __('invoices.pay_now') }}</span>
                             <span wire:loading wire:target="processPayment">…</span>
                         </button>
@@ -121,6 +130,12 @@
                             <option value="gateway-{{ $gateway->id }}">{{ $gateway->name }}</option>
                         @endforeach
                     </select>
+                    {{-- Says why Pay Now is greyed out. The button is at the top of the
+                         page and the select is here, so without this the disabled state
+                         has no visible cause. --}}
+                    @unless ($selectedMethod)
+                        <p class="wf-inv-hint">{{ __('invoices.select_method_to_pay') }}</p>
+                    @endunless
                 </div>
             @endif
         </div>
