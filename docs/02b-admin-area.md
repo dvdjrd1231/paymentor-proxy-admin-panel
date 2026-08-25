@@ -86,19 +86,49 @@ not two, and `ImpersonateMiddleware` governs both.
 The page is deliberately **read-only**. Everything editable stays on the core page that
 owns it, so there is one place a change can be made and one set of validation rules.
 
-### 3. Sidebar queues
+### 3. The WHMCS layout itself
 
-A **Queues** group with **Pending services**, **Suspended services** and **Pending
-cancellations**, each carrying a live count.
+The client asked for the reference's **design**, not only its information, so the panel now
+wears it: a blue menu bar across the top, the left rail, bordered panels with grey heading
+strips, dark table headers, square buttons, a footer.
 
-Only those three, on purpose: core already badges Invoices with the unpaid count and Tickets
-with the open count, so adding entries for those would put the same two numbers in the
-sidebar twice. Services is the actual gap — no badge, no default filter — and for a
-provisioning business those two states are exactly what needs chasing: a backlog waiting to
-be set up, and an account suspended for non-payment. Cancellation requests are the third:
-they live two clicks inside the Services cluster with no badge at all, so a request sat
-waiting was invisible until somebody went looking. Badges show a number or nothing, never
-a zero.
+| Piece | Where |
+|---|---|
+| **Menu bar** — Clients · Orders · Billing · Support · Reports & Logs · Setup · Addons | `Support/WhmcsNavigation.php` |
+| **Left rail** — Shortcuts, System Information, Advanced Search, Staff Online, and the *Minimise Sidebar* bar | `Support/Rail.php` + `resources/views/rail.blade.php` |
+| **Skin** — topbar, dropdowns, panels, tables, buttons, inputs, tiles | `resources/views/skin.blade.php` |
+| **Footer** | `resources/views/footer.blade.php` |
+
+All of it is plain CSS injected at `panels::head.end` and markup injected at
+`panels::layout.start` / `panels::footer`. The admin theme only scans `app/Admin` and
+`resources/views` for classes — `extensions/` is not a `@source` — so a utility class written
+here would not exist in the compiled stylesheet; and a rebuild would put a Vite build in the
+deployment path, which the server does not have. Plain CSS has neither problem.
+
+**One core line** was unavoidable: `->topNavigation()`, recorded as
+[`CORE-TOUCHPOINTS.md`](CORE-TOUCHPOINTS.md) #11. It is read while the panel is constructed,
+so it cannot be set from an extension. Everything else registers afterwards.
+
+#### What it restyles, and what it cannot
+
+The skin restyles **Filament's own markup**. That is the trade: the panel keeps every
+resource, policy, form and table it already has, and those internals stay Filament's HTML.
+They read as the reference design; they are not its markup. Making them byte-identical to
+WHMCS's Bootstrap 3 template would mean replacing Filament, and with it every screen in the
+admin.
+
+#### The catch-all is load-bearing
+
+`Panel::navigation()` takes navigation over completely, so anything the menus do not name
+becomes unreachable — including every resource a future extension registers. `addons()`
+therefore runs last, diffs the panel's actual resources and pages against what the menus
+claimed, and puts the remainder under **Addons**. Installing an extension still works
+without editing this file; its screens simply land in Addons until somebody files them.
+
+Sidebar **Queues** were removed in the same change — not dropped, moved. A NavigationBuilder
+ignores `navigationItems()`, so they could not have survived; pending, suspended and
+cancelled now sit in the **Orders** and **Clients** menus with their badges, and again in the
+rail's Advanced Search with their counts.
 
 A cancellation counts as pending while the service it names has not reached `cancelled` —
 the row itself carries no status, because it is a request. An end-of-period request

@@ -32,6 +32,8 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 - `extensions/Others/AdminOps/Admin/Widgets/ActionQueue.php` — "Needs attention" work queue
 - `extensions/Others/AdminOps/Admin/Widgets/WhoIsAround.php` — staff online + client activity
 - `extensions/Others/AdminOps/Admin/Pages/ClientSummary.php` — one-screen customer view + log in as customer
+- `extensions/Others/AdminOps/Support/WhmcsNavigation.php` — the WHMCS menu bar over Paymenter's resources
+- `extensions/Others/AdminOps/Support/Rail.php` — data for the WHMCS left sidebar column
 - `extensions/Others/AdminOps/Support/Metrics.php` — every dashboard figure, defined once
 - `extensions/Others/AdminOps/Support/Money.php` — multi-currency-safe money formatting
 - `extensions/Others/AdminOps/Support/Links.php` — cross-extension admin URLs

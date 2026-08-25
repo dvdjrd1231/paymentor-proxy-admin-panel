@@ -57,6 +57,14 @@ class AdminPanelProvider extends PanelProvider
             // is the client area — the thing they are meant to be kept out of.
             ->login()
             ->spa()
+            // WHMCS puts its menus in a bar across the top, not down the side, and the
+            // client asked for that layout. Filament renders navigation groups as topbar
+            // dropdowns when this is set, which is exactly the shape those menus need.
+            // The menus themselves are built by Others/AdminOps (WhmcsNavigation), so
+            // disabling that extension leaves this as a bare top bar carrying core's own
+            // groups — still complete, just not WHMCS-shaped.
+            // See docs/CORE-TOUCHPOINTS.md #11.
+            ->topNavigation()
             ->colors([
                 'primary' => Color::Blue,
             ])
