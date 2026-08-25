@@ -124,6 +124,7 @@ class WhmcsNavigation
             static::billing(),
             static::support(),
             static::reports(),
+            static::utilities(),
             static::setup(),
             // Last, and only last: it can only work out the remainder once the rest have
             // claimed what they wanted.
@@ -259,27 +260,66 @@ class WhmcsNavigation
     }
 
     /**
-     * WHMCS's Reports and Utilities menus, merged.
+     * WHMCS's Reports menu.
      *
-     * Paymenter has no business-reporting module, so a faithful "Reports" menu would be an
-     * empty dropdown — worse than not having one. What it does have is an operational record
-     * of what the system did, which is what staff actually open these menus for.
+     * Paymenter has no business-reporting module, so there are no report *pages* to list.
+     * What it has is the data those reports would be built from, and Filament lists take
+     * filters in the URL — so each entry here is the list a given report would have been a
+     * view of, pre-filtered. "Income" is the transactions that succeeded; "New Customers"
+     * is the customer list newest-first.
+     *
+     * The alternative was leaving Reports out, which is what the merged "Reports & Logs"
+     * menu did. The reference has both menus and staff look for them by name, so an honest
+     * set of filtered lists beats a missing menu.
      */
     private static function reports(): ?NavigationGroup
     {
-        return static::group('Reports & Logs', 'ri-line-chart-line', [
+        return static::group('Reports', 'ri-line-chart-line', [
+            static::link(InvoiceTransactionResource::class, 'Income (Transactions)'),
+            static::link(
+                InvoiceResource::class,
+                'Paid Invoices',
+                params: ['filters' => ['status' => ['value' => 'paid']]],
+            ),
+            static::link(
+                InvoiceResource::class,
+                'Overdue Invoices',
+                params: ['filters' => ['status' => ['value' => 'pending']], 'sort' => 'due_at'],
+                badge: fn () => Metrics::invoicesOverdue(),
+                badgeColor: 'danger',
+            ),
+            static::link(UserResource::class, 'New Customers', params: ['sort' => '-created_at']),
+            static::link(
+                ServiceResource::class,
+                'Active Services',
+                params: ['filters' => ['status' => ['value' => 'active']]],
+            ),
+        ]);
+    }
+
+    /**
+     * WHMCS's Utilities menu — the operational record of what the system did.
+     *
+     * This is what the merged menu actually contained: logs, the job queue, the cron, the
+     * updater. On the reference these live under Utilities, not Reports, and that is where
+     * staff go looking for them.
+     */
+    private static function utilities(): ?NavigationGroup
+    {
+        return static::group('Utilities', 'ri-tools-line', [
+            static::page(Updates::class, 'Update Paymenter'),
+            static::page(CronStats::class, 'Automation Status'),
             static::link(
                 ProvisioningOperationResource::class,
                 'Provisioning Operations',
                 badge: fn () => Metrics::provisioningFailures(),
                 badgeColor: 'danger',
             ),
+            static::link(FailedJobResource::class, 'Failed Jobs'),
             static::link(EmailLogResource::class, 'Email Log'),
             static::link(AuditResource::class, 'Audit Log'),
             static::link(ErrorLogResource::class, 'Error Log'),
             static::link(HttpLogResource::class, 'HTTP Log'),
-            static::link(FailedJobResource::class, 'Failed Jobs'),
-            static::page(CronStats::class, 'Cron Status'),
         ]);
     }
 
@@ -301,7 +341,7 @@ class WhmcsNavigation
             static::link(OauthClientResource::class, 'OAuth Clients'),
             static::link(ExtensionResource::class, 'Extensions'),
             static::page(Settings::class, 'General Settings'),
-            static::page(Updates::class, 'Updates'),
+            // Updates lives in Utilities, as it does on the reference ("Update WHMCS").
         ]);
     }
 

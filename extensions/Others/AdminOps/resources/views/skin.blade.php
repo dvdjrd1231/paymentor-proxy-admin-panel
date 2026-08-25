@@ -18,21 +18,32 @@
     worst case is that it stops applying and the stock Filament design shows through.
 --}}
 <style>
-    /* WHMCS Six's palette, taken from its own stylesheet. Declared on .fi-body rather
-       than :root so nothing here leaks into the client-area theme, which publishes its
-       own custom properties into the same document on some pages. */
+    /* WHMCS Six's palette, sampled pixel-by-pixel from the reference screenshots rather
+       than eyeballed — every value below is the dominant colour of that region in
+       `docs`-referenced shots, so the panel matches the reference exactly rather than
+       approximately. Declared on .fi-body rather than :root so nothing here leaks into
+       the client-area theme, which publishes its own custom properties into the same
+       document on some pages. */
     .fi-body {
-        --wa-blue: #22558c;          /* top menu bar */
-        --wa-blue-dark: #1b4470;     /* hover / active */
-        --wa-blue-deep: #163a60;     /* the darker header band */
-        --wa-ink: #333333;
+        --wa-blue: #1a4d80;          /* top menu bar, table headers, footer — all one blue */
+        --wa-blue-dark: #0d2640;     /* hover / open menu item */
+        --wa-ink: #333333;           /* page headings */
         --wa-text: #4a4a4a;
         --wa-muted: #888888;
-        --wa-border: #dddddd;
-        --wa-panel-border: #e3e3e3;
-        --wa-section: #f5f5f5;
-        --wa-canvas: #f0f0f0;
+        --wa-link: #337ab7;          /* rail links, primary button */
+        --wa-border: #cccccc;        /* rail edge, dropdown edge */
+        --wa-panel-border: #dddddd;
+        --wa-rule: #d9dadb;          /* under the table header */
+        --wa-section: #e9e9e9;       /* rail heading band */
+        --wa-rail: #f6f6f6;          /* rail body */
+        --wa-canvas: #ffffff;        /* the reference's content area is white, not grey */
         --wa-radius: 3px;
+
+        /* Measured off the reference: the bar is 45px tall and the rail column is 195px
+           wide plus its 1px rule. Kept as variables so the two places that need each
+           number cannot drift apart. */
+        --wa-topbar-h: 45px;
+        --wa-rail-w: 195px;
     }
 
     /* ── Canvas ──────────────────────────────────────────────────────────────
@@ -60,8 +71,9 @@
     }
 
     nav.fi-topbar {
-        min-height: 46px;
-        padding-inline: 0.75rem;
+        min-height: var(--wa-topbar-h);
+        height: var(--wa-topbar-h);
+        padding-inline: 0;
         gap: 0;
     }
 
@@ -189,13 +201,16 @@
         gap: 0;
     }
 
+    /* Full-height cells, so hovering shades the bar from top to bottom as the reference
+       does rather than leaving a pale margin above and below the label. */
     .fi-topbar-item-btn {
         color: #ffffff;
         border-radius: 0;
-        padding: 0.85rem 0.9rem;
+        height: var(--wa-topbar-h);
+        padding: 0 0.9rem;
         font-size: 13px;
         font-weight: 400;
-        line-height: 1;
+        line-height: var(--wa-topbar-h);
     }
 
     .fi-topbar-item-btn:hover,
@@ -212,7 +227,7 @@
     /* The dropdown panels themselves: square, bordered, tight rows. */
     .fi-dropdown-panel {
         border-radius: var(--wa-radius);
-        border: 1px solid var(--wa-border);
+        border: 1px solid #c3c3c3;
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
         padding: 0.3rem 0;
     }
@@ -225,7 +240,7 @@
     }
 
     .fi-dropdown-list-item:hover {
-        background: var(--wa-section);
+        background: #f5f5f5;
         color: var(--wa-blue);
     }
 
@@ -237,8 +252,8 @@
        i.e. the column plus its 1px rule and the content's own padding. */
     .ao-rail {
         flex: none;
-        width: 192px;
-        background: #ffffff;
+        width: var(--wa-rail-w);
+        background: var(--wa-rail);
         border-inline-end: 1px solid var(--wa-border);
         display: flex;
         flex-direction: column;
@@ -296,11 +311,11 @@
         padding: 6px 10px;
     }
 
-    /* Underlined blue links on white, tight leading, as on the reference. */
+    /* Underlined blue links, tight leading, as on the reference. */
     .ao-rail-list a {
         display: block;
         padding: 2px 0;
-        color: #337ab7;
+        color: var(--wa-link);
         text-decoration: underline;
         line-height: 1.5;
     }
@@ -367,7 +382,7 @@
         width: 100%;
         padding: 5px 8px;
         border: 0;
-        background: #5b5b5b;
+        background: #666666;
         color: #ffffff;
         font-size: 11px;
         cursor: pointer;
@@ -376,7 +391,7 @@
     }
 
     .ao-rail-toggle:hover {
-        background: #444444;
+        background: #4d4d4d;
     }
 
     @media (max-width: 1024px) {
@@ -421,8 +436,10 @@
         box-shadow: none;
     }
 
+    /* Panel headings are the lighter #f5f5f5, not the rail's #e9e9e9 — the reference uses
+       two different greys and collapsing them flattens the page. */
     .fi-section-header {
-        background: var(--wa-section);
+        background: #f5f5f5;
         border-bottom: 1px solid var(--wa-panel-border);
         padding: 0.65rem 0.9rem;
     }
@@ -440,6 +457,7 @@
     /* ── Tables ──────────────────────────────────────────────────────────────
        The reference's solid blue header row with centred white labels, hairline-separated
        cells, and plain white rows underneath. */
+    /* 30px tall and closed by a #d9dadb rule — both measured off the reference. */
     .fi-ta-header-cell {
         background: var(--wa-blue);
         color: #ffffff;
@@ -448,8 +466,10 @@
         text-transform: none;
         letter-spacing: 0;
         text-align: center;
-        padding-block: 0.6rem;
+        height: 30px;
+        padding-block: 0;
         border-inline-start: 1px solid rgba(255, 255, 255, 0.18);
+        border-bottom: 1px solid var(--wa-rule);
     }
 
     .fi-ta-header-cell:first-child {
@@ -488,7 +508,7 @@
        strip rather than Filament's white one. */
     .fi-ta-header-ctn,
     .fi-ta-header-toolbar {
-        background: var(--wa-section);
+        background: #f5f5f5;
         border-bottom: 1px solid var(--wa-panel-border);
     }
 
@@ -609,14 +629,18 @@
         box-shadow: none;
     }
 
+    /* The reference's primary button is Bootstrap's #337ab7, a lighter blue than the bar —
+       sampled off its Search button. Using the bar's blue made every button look like a
+       piece of chrome. */
     .fi-btn.fi-color-primary {
-        background: var(--wa-blue);
-        border: 1px solid var(--wa-blue-dark);
+        background: var(--wa-link);
+        border: 1px solid #2e6da4;
         color: #ffffff;
     }
 
     .fi-btn.fi-color-primary:hover {
-        background: var(--wa-blue-dark);
+        background: #286090;
+        border-color: #204d74;
     }
 
     /* ── Inputs ──────────────────────────────────────────────────────────── */
@@ -650,7 +674,7 @@
         gap: 0.5rem 1rem;
         padding: 0.6rem 1rem;
         border-top: 1px solid var(--wa-border);
-        background: var(--wa-blue-deep);
+        background: var(--wa-blue);
         color: #ffffff;
         font-size: 11.5px;
     }
