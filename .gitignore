@@ -35,9 +35,9 @@ Thumbs.db
 # theme build output is ignored below.
 /public/theme
 
-# The original client's business input files (kept out of delivery build,
-# but tracked here for context). Uncomment to exclude from delivery:
-# /File
+# The client's original brief and panel API docs live in docs/client-brief/.
+# Uncomment to exclude them from a delivery build:
+# /docs/client-brief
 
 # Database exports containing local test data (incl. password hashes).
 # The clean export is committed; regenerate the full one with

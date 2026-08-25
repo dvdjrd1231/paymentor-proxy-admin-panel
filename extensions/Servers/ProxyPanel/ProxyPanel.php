@@ -365,7 +365,7 @@ class ProxyPanel extends Server
     }
 
     /**
-     * Every page of `GET /v0/locations/list` (File/locations.md).
+     * Every page of `GET /v0/locations/list` (docs/client-brief/locations.md).
      *
      * Paged on `total`/`items_per_page`, never `total_pages`: the panel reports 2 pages for
      * 246 locations at 100 each, and page 3 does return the missing 46. Memoised per

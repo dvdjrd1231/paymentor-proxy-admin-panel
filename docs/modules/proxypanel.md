@@ -137,7 +137,7 @@ No separate field is required or supported.
 Inventory is the panel's to know, so availability comes from the panel rather than
 Paymenter's manual **Stock** field.
 
-The source is `GET /v0/locations/list` (documented in `File/locations.md`), a sibling of the
+The source is `GET /v0/locations/list` (documented in `client-brief/locations.md`), a sibling of the
 service API — `api_url` points at `…/v0/services`, this lives at `…/v0/locations`. It is the
 only endpoint that reports capacity:
 
