@@ -3,14 +3,21 @@
 namespace Paymenter\Extensions\Servers\ProxyPanel;
 
 use App\Classes\Extension\Server;
+use App\Events\Service\Updated;
+use App\Helpers\ExtensionHelper;
 use App\Models\Product;
+use App\Models\Property;
 use App\Models\Service;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\View;
 use Paymenter\Extensions\Others\ProvisioningOps\ProvisioningOps;
 use Paymenter\Extensions\Servers\ProxyPanel\Support\CountryFlag;
+use Paymenter\Extensions\Servers\ProxyPanel\Support\Endpoints;
 
 /**
  * ProxyPanel — native Paymenter server (provisioning) module, converted from the client's
@@ -83,6 +90,15 @@ class ProxyPanel extends Server
     /** @var array<int, array<string, mixed>>|null memoised /v0/locations/list, all pages */
     private ?array $locationCatalogue = null;
 
+    /**
+     * Endpoints listed on the management page before it defers to the export.
+     *
+     * The catalogue sells 1,500 to 31,500 proxies per service. Rendering them all produces a
+     * page nobody scrolls and every browser struggles with; the Export button already hands
+     * over the complete list in the format customers actually feed to their tooling.
+     */
+    private const MANAGE_PREVIEW = 100;
+
     private const LOG_CHANNEL = 'stack';
 
     // ── Module configuration (Admin → Servers → ProxyPanel) ──────────────────
@@ -141,17 +157,37 @@ class ProxyPanel extends Server
         }
     }
 
+    /**
+     * Creates `proxypanel_endpoints` (see its migration for why it exists).
+     *
+     * Paymenter runs this when the extension is enabled. ProxyPanel was already enabled when
+     * the table was introduced, so on an existing install run it once by hand:
+     *
+     *   php artisan tinker --execute="\App\Helpers\ExtensionHelper::runMigrations('extensions/Servers/ProxyPanel/database/migrations');"
+     *
+     * Everything degrades to the old property until it exists, so the order does not matter.
+     */
+    public function installed()
+    {
+        ExtensionHelper::runMigrations('extensions/Servers/ProxyPanel/database/migrations');
+    }
+
+    public function uninstalled()
+    {
+        ExtensionHelper::rollbackMigrations('extensions/Servers/ProxyPanel/database/migrations');
+    }
+
     public function boot()
     {
         require __DIR__ . '/routes.php';
-        \Illuminate\Support\Facades\View::addNamespace('servers.proxypanel', __DIR__ . '/resources/views');
+        View::addNamespace('servers.proxypanel', __DIR__ . '/resources/views');
 
         // Renewal is billing-driven — Paymenter has no renew hook. When a ProxyPanel
         // service's expires_at moves (e.g. after an invoice is paid), push it to the panel.
         // Guard: never let a ProxyPanel service sit at "active" unless the panel has
         // confirmed it. Core activates independently of the provisioning job, so this
         // catches it whichever way round the two happen.
-        Event::listen(\App\Events\Service\Updated::class, function ($event) {
+        Event::listen(Updated::class, function ($event) {
             $service = $event->service;
 
             if (!$this->isProxyPanelService($service) || !$service->isDirty('status')) {
@@ -175,7 +211,7 @@ class ProxyPanel extends Server
             ]);
         });
 
-        Event::listen(\App\Events\Service\Updated::class, function ($event) {
+        Event::listen(Updated::class, function ($event) {
             $service = $event->service;
             if (!$this->isProxyPanelService($service) || !$service->isDirty('expires_at') || !$service->expires_at) {
                 return;
@@ -750,7 +786,11 @@ class ProxyPanel extends Server
     /** The provisioned detail shown to the customer. Labels live in lang/en/proxypanel.php. */
     private function customerFields(Service $service): array
     {
-        $ips = $this->prop($service, self::IPS_KEY);
+        // A count, not the list. This renders as a single line on the service page, and the
+        // list can be 31,500 entries — the management view's table and the export are where
+        // the endpoints themselves belong.
+        $endpointCount = Endpoints::count($service);
+        $ips = $endpointCount > 0 ? (string) $endpointCount : null;
         $counter = $this->prop($service, self::ROTATION_COUNTER_KEY);
         $max = $this->prop($service, self::MAX_ROTATE_KEY);
         $synced = $this->prop($service, self::SYNCED_KEY);
@@ -767,7 +807,7 @@ class ProxyPanel extends Server
             __('proxypanel.api_key') => $this->prop($service, self::API_KEY_KEY),
             __('proxypanel.panel_expiration') => $expiration ? date('Y-m-d H:i', (int) $expiration) : null,
             __('proxypanel.panel_service_id') => $this->prop($service, self::REMOTE_ID_KEY),
-            __('proxypanel.last_synced') => $synced ? \Carbon\Carbon::parse($synced)->diffForHumans() : null,
+            __('proxypanel.last_synced') => $synced ? Carbon::parse($synced)->diffForHumans() : null,
         ];
     }
 
@@ -783,6 +823,10 @@ class ProxyPanel extends Server
         return view('servers.proxypanel::manage', [
             'service' => $service,
             'endpoints' => $this->endpointList($service),
+            // The table shows at most MANAGE_PREVIEW rows; the total is what tells the
+            // customer whether they are looking at all of them.
+            'endpointTotal' => Endpoints::count($service),
+            'endpointPreview' => self::MANAGE_PREVIEW,
             'authIps' => array_filter(array_map('trim', explode(',', (string) $this->prop($service, self::AUTH_IPS_KEY)))),
             'maxAuthIps' => min(self::MAX_AUTH_IPS, (int) ($settings['auth_ips'] ?? self::MAX_AUTH_IPS)),
             'rotationTime' => $this->prop($service, self::ROTATION_TIME_KEY),
@@ -795,10 +839,17 @@ class ProxyPanel extends Server
         ])->render();
     }
 
-    /** `ip:port` endpoints as an array, for the management table. */
+    /**
+     * `ip:port` endpoints for the management table.
+     *
+     * Capped: a Ruby service has 31,500 of them, and rendering that many rows produces a
+     * page no browser handles well and nobody reads. The table shows the first
+     * `MANAGE_PREVIEW`, says how many there are in total, and the Export button — which
+     * streams — remains the way to get all of them.
+     */
     private function endpointList(Service $service): array
     {
-        return array_values(array_filter(array_map('trim', explode(',', (string) $this->prop($service, self::IPS_KEY)))));
+        return Endpoints::all($service, self::MANAGE_PREVIEW);
     }
 
     // ── Client-initiated actions (called via this extension's routes) ────────
@@ -1003,26 +1054,31 @@ class ProxyPanel extends Server
      */
     public function exportProxies(Service $service): string
     {
-        $endpoints = (string) $this->prop($service, self::IPS_KEY);
         $username = (string) $this->prop($service, self::USERNAME_KEY);
         $password = (string) $this->prop($service, self::PASSWORD_KEY);
 
         $lines = [];
-        foreach (array_filter(array_map('trim', explode(',', $endpoints))) as $endpoint) {
-            // Split off the port: the last colon-separated segment that is numeric.
-            $port = null;
-            $host = $endpoint;
-            if (($pos = strrpos($endpoint, ':')) !== false && ctype_digit(substr($endpoint, $pos + 1))) {
-                $host = substr($endpoint, 0, $pos);
-                $port = substr($endpoint, $pos + 1);
-            }
 
-            if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-                $host = '[' . $host . ']';
-            }
+        // Chunked: the largest tier exports about 1.7 MB, and holding every row and every
+        // rendered line at once is avoidable.
+        Endpoints::each($service, function (array $endpoints) use (&$lines, $username, $password) {
+            foreach ($endpoints as $endpoint) {
+                [$host, $port] = Endpoints::split($endpoint);
 
-            $lines[] = implode(':', array_filter([$host, $port, $username, $password], fn ($v) => $v !== null && $v !== ''));
-        }
+                if ($host === null) {
+                    continue;
+                }
+
+                if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                    $host = '[' . $host . ']';
+                }
+
+                $lines[] = implode(':', array_filter(
+                    [$host, $port, $username, $password],
+                    fn ($v) => $v !== null && $v !== '' && $v !== 0,
+                ));
+            }
+        });
 
         return implode("\n", $lines);
     }
@@ -1089,7 +1145,7 @@ class ProxyPanel extends Server
      *   X-Panel-Secret: <callback_secret>
      *   X-Panel-Signature: <hex HMAC-SHA256 of the raw body, keyed with callback_secret>
      */
-    public function callback(\Illuminate\Http\Request $request)
+    public function callback(Request $request)
     {
         $secret = (string) $this->config('callback_secret');
 
@@ -1129,7 +1185,7 @@ class ProxyPanel extends Server
         return response()->json(['status' => 'ok']);
     }
 
-    private function isValidCallback(\Illuminate\Http\Request $request, string $secret): bool
+    private function isValidCallback(Request $request, string $secret): bool
     {
         if ($header = $request->header('X-Panel-Secret')) {
             return hash_equals($secret, (string) $header);
@@ -1151,7 +1207,7 @@ class ProxyPanel extends Server
                 continue;
             }
 
-            $serviceIds = \App\Models\Property::where('key', self::REMOTE_ID_KEY)
+            $serviceIds = Property::where('key', self::REMOTE_ID_KEY)
                 ->where('value', (string) $payload[$key])
                 ->where('model_type', Service::class)
                 ->orderByDesc('id')
@@ -1310,6 +1366,7 @@ class ProxyPanel extends Server
         foreach ($payload['ips'] as $entry) {
             if (!is_array($entry)) {
                 $out[] = (string) $entry;
+
                 continue;
             }
 
@@ -1342,7 +1399,11 @@ class ProxyPanel extends Server
         $endpoints = $this->endpointsFrom($payload);
 
         if ($endpoints !== []) {
-            $this->setProp($service, self::IPS_KEY, implode(', ', $endpoints));
+            // Rows, not a comma-joined property: `properties.value` is TEXT and every
+            // product in the catalogue sells more endpoints than it holds, so this used to
+            // throw "Data too long for column 'value'" and fail the whole provisioning run
+            // after the panel had already allocated the proxies. See Support/Endpoints.
+            Endpoints::replace($service, $endpoints);
             $this->setProp($service, self::AMOUNT_KEY, (string) count($endpoints));
         }
 

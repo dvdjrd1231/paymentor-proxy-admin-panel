@@ -10,7 +10,8 @@ return [
     'proxy_username' => 'Proxy username',
     'proxy_password' => 'Proxy password',
     'proxy_count' => 'Proxies',
-    'proxy_endpoints' => 'Proxy addresses',
+    // A count, not the addresses themselves — a service can hold tens of thousands.
+    'proxy_endpoints' => 'Proxy addresses assigned',
     'auth_ips' => 'Authorized IPs',
     'rotation_time' => 'Rotation interval (minutes)',
     'rotations_used' => 'Rotations used',
@@ -39,6 +40,8 @@ return [
     'proxy_list' => 'Your proxies',
     'endpoint' => 'Address',
     'no_proxies' => 'No proxies have been assigned yet. Use "Sync status" to refresh.',
+    // Shown under the proxy table when a service holds more than the page lists.
+    'showing_preview' => 'Showing the first :shown of :total proxies. Download the full list:',
     'auth_ips_hint' => 'Allow connections from up to :max IP addresses. Leave blank to disable IP authorization and use username/password only.',
     'ip_number' => 'IP :number',
     'change_password' => 'Proxy password',

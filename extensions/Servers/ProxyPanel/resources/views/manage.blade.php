@@ -50,6 +50,24 @@
                     </tbody>
                 </table>
             </div>
+
+            {{--
+                A service can hold 31,500 proxies, so the table shows the first
+                `endpointPreview` of them. Saying so — with the real total and a route to the
+                rest — is the difference between a deliberate preview and a list that looks
+                like it lost most of the customer's order.
+            --}}
+            @if ($endpointTotal > count($endpoints))
+                <div class="wf-panel-footnote">
+                    {{ __('proxypanel.showing_preview', [
+                        'shown' => number_format(count($endpoints)),
+                        'total' => number_format($endpointTotal),
+                    ]) }}
+                    <a href="{{ route('extensions.servers.proxypanel.export', $service) }}">
+                        {{ __('proxypanel.action_export') }}
+                    </a>
+                </div>
+            @endif
         @else
             <div class="wf-empty">{{ __('proxypanel.no_proxies') }}</div>
         @endif
