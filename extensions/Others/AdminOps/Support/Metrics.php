@@ -10,6 +10,7 @@ use App\Models\ServiceCancellation;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Paymenter\Extensions\Others\ProvisioningOps\Models\ProvisioningOperation;
 
@@ -32,6 +33,19 @@ class Metrics
      * `open` is exactly WHMCS's "awaiting reply", not merely "not closed".
      */
     public const TICKET_AWAITING_REPLY = 'open';
+
+    /**
+     * Lower bound for an "all time" period.
+     *
+     * Every measure below is a `whereBetween`, so the all-time column is one more call with
+     * a start date old enough to predate any row, rather than a parallel set of unbounded
+     * queries that could drift from the dated ones. The Unix epoch is safely inside MySQL's
+     * `DATETIME` range and comfortably before Paymenter existed.
+     */
+    public static function beginningOfTime(): Carbon
+    {
+        return Carbon::createFromTimestampUTC(0);
+    }
 
     /**
      * Money taken in a period, keyed by currency code.
@@ -263,7 +277,7 @@ class Metrics
      * Grouped in PHP rather than SQL because one person signed in from two devices has two
      * sessions and should appear once, at whichever is the more recent.
      *
-     * @return \Illuminate\Support\Collection<int, object{name: string, last_activity: Carbon}>
+     * @return Collection<int, object{name: string, last_activity: Carbon}>
      */
     public static function staffOnline(int $withinMinutes = 15)
     {

@@ -48,10 +48,15 @@ class AtAGlance extends Widget
 
     protected function getViewData(): array
     {
+        // All time last, as on the reference's Billing panel. Every measure here is a
+        // `whereBetween`, so "all time" is expressed as a lower bound old enough to predate
+        // any row rather than as a second code path — one query shape, one set of
+        // definitions, nothing that can drift between the columns.
         $periods = [
             'Today' => [now()->startOfDay(), now()],
             'This month' => [now()->startOfMonth(), now()],
             'This year' => [now()->startOfYear(), now()],
+            'All time' => [Metrics::beginningOfTime(), now()],
         ];
 
         $rows = [

@@ -24,6 +24,74 @@
         text-decoration: none;
     }
 
+    /* --- Headline tiles: the reference's four-across row at the top of the homepage ---
+
+       Unlike the queue below, a tile always shows its figure, zero included: the value of a
+       fixed row is that the same number is always in the same place. `auto-fit` rather than
+       a fixed four columns so the row reflows on a narrow window instead of overflowing —
+       and so it still looks deliberate when ProvisioningOps is absent and there are only
+       three of them. */
+
+    .ao-tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+        gap: 0.75rem;
+    }
+
+    .ao-tile {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        padding: 1rem 1.15rem;
+        border-radius: 0.75rem;
+        color: hsl(var(--color-inverted));
+        background-color: hsl(var(--color-inactive));
+        transition: filter 120ms ease;
+    }
+
+    .ao-tile:hover {
+        filter: brightness(1.06);
+    }
+
+    .ao-tile-success { background-color: hsl(var(--color-success)); }
+    .ao-tile-warning { background-color: hsl(var(--color-warning)); }
+    .ao-tile-info    { background-color: hsl(var(--color-info)); }
+    .ao-tile-brand   { background-color: hsl(var(--color-primary)); }
+
+    .ao-tile-icon {
+        flex: none;
+        width: 2.25rem;
+        height: 2.25rem;
+        opacity: 0.85;
+    }
+
+    .ao-tile-count {
+        display: block;
+        font-size: 1.75rem;
+        font-weight: 700;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .ao-tile-label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 500;
+        opacity: 0.9;
+    }
+
+    /* --- Who is around: staff on the desk, and store activity --- */
+
+    .ao-around {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+        gap: 0.75rem 2rem;
+    }
+
+    .ao-around .ao-field-value + .ao-field-value {
+        margin-top: 0.4rem;
+    }
+
     /* --- At a glance: periods across, measures down (WHMCS's Overview panel) --- */
 
     .ao-glance {

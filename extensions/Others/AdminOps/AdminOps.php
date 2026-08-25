@@ -2,6 +2,7 @@
 
 namespace Paymenter\Extensions\Others\AdminOps;
 
+use App\Admin\Resources\ServiceCancellationResource;
 use App\Admin\Resources\ServiceResource;
 use App\Attributes\ExtensionMeta;
 use App\Classes\Extension\Extension;
@@ -91,7 +92,7 @@ class AdminOps extends Extension
                 return;
             }
 
-            Filament::getCurrentOrDefaultPanel()?->navigationItems([
+            $items = [
                 NavigationItem::make('Pending services')
                     ->icon('heroicon-o-clock')
                     ->group('Queues')
@@ -109,7 +110,22 @@ class AdminOps extends Extension
                         'filters' => ['status' => ['value' => 'suspended']],
                     ]))
                     ->badge(fn () => static::badge(Metrics::servicesSuspended()), color: 'warning'),
-            ]);
+            ];
+
+            // Cancellation requests live inside the Services cluster, two clicks in and with
+            // no badge, so a request sat waiting is invisible until somebody goes looking.
+            // Checked separately because the resource has its own policy: a role that may
+            // see services is not automatically allowed these.
+            if (ServiceCancellationResource::canViewAny()) {
+                $items[] = NavigationItem::make('Pending cancellations')
+                    ->icon('heroicon-o-no-symbol')
+                    ->group('Queues')
+                    ->sort(3)
+                    ->url(fn (): string => ServiceCancellationResource::getUrl('index'))
+                    ->badge(fn () => static::badge(Metrics::cancellationsPending()), color: 'danger');
+            }
+
+            Filament::getCurrentOrDefaultPanel()?->navigationItems($items);
         });
     }
 

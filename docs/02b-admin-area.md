@@ -35,18 +35,34 @@ day**. Three concrete differences, all delivered by `extensions/Others/AdminOps`
 
 Core's dashboard answers *"how does this month compare with last month"* — a question you
 ask occasionally. WHMCS's homepage answers *"how are we doing today, and what is waiting for
-me"*. Three widgets now sit above core's, in this order:
+me"*. Five widgets now sit above core's, in this order:
 
 | Widget | What it is |
 |---|---|
+| **Headline tiles** | The reference's four coloured tiles — Pending Orders, Tickets Waiting, Pending Cancellations, Pending Module Actions. Each links into the list behind it. |
 | **Shortcuts** | New customer · New service · New invoice · Open ticket · Find a customer. Each hidden unless the signed-in role may actually create that record. |
-| **At a glance** | WHMCS's Overview panel — Income, New services, New customers, Tickets opened, each for Today / This month / This year. Subheading carries active services and total outstanding. |
-| **Needs attention** | The work queue: provisioning failures, tickets awaiting reply, services awaiting provisioning, suspended services, failed payments (7d), unpaid invoices. Every line is a link straight into the matching filtered list. |
+| **At a glance** | WHMCS's Overview panel — Income, New services, New customers, Tickets opened, each for Today / This month / This year / All time. Subheading carries active services and total outstanding. |
+| **Needs attention** | The work queue: provisioning failures, tickets awaiting reply, services awaiting provisioning, suspended services, failed payments (7d), unpaid invoices, renewals due. Every line is a link straight into the matching filtered list. |
+| **Who is around** | WHMCS's Staff Online and Client Activity panels: colleagues seen in the last 15 minutes, customers with a running service, customers signed in within the hour. |
 
 **Needs attention** is the one that matters. Rows with a count of zero are **omitted**
 rather than shown as zeroes, so an empty queue reads as "nothing to do" at a glance, and
 rows are ordered by how much it costs to ignore them — a failed provisioning run (the
 customer paid and got nothing) above an unanswered ticket, above money owed.
+
+The tiles overlap it on purpose. A tile row is a **gauge**: fixed set, fixed position,
+zeroes shown as zeroes, so you learn where "tickets waiting" lives and read it without
+looking. The queue is a **to-do list**: variable length, ordered by urgency, empty rows
+dropped, and it carries measures the four tiles have no room for. "Pending Module Actions"
+is our provisioning failure count — WHMCS means the same thing by it, a server module call
+that did not complete and is waiting on a human — and the tile is omitted entirely when
+`Others/ProvisioningOps` is not installed, because a permanent zero would claim nothing is
+wrong when in fact nothing is being watched.
+
+**Who is around** reads `user_sessions`, which core's session middleware already stamps
+with `last_activity` at most once a minute; the 15-minute window is deliberately much wider
+than that stamp interval, or a colleague reading a page would blink out of the list between
+writes. Two devices signed in as the same person count once.
 
 ### 2. A client summary — one customer, one screen
 
@@ -70,17 +86,24 @@ not two, and `ImpersonateMiddleware` governs both.
 The page is deliberately **read-only**. Everything editable stays on the core page that
 owns it, so there is one place a change can be made and one set of validation rules.
 
-### 3. Sidebar queues for services
+### 3. Sidebar queues
 
-A **Queues** group with **Pending services** and **Suspended services**, each carrying a
-live count.
+A **Queues** group with **Pending services**, **Suspended services** and **Pending
+cancellations**, each carrying a live count.
 
-Only those two, on purpose: core already badges Invoices with the unpaid count and Tickets
+Only those three, on purpose: core already badges Invoices with the unpaid count and Tickets
 with the open count, so adding entries for those would put the same two numbers in the
 sidebar twice. Services is the actual gap — no badge, no default filter — and for a
 provisioning business those two states are exactly what needs chasing: a backlog waiting to
-be set up, and an account suspended for non-payment. Badges show a number or nothing, never
+be set up, and an account suspended for non-payment. Cancellation requests are the third:
+they live two clicks inside the Services cluster with no badge at all, so a request sat
+waiting was invisible until somebody went looking. Badges show a number or nothing, never
 a zero.
+
+A cancellation counts as pending while the service it names has not reached `cancelled` —
+the row itself carries no status, because it is a request. An end-of-period request
+therefore stays in the count for the rest of the term, which is right: it is work that has
+not happened yet.
 
 ## Money and multiple currencies
 
