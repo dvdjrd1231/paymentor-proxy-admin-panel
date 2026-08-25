@@ -46,20 +46,47 @@
     }
 
     /* ── Top menu bar ────────────────────────────────────────────────────────
-       The blue band with the menu dropdowns, and the brand block at its start. */
-    .fi-topbar > nav.fi-topbar {
+       The blue band with the menu dropdowns, and the brand block at its start.
+
+       The element is `<nav class="fi-topbar">`, not a nav inside a `.fi-topbar`.
+       An earlier `.fi-topbar > nav.fi-topbar` matched nothing, so the bar stayed white
+       while the rules below still turned its text white — an invisible menu. Both the
+       Livewire wrapper and the nav are painted, so the band is full-bleed either way. */
+    .fi-topbar-ctn,
+    nav.fi-topbar {
         background: var(--wa-blue);
         border-bottom: 0;
         box-shadow: none;
-        min-height: 46px;
-        padding-inline: 0.75rem;
     }
 
-    .fi-topbar .fi-logo,
-    .fi-topbar .fi-topbar-item-label,
-    .fi-topbar .fi-icon-btn,
-    .fi-topbar .fi-dropdown-trigger button {
+    nav.fi-topbar {
+        min-height: 46px;
+        padding-inline: 0.75rem;
+        gap: 0;
+    }
+
+    nav.fi-topbar .fi-logo,
+    nav.fi-topbar .fi-topbar-item-label,
+    nav.fi-topbar .fi-icon-btn,
+    nav.fi-topbar .fi-btn,
+    nav.fi-topbar .fi-dropdown-trigger button,
+    nav.fi-topbar .fi-topbar-item-icon {
         color: #ffffff;
+    }
+
+    /* Icons sit at the reference's size and never dominate the label. */
+    nav.fi-topbar .fi-topbar-item-icon {
+        width: 1rem;
+        height: 1rem;
+        opacity: 0.9;
+    }
+
+    /* Global search: a plain white field on the blue, as on the reference. */
+    nav.fi-topbar .fi-global-search-field .fi-input-wrp {
+        background: #ffffff;
+        border: 1px solid var(--wa-blue-dark);
+        border-radius: var(--wa-radius);
+        box-shadow: none;
     }
 
     /* Menu entries: white on blue, the whole cell shading on hover, as on the reference. */
@@ -254,8 +281,16 @@
         color: var(--wa-ink);
     }
 
+    /* WHMCS runs its content to the full width of the window; Filament caps it at 7xl and
+       centres it, which left a wide empty gutter beside the rail on a normal monitor. */
     .fi-main {
+        max-width: none;
         padding-block: 1rem;
+        padding-inline: 1rem;
+    }
+
+    .fi-main-ctn {
+        background: var(--wa-canvas);
     }
 
     /* ── Panels ──────────────────────────────────────────────────────────────

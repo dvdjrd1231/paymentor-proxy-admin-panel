@@ -27,7 +27,7 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 ## Admin area (WHMCS-style usability — spec item 2)
 - `extensions/Others/AdminOps/AdminOps.php` — widget styles, sidebar service/cancellation queues
 - `extensions/Others/AdminOps/Admin/Widgets/HeadlineTiles.php` — the reference's four homepage tiles
-- `extensions/Others/AdminOps/Admin/Widgets/Shortcuts.php` — dashboard quick actions
+- `extensions/Others/AdminOps/resources/views/rail.blade.php` — the WHMCS left sidebar column
 - `extensions/Others/AdminOps/Admin/Widgets/AtAGlance.php` — income/services/customers/tickets by period
 - `extensions/Others/AdminOps/Admin/Widgets/ActionQueue.php` — "Needs attention" work queue
 - `extensions/Others/AdminOps/Admin/Widgets/WhoIsAround.php` — staff online + client activity

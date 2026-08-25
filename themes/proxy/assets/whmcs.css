@@ -1215,8 +1215,34 @@
 
     .wf-pay-recurring { margin: .75rem 0 1rem; }
 
-    /* Whatever the gateway handed back to render in place — a card form, a QR code. */
+    /* Whatever the gateway handed back to render in place — a card form, a QR code.
+
+       A gateway ships its view styled for the default theme, i.e. in Tailwind, and this
+       theme does not load that bundle: `bg-secondary-500 text-white rounded-md w-full` on
+       Stripe's submit resolves to nothing, so it arrived as a bare grey button. These rules
+       dress whatever the gateway rendered in the theme's own clothes, by element rather than
+       by class, so they hold for any gateway rather than only the ones we have seen. */
     .wf-pay-embed { min-height: 4rem; }
+    .wf-pay-embed form { margin: 0; }
+
+    /* `text-white` in the gateway views is inert here, and white-on-white is invisible. */
+    .wf-pay-embed, .wf-pay-embed form { color: var(--wf-text); }
+
+    .wf-pay-embed button[type="submit"],
+    .wf-pay-embed button:not([class*="wf-"]) {
+        display: block; width: 100%; margin-top: 1rem;
+        padding: 10px 16px; font-size: 16px; font-family: inherit;
+        background: #5cb85c; color: #fff; border: 1px solid #4cae4c;
+        border-radius: var(--wf-radius); cursor: pointer;
+    }
+    .wf-pay-embed button[type="submit"]:hover,
+    .wf-pay-embed button:not([class*="wf-"]):hover { background: #4cae4c; }
+    .wf-pay-embed button[disabled] { opacity: .55; cursor: not-allowed; }
+
+    /* The gateways hide their error line with Tailwind's `hidden`, which is also inert —
+       so every card form shipped an empty red gap above it until this existed. */
+    .wf-pay-embed .hidden { display: none !important; }
+    .wf-pay-embed #error-message { color: #a94442; margin-bottom: .6rem; }
 
     /* Nothing on the invoice can take this amount. Uses the danger palette the labels
        already use, so a refusal reads the same everywhere. */
