@@ -19,6 +19,12 @@ from the **Summary** link on each row of Clients.
 **Sidebar** — a **Queues** group with Pending services and Suspended services, badged with
 live counts. (Invoices and Tickets already carry counts in core, so they are not repeated.)
 
+**Products/Services** (Setup → Products/Services) — the whole catalogue on one screen, with a
+drag handle on every group and every product, writing `categories.sort` and `products.sort`
+(the columns the storefront already reads). A drag reorders within its own list; moving a
+product between groups stays on the product's edit page. Handles also respond to the arrow
+keys, so it works without a mouse and on touch.
+
 **Sign-in** — the panel's own login page, on Paymenter's auth stack (so the session row is
 created and 2FA is enforced), carrying the **same CAPTCHA as the client login**: one
 provider, one key pair, one verification, set in **Settings → Security**. It is enforced

@@ -100,6 +100,7 @@ strips, dark table headers, square buttons, a footer.
 | **Skin** — topbar, dropdowns, panels, tables, pagination, forms, stat tiles, buttons, inputs | `resources/views/skin.blade.php` |
 | **Footer** | `resources/views/footer.blade.php` |
 | **Sign-in page** — Paymenter's auth stack, 2FA, and the CAPTCHA (§4) | `Admin/Auth/Login.php` + `resources/views/captcha.blade.php` |
+| **Products/Services** — the drag-ordered catalogue (§5) | `Admin/Pages/Catalogue.php` + `resources/views/pages/catalogue*.blade.php` |
 
 #### The icons at each end of the bar
 
@@ -299,6 +300,67 @@ the escape hatch if the keys are wrong rather than absent.
 
 The panel registers no password-reset page, so the sign-in is the only unauthenticated screen
 in the admin area and there is nothing else to protect.
+
+### 5. Products/Services — the catalogue, ordered by dragging
+
+**Setup → Products/Services.** Every group, its products underneath, a handle on both. It is
+the reference's `configproducts.php`, and it is the only screen in the panel whose purpose is
+the *order* of things.
+
+Paymenter could already order both — `categories.sort` and `products.sort` are real columns
+that `App\Livewire\Products\Index` reads, so this is not a new capability — but the two halves
+were on different screens and one of them was three clicks deep:
+
+| To reorder | Before | Now |
+|---|---|---|
+| Groups | Categories list — draggable | Same page as the products |
+| Products in a group | Categories → *edit that category* → Products tab | Same page |
+| Products, from the product list | **Not possible.** It groups by category and has no handle | — |
+
+So "put the Monthly plans above the Daily ones" meant editing each category in turn, with
+nowhere to see the resulting shape. This is that shape.
+
+Nothing else on the page is editable. Every row links to the core screen that owns it, and
+the page writes exactly two columns — the same rule as the client summary, for the same
+reason: one place a change can be made, one set of validation rules.
+
+**A drag reorders within its own list.** Products stay in their category, groups under their
+parent. Moving a product to another group changes `category_id`, and with it the storefront
+URL, the breadcrumb and any link a customer has saved — so it stays on the product's edit page
+where it is deliberate and audited. The reference behaves the same way.
+
+**A save renumbers the whole list, 1..n**, not just the row that moved. `sort` is nullable and
+every row in this store still holds `NULL`, so a partial write would leave a mix of ordered
+and unordered rows whose relative order MySQL decides. The first drag on a list ends that. It
+is also why the page orders by `sort` exactly as core does — NULLs first, MySQL's behaviour,
+not a tidier order of its own — because a page that showed a different order from the
+storefront would be reordering something the customer never sees.
+
+The ids come from the browser, so **the list is checked against the category before anything
+is written**: a set that does not match exactly is refused whole rather than partially applied.
+Without that, a crafted request could renumber rows in a group the sender cannot see. A list
+longer than 255 is refused too — `sort` is an `unsignedTinyInteger`, and writing anyway would
+clamp the tail and scramble it.
+
+Three smaller things worth knowing, because each was a bug before it was a decision:
+
+- **The handle, not the row, starts a drag.** Left permanently draggable, every click on a
+  product name became a drag instead of a link.
+- **The rows carry `wire:key`.** A drag reorders the DOM before the server knows anything, so
+  the re-render that follows is morphing new HTML onto a list in a different order than it was
+  sent in. Keyed, Livewire moves rows; unkeyed, it rewrites each row's contents in place,
+  which looks like the drag half-worked.
+- **The save hangs off `dragend`, not `drop`.** Chrome fires no `drop` unless `dragover` was
+  cancelled over the exact element released on; `dragend` always runs.
+
+Handles are focusable and respond to the arrow keys, so the page works without a mouse — and
+on a touch screen, where the HTML5 drag API does nothing at all. Reordering is gated on
+`admin.products.update` / `admin.categories.update` separately, so a role that may order
+groups but not products gets handles on one and not the other.
+
+Columns are the reference's, minus one: **Auto Setup** has no Paymenter equivalent — core
+provisions on payment, always — so it is left out rather than invented. **Type** is the server
+the product provisions through, which is what a WHMCS module is here.
 
 ## Money and multiple currencies
 
