@@ -3,11 +3,14 @@
 namespace Paymenter\Extensions\Others\AdminOps\Admin\Auth;
 
 use App\Actions\Auth\Login as PaymenterLogin;
+use App\Traits\Captchable;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Facades\Filament;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Schemas\Components\View;
+use Filament\Schemas\Schema;
 use Illuminate\Auth\SessionGuard;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Session;
@@ -29,10 +32,34 @@ use Illuminate\Support\Timebox;
  * handover matches the client login: stash the user, redirect to `/2fa`, let that component
  * finish through the same action.
  *
+ * And it carries the same CAPTCHA as the client login — same setting, same provider, same
+ * verification — because the admin sign-in is the more valuable of the two to guess at.
+ *
  * @link docs/CORE-TOUCHPOINTS.md — "Admin panel: own login, renameable path"
  */
 class Login extends BaseLogin
 {
+    use Captchable;
+
+    /**
+     * Core's three fields, plus the challenge last — below *Remember me*, immediately above
+     * the button, which is where both the client login and the reference put it.
+     *
+     * It is a plain view rather than a field: the token is written straight onto `$captcha`
+     * by the provider's JavaScript, which is what {@see Captchable} reads. Routing it
+     * through form state would put a value the user cannot type into `getState()`, and into
+     * validation that has nothing to say about it.
+     */
+    public function form(Schema $schema): Schema
+    {
+        return $schema->components([
+            $this->getEmailFormComponent(),
+            $this->getPasswordFormComponent(),
+            $this->getRememberFormComponent(),
+            View::make('adminops::captcha')->visible(fn (): bool => $this->captchaEnforced()),
+        ]);
+    }
+
     public function authenticate(): ?LoginResponse
     {
         try {
@@ -41,6 +68,12 @@ class Login extends BaseLogin
             $this->getRateLimitedNotification($exception)?->send();
 
             return null;
+        }
+
+        // After the rate limiter on purpose: an unsolved challenge should still count as an
+        // attempt, or a bot that never answers one gets unlimited free guesses at a password.
+        if ($this->captchaEnforced()) {
+            $this->captcha();
         }
 
         $data = $this->form->getState();
@@ -93,5 +126,24 @@ class Login extends BaseLogin
         app(PaymenterLogin::class)->execute($user, $remember);
 
         return app(LoginResponse::class);
+    }
+
+    /**
+     * Whether a challenge is both switched on and usable.
+     *
+     * The key check is not belt-and-braces. `Captchable::captcha()` fails a submission with
+     * no token, and with no site key no widget can render one — so enabling the setting
+     * while a key is missing would make the admin panel impossible to sign in to, from a
+     * screen inside the admin panel. It stays open instead, exactly as the client login
+     * stays usable, and Settings already marks both keys required once a provider is picked.
+     */
+    private function captchaEnforced(): bool
+    {
+        $provider = config('settings.captcha');
+
+        return filled($provider)
+            && $provider !== 'disabled'
+            && filled(config('settings.captcha_site_key'))
+            && filled(config('settings.captcha_secret'));
     }
 }
