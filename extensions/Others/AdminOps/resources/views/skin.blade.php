@@ -412,6 +412,32 @@
         display: none;
     }
 
+    /* ── The guard that stops a missing script wrecking the page ─────────────
+       If `js/filament/support/support.js` does not execute, `Alpine.data('filamentDropdown')`
+       is never registered. Alpine still boots (Livewire bundles it), so it still strips
+       `x-cloak` off every panel — and then throws `filamentDropdown is not defined` on each
+       one and never positions it. The result is **every dropdown in the bar open at once**,
+       stacked over the page: eleven panels, unreadable, and it looks like the CSS has
+       collapsed rather than like one file failed to load.
+
+       Reproduced exactly by blocking that one URL, which is how it was diagnosed.
+
+       Filament hides a closed panel with an inline `display: none` written by `x-float`
+       (closed: `position: fixed; display: none`; open: `…display: block; left: …; top: …`).
+       When x-float never runs there is no inline `display` at all — so that absence is a
+       reliable "nothing has taken charge of this panel yet" signal, and the sane default for
+       a panel nobody is positioning is hidden.
+
+       This costs nothing when the script does load: a closed panel is matched by
+       `[style*='display']` and keeps Filament's own rule, and an open one is untouched. It
+       also closes the sub-frame window between Alpine stripping `x-cloak` and x-float
+       setting the style. A panel that cannot be positioned is a menu that will not open —
+       annoying, but the rest of the page is still usable, which is the difference between a
+       cosmetic fault and an admin who cannot work. */
+    .fi-dropdown-panel:not([style*='display']) {
+        display: none;
+    }
+
     /* The dropdown panels themselves: square, bordered, tight rows. */
     .fi-dropdown-panel {
         border-radius: var(--wa-radius);

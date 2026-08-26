@@ -20,9 +20,30 @@ use Illuminate\Support\Facades\Log;
  *   locations/list      ✅ 200 — 246 rows over 3 pages
  *   locations/{tag}     ✅ 200 — full row incl. do/linode/vultr priorities
  *   locations/new|update|delete|status   mutating; see the note on each method
- *   tunnels/*           ❌ `list` answers HTTP 500, every other route answers 404.
- *                          Implemented here so the console works the day the panel does,
- *                          but nothing calls them yet — see docs/modules/proxypanel.md.
+ *   tunnels/list        ✅ 200 — 266 rows over 2 pages (re-probed 2026-08-26, previously 500)
+ *   tunnels/{id}/class/{class}       ❌ 404 (HTML). Still unfixed.
+ *   tunnels/info/{id}/class/{class}  ❌ 404 (HTML). Still unfixed.
+ *   tunnels/new|update|delete|status ❔ untested — all documented with the same
+ *                          `/class/{class}` segment as the two 404s above, so treat them as
+ *                          suspect until probed. Not probed here because they mutate real
+ *                          infrastructure.
+ *
+ * The two 404s are a route-shape mismatch, not a bad id: probed with a real `tunnel_id` +
+ * `class` straight out of `list`, for one tunnel of each of the three classes present
+ * (TunnelBroker, RouteGre, NewRoute). What *does* answer is **`GET /tunnels/{id}`** with no
+ * `/class/{class}` segment at all, and its body is the provider-info shape
+ * (`tunnel_id`, `local_ip`, `remote_ip`, `network48`, `network64`) — i.e. what
+ * `tunnels/info/...` is documented to return.
+ *
+ * Both are worked around rather than left broken, and both try the **documented** path first:
+ * {@see tunnelInfo()} falls back to `/tunnels/{id}`, {@see tunnel()} to the row `list` already
+ * returns. The fallback fires on a 404 and nothing else ({@see PanelHttpException}), so a 500
+ * or a rejected token still surfaces as itself instead of being reported as a missing record.
+ * The moment the panel restores those routes, both revert to one direct call with no edit
+ * here. See docs/PANEL-QUESTIONS.md.
+ *
+ * `list` paginates at **200** per page, not the 100 that `locations/list` uses; `tunnels()`
+ * pages until an empty batch rather than trusting `total_pages`, so the difference is moot.
  *
  * @link docs/client-brief/locations.md
  * @link docs/client-brief/tunnels.md
@@ -39,6 +60,9 @@ class PanelApi
 
     /** @var array<int, array<string, mixed>>|null */
     private ?array $locations = null;
+
+    /** @var array<int, array<string, mixed>>|null memoised /v0/tunnels/list, all pages */
+    private ?array $tunnelCache = null;
 
     public function __construct(Server $server)
     {
@@ -150,13 +174,30 @@ class PanelApi
 
     // ── Tunnels ──────────────────────────────────────────────────────────────
     //
-    // Written to the documented contract but unreachable on the current panel: `list`
-    // answers 500 and the per-tunnel routes answer 404. `tunnelsAvailable()` is what the
-    // admin page asks before offering any of it.
+    // `list` works. The two per-tunnel GET routes are documented with a `/class/{class}`
+    // segment that the panel no longer routes, so both of them fall back — see each method.
+    // `tunnelsAvailable()` is still what the admin page asks before offering any of this.
 
-    /** @return array<int, array<string, mixed>> */
+    /**
+     * Every tunnel, over as many pages as it takes.
+     *
+     * Pages until an empty batch rather than trusting `total_pages`, which under-reported on
+     * `locations/list` for months (it said 2 for 3 pages, quietly losing a fifth of the
+     * catalogue). It is correct on both endpoints today; paging to exhaustion costs one extra
+     * request and cannot be wrong. `tunnels/list` returns **200** rows per page where
+     * `locations/list` returns 100 — another reason not to hard-code a page size.
+     *
+     * Memoised per instance because {@see tunnel()} now reads from it: without that, listing
+     * a screen of tunnels would re-fetch all 266 rows once per row.
+     *
+     * @return array<int, array<string, mixed>>
+     */
     public function tunnels(): array
     {
+        if ($this->tunnelCache !== null) {
+            return $this->tunnelCache;
+        }
+
         $rows = [];
         $page = 1;
 
@@ -167,18 +208,79 @@ class PanelApi
             $page++;
         } while ($batch !== [] && $page <= self::MAX_PAGES);
 
-        return $rows;
+        return $this->tunnelCache = $rows;
     }
 
+    /**
+     * One tunnel's panel-side record.
+     *
+     * The documented route is `GET /tunnels/{id}/class/{class}` and it **404s** on the current
+     * panel — verified with a real id and class out of `list`, for one tunnel of each class
+     * present, so it is the path that is missing rather than the record.
+     *
+     * There is no other route that returns this row: the surviving `GET /tunnels/{id}` gives
+     * the *provider* view (see {@see tunnelInfo()}), which has none of `location_id`,
+     * `service_id`, `email`, `username`, `status` or `tag`. But `list` returns exactly this
+     * row for every tunnel, so the fallback reads it from there and re-wraps it in the
+     * documented `{status, tunnels: [row]}` envelope — same data, same source of truth, and
+     * callers cannot tell which path served it.
+     *
+     * Tried in documented-first order so this reverts to a single direct call the moment the
+     * panel restores the route, with no change here.
+     */
     public function tunnel(string $tunnelId, string $class): array
     {
-        return $this->get('/tunnels/' . rawurlencode($tunnelId) . '/class/' . rawurlencode($class));
+        try {
+            return $this->get('/tunnels/' . rawurlencode($tunnelId) . '/class/' . rawurlencode($class));
+        } catch (PanelHttpException $e) {
+            if (!$e->isNotFound()) {
+                throw $e;
+            }
+        }
+
+        foreach ($this->tunnels() as $row) {
+            // Loose comparison on the id: `list` types it as an int and callers hold a string.
+            // Class is only compared when the row carries one, so a panel that stops
+            // returning it does not turn every lookup into "not found".
+            if ((string) ($row['tunnel_id'] ?? '') !== $tunnelId) {
+                continue;
+            }
+
+            if (filled($row['class'] ?? null) && (string) $row['class'] !== $class) {
+                continue;
+            }
+
+            return ['status' => 'ok', 'tunnels' => [$row]];
+        }
+
+        throw new PanelHttpException(404, "The panel has no tunnel {$tunnelId} of class {$class}.");
     }
 
-    /** Live detail straight from the upstream provider, rather than the panel's copy. */
+    /**
+     * Live detail straight from the upstream provider, rather than the panel's copy.
+     *
+     * Documented as `GET /tunnels/info/{id}/class/{class}`, which 404s. What the panel
+     * actually serves is `GET /tunnels/{id}` — no class segment — and its body is precisely
+     * this endpoint's documented shape (`tunnel_id`, `local_ip`, `remote_ip`, `network48`,
+     * `network64`), so the panel appears to have folded the two routes into one.
+     *
+     * Note this call reaches the provider, so it can legitimately fail per-tunnel: a
+     * `NewRoute` tunnel answered `{"status":"error","description":"Unable to get tunnel info:
+     * 404|"}`. That is the panel reporting an upstream failure, not a missing route, and
+     * {@see request()} surfaces it as a panel error — which is right, because the caller
+     * asked for live data and there is none.
+     */
     public function tunnelInfo(string $tunnelId, string $class): array
     {
-        return $this->get('/tunnels/info/' . rawurlencode($tunnelId) . '/class/' . rawurlencode($class));
+        try {
+            return $this->get('/tunnels/info/' . rawurlencode($tunnelId) . '/class/' . rawurlencode($class));
+        } catch (PanelHttpException $e) {
+            if (!$e->isNotFound()) {
+                throw $e;
+            }
+        }
+
+        return $this->get('/tunnels/' . rawurlencode($tunnelId));
     }
 
     public function createTunnel(array $data): array
@@ -269,7 +371,10 @@ class PanelApi
             $detail = $this->summarise($body);
             $this->log('ProxyPanel admin API error', ['path' => $path, 'status' => $response->status(), 'detail' => $detail]);
 
-            throw new \RuntimeException('Panel returned HTTP ' . $response->status() . ': ' . $detail);
+            throw new PanelHttpException(
+                $response->status(),
+                'Panel returned HTTP ' . $response->status() . ': ' . $detail,
+            );
         }
 
         $json = $response->json();

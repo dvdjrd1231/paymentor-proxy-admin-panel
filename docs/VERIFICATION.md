@@ -156,6 +156,35 @@ not move down, it disappears. Measured with `scrollWidth` vs `clientWidth` on
 Before the fix: 721 vs 585 at 1024 (*Addons* off the end, no scrollbar to hint at it), and
 opening the search wrapped *Addons* onto a clipped second line at every width up to ~1400.
 
+### 6.3 "Every dropdown is open" — degraded-JS guard (2026-08-26)
+
+Reported as broken styling; actually one script failing to execute. Diagnosed by blocking
+individual assets over CDP and counting visible `.fi-dropdown-panel` elements.
+
+| Blocked | Before the guard | After the guard |
+|---|---|---|
+| nothing | 0 of 11 visible | 0 of 11 ✅ |
+| `js/filament/support/support.js` | **11 of 11 visible**, `filamentDropdown is not defined` ×11 | 0 of 11 ✅ |
+| `js/filament/filament/app.js` | 0 visible (sidebar store errors only) | 0 of 11 ✅ |
+| `livewire.min.js` | 0 visible, 11 still `x-cloak`ed | 0 of 11 ✅ |
+
+Dropdowns still work with the guard in place — one panel open, never more, for each kind:
+
+| Trigger | Visible panels |
+|---|---|
+| topbar menu (Clients) | 1 ✅ |
+| wrench grid | 1 ✅ |
+| account menu | 1 ✅ |
+
+Panel inline style confirmed as the discriminator: closed `position: fixed; display: none`,
+open `position: fixed; display: block; left: …; top: …`, absent when `x-float` never ran.
+
+**Also ruled out**, so it is not re-investigated: it is not a load race. Instrumenting the page
+before first paint with a `requestAnimationFrame` sampler and loading `/admin` on warm cache,
+cold cache, throttled 3G and 60 kbit gave a peak of **0** simultaneously-visible panels in all
+four profiles — `x-cloak` covers the whole window until `x-float` takes over. A full UI login
+(wrong password, then correct) also produced a clean console and 0 visible panels throughout.
+
 **Not covered:** two-factor sign-in at the admin page. The code path mirrors the customer
 login exactly (stash `2fa` in the session, redirect to `/2fa`, the same action finishes it),
 but no administrator on this installation has `tfa_secret` set, so it has not been exercised
@@ -305,6 +334,38 @@ this does *not* prove is the behaviour over months of real multi-currency tradin
 The `orders` table is also empty here (314 services exist without them), which is why the
 "new orders" figure is counted from services — see `Metrics::newServices()` for why that is
 the right measure in Paymenter regardless.
+
+---
+
+## 12b. Tunnels API re-probe after the panel-side fixes (2026-08-26)
+
+Run against the live panel through `PanelApi` itself, not curl, so it verifies the client and
+not just the endpoint.
+
+| Check | Result |
+|---|---|
+| `GET /tunnels/list` | ✅ 200 — **266 tunnels**, 2 pages, 200/page, 0 duplicate ids (was HTTP 500) |
+| `GET /locations/list` `total_pages` | ✅ now `3` for 246 rows (was `2`, losing 46) |
+| `tunnelsAvailable()` | ✅ `true` (was `false`) |
+| `tunnels()` / `locations()` | ✅ 266 rows in 0.31 s / 246 rows in 0.20 s |
+| `tunnel()` — all 3 classes | ✅ 19 fields each, real `tag` / `location_id` / `status` |
+| `tunnelInfo()` — TunnelBroker, RouteGre | ✅ live provider detail |
+| `tunnel()` on an id that does not exist | ✅ `PanelHttpException`, readable message, no crash |
+
+**Still panel-side, worked around here:** `/tunnels/{id}/class/{class}` and
+`/tunnels/info/{id}/class/{class}` still 404 — verified with real ids of each class, so it is
+the path that is missing, not the record. Both methods try the documented path first and fall
+back only on 404, so they revert to a direct call when the routes return.
+
+**Open panel-side defect found while verifying:** `tunnels/info` fails for roughly a third of
+`NewRoute` tunnels with the panel's own `{"status":"error","description":"Unable to get tunnel
+info: 404|"}`. Sampled 12 per class — TunnelBroker 2/2, RouteGre 4/4, **NewRoute 8/12**. Since
+NewRoute is 260 of 266 tunnels, this is the common case. Logged as A1 question 5 in
+`docs/PANEL-QUESTIONS.md`.
+
+**Not tested, deliberately:** `tunnels/new`, `update`, `delete`, `status`. They mutate real
+infrastructure on a panel holding 266 live tunnels, and they carry the same `/class/{class}`
+segment as the two 404s, so they are suspect but unproven.
 
 ---
 
