@@ -49,6 +49,17 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 - `extensions/Others/AdminOps/README.md`
 - `docs/02b-admin-area.md`
 
+## Fixed-term products (daily/weekly)
+- `extensions/Others/TermLimits/TermLimits.php` — the extension: starts the clock, schedules the sweeper
+- `extensions/Others/TermLimits/Support/Terms.php` — open, extend, close a term
+- `extensions/Others/TermLimits/Support/Sweeper.php` — one pass over what is due, and the backfill
+- `extensions/Others/TermLimits/Console/EnforceTerms.php` — `term-limits:enforce`
+- `extensions/Others/TermLimits/Models/` — `ServiceTerm`, `ServiceTermExtension`
+- `extensions/Others/TermLimits/Admin/Resources/ServiceTermResource.php` — Orders → Fixed Terms, with Extend
+- `extensions/Others/TermLimits/database/migrations/` — `ext_term_limits`, `ext_term_limit_extensions`
+- `extensions/Others/TermLimits/README.md`
+- `docs/modules/term-limits.md`
+
 ## Deployment / operations
 - `scripts/install-debian13.sh` — automated Debian 13 installer
 - `scripts/backup.sh` — DB + files backup
