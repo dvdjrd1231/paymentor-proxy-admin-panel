@@ -4,6 +4,7 @@ namespace Paymenter\Extensions\Others\AdminOps;
 
 use App\Attributes\ExtensionMeta;
 use App\Classes\Extension\Extension;
+use App\Helpers\ExtensionHelper;
 use Filament\Facades\Filament;
 use Filament\Navigation\NavigationBuilder;
 use Filament\Support\Facades\FilamentView;
@@ -47,6 +48,22 @@ class AdminOps extends Extension
                 . 'See <code>docs/02b-admin-area.md</code>.'
             ),
         ]];
+    }
+
+    /**
+     * Creates `ext_adminops_dashboard_layouts` — one row per admin, holding the order of
+     * their dashboard panels and which they have put away. {@see Admin\Widgets\DashboardTools}
+     * checks the table exists before rendering, so an enabled-but-unmigrated install falls
+     * back to the stock dashboard rather than fatalling on the panel's home page.
+     */
+    public function installed()
+    {
+        ExtensionHelper::runMigrations('extensions/Others/AdminOps/database/migrations');
+    }
+
+    public function uninstalled()
+    {
+        ExtensionHelper::rollbackMigrations('extensions/Others/AdminOps/database/migrations');
     }
 
     public function boot()
