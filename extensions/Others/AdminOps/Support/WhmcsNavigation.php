@@ -39,6 +39,7 @@ use Filament\Pages\Dashboard;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\Catalogue;
 use Paymenter\Extensions\Others\Affiliates\Admin\Resources\AffiliateResource;
 use Paymenter\Extensions\Others\Announcements\Admin\Resources\AnnouncementResource;
+use Paymenter\Extensions\Others\Cancellations\Admin\Resources\CancellationRequestResource;
 use Paymenter\Extensions\Others\GatewayRules\Admin\Resources\GatewayRuleResource;
 use Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbArticleResource;
 use Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbCategoryResource;
@@ -162,12 +163,22 @@ class WhmcsNavigation
             static::link(UserResource::class, 'View/Search Clients'),
             static::link(UserResource::class, 'Add New Client', page: 'create'),
             static::link(ServiceResource::class, 'Products/Services'),
-            static::link(
-                ServiceCancellationResource::class,
-                'Cancellation Requests',
-                badge: fn () => Metrics::cancellationsPending(),
-                badgeColor: 'danger',
-            ),
+            // Ours, not core's: core's list offers Edit and Delete, and deleting a request is
+            // indistinguishable from refusing it. Falls back to core's when the extension is
+            // not installed, so the entry never disappears.
+            class_exists(CancellationRequestResource::class)
+                ? static::link(
+                    CancellationRequestResource::class,
+                    'Cancellation Requests',
+                    badge: fn () => Metrics::cancellationsPending(),
+                    badgeColor: 'danger',
+                )
+                : static::link(
+                    ServiceCancellationResource::class,
+                    'Cancellation Requests',
+                    badge: fn () => Metrics::cancellationsPending(),
+                    badgeColor: 'danger',
+                ),
             static::link(AffiliateResource::class, 'Manage Affiliates'),
         ]);
     }

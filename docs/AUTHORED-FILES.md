@@ -60,6 +60,12 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 - `extensions/Others/TermLimits/README.md`
 - `docs/modules/term-limits.md`
 
+## Cancellation requests
+- `extensions/Others/Cancellations/Cancellations.php` — acts on immediate requests
+- `extensions/Others/Cancellations/Support/Requests.php` — accept / refuse
+- `extensions/Others/Cancellations/Admin/Resources/CancellationRequestResource.php` — the list with both actions
+- `extensions/Others/Cancellations/README.md`
+
 ## Deployment / operations
 - `scripts/install-debian13.sh` — automated Debian 13 installer
 - `scripts/backup.sh` — DB + files backup
