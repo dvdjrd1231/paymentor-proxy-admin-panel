@@ -1,22 +1,13 @@
 {{--
-    The reference's utility icons — automation status, updates, setup, help — at the end of
-    the menu bar.
+    The utility icons at the end of the menu bar, rendered at `panels::global-search.after`.
 
-    Rendered through `panels::global-search.after`, which puts them inside `.fi-topbar-end`
-    immediately after the search field and before the user menu. The reference's order runs
-    …wrench, avatar, question mark, so the account menu belongs *between* the last two of
-    these; there is no render hook at that point, so the skin reorders the flex row instead
-    (`.fi-topbar-end` and `.ao-tool-wrap-help`). Doing it in CSS rather than rebuilding the
-    account menu here keeps Filament's own user menu — and with it the working sign-out and
-    the theme switcher — instead of a second copy of both.
+    The reference's order runs …wrench, avatar, question mark, so the account menu belongs
+    between the last two — but there is no render hook there, so the skin reorders the flex
+    row instead (`.ao-tool-wrap-help`). Done in CSS rather than by rebuilding the account menu
+    here, which keeps Filament's own sign-out and theme switcher.
 
-    Two of these are plain links, not dropdowns, because that is what they are on the
-    reference: its cogs opens Automation Status and its arrow opens the updater. See the table
-    in {@see Toolbar}.
-
-    The badge on the cogs is the reference's red marker. It shows a number or nothing, never a
-    zero — same rule as the menu badges, for the same reason: a permanent grey 0 is something
-    you learn to stop seeing.
+    The cogs and the updater are plain links, not dropdowns, as on the reference. The cogs
+    badge shows a number or nothing, never a zero.
 --}}
 @php
     use Paymenter\Extensions\Others\AdminOps\Support\Toolbar;
@@ -39,15 +30,11 @@
             @endif
         </a>
     @else
-        {{-- `shift` on top of the default `flip`: these hang off the right-hand end of the
-             bar, and the setup panel is three columns wide, so without it floating-ui
-             anchors the panel and lets it run off the edge of the window — the last column
-             of the grid was simply not reachable. Shift slides it back inside instead. --}}
-        {{-- `width` is not decoration: `.fi-dropdown-panel` ships `max-width: 14rem
-             !important`, and a three-column tile grid does not fit in 14rem. The tiles
-             overflowed the white panel and sat on the page behind it — an `!important` in
-             the compiled theme cannot be outranked from this stylesheet, so the panel is
-             widened through Filament's own width prop, which is written to beat it. --}}
+        {{-- `shift` keeps these on screen: they hang off the right-hand end of the bar, and
+             without it floating-ui lets the three-column setup panel run off the window edge.
+             `width` is not decoration either — `.fi-dropdown-panel` ships
+             `max-width: 14rem !important`, which no rule in the skin can outrank, so the
+             tiles overflowed the white panel and sat on the page behind it. --}}
         <x-filament::dropdown
             placement="bottom-end"
             shift

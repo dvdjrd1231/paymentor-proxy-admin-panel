@@ -3,17 +3,14 @@
 namespace Paymenter\Extensions\Servers\ProxyPanel\Support;
 
 /**
- * A panel call that came back with a non-2xx status, carrying the status itself.
+ * A non-2xx panel response, carrying the status so a caller can react to *which* failure it
+ * was without parsing the message.
  *
- * Exists so a caller can react to *which* failure it was without reading the message text.
- * The concrete need: two tunnel routes answer 404 because the panel changed their path, so
- * {@see PanelApi::tunnel()} and {@see PanelApi::tunnelInfo()} try a second shape when the
- * first is missing — but only on a 404. A 500, a timeout or a rejected token must still
- * surface immediately, because retrying a different URL would turn "the panel is down" into
- * "the record does not exist", which is a worse lie than the original error.
+ * Needed because {@see PanelApi::tunnel()} and {@see PanelApi::tunnelInfo()} fall back to a
+ * second path on 404 — and only on 404. A 500 or a rejected token must surface as itself;
+ * retrying a different URL would report "the panel is down" as "the record does not exist".
  *
- * Extends `RuntimeException` so every existing `catch (\RuntimeException)` and
- * `catch (\Throwable)` around this client keeps behaving exactly as before.
+ * Extends `RuntimeException`, so existing catch sites are unaffected.
  */
 class PanelHttpException extends \RuntimeException
 {
