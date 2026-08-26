@@ -292,4 +292,154 @@
     .ao-link:hover {
         text-decoration: underline;
     }
+
+    /* --- Products/Services: the drag-ordered catalogue ---
+
+       The reference's shape: a bordered panel per group, a grey heading band carrying the
+       name, the products as a table inside it. Child groups are the same panel indented,
+       which is why these are lists rather than the reference's single flat table.
+
+       Colours are the skin's `--wa-*` where the reference is specific about them and the
+       panel's own properties elsewhere, so this follows dark mode on the pages that have
+       it. Falls back if AdminOps' skin is not loaded. */
+    .ao-cat-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .ao-cat {
+        border: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
+        border-radius: var(--wa-radius, 3px);
+        background: var(--wa-canvas, hsl(var(--color-gray-50)));
+    }
+
+    .ao-cat-head {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.5rem 0.75rem;
+        background: var(--wa-section, hsl(var(--color-gray-100)));
+        border-bottom: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
+        font-size: 0.875rem;
+    }
+
+    .ao-cat-name {
+        font-weight: 600;
+        color: var(--wa-ink, hsl(var(--color-base)));
+    }
+
+    /* Pushes everything after it to the right-hand end, as the reference does with its
+       per-group icons. */
+    .ao-cat-meta {
+        margin-inline-start: auto;
+        font-size: 0.8rem;
+        color: var(--wa-muted, hsl(var(--color-base) / 0.6));
+    }
+
+    .ao-cat-edit {
+        font-size: 0.8rem;
+        color: var(--wa-link, hsl(var(--color-primary)));
+    }
+
+    .ao-cat-edit:hover {
+        text-decoration: underline;
+    }
+
+    .ao-cat-empty {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.85rem;
+        color: var(--wa-muted, hsl(var(--color-base) / 0.6));
+    }
+
+    /* Indented and ruled rather than nested in another border: two panel edges a few pixels
+       apart read as a rendering fault rather than as a hierarchy. */
+    .ao-cat-children {
+        margin: 0.75rem 0 0.75rem 1.5rem;
+        padding-inline-start: 0.75rem;
+        border-inline-start: 2px solid var(--wa-rule, hsl(var(--color-gray-200)));
+    }
+
+    .ao-cat-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+
+    .ao-cat-table th {
+        padding: 0.4rem 0.75rem;
+        text-align: start;
+        font-weight: 600;
+        color: var(--wa-muted, hsl(var(--color-base) / 0.6));
+        border-bottom: 1px solid var(--wa-rule, hsl(var(--color-gray-200)));
+    }
+
+    .ao-cat-table td {
+        padding: 0.4rem 0.75rem;
+        border-bottom: 1px solid var(--wa-rule, hsl(var(--color-gray-200)));
+        color: hsl(var(--color-base));
+    }
+
+    .ao-cat-table tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .ao-cat-table a {
+        color: var(--wa-link, hsl(var(--color-primary)));
+    }
+
+    .ao-cat-table a:hover {
+        text-decoration: underline;
+    }
+
+    .ao-cat-flag {
+        color: var(--wa-muted, hsl(var(--color-base) / 0.6));
+        font-size: 0.8rem;
+    }
+
+    .ao-col-grip { width: 1.75rem; }
+    .ao-col-stock { text-align: end; }
+
+    /* The handle. `grab` rather than `move`, because nothing is being moved until the
+       pointer goes down — and the row is not draggable until it does. */
+    .ao-grip {
+        cursor: grab;
+        user-select: none;
+        color: var(--wa-muted, hsl(var(--color-base) / 0.5));
+        font-size: 0.9rem;
+        line-height: 1;
+        padding: 0.15rem;
+        border-radius: 2px;
+    }
+
+    .ao-grip:hover {
+        color: var(--wa-ink, hsl(var(--color-base)));
+    }
+
+    .ao-grip:focus-visible {
+        outline: 2px solid hsl(var(--color-primary));
+        outline-offset: 1px;
+    }
+
+    .ao-dragging {
+        opacity: 0.45;
+    }
+
+    /* The write is a single indexed UPDATE per row and normally finishes before this is
+       perceptible; it exists for the case where it does not, so a slow save cannot be
+       mistaken for a drag that did not take. */
+    .ao-saving {
+        transition: opacity 120ms;
+        opacity: 0.7;
+    }
+
+    .ao-catalogue-count,
+    .ao-catalogue-empty {
+        margin-top: 0.75rem;
+        font-size: 0.8rem;
+        color: var(--wa-muted, hsl(var(--color-base) / 0.6));
+    }
 </style>

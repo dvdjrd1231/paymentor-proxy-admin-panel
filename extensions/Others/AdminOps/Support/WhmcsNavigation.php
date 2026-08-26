@@ -36,6 +36,7 @@ use Filament\Navigation\NavigationBuilder;
 use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\Catalogue;
 use Paymenter\Extensions\Others\Affiliates\Admin\Resources\AffiliateResource;
 use Paymenter\Extensions\Others\Announcements\Admin\Resources\AnnouncementResource;
 use Paymenter\Extensions\Others\GatewayRules\Admin\Resources\GatewayRuleResource;
@@ -297,6 +298,10 @@ class WhmcsNavigation
     private static function setup(): ?NavigationGroup
     {
         return static::group('Setup', 'ri-settings-3-line', [
+            // First, as it is on the reference: the catalogue as a whole, ordered by
+            // dragging. The two resource lists below it are where a single record is
+            // created, edited and deleted.
+            static::page(Catalogue::class, 'Products/Services'),
             static::link(ProductResource::class, 'Products'),
             static::link(CategoryResource::class, 'Categories'),
             static::link(ConfigOptionResource::class, 'Configurable Options'),
