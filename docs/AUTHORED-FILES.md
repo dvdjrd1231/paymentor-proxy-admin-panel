@@ -37,6 +37,8 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 - `extensions/Others/AdminOps/Admin/Auth/Login.php` — the admin sign-in page, on Paymenter's auth stack, with the client login's CAPTCHA
 - `extensions/Others/AdminOps/resources/views/captcha.blade.php` — that CAPTCHA, for Filament's sign-in card
 - `extensions/Others/AdminOps/Admin/Pages/Catalogue.php` — Products/Services: groups and products ordered by dragging
+- `extensions/Others/AdminOps/Admin/Widgets/DashboardTools.php` — dashboard panels: drag, collapse, refresh, hide
+- `extensions/Others/AdminOps/Models/DashboardLayout.php` — one admin's dashboard order and hidden panels
 - `extensions/Others/AdminOps/Support/PanelSession.php` — issues the session row any sign-in path missed
 - `extensions/Servers/ProxyPanel/Support/PanelHttpException.php` — panel HTTP failures, carrying the status
 - `extensions/Others/AdminOps/Support/Rail.php` — data for the WHMCS left sidebar column

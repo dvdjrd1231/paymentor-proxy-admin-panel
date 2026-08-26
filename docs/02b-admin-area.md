@@ -45,6 +45,49 @@ me"*. Five widgets now sit above core's, in this order:
 | **Needs attention** | The work queue: provisioning failures, tickets awaiting reply, services awaiting provisioning, suspended services, failed payments (7d), unpaid invoices, renewals due. Every line is a link straight into the matching filtered list. |
 | **Who is around** | WHMCS's Staff Online and Client Activity panels: colleagues seen in the last 15 minutes, customers with a running service, customers signed in within the hour. |
 
+#### The panels move, as the reference's do
+
+Leandro's note — *"All items on the WHMCS admin home screen can be moved using
+drag-and-drop"* — is the whole of this. The reference gives every homepage panel four
+behaviours, and the dashboard now has the same four, remembered in the same places:
+
+| Behaviour | Reference | Here | Remembered |
+|---|---|---|---|
+| **Drag** by the panel heading | Packery + Draggabilly, saved to `/widget/order` | HTML5 drag, saved on drop | **Per admin**, in the database |
+| **Hide** (×), and the settings menu that brings it back | `/widget/display/toggle/{id}` | Same toggle, both routes to it | **Per admin**, in the database |
+| **Collapse** (▲) | `localStorage.minimisedWidgets` | `localStorage.aoCollapsedWidgets` | **Per browser** |
+| **Refresh** (⟳) | `/widget/refresh` re-renders the body | The widget's own Livewire `$refresh` | — |
+
+Collapsing is per browser in both, and deliberately: it is a "how am I reading this screen
+right now" decision, not a preference that should follow you to another machine.
+
+Two panels do not move, matching the reference's *stamped* static widget: the **tile row**,
+which is a gauge whose value is that the same figure is always in the same place, and the
+tools widget itself, which draws nothing.
+
+A widget is identified by its **Livewire component name**. Filament renders each widget as
+its own Livewire component and derives that name from the class, so it is the same string on
+every page load and on every machine — which the DOM id, the render key and the position are
+not. A saved name that no longer matches a widget is ignored, so uninstalling an extension
+needs no cleanup.
+
+**Why a widget rather than a replacement dashboard page.** Ordering the widgets in PHP would
+be simpler to reason about, but telling the panel which class its dashboard is happens while
+the panel is constructed — a core edit, and a twelfth touchpoint on the one screen every
+admin lands on. `Admin/Widgets/DashboardTools.php` sorts first, renders no panel, and carries
+the script and the two methods it calls. Disable AdminOps and the dashboard is stock Filament
+again.
+
+The cost is honest and small: the saved order is applied after the widgets have painted, so a
+rearranged dashboard settles into place rather than arriving in place. **Nothing is hidden
+while that happens** — a dashboard left blank by a script that failed is far worse than one
+that reshuffles once. The same reasoning is why `DashboardTools::canView()` checks its table
+exists: an enabled-but-unmigrated install falls back to the stock dashboard instead of
+fatalling on the panel's home page.
+
+Headings are focusable and take the left/right arrow keys, so the dashboard can be
+rearranged without a mouse — and on a touch screen, where the HTML5 drag API does nothing.
+
 **Needs attention** is the one that matters. Rows with a count of zero are **omitted**
 rather than shown as zeroes, so an empty queue reads as "nothing to do" at a glance, and
 rows are ordered by how much it costs to ignore them — a failed provisioning run (the

@@ -11,6 +11,11 @@ WHMCS-style usability for the Paymenter admin panel (spec item 2).
   services awaiting provisioning, suspended services, failed payments, unpaid invoices.
   Zero-count rows are omitted; every row links to the matching filtered list.
 
+**Dashboard chrome** — every panel can be dragged by its heading, collapsed, refreshed or
+hidden, with a settings menu to bring hidden ones back. Order and hidden panels are stored
+per administrator; collapsed state is per browser, as the reference does it. The tile row
+stays put.
+
 **Client Summary** — one customer on one screen: profile, credit, lifetime paid,
 outstanding, custom properties, and their latest services, invoices and tickets — with
 **Log in as customer** (core impersonation), Edit and New invoice in the header. Reached

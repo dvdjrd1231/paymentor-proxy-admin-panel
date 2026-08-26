@@ -293,6 +293,160 @@
         text-decoration: underline;
     }
 
+    /* --- Dashboard chrome: drag, collapse, refresh, hide ---
+
+       The reference puts three small icons in the top-right of every panel heading and a
+       settings button above the grid. These style what `widgets/dashboard-tools.blade.php`
+       adds to Filament's own widget markup at runtime — so the selectors are ours, not
+       Filament's, and nothing here can break a widget that this script never reached. */
+    .ao-dash-tools {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .ao-dash-settings {
+        position: relative;
+    }
+
+    .ao-dash-settings-button {
+        display: flex;
+        align-items: center;
+        padding: 0.3rem;
+        border-radius: 3px;
+        color: hsl(var(--color-base) / 0.55);
+        cursor: pointer;
+    }
+
+    .ao-dash-settings-button:hover {
+        color: hsl(var(--color-base));
+        background: hsl(var(--color-base) / 0.06);
+    }
+
+    .ao-dash-menu {
+        position: absolute;
+        inset-inline-end: 0;
+        top: 100%;
+        z-index: 20;
+        min-width: 15rem;
+        padding: 0.6rem 0.75rem;
+        border: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
+        border-radius: var(--wa-radius, 3px);
+        background: var(--wa-canvas, hsl(var(--color-gray-50)));
+        box-shadow: 0 4px 14px rgb(0 0 0 / 0.12);
+        font-size: 0.85rem;
+    }
+
+    .ao-dash-menu h4 {
+        margin-bottom: 0.4rem;
+        font-weight: 600;
+        color: var(--wa-ink, hsl(var(--color-base)));
+    }
+
+    .ao-dash-menu ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .ao-dash-menu label {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        cursor: pointer;
+    }
+
+    .ao-dash-menu-note {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--wa-rule, hsl(var(--color-gray-200)));
+        font-size: 0.75rem;
+        color: var(--wa-muted, hsl(var(--color-base) / 0.6));
+    }
+
+    /* The heading is the drag handle, so it says so on hover — `grab`, not `move`, because
+       nothing moves until the pointer goes down. */
+    .ao-wi-header {
+        position: relative;
+        cursor: grab;
+    }
+
+    .ao-wi-header:focus-visible {
+        outline: 2px solid hsl(var(--color-primary));
+        outline-offset: 2px;
+    }
+
+    /* Filament's section headers are flex rows, so the tools land at the end of one without
+       being positioned. The `margin-inline-start: auto` is what pins them right in the bar
+       this script draws for a widget that has no header of its own. */
+    .ao-wi-tools {
+        display: flex;
+        align-items: center;
+        gap: 0.15rem;
+        margin-inline-start: auto;
+    }
+
+    .ao-wi-tool {
+        padding: 0.15rem 0.3rem;
+        border-radius: 2px;
+        line-height: 1;
+        font-size: 0.8rem;
+        color: hsl(var(--color-base) / 0.45);
+        cursor: pointer;
+    }
+
+    .ao-wi-tool:hover {
+        color: hsl(var(--color-base));
+        background: hsl(var(--color-base) / 0.06);
+    }
+
+    .ao-wi-spin span[aria-hidden] {
+        display: inline-block;
+        animation: ao-spin 0.7s linear infinite;
+    }
+
+    @keyframes ao-spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .ao-wi-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.75rem;
+        border-bottom: 1px solid var(--wa-rule, hsl(var(--color-gray-200)));
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--wa-ink, hsl(var(--color-base)));
+    }
+
+    .ao-wi-dragging {
+        opacity: 0.45;
+    }
+
+    .ao-wi-hidden {
+        display: none;
+    }
+
+    /* Collapsed: the heading stays, everything under it goes. `:not()` keeps the header —
+       whichever of the three kinds it is — so the panel can be rolled back open. */
+    .ao-wi-collapsed .fi-sc-section-content,
+    .ao-wi-collapsed .fi-wi-chart-chart,
+    .ao-wi-collapsed .fi-wi-stats-overview-stats-ctn {
+        display: none;
+    }
+
+    .ao-wi-collapsed .ao-wi-tool span[aria-hidden] {
+        /* The chevron points the other way once there is nothing under it. */
+        display: inline-block;
+    }
+
+    .ao-wi-collapsed [title^="Collapse"] span[aria-hidden] {
+        transform: rotate(180deg);
+    }
+
     /* --- Products/Services: the drag-ordered catalogue ---
 
        The reference's shape: a bordered panel per group, a grey heading band carrying the
