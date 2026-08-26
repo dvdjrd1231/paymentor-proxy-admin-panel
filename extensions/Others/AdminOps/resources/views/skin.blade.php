@@ -985,9 +985,48 @@
         font-size: 13px;
     }
 
+    /* The CAPTCHA (`adminops::captcha`). reCAPTCHA v2's checkbox is a fixed 304px in a
+       fixed-size iframe — it cannot be made to fill the card, so it is centred rather than
+       left to sit off to one side of a 26rem column. `transform-origin` is set for the
+       narrow-window rule below, which is the only way to shrink a cross-origin iframe. */
+    .ao-captcha {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .ao-captcha > [wire\:ignore] {
+        transform-origin: top center;
+    }
+
+    .ao-captcha-note {
+        font-size: 12px;
+        color: var(--wa-muted);
+        text-align: center;
+    }
+
+    .ao-captcha-error {
+        font-size: 12px;
+        color: #b42318;
+        text-align: center;
+    }
+
+    /* v3 renders no widget: the empty div would otherwise contribute the flex gap. */
+    .ao-captcha-v3 {
+        display: none;
+    }
+
     @media (max-width: 30rem) {
         .fi-simple-main {
             padding: 1.15rem;
+        }
+
+        /* The card's content box drops below 304px here, and an overflowing challenge would
+           push the sign-in button sideways on a phone. */
+        .ao-captcha > [wire\:ignore] {
+            transform: scale(0.85);
+            margin-block-end: -1.5rem;
         }
     }
 

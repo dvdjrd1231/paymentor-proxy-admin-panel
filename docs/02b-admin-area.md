@@ -99,6 +99,7 @@ strips, dark table headers, square buttons, a footer.
 | **Left rail** — Shortcuts, System Information, Advanced Search, Staff Online, and the *Minimise Sidebar* bar | `Support/Rail.php` + `resources/views/rail.blade.php` |
 | **Skin** — topbar, dropdowns, panels, tables, pagination, forms, stat tiles, buttons, inputs | `resources/views/skin.blade.php` |
 | **Footer** | `resources/views/footer.blade.php` |
+| **Sign-in page** — Paymenter's auth stack, 2FA, and the CAPTCHA (§4) | `Admin/Auth/Login.php` + `resources/views/captcha.blade.php` |
 
 #### The icons at each end of the bar
 
@@ -252,6 +253,52 @@ A cancellation counts as pending while the service it names has not reached `can
 the row itself carries no status, because it is a request. An end-of-period request
 therefore stays in the count for the rest of the term, which is right: it is work that has
 not happened yet.
+
+### 4. The sign-in page, and its CAPTCHA
+
+The panel signs staff in through AdminOps' own login page rather than Filament's, for a
+reason that has nothing to do with looks: Paymenter treats the `user_sessions` row as the
+authority, and Filament's page never creates one, so the stock page authenticated and was
+bounced straight back to the form. That page is also where Paymenter's own `tfa_secret` is
+enforced, which Filament's separate multi-factor system knows nothing about.
+
+Being our page, it can carry the client login's **CAPTCHA** — and now does. The client asked
+for the two to match, and they do in the strongest sense available: one setting
+(**Settings → Security**), one site key and secret, one server-side verification
+(`App\Traits\Captchable`). Configure the storefront and the admin door is protected by the
+same act.
+
+What is *not* shared is the widget markup. The client's `<x-captcha>` is a theme component
+styled with the portal's `wf-` classes, and the admin panel does not load the theme, so
+`adminops::captcha` renders into Filament's sign-in card instead. It supports the same four
+providers the setting offers — reCAPTCHA v2 and v3, Turnstile, hCaptcha — and repeats the
+three behaviours the theme's version had to learn:
+
+- **`wire:ignore` around the widget.** A Livewire morph that replaced the iframe would
+  silently discard a solved challenge.
+- **Reset after a request that spent a token**, clearing it on the component at the same
+  time. Miss either half and the next submit replays a token the provider has already
+  burned, which comes back "invalid" — so a wrong password becomes an unexplained CAPTCHA
+  failure. Because that means solving it again, the page says so rather than returning a
+  blank checkbox and, one attempt later, "The CAPTCHA is required."
+- **Expiry and error clear the token**, so a challenge left for two minutes reports the
+  accurate "required" instead of submitting a dead one.
+
+Two things it adds that the client login does not need. The panel runs `->spa()`, so the
+sign-in page can arrive by `wire:navigate` — same JS context, new DOM, new component id —
+which is why the widget is held in a registry keyed by component id and nothing in the
+script closes over an element. And the token is verified **after** the rate limiter rather
+than before it: an unanswered challenge should still spend one of the five attempts, or a
+bot that never solves one gets unlimited free guesses at the password.
+
+It also cannot lock anybody out. The challenge is enforced only when a provider **and** both
+keys are set, because `Captchable` fails any submission without a token and no site key means
+no widget can produce one — enabling the setting with a key missing would otherwise leave an
+unsatisfiable form on the one page you need in order to fix it. See `docs/12-security.md` for
+the escape hatch if the keys are wrong rather than absent.
+
+The panel registers no password-reset page, so the sign-in is the only unauthenticated screen
+in the admin area and there is nothing else to protect.
 
 ## Money and multiple currencies
 

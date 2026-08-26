@@ -19,6 +19,12 @@ from the **Summary** link on each row of Clients.
 **Sidebar** — a **Queues** group with Pending services and Suspended services, badged with
 live counts. (Invoices and Tickets already carry counts in core, so they are not repeated.)
 
+**Sign-in** — the panel's own login page, on Paymenter's auth stack (so the session row is
+created and 2FA is enforced), carrying the **same CAPTCHA as the client login**: one
+provider, one key pair, one verification, set in **Settings → Security**. It is enforced
+only when the provider and both keys are present, so a half-configured setting cannot lock
+you out of the panel.
+
 Money is never summed across currencies — Paymenter stores no exchange rate — so a
 multi-currency figure renders as `$1,234.00 · R$5,678.00`.
 
