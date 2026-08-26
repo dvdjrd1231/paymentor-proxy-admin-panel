@@ -15,15 +15,10 @@ use Illuminate\Support\Facades\Schema;
 use Paymenter\Extensions\Others\ProvisioningOps\Models\ProvisioningOperation;
 
 /**
- * Every figure the admin dashboard shows, in one place.
- *
- * Kept out of the widgets so the two of them cannot drift — "unpaid invoices" has to mean
- * the same thing in the action queue as it does on the invoice list it links to — and so
- * the definitions can be read and corrected without touching any presentation.
- *
- * The status vocabulary is core's own, verified against the resource forms rather than
- * assumed: invoices are paid|pending|cancelled, services active|pending|suspended|cancelled,
- * tickets open|replied|closed.
+ * Every figure the dashboard shows, in one place, so the tiles, the rail and the menu
+ * badges cannot disagree. Each is memoised per request — several widgets ask for the same
+ * number — and each returns null rather than throwing, because a dashboard that cannot
+ * count is still a dashboard.
  */
 class Metrics
 {
@@ -48,15 +43,8 @@ class Metrics
     }
 
     /**
-     * Money taken in a period, keyed by currency code.
-     *
-     * Read from transactions rather than invoices for two reasons: `Invoice::$total` is
-     * computed from its items in PHP and cannot be summed in SQL, and an invoice's paid
-     * date is not stored — the transaction's is.
-     *
-     * Credit transactions are excluded: paying an invoice from account credit spends money
-     * that was already counted as income when the credit was bought. Counting both would
-     * book the same payment twice.
+     * Money taken in a period, keyed by currency code. Summed per currency rather than
+     * converted: there is no stored rate at transaction time, so adding them would invent one.
      *
      * @return array<string, float>
      */
@@ -75,16 +63,8 @@ class Metrics
     }
 
     /**
-     * Value still owed on unpaid invoices, keyed by currency code.
-     *
-     * Invoice totals live in the items, so this sums those and subtracts what has already
-     * been received against each invoice — a part-paid invoice contributes only its
-     * remainder, which is the number an operator chasing payment actually wants.
-     *
-     * The aggregates are deliberately not aliased `total`: `Invoice::total()` is an
-     * accessor that recomputes the figure from the invoice's items, and Eloquent's `pluck`
-     * runs a column through the model's accessors — so a column called `total` comes back
-     * as the accessor's value on an itemless model, i.e. 0, silently discarding the SUM.
+     * Still owed on unpaid invoices, keyed by currency. Computed from line items rather than a
+     * stored total, which core does not keep.
      *
      * @return array<string, float>
      */
@@ -138,14 +118,8 @@ class Metrics
     }
 
     /**
-     * Counts already answered during this request.
-     *
-     * The queue counts are asked for more than once per page: the sidebar badges render on
-     * every admin page, the unpaid badge needs the overdue count as well to pick its colour,
-     * and on the dashboard the action queue asks for the same figures again. None of these
-     * columns is indexed on `status`, so repeating them is the one place this could get
-     * expensive. Per-request only — nothing is cached between requests, so the numbers are
-     * never stale.
+     * Per-request memo. Several widgets and the rail ask for the same counts, and each is a
+     * query; without this the dashboard runs them repeatedly on one page load.
      *
      * @var array<string, int>
      */
@@ -267,15 +241,9 @@ class Metrics
     }
 
     /**
-     * Administrators seen in the last few minutes — WHMCS's "Staff Online" panel.
-     *
-     * Read from `user_sessions`, which core's session middleware stamps with
-     * `last_activity` at most once a minute (UserSession::LAST_ACTIVITY_UPDATE). The window
-     * has to be comfortably wider than that stamp interval or a colleague reading a page
-     * would blink out of the list between writes.
-     *
-     * Grouped in PHP rather than SQL because one person signed in from two devices has two
-     * sessions and should appear once, at whichever is the more recent.
+     * Administrators seen in the last few minutes — WHMCS's "Staff Online". Read from
+     * `user_sessions.last_activity`, which the session middleware touches at most once a
+     * minute, so "now" is necessarily approximate.
      *
      * @return Collection<int, object{name: string, last_activity: Carbon}>
      */

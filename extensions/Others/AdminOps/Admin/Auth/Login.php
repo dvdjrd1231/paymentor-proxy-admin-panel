@@ -16,34 +16,18 @@ use Illuminate\Support\Timebox;
 /**
  * The admin panel's sign-in page, on Paymenter's own auth stack.
  *
- * ## Why this exists — the panel could not be signed into at all
+ * Paymenter does not authenticate with the session guard alone: `ResolveUserSession` treats
+ * the `user_sessions` row as the authority and signs out anyone without one. That row is
+ * created only by {@see \App\Actions\Auth\Login}, which Filament knows nothing about — so
+ * the stock page authenticated, redirected, and was undone on the next request, showing a
+ * login form that reappears with no error and nothing logged.
  *
- * Paymenter does not authenticate with the session guard alone. Every request runs
- * {@see \App\Http\Middleware\ResolveUserSession}, which treats the `user_sessions` row named
- * by `session('user_session')` as the authority: **an authenticated user with no such row is
- * logged straight back out** and bounced to `/`. That row is created in exactly one place,
- * {@see \App\Actions\Auth\Login}, which the client login calls and Filament knows nothing
- * about.
+ * Keeps Filament's form, validation, rate limiting and events; replaces only the sign-in.
  *
- * So Filament's stock login page "worked" — it validated the password, called
- * `attemptWhen()`, regenerated the session and redirected to the panel — and the very next
- * request threw the session away again. The visible symptom was a login form that reappears
- * after every successful sign-in, with no error and nothing in the log, because from the
- * middleware's point of view nothing went wrong: it saw a session it had never issued.
- *
- * This page therefore keeps Filament's form, validation, rate limiting and events, and
- * replaces only the sign-in itself with the action the rest of Paymenter uses.
- *
- * ## Two-factor
- *
- * Paymenter stores its own TOTP secret on the user (`tfa_secret`) and challenges for it in
- * `App\Livewire\Auth\Tfa`; Filament has a separate multi-factor system that Paymenter never
- * registers a provider for. Signing in here without checking `tfa_secret` would therefore
- * have let an administrator who had enabled two-factor skip it entirely — a weaker admin
- * login than the customer one. Instead the same handover the client login performs is done
- * here: stash the pending user, send them to `/2fa`, and let that component finish the
- * sign-in through the same action. It redirects to the client dashboard afterwards, where
- * `KeepStaffOutOfClientArea` returns staff to the panel.
+ * Also enforces Paymenter's own `tfa_secret`, which Filament's separate multi-factor system
+ * does not know about — without it an admin with 2FA enabled would skip it entirely. The
+ * handover matches the client login: stash the user, redirect to `/2fa`, let that component
+ * finish through the same action.
  *
  * @link docs/CORE-TOUCHPOINTS.md — "Admin panel: own login, renameable path"
  */
@@ -68,8 +52,8 @@ class Login extends BaseLogin
         $credentials = $this->getCredentialsFromFormData($data);
         $remember = (bool) ($data['remember'] ?? false);
 
-        // Same constant-time envelope core uses, so a wrong address and a wrong password
-        // still cannot be told apart by how long the answer takes.
+        // Core's constant-time envelope: a wrong address and a wrong password must not be
+        // distinguishable by how long the answer takes.
         $user = app(Timebox::class)->call(function (Timebox $timebox) use ($authProvider, $authGuard, $credentials, $remember): Authenticatable {
             $this->fireAttemptingEvent($authGuard, $credentials, $remember);
 
@@ -85,8 +69,8 @@ class Login extends BaseLogin
             return $user;
         }, (int) config('auth.timebox_duration', 200_000));
 
-        // `attemptWhen()` did this for us before; doing the sign-in ourselves means doing
-        // the panel check ourselves too, or any customer could sign in at the admin URL.
+        // `attemptWhen()` did this before; doing the sign-in ourselves means doing the panel
+        // check ourselves too, or any customer could sign in at the admin URL.
         if (($user instanceof FilamentUser) && (!$user->canAccessPanel(Filament::getCurrentOrDefaultPanel()))) {
             $this->fireFailedEvent($authGuard, $user, $credentials);
             $this->throwFailureValidationException();
@@ -104,9 +88,8 @@ class Login extends BaseLogin
             return null;
         }
 
-        // The one line this whole class exists for: issues the `user_sessions` row, puts its
-        // ulid in the session, signs the user in, sets the remember cookie and fires
-        // Paymenter's own login event (which is what writes the authentication log).
+        // The line this class exists for: issues the `user_sessions` row, signs the user in,
+        // sets the remember cookie and fires Paymenter's login event.
         app(PaymenterLogin::class)->execute($user, $remember);
 
         return app(LoginResponse::class);

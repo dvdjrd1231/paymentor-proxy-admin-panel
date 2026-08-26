@@ -16,26 +16,14 @@ use Paymenter\Extensions\Others\AdminOps\Support\PanelSession;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
- * Admin-area usability, built to the WHMCS admin the client asked us to match.
+ * The WHMCS-style admin: dashboard, per-customer summary, and the panel skin.
  *
- * Paymenter's admin is a competent Filament panel, but it is organised around records
- * rather than around a working day: the dashboard reports 30-day trends, and answering
- * "what needs doing" or "who is this customer" means visiting several lists. This adds the
- * two things WHMCS gets right and Paymenter does not —
+ * Entirely additive — disabling this returns the panel to stock Paymenter.
  *
- *  - a homepage that opens with today's figures, the work queue and the usual shortcuts;
- *  - a client summary, everything about one customer on one screen.
- *
- * All of it is additive. Nothing here replaces a core page, so disabling the extension
- * returns the panel to stock Paymenter — the one core touch is the **Summary** link on the
- * customer list, which is guarded by `class_exists` and documented as touchpoint #10.
- *
- * Adding that link from here was tried first and does not work: `Table::configureUsing()`
- * runs inside `Table::make()`, and the resource's own `table()` method runs afterwards with
- * `->recordActions([...])`, which resets the array before repopulating it. Anything pushed
- * from an extension is therefore discarded before the table renders. The same is true of
- * `->filters([...])`, which is why the action queue links to core's existing filters rather
- * than adding its own.
+ * Trap: a resource's table cannot be extended from here. `Table::configureUsing()` runs
+ * inside `Table::make()`, before the resource's own `table()` resets `recordActions` and
+ * `filters`, so anything pushed from an extension is discarded. Hence the Summary link is
+ * core touchpoint #10, and the action queue reuses core's filters.
  *
  * @link docs/02b-admin-area.md
  */
@@ -72,14 +60,8 @@ class AdminOps extends Extension
     }
 
     /**
-     * Make sure every sign-in leaves a `user_sessions` row behind.
-     *
-     * Paymenter authenticates in two halves — the session guard, and a `user_sessions` row
-     * that {@see \App\Http\Middleware\ResolveUserSession} checks on every request — and a user
-     * holding only the first is silently signed out one request later. The admin panel's own
-     * login page handles both, but the panel is *told* to use that page from vendored core, so
-     * this listener is what stops an upstream merge reverting that one line from taking the
-     * whole admin area down again. See {@see PanelSession}.
+     * Safety net: Paymenter signs out any user with no `user_sessions` row, so a sign-in path
+     * that does not create one silently breaks the panel. See {@see PanelSession}.
      */
     private function keepSignInsRecorded(): void
     {
@@ -87,14 +69,9 @@ class AdminOps extends Extension
     }
 
     /**
-     * The WHMCS admin look: menu bar, left rail, panels, tables.
-     *
-     * Three pieces, all registered from here so the whole skin arrives and leaves with the
-     * extension. Disable AdminOps and the panel is stock Filament again — including its
-     * navigation, because {@see WhmcsNavigation} is only installed while this runs.
-     *
-     * The one thing it cannot do from here is `->topNavigation()`, which is a panel
-     * construction-time call; that is the single core line, documented as touchpoint #11.
+     * The WHMCS look: menu bar, left rail, panels, tables — all registered here so the skin
+     * arrives and leaves with the extension. `->topNavigation()` is the one part that cannot
+     * be, being a panel construction-time call: core touchpoint #11.
      */
     private function registerWhmcsSkin(): void
     {
@@ -103,9 +80,7 @@ class AdminOps extends Extension
             fn (): string => Blade::render('@include(\'adminops::skin\')'),
         );
 
-        // The reference's two icon clusters, one at each end of the menu bar. The `+` goes
-        // after the brand and before the menus; the utility icons go inside `.fi-topbar-end`,
-        // after the search field and before the user menu — the reference's own order.
+        // The `+` sits between brand and menus; the utility icons after the search field.
         FilamentView::registerRenderHook(
             'panels::topbar.logo.after',
             fn (): string => Blade::render('@include(\'adminops::quick-create\')'),
@@ -116,31 +91,22 @@ class AdminOps extends Extension
             fn (): string => Blade::render('@include(\'adminops::toolbar\')'),
         );
 
-        // Inside `.fi-layout`, immediately before Filament's own sidebar — which
-        // `.fi-body-has-top-navigation` translates off-screen — so the rail becomes the
-        // page's left column rather than a second one beside it.
+        // First child of `.fi-layout`, so the rail becomes the page's left column rather than
+        // a second one beside Filament's own (which top navigation moves off-screen).
         FilamentView::registerRenderHook(
             'panels::layout.start',
             fn (): string => Blade::render('@include(\'adminops::rail\')'),
         );
 
-        // Core's own admin footer renders at `panels::sidebar.nav.end`, inside the sidebar
-        // that top navigation moves off-screen, so it would never be seen again.
-        //
-        // `body.end` rather than the obvious `panels::footer`, because that hook fires inside
-        // `.fi-main-ctn` — the content column, whose start edge is the left rail — and the
-        // reference's bar runs the full width of the window, under the rail. `body.end` is
-        // outside `.fi-layout` entirely, so the bar is full-bleed by construction rather than
-        // by a negative margin that would have to know how wide the rail is. It is also the
-        // one placement that works on the sign-in page, whose layout is a centred column:
-        // `panels::footer` there produced a short blue bar floating under the login card.
+        // `body.end`, not `panels::footer`: that hook fires inside the content column, so the
+        // bar would start at the rail instead of spanning the window — and on the sign-in
+        // page, whose layout is a centred column, it rendered as a short floating bar.
         FilamentView::registerRenderHook(
             'panels::body.end',
             fn (): string => Blade::render('@include(\'adminops::footer\')'),
         );
 
-        // Replaces the panel's whole navigation with WHMCS's menus. Registered through
-        // `Filament::serving()` because the panel does not exist yet when extensions boot.
+        // Via `Filament::serving()` because the panel does not exist yet when extensions boot.
         Filament::serving(function (): void {
             Filament::getCurrentOrDefaultPanel()?->navigation(
                 fn (NavigationBuilder $builder): NavigationBuilder => WhmcsNavigation::build($builder),
@@ -149,12 +115,8 @@ class AdminOps extends Extension
     }
 
     /**
-     * Ship the widgets' CSS in the panel head.
-     *
-     * A render hook rather than a `<style>` block inside each widget view: Livewire
-     * components must have a single root element, and polling re-renders the component, so
-     * a style tag living in a widget would either break the root or be re-sent on every
-     * poll.
+     * The widgets' CSS, in the panel head rather than inside each widget: a Livewire component
+     * needs a single root, and polling would re-send an inline `<style>` on every refresh.
      */
     private function registerStyles(): void
     {
@@ -165,17 +127,10 @@ class AdminOps extends Extension
     }
 
     /**
-     * Force the day's log file to be group-writable.
-     *
-     * Whichever process writes the first line of the day owns the file. The scheduler and
-     * artisan run as root, web requests as nginx, so on a day root got there first nginx
-     * could not append — and since logging is part of handling the request, that surfaced
-     * as 500s on the order pages with nothing recorded, the logger being what broke.
-     *
-     * Set here rather than in config/logging.php (where it also is) because config/ is not
-     * bind-mounted into the container and extensions/ is. Remove once ./config is mounted.
-     * Setting the mode beats chmod: it applies to whoever creates the file, and a chmod
-     * only holds until midnight.
+     * The day's log file is owned by whichever process writes to it first — root (scheduler,
+     * artisan) or nginx (web). When root won, nginx could not append, and the failed write
+     * surfaced as intermittent 500s with an empty log. Duplicated from config/logging.php
+     * because config/ is not bind-mounted into the container; remove once it is.
      */
     private function keepTheDailyLogWritable(): void
     {

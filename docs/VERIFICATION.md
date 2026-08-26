@@ -156,6 +156,56 @@ not move down, it disappears. Measured with `scrollWidth` vs `clientWidth` on
 Before the fix: 721 vs 585 at 1024 (*Addons* off the end, no scrollbar to hint at it), and
 opening the search wrapped *Addons* onto a clipped second line at every width up to ~1400.
 
+### 6.4 Full admin sweep — screens, links and workflows (2026-08-26)
+
+Driven against the dev server with a throwaway administrator, deleted afterwards.
+
+**Every admin screen.** All 99 parameterless admin GET routes requested and checked for both a
+2xx and the presence of the WHMCS chrome (topbar, rail, footer, dropdown guard, toolbar,
+account menu):
+
+| Outcome | Count | Notes |
+|---|---|---|
+| 200 with full chrome | 92 | |
+| 302 → child screen | 3 | `admin/extensions`, `admin/invoice`, `admin/services` — cluster roots; all land on a 200 |
+| 404 | 1 | `admin/client-summary/` with no record — correct, it is a per-customer route |
+| 403 | 3 | `admin/tax-rates*` — **correct**, and it exposed a real bug; see below |
+
+**Every link the chrome renders.** All 57 distinct admin links harvested from the rendered
+dashboard and requested: **54 × 200, 3 × 302, 0 broken, 0 bouncing to login.**
+
+**Workflows, in a real browser:**
+
+| Step | Result |
+|---|---|
+| unauthenticated `/admin` | ✅ bounces to `/admin/login` |
+| sign in | ✅ lands on `/admin`; 7 menus, 5 toolbar icons, rail, footer, account menu, widgets |
+| open topbar menu / wrench / account | ✅ exactly **1** panel each, never more |
+| **Sign out** | ✅ redirects to `/login` |
+| `user_sessions` row destroyed | ✅ counted 2 → 3 → 2 across sign-in and sign-out |
+| `/admin` after sign out | ✅ bounces to `/admin/login` |
+| console | ✅ clean at every step |
+
+The session count matters more than the redirect: Paymenter authenticates on that row, so a
+sign-out that only cleared the guard would leave a valid token behind for a stolen cookie.
+
+#### The bug this sweep found: a menu entry that answered 403
+
+`Tax Rates` was listed in the **Billing** menu and returned **403** when clicked.
+
+`TaxRateResource::canAccess()` gates on `config('settings.tax_enabled')`, which is off on this
+install, and Filament enforces `canAccess()` on the request. Our navigation only ever asked
+`canViewAny()` — which returns `true` here — so the entry was built and then refused. Two more
+core resources have the same shape: `ErrorLogResource` and `HttpLogResource` both require
+`admin.debug_logs.view` via `canAccess()`, so any role lacking it would have hit the same 403
+from the Utilities menu.
+
+Fixed by checking `canAccess()` alongside the policy in all three link builders —
+`WhmcsNavigation::link()`, `Toolbar::index()/create()` and `Rail::shortcut()`. (The rail links
+to nothing that overrides `canAccess()` today; it is guarded so the next resource that does
+cannot reintroduce this.) Verified: Tax Rates no longer appears anywhere in the chrome, and
+the 57-link walk is clean.
+
 ### 6.3 "Every dropdown is open" — degraded-JS guard (2026-08-26)
 
 Reported as broken styling; actually one script failing to execute. Diagnosed by blocking

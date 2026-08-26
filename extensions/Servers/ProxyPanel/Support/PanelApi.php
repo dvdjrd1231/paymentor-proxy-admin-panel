@@ -7,43 +7,16 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * The panel API as seen from the admin panel, rather than from a service.
+ * The panel API as seen from the admin panel rather than from a service.
  *
- * `ProxyPanel` itself is a Paymenter `Server` extension: everything it does hangs off a
- * `Service`, and its `config()` resolves settings by walking the call stack. The Locations
- * console has no service — it manages the panel's own infrastructure — so it needs a client
- * that can be constructed from the `Server` row alone. That is all this is.
+ * `ProxyPanel` is a `Server` extension whose `config()` resolves settings by walking the call
+ * stack, so it needs a `Service`. The Locations console manages the panel's own infrastructure
+ * and has none, so it needs a client built from the `Server` row alone. That is all this is.
  *
- * Endpoint groups, and what the live panel actually does with them (probed 2026-08-25
- * against adminproxies-dev.melodyproxy.com):
- *
- *   locations/list      ✅ 200 — 246 rows over 3 pages
- *   locations/{tag}     ✅ 200 — full row incl. do/linode/vultr priorities
- *   locations/new|update|delete|status   mutating; see the note on each method
- *   tunnels/list        ✅ 200 — 266 rows over 2 pages (re-probed 2026-08-26, previously 500)
- *   tunnels/{id}/class/{class}       ❌ 404 (HTML). Still unfixed.
- *   tunnels/info/{id}/class/{class}  ❌ 404 (HTML). Still unfixed.
- *   tunnels/new|update|delete|status ❔ untested — all documented with the same
- *                          `/class/{class}` segment as the two 404s above, so treat them as
- *                          suspect until probed. Not probed here because they mutate real
- *                          infrastructure.
- *
- * The two 404s are a route-shape mismatch, not a bad id: probed with a real `tunnel_id` +
- * `class` straight out of `list`, for one tunnel of each of the three classes present
- * (TunnelBroker, RouteGre, NewRoute). What *does* answer is **`GET /tunnels/{id}`** with no
- * `/class/{class}` segment at all, and its body is the provider-info shape
- * (`tunnel_id`, `local_ip`, `remote_ip`, `network48`, `network64`) — i.e. what
- * `tunnels/info/...` is documented to return.
- *
- * Both are worked around rather than left broken, and both try the **documented** path first:
- * {@see tunnelInfo()} falls back to `/tunnels/{id}`, {@see tunnel()} to the row `list` already
- * returns. The fallback fires on a 404 and nothing else ({@see PanelHttpException}), so a 500
- * or a rejected token still surfaces as itself instead of being reported as a missing record.
- * The moment the panel restores those routes, both revert to one direct call with no edit
- * here. See docs/PANEL-QUESTIONS.md.
- *
- * `list` paginates at **200** per page, not the 100 that `locations/list` uses; `tunnels()`
- * pages until an empty batch rather than trusting `total_pages`, so the difference is moot.
+ * Live-panel state (probed 2026-08-26): `locations/*` and `tunnels/list` all work;
+ * `tunnels/{id}/class/{class}` and `tunnels/info/{id}/class/{class}` answer 404, and
+ * `tunnels/new|update|delete|status` are untested because they mutate real infrastructure.
+ * The two 404s are worked around per-method. See docs/PANEL-QUESTIONS.md.
  *
  * @link docs/client-brief/locations.md
  * @link docs/client-brief/tunnels.md
@@ -179,16 +152,9 @@ class PanelApi
     // `tunnelsAvailable()` is still what the admin page asks before offering any of this.
 
     /**
-     * Every tunnel, over as many pages as it takes.
-     *
      * Pages until an empty batch rather than trusting `total_pages`, which under-reported on
-     * `locations/list` for months (it said 2 for 3 pages, quietly losing a fifth of the
-     * catalogue). It is correct on both endpoints today; paging to exhaustion costs one extra
-     * request and cannot be wrong. `tunnels/list` returns **200** rows per page where
-     * `locations/list` returns 100 — another reason not to hard-code a page size.
-     *
-     * Memoised per instance because {@see tunnel()} now reads from it: without that, listing
-     * a screen of tunnels would re-fetch all 266 rows once per row.
+     * `locations/list` for months. Page sizes also differ per endpoint (200 here, 100 there).
+     * Memoised because {@see tunnel()} reads from it.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -212,21 +178,11 @@ class PanelApi
     }
 
     /**
-     * One tunnel's panel-side record.
-     *
-     * The documented route is `GET /tunnels/{id}/class/{class}` and it **404s** on the current
-     * panel — verified with a real id and class out of `list`, for one tunnel of each class
-     * present, so it is the path that is missing rather than the record.
-     *
-     * There is no other route that returns this row: the surviving `GET /tunnels/{id}` gives
-     * the *provider* view (see {@see tunnelInfo()}), which has none of `location_id`,
-     * `service_id`, `email`, `username`, `status` or `tag`. But `list` returns exactly this
-     * row for every tunnel, so the fallback reads it from there and re-wraps it in the
-     * documented `{status, tunnels: [row]}` envelope — same data, same source of truth, and
-     * callers cannot tell which path served it.
-     *
-     * Tried in documented-first order so this reverts to a single direct call the moment the
-     * panel restores the route, with no change here.
+     * The documented route 404s on the current panel, and no other route returns this row —
+     * `GET /tunnels/{id}` gives the provider view, which lacks `location_id`, `service_id`,
+     * `email`, `username`, `status` and `tag`. So the fallback reads the row out of `list`
+     * and re-wraps it in the documented envelope. Documented path is tried first, so this
+     * reverts to one direct call when the panel restores the route.
      */
     public function tunnel(string $tunnelId, string $class): array
     {
@@ -257,18 +213,12 @@ class PanelApi
     }
 
     /**
-     * Live detail straight from the upstream provider, rather than the panel's copy.
+     * Live detail from the upstream provider. The documented path 404s; the panel serves the
+     * same body at `GET /tunnels/{id}`, so the two routes appear to have been folded into one.
      *
-     * Documented as `GET /tunnels/info/{id}/class/{class}`, which 404s. What the panel
-     * actually serves is `GET /tunnels/{id}` — no class segment — and its body is precisely
-     * this endpoint's documented shape (`tunnel_id`, `local_ip`, `remote_ip`, `network48`,
-     * `network64`), so the panel appears to have folded the two routes into one.
-     *
-     * Note this call reaches the provider, so it can legitimately fail per-tunnel: a
-     * `NewRoute` tunnel answered `{"status":"error","description":"Unable to get tunnel info:
-     * 404|"}`. That is the panel reporting an upstream failure, not a missing route, and
-     * {@see request()} surfaces it as a panel error — which is right, because the caller
-     * asked for live data and there is none.
+     * This reaches the provider, so it can fail per-tunnel — about a third of `NewRoute`
+     * tunnels answer `Unable to get tunnel info: 404|`. That is an upstream failure, not a
+     * missing route, and is surfaced as the panel error it is.
      */
     public function tunnelInfo(string $tunnelId, string $class): array
     {
@@ -340,16 +290,10 @@ class PanelApi
     }
 
     /**
-     * One panel call.
-     *
-     * Kept deliberately parallel to `ProxyPanel::request()`, including the two things the
-     * live panel does that a naive client gets wrong:
-     *
-     *  - an auth failure comes back as **HTTP 200 with a plain-text body**
-     *    ("Unable to authorize your request"), not 401 + JSON. Without the non-array check
-     *    a bad token reads as success and a delete would appear to have worked;
-     *  - a server-side fault comes back as an **HTML Tracy page**, so the body is echoed
-     *    truncated rather than pasted into the admin's notification.
+     * Parallel to `ProxyPanel::request()`, including the two things the live panel does that a
+     * naive client gets wrong: an auth failure returns **HTTP 200 with a plain-text body**
+     * (so without the non-array check a bad token reads as success), and a server fault
+     * returns an HTML Tracy page (so the body is truncated, not pasted into a notification).
      */
     private function request(string $method, string $path, array $data = []): array
     {

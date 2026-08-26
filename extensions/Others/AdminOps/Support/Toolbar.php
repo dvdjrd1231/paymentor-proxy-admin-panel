@@ -28,43 +28,24 @@ use Illuminate\Support\Facades\Schema;
 use Paymenter\Extensions\Servers\ProxyPanel\Admin\Pages\PanelLocations;
 
 /**
- * The two icon clusters that flank WHMCS's menu bar.
+ * The icon clusters at each end of WHMCS's menu bar: the `+` at the start, and search, cogs,
+ * updater, wrench, account and help at the end.
  *
- * The reference bar is not only menus. It opens with a **+** that creates any record from
- * anywhere, and closes with the icons an operator reaches for when the thing they want is not
- * a customer record. {@see WhmcsNavigation} rebuilt the menus; this is the rest of that bar.
+ * Which of those are links and which are menus was read off the reference's own template
+ * (`admin/templates/blend/nav.tpl`, `ul.right-nav`) — a screenshot cannot show the difference.
+ * The cogs and the updater are plain links; the wrench and help are menus. The account menu is
+ * Filament's own, moved into position by the skin rather than rebuilt here, so its sign-out
+ * keeps working.
  *
- * ## The reference's own order, and which of them are menus
- *
- * Read off `admin/templates/blend/nav.tpl` (`ul.right-nav`) rather than from the screenshots,
- * because the difference between a link and a dropdown is not visible in a screenshot:
- *
- * | icon           | reference behaviour                                                  |
- * |----------------|----------------------------------------------------------------------|
- * | magnifier      | Filament's global search, collapsed to a magnifier by the skin       |
- * | cogs (badged)  | **a link** to Automation Status — not a menu                         |
- * | download arrow | **a link** to the updater, and only shown when one is available      |
- * | wrench         | a menu, laid out as a grid of icon tiles (`ul.drop-icons`)           |
- * | avatar         | the account menu — where **Logout** lives                            |
- * | question mark  | a menu of documentation and support links                            |
- *
- * The account menu is not built here: the panel already renders Filament's own user menu in
- * that slot, wired to Paymenter's logout action, so the skin moves it into place between the
- * wrench and the help icon rather than duplicating it.
- *
- * Everything is permission-checked and URL-resolved **here**, not in the view, for the reason
- * spelled out at {@see WhmcsNavigation::resolveUrl()}: this renders on every admin page, so a
- * link that cannot be built has to disappear rather than throw while the topbar renders.
+ * Permission checks and URL resolution happen here, not in the view: this renders on every
+ * admin page, so an unbuildable link must vanish rather than throw. See
+ * {@see WhmcsNavigation::resolveUrl()}.
  *
  * @link docs/02b-admin-area.md
  */
 class Toolbar
 {
-    /**
-     * The **+** menu — create any record without first navigating to its list.
-     *
-     * @return array<int, array{label: string, url: string}>
-     */
+    /** @return array<int, array{label: string, url: string}> */
     public static function quickCreate(): array
     {
         return array_values(array_filter([
@@ -78,13 +59,9 @@ class Toolbar
     }
 
     /**
-     * The icons at the end of the bar, in the reference's order.
-     *
-     * Each entry is either `type => 'link'` (icon, tooltip, destination) or `type => 'menu'`
-     * (icon, tooltip, items). A menu whose items all resolved to nothing is dropped, on the
-     * same reasoning as {@see WhmcsNavigation::group()}: an empty dropdown reads as a broken
-     * panel rather than as a role that cannot go there. A link is dropped the same way when
-     * its target is unreachable.
+     * The end-of-bar icons, in the reference's order. Each entry is a `link` or a `menu`;
+     * either is dropped when nothing in it resolved, since an empty dropdown reads as breakage
+     * rather than as a role that cannot go there.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -99,17 +76,9 @@ class Toolbar
     }
 
     /**
-     * The wrench menu — every setup screen in the panel.
-     *
-     * Longer than the reference's six tiles, and it has to be: WHMCS's wrench opens onto a
-     * *Setup index page* that holds the rest, which Paymenter has no equivalent of, and
-     * {@see WhmcsNavigation::groups()} drops the Setup menu from the bar to match the
-     * reference. Everything that lived there is therefore reachable only from here, so this
-     * carries the full list in the reference's tile layout rather than six of them in the
-     * reference's exact wording.
-     *
-     * Ordered the way an operator builds a store — what you sell, where it runs, how you are
-     * paid, then the administrative plumbing — not alphabetically.
+     * The wrench menu — every setup screen, because the bar has no Setup menu and WHMCS's
+     * "Setup index page" has no Paymenter equivalent. Ordered the way a store gets built, not
+     * alphabetically.
      *
      * @return array<int, array{label: string, url: string, icon: ?string, target: ?string}>
      */
@@ -134,12 +103,8 @@ class Toolbar
     }
 
     /**
-     * The question mark — the reference's help menu, pointed at Paymenter's own resources.
-     *
-     * Same five entries in the same order, because staff read this menu by position: docs,
-     * somewhere to report a problem, somewhere to ask, what changed, and then — below a rule,
-     * as on the reference — what this installation actually is. WHMCS's last entry is its
-     * licence; ours is the version and updater, which is the equivalent question here.
+     * The reference's five help entries in its order, pointed at Paymenter's own resources.
+     * Its last is the licence; ours is the version, which answers the same question.
      *
      * @return array<int, array{label: string, url: string, icon: ?string, target: ?string}>
      */
@@ -155,16 +120,10 @@ class Toolbar
     }
 
     /**
-     * What the reference's red badge on the cogs actually counts.
-     *
-     * Two things an operator has to be told about without going to look: a queued job that
-     * gave up, and an unhandled exception. Errors are windowed to a week because the table is
-     * never pruned — an incident from March is history, not an alert, and a badge that only
-     * ever grows is one nobody reads.
-     *
-     * Both tables are guarded and the whole thing is caught: this number renders on every
-     * admin page, so a counting query that throws would be a 500 across the panel rather than
-     * a missing badge.
+     * The cogs badge: failed jobs plus exceptions from the last week. Windowed because
+     * `debug_logs` is never pruned and a badge that only grows is one nobody reads. Fully
+     * guarded — this renders on every admin page, so a throwing count would be a panel-wide
+     * 500 rather than a missing number.
      */
     public static function health(): ?int
     {
@@ -190,11 +149,7 @@ class Toolbar
 
     // ── plumbing ────────────────────────────────────────────────────────────────
 
-    /**
-     * A bare icon that goes straight somewhere, as the reference's cogs and updater do.
-     *
-     * @return array<string, mixed>|null
-     */
+    /** @return array<string, mixed>|null */
     private static function iconLink(string $key, string $icon, string $label, string $page, ?int $badge = null): ?array
     {
         $entry = static::page($page, $label);
@@ -235,18 +190,14 @@ class Toolbar
     }
 
     /**
-     * A resource's create page, or nothing if the role may not create one.
-     *
-     * `canCreate()` answers the *policy*, not whether a `create` route was registered — a
-     * resource may authorise creation and still only offer it in a modal — so the URL is
-     * resolved here and the entry dropped if it cannot be built. Same trap as
-     * {@see Rail::shortcut()}.
+     * `canCreate()` answers the policy, not whether a `create` route exists — a resource may
+     * authorise creation and only offer it in a modal — so the URL is resolved here too.
      *
      * @return array{label: string, url: string, icon: ?string, target: ?string, separated: bool}|null
      */
     private static function create(string $resource, string $label): ?array
     {
-        if (!class_exists($resource) || !$resource::canCreate()) {
+        if (!class_exists($resource) || !static::reachable($resource) || !$resource::canCreate()) {
             return null;
         }
 
@@ -258,7 +209,7 @@ class Toolbar
      */
     private static function index(string $resource, string $label, ?string $icon = null): ?array
     {
-        if (!class_exists($resource) || !$resource::canViewAny()) {
+        if (!class_exists($resource) || !static::reachable($resource) || !$resource::canViewAny()) {
             return null;
         }
 
@@ -266,12 +217,20 @@ class Toolbar
     }
 
     /**
+     * Core gates some resources in `canAccess()` rather than the policy — skipping it builds
+     * entries that answer 403. See {@see WhmcsNavigation::reachable()}.
+     */
+    private static function reachable(string $resource): bool
+    {
+        return !method_exists($resource, 'canAccess') || $resource::canAccess();
+    }
+
+    /**
      * @return array{label: string, url: string, icon: ?string, target: ?string, separated: bool}|null
      */
     private static function page(string $page, string $label, ?string $icon = null, bool $separated = false): ?array
     {
-        // `canAccess()` comes from the CanAuthorizeAccess trait, which a page is not obliged
-        // to use — a page without it authorises nothing and is simply reachable.
+        // A page need not use CanAuthorizeAccess; without it there is nothing to authorise.
         if (!class_exists($page)) {
             return null;
         }

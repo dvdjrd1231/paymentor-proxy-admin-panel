@@ -10,35 +10,21 @@ use App\Admin\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * The data behind WHMCS's left sidebar column — Shortcuts, System Information, Advanced
- * Search, Staff Online.
+ * The data behind WHMCS's left rail: Shortcuts, System Information, Advanced Search and
+ * Staff Online. Structure only — `rail.blade.php` renders it.
  *
- * Kept out of the Blade view so the view only decides how it looks, and so the queries can
- * be read and corrected in one place. Same reasoning as {@see Metrics}, which this leans on
- * for anything that is a count.
- *
- * Unlike the dashboard widgets, this renders on **every** admin page, so it is deliberately
- * cheap: three counts (already memoised per request by Metrics) and one session lookup.
+ * Everything is permission-checked and URL-resolved here, for the reason at
+ * {@see WhmcsNavigation::resolveUrl()}: this renders on every admin page, so a link that
+ * cannot be built must vanish rather than throw.
  *
  * @link docs/02b-admin-area.md
  */
 class Rail
 {
     /**
-     * The section the current page is in — the reference's contextual rail.
-     *
-     * On WHMCS the left column is not fixed furniture: open a Support page and it lists the
-     * Support screens, open Reports and it lists the reports. It is the menu you are already
-     * inside, kept in reach so you can move around a section without going back up to the
-     * menu bar.
-     *
-     * Reuses the menu groups rather than repeating them, so a screen can never appear in one
-     * and not the other, and so the permission checks behind them are applied once.
-     *
-     * The group's own icon comes along with it. On the reference every rail heading carries
-     * one, and taking it from the menu group means the icon beside "Support" in the rail is
-     * by construction the same idea as the one the menu uses — there is no second list of
-     * icons to keep in step.
+     * The section the current page is in — the reference's rail lists the menu you are inside,
+     * so it is {@see WhmcsNavigation}'s own groups viewed a second way. Sharing them means the
+     * rail and the bar cannot disagree about what exists or who may see it.
      *
      * @return array{label: string, icon: string|\BackedEnum|null, items: array<int, array{label: string, url: string, badge: ?string}>}|null
      */
@@ -84,21 +70,15 @@ class Rail
     }
 
     /**
-     * One shortcut, or nothing if the role may not create that record — or if the resource
-     * has no create page to link to.
-     *
-     * `canCreate()` answers whether the *policy* allows it, not whether a `create` route
-     * exists; a resource can authorise creation and still only offer it through a modal.
-     * Asking for a route that was never registered throws, and this rail renders on **every**
-     * admin page, so that would be a 500 across the whole panel rather than one absent link.
-     * The same oversight in the menus is what took the admin down once — see
-     * {@see WhmcsNavigation::resolveUrl()}.
+     * One shortcut, or nothing if the role may not create that record. `canCreate()` answers
+     * the policy, not whether a `create` route exists — a resource may authorise creation and
+     * only offer it in a modal — so the URL is resolved here too.
      *
      * @return array{label: string, url: string}|null
      */
     private static function shortcut(string $resource, string $label): ?array
     {
-        if (!class_exists($resource) || !$resource::canCreate()) {
+        if (!class_exists($resource) || !static::reachable($resource) || !$resource::canCreate()) {
             return null;
         }
 
@@ -107,6 +87,16 @@ class Rail
         } catch (\Throwable $e) {
             return null;
         }
+    }
+
+    /**
+     * Core gates some resources in `canAccess()` rather than the policy. Nothing the rail links
+     * to does today; guarded so the next one that does cannot reintroduce the 403 the menu had.
+     * See {@see WhmcsNavigation::reachable()}.
+     */
+    private static function reachable(string $resource): bool
+    {
+        return !method_exists($resource, 'canAccess') || $resource::canAccess();
     }
 
     /**
@@ -130,12 +120,8 @@ class Rail
     }
 
     /**
-     * The four filtered lists WHMCS puts under Advanced Search, each with its count.
-     *
-     * Rows with nothing in them are kept rather than dropped — unlike the dashboard's work
-     * queue. This is a search box, not a to-do list: "0 pending" is a useful answer to
-     * "is there anything pending", and a control that appears and disappears between page
-     * loads is worse than one that reads zero.
+     * The filtered lists WHMCS puts under Advanced Search, each with its count. Counts come
+     * from {@see Metrics} so the rail and the menu badges cannot disagree.
      *
      * @return array<int, array{label: string, count: int, url: string}>
      */

@@ -1,21 +1,14 @@
 {{--
     WHMCS "Six" admin skin for the Filament panel.
 
-    Plain CSS injected through the `panels::head.end` render hook, for the same reason as
-    `styles.blade.php`: the admin theme (`resources/css/filament/admin/theme.css`) only scans
-    `app/Admin` and `resources/views` for classes, `extensions/` is not a `@source`, and
-    rebuilding it would need a Vite build on every deployment. This loads after that compiled
-    stylesheet, so it wins on equal specificity and needs no build step — which matters,
-    because the server deploy does not run npm.
+    Plain CSS at `panels::head.end`, not a theme rebuild: the admin theme does not scan
+    `extensions/`, and a rebuild would put a Vite build in the deploy path (the server has no
+    npm). Loading after the compiled stylesheet wins on equal specificity.
 
-    It restyles Filament's own markup rather than replacing it. That is the whole trade: the
-    panel keeps every resource, policy, form and table it already has, and those internals
-    stay Filament's HTML — they read as the reference design, they are not its markup.
-
-    Class names below are Filament 5's (`fi-topbar`, `fi-section`, `fi-ta-*`, `fi-btn`).
-    They are a public styling surface but not a stability guarantee: after an upstream
-    Filament major, check this file. Nothing here can break the panel functionally — the
-    worst case is that it stops applying and the stock Filament design shows through.
+    Restyles Filament's markup rather than replacing it, so the panel keeps every resource,
+    form and table it has. Selectors are Filament 5's — a public surface, but not a stability
+    guarantee: re-check after an upstream major. Worst case it stops applying and stock
+    Filament shows through; nothing here can break the panel functionally.
 --}}
 <style>
     /* WHMCS Six's palette, sampled pixel-by-pixel from the reference screenshots rather
@@ -108,17 +101,13 @@
         display: none;
     }
 
-    /* Global search: a bare magnifier on the blue that grows into a field when you reach for
-       it, which is how the reference's search behaves. Collapsing the input rather than
-       replacing the component keeps core's resource-aware results and its ⌘K binding —
-       the keystroke focuses the input, and focus is what opens it.
+    /* Global search: a bare magnifier that grows into a field on reach, as the reference
+       does. Collapsing the input rather than replacing the component keeps core's results and
+       its ⌘K binding.
 
-       The expanded field is an **overlay**, not part of the row. In flow it was 14rem of
-       extra width in `.fi-topbar-end`, which squeezed `.fi-topbar-nav-groups` until Filament's
-       `flex-wrap: wrap` dropped the last menu onto a second line — and since this skin pins
-       the bar to 45px, that second line was clipped: opening the search made *Addons*
-       disappear. Taking the field out of flow means the bar cannot change shape no matter how
-       wide the field is. */
+       The open field is an **overlay**, not part of the row: in flow its 14rem squeezed the
+       menus until Filament wrapped the last one onto a clipped second line, so opening the
+       search made *Addons* disappear. */
     nav.fi-topbar .fi-global-search-ctn {
         position: relative;
         flex: none;
@@ -277,19 +266,13 @@
         font-variant-numeric: tabular-nums;
     }
 
-    /* ── The account menu ────────────────────────────────────────────────────
-       Where **Sign out** lives, and the reason it could not be found.
+    /* ── The account menu ────────────────────────
+       Where Sign out lives, and why it looked missing: the trigger is nothing but an avatar
+       `<img>`, and Paymenter's provider returns a Gravatar URL. Unreachable host or no
+       Gravatar and the button collapses to an invisible control on a blue bar.
 
-       Filament's user-menu trigger is nothing but an avatar `<img>`, and Paymenter's avatar
-       provider returns a **Gravatar URL**. On a server that cannot reach gravatar.com — or
-       for the many admin addresses that have no Gravatar — the image never paints, and since
-       the button is exactly the size of its content, what is left is an invisible control on
-       a blue bar. The menu was always there; there was nothing to press.
-
-       So the remote image is dropped and the trigger draws its own mark: a person glyph as an
-       inline `mask-image`, which needs no network request, cannot 404, and takes its colour
-       from the bar like every other icon here. Filament's own menu, and therefore its working
-       sign-out, is untouched — only how you get to it. */
+       So the remote image is dropped for an inline `mask-image` glyph — no request, cannot
+       404. Filament's menu and its working sign-out are untouched. */
     nav.fi-topbar .fi-user-menu-trigger {
         display: inline-flex;
         align-items: center;
@@ -317,19 +300,13 @@
         mask: var(--ao-user-mark) center / contain no-repeat;
     }
 
-    /* Menu entries: white on blue, the whole cell shading on hover, as on the reference.
+    /* Menu entries: white on blue, the whole cell shading on hover.
 
-       `flex-wrap: nowrap` overrides Filament, which wraps these onto as many lines as it
-       needs. That is right for a bar that grows with its contents and wrong for one pinned to
-       45px: the overflow was simply cut off, so at an awkward window width — or with the
-       search field open, before it became an overlay — the last menu vanished with no hint
-       that it was still there.
-
-       When they genuinely will not fit, the row scrolls sideways instead. That is safe here
-       only because Filament teleports every topbar dropdown to `<body>`: the panels are not
-       children of this element, so clipping the row does not clip the menus. The scrollbar
-       itself is hidden — it would be a grey stripe across the bottom of a blue bar — and the
-       row stays scrollable by wheel, trackpad and keyboard. */
+       `flex-wrap: nowrap` overrides Filament, which wraps these onto extra lines — right for
+       a bar that grows, wrong for one pinned to 45px, where the second line is simply clipped
+       and a menu vanishes silently. When they truly will not fit the row scrolls sideways,
+       which is safe only because Filament teleports these panels to `<body>`. The scrollbar
+       is hidden; wheel, trackpad and keyboard still scroll. */
     .fi-topbar-nav-groups {
         gap: 0;
         flex-wrap: nowrap;
@@ -354,19 +331,10 @@
         flex: none;
     }
 
-    /* Give up ornament before content, in that order, as the window narrows.
-
-       The numbers this is built on, measured on the dev panel: the brand block is 152px, the
-       icon cluster 249px, and the seven menus 721px — 1122px in all, so at anything under
-       about 1140px the row began to scroll and *Addons* went off the end. Filament stops
-       showing these menus altogether below 64rem (1024px) and offers the hamburger instead,
-       so the gap to close is 1024–1140px, and it is 130px wide.
-
-       Two steps, cheapest first. Tighter cells at 1400px, which buys a little and costs
-       nothing. Then at 1200px the chevrons go: they are decoration — the cell is visibly a
-       menu when you press it — and at ~20px each across seven menus they are most of the
-       shortfall on their own. The icons tighten at the same point. Together that is about
-       200px, enough to carry every menu down to the width where Filament takes over. */
+    /* Give up ornament before content as the window narrows. Measured: brand 152px + menus
+       721px + icons 249px = 1122px, and Filament hides these menus below 1024px — so the gap
+       to close is ~130px. Tighter cells at 1400px, then at 1200px the chevrons go (~20px x 7,
+       decoration) and the icons tighten. About 200px, enough to reach the hamburger. */
     @media (max-width: 1400px) {
         .fi-topbar-item-btn {
             padding-inline: 0.6rem;
@@ -412,28 +380,13 @@
         display: none;
     }
 
-    /* ── The guard that stops a missing script wrecking the page ─────────────
-       If `js/filament/support/support.js` does not execute, `Alpine.data('filamentDropdown')`
-       is never registered. Alpine still boots (Livewire bundles it), so it still strips
-       `x-cloak` off every panel — and then throws `filamentDropdown is not defined` on each
-       one and never positions it. The result is **every dropdown in the bar open at once**,
-       stacked over the page: eleven panels, unreadable, and it looks like the CSS has
-       collapsed rather than like one file failed to load.
+    /* Degraded-JS guard. If `support.js` does not execute, `filamentDropdown` is never
+       registered; Alpine still boots and strips `x-cloak`, then fails to position anything —
+       so every dropdown in the bar renders open at once and the page looks destroyed.
 
-       Reproduced exactly by blocking that one URL, which is how it was diagnosed.
-
-       Filament hides a closed panel with an inline `display: none` written by `x-float`
-       (closed: `position: fixed; display: none`; open: `…display: block; left: …; top: …`).
-       When x-float never runs there is no inline `display` at all — so that absence is a
-       reliable "nothing has taken charge of this panel yet" signal, and the sane default for
-       a panel nobody is positioning is hidden.
-
-       This costs nothing when the script does load: a closed panel is matched by
-       `[style*='display']` and keeps Filament's own rule, and an open one is untouched. It
-       also closes the sub-frame window between Alpine stripping `x-cloak` and x-float
-       setting the style. A panel that cannot be positioned is a menu that will not open —
-       annoying, but the rest of the page is still usable, which is the difference between a
-       cosmetic fault and an admin who cannot work. */
+       `x-float` always writes an inline `display` (none when closed, block when open), so its
+       absence means nothing has taken charge of the panel, and hidden is the right default.
+       Costs nothing when the script loads, and degrades to "menus will not open". */
     .fi-dropdown-panel:not([style*='display']) {
         display: none;
     }
@@ -964,20 +917,12 @@
     .fi-body .ao-tile-info { background-color: #8dd5d9; }
     .fi-body .ao-tile-info .ao-tile-icon { background-color: #68b1b5; }
 
-    /* ── Forms ───────────────────────────────────────────────────────────────
-       The reference lays a form out as alternating #ffffff / #efefef bands with the
-       label right-aligned against its field. Filament renders each field as a
-       `.fi-fo-field`, so the banding is `:nth-child` over those rather than markup this
-       skin would have to introduce.
+    /* ── Forms ────────────────────────
+       The reference bands a form #ffffff / #efefef with the label right-aligned. Done with
+       `:nth-child` over `.fi-fo-field` rather than markup this skin would have to introduce.
 
-       Applied only where fields are stacked in a single column — Filament's own grid
-       layouts put two fields on one row, and banding those would stripe half a row.
-
-       Confined to `.fi-layout`, which is the panel's *page* layout. Without that it also
-       reached the sign-in page — Filament renders that through `.fi-simple-layout` and it is
-       a form like any other — and banded a two-field login form into one white row and one
-       grey one, which is what "the login page style is broken" was. A record form wants the
-       reference's banding; a login box is not a record form. */
+       Confined to `.fi-layout` — the panel's *page* layout. Unscoped it also banded the
+       sign-in form, which is what "the login page style is broken" was. */
     .fi-layout .fi-fo-field:nth-child(even) {
         background: #efefef;
     }
@@ -1096,9 +1041,7 @@
         text-decoration: underline;
     }
 
-    /* Dark mode is deliberately left alone rather than forced off. The reference has no
-       dark palette to copy, but the rules above set explicit colours on the chrome, so a
-       staff member who prefers dark keeps a readable panel — the WHMCS blue simply sits on
-       Filament's dark surfaces instead of its light ones. Forcing light would override a
-       preference the panel offers, to match a reference that never had the choice. */
+    /* Dark mode is left alone rather than forced off: the rules above set explicit colours on
+       the chrome, so it stays readable either way, and forcing light would override a
+       preference the panel offers to match a reference that never had the choice. */
 </style>

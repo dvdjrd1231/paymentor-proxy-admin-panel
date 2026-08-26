@@ -48,30 +48,18 @@ use Paymenter\Extensions\Others\TicketTools\Admin\Resources\TicketNoteResource;
 use Paymenter\Extensions\Servers\ProxyPanel\Admin\Pages\PanelLocations;
 
 /**
- * The WHMCS admin menu bar, rebuilt over Paymenter's resources.
+ * The WHMCS menu bar, rebuilt over Paymenter's resources: grouped by what you are *doing*
+ * (Clients, Orders, Billing…) rather than by record type as core groups them.
  *
- * WHMCS groups the admin by **what you are doing** — Clients, Orders, Billing, Support,
- * Reports, Setup — where Paymenter groups it by *what kind of record it is* (Administration,
- * Configuration, Extensions, System). The client asked for the former, so this maps one onto
- * the other.
+ * Uses `Panel::navigation()` because a resource's group is a static property on the resource
+ * class — regrouping the normal way would mean editing two dozen core files.
  *
- * ## Why a NavigationBuilder and not per-resource groups
+ * Taking navigation over makes anything not named here unreachable, so {@see addons()} runs
+ * last and sweeps up whatever was not placed. A new extension therefore still appears,
+ * landing in Addons until someone files it properly.
  *
- * A resource's group is a static property on the resource class, so regrouping the panel the
- * obvious way would mean editing two dozen core files — exactly what this repo does not do.
- * `Panel::navigation()` takes the whole navigation over in one call, from outside, and is
- * the only way to do this without touching core.
- *
- * ## The catch-all matters
- *
- * Taking navigation over means anything not named here becomes **unreachable** — no menu
- * entry, no sidebar, nothing. Hand-listing alone would therefore quietly hide every resource
- * a future extension registers. So {@see addons()} runs last, diffs what the panel actually
- * has against what was placed, and puts the remainder under **Addons**. Adding an extension
- * still Just Works; it lands in Addons until somebody files it somewhere better.
- *
- * Every entry is permission-checked. A support-only role sees a shorter menu rather than
- * links that greet them with a 403.
+ * Every entry is permission-checked: a limited role sees a shorter menu, never a link that
+ * answers 403.
  *
  * @link docs/02b-admin-area.md
  */
@@ -97,14 +85,8 @@ class WhmcsNavigation
     }
 
     /**
-     * The WHMCS menus, built once per request.
-     *
-     * Public and memoised because the left rail needs them too: on the reference, the rail
-     * lists the section you are *in* — Support pages show the Support links, Reports pages
-     * show the reports — so it is the same structure viewed a second way. Building it once
-     * and sharing it means the menu and the rail cannot disagree about what exists or about
-     * who may see it, and the permission checks and URL resolution behind it run once rather
-     * than twice per page.
+     * Built once per request and shared with the rail, which shows the section you are in —
+     * so the two cannot disagree about what exists, and the permission checks run once.
      *
      * @return array<int, NavigationGroup>
      */
@@ -144,13 +126,9 @@ class WhmcsNavigation
     }
 
     /**
-     * The group the current page belongs to, or null on the dashboard.
-     *
-     * Matched on path rather than on Filament's own "active" flag: menu entries deliberately
-     * report themselves inactive ({@see link()}) because several of them point at the same
-     * resource under different filters, so there is nothing to ask. The longest matching
-     * path wins, so `/admin/services/cancellations` picks the cancellations entry rather
-     * than the `/admin/services` one it happens to start with.
+     * The group the current page belongs to, or null on the dashboard. Matched on path, not
+     * Filament's active flag — entries report themselves inactive ({@see link()}) because
+     * several point at one resource under different filters. Longest match wins.
      */
     public static function activeGroup(): ?NavigationGroup
     {
@@ -193,12 +171,8 @@ class WhmcsNavigation
     }
 
     /**
-     * Orders by status.
-     *
-     * The status filters point at **services**, not orders: a Paymenter order carries no
-     * status of its own — it is a container row holding the services bought together — so
-     * "Pending Orders" can only mean a service that is pending. Same reasoning as
-     * {@see Metrics::newServices()}.
+     * Status filters point at *services*, not orders: a Paymenter order is a container row
+     * with no status of its own. Same reasoning as {@see Metrics::newServices()}.
      */
     private static function orders(): ?NavigationGroup
     {
@@ -271,17 +245,8 @@ class WhmcsNavigation
     }
 
     /**
-     * WHMCS's Reports menu.
-     *
-     * Paymenter has no business-reporting module, so there are no report *pages* to list.
-     * What it has is the data those reports would be built from, and Filament lists take
-     * filters in the URL — so each entry here is the list a given report would have been a
-     * view of, pre-filtered. "Income" is the transactions that succeeded; "New Customers"
-     * is the customer list newest-first.
-     *
-     * The alternative was leaving Reports out, which is what the merged "Reports & Logs"
-     * menu did. The reference has both menus and staff look for them by name, so an honest
-     * set of filtered lists beats a missing menu.
+     * Paymenter has no reporting module, so each entry is the pre-filtered list a report would
+     * have been a view of. Staff look for this menu by name; filtered lists beat no menu.
      */
     private static function reports(): ?NavigationGroup
     {
@@ -308,13 +273,7 @@ class WhmcsNavigation
         ]);
     }
 
-    /**
-     * WHMCS's Utilities menu — the operational record of what the system did.
-     *
-     * This is what the merged menu actually contained: logs, the job queue, the cron, the
-     * updater. On the reference these live under Utilities, not Reports, and that is where
-     * staff go looking for them.
-     */
+    /** Logs, the job queue, the cron and the updater — where the reference keeps them. */
     private static function utilities(): ?NavigationGroup
     {
         return static::group('Utilities', 'ri-tools-line', [
@@ -357,11 +316,8 @@ class WhmcsNavigation
     }
 
     /**
-     * Everything the menus above did not claim.
-     *
-     * Without this, taking navigation over would hide any resource or page this file has not
-     * heard of — including every one a future extension adds. Anything left lands here, so
-     * the panel stays complete by construction rather than by remembering to edit this file.
+     * Everything the menus above did not claim, so the panel stays complete by construction
+     * rather than by remembering to edit this file when an extension is added.
      */
     private static function addons(): ?NavigationGroup
     {
@@ -396,10 +352,7 @@ class WhmcsNavigation
     // ── plumbing ────────────────────────────────────────────────────────────────
 
     /**
-     * A group, or null when every entry in it was filtered out.
-     *
-     * An empty dropdown is worse than a missing one: it looks like the panel is broken
-     * rather than like the role simply cannot reach those screens.
+     * Null when every entry was filtered out — an empty dropdown reads as breakage.
      *
      * @param  array<NavigationItem|null>  $items
      */
@@ -415,11 +368,9 @@ class WhmcsNavigation
     }
 
     /**
-     * A link to a resource page, or null if the resource is absent or barred.
-     *
-     * `class_exists` is what decides, not the `use` above — an import is a compile-time
-     * alias and loads nothing — so a disabled or removed extension drops out of the menu
-     * instead of fatalling the whole panel.
+     * Null if the resource is absent or barred. `class_exists` is what decides, not the
+     * `use` above — an import loads nothing — so a removed extension drops out of the menu
+     * rather than fatalling the panel.
      *
      * @param  array<string, mixed>  $params
      */
@@ -432,6 +383,10 @@ class WhmcsNavigation
         string|\Closure|null $badgeColor = null,
     ): ?NavigationItem {
         if (!class_exists($resource)) {
+            return null;
+        }
+
+        if (!static::reachable($resource)) {
             return null;
         }
 
@@ -463,6 +418,18 @@ class WhmcsNavigation
         return static::withBadge($item, $badge, $badgeColor);
     }
 
+    /**
+     * Whether the *screen* is open, not merely whether the record policy allows it. Core
+     * overrides `canAccess()` on three resources for reasons a policy cannot express —
+     * `TaxRateResource` closes when `settings.tax_enabled` is off, `ErrorLog` and `HttpLog`
+     * need `admin.debug_logs.view` — and Filament enforces it on the request. Checking only
+     * the policy put Tax Rates in the Billing menu on an install with tax off, answering 403.
+     */
+    private static function reachable(string $resource): bool
+    {
+        return !method_exists($resource, 'canAccess') || $resource::canAccess();
+    }
+
     /** A link to a standalone page, same rules as {@see link()}. */
     private static function page(string $page, string $label): ?NavigationItem
     {
@@ -490,22 +457,13 @@ class WhmcsNavigation
     }
 
     /**
-     * Resolve a menu URL now, and drop the entry if it cannot be built.
+     * Resolve the URL now and drop the entry if it cannot be built. **This guard took the
+     * admin down once:** `NavigationItem::url()` accepts a closure, so a bad URL fails while
+     * the topbar *renders* — an unhandled 500 on every admin page — not while the menu is
+     * assembled. So "the navigation builds" proves nothing; the URLs must resolve too.
      *
-     * **This is the guard that took the admin down once.** `NavigationItem::url()` accepts a
-     * closure, so a URL that cannot be generated does not fail while the menu is being
-     * assembled — it fails later, while the topbar is being *rendered*, and a route error
-     * there is an unhandled 500 on every admin page. Verifying that the navigation "builds"
-     * therefore proves nothing; the URLs have to be resolved too, which is what this does.
-     *
-     * The concrete case: `ClientSummary` is a per-customer screen at
-     * `admin/client-summary/{record}`. It is reached from a row on the customer list, never
-     * from a menu, so `getUrl()` with no record throws "Missing required parameter". The
-     * Addons catch-all, whose whole job is to sweep up pages nobody filed, swept it in.
-     *
-     * Catching rather than special-casing that one page: any resource or page whose route
-     * takes a parameter has the same problem, including ones that do not exist yet, and a
-     * menu entry that cannot be linked is simply not a menu entry.
+     * Caught rather than special-cased, because any route taking a parameter has this problem
+     * (the Addons catch-all swept in `ClientSummary`, which needs a customer id).
      */
     private static function resolveUrl(\Closure $url): ?string
     {
@@ -516,10 +474,7 @@ class WhmcsNavigation
         }
     }
 
-    /**
-     * Badges show a number or nothing, never a zero — the same rule the sidebar queues use.
-     * A row of grey zeroes down a menu is noise you learn to stop reading.
-     */
+    /** A number or nothing, never a zero: a column of grey zeroes is noise. */
     private static function withBadge(NavigationItem $item, ?\Closure $badge, string|\Closure|null $color): NavigationItem
     {
         if (!$badge) {
