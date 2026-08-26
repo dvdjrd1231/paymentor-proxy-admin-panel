@@ -181,6 +181,32 @@ Letting the row scroll sideways is the last resort rather than the fix, and it i
 all because Filament teleports every topbar dropdown to `<body>` — the panels are not children
 of the scrolling element, so clipping the row does not clip the menus.
 
+#### When `support.js` does not load, every menu opens at once
+
+Worth knowing because it looks nothing like its cause. If
+`js/filament/support/support.js` fails to execute, `Alpine.data('filamentDropdown')` is never
+registered. Alpine still boots — Livewire bundles it — so it still strips `x-cloak` from every
+dropdown panel, then throws `filamentDropdown is not defined` on each one and never positions
+any of them. The result is **all eleven panels in the bar open simultaneously**, stacked over
+the page. It reads as "the CSS has completely broken", which sends you looking in the wrong
+place; the stylesheets are fine and one script is missing.
+
+Diagnosed by blocking that single URL in DevTools, which reproduces the reported screenshot
+pixel for pixel. Blocking `app.js` instead breaks only the sidebar store; blocking
+`livewire.min.js` leaves every panel `x-cloak`ed and therefore correctly hidden.
+
+The skin now hides any panel that has no inline `display` (`skin.blade.php`, the rule above
+`.fi-dropdown-panel`). Filament's `x-float` always writes one — `display: none` when closed,
+`display: block; left: …; top: …` when open — so its absence means nothing has taken charge of
+that panel, and hidden is the right default. Verified: with the script blocked, 0 of 11 panels
+are visible and the page stays usable; with it loading, all three dropdown kinds (topbar menu,
+wrench grid, account) still open exactly one panel each.
+
+The likely trigger in the wild is caching. That file is 142 KB, served through Cloudflare with
+`Cache-Control: max-age=14400` and a `?v=5.6.8.0` buster tied to the *Filament version*, not to
+the deploy — so a truncated or errored copy, once cached, persists for up to four hours and a
+plain reload will not shift it. A hard reload (Ctrl+Shift+R) clears it.
+
 The **footer** is the reference's split bar: copyright at the start, pipe-separated links at
 the end. It renders at `panels::body.end` rather than the obvious `panels::footer`, for two
 reasons. `panels::footer` fires inside `.fi-main-ctn` — the content column, whose start edge
