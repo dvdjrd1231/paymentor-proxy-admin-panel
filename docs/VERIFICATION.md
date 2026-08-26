@@ -119,6 +119,48 @@ is visible in the list. The Operations metrics widget is registered on the dashb
 (verified via `Filament::getPanel('admin')->getWidgets()`; its stat values load lazily over
 Livewire, so they are not in the initial HTML).
 
+### 6.1 Admin sign-in and the WHMCS chrome (dev server, 2026-08-26)
+
+Driven over real HTTP against `paymenter-dev.7hoop.net` with a throwaway administrator, which
+was deleted afterwards, and screenshotted through Chrome DevTools Protocol at fixed viewports.
+
+| Check | Result |
+|---|---|
+| `/admin/login` serves `…AdminOps\Admin\Auth\Login` | ✅ |
+| Livewire `authenticate` → redirect to `/admin` | ✅ |
+| **Two consecutive** `GET /admin` after sign-in | ✅ both 200 — this is the regression; the second used to bounce to the login form |
+| Dashboard is the dashboard, not the login form | ✅ no `wire:submit="authenticate"`; rail, tiles and menus present |
+| Login page at 1440 / 768 / 390 (mobile emulation) | ✅ card centred, nothing overflows, no field banding |
+| Footer full-bleed, under the rail, pipe-separated | ✅ `Report a Bug \| Documentation \| Contact Us` |
+| Footer is outside `.fi-layout` | ✅ last element in `<body>` |
+| Topbar-end order | ✅ search · cogs (badge) · updates · wrench · account · help |
+| Account menu opens | ✅ person glyph visible; **Exit Admin** and **Sign out** both present |
+| Wrench menu | ✅ 14 tiles in a 3-column icon grid, inside the panel and inside the window |
+| Help menu | ✅ Documentation · Technical Support · Community Forums · What's New · ─ · Version Information |
+
+### 6.2 Top bar at width (dev server, 2026-08-26)
+
+The bar is pinned to 45px, so anything that wraps is clipped rather than shown — a menu does
+not move down, it disappears. Measured with `scrollWidth` vs `clientWidth` on
+`.fi-topbar-nav-groups`, search shut and search open, at each width:
+
+| Window | Menus fit (`scroll` = `client`) | Search open |
+|---|---|---|
+| 1024 | ✅ 525 = 525 | ✅ overlays, bar unchanged |
+| 1120 | ✅ 525 = 525 | ✅ |
+| 1200 | ✅ 525 = 525 | ✅ |
+| 1280 | ✅ 721 = 721 | ✅ |
+| 1366 | ✅ 721 = 721 | ✅ |
+| 768 | n/a — Filament's hamburger, icons intact, no wrap | ✅ |
+
+Before the fix: 721 vs 585 at 1024 (*Addons* off the end, no scrollbar to hint at it), and
+opening the search wrapped *Addons* onto a clipped second line at every width up to ~1400.
+
+**Not covered:** two-factor sign-in at the admin page. The code path mirrors the customer
+login exactly (stash `2fa` in the session, redirect to `/2fa`, the same action finishes it),
+but no administrator on this installation has `tfa_secret` set, so it has not been exercised
+against a real authenticator.
+
 ## 7. Static checks
 
 - `php -l` across all 250+ authored PHP files (extensions, themes, lang, touched core): **0 failures**.

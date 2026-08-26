@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Paymenter\Extensions\Others\AdminOps\Admin\Auth\Login as AdminOpsLogin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -55,7 +56,14 @@ class AdminPanelProvider extends PanelProvider
             // Admins sign in at the panel itself rather than through the customer login.
             // Without this Filament has no login route and bounces staff to /login, which
             // is the client area — the thing they are meant to be kept out of.
-            ->login()
+            //
+            // The page is AdminOps' rather than Filament's because Filament's signs in with
+            // the session guard alone, and ResolveUserSession logs out any user who has no
+            // `user_sessions` row — so the stock page authenticated successfully and was
+            // bounced back to the login form on the very next request. See
+            // docs/CORE-TOUCHPOINTS.md. Guarded, so removing the extension falls back to
+            // Filament's page rather than fatalling the panel.
+            ->login(class_exists(AdminOpsLogin::class) ? AdminOpsLogin::class : null)
             ->spa()
             // WHMCS puts its menus in a bar across the top, not down the side, and the
             // client asked for that layout. Filament renders navigation groups as topbar

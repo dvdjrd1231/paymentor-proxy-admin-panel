@@ -44,6 +44,12 @@
            number cannot drift apart. */
         --wa-topbar-h: 45px;
         --wa-rail-w: 195px;
+        --wa-footer-h: 34px;
+
+        /* The account menu's person glyph, inline so it needs no request and cannot 404 —
+           see the note at `.fi-user-menu-trigger`. Black in the data URI because it is used
+           as a mask: only the shape matters, the colour comes from `background-color`. */
+        --ao-user-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z'/%3E%3Cpath d='M4.5 20a7.5 7.5 0 0 1 15 0'/%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3C/svg%3E");
     }
 
     /* ── Canvas ──────────────────────────────────────────────────────────────
@@ -75,6 +81,14 @@
         height: var(--wa-topbar-h);
         padding-inline: 0;
         gap: 0;
+        /* The bar is one line high by design, so nothing in it may wrap onto a second one —
+           that line would be clipped rather than shown. See `.fi-topbar-nav-groups`. */
+        flex-wrap: nowrap;
+    }
+
+    /* The brand block is fixed furniture; only the menus should give up space. */
+    nav.fi-topbar .fi-topbar-start {
+        flex: none;
     }
 
     nav.fi-topbar .fi-logo,
@@ -97,7 +111,34 @@
     /* Global search: a bare magnifier on the blue that grows into a field when you reach for
        it, which is how the reference's search behaves. Collapsing the input rather than
        replacing the component keeps core's resource-aware results and its ⌘K binding —
-       the keystroke focuses the input, and focus is what opens it. */
+       the keystroke focuses the input, and focus is what opens it.
+
+       The expanded field is an **overlay**, not part of the row. In flow it was 14rem of
+       extra width in `.fi-topbar-end`, which squeezed `.fi-topbar-nav-groups` until Filament's
+       `flex-wrap: wrap` dropped the last menu onto a second line — and since this skin pins
+       the bar to 45px, that second line was clipped: opening the search made *Addons*
+       disappear. Taking the field out of flow means the bar cannot change shape no matter how
+       wide the field is. */
+    nav.fi-topbar .fi-global-search-ctn {
+        position: relative;
+        flex: none;
+    }
+
+    nav.fi-topbar .fi-global-search {
+        flex: none;
+    }
+
+    /* A fixed cell for the collapsed magnifier, so the bar reserves the same space whether
+       the field is open or shut. Without it the cell would be 0 wide once its only child
+       goes absolute, and the icon would have nothing to sit in. */
+    nav.fi-topbar .fi-global-search-field {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: var(--wa-topbar-h);
+    }
+
     nav.fi-topbar .fi-global-search-field .fi-input-wrp {
         background: transparent;
         border: 1px solid transparent;
@@ -117,10 +158,29 @@
         transition: width 140ms ease, padding-inline 140ms ease;
     }
 
+    /* Open: lifted out of the row and hung off the right-hand end of the search cell, so it
+       grows leftwards over the menus for as long as the pointer or the caret is in it, and
+       the row underneath never moves. */
     nav.fi-topbar .fi-global-search-field:hover .fi-input-wrp,
     nav.fi-topbar .fi-global-search-field:focus-within .fi-input-wrp {
+        position: absolute;
+        top: 50%;
+        inset-inline-end: 0;
+        transform: translateY(-50%);
+        width: 16rem;
+        z-index: 30;
         background: #ffffff;
         border-color: var(--wa-blue-dark);
+    }
+
+    /* The results panel is positioned against `.fi-global-search`, and core stretches it to
+       `inset-inline: 1rem` — the full width of a search that is `flex: 1`. This one is a
+       2.5rem cell, so that would render the results in a column two characters wide. */
+    nav.fi-topbar .fi-global-search-results-ctn {
+        inset-inline: auto;
+        inset-inline-end: 0;
+        width: 20rem;
+        max-width: calc(100vw - 1rem);
     }
 
     nav.fi-topbar .fi-global-search-field:hover .fi-input-wrp .fi-icon,
@@ -130,7 +190,7 @@
 
     nav.fi-topbar .fi-global-search-field:hover .fi-input,
     nav.fi-topbar .fi-global-search-field:focus-within .fi-input {
-        width: 14rem;
+        width: 100%;
         padding-inline-end: 0.5rem;
     }
 
@@ -139,6 +199,13 @@
        injected by AdminOps through the topbar render hooks. Square, flat, and
        shading the whole cell on hover — the same treatment as a menu entry, so
        the two clusters read as part of the bar rather than as buttons on it. */
+    /* Filament spaces `.fi-topbar-end` out by 1rem, which reads as five separate buttons
+       floating on the bar. On the reference they are one contiguous strip of cells, so the
+       gap is closed here and the cells carry their own padding instead. */
+    .fi-topbar-end {
+        column-gap: 0;
+    }
+
     .ao-tool {
         position: relative;
         display: inline-flex;
@@ -151,10 +218,24 @@
         color: #ffffff;
         cursor: pointer;
         line-height: 1;
+        /* Two of these are `<a>` now, not `<button>` — the reference's cogs and updater go
+           straight somewhere rather than opening a menu — so the anchor defaults have to be
+           undone or they arrive underlined and in the link colour. */
+        text-decoration: none;
     }
 
     .ao-tool:hover {
         background: var(--wa-blue-dark);
+        color: #ffffff;
+    }
+
+    /* The reference closes its bar with the question mark, and puts the account menu in front
+       of it. Filament renders its user menu last, after every render hook in `.fi-topbar-end`,
+       so there is no hook between them to render into — but the row is a flexbox, so ordering
+       the help cluster after everything else puts the two in the reference's order without
+       replacing the account menu with a copy of our own. */
+    .ao-tool-wrap-help {
+        order: 1;
     }
 
     /* Selected through the button, not on its own: `generate_icon_html()` adds
@@ -196,9 +277,116 @@
         font-variant-numeric: tabular-nums;
     }
 
-    /* Menu entries: white on blue, the whole cell shading on hover, as on the reference. */
+    /* ── The account menu ────────────────────────────────────────────────────
+       Where **Sign out** lives, and the reason it could not be found.
+
+       Filament's user-menu trigger is nothing but an avatar `<img>`, and Paymenter's avatar
+       provider returns a **Gravatar URL**. On a server that cannot reach gravatar.com — or
+       for the many admin addresses that have no Gravatar — the image never paints, and since
+       the button is exactly the size of its content, what is left is an invisible control on
+       a blue bar. The menu was always there; there was nothing to press.
+
+       So the remote image is dropped and the trigger draws its own mark: a person glyph as an
+       inline `mask-image`, which needs no network request, cannot 404, and takes its colour
+       from the bar like every other icon here. Filament's own menu, and therefore its working
+       sign-out, is untouched — only how you get to it. */
+    nav.fi-topbar .fi-user-menu-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: var(--wa-topbar-h);
+        padding: 0 0.75rem;
+        cursor: pointer;
+    }
+
+    nav.fi-topbar .fi-user-menu-trigger:hover {
+        background: var(--wa-blue-dark);
+    }
+
+    nav.fi-topbar .fi-user-menu-trigger .fi-avatar {
+        display: none;
+    }
+
+    nav.fi-topbar .fi-user-menu-trigger::after {
+        content: '';
+        display: block;
+        width: 1.35rem;
+        height: 1.35rem;
+        background-color: #ffffff;
+        -webkit-mask: var(--ao-user-mark) center / contain no-repeat;
+        mask: var(--ao-user-mark) center / contain no-repeat;
+    }
+
+    /* Menu entries: white on blue, the whole cell shading on hover, as on the reference.
+
+       `flex-wrap: nowrap` overrides Filament, which wraps these onto as many lines as it
+       needs. That is right for a bar that grows with its contents and wrong for one pinned to
+       45px: the overflow was simply cut off, so at an awkward window width — or with the
+       search field open, before it became an overlay — the last menu vanished with no hint
+       that it was still there.
+
+       When they genuinely will not fit, the row scrolls sideways instead. That is safe here
+       only because Filament teleports every topbar dropdown to `<body>`: the panels are not
+       children of this element, so clipping the row does not clip the menus. The scrollbar
+       itself is hidden — it would be a grey stripe across the bottom of a blue bar — and the
+       row stays scrollable by wheel, trackpad and keyboard. */
     .fi-topbar-nav-groups {
         gap: 0;
+        flex-wrap: nowrap;
+        min-width: 0;
+        margin-inline: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .fi-topbar-nav-groups::-webkit-scrollbar {
+        display: none;
+    }
+
+    .fi-topbar-item {
+        flex: none;
+    }
+
+    /* Fixed furniture at the end of the bar: it must not be squeezed by the menus, nor grow
+       and squeeze them. `.fi-global-search` is `flex: 1` in core, which is what let the open
+       search take the menus' width in the first place. */
+    .fi-topbar-end {
+        flex: none;
+    }
+
+    /* Give up ornament before content, in that order, as the window narrows.
+
+       The numbers this is built on, measured on the dev panel: the brand block is 152px, the
+       icon cluster 249px, and the seven menus 721px — 1122px in all, so at anything under
+       about 1140px the row began to scroll and *Addons* went off the end. Filament stops
+       showing these menus altogether below 64rem (1024px) and offers the hamburger instead,
+       so the gap to close is 1024–1140px, and it is 130px wide.
+
+       Two steps, cheapest first. Tighter cells at 1400px, which buys a little and costs
+       nothing. Then at 1200px the chevrons go: they are decoration — the cell is visibly a
+       menu when you press it — and at ~20px each across seven menus they are most of the
+       shortfall on their own. The icons tighten at the same point. Together that is about
+       200px, enough to carry every menu down to the width where Filament takes over. */
+    @media (max-width: 1400px) {
+        .fi-topbar-item-btn {
+            padding-inline: 0.6rem;
+        }
+    }
+
+    @media (max-width: 1200px) {
+        .fi-topbar-item-btn {
+            padding-inline: 0.45rem;
+            column-gap: 0;
+        }
+
+        .fi-topbar-group-toggle-icon {
+            display: none;
+        }
+
+        .ao-tool,
+        nav.fi-topbar .fi-user-menu-trigger {
+            padding-inline: 0.45rem;
+        }
     }
 
     /* Full-height cells, so hovering shades the bar from top to bottom as the reference
@@ -242,6 +430,65 @@
     .fi-dropdown-list-item:hover {
         background: #f5f5f5;
         color: var(--wa-blue);
+    }
+
+    /* The reference rules off the last entry of its help menu — the one that answers "what
+       is this installation", rather than "where do I get help". */
+    .fi-dropdown-list-item.ao-drop-item-separated {
+        margin-top: 0.3rem;
+        border-top: 1px solid #e5e5e5;
+        padding-top: 0.55rem;
+    }
+
+    /* ── The wrench menu ─────────────────────────────────────────────────────
+       The reference's `ul.drop-icons`: not a list of links but a grid of tiles, each an icon
+       over its label, three to a row. Three because that is the reference's own count, and
+       because at two the panel is a column and at four the labels start wrapping. */
+    /* Three equal columns of whatever the panel is, rather than three fixed ones: the panel
+       is `width: 100vw` capped by its width class, so on a phone it is the screen and the
+       tiles have to come with it. Fixed columns overflowed it instead. */
+    .ao-drop-icons {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        width: 100%;
+        gap: 1px;
+        padding: 0.35rem;
+    }
+
+    @media (max-width: 26rem) {
+        .ao-drop-icons {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .ao-drop-icons .ao-drop-icon {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.4rem;
+        padding: 0.7rem 0.4rem;
+        border-radius: var(--wa-radius);
+        color: var(--wa-ink);
+        font-size: 12px;
+        line-height: 1.3;
+        text-align: center;
+        text-decoration: none;
+    }
+
+    .ao-drop-icons .ao-drop-icon:hover {
+        background: #f5f5f5;
+        color: var(--wa-blue);
+    }
+
+    /* Muted, and staying muted on hover: on the reference these mark the tile, they are not
+       the thing you are reading. Sized through the anchor for the reason given at
+       `.ao-tool .ao-tool-icon` — `generate_icon_html()` sets a size at two-class
+       specificity, so a lone class here would lose to it. */
+    .ao-drop-icons .ao-drop-icon .ao-drop-icon-mark .fi-icon {
+        width: 1.4rem;
+        height: 1.4rem;
+        color: var(--wa-link);
     }
 
     /* ── The left rail ───────────────────────────────────────────────────────
@@ -698,40 +945,120 @@
        skin would have to introduce.
 
        Applied only where fields are stacked in a single column — Filament's own grid
-       layouts put two fields on one row, and banding those would stripe half a row. */
-    .fi-fo-field:nth-child(even) {
+       layouts put two fields on one row, and banding those would stripe half a row.
+
+       Confined to `.fi-layout`, which is the panel's *page* layout. Without that it also
+       reached the sign-in page — Filament renders that through `.fi-simple-layout` and it is
+       a form like any other — and banded a two-field login form into one white row and one
+       grey one, which is what "the login page style is broken" was. A record form wants the
+       reference's banding; a login box is not a record form. */
+    .fi-layout .fi-fo-field:nth-child(even) {
         background: #efefef;
     }
 
-    .fi-fo-field {
+    .fi-layout .fi-fo-field {
         padding: 0.5rem 0.75rem;
     }
 
     /* Inline labels get the reference's right alignment; stacked ones are left alone,
        because right-aligning a label that sits *above* its field just looks broken. */
-    .fi-fo-field-has-inline-label .fi-fo-field-label-col {
+    .fi-layout .fi-fo-field-has-inline-label .fi-fo-field-label-col {
         text-align: end;
     }
 
+    /* ── Sign-in ─────────────────────────────────────────────────────────────
+       The panel's own login page (`.fi-simple-layout`). It carries none of the chrome above —
+       no bar, no rail — so left alone it was stock Filament with this skin's form rules
+       leaking onto it. Given its own treatment instead: a bordered card on the grey the
+       reference uses behind a bare page, and sized in `rem` off the viewport so it stays a
+       card on a phone rather than a full-bleed white sheet. */
+    /* Filament sizes this to the full viewport, which was written for a page with no footer
+       under it. Leaving it would put the sign-in box one footer's worth below centre and give
+       a login page — the one page with nothing to scroll — a scrollbar. */
+    .fi-simple-layout {
+        background: #f0f0f0;
+        min-height: calc(100dvh - var(--wa-footer-h));
+        padding: 1rem;
+    }
+
+    .fi-simple-main {
+        max-width: 26rem;
+        margin-block: 0;
+        padding: 1.75rem;
+        border: 1px solid var(--wa-panel-border);
+        border-top: 3px solid var(--wa-blue);
+        border-radius: var(--wa-radius);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Filament stacks the brand, the page heading and the form with generous spacing meant
+       for a full-width page; at this width that pushed the button below the fold on a short
+       window. */
+    .fi-simple-layout .fi-logo {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--wa-blue);
+    }
+
+    .fi-simple-layout .fi-header-heading {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--wa-ink);
+    }
+
+    /* The one place a full-width primary button is right: it is the only thing to press. */
+    .fi-simple-layout .fi-form .fi-btn {
+        width: 100%;
+        justify-content: center;
+        padding-block: 0.5rem;
+        font-size: 13px;
+    }
+
+    @media (max-width: 30rem) {
+        .fi-simple-main {
+            padding: 1.15rem;
+        }
+    }
+
     /* ── Footer ──────────────────────────────────────────────────────────────
-       Copyright at the start, links at the end — the reference's split bar. It wraps
-       rather than shrinks on a narrow window, so neither half is ever truncated. */
+       Copyright at the start, pipe-separated links at the end — the reference's split bar,
+       running the full width of the window and passing *under* the left rail rather than
+       starting where the content does. That full bleed is why AdminOps renders it at
+       `panels::body.end`: the bar is a sibling of `.fi-layout`, not a child of the content
+       column, so it needs no negative margin and no knowledge of how wide the rail is.
+
+       It wraps rather than shrinks on a narrow window, so neither half is ever truncated. */
     .ao-admin-footer {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
-        gap: 0.5rem 1rem;
-        padding: 0.6rem 1rem;
-        border-top: 1px solid var(--wa-border);
+        gap: 0.25rem 1rem;
+        min-height: var(--wa-footer-h);
+        padding: 0.5rem 1rem;
         background: var(--wa-blue);
         color: #ffffff;
-        font-size: 11.5px;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    /* The layout above it is sized so the two together are exactly one viewport. Filament
+       gives `.fi-main-ctn` `100dvh - 4rem`, which assumed its own 64px bar and no footer at
+       all; left alone that is a scrollbar on every page with nothing under the fold but the
+       footer. */
+    .fi-main-ctn {
+        min-height: calc(100dvh - var(--wa-topbar-h) - var(--wa-footer-h));
     }
 
     .ao-admin-footer-links {
         display: flex;
-        gap: 0.9rem;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.45rem;
+    }
+
+    .ao-admin-footer-sep {
+        color: rgba(255, 255, 255, 0.45);
     }
 
     .ao-admin-footer a {

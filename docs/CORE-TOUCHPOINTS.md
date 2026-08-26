@@ -322,9 +322,30 @@ what made this look intermittent and unrelated to any change.
 panel, reach a customer's account only by impersonating, and never browse the client area as
 themselves. Two of the three pieces cannot be done from an extension:
 
-- **`->login()`** — without it Filament registers no login route, so an unauthenticated
-  `/admin` redirects to `/login`, the customer login. Staff were being sent into the client
-  area to reach the admin panel.
+- **`->login(AdminOpsLogin::class)`** — without it Filament registers no login route, so an
+  unauthenticated `/admin` redirects to `/login`, the customer login. Staff were being sent
+  into the client area to reach the admin panel.
+
+  The **page class** is the second half of this, and it is not optional. Filament's stock
+  login page signs in with the session guard alone, but Paymenter authenticates with *two*
+  things: the guard, and a `user_sessions` row that `ResolveUserSession` checks on every
+  request. That row is created in exactly one place, `App\Actions\Auth\Login`, which the
+  customer login calls and Filament knows nothing about — so the stock page validated the
+  password, redirected to the panel, and `ResolveUserSession` logged the user straight back
+  out on the very next request. **The admin panel could not be signed into at all**: the login
+  form simply reappeared, with no error and nothing in the log, because from the middleware's
+  point of view nothing had gone wrong — it saw a session it had never issued.
+
+  `Paymenter\Extensions\Others\AdminOps\Admin\Auth\Login` keeps Filament's form, validation,
+  rate limiting, panel-access check and events, and replaces only the sign-in itself with that
+  action. It also enforces Paymenter's own `tfa_secret` second factor, which Filament's
+  multi-factor system does not know about and which the stock page therefore skipped.
+
+  Guarded by `class_exists`, so removing the extension falls back to Filament's page rather
+  than fatalling the panel — and `AdminOps` additionally listens for `Illuminate\Auth\Events\Login`
+  (`Support/PanelSession.php`) and issues the missing row for **any** sign-in path that did not
+  create one. That listener is why reverting this line on an upstream merge no longer takes
+  the whole admin area down; it is a safety net, not the fix.
 - **`->path(config('settings.admin_path') ?: 'admin')`** — the panel path is read when the
   panel registers its routes, which happens before any extension boots, so an extension
   cannot change it afterwards.
@@ -342,7 +363,10 @@ php artisan app:settings:change admin_path myadmin
 `Others/PortalBehavior/Middleware/KeepStaffOutOfClientArea`, appended to the `web` group.
 
 **If not re-applied after an upgrade:** the panel returns to `/admin` with no login page, and
-staff are bounced through the customer login again. Impersonation still works either way.
+staff are bounced through the customer login again. Impersonation still works either way. If
+only the page class is reverted — `->login()` with no argument — sign-in still works, because
+`PanelSession` issues the session row, but an administrator with two-factor enabled is no
+longer challenged for it. Verify with `docs/VERIFICATION.md`.
 
 ---
 

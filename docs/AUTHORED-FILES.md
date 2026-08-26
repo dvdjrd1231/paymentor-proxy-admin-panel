@@ -34,6 +34,8 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 - `extensions/Others/AdminOps/Admin/Pages/ClientSummary.php` — one-screen customer view + log in as customer
 - `extensions/Others/AdminOps/Support/WhmcsNavigation.php` — the WHMCS menu bar over Paymenter's resources
 - `extensions/Others/AdminOps/Support/Toolbar.php` — the `+` and utility icons at each end of that bar
+- `extensions/Others/AdminOps/Admin/Auth/Login.php` — the admin sign-in page, on Paymenter's auth stack
+- `extensions/Others/AdminOps/Support/PanelSession.php` — issues the session row any sign-in path missed
 - `extensions/Others/AdminOps/Support/Rail.php` — data for the WHMCS left sidebar column
 - `extensions/Others/AdminOps/Support/Metrics.php` — every dashboard figure, defined once
 - `extensions/Others/AdminOps/Support/Money.php` — multi-currency-safe money formatting

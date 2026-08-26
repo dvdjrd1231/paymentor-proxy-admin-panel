@@ -6,17 +6,12 @@ use App\Admin\Pages\CronStats;
 use App\Admin\Pages\Settings;
 use App\Admin\Pages\Updates;
 use App\Admin\Resources\ApiResource;
-use App\Admin\Resources\Audits\AuditResource;
 use App\Admin\Resources\CategoryResource;
 use App\Admin\Resources\ConfigOptionResource;
 use App\Admin\Resources\CurrencyResource;
 use App\Admin\Resources\CustomPropertyResource;
-use App\Admin\Resources\EmailLogResource;
-use App\Admin\Resources\ErrorLogResource;
 use App\Admin\Resources\ExtensionResource;
-use App\Admin\Resources\FailedJobResource;
 use App\Admin\Resources\GatewayResource;
-use App\Admin\Resources\HttpLogResource;
 use App\Admin\Resources\InvoiceResource;
 use App\Admin\Resources\NotificationTemplateResource;
 use App\Admin\Resources\OauthClientResource;
@@ -36,13 +31,26 @@ use Paymenter\Extensions\Servers\ProxyPanel\Admin\Pages\PanelLocations;
  * The two icon clusters that flank WHMCS's menu bar.
  *
  * The reference bar is not only menus. It opens with a **+** that creates any record from
- * anywhere, and closes with five utility icons — search, system health, updates, setup,
- * help — which is where an operator goes when the thing they want is not a customer record.
- * {@see WhmcsNavigation} rebuilt the menus; this is the rest of that bar.
+ * anywhere, and closes with the icons an operator reaches for when the thing they want is not
+ * a customer record. {@see WhmcsNavigation} rebuilt the menus; this is the rest of that bar.
  *
- * Search is not listed here: the panel already has Filament's global search in that slot,
- * and the skin collapses it to the reference's magnifier until it is focused. Re-implementing
- * it would mean giving up the resource-aware results core already provides.
+ * ## The reference's own order, and which of them are menus
+ *
+ * Read off `admin/templates/blend/nav.tpl` (`ul.right-nav`) rather than from the screenshots,
+ * because the difference between a link and a dropdown is not visible in a screenshot:
+ *
+ * | icon           | reference behaviour                                                  |
+ * |----------------|----------------------------------------------------------------------|
+ * | magnifier      | Filament's global search, collapsed to a magnifier by the skin       |
+ * | cogs (badged)  | **a link** to Automation Status — not a menu                         |
+ * | download arrow | **a link** to the updater, and only shown when one is available      |
+ * | wrench         | a menu, laid out as a grid of icon tiles (`ul.drop-icons`)           |
+ * | avatar         | the account menu — where **Logout** lives                            |
+ * | question mark  | a menu of documentation and support links                            |
+ *
+ * The account menu is not built here: the panel already renders Filament's own user menu in
+ * that slot, wired to Paymenter's logout action, so the skin moves it into place between the
+ * wrench and the help icon rather than duplicating it.
  *
  * Everything is permission-checked and URL-resolved **here**, not in the view, for the reason
  * spelled out at {@see WhmcsNavigation::resolveUrl()}: this renders on every admin page, so a
@@ -70,62 +78,84 @@ class Toolbar
     }
 
     /**
-     * The utility icons at the end of the bar, in the reference's order.
+     * The icons at the end of the bar, in the reference's order.
      *
-     * Each is a dropdown rather than a single link, because the reference's icons stand for
-     * *areas* — its gear opens system health, its wrench opens the whole Setup menu — and one
-     * icon that jumps straight to one page would strand the rest of the area behind a menu
-     * the operator has to go and find.
+     * Each entry is either `type => 'link'` (icon, tooltip, destination) or `type => 'menu'`
+     * (icon, tooltip, items). A menu whose items all resolved to nothing is dropped, on the
+     * same reasoning as {@see WhmcsNavigation::group()}: an empty dropdown reads as a broken
+     * panel rather than as a role that cannot go there. A link is dropped the same way when
+     * its target is unreachable.
      *
-     * A cluster entry with no reachable items is dropped, on the same reasoning as
-     * {@see WhmcsNavigation::group()}: an empty dropdown reads as a broken panel rather than
-     * as a role that cannot go there.
-     *
-     * @return array<int, array{key: string, icon: string, label: string, badge: ?int, items: array<int, array{label: string, url: string, target: ?string}>}>
+     * @return array<int, array<string, mixed>>
      */
     public static function utilities(): array
     {
         return array_values(array_filter([
-            static::cluster('health', 'heroicon-o-cog-6-tooth', 'System health', static::health(), [
-                static::index(ErrorLogResource::class, 'Error Log'),
-                static::index(FailedJobResource::class, 'Failed Jobs'),
-                static::index(HttpLogResource::class, 'HTTP Log'),
-                static::index(EmailLogResource::class, 'Email Log'),
-                static::index(AuditResource::class, 'Audit Log'),
-                static::page(CronStats::class, 'Cron Status'),
-            ]),
-            static::cluster('updates', 'heroicon-o-arrow-down-tray', 'Updates', null, [
-                static::page(Updates::class, 'Check for Updates'),
-                static::index(ExtensionResource::class, 'Extensions'),
-            ]),
-            // The whole Setup menu, because the bar no longer has one: the reference keeps
-            // setup behind this wrench, so {@see WhmcsNavigation::groups()} drops the Setup
-            // group and everything it held has to be reachable from here instead.
-            static::cluster('setup', 'heroicon-o-wrench-screwdriver', 'Setup', null, [
-                static::page(Settings::class, 'General Settings'),
-                static::index(ProductResource::class, 'Products'),
-                static::index(CategoryResource::class, 'Categories'),
-                static::index(ConfigOptionResource::class, 'Configurable Options'),
-                static::index(ServerResource::class, 'Servers'),
-                static::page(PanelLocations::class, 'Panel Locations'),
-                static::index(GatewayResource::class, 'Payment Gateways'),
-                static::index(CurrencyResource::class, 'Currencies'),
-                static::index(CustomPropertyResource::class, 'Custom Properties'),
-                static::index(NotificationTemplateResource::class, 'Email Templates'),
-                static::index(RoleResource::class, 'Administrator Roles'),
-                static::index(ApiResource::class, 'API Keys'),
-                static::index(OauthClientResource::class, 'OAuth Clients'),
-                static::index(ExtensionResource::class, 'Extensions'),
-            ]),
-            static::cluster('help', 'heroicon-o-question-mark-circle', 'Help', null, [
-                ['label' => 'Paymenter Documentation', 'url' => 'https://paymenter.org/docs', 'target' => '_blank'],
-                ['label' => 'Community Support', 'url' => 'https://discord.gg/paymenter', 'target' => '_blank'],
-            ]),
+            static::iconLink('health', 'heroicon-o-cog-6-tooth', 'Automation Status', CronStats::class, static::health()),
+            static::iconLink('updates', 'heroicon-o-arrow-down-tray', 'Update Paymenter', Updates::class),
+            static::menu('setup', 'heroicon-o-wrench-screwdriver', 'Setup', static::setup(), grid: true),
+            static::menu('help', 'heroicon-o-question-mark-circle', 'Help', static::help()),
         ]));
     }
 
     /**
-     * What the reference's red badge on the gear actually counts.
+     * The wrench menu — every setup screen in the panel.
+     *
+     * Longer than the reference's six tiles, and it has to be: WHMCS's wrench opens onto a
+     * *Setup index page* that holds the rest, which Paymenter has no equivalent of, and
+     * {@see WhmcsNavigation::groups()} drops the Setup menu from the bar to match the
+     * reference. Everything that lived there is therefore reachable only from here, so this
+     * carries the full list in the reference's tile layout rather than six of them in the
+     * reference's exact wording.
+     *
+     * Ordered the way an operator builds a store — what you sell, where it runs, how you are
+     * paid, then the administrative plumbing — not alphabetically.
+     *
+     * @return array<int, array{label: string, url: string, icon: ?string, target: ?string}>
+     */
+    private static function setup(): array
+    {
+        return array_values(array_filter([
+            static::page(Settings::class, 'General Settings', 'heroicon-o-adjustments-horizontal'),
+            static::index(ProductResource::class, 'Products', 'heroicon-o-cube'),
+            static::index(CategoryResource::class, 'Categories', 'heroicon-o-squares-2x2'),
+            static::index(ConfigOptionResource::class, 'Configurable Options', 'heroicon-o-adjustments-vertical'),
+            static::index(ServerResource::class, 'Servers', 'heroicon-o-server-stack'),
+            static::page(PanelLocations::class, 'Panel Locations', 'heroicon-o-globe-alt'),
+            static::index(GatewayResource::class, 'Payment Gateways', 'heroicon-o-credit-card'),
+            static::index(CurrencyResource::class, 'Currencies', 'heroicon-o-banknotes'),
+            static::index(CustomPropertyResource::class, 'Custom Properties', 'heroicon-o-tag'),
+            static::index(NotificationTemplateResource::class, 'Email Templates', 'heroicon-o-envelope'),
+            static::index(RoleResource::class, 'Administrator Roles', 'heroicon-o-user-group'),
+            static::index(ApiResource::class, 'API Keys', 'heroicon-o-key'),
+            static::index(OauthClientResource::class, 'OAuth Clients', 'heroicon-o-finger-print'),
+            static::index(ExtensionResource::class, 'Extensions', 'heroicon-o-puzzle-piece'),
+        ]));
+    }
+
+    /**
+     * The question mark — the reference's help menu, pointed at Paymenter's own resources.
+     *
+     * Same five entries in the same order, because staff read this menu by position: docs,
+     * somewhere to report a problem, somewhere to ask, what changed, and then — below a rule,
+     * as on the reference — what this installation actually is. WHMCS's last entry is its
+     * licence; ours is the version and updater, which is the equivalent question here.
+     *
+     * @return array<int, array{label: string, url: string, icon: ?string, target: ?string}>
+     */
+    private static function help(): array
+    {
+        return array_values(array_filter([
+            static::external('Documentation', 'https://paymenter.org/docs'),
+            static::external('Technical Support', 'https://github.com/Paymenter/Paymenter/issues'),
+            static::external('Community Forums', 'https://discord.gg/paymenter'),
+            static::external("What's New", 'https://github.com/Paymenter/Paymenter/releases'),
+            static::page(Updates::class, 'Version Information', separated: true),
+        ]));
+    }
+
+    /**
+     * What the reference's red badge on the cogs actually counts.
      *
      * Two things an operator has to be told about without going to look: a queued job that
      * gave up, and an unhandled exception. Errors are windowed to a week because the table is
@@ -161,18 +191,47 @@ class Toolbar
     // ── plumbing ────────────────────────────────────────────────────────────────
 
     /**
-     * @param  array<int, array{label: string, url: string, target: ?string}|null>  $items
-     * @return array{key: string, icon: string, label: string, badge: ?int, items: array<int, array{label: string, url: string, target: ?string}>}|null
+     * A bare icon that goes straight somewhere, as the reference's cogs and updater do.
+     *
+     * @return array<string, mixed>|null
      */
-    private static function cluster(string $key, string $icon, string $label, ?int $badge, array $items): ?array
+    private static function iconLink(string $key, string $icon, string $label, string $page, ?int $badge = null): ?array
     {
-        $items = array_values(array_filter($items));
+        $entry = static::page($page, $label);
 
+        if ($entry === null) {
+            return null;
+        }
+
+        return [
+            'type' => 'link',
+            'key' => $key,
+            'icon' => $icon,
+            'label' => $label,
+            'badge' => $badge,
+            'url' => $entry['url'],
+        ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     * @return array<string, mixed>|null
+     */
+    private static function menu(string $key, string $icon, string $label, array $items, bool $grid = false): ?array
+    {
         if ($items === []) {
             return null;
         }
 
-        return compact('key', 'icon', 'label', 'badge', 'items');
+        return [
+            'type' => 'menu',
+            'key' => $key,
+            'icon' => $icon,
+            'label' => $label,
+            'badge' => null,
+            'grid' => $grid,
+            'items' => $items,
+        ];
     }
 
     /**
@@ -183,7 +242,7 @@ class Toolbar
      * resolved here and the entry dropped if it cannot be built. Same trap as
      * {@see Rail::shortcut()}.
      *
-     * @return array{label: string, url: string, target: ?string}|null
+     * @return array{label: string, url: string, icon: ?string, target: ?string, separated: bool}|null
      */
     private static function create(string $resource, string $label): ?array
     {
@@ -195,21 +254,21 @@ class Toolbar
     }
 
     /**
-     * @return array{label: string, url: string, target: ?string}|null
+     * @return array{label: string, url: string, icon: ?string, target: ?string, separated: bool}|null
      */
-    private static function index(string $resource, string $label): ?array
+    private static function index(string $resource, string $label, ?string $icon = null): ?array
     {
         if (!class_exists($resource) || !$resource::canViewAny()) {
             return null;
         }
 
-        return static::entry($label, fn (): string => $resource::getUrl('index'));
+        return static::entry($label, fn (): string => $resource::getUrl('index'), $icon);
     }
 
     /**
-     * @return array{label: string, url: string, target: ?string}|null
+     * @return array{label: string, url: string, icon: ?string, target: ?string, separated: bool}|null
      */
-    private static function page(string $page, string $label): ?array
+    private static function page(string $page, string $label, ?string $icon = null, bool $separated = false): ?array
     {
         // `canAccess()` comes from the CanAuthorizeAccess trait, which a page is not obliged
         // to use — a page without it authorises nothing and is simply reachable.
@@ -221,16 +280,36 @@ class Toolbar
             return null;
         }
 
-        return static::entry($label, fn (): string => $page::getUrl());
+        return static::entry($label, fn (): string => $page::getUrl(), $icon, separated: $separated);
     }
 
     /**
-     * @return array{label: string, url: string, target: ?string}|null
+     * @return array{label: string, url: string, icon: ?string, target: ?string, separated: bool}
      */
-    private static function entry(string $label, \Closure $url): ?array
+    private static function external(string $label, string $url): array
+    {
+        return [
+            'label' => $label,
+            'url' => $url,
+            'icon' => null,
+            'target' => '_blank',
+            'separated' => false,
+        ];
+    }
+
+    /**
+     * @return array{label: string, url: string, icon: ?string, target: ?string, separated: bool}|null
+     */
+    private static function entry(string $label, \Closure $url, ?string $icon = null, bool $separated = false): ?array
     {
         try {
-            return ['label' => $label, 'url' => $url(), 'target' => null];
+            return [
+                'label' => $label,
+                'url' => $url(),
+                'icon' => $icon,
+                'target' => null,
+                'separated' => $separated,
+            ];
         } catch (\Throwable $e) {
             return null;
         }

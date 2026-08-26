@@ -7,9 +7,12 @@ use App\Classes\Extension\Extension;
 use Filament\Facades\Filament;
 use Filament\Navigation\NavigationBuilder;
 use Filament\Support\Facades\FilamentView;
+use Illuminate\Auth\Events\Login as AuthLogin;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\HtmlString;
+use Paymenter\Extensions\Others\AdminOps\Support\PanelSession;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
@@ -64,7 +67,23 @@ class AdminOps extends Extension
 
         $this->registerStyles();
         $this->registerWhmcsSkin();
+        $this->keepSignInsRecorded();
         $this->keepTheDailyLogWritable();
+    }
+
+    /**
+     * Make sure every sign-in leaves a `user_sessions` row behind.
+     *
+     * Paymenter authenticates in two halves — the session guard, and a `user_sessions` row
+     * that {@see \App\Http\Middleware\ResolveUserSession} checks on every request — and a user
+     * holding only the first is silently signed out one request later. The admin panel's own
+     * login page handles both, but the panel is *told* to use that page from vendored core, so
+     * this listener is what stops an upstream merge reverting that one line from taking the
+     * whole admin area down again. See {@see PanelSession}.
+     */
+    private function keepSignInsRecorded(): void
+    {
+        Event::listen(AuthLogin::class, [PanelSession::class, 'issueMissingToken']);
     }
 
     /**
@@ -107,8 +126,16 @@ class AdminOps extends Extension
 
         // Core's own admin footer renders at `panels::sidebar.nav.end`, inside the sidebar
         // that top navigation moves off-screen, so it would never be seen again.
+        //
+        // `body.end` rather than the obvious `panels::footer`, because that hook fires inside
+        // `.fi-main-ctn` — the content column, whose start edge is the left rail — and the
+        // reference's bar runs the full width of the window, under the rail. `body.end` is
+        // outside `.fi-layout` entirely, so the bar is full-bleed by construction rather than
+        // by a negative margin that would have to know how wide the rail is. It is also the
+        // one placement that works on the sign-in page, whose layout is a centred column:
+        // `panels::footer` there produced a short blue bar floating under the login card.
         FilamentView::registerRenderHook(
-            'panels::footer',
+            'panels::body.end',
             fn (): string => Blade::render('@include(\'adminops::footer\')'),
         );
 

@@ -95,7 +95,7 @@ strips, dark table headers, square buttons, a footer.
 | Piece | Where |
 |---|---|
 | **Menu bar** — Clients · Orders · Billing · Support · Reports & Logs · Setup · Addons | `Support/WhmcsNavigation.php` |
-| **Toolbar icons** — the `+` at the start of the bar, and system health / updates / setup / help at its end | `Support/Toolbar.php` + `resources/views/quick-create.blade.php`, `toolbar.blade.php` |
+| **Toolbar icons** — the `+` at the start of the bar, and automation status / updates / setup / account / help at its end | `Support/Toolbar.php` + `resources/views/quick-create.blade.php`, `toolbar.blade.php` |
 | **Left rail** — Shortcuts, System Information, Advanced Search, Staff Online, and the *Minimise Sidebar* bar | `Support/Rail.php` + `resources/views/rail.blade.php` |
 | **Skin** — topbar, dropdowns, panels, tables, pagination, forms, stat tiles, buttons, inputs | `resources/views/skin.blade.php` |
 | **Footer** | `resources/views/footer.blade.php` |
@@ -103,31 +103,96 @@ strips, dark table headers, square buttons, a footer.
 #### The icons at each end of the bar
 
 The reference bar is not only menus. It opens with a **+** that creates any record from
-wherever you happen to be, and closes with five icons — search, system health, updates,
-setup, help — which is where you go when the thing you want is not a customer record.
+wherever you happen to be, and closes with six icons — search, automation status, updates,
+setup, account, help — which is where you go when the thing you want is not a customer record.
+
+Which of them are *menus* and which are plain links was read off the reference's own template
+(`admin/templates/blend/nav.tpl`, `ul.right-nav`), because that difference is not visible in a
+screenshot. Two of them are links.
 
 - **`+`** — new client, order, invoice, service, ticket, product. Injected at
   `panels::topbar.logo.after`, so it sits between the brand and the menus.
 - **Search** — Filament's own global search, which was already in that slot. The skin
   collapses it to the reference's bare magnifier and grows it into a field on focus, so
   core's resource-aware results and its ⌘K binding are kept rather than reimplemented.
-- **System health** — error log, failed jobs, HTTP log, email log, audit log, cron status,
-  carrying the reference's red badge. It counts failed jobs plus exceptions from the last
-  seven days: `debug_logs` is never pruned, so an unwindowed badge would only ever grow.
-- **Updates** and **Setup** — the Updates page and extensions; the Setup menu's own screens.
-- **Help** — Paymenter's documentation and community, in a new tab.
+- **Automation status** — a **link** to the cron page, carrying the reference's red badge.
+  The badge counts failed jobs plus exceptions from the last seven days: `debug_logs` is
+  never pruned, so an unwindowed badge would only ever grow. The logs it used to list are all
+  in the **Utilities** menu, where the reference keeps them.
+- **Updates** — a **link** to the updater.
+- **Setup** — a menu, laid out as the reference's grid of icon tiles (`ul.drop-icons`). It
+  carries the full setup list rather than the reference's six, because WHMCS's wrench opens
+  onto a Setup *index page* that holds the rest and Paymenter has no equivalent — and the bar
+  itself has no Setup menu, to match the reference.
+- **Account** — Filament's own user menu, which is where **Sign out** lives. Not rebuilt
+  here; the skin moves it into the reference's position (after the wrench, before the
+  question mark) by ordering the flex row, so core's working sign-out and theme switcher are
+  kept rather than duplicated.
+- **Help** — documentation, technical support, community, what's new, and, below a rule,
+  version information: the reference's five entries in the reference's order.
 
 Every entry is permission-checked and its URL is resolved while the list is built, for the
 reason at `WhmcsNavigation::resolveUrl()`: this renders on **every** admin page, so a link
 that cannot be built has to disappear rather than throw mid-topbar. A cluster whose entries
 are all filtered out is dropped, not shown empty.
 
+Two things about the account menu are worth knowing, because both looked like missing
+features rather than defects:
+
+- **The avatar never painted.** Paymenter's avatar provider returns a **Gravatar URL**, and
+  the trigger button is nothing but that image — so on a server that cannot reach
+  gravatar.com, or for an address with no Gravatar, the button collapsed to nothing and the
+  panel appeared to have no sign-out at all. The skin hides the remote image and draws a
+  person glyph from an inline `mask-image` instead: no request, nothing to fail.
+- **The setup grid overflowed its own panel.** `.fi-dropdown-panel` carries
+  `max-width: 14rem !important` in the compiled theme, which no rule in `skin.blade.php` can
+  outrank, so the tiles rendered outside the white panel and off the edge of the window. The
+  panel is widened through Filament's own `width` prop, which *is* written to beat it, and
+  the dropdown is given `shift` so floating-ui keeps it on screen.
+
 The menu labels themselves lost their icons, because the reference's are text only. The
 group icons are still set — the rail now reads them for its section heading, so the icon
 beside *Support* in the rail is by construction the same one the menu means.
 
+#### The bar is one line high, and that has consequences
+
+Filament's topbar grows with its contents: `.fi-topbar-nav-groups` carries `flex-wrap: wrap`,
+so when the menus stop fitting they take a second line and the bar gets taller. This skin pins
+the bar to 45px to match the reference, which turns that graceful behaviour into a silent
+fault — the second line is **clipped**, so a menu does not move, it disappears.
+
+It was reachable two ways, and both are closed:
+
+- **Opening the search.** Core's `.fi-global-search` is `flex: 1`, and the skin grew the input
+  to 14rem on focus. That 14rem came out of the menus' width, which pushed *Addons* onto the
+  clipped second line: searching made a menu vanish. The expanded field is now an **overlay** —
+  absolutely positioned off the right-hand end of its own cell — so the row cannot change shape
+  no matter how wide the field is. Its results panel is re-anchored to match, because core
+  stretches that to `inset-inline: 1rem` of a search that is no longer full-width.
+- **A narrow window.** Measured on the dev panel: brand 152px + menus 721px + icons 249px =
+  1122px, and Filament only takes over with the hamburger below 1024px — so there was a 100px
+  band where the row overflowed. `flex-wrap: nowrap` stops the clipping, and two media queries
+  give up ornament rather than content: tighter cells at 1400px, and at 1200px the dropdown
+  chevrons (~20px × 7) and some icon padding. That is about 200px, which carries all seven
+  menus down to the width where core hides them anyway. Verified `scrollWidth === clientWidth`
+  at 1024, 1120, 1200, 1280 and 1366.
+
+Letting the row scroll sideways is the last resort rather than the fix, and it is only safe at
+all because Filament teleports every topbar dropdown to `<body>` — the panels are not children
+of the scrolling element, so clipping the row does not clip the menus.
+
+The **footer** is the reference's split bar: copyright at the start, pipe-separated links at
+the end. It renders at `panels::body.end` rather than the obvious `panels::footer`, for two
+reasons. `panels::footer` fires inside `.fi-main-ctn` — the content column, whose start edge
+is the left rail — while the reference's bar runs the full width of the window and passes
+*under* the rail; and on the sign-in page, whose layout is a centred column, it produced a
+short blue bar floating under the login card. `body.end` is outside `.fi-layout` entirely, so
+the bar is full-bleed by construction. `.fi-main-ctn`'s `min-height` is re-stated to
+`100dvh − topbar − footer`, or every page would carry a scrollbar with nothing under the fold
+but the footer.
+
 All of it is plain CSS injected at `panels::head.end` and markup injected at
-`panels::layout.start` / `panels::footer`. The admin theme only scans `app/Admin` and
+`panels::layout.start` / `panels::body.end`. The admin theme only scans `app/Admin` and
 `resources/views` for classes — `extensions/` is not a `@source` — so a utility class written
 here would not exist in the compiled stylesheet; and a rebuild would put a Vite build in the
 deployment path, which the server does not have. Plain CSS has neither problem.
