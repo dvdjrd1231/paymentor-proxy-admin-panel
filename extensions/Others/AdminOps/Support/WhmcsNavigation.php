@@ -44,6 +44,7 @@ use Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbArticleResource;
 use Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbCategoryResource;
 use Paymenter\Extensions\Others\PaymentFees\Admin\Resources\PaymentFeeRuleResource;
 use Paymenter\Extensions\Others\ProvisioningOps\Admin\Resources\ProvisioningOperationResource;
+use Paymenter\Extensions\Others\TermLimits\Admin\Resources\ServiceTermResource;
 use Paymenter\Extensions\Others\TicketTools\Admin\Resources\CannedResponseResource;
 use Paymenter\Extensions\Others\TicketTools\Admin\Resources\TicketNoteResource;
 use Paymenter\Extensions\Servers\ProxyPanel\Admin\Pages\PanelLocations;
@@ -190,6 +191,17 @@ class WhmcsNavigation
                 ServiceResource::class,
                 'Active Orders',
                 params: ['filters' => ['status' => ['value' => 'active']]],
+            ),
+            // Beside the orders it constrains. The badge counts terms that are overdue and
+            // still running, which should always be zero — a number there means the
+            // every-minute scheduler is not running.
+            static::link(
+                ServiceTermResource::class,
+                'Fixed Terms',
+                badge: fn () => class_exists(ServiceTermResource::class)
+                    ? ServiceTermResource::getNavigationBadge()
+                    : null,
+                badgeColor: 'danger',
             ),
             static::link(
                 ServiceResource::class,
