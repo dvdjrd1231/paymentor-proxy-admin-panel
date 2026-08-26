@@ -447,6 +447,90 @@
         transform: rotate(180deg);
     }
 
+    /* --- Automation Status ---
+       Health first: the two clocks read as green or red at a glance, and a problem is a
+       block of prose above them rather than a badge, because the useful part is the command
+       that is missing from cron. */
+    .ao-auto-problems {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .ao-auto-problem {
+        padding: 0.6rem 0.75rem;
+        border: 1px solid hsl(var(--color-error) / 0.35);
+        border-inline-start: 3px solid hsl(var(--color-error));
+        border-radius: var(--wa-radius, 3px);
+        background: hsl(var(--color-error) / 0.06);
+        font-size: 0.85rem;
+    }
+
+    .ao-auto-problem p {
+        margin-top: 0.2rem;
+        color: hsl(var(--color-base) / 0.8);
+    }
+
+    .ao-auto-clocks {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .ao-auto-clock {
+        padding: 0.75rem;
+        border: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
+        border-radius: var(--wa-radius, 3px);
+        background: var(--wa-canvas, hsl(var(--color-gray-50)));
+        font-size: 0.85rem;
+    }
+
+    .ao-auto-clock-head {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .ao-auto-dot {
+        width: 0.6rem;
+        height: 0.6rem;
+        border-radius: 999px;
+        flex: none;
+    }
+
+    .ao-auto-ok .ao-auto-dot { background: hsl(var(--color-success)); }
+    .ao-auto-bad .ao-auto-dot { background: hsl(var(--color-error)); }
+
+    .ao-auto-label {
+        font-weight: 600;
+        color: var(--wa-ink, hsl(var(--color-base)));
+    }
+
+    .ao-auto-verdict {
+        margin-inline-start: auto;
+        font-weight: 600;
+    }
+
+    .ao-auto-ok .ao-auto-verdict { color: hsl(var(--color-success)); }
+    .ao-auto-bad .ao-auto-verdict { color: hsl(var(--color-error)); }
+
+    .ao-auto-when {
+        margin-top: 0.35rem;
+        color: hsl(var(--color-base));
+    }
+
+    .ao-auto-exact,
+    .ao-auto-note {
+        color: var(--wa-muted, hsl(var(--color-base) / 0.6));
+    }
+
+    .ao-auto-note {
+        margin-top: 0.35rem;
+        font-size: 0.75rem;
+    }
+
     /* --- Products/Services: the drag-ordered catalogue ---
 
        The reference's shape: a bordered panel per group, a grey heading band carrying the
