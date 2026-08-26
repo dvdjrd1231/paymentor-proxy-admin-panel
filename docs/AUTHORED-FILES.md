@@ -38,6 +38,7 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 - `extensions/Others/AdminOps/resources/views/captcha.blade.php` — that CAPTCHA, for Filament's sign-in card
 - `extensions/Others/AdminOps/Admin/Pages/Catalogue.php` — Products/Services: groups and products ordered by dragging
 - `extensions/Others/AdminOps/Admin/Widgets/DashboardTools.php` — dashboard panels: drag, collapse, refresh, hide
+- `extensions/Others/AdminOps/Admin/Pages/AutomationStatus.php` — is the automation running, and what did it do
 - `extensions/Others/AdminOps/Models/DashboardLayout.php` — one admin's dashboard order and hidden panels
 - `extensions/Others/AdminOps/Support/PanelSession.php` — issues the session row any sign-in path missed
 - `extensions/Servers/ProxyPanel/Support/PanelHttpException.php` — panel HTTP failures, carrying the status

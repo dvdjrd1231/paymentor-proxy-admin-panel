@@ -21,7 +21,7 @@ use Illuminate\Support\Timebox;
  *
  * Paymenter does not authenticate with the session guard alone: `ResolveUserSession` treats
  * the `user_sessions` row as the authority and signs out anyone without one. That row is
- * created only by {@see \App\Actions\Auth\Login}, which Filament knows nothing about — so
+ * created only by {@see PaymenterLogin}, which Filament knows nothing about — so
  * the stock page authenticated, redirected, and was undone on the next request, showing a
  * login form that reappears with no error and nothing logged.
  *

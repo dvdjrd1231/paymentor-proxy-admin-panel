@@ -405,6 +405,34 @@ Columns are the reference's, minus one: **Auto Setup** has no Paymenter equivale
 provisions on payment, always — so it is left out rather than invented. **Type** is the server
 the product provisions through, which is what a WHMCS module is here.
 
+### 6. Automation Status
+
+**Utilities → Automation Status.** The reference's `automationstatus.php` answers one
+question before any other — *is this thing running at all* — and shows task activity
+underneath. Core's Cron Statistics page shows the activity but not the health: it draws a
+tidy row of zeroes for a scheduler that has been dead a week, because a task that never ran
+records nothing, and nothing is exactly what zero looks like.
+
+That stopped being cosmetic when `Others/TermLimits` arrived. Fixed-term services are ended
+by a sweep that runs **every minute** — if the scheduler is down, daily proxies go on
+working past their term and nothing else anywhere says so.
+
+Two independent clocks, because they fail differently and the fixes differ:
+
+| Clock | Written by | What a stale one means |
+|---|---|---|
+| `last_scheduler_run` | core's heartbeat, every minute | `schedule:run` is not in cron at all |
+| `last_cron_run` | `app:cron-job` on completion | scheduler fine, the daily job itself is failing |
+
+Problems are stated above the figures, in the imperative, with the command that is missing —
+"automation is not running" sends somebody to the wrong place. Task counts are shown for
+today *and* the last seven days: the daily job runs once at a configured hour, so every one
+of today's figures is legitimately zero until it has, and a page showing only today would
+report a healthy install as idle every morning.
+
+Core's Cron Statistics page is untouched and still linked, from the header and from
+Utilities.
+
 ## Money and multiple currencies
 
 Paymenter stores a price per currency and **no exchange rate**, so there is nothing to

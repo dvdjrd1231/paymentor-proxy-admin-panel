@@ -36,6 +36,7 @@ use Filament\Navigation\NavigationBuilder;
 use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AutomationStatus;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\Catalogue;
 use Paymenter\Extensions\Others\Affiliates\Admin\Resources\AffiliateResource;
 use Paymenter\Extensions\Others\Announcements\Admin\Resources\AnnouncementResource;
@@ -242,6 +243,21 @@ class WhmcsNavigation
                 badge: fn () => Metrics::invoicesUnpaid(),
                 badgeColor: fn () => Metrics::invoicesOverdue() ? 'danger' : 'gray',
             ),
+            static::link(
+                InvoiceResource::class,
+                'Paid Invoices',
+                params: ['filters' => ['status' => ['value' => 'paid']]],
+            ),
+            static::link(
+                InvoiceResource::class,
+                'Cancelled Invoices',
+                params: ['filters' => ['status' => ['value' => 'cancelled']]],
+            ),
+            // The reference keeps its gateway log under Billing, and this is the nearest
+            // thing Paymenter has: every outbound HTTP call, gateways included. Also in
+            // Utilities, where core files it — two ways to one page, as with the invoice
+            // filters above.
+            static::link(HttpLogResource::class, 'Gateway Log'),
             static::link(CouponResource::class, 'Coupons'),
             static::link(PaymentFeeRuleResource::class, 'Payment Fee Rules'),
             static::link(GatewayRuleResource::class, 'Gateway Rules'),
@@ -302,7 +318,10 @@ class WhmcsNavigation
     {
         return static::group('Utilities', 'ri-tools-line', [
             static::page(Updates::class, 'Update Paymenter'),
-            static::page(CronStats::class, 'Automation Status'),
+            class_exists(AutomationStatus::class)
+                ? static::page(AutomationStatus::class, 'Automation Status')
+                : static::page(CronStats::class, 'Automation Status'),
+            static::page(CronStats::class, 'Cron Statistics'),
             static::link(
                 ProvisioningOperationResource::class,
                 'Provisioning Operations',
