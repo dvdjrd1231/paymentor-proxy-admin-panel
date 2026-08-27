@@ -42,6 +42,7 @@ use Paymenter\Extensions\Others\Affiliates\Admin\Resources\AffiliateResource;
 use Paymenter\Extensions\Others\Announcements\Admin\Resources\AnnouncementResource;
 use Paymenter\Extensions\Others\Cancellations\Admin\Resources\CancellationRequestResource;
 use Paymenter\Extensions\Others\GatewayRules\Admin\Resources\GatewayRuleResource;
+use Paymenter\Extensions\Others\InvoiceOps\Admin\Resources\InvoiceOpsResource;
 use Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbArticleResource;
 use Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbCategoryResource;
 use Paymenter\Extensions\Others\PaymentFees\Admin\Resources\PaymentFeeRuleResource;
@@ -258,6 +259,14 @@ class WhmcsNavigation
             // thing Paymenter has: every outbound HTTP call, gateways included. Also in
             // Utilities, where core files it — two ways to one page, as with the invoice
             // filters above.
+            // Publish a draft, record a refund, send one notice by hand — the three things
+            // the reference's invoice page can do that core's cannot.
+            static::link(InvoiceOpsResource::class, 'Invoice Operations'),
+            static::link(
+                InvoiceResource::class,
+                'Draft Invoices',
+                params: ['filters' => ['status' => ['value' => 'draft']]],
+            ),
             static::link(HttpLogResource::class, 'Gateway Log'),
             static::link(CouponResource::class, 'Coupons'),
             static::link(PaymentFeeRuleResource::class, 'Payment Fee Rules'),

@@ -68,6 +68,15 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 - `extensions/Others/Cancellations/Admin/Resources/CancellationRequestResource.php` — the list with both actions
 - `extensions/Others/Cancellations/README.md`
 
+## Invoice operations
+- `extensions/Others/InvoiceOps/InvoiceOps.php` — draft status, refunds, manual notices
+- `extensions/Others/InvoiceOps/Support/Drafts.php` — the draft scope and Publish
+- `extensions/Others/InvoiceOps/Support/Refunds.php` — recorded refunds and Reverse Payment
+- `extensions/Others/InvoiceOps/Models/InvoiceRefund.php`
+- `extensions/Others/InvoiceOps/Admin/Resources/InvoiceOpsResource.php` — Billing → Invoice Operations
+- `extensions/Others/InvoiceOps/database/migrations/` — `ext_invoice_refunds`
+- `docs/modules/invoice-ops.md`
+
 ## Deployment / operations
 - `scripts/install-debian13.sh` — automated Debian 13 installer
 - `scripts/backup.sh` — DB + files backup
