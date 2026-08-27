@@ -107,13 +107,41 @@ with `last_activity` at most once a minute; the 15-minute window is deliberately
 than that stamp interval, or a colleague reading a page would blink out of the list between
 writes. Two devices signed in as the same person count once.
 
-### 2. A client summary — one customer, one screen
+### 2. The client profile — one customer, one screen, in tabs
 
 Everything on it was already in Paymenter, spread over six sub-pages (profile, services,
 invoices, credits, tickets, billing agreements). Answering *"who is this and what is going
 on with them"* — the first thing support does on every ticket — cost five page loads.
 
-**Clients → Summary** (a link on every row of the customer list) now shows, on one page:
+It began as a summary page *beside* Paymenter's own sub-pages, which was a misreading of the
+reference. WHMCS has **one** client page and *Summary* is its first tab, not a second screen.
+Everything else is a tab on the same page. So this is now that page:
+
+| Tab | What it lists |
+|---|---|
+| **Summary** | The eight-row previews below — the page as it was |
+| Products/Services · Invoices · Tickets | The customer's own, 50 at a time, linking out to the core screens |
+| **Billable Items** | From `Others/BillableItems`, including what is still uninvoiced |
+| **Transactions** | Payments and refunds interleaved, In and Out |
+| **Emails** | Core's `notifications` — everything sent to them |
+| **Log** | Core's audit trail for this account |
+
+**A tab loads only its own data.** The obvious build renders all of them and hides the rest
+with CSS, which is fine for six rows and ruinous for a customer with four hundred invoices —
+every visit would pay for every tab. The tab is a Livewire property, so switching costs one
+query rather than a page load, and it is query-stringed so a tab is a URL: support can paste
+*"the Invoices tab of customer 41"* into a ticket and have it open there.
+
+Tabs Paymenter has nothing behind are **dropped rather than shown empty** — Domains (removed
+from this store entirely), Users and Contacts (WHMCS's sub-account model, which Paymenter
+does not have), Quotes (until the feature exists). A tab that always says "none" teaches
+people to stop opening tabs.
+
+Each tab that reads another extension's table checks the table exists first, not the class:
+an extension can be present in the filesystem and not installed, and a tab that fatals is
+worse than one that is empty.
+
+**Clients → Summary** (a link on every row of the customer list) shows, on the Summary tab:
 
 - ID, email and verification state, registration date, account credit, lifetime paid,
   outstanding — plus any custom properties (CPF/CNPJ from `Others/BrazilianRegistration`).

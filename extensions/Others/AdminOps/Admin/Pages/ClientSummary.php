@@ -8,22 +8,37 @@ use App\Admin\Resources\TicketResource;
 use App\Admin\Resources\UserResource;
 use App\Enums\InvoiceTransactionStatus;
 use App\Models\Invoice;
+use App\Models\InvoiceTransaction;
 use App\Models\User;
+use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Filament\Panel;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Livewire\Attributes\Url;
 use Paymenter\Extensions\Others\AdminOps\Support\Money;
 
 /**
- * WHMCS's client summary: one customer, one screen.
+ * The reference's **Client Profile**: one customer, one screen, in tabs.
  *
- * Paymenter already holds everything shown here, but spread over six sub-pages — profile,
- * services, invoices, credits, tickets, billing agreements — so answering "who is this and
- * what is going on with them", which is the first thing support does on every ticket, costs
- * five page loads. This is that answer on one page, with the actions that usually follow it
- * in the header.
+ * It began as a summary page beside Paymenter's own sub-pages, which was a misreading of the
+ * reference — WHMCS has **one** client page and *Summary* is its first tab, not a second
+ * screen. Everything else is a tab on the same page: Products/Services, Billable Items,
+ * Invoices, Transactions, Tickets, Emails, Log. So this is that page, and Summary is where
+ * it opens.
+ *
+ * Paymenter holds all of it already, spread over six sub-pages, so answering "who is this and
+ * what is going on with them" — the first thing support does on every ticket — cost five page
+ * loads. Now it costs one, and moving between tabs costs a query rather than a page.
+ *
+ * **A tab loads only its own data.** The obvious build renders everything and hides the rest
+ * with CSS, which is fine for six rows and ruinous for a customer with four hundred invoices
+ * — every visit would pay for every tab. `$tab` is a Livewire property and
+ * {@see getViewData()} switches on it.
  *
  * Read-only by design: everything editable stays on the core pages that own it, so there is
  * one place a change can be made and one set of validation rules to trust.
@@ -53,8 +68,42 @@ class ClientSummary extends Page
      */
     public User $customer;
 
-    /** How many rows of each kind before "see all" takes over. */
+    /**
+     * Which tab is showing.
+     *
+     * Public and query-stringed so a tab is a URL: support pastes "the Invoices tab of
+     * customer 41" into a ticket and it opens there, which a tab held only in component
+     * state cannot do.
+     */
+    #[Url]
+    public string $tab = 'summary';
+
+    /**
+     * The reference's tabs, less the ones Paymenter has nothing behind.
+     *
+     * Dropped deliberately rather than shown empty: **Domains** (removed from this store
+     * entirely, §10 of the brief), **Users** and **Contacts** (WHMCS's sub-account model,
+     * which Paymenter does not have), **Quotes** (nothing to list yet — the tab appears with
+     * the feature). A tab that always says "none" teaches people to stop opening tabs.
+     *
+     * @var array<string, string>
+     */
+    private const TABS = [
+        'summary' => 'Summary',
+        'services' => 'Products/Services',
+        'billable' => 'Billable Items',
+        'invoices' => 'Invoices',
+        'transactions' => 'Transactions',
+        'tickets' => 'Tickets',
+        'emails' => 'Emails',
+        'log' => 'Log',
+    ];
+
+    /** How many rows of each kind on the Summary tab before "see all" takes over. */
     private const ROWS = 8;
+
+    /** A tab of its own is a list, not a preview, so it can afford to be longer. */
+    private const TAB_ROWS = 50;
 
     /**
      * The record is part of the path rather than the slug so the route keeps a clean name
@@ -127,7 +176,38 @@ class ClientSummary extends Page
         ];
     }
 
+    /**
+     * Only the showing tab's data.
+     *
+     * The Summary tab keeps its eight-row previews of everything; every other tab is a list
+     * of one thing, longer, and costs a query only when opened.
+     */
     protected function getViewData(): array
+    {
+        return [
+            'user' => $this->customer,
+            'tabs' => self::TABS,
+            'tab' => array_key_exists($this->tab, self::TABS) ? $this->tab : 'summary',
+            'urls' => $this->urls(),
+            ...match (array_key_exists($this->tab, self::TABS) ? $this->tab : 'summary') {
+                'services' => ['rows' => $this->customer->services()->with('product')->latest()->limit(self::TAB_ROWS)->get()],
+                'billable' => ['rows' => $this->billableItems()],
+                'invoices' => ['rows' => $this->customer->invoices()->with(['items', 'transactions'])->latest()->limit(self::TAB_ROWS)->get()],
+                'transactions' => ['rows' => $this->transactionRows()],
+                'tickets' => ['rows' => $this->customer->tickets()->latest()->limit(self::TAB_ROWS)->get()],
+                'emails' => ['rows' => $this->emailRows()],
+                'log' => ['rows' => $this->logRows()],
+                default => $this->summaryData(),
+            },
+        ];
+    }
+
+    /**
+     * Everything the Summary tab shows — the page as it was before there were tabs.
+     *
+     * @return array<string, mixed>
+     */
+    private function summaryData(): array
     {
         $user = $this->customer;
 
@@ -159,15 +239,29 @@ class ClientSummary extends Page
                 ->limit(self::ROWS)
                 ->get(),
             'ticketCount' => $user->tickets()->count(),
-            'urls' => [
-                'services' => UserResource::getUrl('services', ['record' => $user]),
-                'invoices' => UserResource::getUrl('invoices', ['record' => $user]),
-                'tickets' => UserResource::getUrl('tickets', ['record' => $user]),
-                'credits' => UserResource::getUrl('credits', ['record' => $user]),
-                'service' => fn ($id) => ServiceResource::getUrl('edit', ['record' => $id]),
-                'invoice' => fn ($id) => InvoiceResource::getUrl('edit', ['record' => $id]),
-                'ticket' => fn ($id) => TicketResource::getUrl('edit', ['record' => $id]),
-            ],
+        ];
+    }
+
+    /**
+     * Links out to the core screens that own each record.
+     *
+     * Built once for every tab rather than per tab, because the tab bar is on every one of
+     * them and half of these are what the rows link to.
+     *
+     * @return array<string, mixed>
+     */
+    private function urls(): array
+    {
+        $user = $this->customer;
+
+        return [
+            'services' => UserResource::getUrl('services', ['record' => $user]),
+            'invoices' => UserResource::getUrl('invoices', ['record' => $user]),
+            'tickets' => UserResource::getUrl('tickets', ['record' => $user]),
+            'credits' => UserResource::getUrl('credits', ['record' => $user]),
+            'service' => fn ($id) => ServiceResource::getUrl('edit', ['record' => $id]),
+            'invoice' => fn ($id) => InvoiceResource::getUrl('edit', ['record' => $id]),
+            'ticket' => fn ($id) => TicketResource::getUrl('edit', ['record' => $id]),
         ];
     }
 
@@ -214,6 +308,121 @@ class ClientSummary extends Page
             });
 
         return $totals;
+    }
+
+    // ── The tabs that read tables this page does not own ─────────────────────────────────
+    // Each is guarded by a table check rather than a class check: an extension can be
+    // present in the filesystem and not installed, and a tab that fatals is worse than a
+    // tab that is empty.
+
+    /**
+     * @return Collection<int, object>
+     */
+    private function billableItems()
+    {
+        if (!Schema::hasTable('ext_billable_items')) {
+            return collect();
+        }
+
+        return DB::table('ext_billable_items')
+            ->where('user_id', $this->customer->id)
+            ->orderByDesc('id')
+            ->limit(self::TAB_ROWS)
+            ->get();
+    }
+
+    /**
+     * Payments and refunds for this customer, newest first.
+     *
+     * The same interleaving as the Transactions report, and for the same reason: a payment
+     * and the refund that partly undid it belong next to each other.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function transactionRows()
+    {
+        $rows = InvoiceTransaction::query()
+            ->whereIn('invoice_id', $this->customer->invoices()->select('id'))
+            ->with('gateway')
+            ->latest('id')
+            ->limit(self::TAB_ROWS)
+            ->get()
+            ->map(fn ($transaction): array => [
+                'at' => $transaction->created_at,
+                'method' => $transaction->is_credit_transaction
+                    ? 'Account credit'
+                    : ($transaction->gateway?->name ?? 'Unknown'),
+                'description' => 'Invoice #' . $transaction->invoice_id
+                    . ($transaction->transaction_id ? ' · ' . $transaction->transaction_id : ''),
+                'in' => (float) $transaction->amount,
+                'out' => 0.0,
+            ]);
+
+        if (Schema::hasTable('ext_invoice_refunds')) {
+            $rows = $rows->concat(
+                DB::table('ext_invoice_refunds')
+                    ->whereIn('invoice_id', $this->customer->invoices()->select('id'))
+                    ->orderByDesc('id')
+                    ->limit(self::TAB_ROWS)
+                    ->get()
+                    ->map(fn ($refund): array => [
+                        'at' => Carbon::parse($refund->created_at),
+                        'method' => 'Refund',
+                        'description' => 'Invoice #' . $refund->invoice_id
+                            . ($refund->reason ? ' · ' . str($refund->reason)->limit(50) : ''),
+                        'in' => 0.0,
+                        'out' => (float) $refund->amount,
+                    ])
+            );
+        }
+
+        return $rows->sortByDesc('at')->values()->take(self::TAB_ROWS);
+    }
+
+    /**
+     * What has been sent to this customer — the reference's Emails tab.
+     *
+     * Read from core's `notifications`, which is where every message it sends is logged.
+     *
+     * @return Collection<int, object>
+     */
+    private function emailRows()
+    {
+        if (!Schema::hasTable('notifications')) {
+            return collect();
+        }
+
+        return DB::table('notifications')
+            ->where('user_id', $this->customer->id)
+            ->orderByDesc('id')
+            ->limit(self::TAB_ROWS)
+            ->get();
+    }
+
+    /**
+     * The reference's Log tab: what has been done to this account, and by whom.
+     *
+     * Core already ships `owen-it/laravel-auditing` and audits the models that matter, so
+     * this is a view of something already being recorded rather than new bookkeeping.
+     *
+     * @return Collection<int, object>
+     */
+    private function logRows()
+    {
+        if (!Schema::hasTable('audits')) {
+            return collect();
+        }
+
+        return DB::table('audits')
+            ->where(function ($query): void {
+                $query->where(function ($subject): void {
+                    $subject->where('auditable_type', User::class)
+                        ->where('auditable_id', $this->customer->id);
+                })->orWhere('user_id', $this->customer->id);
+            })
+            ->orderByDesc('id')
+            ->limit(self::TAB_ROWS)
+            ->get();
     }
 
     public function formatMoney(float $amount, ?string $currency): string
