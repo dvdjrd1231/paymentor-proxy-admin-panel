@@ -51,6 +51,7 @@ use Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbArticleResource;
 use Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbCategoryResource;
 use Paymenter\Extensions\Others\PaymentFees\Admin\Resources\PaymentFeeRuleResource;
 use Paymenter\Extensions\Others\ProvisioningOps\Admin\Resources\ProvisioningOperationResource;
+use Paymenter\Extensions\Others\Quotes\Admin\Resources\QuoteResource;
 use Paymenter\Extensions\Others\TermLimits\Admin\Resources\ProductTermResource;
 use Paymenter\Extensions\Others\TermLimits\Admin\Resources\ServiceTermResource;
 use Paymenter\Extensions\Others\TicketTools\Admin\Resources\CannedResponseResource;
@@ -278,6 +279,12 @@ class WhmcsNavigation
             // filters above.
             // Publish a draft, record a refund, send one notice by hand — the three things
             // the reference's invoice page can do that core's cannot.
+            static::link(
+                QuoteResource::class,
+                'Quotes',
+                badge: fn () => class_exists(QuoteResource::class) ? QuoteResource::getNavigationBadge() : null,
+                badgeColor: 'info',
+            ),
             static::link(
                 BillableItemResource::class,
                 'Billable Items',

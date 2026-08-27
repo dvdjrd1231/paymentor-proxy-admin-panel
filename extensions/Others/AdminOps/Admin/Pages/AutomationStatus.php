@@ -84,6 +84,7 @@ class AutomationStatus extends Page
         'orders_cancelled' => ['Unpaid Orders', 'Cancelled'],
         'upgrade_invoices_updated' => ['Upgrade Invoices', 'Updated'],
         'billable_items_invoiced' => ['Billable Items', 'Invoiced'],
+        'quotes_expired' => ['Quotes', 'Expired'],
         'tickets_closed' => ['Inactive Tickets', 'Closed'],
         'email_logs_deleted' => ['Email Logs', 'Deleted'],
     ];

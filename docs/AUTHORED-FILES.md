@@ -85,6 +85,15 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 - `extensions/Others/BillableItems/database/migrations/` — `ext_billable_items`
 - `docs/modules/billable-items.md`
 
+## Quotes
+- `extensions/Others/Quotes/Quotes.php` — the extension and its daily expiry sweep
+- `extensions/Others/Quotes/Support/Quoting.php` — send, accept, decline, duplicate, expire
+- `extensions/Others/Quotes/Models/` — `Quote`, `QuoteItem`
+- `extensions/Others/Quotes/Admin/Resources/QuoteResource.php` — Billing → Quotes
+- `extensions/Others/Quotes/database/migrations/` — `ext_quotes`, `ext_quote_items`
+- `extensions/Others/ClientTools/Livewire/Quotes.php` — the client-area page, now filled
+- `docs/modules/quotes.md`
+
 ## Deployment / operations
 - `scripts/install-debian13.sh` — automated Debian 13 installer
 - `scripts/backup.sh` — DB + files backup

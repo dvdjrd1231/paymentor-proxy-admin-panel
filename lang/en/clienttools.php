@@ -11,6 +11,19 @@ return [
     'quotes_short' => 'Quotes',
     'quotes_subtitle' => 'Quotes issued to you',
     'quotes_empty' => 'There are no quotes to display',
+    // Filled in by Others/Quotes. The keys exist whether or not it is installed, so a
+    // half-installed store shows English rather than a translation key.
+    'quotes_description' => 'Description',
+    'quotes_qty' => 'Qty',
+    'quotes_amount' => 'Amount',
+    'quotes_total' => 'Total',
+    'quotes_valid_until' => 'Valid until',
+    'quotes_lapsed' => 'past its date — accept soon',
+    'quotes_accept' => 'Accept quote',
+    'quotes_decline' => 'Decline',
+    'quotes_accept_confirm' => 'Accepting creates an invoice for this amount. Continue?',
+    'quotes_decline_confirm' => 'Decline this quote? This cannot be undone.',
+    'quotes_see_invoice' => 'View the invoice for this quote',
 
     // ── Mass Payment ──────────────────────────────────────────────────────────────
     'mass_payment' => 'Mass Payment',
