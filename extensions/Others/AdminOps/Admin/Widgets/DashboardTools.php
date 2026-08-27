@@ -65,6 +65,20 @@ class DashboardTools extends Widget
     protected int|string|array $columnSpan = 'full';
 
     /**
+     * Rendered with the page, not fetched afterwards — and that is the whole feature.
+     *
+     * Filament widgets are lazy by default: the first response carries a placeholder, and the
+     * real markup arrives later and is *morphed* into the document. Livewire does not execute
+     * a plain `<script>` that arrives that way. This widget is almost entirely a script, so
+     * lazy meant it silently never ran — the dashboard rendered exactly as stock, with no
+     * error anywhere to say why.
+     *
+     * It has nothing to defer in any case: it queries no tables of its own beyond one small
+     * row of saved layout, so there is no slow work that lazy loading would be buying time for.
+     */
+    protected static bool $isLazy = false;
+
+    /**
      * The migration ships with this extension, so a panel that has AdminOps enabled but has
      * not re-run `installed()` would fatal on every dashboard load without this check —
      * which is the one screen you cannot navigate away from. Without the table the
