@@ -47,6 +47,40 @@ their own should not lose it the moment this is switched on.
 
 
 
+## Auto Terminate/Fixed Term — the reference's field
+
+WHMCS puts this on the product's **Pricing** tab:
+
+> **Auto Terminate/Fixed Term** — *"Enter the number of days after activation to
+> automatically terminate (eg. free trials, time limited products, etc...)"*
+> **Termination Email** — *"Choose the email template to send when the fixed term comes to
+> an end"*
+
+Both now exist, under **Setup → Auto Terminate**, one row per product.
+
+It is a screen rather than a field on the product form for the same reason the Cancellation
+Requests actions are a second resource: a resource's `form()` replaces whatever an extension
+pushes into it, exactly as its `table()` does.
+
+**Most products need nothing set.** A one-time daily plan already says one day, and all
+twenty of this store's daily and weekly products derive their term with no configuration.
+The reference needs the field because a WHMCS "One Time" product carries no period at all;
+Paymenter's does. The **From** column says which is which for the whole catalogue — set here,
+or derived — which the reference has no equivalent of.
+
+What the field reaches that derivation cannot is a **fixed term on a recurring product**:
+"monthly plan, terminates after 3 days" is a free trial, and no billing cycle can express it.
+
+**The Termination Email is new behaviour, not just a setting.** Until now a fixed-term proxy
+simply stopped working and the customer was told nothing — a support ticket every time. The
+term now sends the template that product names, falling back to core's `server_terminated`.
+There is deliberately no "send nothing" option. Sending can never fail the termination: the
+service is already stopped and the panel has already released it by the time the mail is
+attempted.
+
+Changing a product's term affects **new services only**. A term already open was bought at
+the old length, and re-timing it afterwards would change what somebody paid for.
+
 ## Design decisions worth knowing
 
 **Why a table beside `services` and not `services.expires_at`.** Core casts `expires_at` to

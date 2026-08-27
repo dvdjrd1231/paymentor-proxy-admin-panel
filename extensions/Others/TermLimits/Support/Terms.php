@@ -2,6 +2,7 @@
 
 namespace Paymenter\Extensions\Others\TermLimits\Support;
 
+use App\Helpers\NotificationHelper;
 use App\Jobs\Server\SuspendJob;
 use App\Jobs\Server\TerminateJob;
 use App\Models\Plan;
@@ -11,6 +12,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Paymenter\Extensions\Others\TermLimits\Console\EnforceTerms;
+use Paymenter\Extensions\Others\TermLimits\Models\ProductTerm;
 use Paymenter\Extensions\Others\TermLimits\Models\ServiceTerm;
 use Paymenter\Extensions\Others\TermLimits\Models\ServiceTermExtension;
 
@@ -43,6 +45,18 @@ class Terms
      */
     public static function length(Service $service): ?int
     {
+        // The product's own **Auto Terminate/Fixed Term** wins, exactly as it does on the
+        // reference, and it applies whatever the plan is. That is the case derivation cannot
+        // reach: "monthly plan, terminates after 3 days" is a free trial, and no billing
+        // cycle can express it.
+        $override = $service->product_id
+            ? ProductTerm::firstWhere('product_id', $service->product_id)?->hours()
+            : null;
+
+        if ($override !== null) {
+            return $override;
+        }
+
         $plan = $service->plan;
 
         if (!$plan instanceof Plan || $plan->type !== 'one-time') {
@@ -53,6 +67,36 @@ class Terms
         $period = (int) $plan->billing_period;
 
         return ($unit && $period > 0) ? $unit * $period : null;
+    }
+
+    /**
+     * Tell the customer their term has ended - the reference's **Termination Email**.
+     *
+     * A fixed-term proxy that simply stops working, with nothing said, is a support ticket
+     * every time. The reference puts a template picker beside the field for this reason, and
+     * this sends the one that product names, falling back to core's `server_terminated`.
+     *
+     * Never allowed to fail the termination. The service is already stopped and the panel has
+     * already released it by the time this runs; an unreachable mail server must not make the
+     * sweeper retry a service it has correctly ended.
+     */
+    public static function notify(Service $service): void
+    {
+        try {
+            $template = $service->product_id
+                ? ProductTerm::firstWhere('product_id', $service->product_id)?->termination_email
+                : null;
+
+            NotificationHelper::sendNotification(
+                $template ?: 'server_terminated',
+                ['service' => $service],
+                $service->user,
+            );
+        } catch (\Throwable $exception) {
+            Log::warning('TermLimits: could not send the termination email for service #' . $service->id, [
+                'exception' => $exception->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -165,6 +209,8 @@ class Terms
                     $terminate
                         ? TerminateJob::dispatch($service)
                         : SuspendJob::dispatch($service);
+
+                    static::notify($service);
                 } catch (\Throwable $exception) {
                     // The term is closed either way. A panel that cannot be reached is a
                     // provisioning failure, which Others/ProvisioningOps already surfaces.
