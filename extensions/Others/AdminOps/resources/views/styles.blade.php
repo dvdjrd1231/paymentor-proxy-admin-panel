@@ -216,6 +216,39 @@
         color: hsl(var(--color-muted));
     }
 
+    /* --- Client profile tabs ---
+       The reference's tab strip: a row of plain buttons on a rule, the active one carrying
+       the rule's colour and a heavier weight. Scrolls sideways rather than wrapping, because
+       a tab bar that becomes two rows moves every tab under the pointer. */
+    .ao-tabs {
+        display: flex;
+        gap: 0.15rem;
+        overflow-x: auto;
+        border-bottom: 1px solid var(--wa-rule, hsl(var(--color-gray-200)));
+        margin-bottom: 1rem;
+    }
+
+    .ao-tab {
+        flex: none;
+        padding: 0.5rem 0.85rem;
+        border-bottom: 2px solid transparent;
+        font-size: 0.85rem;
+        color: var(--wa-muted, hsl(var(--color-base) / 0.65));
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .ao-tab:hover {
+        color: hsl(var(--color-base));
+        background: hsl(var(--color-base) / 0.04);
+    }
+
+    .ao-tab-active {
+        font-weight: 600;
+        color: hsl(var(--color-primary));
+        border-bottom-color: hsl(var(--color-primary));
+    }
+
     /* --- Client summary --- */
 
     .ao-summary-grid {

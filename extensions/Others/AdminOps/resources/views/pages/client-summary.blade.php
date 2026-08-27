@@ -1,6 +1,13 @@
 {{--
-    One customer on one screen. Everything is read-only and links out to the core page that
-    owns each record, so this stays a view and never a second place to edit from.
+    The reference's Client Profile: one customer, one screen, in tabs — Summary first, as it
+    is there.
+
+    Only the showing tab is rendered. The obvious build renders all of them and hides the
+    rest with CSS, which is fine for six rows and ruinous for a customer with four hundred
+    invoices: every visit would pay for every tab.
+
+    Everything is read-only and links out to the core page that owns each record, so this
+    stays a view and never a second place to edit from.
 --}}
 @php
     $statusTag = fn (string $status) => match ($status) {
@@ -13,8 +20,23 @@
 @endphp
 
 <x-filament-panels::page>
+    {{-- The tab bar. `wire:click` rather than links: the page is a Livewire component, so
+         switching costs one round trip and one query instead of a full page load. --}}
+    <nav class="ao-tabs" role="tablist">
+        @foreach ($tabs as $key => $label)
+            <button type="button"
+                class="ao-tab {{ $tab === $key ? 'ao-tab-active' : '' }}"
+                role="tab"
+                aria-selected="{{ $tab === $key ? 'true' : 'false' }}"
+                wire:click="$set('tab', '{{ $key }}')">
+                {{ $label }}
+            </button>
+        @endforeach
+    </nav>
+
     <div class="ao-panel" style="display:flex;flex-direction:column;gap:1.5rem;">
 
+    @if ($tab === 'summary')
         <x-filament::section icon="heroicon-o-identification" heading="Customer">
             <div class="ao-summary-grid">
                 <div>
@@ -174,6 +196,12 @@
                 </table>
             @endif
         </x-filament::section>
+
+    @else
+        {{-- Every other tab is one list of one thing. `adminops::pages.client-tab` renders
+             whichever it is, so a new tab is a case there rather than another block here. --}}
+        @include('adminops::pages.client-tab', ['tab' => $tab, 'rows' => $rows, 'urls' => $urls])
+    @endif
 
     </div>
 </x-filament-panels::page>
