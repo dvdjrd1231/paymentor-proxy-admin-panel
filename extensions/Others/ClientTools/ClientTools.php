@@ -5,7 +5,6 @@ namespace Paymenter\Extensions\Others\ClientTools;
 use App\Attributes\ExtensionMeta;
 use App\Classes\Extension\Extension;
 use App\Helpers\ExtensionHelper;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\HtmlString;
 use Livewire\Livewire;
