@@ -71,10 +71,20 @@
         // Moved rather than rendered there: a render hook cannot reach the widget's own
         // Livewire component, and the checkboxes have to call its methods.
         const lift = () => {
-            const settings = mount.querySelector('[data-ao-settings]');
             const header = document.querySelector('.fi-header, .fi-page-header');
+            const settings = mount.querySelector('[data-ao-settings]');
 
-            if (!settings || !header || settings.dataset.aoLifted) return;
+            if (!settings || !header) return;
+
+            // If one has already been lifted, anything still sitting in the widget is a
+            // second copy that a re-render put back, and two gears is how the working one
+            // ends up buried under a dead one. `#[Renderless]` on the actions is what stops
+            // that happening; this is the guard for anything else that re-renders us.
+            if (header.querySelector('[data-ao-settings][data-ao-lifted]')) {
+                settings.remove();
+
+                return;
+            }
 
             header.classList.add('ao-dash-header');
             header.append(settings);
@@ -289,8 +299,10 @@
                 });
             }
 
-            mount.querySelector('[data-ao-settings]')?.removeAttribute('hidden');
+            // Lift first, then reveal whichever one is now in the page — after the lift the
+            // gear is no longer inside `mount`, so looking for it there would find nothing.
             lift();
+            document.querySelector('[data-ao-settings]')?.removeAttribute('hidden');
         };
 
         // The observer must not see its own work, or `decorate` would trigger the tick that
@@ -324,12 +336,21 @@
             const wrap = document.createElement('span');
             wrap.className = 'ao-wi-tools';
 
+            // Drawn, not typed. These were text glyphs — ↻ ▲ ✕ — and a glyph is at the mercy
+            // of whatever font resolves it: different weights, different baselines, different
+            // sizes on Windows and on a Mac, and no way to make three of them look like one
+            // set. These are strokes on the same 16-unit grid at the same width, so they line
+            // up with each other and with Filament's own outline icons.
+            const icon = (paths) => `<svg viewBox="0 0 16 16" width="14" height="14" fill="none"`
+                + ` stroke="currentColor" stroke-width="1.5" stroke-linecap="round"`
+                + ` stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+
             const button = (label, glyph, onClick) => {
                 const el = document.createElement('button');
                 el.type = 'button';
                 el.className = 'ao-wi-tool';
                 el.title = `${label} — ${title}`;
-                el.innerHTML = `<span aria-hidden="true">${glyph}</span>`;
+                el.innerHTML = glyph;
                 el.append(Object.assign(document.createElement('span'), {
                     className: 'ao-sr',
                     textContent: `${label} ${title}`,
@@ -348,7 +369,9 @@
             wrap.append(
                 // Every widget is its own Livewire component, so "refresh" is the component
                 // refreshing itself — no second endpoint, and no view rendered twice.
-                button('Refresh', '&#8635;', (el) => {
+                button('Refresh', icon('<path d="M2.6 8a5.4 5.4 0 0 1 9.2-3.8L14 6.4"/>'
+                    + '<path d="M13.4 8a5.4 5.4 0 0 1-9.2 3.8L2 9.6"/>'
+                    + '<path d="M14 3.2v3.2h-3.2"/><path d="M2 12.8V9.6h3.2"/>'), (el) => {
                     el.classList.add('ao-wi-spin');
 
                     // `$wire`, not the component: `Livewire.all()` returns the raw component
@@ -359,14 +382,14 @@
 
                     refresh?.then ? refresh.then(done, done) : setTimeout(done, 600);
                 }),
-                button('Collapse', '&#9650;', () => {
+                button('Collapse', icon('<path d="M4.2 9.8 8 6l3.8 3.8"/>'), () => {
                     const isCollapsed = panel.block.classList.toggle('ao-wi-collapsed');
 
                     // The set the observer reapplies from, so a poll does not unroll it.
                     isCollapsed ? rolled.add(panel.name) : rolled.delete(panel.name);
                     rememberCollapsed([...rolled]);
                 }),
-                button('Hide', '&#10005;', () => {
+                button('Hide', icon('<path d="M4.2 4.2 11.8 11.8"/><path d="M11.8 4.2 4.2 11.8"/>'), () => {
                     hidden.add(panel.name);
                     panel.block.classList.add('ao-wi-hidden');
 
@@ -401,22 +424,49 @@
         }
 
         // ── The settings menu ────────────────────────────────────────────────────────
-        const settingsButton = mount.querySelector('[data-ao-settings-button]');
-        const settingsMenu = mount.querySelector('[data-ao-menu]');
+        // Delegated from the document rather than bound to the button, and registered once
+        // for the life of the page. Binding to the element meant the gear worked only for as
+        // long as that exact node survived — and it does not: it is moved into the page
+        // header, and anything that re-renders the widget replaces it. A handler that finds
+        // the button at click time cannot go stale, whatever happens to the DOM.
+        if (!window.aoDashMenuBound) {
+            window.aoDashMenuBound = true;
 
-        settingsButton?.addEventListener('click', (event) => {
-            event.stopPropagation();
-            const open = settingsMenu.hasAttribute('hidden');
-            settingsMenu.toggleAttribute('hidden', !open);
-            settingsButton.setAttribute('aria-expanded', String(open));
-        });
+            document.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-ao-settings-button]');
+                const menu = document.querySelector('[data-ao-menu]');
 
-        document.addEventListener('click', (event) => {
-            if (!settingsMenu || settingsMenu.hasAttribute('hidden')) return;
-            if (event.target.closest('[data-ao-settings]')) return;
-            settingsMenu.setAttribute('hidden', '');
-            settingsButton?.setAttribute('aria-expanded', 'false');
-        });
+                if (!menu) return;
+
+                if (button) {
+                    const open = menu.hasAttribute('hidden');
+                    menu.toggleAttribute('hidden', !open);
+                    button.setAttribute('aria-expanded', String(open));
+                    event.stopPropagation();
+
+                    return;
+                }
+
+                // A click inside the menu is a checkbox, not a dismissal.
+                if (menu.hasAttribute('hidden') || event.target.closest('[data-ao-settings]')) return;
+
+                menu.setAttribute('hidden', '');
+                document.querySelector('[data-ao-settings-button]')?.setAttribute('aria-expanded', 'false');
+            });
+
+            // Escape closes it, as it closes every other menu in the panel.
+            document.addEventListener('keydown', (event) => {
+                if (event.key !== 'Escape') return;
+
+                const menu = document.querySelector('[data-ao-menu]');
+                if (!menu || menu.hasAttribute('hidden')) return;
+
+                menu.setAttribute('hidden', '');
+                const button = document.querySelector('[data-ao-settings-button]');
+                button?.setAttribute('aria-expanded', 'false');
+                button?.focus();
+            });
+        }
 
         // ── Dragging ─────────────────────────────────────────────────────────────────
         // By the heading, as the reference does (`handle: '.panel-title'`). A widget full
@@ -437,10 +487,26 @@
             return now;
         };
 
-        grid.addEventListener('mousedown', (event) => {
+        // On hover, not on mousedown — and that is the whole reason dragging did not work.
+        //
+        // Chrome decides whether a gesture is a drag when the button goes *down*: an element
+        // that becomes draggable during its own `mousedown` is already too late, and no
+        // `dragstart` is ever fired. (The handlers below were fine all along — synthetic drag
+        // events reordered the dashboard correctly. Nothing was ever starting them.)
+        //
+        // So the panel under the pointer is made draggable as soon as the pointer is over its
+        // heading, and only one panel is draggable at a time. Interactive things in the
+        // heading are excluded, or the tool buttons could not be clicked.
+        grid.addEventListener('mouseover', (event) => {
             const header = event.target.closest('.ao-wi-header');
-            if (!header || event.target.closest('a, button, input, select, canvas')) return;
-            header.closest('[data-ao-widget]')?.setAttribute('draggable', 'true');
+            const interactive = event.target.closest('a, button, input, select, canvas');
+            const root = header && !interactive ? header.closest('[data-ao-widget]') : null;
+
+            for (const el of grid.querySelectorAll('[data-ao-widget][draggable]')) {
+                if (el !== root && el !== dragged) el.removeAttribute('draggable');
+            }
+
+            root?.setAttribute('draggable', 'true');
         });
 
         grid.addEventListener('dragstart', (event) => {

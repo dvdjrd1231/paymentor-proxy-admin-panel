@@ -379,12 +379,21 @@
         background: hsl(var(--color-base) / 0.06);
     }
 
+    /* Sized to its contents, and bounded by the window rather than by a guess at how many
+       widgets a panel will ever have. An extension can add widgets, so the list is not a
+       fixed length: past roughly a dozen the list scrolls inside the menu instead of running
+       off the bottom of the screen, and the heading and the note stay put while it does. */
     .ao-dash-menu {
         position: absolute;
         inset-inline-end: 0;
         top: 100%;
         z-index: 20;
+        display: flex;
+        flex-direction: column;
         min-width: 15rem;
+        width: max-content;
+        max-width: min(22rem, calc(100vw - 2rem));
+        max-height: min(70vh, 34rem);
         padding: 0.6rem 0.75rem;
         border: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
         border-radius: var(--wa-radius, 3px);
@@ -399,6 +408,8 @@
         color: var(--wa-ink, hsl(var(--color-base)));
     }
 
+    /* The list is the part that scrolls; `min-height: 0` is what allows a flex child to be
+       shorter than its content, without which it simply overflows the menu. */
     .ao-dash-menu ul {
         list-style: none;
         margin: 0;
@@ -406,6 +417,9 @@
         display: flex;
         flex-direction: column;
         gap: 0.3rem;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
     }
 
     .ao-dash-menu label {
@@ -413,6 +427,13 @@
         align-items: center;
         gap: 0.4rem;
         cursor: pointer;
+        /* A long widget name wraps rather than widening the menu past its maximum. */
+        overflow-wrap: anywhere;
+    }
+
+    .ao-dash-menu h4,
+    .ao-dash-menu-note {
+        flex: none;
     }
 
     .ao-dash-menu-note {
@@ -476,8 +497,11 @@
         background: hsl(var(--color-base) / 0.06);
     }
 
-    .ao-wi-spin span[aria-hidden] {
-        display: inline-block;
+    .ao-wi-tool svg {
+        display: block;
+    }
+
+    .ao-wi-spin svg {
         animation: ao-spin 0.7s linear infinite;
     }
 
@@ -540,12 +564,9 @@
         display: none;
     }
 
-    .ao-wi-collapsed .ao-wi-tool span[aria-hidden] {
-        /* The chevron points the other way once there is nothing under it. */
-        display: inline-block;
-    }
-
-    .ao-wi-collapsed [title^="Collapse"] span[aria-hidden] {
+    /* The chevron points the other way once there is nothing under it — so the button says
+       "expand" when the panel is rolled up, which is what the reference does. */
+    .ao-wi-collapsed [title^="Collapse"] svg {
         transform: rotate(180deg);
     }
 
