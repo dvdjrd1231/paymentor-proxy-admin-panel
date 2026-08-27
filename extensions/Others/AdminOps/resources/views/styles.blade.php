@@ -351,13 +351,42 @@
         display: none;
     }
 
-    /* The reference keeps its page title tight under the top bar and the tiles tight under
-       the title; Filament spends 32px on each. Scoped by :has(.ao-dash-header) so only the
-       dashboard — the one page whose header carries our gear — is pulled together, and every
-       other admin page keeps Filament's spacing. */
-    .fi-page-header-main-ctn:has(.ao-dash-header) {
+    /* The reference keeps every page title tight under the top bar and the content tight
+       under the title; Filament spends 32px on each. This began scoped to the dashboard,
+       until the Users page showed the same two bands on every screen — so it is the whole
+       admin area now, which is also what makes the pages feel like one application. */
+    .fi-page-header-main-ctn {
         padding-block-start: 0.75rem;
         gap: 1rem;
+    }
+
+    /* WHMCS page titles are quiet: ~20px, sitting right on the breadcrumb line. Filament's
+       24px title with 8px of breadcrumb margin above it reads as a banner. */
+    .fi-header h1 {
+        font-size: 1.25rem;
+        line-height: 1.4;
+    }
+
+    .fi-breadcrumbs {
+        margin-bottom: 0.15rem;
+    }
+
+    /* ── Table density ──────────────────────────────────────────────────────────────
+       The reference's rows are ~34px; Filament's were 73px, and almost none of it was
+       content: `.fi-ta-text-item` carries 16px of padding above and below a 24px line,
+       inside a cell that adds 8px more each way. Trimmed at both levels, a row is ~40px —
+       twice the records on screen, which on a list page is the entire point of the page. */
+    .fi-ta-cell {
+        padding-block: 2px;
+    }
+
+    .fi-ta-cell .fi-ta-text-item {
+        padding-block: 0.3rem;
+    }
+
+    /* Actions column too, or rows with buttons stay tall and the table ripples. */
+    .fi-ta-cell .fi-ta-actions {
+        padding-block: 0.3rem;
     }
 
     /* The reference's position: top right, level with the page heading. */
