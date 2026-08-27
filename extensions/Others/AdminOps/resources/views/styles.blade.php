@@ -1025,4 +1025,219 @@
         font-size: 0.8rem;
         color: var(--wa-muted, hsl(var(--color-base) / 0.6));
     }
+
+    /* --- View/Search Clients & Manage Users ---
+       The reference's furniture, shared by both screens: the grey search band with its
+       round green glass, the records line, the navy grid, and the page buttons. Measured
+       against the screenshots rather than remembered. */
+    .ao-mu {
+        font-size: 0.8125rem;
+        color: var(--wa-text, #4a4a4a);
+    }
+
+    .ao-find {
+        display: flex;
+        align-items: flex-end;
+        gap: 1rem;
+        padding: 0.9rem 1.1rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 3px);
+        background: #f8f8f8;
+        margin-bottom: 0.9rem;
+    }
+
+    .ao-find-glass {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        flex: none;
+        align-self: center;
+        border-radius: 999px;
+        background: #86c44a;
+        color: #fff;
+    }
+
+    .ao-find-fields {
+        display: flex;
+        flex: 1;
+        flex-wrap: wrap;
+        gap: 0.9rem;
+    }
+
+    .ao-find-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        min-width: 9rem;
+    }
+
+    .ao-find-field > span {
+        font-weight: 600;
+        color: var(--wa-ink, #333);
+    }
+
+    .ao-find-wide { flex: 1; min-width: 13rem; }
+    .ao-find-grow { flex: 1; }
+
+    .ao-find-field input,
+    .ao-find-field select {
+        height: 2.1rem;
+        padding: 0 0.55rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: var(--wa-radius, 3px);
+        background: #fff;
+        font-size: 0.8125rem;
+    }
+
+    .ao-find-field input:focus,
+    .ao-find-field select:focus {
+        outline: 2px solid var(--wa-link, #337ab7);
+        outline-offset: -1px;
+    }
+
+    .ao-find-go {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        height: 2.1rem;
+        padding: 0 1.4rem;
+        flex: none;
+        border-radius: var(--wa-radius, 3px);
+        background: var(--wa-link, #337ab7);
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.8125rem;
+        cursor: pointer;
+    }
+
+    .ao-find-go:hover { background: #286090; }
+
+    .ao-mu-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .ao-mu-line-right {
+        display: inline-flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .ao-mu-jump select {
+        margin-inline-start: 0.3rem;
+        padding: 0.1rem 0.4rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: var(--wa-radius, 3px);
+        background: #fff;
+    }
+
+    /* The reference's little ON pill on Hide Inactive Clients. */
+    .ao-mu-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        cursor: pointer;
+        color: inherit;
+    }
+
+    .ao-mu-toggle i {
+        font-style: normal;
+        font-size: 0.66rem;
+        font-weight: 700;
+        padding: 0.1rem 0.45rem;
+        border-radius: 999px;
+        background: #b6b6b6;
+        color: #fff;
+    }
+
+    .ao-mu-toggle.ao-on i { background: var(--wa-link, #337ab7); }
+
+    .ao-mu-grid {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+    }
+
+    .ao-mu-grid th {
+        padding: 0.45rem 0.6rem;
+        background: var(--wa-blue, #1a4d80);
+        color: #fff;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-align: center;
+        border-inline-end: 1px solid rgb(255 255 255 / 0.18);
+        white-space: nowrap;
+    }
+
+    .ao-mu-grid td {
+        padding: 0.45rem 0.6rem;
+        text-align: center;
+        border-bottom: 1px solid var(--wa-rule, #d9dadb);
+    }
+
+    .ao-mu-grid tbody tr:hover { background: #f5f8fb; }
+
+    .ao-mu-grid a {
+        color: var(--wa-link, #337ab7);
+    }
+
+    .ao-mu-grid a:hover { text-decoration: underline; }
+
+    .ao-mu-check { width: 2rem; }
+
+    .ao-mu-none {
+        padding: 0.8rem !important;
+        color: var(--wa-muted, #888);
+    }
+
+    .ao-mu-status.ao-mu-active { color: #3c763d; font-weight: 600; }
+    .ao-mu-status.ao-mu-inactive { color: var(--wa-muted, #888); }
+
+    .ao-mu-actions a { margin-inline: 0.35rem; white-space: nowrap; }
+
+    .ao-mu-selected {
+        margin-top: 0.7rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .ao-mu-selected button,
+    .ao-mu-pages button {
+        padding: 0.35rem 0.9rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: var(--wa-radius, 3px);
+        background: #fff;
+        color: var(--wa-text, #4a4a4a);
+        font-size: 0.8125rem;
+        cursor: pointer;
+    }
+
+    .ao-mu-selected button:hover,
+    .ao-mu-pages button:hover:not(:disabled) { background: #f0f0f0; }
+
+    .ao-mu-pages button:disabled { opacity: 0.5; cursor: default; }
+
+    .ao-mu-pages {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 1.1rem;
+    }
+
+    .ao-mu-page-now {
+        display: inline-grid;
+        place-items: center;
+        min-width: 2.1rem;
+        height: 2.1rem;
+        border-radius: var(--wa-radius, 3px);
+        background: var(--wa-blue, #1a4d80);
+        color: #fff;
+        font-weight: 700;
+    }
 </style>

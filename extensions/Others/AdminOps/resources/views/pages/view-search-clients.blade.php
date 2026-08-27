@@ -1,0 +1,150 @@
+{{--
+    View/Search Clients, to the reference screenshot: search band, records line with Jump to
+    Page and the Hide Inactive toggle, navy grid, With Selected underneath, page buttons.
+
+    Send Message is real, not scenery: it collects the ticked rows' addresses into a mailto:
+    so the admin's own mail client opens addressed — the one way to "send a message" that
+    needs no backend nobody has built.
+--}}
+<x-filament-panels::page>
+    <div class="ao-mu">
+        <form class="ao-find" wire:submit.prevent="search">
+            <span class="ao-find-glass" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" width="18" height="18">
+                    <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
+                </svg>
+            </span>
+
+            <div class="ao-find-fields">
+                <label class="ao-find-field ao-find-wide">
+                    <span>Client/Company Name</span>
+                    <input type="text" wire:model="name">
+                </label>
+                <label class="ao-find-field ao-find-wide">
+                    <span>Email Address</span>
+                    <input type="text" wire:model="email">
+                </label>
+                <label class="ao-find-field">
+                    <span>Phone Number</span>
+                    <input type="text" wire:model="phone">
+                </label>
+                <label class="ao-find-field">
+                    <span>Status</span>
+                    <select wire:model="status">
+                        <option value="">Any</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </label>
+            </div>
+
+            <button type="submit" class="ao-find-go">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" width="13" height="13" aria-hidden="true">
+                    <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
+                </svg>
+                Search
+            </button>
+        </form>
+
+        <div class="ao-mu-line">
+            <span>{{ number_format($clients->total()) }} Records Found</span>
+            <span class="ao-mu-line-right">
+                <button type="button" class="ao-mu-toggle {{ $hideInactive ? 'ao-on' : '' }}"
+                    wire:click="toggleInactive">
+                    <i>{{ $hideInactive ? 'ON' : 'OFF' }}</i>
+                    Hide Inactive Clients ({{ number_format($hiddenCount) }})
+                </button>
+                <label class="ao-mu-jump">
+                    Jump to Page:
+                    <select wire:change="jump($event.target.value)">
+                        @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ViewSearchClients::pages($clients) as $number)
+                            <option value="{{ $number }}" @selected($number === $clients->currentPage())>{{ $number }}</option>
+                        @endforeach
+                    </select>
+                </label>
+            </span>
+        </div>
+
+        <table class="ao-mu-grid">
+            <thead>
+                <tr>
+                    <th class="ao-mu-check"><input type="checkbox" data-ao-check-all></th>
+                    <th>ID &#9662;</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Company Name</th>
+                    <th>Email Address</th>
+                    <th>Services</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($clients as $client)
+                    @php
+                        $summary = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $client->id]);
+                        $company = $client->properties->first()?->value;
+                        $active = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ViewSearchClients::isActive($client);
+                    @endphp
+                    <tr>
+                        <td class="ao-mu-check"><input type="checkbox" data-ao-check value="{{ $client->email }}"></td>
+                        <td>{{ $client->id }}</td>
+                        <td><a href="{{ $summary }}">{{ $client->first_name ?: '—' }}</a></td>
+                        <td><a href="{{ $summary }}">{{ $client->last_name ?: '—' }}</a></td>
+                        <td>{{ $company ?: '' }}</td>
+                        <td><a href="{{ $summary }}">{{ $client->email }}</a></td>
+                        <td>{{ $client->services_count }}</td>
+                        <td>{{ $client->created_at?->format('d/m/Y') }}</td>
+                        <td>
+                            <span class="ao-mu-status {{ $active ? 'ao-mu-active' : 'ao-mu-inactive' }}">
+                                {{ $active ? 'Active' : 'Inactive' }}
+                            </span>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="9" class="ao-mu-none">No Records Found</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+
+        <div class="ao-mu-selected">
+            With Selected:
+            <button type="button" data-ao-send-message>Send Message</button>
+        </div>
+
+        <nav class="ao-mu-pages">
+            <button type="button" wire:click="jump({{ $clients->currentPage() - 1 }})"
+                @disabled($clients->onFirstPage())>&laquo; Previous Page</button>
+            <span class="ao-mu-page-now">{{ $clients->currentPage() }}</span>
+            <button type="button" wire:click="jump({{ $clients->currentPage() + 1 }})"
+                @disabled(!$clients->hasMorePages())>Next Page &raquo;</button>
+        </nav>
+    </div>
+
+    <script>
+        (() => {
+            const root = document.currentScript.closest('.fi-page') ?? document;
+
+            root.addEventListener('change', (event) => {
+                if (!event.target.matches('[data-ao-check-all]')) return;
+                for (const box of root.querySelectorAll('[data-ao-check]')) box.checked = event.target.checked;
+            });
+
+            root.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-ao-send-message]');
+                if (!button) return;
+
+                const picked = [...root.querySelectorAll('[data-ao-check]:checked')].map((box) => box.value);
+
+                if (!picked.length) {
+                    alert('Tick at least one client first.');
+                    return;
+                }
+
+                window.location.href = 'mailto:' + encodeURIComponent(picked.join(','));
+            });
+        })();
+    </script>
+</x-filament-panels::page>
