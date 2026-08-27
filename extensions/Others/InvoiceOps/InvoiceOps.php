@@ -5,6 +5,7 @@ namespace Paymenter\Extensions\Others\InvoiceOps;
 use App\Attributes\ExtensionMeta;
 use App\Classes\Extension\Extension;
 use App\Helpers\ExtensionHelper;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\HtmlString;
 use Paymenter\Extensions\Others\InvoiceOps\Support\Drafts;
 
@@ -73,6 +74,8 @@ class InvoiceOps extends Extension
 
     public function boot()
     {
+        View::addNamespace('invoiceops', __DIR__ . '/resources/views');
+
         Drafts::hideFromCustomers();
     }
 }
