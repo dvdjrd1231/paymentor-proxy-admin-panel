@@ -376,12 +376,24 @@
        content: `.fi-ta-text-item` carries 16px of padding above and below a 24px line,
        inside a cell that adds 8px more each way. Trimmed at both levels, a row is ~40px —
        twice the records on screen, which on a list page is the entire point of the page. */
-    .fi-ta-cell {
+    /* The extra ancestor is load-bearing: these are injected in the head, before Filament's
+       own stylesheet, so at equal specificity Filament wins on order and nothing changes. */
+    .fi-ta .fi-ta-cell {
         padding-block: 2px;
     }
 
-    .fi-ta-cell .fi-ta-text-item {
+    /* Both spellings: a plain cell wraps its text in `.fi-ta-text-item`, a cell with a
+       description line wraps the pair in `.fi-ta-text` — each with its own 16px paddings,
+       so trimming only the first left any row with a second line at twice the height of
+       its neighbours, and the Users list read as ragged. */
+    .fi-ta-cell .fi-ta-text-item,
+    .fi-ta-cell .fi-ta-text {
         padding-block: 0.3rem;
+    }
+
+    .fi-ta-cell .fi-ta-text-description {
+        font-size: 0.78rem;
+        line-height: 1.3;
     }
 
     /* Actions column too, or rows with buttons stay tall and the table ripples. */
@@ -565,7 +577,17 @@
         border-bottom: 1px solid var(--wa-rule, hsl(var(--color-gray-200)));
         font-size: 0.875rem;
         font-weight: 600;
-        color: var(--wa-ink, hsl(var(--color-base)));
+        color: var(--wa-link, #337ab7);
+    }
+
+    /* Blue panel titles, exactly as every WHMCS panel titles itself — it is the single most
+       recognisable trait of that dashboard, and the black headings were the tell that this
+       one was something else. */
+    .ao-wi .fi-section-header-heading,
+    .ao-wi .fi-ta-header-heading,
+    .ao-wi .fi-wi-chart-header-heading {
+        color: var(--wa-link, #337ab7);
+        font-size: 0.9rem;
     }
 
     .ao-wi-dragging {
