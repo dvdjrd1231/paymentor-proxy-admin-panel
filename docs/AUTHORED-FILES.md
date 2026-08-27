@@ -55,7 +55,8 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 - `extensions/Others/TermLimits/Support/Terms.php` — open, extend, close a term
 - `extensions/Others/TermLimits/Support/Sweeper.php` — one pass over what is due, and the backfill
 - `extensions/Others/TermLimits/Console/EnforceTerms.php` — `term-limits:enforce`
-- `extensions/Others/TermLimits/Models/` — `ServiceTerm`, `ServiceTermExtension`
+- `extensions/Others/TermLimits/Models/` — `ServiceTerm`, `ServiceTermExtension`, `ProductTerm`
+- `extensions/Others/TermLimits/Admin/Resources/ProductTermResource.php` — Setup → Auto Terminate, the reference's per-product field
 - `extensions/Others/TermLimits/Admin/Resources/ServiceTermResource.php` — Orders → Fixed Terms, with Extend
 - `extensions/Others/TermLimits/database/migrations/` — `ext_term_limits`, `ext_term_limit_extensions`
 - `extensions/Others/TermLimits/README.md`

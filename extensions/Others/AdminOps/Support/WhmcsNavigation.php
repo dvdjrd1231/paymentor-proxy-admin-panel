@@ -46,6 +46,7 @@ use Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbArticleResource;
 use Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbCategoryResource;
 use Paymenter\Extensions\Others\PaymentFees\Admin\Resources\PaymentFeeRuleResource;
 use Paymenter\Extensions\Others\ProvisioningOps\Admin\Resources\ProvisioningOperationResource;
+use Paymenter\Extensions\Others\TermLimits\Admin\Resources\ProductTermResource;
 use Paymenter\Extensions\Others\TermLimits\Admin\Resources\ServiceTermResource;
 use Paymenter\Extensions\Others\TicketTools\Admin\Resources\CannedResponseResource;
 use Paymenter\Extensions\Others\TicketTools\Admin\Resources\TicketNoteResource;
@@ -346,6 +347,10 @@ class WhmcsNavigation
             static::page(Catalogue::class, 'Products/Services'),
             static::link(ProductResource::class, 'Products'),
             static::link(CategoryResource::class, 'Categories'),
+            // The reference's Auto Terminate/Fixed Term field, which lives on the product's
+            // Pricing tab there and cannot here — a resource's form is no more extensible
+            // from an extension than its table is.
+            static::link(ProductTermResource::class, 'Auto Terminate'),
             static::link(ConfigOptionResource::class, 'Configurable Options'),
             static::link(ServerResource::class, 'Servers'),
             static::page(PanelLocations::class, 'Panel Locations'),
