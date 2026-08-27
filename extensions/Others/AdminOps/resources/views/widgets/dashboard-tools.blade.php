@@ -47,8 +47,6 @@
         const grid = mount.closest('.fi-wi-widget')?.parentElement;
         if (!grid) return;
 
-        mount.dataset.aoBound = '1';
-
         // The reference puts this gear at the top right of the page, level with the
         // "Dashboard" heading — not in the grid. This widget has to *be* in the grid (it is
         // how it sorts first and finds its neighbours), so the gear is moved out of it into
@@ -74,13 +72,23 @@
         const saved = @js($layout);
         const COLLAPSED = 'aoCollapsedWidgets';
 
+        // `Livewire.find()` hands back the `$wire` proxy, which is what carries `call()`.
+        // `Livewire.all()` hands back the raw components, which do not — hence `.$wire`
+        // wherever a neighbour is asked to do something. Getting this the wrong way round is
+        // silent: the refresh button span for 600ms and refreshed nothing.
         const self = () => {
             const id = mount.closest('[wire\\:id]')?.getAttribute('wire:id');
             return id ? Livewire.find(id) : null;
         };
 
+        // This widget renders with the page, so the script can run before Livewire has
+        // registered anything. Claim the mount only once there is a component to talk to,
+        // or the retry on `livewire:initialized` would find it already claimed and bail —
+        // and nothing would ever bind.
         const tools = self();
         if (!tools) return;
+
+        mount.dataset.aoBound = '1';
 
         // ── Which panels are on this screen ──────────────────────────────────────────
         // Keyed by Livewire component name: the only identifier that is the same string
@@ -116,7 +124,13 @@
             // `Target class [ComponentRegistry] does not exist` while rendering the dashboard.
             // This asks the DOM a question the DOM can answer.
             .filter((panel) => !panel.block.contains(mount)      // this widget
-                && !panel.block.querySelector('.ao-tiles'));     // the tile row
+                && !panel.block.querySelector('.ao-tiles')       // the tile row
+                // Every other widget is lazy: what is in the grid at first paint is an empty
+                // `.fi-loading-section` box, and its real markup — heading included — is
+                // morphed in later. Decorating the box would put the tools on something that
+                // is about to be thrown away, and read a title that is not there yet.
+                && !panel.root.classList.contains('fi-loading-section')
+                && !panel.root.querySelector('.fi-loading-section'));
 
         const collapsed = () => {
             try {
@@ -168,39 +182,111 @@
         };
 
         // ── Apply what was saved ─────────────────────────────────────────────────────
-        const found = panels();
+        // Not once. Every panel but this one is lazy, so they arrive one at a time, minutes
+        // apart if a query is slow — and each `wire:poll` tick morphs one of them again,
+        // which throws away any tools sitting inside the part that was replaced.
+        //
+        // So this is written to be run repeatedly and to be a no-op when there is nothing
+        // to do: decorate what is undecorated, leave the rest alone. A MutationObserver on
+        // the grid runs it whenever the dashboard changes underneath us.
         const hidden = new Set(saved.hidden ?? []);
         const rolled = new Set(collapsed());
-
-        // Saved order first, in order; anything the admin has never moved — a widget added
-        // by an extension since — keeps Filament's own position, after them.
-        const ordered = [
-            ...(saved.order ?? []).map((name) => found.find((panel) => panel.name === name)).filter(Boolean),
-            ...found.filter((panel) => !(saved.order ?? []).includes(panel.name)),
-        ];
-
-        ordered.forEach((panel) => grid.appendChild(panel.block));
-
+        const order = [...(saved.order ?? [])];
         const menu = mount.querySelector('[data-ao-menu-list]');
 
-        ordered.forEach((panel) => {
-            const title = titleOf(panel.root, panel.name);
-            const header = headerOf(panel.root, title);
+        let menuKey = '';
 
-            panel.block.dataset.aoWidget = panel.name;
-            panel.block.classList.add('ao-wi');
-            header.classList.add('ao-wi-header');
-            header.setAttribute('title', 'Drag to move this panel');
+        const decorate = () => {
+            const found = panels();
+            if (!found.length) return;
 
-            if (hidden.has(panel.name)) panel.block.classList.add('ao-wi-hidden');
-            if (rolled.has(panel.name)) panel.block.classList.add('ao-wi-collapsed');
+            // Saved order first, in order; anything the admin has never moved — a widget
+            // added by an extension since — keeps Filament's own position, after them.
+            const ordered = [
+                ...order.map((name) => found.find((panel) => panel.name === name)).filter(Boolean),
+                ...found.filter((panel) => !order.includes(panel.name)),
+            ];
 
-            header.append(buildTools(panel, title));
-            menu?.append(buildMenuRow(panel, title, hidden));
+            // Only touch the DOM if the order is actually wrong. Re-appending every panel on
+            // every observer tick would fight `wire:poll` for the scroll position and make
+            // the dashboard twitch once a minute for no reason.
+            const laidOut = Array.from(grid.children).filter((el) => ordered.some((p) => p.block === el));
+            const settled = laidOut.length === ordered.length
+                && ordered.every((panel, index) => laidOut[index] === panel.block);
+
+            if (!settled) ordered.forEach((panel) => grid.appendChild(panel.block));
+
+            ordered.forEach((panel) => {
+                const title = titleOf(panel.root, panel.name);
+                const header = headerOf(panel.root, title);
+
+                panel.block.dataset.aoWidget = panel.name;
+                panel.block.classList.add('ao-wi');
+
+                // Set, not added: a panel brought back from the menu has to lose the class
+                // again, and a morph can restore one we had removed.
+                panel.block.classList.toggle('ao-wi-hidden', hidden.has(panel.name));
+                panel.block.classList.toggle('ao-wi-collapsed', rolled.has(panel.name));
+
+                if (header.querySelector('.ao-wi-tools')) return;
+
+                header.classList.add('ao-wi-header');
+                header.setAttribute('title', 'Drag to move this panel');
+                // A div is not focusable, and a dashboard that can only be rearranged with a
+                // mouse is not the feature that was asked for.
+                header.setAttribute('tabindex', '0');
+                header.setAttribute('role', 'button');
+                header.setAttribute('aria-label', 'Move this panel with the left and right arrow keys');
+                header.append(buildTools(panel, title));
+            });
+
+            // Rebuilt only when the roster changes — otherwise just re-tick the boxes, so
+            // that a checkbox the admin is looking at does not get replaced under the cursor.
+            const key = ordered.map((panel) => panel.name).join('|');
+
+            if (menu && key !== menuKey) {
+                menuKey = key;
+                menu.textContent = '';
+                ordered.forEach((panel) => menu.append(
+                    buildMenuRow(panel, titleOf(panel.root, panel.name)),
+                ));
+            } else if (menu) {
+                ordered.forEach((panel) => {
+                    const box = menu.querySelector(`input[data-ao-widget="${CSS.escape(panel.name)}"]`);
+                    if (box) box.checked = !hidden.has(panel.name);
+                });
+            }
+
+            mount.querySelector('[data-ao-settings]')?.removeAttribute('hidden');
+            lift();
+        };
+
+        // The observer must not see its own work, or `decorate` would trigger the tick that
+        // runs `decorate`. Disconnecting across the call is what makes that terminate.
+        let observer = null;
+        let timer = null;
+
+        const watch = () => observer?.observe(grid, { childList: true, subtree: true });
+
+        const sync = () => {
+            observer?.disconnect();
+
+            try {
+                decorate();
+            } catch (error) {
+                // A broken panel must not take the dashboard's chrome with it.
+                console.error('AdminOps dashboard:', error);
+            } finally {
+                watch();
+            }
+        };
+
+        observer = new MutationObserver(() => {
+            clearTimeout(timer);
+            timer = setTimeout(sync, 100);
         });
 
-        mount.querySelector('[data-ao-settings]')?.removeAttribute('hidden');
-        lift();
+        sync();
 
         function buildTools(panel, title) {
             const wrap = document.createElement('span');
@@ -232,22 +318,29 @@
                 // refreshing itself — no second endpoint, and no view rendered twice.
                 button('Refresh', '&#8635;', (el) => {
                     el.classList.add('ao-wi-spin');
-                    panel.component.$refresh?.()?.then?.(
-                        () => el.classList.remove('ao-wi-spin'),
-                        () => el.classList.remove('ao-wi-spin'),
-                    ) ?? setTimeout(() => el.classList.remove('ao-wi-spin'), 600);
+
+                    // `$wire`, not the component: `Livewire.all()` returns the raw component
+                    // objects, and `$refresh` lives on the proxy. Called on the component it
+                    // is simply `undefined`, so the button spun and refreshed nothing.
+                    const done = () => el.classList.remove('ao-wi-spin');
+                    const refresh = panel.component.$wire?.$refresh?.();
+
+                    refresh?.then ? refresh.then(done, done) : setTimeout(done, 600);
                 }),
                 button('Collapse', '&#9650;', () => {
-                    panel.block.classList.toggle('ao-wi-collapsed');
+                    const isCollapsed = panel.block.classList.toggle('ao-wi-collapsed');
 
-                    const list = collapsed().filter((name) => name !== panel.name);
-                    if (panel.block.classList.contains('ao-wi-collapsed')) list.push(panel.name);
-                    rememberCollapsed(list);
+                    // The set the observer reapplies from, so a poll does not unroll it.
+                    isCollapsed ? rolled.add(panel.name) : rolled.delete(panel.name);
+                    rememberCollapsed([...rolled]);
                 }),
                 button('Hide', '&#10005;', () => {
+                    hidden.add(panel.name);
                     panel.block.classList.add('ao-wi-hidden');
+
                     const box = menu?.querySelector(`input[data-ao-widget="${CSS.escape(panel.name)}"]`);
                     if (box) box.checked = false;
+
                     tools.call('toggleHidden', panel.name);
                 }),
             );
@@ -255,15 +348,16 @@
             return wrap;
         }
 
-        function buildMenuRow(panel, title, hiddenSet) {
+        function buildMenuRow(panel, title) {
             const row = document.createElement('li');
             const label = document.createElement('label');
             const box = document.createElement('input');
 
             box.type = 'checkbox';
-            box.checked = !hiddenSet.has(panel.name);
+            box.checked = !hidden.has(panel.name);
             box.dataset.aoWidget = panel.name;
             box.addEventListener('change', () => {
+                box.checked ? hidden.delete(panel.name) : hidden.add(panel.name);
                 panel.block.classList.toggle('ao-wi-hidden', !box.checked);
                 tools.call('toggleHidden', panel.name);
             });
@@ -298,8 +392,18 @@
         let dragged = null;
         let before = null;
 
-        const order = () => Array.from(grid.querySelectorAll(':scope > [data-ao-widget]'))
+        const currentOrder = () => Array.from(grid.querySelectorAll(':scope > [data-ao-widget]'))
             .map((root) => root.dataset.aoWidget);
+
+        // Save, and keep the list `decorate` lays out from in step — otherwise the next
+        // observer tick would put the panel straight back where it was dragged from.
+        const persistOrder = () => {
+            const now = currentOrder();
+            order.splice(0, order.length, ...now);
+            tools.call('saveOrder', now);
+
+            return now;
+        };
 
         grid.addEventListener('mousedown', (event) => {
             const header = event.target.closest('.ao-wi-header');
@@ -312,7 +416,7 @@
             if (!root || root.getAttribute('draggable') !== 'true') return;
 
             dragged = root;
-            before = order().join();
+            before = currentOrder().join();
             event.dataTransfer.effectAllowed = 'move';
             event.dataTransfer.setData('text/plain', root.dataset.aoWidget);
             root.classList.add('ao-wi-dragging');
@@ -346,8 +450,7 @@
             dragged.classList.remove('ao-wi-dragging');
             dragged.removeAttribute('draggable');
 
-            const now = order();
-            if (now.join() !== before) tools.call('saveOrder', now);
+            if (currentOrder().join() !== before) persistOrder();
 
             dragged = null;
         });
@@ -370,14 +473,7 @@
             event.preventDefault();
             grid.insertBefore(root, step < 0 ? roots[target] : roots[target].nextSibling);
             header.focus();
-            tools.call('saveOrder', order());
-        });
-
-        // Reachable by keyboard at all: a div is not focusable by default.
-        grid.querySelectorAll('.ao-wi-header').forEach((header) => {
-            header.setAttribute('tabindex', '0');
-            header.setAttribute('role', 'button');
-            header.setAttribute('aria-label', 'Move this panel with the left and right arrow keys');
+            persistOrder();
         });
     };
 
