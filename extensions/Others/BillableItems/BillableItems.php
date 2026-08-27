@@ -7,8 +7,10 @@ use App\Classes\Extension\Extension;
 use App\Helpers\ExtensionHelper;
 use App\Models\Invoice;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\HtmlString;
 use Paymenter\Extensions\Others\BillableItems\Support\Items;
+use Throwable;
 
 /**
  * The reference's **Billable Items**: charging for something nobody ordered.
@@ -93,12 +95,23 @@ class BillableItems extends Extension
     private function sweepDaily(): void
     {
         app()->booted(function (): void {
-            app(Schedule::class)
-                ->call(fn () => Items::sweep())
-                ->dailyAt(config('settings.cronjob_time', '00:00'))
-                ->name('billable-items-sweep')
-                ->withoutOverlapping()
-                ->onOneServer();
+            // Guarded because a throw here reaches no handler: `booted()` runs on every
+            // request, so an exception while *registering* background work 500s every page
+            // of the site — which is exactly what an `Artisan::starting()` that did not
+            // exist did on 2026-08-27. A schedule that fails to register costs a background
+            // task; an unhandled boot exception costs the whole business.
+            try {
+                app(Schedule::class)
+                    ->call(fn () => Items::sweep())
+                    ->dailyAt(config('settings.cronjob_time', '00:00'))
+                    ->name('billable-items-sweep')
+                    ->withoutOverlapping()
+                    ->onOneServer();
+            } catch (Throwable $exception) {
+                Log::error('BillableItems: could not register its scheduled work', [
+                    'exception' => $exception->getMessage(),
+                ]);
+            }
         });
     }
 }
