@@ -37,7 +37,11 @@ class ProductTermResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-hourglass';
+    // `o-clock`, not `o-hourglass`: heroicons has no hourglass, and a missing icon is not a
+    // missing picture — Blade Icons throws, so the whole page answered 500. It was the only
+    // invalid name of the 41 this project references, and nothing pointed at it until the
+    // page was actually opened.
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clock';
 
     protected static ?string $navigationLabel = 'Auto Terminate';
 
@@ -100,7 +104,7 @@ class ProductTermResource extends Resource
             ->recordActions([
                 Action::make('setTerm')
                     ->label('Auto Terminate')
-                    ->icon('heroicon-o-hourglass')
+                    ->icon('heroicon-o-clock')
                     ->visible(fn (): bool => static::canSet())
                     ->fillForm(fn (Product $record): array => [
                         'days' => ProductTerm::firstWhere('product_id', $record->id)?->days ?? 0,
