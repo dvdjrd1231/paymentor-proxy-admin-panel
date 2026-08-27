@@ -23,17 +23,26 @@
  *
  *   php scripts/test-admin-captcha.php
  */
-$base = dirname(__DIR__);
-require $base . '/vendor/autoload.php';
-$app = require_once $base . '/bootstrap/app.php';
-$app->make(Kernel::class)->bootstrap();
-
+// Imports sit above the bootstrap, not below it, and that is load-bearing: PHP resolves
+// aliases in parse order, so a `use` declared after this block does not apply to it and
+// `Kernel::class` there resolves to a non-existent global `Kernel`. Pint keeps the block
+// wherever it finds it and shortens any fully-qualified name back to the alias, so above
+// is the only arrangement that survives both. Found by running the script.
 use Filament\Schemas\Schema;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ViewErrorBag;
 use Illuminate\Validation\ValidationException;
 use Paymenter\Extensions\Others\AdminOps\Admin\Auth\Login;
+
+$base = dirname(__DIR__);
+require $base . '/vendor/autoload.php';
+$app = require_once $base . '/bootstrap/app.php';
+// Fully qualified, not the imported alias: Pint orders `use` statements after this
+// bootstrap block, and PHP resolves aliases in parse order — an alias declared below
+// this line does not apply to it, so `Kernel::class` would resolve to a global `Kernel`
+// that does not exist. Found by running it.
+$app->make(Kernel::class)->bootstrap();
 
 $steps = [];
 
