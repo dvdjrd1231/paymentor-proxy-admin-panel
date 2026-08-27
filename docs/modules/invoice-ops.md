@@ -100,7 +100,35 @@ work. It is shown rather than hidden so the difference is visible instead of ass
 
 Totals are per currency, never summed across them: Paymenter stores no exchange rate.
 
-## 5. Refunds ledger
+## 5. Refund requests — the answer to what blocked gateway refunds
+
+**Billing → Refund Requests.** The customer asks, an administrator answers.
+
+This is the shape that makes refunds workable without a gateway API. Paymenter cannot push
+money back through Stripe — no gateway here defines `refund()` — but the **decision** needs
+no API. You approve here, refund in the gateway's own dashboard, and the approval writes the
+record the ledger and the Amount Out column read.
+
+The money and the record are two acts by one person, in that order, and the screen says so
+rather than implying the approval moved anything.
+
+**Approving is two statements, not one:** how much goes back, and whether the service goes
+with it. A customer asking for money back is not necessarily asking to lose their proxy, and
+the two have very different consequences — so cancelling is off by default and never implied.
+
+The administrator is **not bound by the amount asked for**. A part refund is a legitimate
+answer to "give me all of it", and forcing a yes/no on the customer's number would push those
+conversations off the record entirely.
+
+**Refusing requires a reason.** A refusal with nothing behind it is the one a customer
+escalates, and the one nobody can defend three months later when it returns as a chargeback.
+
+One open request per invoice at a time: a second while one is still open is the same
+conversation twice, and answering both separately is how a customer gets refunded twice. The
+approved request keeps its refund's id, which is what stops one request becoming two refunds
+if the button is pressed twice.
+
+## 6. Refunds ledger
 
 **Billing → Refunds.** Every refund, read-only — a refund is a fact about money that has
 already moved, and correcting one is another refund with its own reason, not an edit that
