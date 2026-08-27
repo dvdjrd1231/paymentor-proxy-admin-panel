@@ -38,6 +38,8 @@ use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AutomationStatus;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\Catalogue;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageUsers;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ViewSearchClients;
 use Paymenter\Extensions\Others\Affiliates\Admin\Resources\AffiliateResource;
 use Paymenter\Extensions\Others\Announcements\Admin\Resources\AnnouncementResource;
 use Paymenter\Extensions\Others\BillableItems\Admin\Resources\BillableItemResource;
@@ -168,8 +170,13 @@ class WhmcsNavigation
     private static function clients(): ?NavigationGroup
     {
         return static::group('Clients', 'ri-group-line', [
-            static::link(UserResource::class, 'View/Search Clients'),
+            // The reference's own screens, not core's list: Leandro's feedback screenshots
+            // are of View/Search Clients and Manage Users, so those pages exist here and the
+            // menu leads to them. Core's UserResource stays reachable through their Actions
+            // column — it is still the only place a user is edited.
+            static::page(ViewSearchClients::class, 'View/Search Clients'),
             static::link(UserResource::class, 'Add New Client', page: 'create'),
+            static::page(ManageUsers::class, 'Manage Users'),
             static::link(ServiceResource::class, 'Products/Services'),
             // Ours, not core's: core's list offers Edit and Delete, and deleting a request is
             // indistinguishable from refusing it. Falls back to core's when the extension is
