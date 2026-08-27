@@ -6,8 +6,8 @@ use App\Attributes\ExtensionMeta;
 use App\Classes\Extension\Extension;
 use App\Helpers\ExtensionHelper;
 use App\Models\Service;
+use Illuminate\Console\Application as ConsoleApplication;
 use Illuminate\Console\Scheduling\Schedule;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\HtmlString;
@@ -177,14 +177,32 @@ class TermLimits extends Extension
         // scheduled command that has not been resolved yet is a scheduler that fails
         // silently — the closure calls the same code either way.
         app()->booted(function (): void {
-            Artisan::starting(fn ($artisan) => $artisan->resolve(EnforceTerms::class));
+            // Guarded because a throw here reaches no handler: `booted()` runs on every
+            // request, so an exception while *registering* background work 500s every page
+            // of the site — which is exactly what an `Artisan::starting()` that did not
+            // exist did on 2026-08-27. A schedule that fails to register costs a background
+            // task; an unhandled boot exception costs the whole business.
+            try {
+                // `Illuminate\Console\Application::starting()`, not the `Artisan` facade. The
+                // facade resolves to `Illuminate\Contracts\Console\Kernel`, which has no
+                // `starting()` — and because this closure runs on *every* request, the
+                // BadMethodCallException took the whole site down with a 500 on every page, not
+                // just the console. Registering a command is the console Application's job.
+                ConsoleApplication::starting(function ($artisan): void {
+                    $artisan->resolve(EnforceTerms::class);
+                });
 
-            app(Schedule::class)
-                ->call(fn () => Sweeper::run())
-                ->everyMinute()
-                ->name('term-limits-enforce')
-                ->withoutOverlapping()
-                ->onOneServer();
+                app(Schedule::class)
+                    ->call(fn () => Sweeper::run())
+                    ->everyMinute()
+                    ->name('term-limits-enforce')
+                    ->withoutOverlapping()
+                    ->onOneServer();
+            } catch (Throwable $exception) {
+                Log::error('TermLimits: could not register its scheduled work', [
+                    'exception' => $exception->getMessage(),
+                ]);
+            }
         });
     }
 }

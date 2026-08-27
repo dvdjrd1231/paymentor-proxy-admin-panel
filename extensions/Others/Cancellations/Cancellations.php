@@ -105,12 +105,23 @@ class Cancellations extends Extension
     private function sweepWhenDue(): void
     {
         app()->booted(function (): void {
-            app(Schedule::class)
-                ->call(fn () => Sweeper::run())
-                ->hourly()
-                ->name('cancellations-sweep')
-                ->withoutOverlapping()
-                ->onOneServer();
+            // Guarded because a throw here reaches no handler: `booted()` runs on every
+            // request, so an exception while *registering* background work 500s every page
+            // of the site — which is exactly what an `Artisan::starting()` that did not
+            // exist did on 2026-08-27. A schedule that fails to register costs a background
+            // task; an unhandled boot exception costs the whole business.
+            try {
+                app(Schedule::class)
+                    ->call(fn () => Sweeper::run())
+                    ->hourly()
+                    ->name('cancellations-sweep')
+                    ->withoutOverlapping()
+                    ->onOneServer();
+            } catch (Throwable $exception) {
+                Log::error('Cancellations: could not register its scheduled work', [
+                    'exception' => $exception->getMessage(),
+                ]);
+            }
         });
     }
 

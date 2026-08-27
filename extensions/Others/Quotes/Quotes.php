@@ -6,8 +6,10 @@ use App\Attributes\ExtensionMeta;
 use App\Classes\Extension\Extension;
 use App\Helpers\ExtensionHelper;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\HtmlString;
 use Paymenter\Extensions\Others\Quotes\Support\Quoting;
+use Throwable;
 
 /**
  * Quotes: a priced proposal a customer can accept, which then becomes an invoice.
@@ -78,12 +80,23 @@ class Quotes extends Extension
     private function expireDaily(): void
     {
         app()->booted(function (): void {
-            app(Schedule::class)
-                ->call(fn () => Quoting::sweep())
-                ->dailyAt(config('settings.cronjob_time', '00:00'))
-                ->name('quotes-expire')
-                ->withoutOverlapping()
-                ->onOneServer();
+            // Guarded because a throw here reaches no handler: `booted()` runs on every
+            // request, so an exception while *registering* background work 500s every page
+            // of the site — which is exactly what an `Artisan::starting()` that did not
+            // exist did on 2026-08-27. A schedule that fails to register costs a background
+            // task; an unhandled boot exception costs the whole business.
+            try {
+                app(Schedule::class)
+                    ->call(fn () => Quoting::sweep())
+                    ->dailyAt(config('settings.cronjob_time', '00:00'))
+                    ->name('quotes-expire')
+                    ->withoutOverlapping()
+                    ->onOneServer();
+            } catch (Throwable $exception) {
+                Log::error('Quotes: could not register its scheduled work', [
+                    'exception' => $exception->getMessage(),
+                ]);
+            }
         });
     }
 }
