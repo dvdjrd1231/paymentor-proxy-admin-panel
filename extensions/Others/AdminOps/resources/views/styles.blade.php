@@ -509,11 +509,31 @@
     }
 
     /* The table widget's header is the one place the tools land that is not already a flex
-       row; without this they stack under the heading instead of sitting at its end. */
+       row; without this they stack under the heading instead of sitting at its end. The
+       heading is pushed left explicitly — centred, it read as a different kind of panel
+       from its neighbours. */
+    /* The table widget's header fought every flex arrangement — its heading container
+       centres itself with auto margins and pushed the tools onto a second line. So the
+       tools are pinned to the corner absolutely instead, and the centring margin removed:
+       title left, tools right, one line, whatever the inner markup does. */
     .fi-ta-header.ao-wi-header {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        position: relative;
+    }
+
+    .fi-ta-header.ao-wi-header > :first-child {
+        margin-inline: 0;
+        text-align: left;
+    }
+
+    .fi-ta-header.ao-wi-header .fi-ta-header-heading {
+        text-align: left;
+    }
+
+    .fi-ta-header.ao-wi-header .ao-wi-tools {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        inset-inline-end: 0.8rem;
     }
 
     /* Filament's section headers are flex rows, so the tools land at the end of one without
@@ -543,18 +563,17 @@
         margin-inline-start: auto;
     }
 
+    /* The reference's tool icons: pale grey strokes that darken on hover, no hover pill —
+       quiet enough that the blue title stays the thing being read. */
     .ao-wi-tool {
-        padding: 0.15rem 0.3rem;
-        border-radius: 2px;
+        padding: 0.15rem 0.25rem;
         line-height: 1;
-        font-size: 0.8rem;
-        color: hsl(var(--color-base) / 0.45);
+        color: #b9bfc4;
         cursor: pointer;
     }
 
     .ao-wi-tool:hover {
-        color: hsl(var(--color-base));
-        background: hsl(var(--color-base) / 0.06);
+        color: #7d8790;
     }
 
     .ao-wi-tool svg {
@@ -580,14 +599,28 @@
         color: var(--wa-link, #337ab7);
     }
 
+    /* The reference's dashboard headers are *white*, not the #f5f5f5 band its other panels
+       wear — a blue title sitting directly on the panel, tools in light grey at the right,
+       and no rule underneath. The band styling in the skin is correct everywhere else, so
+       only panels this chrome has adopted are overridden. */
+    .ao-wi .fi-section-header,
+    .ao-wi .fi-ta-header,
+    .ao-wi .ao-wi-bar {
+        background: #fff;
+        border-bottom: 0;
+        padding: 0.6rem 0.8rem 0.3rem;
+    }
+
     /* Blue panel titles, exactly as every WHMCS panel titles itself — it is the single most
        recognisable trait of that dashboard, and the black headings were the tell that this
-       one was something else. */
+       one was something else. Regular weight, as the reference sets them. */
     .ao-wi .fi-section-header-heading,
     .ao-wi .fi-ta-header-heading,
-    .ao-wi .fi-wi-chart-header-heading {
+    .ao-wi .fi-wi-chart-header-heading,
+    .ao-wi .ao-wi-bar {
         color: var(--wa-link, #337ab7);
-        font-size: 0.9rem;
+        font-size: 14px;
+        font-weight: 400;
     }
 
     .ao-wi-dragging {
@@ -606,8 +639,15 @@
     .fi-wi-widget.ao-wi {
         border: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
         border-radius: var(--wa-radius, 3px);
-        background: var(--wa-card, hsl(var(--color-gray-50) / 0.3));
+        background: #fff;
         overflow: hidden;
+    }
+
+    /* The reference's dashboard is white panels on a quiet grey page — panel edges read from
+       the contrast, not only from the border. Scoped to the one page that has adopted
+       panels; every other admin screen keeps the white canvas the skin gives it. */
+    main.fi-main:has(.fi-wi-widget.ao-wi) {
+        background: #f3f5f6;
     }
 
     .fi-wi-widget.ao-wi .fi-section,
