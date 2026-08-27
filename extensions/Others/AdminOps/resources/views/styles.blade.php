@@ -472,6 +472,113 @@
         color: hsl(var(--color-base) / 0.8);
     }
 
+    /* The reference's three header tiles: verdict, last run, next run. Big figure, small
+       label under it, colour carrying the verdict. */
+    .ao-auto-head {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .ao-auto-head-tile {
+        padding: 1rem 1.15rem;
+        border-radius: 0.375rem;
+        color: hsl(var(--color-inverted));
+        background: hsl(var(--color-inactive));
+    }
+
+    .ao-auto-head-tile.ao-auto-ok { background: hsl(var(--color-success)); }
+    .ao-auto-head-tile.ao-auto-bad { background: hsl(var(--color-error)); }
+    .ao-auto-head-tile.ao-auto-neutral { background: hsl(var(--color-warning)); }
+    .ao-auto-head-tile.ao-auto-quiet { background: hsl(var(--color-inactive)); }
+
+    .ao-auto-head-figure {
+        display: block;
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1.15;
+    }
+
+    .ao-auto-head-label {
+        display: block;
+        font-size: 0.8rem;
+        opacity: 0.9;
+    }
+
+    .ao-auto-heartbeat {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
+        color: hsl(var(--color-base));
+    }
+
+    .ao-auto-section {
+        margin-bottom: 0.6rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--wa-ink, hsl(var(--color-base)));
+    }
+
+    /* Daily Actions. `auto-fit` rather than the reference's fixed three columns, so the grid
+       reflows on a narrow window instead of overflowing — and still looks deliberate when
+       an extension that owns two of the tiles is not installed. */
+    .ao-auto-tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+        gap: 0.75rem;
+    }
+
+    .ao-auto-tile {
+        border: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
+        border-radius: var(--wa-radius, 3px);
+        background: var(--wa-canvas, hsl(var(--color-gray-50)));
+    }
+
+    .ao-auto-tile-head {
+        padding: 0.45rem 0.75rem;
+        border-bottom: 1px solid var(--wa-rule, hsl(var(--color-gray-200)));
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--wa-ink, hsl(var(--color-base)));
+    }
+
+    .ao-auto-tile-body {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        padding: 0.6rem 0.75rem 0.35rem;
+    }
+
+    .ao-auto-tile-figure {
+        font-size: 1.75rem;
+        font-weight: 700;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+        color: hsl(var(--color-primary));
+    }
+
+    .ao-auto-tile-did {
+        font-size: 0.8rem;
+        color: var(--wa-muted, hsl(var(--color-base) / 0.6));
+    }
+
+    /* The reference puts this in red at the end of the row, and only when it is not zero. */
+    .ao-auto-tile-failed {
+        margin-inline-start: auto;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: hsl(var(--color-error));
+    }
+
+    .ao-auto-tile-foot {
+        padding: 0 0.75rem 0.6rem;
+        font-size: 0.72rem;
+        color: var(--wa-muted, hsl(var(--color-base) / 0.6));
+    }
+
     .ao-auto-clocks {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));

@@ -424,11 +424,28 @@ Two independent clocks, because they fail differently and the fixes differ:
 | `last_scheduler_run` | core's heartbeat, every minute | `schedule:run` is not in cron at all |
 | `last_cron_run` | `app:cron-job` on completion | scheduler fine, the daily job itself is failing |
 
-Problems are stated above the figures, in the imperative, with the command that is missing —
-"automation is not running" sends somebody to the wrong place. Task counts are shown for
-today *and* the last seven days: the daily job runs once at a configured hour, so every one
-of today's figures is legitimately zero until it has, and a page showing only today would
-report a healthy install as idle every morning.
+The layout is the reference's, taken from a screenshot of its own page: three tiles across
+the top — verdict, last daily run, next daily run — then **Daily Actions**, a tile per task
+carrying what it did today and, in red beside it, **what failed**.
+
+That failed count is the part most worth copying. A task can half-work — one panel that will
+not answer while the other fifty services end fine — and a grid showing only successes calls
+that a good day. Both of our tasks now count their failures rather than throwing on the first
+one, which is also why one unreachable panel no longer stops the queue.
+
+**Fixed Term Terminations** and **Overdue Terminations** are separate tiles, as they are on
+the reference, and deliberately: one is a service whose paid period ran out unpaid, the other
+was always going to end on a date. Merged, a fixed-term module that had stopped would hide
+behind an overdue ladder that had not.
+
+A task that has never recorded anything gets no tile at all — so an uninstalled module leaves
+no permanent zero claiming to be watched. Every task writes to `cron_stats`, the table core's
+own tasks use, so this page needs no knowledge of which extension owns which tile.
+
+Counts are shown for today *and* the last seven days: the daily job runs once at a configured
+hour, so every one of today's figures is legitimately zero until it has, and a page showing
+only today would report a healthy install as idle every morning. The two tasks that do not
+wait for it — fixed terms every minute, cancellations hourly — say so on the page.
 
 Core's Cron Statistics page is untouched and still linked, from the header and from
 Utilities.

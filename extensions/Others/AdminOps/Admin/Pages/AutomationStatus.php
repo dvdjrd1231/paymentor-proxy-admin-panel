@@ -56,15 +56,35 @@ class AutomationStatus extends Page
     private const DAILY_STALE_HOURS = 36;
 
     /**
-     * Names for tasks core does not know about, because they belong to extensions.
+     * The reference's **Daily Actions** tiles, in its order and its words.
      *
-     * Worded as the reference words its own — its Automation Status lists a
-     * "Cancellation Requests" task — so the two screens read the same way round.
+     * Each is `key => [title, past participle]` — the reference labels the figure with what
+     * the task *did* ("0 Generated", "0 Suspended", "0 Terminated") rather than repeating the
+     * task name, which is what makes a wall of zeroes readable at a glance.
      *
-     * @var array<string, string>
+     * Two of these are ours. **Fixed Term Terminations** and **Cancellation Requests** are
+     * tasks the reference has and core did not; they write to `cron_stats` like everything
+     * else, so this page needs no knowledge of which extension owns them — a key that never
+     * appears simply has no tile.
+     *
+     * `Overdue Terminations` and `Fixed Term Terminations` are deliberately separate, as they
+     * are on the reference. One is a service whose paid period ran out unpaid; the other was
+     * always going to end on a date. Merged, a fixed-term module that had stopped would hide
+     * behind an overdue ladder that had not.
+     *
+     * @var array<string, array{0: string, 1: string}>
      */
-    private const LABELS = [
-        'cancellations_processed' => 'Cancellation Requests',
+    private const TASKS = [
+        'invoices_created' => ['Invoices', 'Generated'],
+        'invoice_charged' => ['Payment Captures', 'Captured'],
+        'cancellations_processed' => ['Cancellation Requests', 'Processed'],
+        'services_suspended' => ['Overdue Suspensions', 'Suspended'],
+        'services_terminated' => ['Overdue Terminations', 'Terminated'],
+        'fixed_term_terminations' => ['Fixed Term Terminations', 'Terminated'],
+        'orders_cancelled' => ['Unpaid Orders', 'Cancelled'],
+        'upgrade_invoices_updated' => ['Upgrade Invoices', 'Updated'],
+        'tickets_closed' => ['Inactive Tickets', 'Closed'],
+        'email_logs_deleted' => ['Email Logs', 'Deleted'],
     ];
 
     public static function canAccess(): bool
@@ -104,9 +124,26 @@ class AutomationStatus extends Page
                 'healthy' => $daily && $daily->diffInHours(now()) <= self::DAILY_STALE_HOURS,
                 'threshold' => self::DAILY_STALE_HOURS . ' hours',
             ],
+            'nextRun' => $this->nextDailyRun(),
             'tasks' => $this->tasks(),
             'problems' => $this->problems($heartbeat, $daily),
         ];
+    }
+
+    /**
+     * When the daily pass is next due — the reference's "Next Daily Task Run" tile.
+     *
+     * Derived from `cronjob_time` rather than stored, because nothing stores it: the
+     * scheduler decides at run time whether the hour has come. Today's slot if it has not
+     * passed, tomorrow's if it has.
+     */
+    private function nextDailyRun(): Carbon
+    {
+        [$hour, $minute] = array_pad(explode(':', (string) config('settings.cronjob_time', '00:00')), 2, '0');
+
+        $next = now()->setTime((int) $hour, (int) $minute, 0);
+
+        return $next->isFuture() ? $next : $next->addDay();
     }
 
     /**
@@ -149,29 +186,34 @@ class AutomationStatus extends Page
     {
         $rows = CronStat::query()
             ->where('date', '>=', now()->subDays(7)->toDateString())
-            ->get();
+            ->get()
+            ->groupBy('key');
 
-        return $rows
-            ->groupBy('key')
-            ->map(function ($group, string $key): array {
-                $today = $group->where('date', now()->toDateString())->sum('value');
+        $today = now()->toDateString();
+        $tiles = [];
 
-                return [
-                    'key' => $key,
-                    // Core already names these for its own cron page; reusing the same
-                    // strings means the two screens cannot drift apart.
-                    'label' => self::LABELS[$key]
-                        ?? (__('admin.cronjob.' . $key) === 'admin.cronjob.' . $key
-                            ? str($key)->replace('_', ' ')->ucfirst()->toString()
-                            : __('admin.cronjob.' . $key)),
-                    'today' => (int) $today,
-                    'week' => (int) $group->sum('value'),
-                    'lastSeen' => $group->max('date'),
-                ];
-            })
-            ->sortBy('label')
-            ->values()
-            ->all();
+        foreach (self::TASKS as $key => [$title, $did]) {
+            $group = $rows->get($key);
+
+            // A task that has never recorded anything gets no tile. The reference does the
+            // same — its grid shows the tasks this install actually runs, so an uninstalled
+            // module leaves no permanent zero claiming to be watched.
+            if ($group === null) {
+                continue;
+            }
+
+            $tiles[] = [
+                'title' => $title,
+                'did' => $did,
+                'today' => (int) $group->where('date', $today)->sum('value'),
+                'week' => (int) $group->sum('value'),
+                // The reference puts a failed count on every tile, in red, beside the figure.
+                'failed' => (int) ($rows->get($key . '_failed')?->where('date', $today)->sum('value') ?? 0),
+                'lastSeen' => $group->max('date'),
+            ];
+        }
+
+        return $tiles;
     }
 
     /**
