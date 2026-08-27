@@ -122,11 +122,34 @@ Configured on the server with the client's API Integration (Client ID + Client S
 `c-api.coinpayments.net`). Nothing outstanding except regenerating the client secret, which
 was shared over chat.
 
-### Cryptomus
+### Cryptomus — **done**, live and verified 27 Aug 2026
+
+The application was approved and the account is active. Both credentials are configured on
+the dev server and confirmed working end to end:
+
+| Check | Result |
+|---|---|
+| `POST /v1/payment/services` with the stored key | HTTP 200, `state: 0`, **105 services, all available** |
+| `scripts/test-cryptomus-payment.php` | **5/5** — invoice raised, payment created at Cryptomus, pending transaction recorded |
+
 | Field | Where to get it |
 |---|---|
 | `merchant_id` | Merchant UUID, dashboard → Settings |
 | `payment_api_key` | dashboard → API |
+
+Two things worth recording, because neither is obvious from the dashboard:
+
+- **The first key issued was already stale.** The server held an earlier key and every
+  request came back `HTTP 401 Invalid Sign`. The merchant UUID was unchanged, so the failure
+  looked like a signing bug rather than a credential one. If Cryptomus ever returns
+  *Invalid Sign* against a UUID you know is right, compare the stored key with the issued
+  one before touching the signing code.
+- **Regenerate this key.** It was shared over chat, like the CoinPayments secret above.
+
+Settlement still needs one real payment to confirm the callback end of it. The signature
+scheme is `md5(base64(body) . api_key)` and we hold the key, so a signed callback can be
+delivered deliberately — `scripts/test-cryptomus-payment.php --settle` does exactly that,
+and rejects a forgery first so that acceptance means something.
 
 ### Binance Pay — **blocked by geo-restriction** 🚫
 
