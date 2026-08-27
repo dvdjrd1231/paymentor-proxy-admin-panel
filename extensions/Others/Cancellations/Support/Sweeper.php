@@ -5,6 +5,7 @@ namespace Paymenter\Extensions\Others\Cancellations\Support;
 use App\Models\CronStat;
 use App\Models\ServiceCancellation;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Paymenter\Extensions\Others\Cancellations\Cancellations;
 
 /**
@@ -29,11 +30,12 @@ class Sweeper
     public const STAT_KEY = 'cancellations_processed';
 
     /**
-     * @return array{terminated: int, lines: array<int, string>}
+     * @return array{terminated: int, failed: int, lines: array<int, string>}
      */
     public static function run(bool $dryRun = false): array
     {
         $terminated = 0;
+        $failed = 0;
         $lines = [];
 
         foreach (static::due() as $request) {
@@ -47,25 +49,34 @@ class Sweeper
                 $service?->expires_at?->toDateString() ?? 'now',
             );
 
-            if (!$dryRun) {
-                Requests::accept($request);
+            if ($dryRun) {
+                $terminated++;
+
+                continue;
             }
 
-            $terminated++;
+            // Counted rather than thrown, and for the reference's own reason: it reports a
+            // failed count per task because a task can half-work, and one panel that will
+            // not answer must not stop the rest of the queue being cleared.
+            try {
+                Requests::accept($request);
+                $terminated++;
+            } catch (\Throwable $exception) {
+                Log::error('Cancellations: could not act on request #' . $request->id, [
+                    'exception' => $exception->getMessage(),
+                ]);
+                $failed++;
+            }
         }
 
         if (!$dryRun) {
-            // Recorded even when it is zero: a task that only writes a row when it does
-            // something is indistinguishable, on the status page, from a task that has
-            // stopped running. Zero is the useful answer here.
-            CronStat::create([
-                'key' => static::STAT_KEY,
-                'value' => $terminated,
-                'date' => now()->toDateString(),
-            ]);
+            // Recorded even when zero: a task that only writes a row when it does something
+            // is indistinguishable, on the status page, from a task that has stopped running.
+            CronStat::create(['key' => static::STAT_KEY, 'value' => $terminated, 'date' => now()->toDateString()]);
+            CronStat::create(['key' => static::STAT_KEY . '_failed', 'value' => $failed, 'date' => now()->toDateString()]);
         }
 
-        return ['terminated' => $terminated, 'lines' => $lines];
+        return ['terminated' => $terminated, 'failed' => $failed, 'lines' => $lines];
     }
 
     /**

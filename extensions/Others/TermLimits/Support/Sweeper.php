@@ -2,7 +2,9 @@
 
 namespace Paymenter\Extensions\Others\TermLimits\Support;
 
+use App\Models\CronStat;
 use App\Models\Service;
+use Illuminate\Support\Facades\Log;
 use Paymenter\Extensions\Others\TermLimits\Models\ServiceTerm;
 use Paymenter\Extensions\Others\TermLimits\TermLimits;
 
@@ -17,7 +19,18 @@ use Paymenter\Extensions\Others\TermLimits\TermLimits;
 class Sweeper
 {
     /**
-     * @return array{stopped: int, released: int, lines: array<int, string>}
+     * The reference's **Fixed Term Terminations** task, and the key it reports under.
+     *
+     * WHMCS's Automation Status lists this beside "Overdue Terminations" as a task of its
+     * own, because they are different things: one is a service whose paid period ran out
+     * unpaid, the other is a service that was always going to end on a date. Reporting them
+     * together would hide a fixed-term module that has stopped behind an overdue ladder that
+     * has not.
+     */
+    public const STAT_KEY = 'fixed_term_terminations';
+
+    /**
+     * @return array{stopped: int, released: int, failed: int, lines: array<int, string>}
      */
     public static function run(bool $dryRun = false): array
     {
@@ -26,6 +39,7 @@ class Sweeper
 
         $stopped = 0;
         $released = 0;
+        $failed = 0;
         $lines = [];
 
         foreach ($due as $term) {
@@ -53,14 +67,46 @@ class Sweeper
 
             $lines[] = ($terminate ? 'terminate ' : 'suspend   ') . $label;
 
-            if (!$dryRun) {
-                Terms::close($term, $terminate);
+            if ($dryRun) {
+                $stopped++;
+
+                continue;
             }
 
-            $stopped++;
+            // Counted rather than thrown. One panel that will not answer must not stop the
+            // other fifty services being ended, and the reference reports a failure count
+            // per task for exactly this reason — a task can half-work, and a page that only
+            // showed successes would call that a good day.
+            try {
+                Terms::close($term, $terminate);
+                $stopped++;
+            } catch (\Throwable $exception) {
+                Log::error('TermLimits: could not close term #' . $term->id, [
+                    'exception' => $exception->getMessage(),
+                ]);
+                $failed++;
+            }
         }
 
-        return ['stopped' => $stopped, 'released' => $released, 'lines' => $lines];
+        if (!$dryRun) {
+            static::record($stopped, $failed);
+        }
+
+        return ['stopped' => $stopped, 'released' => $released, 'failed' => $failed, 'lines' => $lines];
+    }
+
+    /**
+     * Report the pass to `cron_stats`, which is where core's own tasks report and therefore
+     * where Automation Status reads.
+     *
+     * Written even when both numbers are zero. A task that only records a row when it did
+     * something is, on that page, indistinguishable from a task that has stopped running —
+     * and "nothing was due today" is the answer you want to be able to see.
+     */
+    private static function record(int $stopped, int $failed): void
+    {
+        CronStat::create(['key' => static::STAT_KEY, 'value' => $stopped, 'date' => now()->toDateString()]);
+        CronStat::create(['key' => static::STAT_KEY . '_failed', 'value' => $failed, 'date' => now()->toDateString()]);
     }
 
     /**
