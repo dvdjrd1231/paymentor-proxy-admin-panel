@@ -685,14 +685,19 @@
         };
 
         grid.addEventListener('click', (event) => {
-            if (event.target.closest('a, button, input, select, canvas')) return;
-
+            // Order matters: while carrying, *any* click in the grid is the set-down —
+            // including one that happens to land on a link or a chart. Bailing for
+            // interactive elements first left the panel stuck in hand and the click
+            // navigating away, which is the worst of both.
             if (carrying) {
                 event.preventDefault();
+                event.stopPropagation();
                 setDown(false);
 
                 return;
             }
+
+            if (event.target.closest('a, button, input, select, canvas')) return;
 
             const header = event.target.closest('.ao-wi-header');
             const root = header?.closest('[data-ao-widget]');
