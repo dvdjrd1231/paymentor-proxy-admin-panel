@@ -45,6 +45,7 @@ use Paymenter\Extensions\Others\Cancellations\Admin\Resources\CancellationReques
 use Paymenter\Extensions\Others\GatewayRules\Admin\Resources\GatewayRuleResource;
 use Paymenter\Extensions\Others\InvoiceOps\Admin\Pages\Transactions;
 use Paymenter\Extensions\Others\InvoiceOps\Admin\Resources\InvoiceOpsResource;
+use Paymenter\Extensions\Others\InvoiceOps\Admin\Resources\RefundRequestResource;
 use Paymenter\Extensions\Others\InvoiceOps\Admin\Resources\RefundResource;
 use Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbArticleResource;
 use Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbCategoryResource;
@@ -244,6 +245,14 @@ class WhmcsNavigation
             // three tiles above them. Core's list has Amount and nothing else, which cannot
             // answer what was actually kept.
             static::page(Transactions::class, 'Transactions Report'),
+            static::link(
+                RefundRequestResource::class,
+                'Refund Requests',
+                badge: fn () => class_exists(RefundRequestResource::class)
+                    ? RefundRequestResource::getNavigationBadge()
+                    : null,
+                badgeColor: 'danger',
+            ),
             static::link(RefundResource::class, 'Refunds'),
             static::link(InvoiceResource::class, 'All Invoices'),
             static::link(
