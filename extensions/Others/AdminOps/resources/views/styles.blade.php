@@ -63,13 +63,16 @@
     .ao-tile-info    { background-color: hsl(var(--color-info)); }
     .ao-tile-brand   { background-color: hsl(var(--color-primary)); }
 
+    /* Sized off the reference's tiles, which are shorter than they look: ~64px tall, a
+       ~28px glyph on the dark block, a 24px figure. Ours had drifted a size up on all
+       three. */
     .ao-tile-icon {
         flex: none;
         box-sizing: content-box;
-        width: 2rem;
+        width: 1.75rem;
         height: auto;
         align-self: stretch;
-        padding: 1rem 1.15rem;
+        padding: 0.8rem 1rem;
         background: rgb(0 0 0 / 0.16);
         color: #fff;
         opacity: 1;
@@ -77,15 +80,15 @@
 
     .ao-tile-figure {
         align-self: center;
-        padding-block: 0.9rem;
+        padding-block: 0.6rem;
         padding-inline-end: 1rem;
     }
 
     .ao-tile-count {
         display: block;
-        font-size: 1.7rem;
+        font-size: 1.5rem;
         font-weight: 700;
-        line-height: 1.1;
+        line-height: 1.15;
         font-variant-numeric: tabular-nums;
     }
 
@@ -629,6 +632,30 @@
         padding: 0.55rem 0.8rem;
     }
 
+    /* The reference letters its stats, not its labels: figures in rotating WHMCS colours —
+       green, orange, pink — at regular weight, labels in quiet grey. Ours were black-on-black
+       bold, which read as a different product. Sampled from the screenshot. */
+    .ao-wi .fi-wi-stats-overview-stat-label {
+        color: #8b8b8b;
+        font-weight: 400;
+        font-size: 0.8rem;
+    }
+
+    .ao-wi .fi-wi-stats-overview-stat-value {
+        font-weight: 400;
+    }
+
+    /* Counted on the stats container's children, not on the stat class itself: each stat
+       sits in its own wrapper, so counting stats made every one a first child and the
+       whole rotation came out green. */
+    .ao-wi .fi-wi-stats-overview-stats-ctn > :nth-child(3n+1) .fi-wi-stats-overview-stat-value { color: #7ac143; }
+    .ao-wi .fi-wi-stats-overview-stats-ctn > :nth-child(3n+2) .fi-wi-stats-overview-stat-value { color: #f5a54a; }
+    .ao-wi .fi-wi-stats-overview-stats-ctn > :nth-child(3n)   .fi-wi-stats-overview-stat-value { color: #f062a2; }
+
+    .ao-wi .fi-wi-stats-overview-stat-description {
+        color: #8b8b8b;
+    }
+
     /* Blue panel titles, exactly as every WHMCS panel titles itself — it is the single most
        recognisable trait of that dashboard, and the black headings were the tell that this
        one was something else. Regular weight, as the reference sets them. */
@@ -684,9 +711,31 @@
        has adopted: the tile row and this widget's own block are untouched, so the tiles
        keep the full width the reference gives them. */
     @media (min-width: 1024px) {
-        .fi-grid:has(> .fi-wi-widget.ao-wi) {
+        /* Keyed on .ao-grid — the class the widget script adds at boot — not on
+           :has(.ao-wi). The :has version only matched once panels were *decorated*, so in
+           the seconds before that the grid kept Filament's 24px gap while the 10px masonry
+           rows already applied: every undecorated child reserved 40 rows plus 39 fat gaps,
+           1336px of nothing each, which pushed the lazy widgets out of the viewport so
+           they never loaded without scrolling. One class, one moment, both rules. */
+        .fi-grid.ao-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 0.65rem;
+            grid-auto-rows: 10px;
+        }
+
+        /* `13` is a lazy placeholder's own height, so the frame before the first pack()
+           reserves roughly what is actually there.
+
+           `align-self: start` on *every* child, and that is the load-bearing half: a
+           stretched grid item's height is its span's height, so measuring it hands the
+           span straight back and the box never shrinks to its content. The tiles row
+           proved it — not being an adopted panel it missed the .ao-wi start-alignment,
+           stretched to its own guess, and wore 170px of empty space as if it were
+           content. Start-aligned, a child's height is its content's, and packing
+           converges. */
+        .ao-grid > * {
+            grid-row: span var(--ao-span, 13);
+            align-self: start;
         }
 
         .fi-wi-widget.ao-wi {
