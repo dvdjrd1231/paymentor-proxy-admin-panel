@@ -15,7 +15,6 @@
 --}}
 @php
     $layout = $this->getLayout();
-    $static = $this->getStaticWidgets();
 @endphp
 
 <div class="ao-dash-tools" data-ao-dash>
@@ -50,7 +49,6 @@
 
         mount.dataset.aoBound = '1';
 
-        const STATIC = @js($static);
         const saved = @js($layout);
         const COLLAPSED = 'aoCollapsedWidgets';
 
@@ -90,7 +88,13 @@
                 return block ? { name: component.name, root, block, component } : null;
             })
             .filter(Boolean)
-            .filter((panel) => !STATIC.includes(panel.name));
+            // Static panels — the reference stamps its own, and these are ours. Decided from
+            // the markup rather than from a list of component names resolved in PHP: Livewire 4
+            // has no stable class-to-name API, and the Livewire 3 one that was used here threw
+            // `Target class [ComponentRegistry] does not exist` while rendering the dashboard.
+            // This asks the DOM a question the DOM can answer.
+            .filter((panel) => !panel.block.contains(mount)      // this widget
+                && !panel.block.querySelector('.ao-tiles'));     // the tile row
 
         const collapsed = () => {
             try {
