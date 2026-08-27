@@ -339,14 +339,25 @@
 
     /* Once the gear has been lifted into the page header, the grid row this widget occupied
        is empty — and an empty row above the tiles reads as a rendering fault rather than as
-       nothing. Collapsed rather than `display: none` so the widget's own Livewire root stays
-       in the document: removing it from layout is enough, and hiding it entirely would take
-       the component that owns the checkboxes with it. */
+       nothing.
+
+       `display: none`, and it must be: the previous `height: 0` removed the box but not the
+       grid *row*, and the grid pays its 24px row-gap on every row — so the tiles sat a full
+       gap lower for a row containing nothing. A `display: none` grid item creates no row at
+       all. The earlier worry that hiding it would break the Livewire component was wrong on
+       both counts: the element stays in the document either way, and by the time this class
+       is applied the gear and menu have already been moved out into the page header. */
     .fi-wi-widget.ao-dash-collapsed {
-        display: block;
-        height: 0;
-        margin: 0;
-        overflow: hidden;
+        display: none;
+    }
+
+    /* The reference keeps its page title tight under the top bar and the tiles tight under
+       the title; Filament spends 32px on each. Scoped by :has(.ao-dash-header) so only the
+       dashboard — the one page whose header carries our gear — is pulled together, and every
+       other admin page keeps Filament's spacing. */
+    .fi-page-header-main-ctn:has(.ao-dash-header) {
+        padding-block-start: 0.75rem;
+        gap: 1rem;
     }
 
     /* The reference's position: top right, level with the page heading. */
