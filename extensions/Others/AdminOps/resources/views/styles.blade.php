@@ -38,12 +38,17 @@
         gap: 0.75rem;
     }
 
+    /* The reference's tiles: a darker block of the tile's own colour on the left with the
+       icon reversed out white, figure and label on the lighter body, corners barely
+       rounded. The dark block is black at 16% over the tile colour, so every tone gets its
+       own darker shade without naming four more colours. */
     .ao-tile {
         display: flex;
-        align-items: center;
-        gap: 0.9rem;
-        padding: 1rem 1.15rem;
-        border-radius: 0.75rem;
+        align-items: stretch;
+        gap: 1rem;
+        padding: 0;
+        border-radius: 3px;
+        overflow: hidden;
         color: hsl(var(--color-inverted));
         background-color: hsl(var(--color-inactive));
         transition: filter 120ms ease;
@@ -60,14 +65,25 @@
 
     .ao-tile-icon {
         flex: none;
-        width: 2.25rem;
-        height: 2.25rem;
-        opacity: 0.85;
+        box-sizing: content-box;
+        width: 2rem;
+        height: auto;
+        align-self: stretch;
+        padding: 1rem 1.15rem;
+        background: rgb(0 0 0 / 0.16);
+        color: #fff;
+        opacity: 1;
+    }
+
+    .ao-tile-figure {
+        align-self: center;
+        padding-block: 0.9rem;
+        padding-inline-end: 1rem;
     }
 
     .ao-tile-count {
         display: block;
-        font-size: 1.75rem;
+        font-size: 1.7rem;
         font-weight: 700;
         line-height: 1.1;
         font-variant-numeric: tabular-nums;
@@ -607,8 +623,10 @@
     .ao-wi .fi-ta-header,
     .ao-wi .ao-wi-bar {
         background: #fff;
-        border-bottom: 0;
-        padding: 0.6rem 0.8rem 0.3rem;
+        /* The zoom shows a hairline under each title — far lighter than the #ddd the other
+           panels close their bands with. */
+        border-bottom: 1px solid #ececec;
+        padding: 0.55rem 0.8rem;
     }
 
     /* Blue panel titles, exactly as every WHMCS panel titles itself — it is the single most
