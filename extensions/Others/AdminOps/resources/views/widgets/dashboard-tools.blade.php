@@ -313,9 +313,21 @@
         let observer = null;
         let timer = null;
 
+        // Declared here, not in the drag section below: sync() consults it and runs before
+        // that section does — a later `let` would be a temporal-dead-zone crash on boot.
+        let dragged = null;
+        let before = null;
+
         const watch = () => observer?.observe(grid, { childList: true, subtree: true });
 
         const sync = () => {
+            // Never while a drag is in flight. Every insert the drag makes wakes the
+            // observer, and 100ms later decorate() would lay the grid back out to the
+            // *saved* order — snatching the panel back out from under the cursor, which is
+            // exactly what a drag that "isn't smooth" feels like. The drop calls sync()
+            // itself once the new order is the saved order.
+            if (dragged) return;
+
             observer?.disconnect();
 
             try {
@@ -474,9 +486,7 @@
         // ── Dragging ─────────────────────────────────────────────────────────────────
         // By the heading, as the reference does (`handle: '.panel-title'`). A widget full
         // of links and buttons cannot be draggable everywhere or nothing in it is clickable.
-        let dragged = null;
-        let before = null;
-
+        // (`dragged` and `before` are declared up by the observer, which reads them.)
         const currentOrder = () => Array.from(grid.querySelectorAll(':scope > [data-ao-widget]'))
             .map((root) => root.dataset.aoWidget);
 
@@ -523,6 +533,33 @@
             root.classList.add('ao-wi-dragging');
         });
 
+        // FLIP: record where every panel is, make the change, then let each panel *slide*
+        // from its old place to its new one. Without it a reorder is a teleport — the grid
+        // reflows in one frame — and dragging feels like shuffling cards, not moving panels.
+        // The dragged panel itself is excluded: the browser is already drawing its ghost.
+        const flip = (mutate) => {
+            const kids = [...grid.children].filter((el) => el !== dragged && el.getClientRects().length);
+            const before = new Map(kids.map((el) => [el, el.getBoundingClientRect()]));
+
+            mutate();
+
+            for (const el of kids) {
+                const a = before.get(el);
+                const b = el.getBoundingClientRect();
+                const dx = a.left - b.left;
+                const dy = a.top - b.top;
+
+                if (!dx && !dy) continue;
+
+                el.style.transition = 'none';
+                el.style.transform = `translate(${dx}px, ${dy}px)`;
+                void el.offsetWidth; // commit the starting position before animating away from it
+                el.style.transition = 'transform 170ms ease';
+                el.style.transform = '';
+                el.addEventListener('transitionend', () => { el.style.transition = ''; }, { once: true });
+            }
+        };
+
         grid.addEventListener('dragover', (event) => {
             if (!dragged) return;
 
@@ -538,7 +575,13 @@
             const after = (event.clientY - box.top) / box.height > 0.5
                 || (event.clientX - box.left) / box.width > 0.5;
 
-            grid.insertBefore(dragged, after ? over.nextSibling : over);
+            const ref = after ? over.nextSibling : over;
+
+            // dragover fires on every mouse move; only act when the drop point actually
+            // changed, or the grid re-lays-out dozens of times a second for nothing.
+            if (ref === dragged || ref === dragged.nextSibling) return;
+
+            flip(() => grid.insertBefore(dragged, ref));
         });
 
         grid.addEventListener('drop', (event) => event.preventDefault());
@@ -554,6 +597,10 @@
             if (currentOrder().join() !== before) persistOrder();
 
             dragged = null;
+
+            // The observer stayed silent for the whole drag; run the pass it skipped, now
+            // that the DOM order and the saved order agree again.
+            sync();
         });
 
         // Keyboard equivalent, for the same reason as the catalogue: the HTML5 drag API
