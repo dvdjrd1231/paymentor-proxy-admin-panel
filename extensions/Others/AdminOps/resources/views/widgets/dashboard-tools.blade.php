@@ -55,6 +55,14 @@
         const grid = mount.closest('.fi-wi-widget')?.parentElement;
         if (!grid) return;
 
+        // No masonry here, and that is deliberate. The reference packs its columns with
+        // Packery, so a short panel never leaves a hole beside a tall one. The library-free
+        // equivalent — 8px grid rows with each panel spanning as many as it needs — was
+        // tried and reverted: a chart sized to a content-driven row collapses to nothing,
+        // so the revenue panel rendered blank and the page grew to five thousand pixels of
+        // mostly whitespace. A gap under a short panel is worth more than a chart that is
+        // not there.
+
         // The reference puts this gear at the top right of the page, level with the
         // "Dashboard" heading — not in the grid. This widget has to *be* in the grid (it is
         // how it sorts first and finds its neighbours), so the gear is moved out of it into

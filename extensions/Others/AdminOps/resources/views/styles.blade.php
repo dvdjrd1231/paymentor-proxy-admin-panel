@@ -504,6 +504,28 @@
         display: none;
     }
 
+    /* The reference lays its homepage out in columns — panels side by side, not a single
+       stack a screen and a half tall. Filament's dashboard grid is already two columns
+       wide; every widget simply spans both, so nothing ever sits beside anything.
+
+       Done here rather than by setting `columnSpan` on the widgets because three of the
+       seven are Paymenter's own, and those are core. This reaches only panels the chrome
+       has adopted: the tile row and this widget's own block are untouched, so the tiles
+       keep the full width the reference gives them. */
+    @media (min-width: 1024px) {
+        .fi-wi-widget.ao-wi {
+            grid-column: span 1 / span 1;
+        }
+
+        /* Panels sit at the top of their row rather than stretching to match the tallest
+           one beside them. It does not close the gap a short panel leaves — only masonry
+           does that, and masonry collapses the chart (see the note in the widget script) —
+           but it does stop a half-empty panel from being stretched to look full. */
+        .fi-wi-widget.ao-wi {
+            align-self: start;
+        }
+    }
+
     /* Collapsed: the heading stays, everything under it goes, so the panel can be rolled
        back open.
 
