@@ -71,3 +71,45 @@ New gateway/server modules **must**:
 2. Read them via `$this->config('key')` — never inline.
 3. Validate all inbound webhooks/IPNs before mutating state.
 4. Log ids/refs and outcomes, **never** raw secrets or full card/crypto payloads.
+
+### Declaring `encrypted` is not the same as being encrypted ⚠️
+
+Checked on the dev server, 27 Aug 2026. Every gateway credential was stored **in plaintext**,
+with the `settings.encrypted` column set to `0` — including Stripe's secret key and webhook
+secret, CoinPayments' client secret and Binance's API secret:
+
+```
+extension     key                     encrypted  at_rest
+Stripe        stripe_secret_key       0          PLAINTEXT
+Stripe        stripe_webhook_secret   0          PLAINTEXT
+CoinPayments  client_secret           0          PLAINTEXT
+Binance       api_secret              0          PLAINTEXT
+Cryptomus     payment_api_key         0          PLAINTEXT   ← fixed, now ENCRYPTED
+```
+
+Encryption at rest is driven by that **column**, not by the extension's config: the
+`Setting` saving event encrypts only when the row says `encrypted`. Core sets the column
+from the config — `'encrypted' => $option['encrypted'] ?? false` in
+`GatewayResource/Pages/EditGateway.php` — but **only when the value is saved through
+Admin → Gateways**. A value written any other way (a script, a seeder, direct SQL) keeps the
+column's default of `0` and is stored as typed. Our `Cryptomus` config has always declared
+`'encrypted' => true`; the row said otherwise.
+
+The consequence is that anything holding the row holds the key: `mariadb-dump` output, the
+nightly `/root/backups/*.sql.gz`, and any copy of the database taken for development.
+
+Cryptomus was rewritten through the model with the flag from its own config and now reads
+`ENCRYPTED` at rest. **The other three have not been touched** — re-saving a credential
+means re-entering it, which is the owner's call, and doing it wrongly takes payments down.
+To fix each: open **Admin → Gateways → *gateway* **, re-enter the secret, save. That path
+sets the column correctly. Verify with:
+
+```sql
+SELECT e.extension, s.`key`, s.encrypted,
+       CASE WHEN s.value LIKE 'eyJpdiI6%' THEN 'ENCRYPTED' ELSE 'PLAINTEXT' END AS at_rest
+FROM settings s JOIN extensions e ON e.id = s.settingable_id
+WHERE s.settingable_type LIKE '%Gateway';
+```
+
+Rotate anything that was ever stored in plaintext, since the old value may persist in a
+backup taken before the fix.

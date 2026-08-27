@@ -22,18 +22,35 @@ the panel serves them. See `PANEL-QUESTIONS.md` A1.
 
 ## P2 — Costing money or hiding faults today
 
+### 2.0 Gateway secrets are stored in plaintext · *owner re-enters each, ~5 minutes*
+
+Stripe's secret key and webhook secret, CoinPayments' client secret and Binance's API secret
+are all held unencrypted in `settings.value`, so every database dump and every nightly
+`/root/backups/*.sql.gz` contains them in the clear.
+
+The cause is not a missing config flag — our extensions declare `'encrypted' => true`.
+Encryption at rest follows the `settings.encrypted` **column**, and core sets that column
+only when the value is saved through **Admin → Gateways**. Anything written by a script or
+by SQL keeps the default of `0`. Full detail, including the verification query, is in
+`12-security.md`.
+
+Cryptomus was corrected on 27 Aug 2026 and now reads `ENCRYPTED` at rest. The other three are
+deliberately untouched: re-saving means re-entering the secret, and getting it wrong takes
+payments down — that is the account owner's call, not ours. For each: open **Admin →
+Gateways → *gateway* **, re-enter the secret, save. Then rotate, because the old value
+survives in backups taken before the change.
+
 ### 2.1 Ticket email piping is misconfigured · *Leandro decides, we apply*
 
 Fails every five minutes against `ssl://172.18.0.1:993`, where no IMAP service runs — **~413
 errors a day**. Nothing is lost, but it buries real errors: this is exactly why the
 provisioning failure below went unnoticed for weeks.
 
-Three ways out, in `PANEL-QUESTIONS.md` B3. Option 1 is one command and reversible in
-seconds:
-
-```bash
-php artisan app:settings:change ticket_mail_piping 0
-```
+**Closed 27 Aug 2026** — piping is off and confirmed (`app:fetch-emails` now reports
+*"Email piping is not enabled. Skipping email fetch."*). Note for anyone repeating it:
+`app:settings:change ticket_mail_piping 0` did **not** take. The value has to be the string
+`"0"` — `"false"` is truthy in PHP — and the settings cache has to be dropped with
+`Cache::forget('settings')`, or the old value is served from cache regardless.
 
 ### 2.2 Mock data still on production · *needs two answers, then ~10 minutes*
 
