@@ -28,7 +28,7 @@
         </button>
 
         <div class="ao-dash-menu" data-ao-menu hidden>
-            <h4>Show on this dashboard</h4>
+            <h4>Show/Hide Widgets</h4>
             <ul data-ao-menu-list></ul>
             <p class="ao-dash-menu-note">Drag a panel by its heading to move it.</p>
         </div>
@@ -48,6 +48,28 @@
         if (!grid) return;
 
         mount.dataset.aoBound = '1';
+
+        // The reference puts this gear at the top right of the page, level with the
+        // "Dashboard" heading — not in the grid. This widget has to *be* in the grid (it is
+        // how it sorts first and finds its neighbours), so the gear is moved out of it into
+        // Filament's page header once there is something to put in the menu.
+        //
+        // Moved rather than rendered there: a render hook cannot reach the widget's own
+        // Livewire component, and the checkboxes have to call its methods.
+        const lift = () => {
+            const settings = mount.querySelector('[data-ao-settings]');
+            const header = document.querySelector('.fi-header, .fi-page-header');
+
+            if (!settings || !header || settings.dataset.aoLifted) return;
+
+            header.classList.add('ao-dash-header');
+            header.append(settings);
+            settings.dataset.aoLifted = '1';
+
+            // The row this widget occupied is now empty, and an empty grid row is a gap
+            // above the tiles that looks like a rendering fault.
+            mount.closest('.fi-wi-widget')?.classList.add('ao-dash-collapsed');
+        };
 
         const saved = @js($layout);
         const COLLAPSED = 'aoCollapsedWidgets';
@@ -178,6 +200,7 @@
         });
 
         mount.querySelector('[data-ao-settings]')?.removeAttribute('hidden');
+        lift();
 
         function buildTools(panel, title) {
             const wrap = document.createElement('span');

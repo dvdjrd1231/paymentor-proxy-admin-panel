@@ -337,6 +337,30 @@
         justify-content: flex-end;
     }
 
+    /* Once the gear has been lifted into the page header, the grid row this widget occupied
+       is empty — and an empty row above the tiles reads as a rendering fault rather than as
+       nothing. Collapsed rather than `display: none` so the widget's own Livewire root stays
+       in the document: removing it from layout is enough, and hiding it entirely would take
+       the component that owns the checkboxes with it. */
+    .fi-wi-widget.ao-dash-collapsed {
+        display: block;
+        height: 0;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    /* The reference's position: top right, level with the page heading. */
+    .fi-header.ao-dash-header,
+    .fi-page-header.ao-dash-header {
+        position: relative;
+    }
+
+    .ao-dash-header .ao-dash-settings {
+        position: absolute;
+        inset-inline-end: 0;
+        top: 0;
+    }
+
     .ao-dash-settings {
         position: relative;
     }
