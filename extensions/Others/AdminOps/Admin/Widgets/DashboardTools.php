@@ -5,9 +5,7 @@ namespace Paymenter\Extensions\Others\AdminOps\Admin\Widgets;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
-use Livewire\Mechanisms\ComponentRegistry;
 use Paymenter\Extensions\Others\AdminOps\Models\DashboardLayout;
-use Throwable;
 
 /**
  * The reference's dashboard chrome: every panel draggable, collapsible, refreshable and
@@ -38,6 +36,18 @@ use Throwable;
  * Its Livewire component name. Filament renders each widget as its own Livewire component,
  * and the name is derived from the class, so it is the same string on every page load and
  * on every machine — which the DOM id, the render key and the position are not.
+ *
+ * ## Which panels do not move, and why that is decided in the browser
+ *
+ * The tile row and this widget are stamped, as the reference stamps its static panel. That
+ * used to be resolved here, by asking Livewire's registry for each class's name — and it
+ * was wrong: `Livewire\Mechanisms\ComponentRegistry` is Livewire **3**, this is Livewire 4,
+ * and the container threw `Target class does not exist` while rendering the dashboard.
+ *
+ * There is no stable class-to-name API in Livewire 4 to replace it with, so the question is
+ * now answered structurally in the browser instead: a panel is static if it *is* this
+ * widget, or if it contains the tile row's own markup. That needs no Livewire internals at
+ * all, and it cannot break again on the next major.
  */
 class DashboardTools extends Widget
 {
@@ -63,36 +73,6 @@ class DashboardTools extends Widget
     public static function canView(): bool
     {
         return Auth::check() && Schema::hasTable('ext_adminops_dashboard_layouts');
-    }
-
-    /**
-     * The widgets that do not move, by Livewire component name.
-     *
-     * The reference "stamps" its static panel so Packery lays out around it; the equivalent
-     * here is the tile row, which is a gauge — its value is that the same figure is always
-     * in the same place — and this widget itself, which draws nothing.
-     *
-     * Resolved through Livewire's own registry rather than by guessing the name from the
-     * class, because the mapping is Livewire's to define and it has changed between majors.
-     *
-     * @return array<int, string>
-     */
-    public function getStaticWidgets(): array
-    {
-        $registry = app(ComponentRegistry::class);
-
-        return collect([static::class, HeadlineTiles::class])
-            ->map(function (string $class) use ($registry): ?string {
-                try {
-                    return $registry->getName($class);
-                } catch (Throwable) {
-                    // A widget that is not registered cannot be on the page to be dragged.
-                    return null;
-                }
-            })
-            ->filter()
-            ->values()
-            ->all();
     }
 
     /**
