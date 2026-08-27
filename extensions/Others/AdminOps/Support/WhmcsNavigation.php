@@ -40,6 +40,7 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AutomationStatus;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\Catalogue;
 use Paymenter\Extensions\Others\Affiliates\Admin\Resources\AffiliateResource;
 use Paymenter\Extensions\Others\Announcements\Admin\Resources\AnnouncementResource;
+use Paymenter\Extensions\Others\BillableItems\Admin\Resources\BillableItemResource;
 use Paymenter\Extensions\Others\Cancellations\Admin\Resources\CancellationRequestResource;
 use Paymenter\Extensions\Others\GatewayRules\Admin\Resources\GatewayRuleResource;
 use Paymenter\Extensions\Others\InvoiceOps\Admin\Resources\InvoiceOpsResource;
@@ -261,6 +262,14 @@ class WhmcsNavigation
             // filters above.
             // Publish a draft, record a refund, send one notice by hand — the three things
             // the reference's invoice page can do that core's cannot.
+            static::link(
+                BillableItemResource::class,
+                'Billable Items',
+                badge: fn () => class_exists(BillableItemResource::class)
+                    ? BillableItemResource::getNavigationBadge()
+                    : null,
+                badgeColor: 'warning',
+            ),
             static::link(InvoiceOpsResource::class, 'Invoice Operations'),
             static::link(
                 InvoiceResource::class,
