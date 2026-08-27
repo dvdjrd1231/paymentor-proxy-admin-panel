@@ -56,16 +56,20 @@ class Rail
     }
 
     /**
-     * @return array<int, array{label: string, url: string}>
+     * Each with its own small icon, as every WHMCS shortcut has — the icon column is half of
+     * what makes that list scannable.
+     *
+     * @return array<int, array{label: string, url: string, icon: string}>
      */
     public static function shortcuts(): array
     {
         return array_values(array_filter([
-            static::shortcut(UserResource::class, 'Add New Client'),
-            static::shortcut(OrderResource::class, 'Add New Order'),
-            static::shortcut(InvoiceResource::class, 'Create Invoice'),
-            static::shortcut(TicketResource::class, 'Open New Ticket'),
-            static::shortcut(ServiceResource::class, 'Add New Service'),
+            static::shortcut(UserResource::class, 'Add New Client', 'ri-user-add-line'),
+            static::shortcut(OrderResource::class, 'Add New Order', 'ri-shopping-cart-2-line'),
+            static::shortcut('Paymenter\\Extensions\\Others\\Quotes\\Admin\\Resources\\QuoteResource', 'Create New Quote', 'ri-draft-line'),
+            static::shortcut(InvoiceResource::class, 'Create Invoice', 'ri-bill-line'),
+            static::shortcut(TicketResource::class, 'Open New Ticket', 'ri-mail-add-line'),
+            static::shortcut(ServiceResource::class, 'Add New Service', 'ri-add-box-line'),
         ]));
     }
 
@@ -74,16 +78,16 @@ class Rail
      * the policy, not whether a `create` route exists — a resource may authorise creation and
      * only offer it in a modal — so the URL is resolved here too.
      *
-     * @return array{label: string, url: string}|null
+     * @return array{label: string, url: string, icon: string}|null
      */
-    private static function shortcut(string $resource, string $label): ?array
+    private static function shortcut(string $resource, string $label, string $icon): ?array
     {
         if (!class_exists($resource) || !static::reachable($resource) || !$resource::canCreate()) {
             return null;
         }
 
         try {
-            return ['label' => $label, 'url' => $resource::getUrl('create')];
+            return ['label' => $label, 'url' => $resource::getUrl('create'), 'icon' => $icon];
         } catch (\Throwable $e) {
             return null;
         }

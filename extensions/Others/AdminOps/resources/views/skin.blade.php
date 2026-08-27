@@ -539,11 +539,22 @@
 
     /* Underlined blue links, tight leading, as on the reference. */
     .ao-rail-list a {
-        display: block;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
         padding: 2px 0;
         color: var(--wa-link);
         text-decoration: underline;
         line-height: 1.5;
+    }
+
+    /* The shortcut icons, muted so the blue labels stay the thing being read. Sized to the
+       text, not the row, exactly as the reference's little glyph column is. */
+    .ao-rail-link-icon {
+        width: 0.85rem;
+        height: 0.85rem;
+        flex: none;
+        color: var(--wa-muted, hsl(var(--color-base) / 0.55));
     }
 
     .ao-rail-list a:hover {

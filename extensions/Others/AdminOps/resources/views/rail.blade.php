@@ -55,7 +55,12 @@
                 </h2>
                 <ul class="ao-rail-list">
                     @foreach ($shortcuts as $shortcut)
-                        <li><a href="{{ $shortcut['url'] }}">{{ $shortcut['label'] }}</a></li>
+                        <li>
+                            <a href="{{ $shortcut['url'] }}">
+                                <x-filament::icon :icon="$shortcut['icon']" class="ao-rail-link-icon" />
+                                {{ $shortcut['label'] }}
+                            </a>
+                        </li>
                     @endforeach
                 </ul>
             </section>
