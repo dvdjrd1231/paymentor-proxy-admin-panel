@@ -668,8 +668,28 @@
         font-weight: 400;
     }
 
+    /* While a drag is in flight the in-flow panel becomes the reference's estimate box:
+       the browser's ghost carries the picture under the cursor, and the dashed outline
+       shows where it will land, gliding between candidate slots as the others FLIP out
+       of the way. `visibility` rather than `display` on the contents, so the box keeps
+       the panel's exact size. */
     .ao-wi-dragging {
-        opacity: 0.45;
+        border: 2px dashed #b9b9b9;
+        background: #fbfbfb;
+    }
+
+    .ao-wi-dragging > * {
+        visibility: hidden;
+    }
+
+    /* Carried (click-to-pick-up): the panel itself travels to the estimated slot as the
+       pointer moves, so it stays visible — dashes and a lift-shadow say "in hand". */
+    .ao-wi-carrying {
+        outline: 2px dashed #6ea3d8;
+        outline-offset: 2px;
+        opacity: 0.92;
+        box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
+        cursor: grabbing;
     }
 
     .ao-wi-hidden {
