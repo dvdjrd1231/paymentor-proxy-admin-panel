@@ -467,6 +467,14 @@
         outline-offset: 2px;
     }
 
+    /* The table widget's header is the one place the tools land that is not already a flex
+       row; without this they stack under the heading instead of sitting at its end. */
+    .fi-ta-header.ao-wi-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
     /* Filament's section headers are flex rows, so the tools land at the end of one without
        being positioned. The `margin-inline-start: auto` is what pins them right in the bar
        this script draws for a widget that has no header of its own. */
@@ -539,25 +547,64 @@
         display: none;
     }
 
+    /* Every adopted panel is one bordered box, as every WHMCS panel is. The wrapper carries
+       the border because the widgets inside are inconsistent: a section brings its own box,
+       a table brings a different one, and a stats row brings none at all — which is why some
+       dashboard blocks had borders and some floated. One border at one level, and the inner
+       containers stop competing with it. */
+    .fi-wi-widget.ao-wi {
+        border: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
+        border-radius: var(--wa-radius, 3px);
+        background: var(--wa-card, hsl(var(--color-gray-50) / 0.3));
+        overflow: hidden;
+    }
+
+    .fi-wi-widget.ao-wi .fi-section,
+    .fi-wi-widget.ao-wi .fi-ta-ctn {
+        border: none;
+        box-shadow: none;
+        border-radius: 0;
+    }
+
     /* The reference lays its homepage out in columns — panels side by side, not a single
-       stack a screen and a half tall. Filament's dashboard grid is already two columns
-       wide; every widget simply spans both, so nothing ever sits beside anything.
+       stack a screen and a half tall. Three of them, as WHMCS has, with WHMCS's tight
+       gutters rather than Filament's 24px.
 
        Done here rather than by setting `columnSpan` on the widgets because three of the
        seven are Paymenter's own, and those are core. This reaches only panels the chrome
        has adopted: the tile row and this widget's own block are untouched, so the tiles
        keep the full width the reference gives them. */
     @media (min-width: 1024px) {
-        .fi-wi-widget.ao-wi {
-            grid-column: span 1 / span 1;
+        .fi-grid:has(> .fi-wi-widget.ao-wi) {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.65rem;
         }
 
-        /* Panels sit at the top of their row rather than stretching to match the tallest
-           one beside them. It does not close the gap a short panel leaves — only masonry
-           does that, and masonry collapses the chart (see the note in the widget script) —
-           but it does stop a half-empty panel from being stretched to look full. */
         .fi-wi-widget.ao-wi {
+            grid-column: span 1 / span 1;
+
+            /* Panels sit at the top of their row rather than stretching to match the
+               tallest one beside them. It does not close the gap a short panel leaves —
+               only masonry does that, and masonry collapses the chart (see the note in the
+               widget script) — but it does stop a half-empty panel being stretched. */
             align-self: start;
+        }
+
+        /* The revenue chart takes two of the three, as the reference's System Overview
+           does — a graph one column wide is a sparkline pretending to be a chart. */
+        .fi-wi-widget.ao-wi.fi-wi-chart {
+            grid-column: span 2 / span 2;
+        }
+
+        /* Capped, or it isn't a strip: Chart.js keeps its aspect ratio, so a chart two
+           columns wide renders two columns *tall*. The reference's chart is ~300px high
+           however wide the screen. Chart.js is responsive and follows the container. */
+        .fi-wi-widget.ao-wi.fi-wi-chart .fi-wi-chart-canvas-ctn {
+            height: 300px;
+        }
+
+        .fi-wi-widget.ao-wi.fi-wi-chart .fi-wi-chart-canvas-ctn canvas {
+            max-height: 100%;
         }
     }
 
