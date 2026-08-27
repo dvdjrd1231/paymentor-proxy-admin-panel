@@ -438,6 +438,23 @@
     /* Filament's section headers are flex rows, so the tools land at the end of one without
        being positioned. The `margin-inline-start: auto` is what pins them right in the bar
        this script draws for a widget that has no header of its own. */
+    /* Ours, not Tailwind's. The admin panel's stylesheet does not define `.sr-only`, so the
+       labels these buttons carry for screen readers were rendering as visible text: every
+       panel heading read "↻Refresh At a glance ▲Collapse At a glance ✕Hide At a glance".
+       Depending on a class the framework happens to ship is how that went unnoticed. */
+    .ao-sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border-width: 0;
+    }
+
     .ao-wi-tools {
         display: flex;
         align-items: center;
@@ -487,11 +504,17 @@
         display: none;
     }
 
-    /* Collapsed: the heading stays, everything under it goes. `:not()` keeps the header —
-       whichever of the three kinds it is — so the panel can be rolled back open. */
-    .ao-wi-collapsed .fi-sc-section-content,
-    .ao-wi-collapsed .fi-wi-chart-chart,
-    .ao-wi-collapsed .fi-wi-stats-overview-stats-ctn {
+    /* Collapsed: the heading stays, everything under it goes, so the panel can be rolled
+       back open.
+
+       These are the class names Filament 5 actually emits — taken from its own Blade views,
+       not guessed. The `.fi-sc-section-content` spelling that was here matched nothing, so
+       the collapse button changed a class and the panel sat there fully open. */
+    .ao-wi-collapsed .fi-section-content,
+    .ao-wi-collapsed .fi-section-content-ctn,
+    .ao-wi-collapsed .fi-wi-chart-canvas-ctn,
+    .ao-wi-collapsed .fi-wi-stats-overview-stats-ctn,
+    .ao-wi-collapsed .fi-ta-ctn {
         display: none;
     }
 

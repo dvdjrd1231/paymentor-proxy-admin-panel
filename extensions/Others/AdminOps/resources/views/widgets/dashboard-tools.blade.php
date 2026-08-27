@@ -17,6 +17,14 @@
     $layout = $this->getLayout();
 @endphp
 
+{{--
+    Wrapped like every other widget, and that matters more than it looks: the wrapper is what
+    supplies the `.fi-wi-widget.fi-grid-col` box Filament lays the dashboard out with. Rendered
+    as a bare div, this sat in a schema wrapper of its own instead of beside its neighbours —
+    so `closest('.fi-wi-widget')` found nothing, the grid could not be identified, and the
+    script returned on its second line without decorating anything or logging a word.
+--}}
+<x-filament-widgets::widget>
 <div class="ao-dash-tools" data-ao-dash>
     <div class="ao-dash-settings" data-ao-settings hidden>
         <button type="button" class="ao-dash-settings-button" data-ao-settings-button
@@ -24,7 +32,7 @@
             <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" width="16" height="16">
                 <path d="M8.34 1.8a1 1 0 0 1 .98-.8h1.36a1 1 0 0 1 .98.8l.2 1a6.9 6.9 0 0 1 1.2.7l.96-.33a1 1 0 0 1 1.2.45l.68 1.17a1 1 0 0 1-.22 1.26l-.77.66a6.9 6.9 0 0 1 0 1.38l.77.66a1 1 0 0 1 .22 1.26l-.68 1.17a1 1 0 0 1-1.2.45l-.97-.33c-.37.28-.77.51-1.2.7l-.2 1a1 1 0 0 1-.97.8H9.32a1 1 0 0 1-.98-.8l-.2-1a6.9 6.9 0 0 1-1.2-.7l-.96.33a1 1 0 0 1-1.2-.45l-.68-1.17a1 1 0 0 1 .22-1.26l.77-.66a6.9 6.9 0 0 1 0-1.38l-.77-.66a1 1 0 0 1-.22-1.26l.68-1.17a1 1 0 0 1 1.2-.45l.96.33c.37-.28.77-.51 1.2-.7l.2-1ZM10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
             </svg>
-            <span class="sr-only">Choose which panels to show</span>
+            <span class="ao-sr">Choose which panels to show</span>
         </button>
 
         <div class="ao-dash-menu" data-ao-menu hidden>
@@ -155,8 +163,15 @@
         // A widget with neither — a bare view — gets a slim bar of ours, so that every
         // panel has something to take hold of, which is the reference's promise.
         const headerOf = (root, title) => {
+            // `.fi-section-header` is what Filament 5 actually emits. The `.fi-sc-` spelling
+            // that was here matched nothing, so every panel that already had a perfectly good
+            // heading got a second one bolted above it.
+            //
+            // `.ao-wi-bar` is in this list because this runs on every observer pass: without
+            // it the stand-in is not *found*, it is *created again*, and the panel grows a
+            // title bar per tick.
             const existing = root.querySelector(
-                '.fi-sc-section-header, .fi-wi-chart-header, .fi-wi-stats-overview-header',
+                '.ao-wi-bar, .fi-section-header, .fi-wi-chart-header, .fi-wi-stats-overview-header, .fi-sc-section-header',
             );
 
             if (existing) return existing;
@@ -172,7 +187,7 @@
 
         const titleOf = (root, name) => {
             const heading = root.querySelector(
-                '.fi-sc-section-header-heading, .fi-wi-chart-header-heading, h1, h2, h3',
+                '.fi-section-header-heading, .fi-wi-chart-header-heading, .fi-sc-section-header-heading, h1, h2, h3',
             );
 
             if (heading?.textContent.trim()) return heading.textContent.trim();
@@ -228,7 +243,16 @@
                 panel.block.classList.toggle('ao-wi-hidden', hidden.has(panel.name));
                 panel.block.classList.toggle('ao-wi-collapsed', rolled.has(panel.name));
 
-                if (header.querySelector('.ao-wi-tools')) return;
+                // Asked of the whole panel, not of this header. A widget can gain a real
+                // section header *after* we have already given it one of our slim bars —
+                // the heading arrives with the second morph — and a per-header check then
+                // hands out a second set of tools, six icons in one panel.
+                if (panel.block.querySelector('.ao-wi-tools')) return;
+
+                // If a real heading has since appeared, the stand-in is no longer wanted.
+                if (header !== panel.block.querySelector('.ao-wi-bar')) {
+                    panel.block.querySelector('.ao-wi-bar')?.remove();
+                }
 
                 header.classList.add('ao-wi-header');
                 header.setAttribute('title', 'Drag to move this panel');
@@ -252,7 +276,7 @@
                 ));
             } else if (menu) {
                 ordered.forEach((panel) => {
-                    const box = menu.querySelector(`input[data-ao-widget="${CSS.escape(panel.name)}"]`);
+                    const box = menu.querySelector(`input[data-ao-box="${CSS.escape(panel.name)}"]`);
                     if (box) box.checked = !hidden.has(panel.name);
                 });
             }
@@ -299,7 +323,7 @@
                 el.title = `${label} — ${title}`;
                 el.innerHTML = `<span aria-hidden="true">${glyph}</span>`;
                 el.append(Object.assign(document.createElement('span'), {
-                    className: 'sr-only',
+                    className: 'ao-sr',
                     textContent: `${label} ${title}`,
                 }));
                 // The header is the drag handle; a press on a button must not start one.
@@ -338,7 +362,7 @@
                     hidden.add(panel.name);
                     panel.block.classList.add('ao-wi-hidden');
 
-                    const box = menu?.querySelector(`input[data-ao-widget="${CSS.escape(panel.name)}"]`);
+                    const box = menu?.querySelector(`input[data-ao-box="${CSS.escape(panel.name)}"]`);
                     if (box) box.checked = false;
 
                     tools.call('toggleHidden', panel.name);
@@ -355,7 +379,7 @@
 
             box.type = 'checkbox';
             box.checked = !hidden.has(panel.name);
-            box.dataset.aoWidget = panel.name;
+            box.dataset.aoBox = panel.name;
             box.addEventListener('change', () => {
                 box.checked ? hidden.delete(panel.name) : hidden.add(panel.name);
                 panel.block.classList.toggle('ao-wi-hidden', !box.checked);
@@ -489,3 +513,4 @@
     }
     })();
 </script>
+</x-filament-widgets::widget>
