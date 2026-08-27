@@ -188,8 +188,11 @@
             // `.ao-wi-bar` is in this list because this runs on every observer pass: without
             // it the stand-in is not *found*, it is *created again*, and the panel grows a
             // title bar per tick.
+            // `.fi-ta-header` is the table widget's own heading (the Support panel). It was
+            // missing from this list, so that panel got a second title bar bolted above the
+            // one it already had.
             const existing = root.querySelector(
-                '.ao-wi-bar, .fi-section-header, .fi-wi-chart-header, .fi-wi-stats-overview-header, .fi-sc-section-header',
+                '.ao-wi-bar, .fi-section-header, .fi-ta-header, .fi-wi-chart-header, .fi-wi-stats-overview-header, .fi-sc-section-header',
             );
 
             if (existing) return existing;
@@ -205,7 +208,7 @@
 
         const titleOf = (root, name) => {
             const heading = root.querySelector(
-                '.fi-section-header-heading, .fi-wi-chart-header-heading, .fi-sc-section-header-heading, h1, h2, h3',
+                '.fi-section-header-heading, .fi-ta-header-heading, .fi-wi-chart-header-heading, .fi-sc-section-header-heading, h1, h2, h3',
             );
 
             if (heading?.textContent.trim()) return heading.textContent.trim();
