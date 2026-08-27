@@ -99,4 +99,40 @@ class Requests
             ->filter(fn (ServiceCancellation $request): bool => $request->service
                 && $request->service->status !== Service::STATUS_CANCELLED);
     }
+
+    /**
+     * End-of-period requests whose period has now ended.
+     *
+     * This is the reference's *"automatically terminate accounts with cancellation requests
+     * **when due**"*, and it is the half Paymenter never had. Core treats a cancellation as
+     * nothing but a reason to skip the next invoice, so an end-of-period request runs out its
+     * term and then falls into the ordinary overdue ladder: still working for two days past
+     * the period the customer paid for, then suspended for twelve more with its proxies still
+     * allocated. Fourteen days of capacity for a service both sides agreed was finished.
+     *
+     * Terminating on the due date is what the customer asked for and what returns the
+     * capacity. `expires_at` is the due date core keeps for a recurring service; a one-time
+     * service has none — its clock belongs to `Others/TermLimits`, which ends it on its own
+     * schedule, so those are left alone here rather than ended twice by two modules.
+     *
+     * `endOfDay()` because core casts `expires_at` to a date: the customer paid for that day,
+     * so the service is due at the end of it, not at midnight when it begins.
+     *
+     * @return Collection<int, ServiceCancellation>
+     */
+    public static function dueEndOfPeriod()
+    {
+        return ServiceCancellation::query()
+            ->where('type', 'end_of_period')
+            ->with('service')
+            ->get()
+            ->filter(function (ServiceCancellation $request): bool {
+                $service = $request->service;
+
+                return $service
+                    && $service->status === Service::STATUS_ACTIVE
+                    && $service->expires_at !== null
+                    && $service->expires_at->endOfDay()->isPast();
+            });
+    }
 }

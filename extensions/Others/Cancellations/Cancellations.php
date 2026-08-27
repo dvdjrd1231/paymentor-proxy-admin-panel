@@ -5,9 +5,11 @@ namespace Paymenter\Extensions\Others\Cancellations;
 use App\Attributes\ExtensionMeta;
 use App\Classes\Extension\Extension;
 use App\Models\ServiceCancellation;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\HtmlString;
 use Paymenter\Extensions\Others\Cancellations\Support\Requests;
+use Paymenter\Extensions\Others\Cancellations\Support\Sweeper;
 use Throwable;
 
 /**
@@ -32,14 +34,22 @@ use Throwable;
  *
  * - An **immediate** request terminates the service as soon as it is made, if the setting
  *   below says so — which is what the customer asked for and what returns the capacity.
- * - **End of period** requests are left exactly as they are. Core already handles them
- *   correctly by not invoicing again, and terminating one early would take away time the
- *   customer has paid for.
+ * - An **end-of-period** request terminates **when its period ends**, which is the
+ *   reference's *"automatically terminate accounts with cancellation requests when due"*.
+ *   Before this, such a request only stopped the next invoice and the service then fell into
+ *   the ordinary overdue ladder: live for two days past the period it was paid for, then
+ *   suspended for twelve more with its proxies still allocated. Fourteen days of capacity
+ *   for a service both sides agreed was finished.
  * - An administrator gets **Accept now** and **Refuse** on every request.
  *
- * Automatic acceptance is a setting rather than a given, because "immediate" is a customer's
- * word: a store that wants a human to look first can have that, and the badge on the menu
- * counts what is waiting.
+ * Automatic acceptance is a setting rather than a given, matching the reference's own
+ * *"Cancellation Requests"* switch under Automation Settings — and, as there, the switch
+ * governs the automatic termination, not the request. Turned off, an immediate request waits
+ * for a human (the menu badge counts what is waiting) while an end-of-period one still ends
+ * on its date, because that is a date arriving rather than a decision to make.
+ *
+ * The sweep records itself in `cron_stats` under the reference's own task name, so it appears
+ * on **Automation Status** beside core's tasks without that page knowing this exists.
  */
 #[ExtensionMeta(
     name: 'Cancellation Requests',
@@ -70,8 +80,9 @@ class Cancellations extends Extension
                     'review' => 'Hold for review — an administrator accepts it',
                 ],
                 'default' => 'auto',
-                'description' => 'End-of-period requests are never affected by this: core already handles them '
-                    . 'by not raising another invoice, and ending one early would take away time already paid for.',
+                'description' => 'End-of-period requests are not affected by this — they always end on their '
+                    . 'due date, because that is a date arriving rather than a decision to make. This governs '
+                    . 'the automatic termination only, exactly as the reference does under Automation Settings.',
             ],
         ];
     }
@@ -79,6 +90,28 @@ class Cancellations extends Extension
     public function boot()
     {
         $this->actOnImmediateRequests();
+        $this->sweepWhenDue();
+    }
+
+    /**
+     * The reference's daily **Cancellation Requests** task.
+     *
+     * Hourly rather than daily. WHMCS runs it once a day because its whole automation is one
+     * daily cron; here the scheduler already ticks every minute, and an end-of-period service
+     * that stays live until tomorrow morning is another day of proxy capacity spent on a
+     * service both sides agreed was finished. Hourly is close enough to the due date to be
+     * honest and far enough apart to cost nothing.
+     */
+    private function sweepWhenDue(): void
+    {
+        app()->booted(function (): void {
+            app(Schedule::class)
+                ->call(fn () => Sweeper::run())
+                ->hourly()
+                ->name('cancellations-sweep')
+                ->withoutOverlapping()
+                ->onOneServer();
+        });
     }
 
     /**

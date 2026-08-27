@@ -55,6 +55,18 @@ class AutomationStatus extends Page
     /** The daily job runs once a day, so a day and a half without one is a real failure. */
     private const DAILY_STALE_HOURS = 36;
 
+    /**
+     * Names for tasks core does not know about, because they belong to extensions.
+     *
+     * Worded as the reference words its own — its Automation Status lists a
+     * "Cancellation Requests" task — so the two screens read the same way round.
+     *
+     * @var array<string, string>
+     */
+    private const LABELS = [
+        'cancellations_processed' => 'Cancellation Requests',
+    ];
+
     public static function canAccess(): bool
     {
         return (bool) Auth::user()?->hasPermission('admin.settings.view');
@@ -148,9 +160,10 @@ class AutomationStatus extends Page
                     'key' => $key,
                     // Core already names these for its own cron page; reusing the same
                     // strings means the two screens cannot drift apart.
-                    'label' => __('admin.cronjob.' . $key) === 'admin.cronjob.' . $key
-                        ? str($key)->replace('_', ' ')->ucfirst()->toString()
-                        : __('admin.cronjob.' . $key),
+                    'label' => self::LABELS[$key]
+                        ?? (__('admin.cronjob.' . $key) === 'admin.cronjob.' . $key
+                            ? str($key)->replace('_', ' ')->ucfirst()->toString()
+                            : __('admin.cronjob.' . $key)),
                     'today' => (int) $today,
                     'week' => (int) $group->sum('value'),
                     'lastSeen' => $group->max('date'),

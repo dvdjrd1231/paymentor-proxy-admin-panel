@@ -22,12 +22,39 @@ the capacity is gone too.
 There was also no way to accept or refuse a request: core's list offers Edit and Delete, and
 deleting is indistinguishable from refusing.
 
+## Following the reference
+
+WHMCS's model, read out of `admin/lang/english.php` (the only unencoded part of a nulled
+copy, and authoritative for behaviour):
+
+| WHMCS | Where |
+|---|---|
+| *"Check to automatically terminate accounts with cancellation requests **when due**"* | Automation Settings → Cancellation Requests |
+| A **Cancellation Requests** task on Automation Status, with success/failure counts | `utilities.automationStatusDetail.task.cancellationRequests` |
+| *"A cancellation request exists for this item and so it will not be invoiced when due"* | the service page — Paymenter already behaves this way |
+| *"automatically cancel outstanding unpaid invoices when a cancellation request is submitted"* | General Settings — **not implemented here**, see below |
+
+So the reference terminates on the due date, automatically, governed by one switch, and
+reports itself as an automation task. That is what this now does.
+
+**Two deliberate differences.** WHMCS runs the task once a day because its entire automation
+is a single daily cron; here the scheduler already ticks every minute, so immediate requests
+are acted on as they are made and the sweep runs hourly — an end-of-period service left live
+until tomorrow morning is another day of proxy capacity spent on a service both sides agreed
+was finished. And WHMCS's *cancel unpaid invoices on submission* is not implemented: this
+cancels them on **termination** instead, so a customer who is refused, or who cancels at
+period end and changes their mind, is not left chasing an invoice that was voided
+prematurely.
+
 ## What it does
 
 - An **immediate** request terminates the service as soon as it is made — releasing the
   proxies, cancelling any unpaid invoice for that service, and returning stock.
-- **End-of-period** requests are untouched. Core handles them correctly by not invoicing
-  again, and ending one early would take away time the customer has paid for.
+- **End-of-period** requests terminate **when the period ends** — the reference's "when due".
+  Before this they only stopped the next invoice, and the service then fell into the ordinary
+  overdue ladder: live for two days past the period it was paid for, then suspended for twelve
+  more with its proxies still allocated. Fourteen days of capacity for a service both sides
+  agreed was finished.
 - **Clients → Cancellation Requests** gains **Accept now** and **Refuse**. Refusing deletes
   the request, which is the whole of un-cancelling — core decides "is this cancelled" by the
   row existing.
