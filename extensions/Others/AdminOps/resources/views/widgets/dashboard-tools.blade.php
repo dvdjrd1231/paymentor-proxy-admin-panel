@@ -573,6 +573,14 @@
         });
 
         grid.addEventListener('dragstart', (event) => {
+            // A native drag must not start over a click-carry already in progress — the two
+            // modes share the machinery and would tangle.
+            if (carrying) {
+                event.preventDefault();
+
+                return;
+            }
+
             const root = event.target.closest('[data-ao-widget]');
             if (!root || root.getAttribute('draggable') !== 'true') return;
 
@@ -651,6 +659,70 @@
             // The observer stayed silent for the whole drag; run the pass it skipped, now
             // that the DOM order and the saved order agree again.
             sync();
+        });
+
+        // ── Click-carry ──────────────────────────────────────────────────────────────
+        // The other way to move a panel: one click on its heading picks it up, the panel
+        // travels to the estimated slot as the pointer crosses the grid, a second click
+        // sets it down there. Escape puts it back. Shares the drag's placement logic and
+        // its observer pause (`dragged`), so the two ways cannot disagree about anything.
+        let carrying = null;
+
+        const setDown = (cancel) => {
+            if (!carrying) return;
+
+            carrying.classList.remove('ao-wi-carrying');
+
+            const moved = currentOrder().join() !== before;
+            carrying = null;
+            dragged = null;
+
+            if (!cancel && moved) persistOrder();
+
+            // On cancel, decorate() lays the grid back out to the saved order — the same
+            // pass that snapped panels back mid-drag, doing it on purpose this time.
+            sync();
+        };
+
+        grid.addEventListener('click', (event) => {
+            if (event.target.closest('a, button, input, select, canvas')) return;
+
+            if (carrying) {
+                event.preventDefault();
+                setDown(false);
+
+                return;
+            }
+
+            const header = event.target.closest('.ao-wi-header');
+            const root = header?.closest('[data-ao-widget]');
+            if (!root) return;
+
+            event.preventDefault();
+            carrying = root;
+            dragged = root; // pauses the observer, exactly as a native drag does
+            before = currentOrder().join();
+            root.classList.add('ao-wi-carrying');
+        });
+
+        grid.addEventListener('mousemove', (event) => {
+            if (!carrying) return;
+
+            const over = event.target.closest('[data-ao-widget]');
+            if (!over || over === carrying || over.parentElement !== grid) return;
+
+            const box = over.getBoundingClientRect();
+            const after = (event.clientY - box.top) / box.height > 0.5
+                || (event.clientX - box.left) / box.width > 0.5;
+
+            const ref = after ? over.nextSibling : over;
+            if (ref === carrying || ref === carrying.nextSibling) return;
+
+            flip(() => grid.insertBefore(carrying, ref));
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && carrying) setDown(true);
         });
 
         // Keyboard equivalent, for the same reason as the catalogue: the HTML5 drag API
