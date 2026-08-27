@@ -77,6 +77,14 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 - `extensions/Others/InvoiceOps/database/migrations/` — `ext_invoice_refunds`
 - `docs/modules/invoice-ops.md`
 
+## Billable items
+- `extensions/Others/BillableItems/BillableItems.php` — rides along on new invoices, daily sweep
+- `extensions/Others/BillableItems/Support/Items.php` — invoicing, recurrence, the sweep
+- `extensions/Others/BillableItems/Models/BillableItem.php`
+- `extensions/Others/BillableItems/Admin/Resources/BillableItemResource.php` — Billing → Billable Items
+- `extensions/Others/BillableItems/database/migrations/` — `ext_billable_items`
+- `docs/modules/billable-items.md`
+
 ## Deployment / operations
 - `scripts/install-debian13.sh` — automated Debian 13 installer
 - `scripts/backup.sh` — DB + files backup
