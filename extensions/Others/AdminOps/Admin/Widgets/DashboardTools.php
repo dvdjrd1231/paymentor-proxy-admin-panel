@@ -5,6 +5,7 @@ namespace Paymenter\Extensions\Others\AdminOps\Admin\Widgets;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Attributes\Renderless;
 use Paymenter\Extensions\Others\AdminOps\Models\DashboardLayout;
 
 /**
@@ -110,8 +111,21 @@ class DashboardTools extends Widget
      * a widget is ignored at render. There is nothing here to forge — the worst a bad list
      * can do is disarrange the sender's own dashboard, which they can do with the mouse.
      *
+     * Renderless, and that is not an optimisation — it is the fix for a real bug.
+     *
+     * A Livewire action re-renders its component by default, and the re-render is morphed
+     * back into the page. This widget's markup has by then been *moved* out of the component
+     * (the gear lives in the page header), so the morph did not update it — it put a second
+     * copy back. Two gears, two menus, and the one on top had no click handler bound to it,
+     * because the handlers belong to the element that was moved. The gear went dead after
+     * the first hide, exactly as reported.
+     *
+     * Neither of these methods has anything to re-render: they save a preference the browser
+     * has already applied. So they do not render.
+     *
      * @param  array<int, string>  $order
      */
+    #[Renderless]
     public function saveOrder(array $order): void
     {
         $this->store(['order' => $this->clean($order)]);
@@ -121,6 +135,7 @@ class DashboardTools extends Widget
      * Put a widget away, or bring it back — the reference's × and its settings checkboxes,
      * which are two ways to the same toggle.
      */
+    #[Renderless]
     public function toggleHidden(string $widget): void
     {
         $hidden = DashboardLayout::forUser(Auth::id())->hidden ?? [];
