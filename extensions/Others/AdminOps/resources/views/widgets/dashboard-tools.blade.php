@@ -55,13 +55,59 @@
         const grid = mount.closest('.fi-wi-widget')?.parentElement;
         if (!grid) return;
 
-        // No masonry here, and that is deliberate. The reference packs its columns with
-        // Packery, so a short panel never leaves a hole beside a tall one. The library-free
-        // equivalent — 8px grid rows with each panel spanning as many as it needs — was
-        // tried and reverted: a chart sized to a content-driven row collapses to nothing,
-        // so the revenue panel rendered blank and the page grew to five thousand pixels of
-        // mostly whitespace. A gap under a short panel is worth more than a chart that is
-        // not there.
+        // ── Masonry ──────────────────────────────────────────────────────────────────
+        // The reference packs its columns with Packery, so a short panel never leaves a
+        // hole beside a tall one. Same effect, no library: 10px grid rows, each panel
+        // spanning as many as its content needs, so every column packs independently.
+        //
+        // A first attempt at this was reverted for collapsing the chart, and both causes
+        // are gone by construction now: the items are `align-self: start`, so a panel's
+        // height is its *content's* height whatever span it holds — measuring it cannot
+        // feed back into what was measured — and the chart canvas has a fixed 300px
+        // height, so nothing sizes itself from the row any more.
+        const ROW = 10;
+
+        const pack = () => {
+            const gap = parseFloat(getComputedStyle(grid).rowGap) || 0;
+
+            for (const child of grid.children) {
+                // display:none (our collapsed widget, hidden panels) has no box; spanning
+                // it would hold empty rows open where the panel used to be.
+                if (!child.getClientRects().length) {
+                    if (child.style.getPropertyValue('--ao-span')) child.style.removeProperty('--ao-span');
+                    continue;
+                }
+
+                const span = Math.max(1, Math.ceil((child.offsetHeight + gap) / (ROW + gap)));
+
+                // Write only on change: a ResizeObserver that sees its own writes is an
+                // infinite loop with extra steps.
+                if (child.style.getPropertyValue('--ao-span') !== String(span)) {
+                    child.style.setProperty('--ao-span', span);
+                }
+            }
+        };
+
+        let packFrame = null;
+        const repack = () => {
+            cancelAnimationFrame(packFrame);
+            packFrame = requestAnimationFrame(pack);
+        };
+
+        // Panels change height on their own — a chart draws, a poll returns more rows —
+        // and each change has to re-pack the column it sits in.
+        const sizes = new ResizeObserver(repack);
+        window.addEventListener('resize', repack);
+
+        grid.classList.add('ao-grid');
+
+        // Pack *now*, placeholders included — not only from decorate(), which returns
+        // early while everything is still lazy. Unpacked placeholders held their default
+        // span, the lazy widgets sat below the viewport, and nothing ever loaded to
+        // trigger the packing that would have brought them up: a deadlock the first
+        // masonry attempt died of without anyone diagnosing it.
+        for (const child of grid.children) sizes.observe(child);
+        pack();
 
         // The reference puts this gear at the top right of the page, level with the
         // "Dashboard" heading — not in the grid. This widget has to *be* in the grid (it is
@@ -306,6 +352,10 @@
             // gear is no longer inside `mount`, so looking for it there would find nothing.
             lift();
             document.querySelector('[data-ao-settings]')?.removeAttribute('hidden');
+
+            // Watch every child for size changes (observing twice is a no-op), and pack now.
+            for (const child of grid.children) sizes.observe(child);
+            pack();
         };
 
         // The observer must not see its own work, or `decorate` would trigger the tick that
