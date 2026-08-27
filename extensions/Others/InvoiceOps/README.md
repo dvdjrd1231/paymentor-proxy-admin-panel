@@ -74,6 +74,42 @@ belongs to the cron, so nudging one customer means waiting for all of them to be
 reference puts that dropdown beside the invoice status, and so does this. Only **enabled**
 templates are listed — a disabled one would silently send nothing.
 
+## 4. Transactions — Amount In, Fees, Amount Out
+
+**Billing → Transactions Report.** The reference's three tiles (Total Income, Total Fees,
+Total Expenditure) and its columns.
+
+Core's transaction list has **Amount** and nothing else, which makes an ordinary question
+unanswerable: *what did we actually keep*. A gateway takes its cut before the money arrives
+and a refund gives some of it back, so gross receipts are not revenue.
+
+| Column | Source |
+|---|---|
+| Amount In | `invoice_transactions.amount` — core records this |
+| **Fees** | `invoice_transactions.fee` — **this column has existed since the table was created and nothing has ever written to it** |
+| **Amount Out** | refunds, from this extension |
+
+Payments and refunds interleave in one list rather than sitting in two tables: *"paid, then
+half of it refunded a week later"* is only obvious when the two lines are next to each other.
+
+The Fees tile reads zero **and says why**. None of the four gateways here reports its cut
+back to Paymenter, so a bare zero would imply no fees were charged rather than "nothing has
+ever written this column". Making it real means each gateway reading its fee from the webhook
+payload — Stripe's `balance_transaction`, and so on — which is gateway work, not reporting
+work. It is shown rather than hidden so the difference is visible instead of assumed.
+
+Totals are per currency, never summed across them: Paymenter stores no exchange rate.
+
+## 5. Refunds ledger
+
+**Billing → Refunds.** Every refund, read-only — a refund is a fact about money that has
+already moved, and correcting one is another refund with its own reason, not an edit that
+rewrites what the books say happened.
+
+The reference keeps refunds on each invoice and has no page quite like this. Its Transactions
+page has an *Amount Out* column that has to come from somewhere, and "show me everything we
+gave back this month" is a question an invoice-at-a-time view cannot answer.
+
 ## Uninstalling
 
 The refund records go with it. An invoice left on `draft` or `refunded` keeps that status:

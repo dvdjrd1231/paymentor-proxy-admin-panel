@@ -781,6 +781,12 @@
         opacity: 0.7;
     }
 
+    /* Money leaving reads differently from money arriving, which is the whole point of the
+       reference splitting In from Out rather than using a sign. */
+    .ao-tx-out {
+        color: hsl(var(--color-error));
+    }
+
     .ao-catalogue-count,
     .ao-catalogue-empty {
         margin-top: 0.75rem;

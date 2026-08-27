@@ -43,7 +43,9 @@ use Paymenter\Extensions\Others\Announcements\Admin\Resources\AnnouncementResour
 use Paymenter\Extensions\Others\BillableItems\Admin\Resources\BillableItemResource;
 use Paymenter\Extensions\Others\Cancellations\Admin\Resources\CancellationRequestResource;
 use Paymenter\Extensions\Others\GatewayRules\Admin\Resources\GatewayRuleResource;
+use Paymenter\Extensions\Others\InvoiceOps\Admin\Pages\Transactions;
 use Paymenter\Extensions\Others\InvoiceOps\Admin\Resources\InvoiceOpsResource;
+use Paymenter\Extensions\Others\InvoiceOps\Admin\Resources\RefundResource;
 use Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbArticleResource;
 use Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbCategoryResource;
 use Paymenter\Extensions\Others\PaymentFees\Admin\Resources\PaymentFeeRuleResource;
@@ -238,6 +240,11 @@ class WhmcsNavigation
     {
         return static::group('Billing', 'ri-bill-line', [
             static::link(InvoiceTransactionResource::class, 'Transactions List'),
+            // The reference's own Transactions page: Amount In, Fees, Amount Out, and the
+            // three tiles above them. Core's list has Amount and nothing else, which cannot
+            // answer what was actually kept.
+            static::page(Transactions::class, 'Transactions Report'),
+            static::link(RefundResource::class, 'Refunds'),
             static::link(InvoiceResource::class, 'All Invoices'),
             static::link(
                 InvoiceResource::class,
