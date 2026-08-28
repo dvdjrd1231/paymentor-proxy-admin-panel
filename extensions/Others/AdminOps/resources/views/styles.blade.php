@@ -1526,6 +1526,154 @@
         text-align: center;
     }
 
+    /* One column on a narrow window — the reference collapses the same way. */
+    @media (max-width: 1100px) {
+        .ao-anc-cols { grid-template-columns: 1fr; }
+    }
+
+    /* --- Client Profile Summary: the reference's four panel columns and banded tables --- */
+    .ao-cs-head h2 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--wa-ink, #333);
+        margin-bottom: 0.9rem;
+    }
+
+    .ao-cs-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 20px;
+        align-items: start;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 1400px) { .ao-cs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 800px) { .ao-cs-grid { grid-template-columns: 1fr; } }
+
+    .ao-cs-col {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        min-width: 0;
+    }
+
+    .ao-cp {
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px;
+        background: #fff;
+    }
+
+    /* The reference's panel titles: navy on a quiet band, centred. */
+    .ao-cp > h3 {
+        padding: 0.5rem 0.75rem;
+        background: #f5f5f5;
+        border-bottom: 1px solid var(--wa-panel-border, #ddd);
+        text-align: center;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--wa-blue, #1a4d80);
+    }
+
+    .ao-cp-body {
+        padding: 0.6rem 0.75rem;
+    }
+
+    .ao-cp-empty {
+        text-align: center;
+        color: var(--wa-muted, #999);
+        padding-block: 0.9rem;
+    }
+
+    .ao-cp-kv {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 0.5rem;
+    }
+
+    .ao-cp-kv td {
+        padding: 0.3rem 0.35rem;
+        vertical-align: top;
+        overflow-wrap: anywhere;
+    }
+
+    .ao-cp-kv td:first-child {
+        width: 45%;
+        color: var(--wa-muted, #888);
+    }
+
+    .ao-cp-kv tr + tr td {
+        border-top: 1px solid #f0f0f0;
+    }
+
+    .ao-cp-kv-band td {
+        background: #f5f5f5;
+        font-weight: 700;
+        color: var(--wa-ink, #333);
+    }
+
+    .ao-cp-link {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.25rem 0.35rem;
+        color: var(--wa-link, #337ab7);
+        background: none;
+        border: 0;
+        font-size: inherit;
+        cursor: pointer;
+        text-align: left;
+        width: 100%;
+    }
+
+    .ao-cp-link:hover { text-decoration: underline; }
+
+    .ao-cp-ic {
+        width: 1rem;
+        height: 1rem;
+        flex: none;
+        color: var(--wa-muted, #999);
+    }
+
+    .ao-cp-mail {
+        padding: 0.25rem 0.1rem;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.8rem;
+    }
+
+    .ao-cp-mail span { color: var(--wa-muted, #999); }
+
+    .ao-cp-send {
+        display: inline-flex;
+        justify-content: center;
+        text-align: center;
+    }
+
+    /* The banded tables under the panels — grey title strip, then the navy grid. */
+    .ao-cs-band {
+        margin-bottom: 20px;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .ao-cs-band > h4 {
+        padding: 0.45rem 0.75rem;
+        background: #efefef;
+        text-align: center;
+        font-weight: 700;
+        color: var(--wa-ink, #333);
+    }
+
+    /* The rail's "- Category" sub-entries sit indented under List All, as the reference's. */
+    .ao-rail-sub a {
+        padding-inline-start: 0.9rem;
+    }
+
+    /* Wide grids scroll inside their panel rather than widening the page. */
+    .ao-mu {
+        overflow-x: auto;
+    }
+
     /* Actions as the reference's small buttons, not bare links. */
     .ao-mu-actions a {
         display: inline-block;

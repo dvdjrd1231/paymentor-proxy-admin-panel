@@ -10,7 +10,7 @@
 @php
     use Paymenter\Extensions\Others\AdminOps\Support\Rail;
 
-    $section = Rail::section();
+    $sections = Rail::sections();
     $shortcuts = Rail::shortcuts();
     $searches = Rail::searches();
     $staff = Rail::staffOnline();
@@ -26,27 +26,29 @@
     <div class="ao-rail-inner">
         {{-- The section you are in, top of the column — the reference's contextual rail.
              On the dashboard there is no section, so Shortcuts takes the slot instead. --}}
-        @if ($section)
-            <section class="ao-rail-panel">
-                <h2 class="ao-rail-heading">
-                    @if ($section['icon'])
-                        <x-filament::icon :icon="$section['icon']" class="ao-rail-heading-icon" />
-                    @endif
-                    {{ $section['label'] }}
-                </h2>
-                <ul class="ao-rail-list ao-rail-list-counted">
-                    @foreach ($section['items'] as $item)
-                        <li>
-                            <a href="{{ $item['url'] }}">
-                                <span>{{ $item['label'] }}</span>
-                                @if ($item['badge'])
-                                    <span class="ao-rail-count">{{ $item['badge'] }}</span>
-                                @endif
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
-            </section>
+        @if ($sections !== [])
+            @foreach ($sections as $section)
+                <section class="ao-rail-panel">
+                    <h2 class="ao-rail-heading">
+                        @if ($section['icon'])
+                            <x-filament::icon :icon="$section['icon']" class="ao-rail-heading-icon" />
+                        @endif
+                        {{ $section['label'] }}
+                    </h2>
+                    <ul class="ao-rail-list ao-rail-list-counted">
+                        @foreach ($section['items'] as $item)
+                            <li @if (str_starts_with($item['label'], '- ')) class="ao-rail-sub" @endif>
+                                <a href="{{ $item['url'] }}">
+                                    <span>{{ $item['label'] }}</span>
+                                    @if ($item['badge'])
+                                        <span class="ao-rail-count">{{ $item['badge'] }}</span>
+                                    @endif
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </section>
+            @endforeach
         @elseif ($shortcuts)
             <section class="ao-rail-panel">
                 <h2 class="ao-rail-heading">

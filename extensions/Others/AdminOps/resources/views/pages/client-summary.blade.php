@@ -37,165 +37,221 @@
     <div class="ao-panel" style="display:flex;flex-direction:column;gap:1.5rem;">
 
     @if ($tab === 'summary')
-        <x-filament::section icon="heroicon-o-identification" heading="Customer">
-            <div class="ao-summary-grid">
-                <div>
-                    <div class="ao-field-label">Customer ID</div>
-                    <div class="ao-field-value">#{{ $user->id }}</div>
-                </div>
-                <div>
-                    <div class="ao-field-label">Email</div>
-                    <div class="ao-field-value">
-                        <a href="mailto:{{ $user->email }}" class="ao-link">{{ $user->email }}</a>
-                        @unless ($user->email_verified_at)
-                            <span class="ao-tag ao-tag-warning" style="margin-left:.35rem;">Unverified</span>
-                        @endunless
+        {{-- The reference's Summary: four columns of panels, then the banded tables. --}}
+        <div class="ao-cs-head">
+            <h2>#{{ $user->id }} - {{ trim($user->first_name . ' ' . $user->last_name) ?: $user->email }}</h2>
+        </div>
+
+        <div class="ao-cs-grid">
+            <div class="ao-cs-col">
+                <div class="ao-cp">
+                    <h3>Clients Information</h3>
+                    <div class="ao-cp-body">
+                        <table class="ao-cp-kv">
+                            <tr><td>First Name</td><td>{{ $user->first_name ?? '—' }}</td></tr>
+                            <tr><td>Last Name</td><td>{{ $user->last_name ?? '—' }}</td></tr>
+                            <tr><td>Email Address</td><td>{{ $user->email }}</td></tr>
+                            @foreach ($properties as $label => $value)
+                                <tr><td>{{ $label }}</td><td>{{ $value }}</td></tr>
+                            @endforeach
+                        </table>
+                        <a class="ao-cp-link" href="{{ \App\Admin\Resources\UserResource::getUrl('edit', ['record' => $user->id]) }}">
+                            <x-filament::icon icon="ri-user-settings-line" class="ao-cp-ic" /> Edit Client Details
+                        </a>
                     </div>
-                </div>
-                <div>
-                    <div class="ao-field-label">Registered</div>
-                    <div class="ao-field-value">{{ $user->created_at?->format('j M Y') ?? '—' }}</div>
-                </div>
-                <div>
-                    <div class="ao-field-label">Account credit</div>
-                    <div class="ao-field-value">
-                        <a href="{{ $urls['credits'] }}" class="ao-link">{{ $this->formatTotals($credits) }}</a>
-                    </div>
-                </div>
-                <div>
-                    <div class="ao-field-label">Lifetime paid</div>
-                    <div class="ao-field-value">{{ $this->formatTotals($lifetime) }}</div>
-                </div>
-                <div>
-                    <div class="ao-field-label">Outstanding</div>
-                    <div class="ao-field-value">{{ $this->formatTotals($outstanding) }}</div>
                 </div>
 
-                @foreach ($properties as $label => $value)
-                    <div>
-                        <div class="ao-field-label">{{ $label }}</div>
-                        <div class="ao-field-value">{{ $value }}</div>
-                    </div>
-                @endforeach
+                <div class="ao-cp">
+                    <h3>Contacts</h3>
+                    <div class="ao-cp-body ao-cp-empty">No additional contacts setup</div>
+                </div>
+
+                <div class="ao-cp">
+                    <h3>Pay Methods</h3>
+                    <div class="ao-cp-body ao-cp-empty">No Pay Methods</div>
+                </div>
             </div>
-        </x-filament::section>
 
-        <x-filament::section
-            icon="heroicon-o-server-stack"
-            :heading="'Services (' . $serviceCount . ')'"
-        >
-            <x-slot name="afterHeader">
-                <a href="{{ $urls['services'] }}" class="ao-link">See all</a>
-            </x-slot>
+            <div class="ao-cs-col">
+                <div class="ao-cp">
+                    <h3>Invoices/Billing</h3>
+                    <div class="ao-cp-body">
+                        <table class="ao-cp-kv">
+                            <tr><td>Paid</td><td>{{ $invoiceStats['paid']['count'] }} (${{ number_format($invoiceStats['paid']['total'], 2) }} {{ $invoiceStats['paid']['code'] }})</td></tr>
+                            <tr><td>Unpaid/Due</td><td>{{ $invoiceStats['unpaid']['count'] }} (${{ number_format($invoiceStats['unpaid']['total'], 2) }} {{ $invoiceStats['unpaid']['code'] }})</td></tr>
+                            <tr><td>Cancelled</td><td>{{ $invoiceStats['cancelled']['count'] }} (${{ number_format($invoiceStats['cancelled']['total'], 2) }} {{ $invoiceStats['cancelled']['code'] }})</td></tr>
+                            <tr class="ao-cp-kv-band"><td colspan="2">Income</td></tr>
+                            <tr><td>Gross Revenue</td><td>{{ $this->formatTotals($lifetime) }}</td></tr>
+                            <tr><td>Net Income</td><td>{{ $this->formatTotals($lifetime) }}</td></tr>
+                            <tr><td>Credit Balance</td><td><a class="ao-link" href="{{ $urls['credits'] }}">{{ $this->formatTotals($credits) }}</a></td></tr>
+                        </table>
+                        <a class="ao-cp-link" href="{{ \App\Admin\Resources\InvoiceResource::getUrl('create') }}">
+                            <x-filament::icon icon="ri-bill-line" class="ao-cp-ic" /> Create Invoice
+                        </a>
+                        <a class="ao-cp-link" href="{{ $urls['credits'] }}">
+                            <x-filament::icon icon="ri-coins-line" class="ao-cp-ic" /> Manage Credits
+                        </a>
+                        @if (class_exists(\Paymenter\Extensions\Others\Quotes\Admin\Resources\QuoteResource::class))
+                            <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\Quotes\Admin\Resources\QuoteResource::getUrl('index') }}">
+                                <x-filament::icon icon="ri-draft-line" class="ao-cp-ic" /> Create New Quote
+                            </a>
+                        @endif
+                    </div>
+                </div>
 
-            @if ($services->isEmpty())
-                <p class="ao-empty">No services.</p>
-            @else
-                <table class="ao-list">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Status</th>
-                            <th>Renews</th>
-                            <th class="ao-num">Price</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($services as $service)
+                <div class="ao-cp">
+                    <h3>Other Information</h3>
+                    <div class="ao-cp-body">
+                        <table class="ao-cp-kv">
+                            <tr><td>Status</td><td>{{ $isActive ? 'Active' : 'Inactive' }}</td></tr>
+                            <tr><td>Client Group</td><td>None</td></tr>
+                            <tr><td>Signup Date</td><td>{{ $user->created_at?->format('m/d/Y') }}</td></tr>
+                            <tr><td>Client For</td><td>{{ $user->created_at?->diffForHumans(null, true) }}</td></tr>
                             <tr>
+                                <td>Last Login</td>
                                 <td>
-                                    <a href="{{ $urls['service']($service->id) }}" class="ao-link">
-                                        {{ $service->product?->name ?? 'Service #' . $service->id }}
-                                    </a>
-                                    @if ($service->quantity > 1)
-                                        <span style="opacity:.7;">&times;{{ $service->quantity }}</span>
+                                    @if ($lastSeen)
+                                        Date: {{ $lastSeen->last_activity?->format('m/d/Y H:i') }}<br>
+                                        IP Address: {{ $lastSeen->ip_address }}
+                                    @else
+                                        Never
                                     @endif
                                 </td>
-                                <td><span class="ao-tag {{ $statusTag($service->status) }}">{{ ucfirst($service->status) }}</span></td>
-                                <td>{{ $service->expires_at?->format('j M Y') ?? '—' }}</td>
-                                <td class="ao-num">{{ $this->formatMoney((float) $service->price, $service->currency_code) }}</td>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @endif
-        </x-filament::section>
+                            <tr><td>Owner Email Verified</td><td>{{ $user->email_verified_at ? 'Yes' : 'No' }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-        <x-filament::section
-            icon="heroicon-o-document-text"
-            :heading="'Invoices (' . $invoiceCount . ')'"
-        >
-            <x-slot name="afterHeader">
-                <a href="{{ $urls['invoices'] }}" class="ao-link">See all</a>
-            </x-slot>
+            <div class="ao-cs-col">
+                <div class="ao-cp">
+                    <h3>Products/Services</h3>
+                    <div class="ao-cp-body">
+                        <table class="ao-cp-kv">
+                            @forelse ($categoryCounts as $name => $counts)
+                                <tr><td>{{ $name }}</td><td>{{ $counts['open'] }} ({{ $counts['total'] }} Total)</td></tr>
+                            @empty
+                                <tr><td colspan="2" class="ao-cp-empty">No services yet</td></tr>
+                            @endforelse
+                        </table>
+                        <a class="ao-cp-link" href="{{ \App\Admin\Resources\OrderResource::getUrl('index') }}">
+                            <x-filament::icon icon="ri-shopping-basket-2-line" class="ao-cp-ic" /> View Orders
+                        </a>
+                        <a class="ao-cp-link" href="{{ \App\Admin\Resources\OrderResource::getUrl('create') }}">
+                            <x-filament::icon icon="ri-add-box-line" class="ao-cp-ic" /> Add New Order
+                        </a>
+                    </div>
+                </div>
 
-            @if ($invoices->isEmpty())
-                <p class="ao-empty">No invoices.</p>
-            @else
-                <table class="ao-list">
+                <div class="ao-cp">
+                    <h3>Recent Emails</h3>
+                    <div class="ao-cp-body">
+                        @forelse ($recentEmails as $mail)
+                            <div class="ao-cp-mail">
+                                <span>{{ \Carbon\Carbon::parse($mail->created_at)->format('m/d/Y H:i') }}</span> -
+                                <button type="button" class="ao-link" wire:click="$set('tab', 'emails')">{{ str($mail->title)->limit(34) }}</button>
+                            </div>
+                        @empty
+                            <div class="ao-cp-empty">No emails sent</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            <div class="ao-cs-col">
+                <div class="ao-cp">
+                    <h3>Other Actions</h3>
+                    <div class="ao-cp-body">
+                        <button type="button" class="ao-cp-link" wire:click="$set('tab', 'transactions')">
+                            <x-filament::icon icon="ri-file-list-3-line" class="ao-cp-ic" /> View Account Statement
+                        </button>
+                        <a class="ao-cp-link" href="{{ \App\Admin\Resources\TicketResource::getUrl('create') }}">
+                            <x-filament::icon icon="ri-mail-add-line" class="ao-cp-ic" /> Open New Support Ticket
+                        </a>
+                        <button type="button" class="ao-cp-link" wire:click="$set('tab', 'tickets')">
+                            <x-filament::icon icon="ri-customer-service-line" class="ao-cp-ic" /> View all Support Tickets
+                        </button>
+                        @if (class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::class))
+                            <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::getUrl() }}">
+                                <x-filament::icon icon="ri-share-forward-line" class="ao-cp-ic" /> Manage Affiliate
+                            </a>
+                        @endif
+                        <a class="ao-cp-link" href="{{ \App\Admin\Resources\UserResource::getUrl('edit', ['record' => $user->id]) }}">
+                            <x-filament::icon icon="ri-user-settings-line" class="ao-cp-ic" /> Edit Client
+                        </a>
+                    </div>
+                </div>
+
+                <div class="ao-cp">
+                    <h3>Send Email</h3>
+                    <div class="ao-cp-body">
+                        <a class="ao-find-go ao-cp-send" href="mailto:{{ $user->email }}">New Message</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- The reference's banded tables under the panels. Addons and Domains render with
+             no records, which is exactly what the reference shows for a store without them. --}}
+        @php
+            $bands = [
+                ['title' => 'Products/Services', 'head' => ['ID', 'Product/Service', 'Amount', 'Billing Cycle', 'Signup Date', 'Next Due Date', 'Status'], 'rows' => $services],
+                ['title' => 'Addons', 'head' => ['ID', 'Name', 'Amount', 'Billing Cycle', 'Signup Date', 'Next Due Date', 'Status'], 'rows' => collect()],
+                ['title' => 'Domains', 'head' => ['ID', 'Domain', 'Registrar', 'Registration Date', 'Next Due Date', 'Expiry Date', 'Status'], 'rows' => collect()],
+                ['title' => 'Current Quotes', 'head' => ['ID', 'Subject', 'Date', 'Total', 'Valid Until Date', 'Status'], 'rows' => $quoteRows],
+            ];
+        @endphp
+
+        @foreach ($bands as $band)
+            <div class="ao-cs-band">
+                <h4>{{ $band['title'] }}</h4>
+                <table class="ao-mu-grid">
                     <thead>
                         <tr>
-                            <th>Invoice</th>
-                            <th>Status</th>
-                            <th>Due</th>
-                            <th class="ao-num">Total</th>
-                            <th class="ao-num">Remaining</th>
+                            @foreach ($band['head'] as $column)
+                                <th>{{ $column }}</th>
+                            @endforeach
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($invoices as $invoice)
-                            <tr>
-                                <td>
-                                    <a href="{{ $urls['invoice']($invoice->id) }}" class="ao-link">
-                                        {{ $invoice->number ?: '#' . $invoice->id }}
-                                    </a>
-                                </td>
-                                <td><span class="ao-tag {{ $statusTag($invoice->status) }}">{{ ucfirst($invoice->status) }}</span></td>
-                                <td>{{ $invoice->due_at?->format('j M Y') ?? '—' }}</td>
-                                <td class="ao-num">{{ $this->formatMoney((float) $invoice->total, $invoice->currency_code) }}</td>
-                                <td class="ao-num">{{ $this->formatMoney((float) $invoice->remaining, $invoice->currency_code) }}</td>
-                            </tr>
-                        @endforeach
+                        @if ($band['title'] === 'Products/Services')
+                            @forelse ($band['rows'] as $service)
+                                <tr>
+                                    <td>{{ $service->id }}</td>
+                                    <td class="ao-mu-left"><a href="{{ $urls['service']($service->id) }}">{{ $service->product?->name ?? '—' }} - (No Domain)</a></td>
+                                    <td>${{ number_format((float) $service->price, 2) }} {{ $service->currency_code }}</td>
+                                    <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::cycle($service) }}</td>
+                                    <td>{{ $service->created_at?->format('m/d/Y') }}</td>
+                                    <td>{{ $service->expires_at?->format('m/d/Y') ?? '-' }}</td>
+                                    <td><span class="ao-mu-status ao-mu-st-{{ $service->status }}">{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel($service->status) }}</span></td>
+                                    <td class="ao-mu-actions"><a href="{{ $urls['service']($service->id) }}" title="Open">+</a></td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="8" class="ao-mu-none">No records found</td></tr>
+                            @endforelse
+                        @elseif ($band['title'] === 'Current Quotes')
+                            @forelse ($band['rows'] as $quote)
+                                <tr>
+                                    <td>{{ $quote->id }}</td>
+                                    <td class="ao-mu-left">{{ $quote->subject }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($quote->created_at)->format('m/d/Y') }}</td>
+                                    <td>—</td>
+                                    <td>{{ $quote->valid_until ? \Carbon\Carbon::parse($quote->valid_until)->format('m/d/Y') : '-' }}</td>
+                                    <td>{{ ucfirst($quote->status) }}</td>
+                                    <td></td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="7" class="ao-mu-none">No records found</td></tr>
+                            @endforelse
+                        @else
+                            <tr><td colspan="8" class="ao-mu-none">No records found</td></tr>
+                        @endif
                     </tbody>
                 </table>
-            @endif
-        </x-filament::section>
-
-        <x-filament::section
-            icon="heroicon-o-lifebuoy"
-            :heading="'Tickets (' . $ticketCount . ')'"
-        >
-            <x-slot name="afterHeader">
-                <a href="{{ $urls['tickets'] }}" class="ao-link">See all</a>
-            </x-slot>
-
-            @if ($tickets->isEmpty())
-                <p class="ao-empty">No tickets.</p>
-            @else
-                <table class="ao-list">
-                    <thead>
-                        <tr>
-                            <th>Subject</th>
-                            <th>Status</th>
-                            <th>Priority</th>
-                            <th>Last activity</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($tickets as $ticket)
-                            <tr>
-                                <td>
-                                    <a href="{{ $urls['ticket']($ticket->id) }}" class="ao-link">{{ $ticket->subject }}</a>
-                                </td>
-                                <td><span class="ao-tag {{ $statusTag($ticket->status) }}">{{ ucfirst($ticket->status) }}</span></td>
-                                <td>{{ ucfirst($ticket->priority) }}</td>
-                                <td>{{ $ticket->updated_at?->diffForHumans() ?? '—' }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @endif
-        </x-filament::section>
+            </div>
+        @endforeach
 
     @else
         {{-- Every other tab is one list of one thing. `adminops::pages.client-tab` renders

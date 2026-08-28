@@ -239,7 +239,74 @@ class ClientSummary extends Page
                 ->limit(self::ROWS)
                 ->get(),
             'ticketCount' => $user->tickets()->count(),
+            // ── The reference's Summary panels ───────────────────────────────────────────
+            'invoiceStats' => $this->invoiceStats(),
+            'categoryCounts' => $this->categoryCounts(),
+            'lastSeen' => $user->sessions()->orderByDesc('last_activity')->first(),
+            'recentEmails' => $this->emailRows()->take(5),
+            'isActive' => $user->services()->whereIn('status', ['pending', 'active', 'suspended'])->exists(),
+            'quoteRows' => $this->quoteRows(),
         ];
+    }
+
+    /**
+     * The reference's Invoices/Billing panel: a count and a sum per state.
+     *
+     * @return array<string, array{count: int, total: float, code: string}>
+     */
+    private function invoiceStats(): array
+    {
+        $stats = [];
+
+        foreach (['paid' => Invoice::STATUS_PAID, 'unpaid' => Invoice::STATUS_PENDING, 'cancelled' => Invoice::STATUS_CANCELLED] as $label => $status) {
+            $invoices = $this->customer->invoices()->where('status', $status)->with(['items', 'transactions'])->get();
+
+            $stats[$label] = [
+                'count' => $invoices->count(),
+                'total' => $invoices->sum(fn (Invoice $invoice) => (float) $invoice->total),
+                'code' => $invoices->first()?->currency_code ?? 'USD',
+            ];
+        }
+
+        return $stats;
+    }
+
+    /**
+     * The reference's Products/Services panel: "Group  n (m Total)" per product group.
+     *
+     * @return array<string, array{open: int, total: int}>
+     */
+    private function categoryCounts(): array
+    {
+        $services = $this->customer->services()->with('product')->get();
+
+        return $services
+            ->groupBy(fn ($service) => $service->product?->category?->name ?? 'Product/Service')
+            ->map(fn ($group) => [
+                'open' => $group->whereIn('status', ['pending', 'active', 'suspended'])->count(),
+                'total' => $group->count(),
+            ])
+            ->all();
+    }
+
+    /**
+     * The reference's Current Quotes table — empty when the quoting extension is absent,
+     * exactly as the reference shows an installation that has never raised one.
+     *
+     * @return Collection<int, object>
+     */
+    private function quoteRows()
+    {
+        if (!Schema::hasTable('ext_quotes')) {
+            return collect();
+        }
+
+        return DB::table('ext_quotes')
+            ->where('user_id', $this->customer->id)
+            ->whereNotIn('status', ['draft'])
+            ->orderByDesc('id')
+            ->limit(10)
+            ->get();
     }
 
     /**
