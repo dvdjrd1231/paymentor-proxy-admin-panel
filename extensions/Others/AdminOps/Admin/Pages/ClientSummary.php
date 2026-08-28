@@ -94,14 +94,30 @@ class ClientSummary extends Page
      */
     private const TABS = [
         'summary' => 'Summary',
+        'profile' => 'Profile',
         'services' => 'Products/Services',
         'billable' => 'Billable Items',
         'invoices' => 'Invoices',
+        'quotes' => 'Quotes',
         'transactions' => 'Transactions',
         'tickets' => 'Tickets',
         'emails' => 'Emails',
+        'notes' => 'Notes',
         'log' => 'Log',
     ];
+
+    /**
+     * The tab labels, with the reference's live "Notes (n)" count.
+     *
+     * @return array<string, string>
+     */
+    private function tabLabels(): array
+    {
+        $labels = self::TABS;
+        $labels['notes'] = 'Notes (' . (trim($this->adminNotes) !== '' ? 1 : 0) . ')';
+
+        return $labels;
+    }
 
     /** How many rows of each kind on the Summary tab before "see all" takes over. */
     private const ROWS = 8;
@@ -207,9 +223,14 @@ class ClientSummary extends Page
     {
         return [
             'user' => $this->customer,
-            'tabs' => self::TABS,
+            'tabs' => $this->tabLabels(),
             'tab' => array_key_exists($this->tab, self::TABS) ? $this->tab : 'summary',
             'urls' => $this->urls(),
+            'clientsList' => User::query()
+                ->whereNull('role_id')
+                ->orderBy('first_name')
+                ->limit(200)
+                ->get(['id', 'first_name', 'last_name', 'email']),
             ...match (array_key_exists($this->tab, self::TABS) ? $this->tab : 'summary') {
                 'services' => ['rows' => $this->customer->services()->with('product')->latest()->limit(self::TAB_ROWS)->get()],
                 'billable' => ['rows' => $this->billableItems()],
@@ -218,6 +239,11 @@ class ClientSummary extends Page
                 'tickets' => ['rows' => $this->customer->tickets()->latest()->limit(self::TAB_ROWS)->get()],
                 'emails' => ['rows' => $this->emailRows()],
                 'log' => ['rows' => $this->logRows()],
+                // The reference's Profile tab is the client's stored details; ours reads the
+                // same properties the Summary panel does, in full.
+                'profile' => ['rows' => []],
+                'quotes' => ['rows' => $this->quoteRows()],
+                'notes' => ['rows' => []],
                 default => $this->summaryData(),
             },
         ];

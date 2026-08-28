@@ -37,7 +37,19 @@
     <div class="ao-panel" style="display:flex;flex-direction:column;gap:1.5rem;">
 
     @if ($tab === 'summary')
-        {{-- The reference's Summary: four columns of panels, then the banded tables. --}}
+        {{-- The reference's Summary: the client switcher, four columns of panels, then the
+             banded tables. The switcher is the reference's dropdown under the title — pick
+             any client and land on their profile. --}}
+        <div class="ao-cs-switch">
+            <select onchange="if (this.value) window.location = '{{ url('/admin/client-summary') }}/' + this.value;">
+                @foreach ($clientsList as $client)
+                    <option value="{{ $client->id }}" @selected($client->id === $user->id)>
+                        {{ trim($client->first_name . ' ' . $client->last_name) ?: $client->email }} - #{{ $client->id }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
         <div class="ao-cs-head">
             <h2>#{{ $user->id }} - {{ trim($user->first_name . ' ' . $user->last_name) ?: $user->email }}</h2>
         </div>
@@ -91,6 +103,22 @@
                         <a class="ao-cp-link" href="{{ $urls['credits'] }}">
                             <x-filament::icon icon="ri-coins-line" class="ao-cp-ic" /> Manage Credits
                         </a>
+                        @php
+                            // The resource creates via modal, so a 'create' route may not
+                            // exist — resolved defensively, exactly like the nav does.
+                            $billableUrl = null;
+                            try {
+                                if (class_exists(\Paymenter\Extensions\Others\BillableItems\Admin\Resources\BillableItemResource::class)) {
+                                    $billableUrl = \Paymenter\Extensions\Others\BillableItems\Admin\Resources\BillableItemResource::getUrl('index');
+                                }
+                            } catch (\Throwable $e) {
+                            }
+                        @endphp
+                        @if ($billableUrl)
+                            <a class="ao-cp-link" href="{{ $billableUrl }}">
+                                <x-filament::icon icon="ri-price-tag-3-line" class="ao-cp-ic" /> Add Billable Item
+                            </a>
+                        @endif
                         @if (class_exists(\Paymenter\Extensions\Others\Quotes\Admin\Resources\QuoteResource::class))
                             <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\Quotes\Admin\Resources\QuoteResource::getUrl('index') }}">
                                 <x-filament::icon icon="ri-draft-line" class="ao-cp-ic" /> Create New Quote
@@ -206,6 +234,8 @@
             </div>
         </div>
 
+        <div class="ao-cs-filter-tag">Status Filter: Off</div>
+
         {{-- The reference's banded tables under the panels. Addons and Domains render with
              no records, which is exactly what the reference shows for a store without them. --}}
         @php
@@ -280,6 +310,69 @@
                 </div>
             </div>
         @endforeach
+
+        {{-- The reference's bulk row. Disabled: bulk invoicing and bulk deletion have no
+             backend here, and a live-looking button that destroys nothing (or worse,
+             something) would be the wrong kind of faithful. --}}
+        <div class="ao-cs-selected">
+            With Selected:
+            <button type="button" disabled title="Not available">&#8635; Invoice Selected Items</button>
+            <button type="button" class="ao-cs-danger" disabled title="Not available">&#128465; Delete Selected Items</button>
+        </div>
+
+    @elseif ($tab === 'profile')
+        {{-- The reference's Profile tab: the client's stored details in full. --}}
+        <div class="ao-cp ao-cp-wide">
+            <h3>Profile</h3>
+            <div class="ao-cp-body">
+                <table class="ao-cp-kv">
+                    <tr><td>First Name</td><td>{{ $user->first_name ?? '—' }}</td></tr>
+                    <tr><td>Last Name</td><td>{{ $user->last_name ?? '—' }}</td></tr>
+                    <tr><td>Email Address</td><td>{{ $user->email }}</td></tr>
+                    <tr><td>Email Verified</td><td>{{ $user->email_verified_at ? 'Yes' : 'No' }}</td></tr>
+                    <tr><td>Signup Date</td><td>{{ $user->created_at?->format('m/d/Y H:i') }}</td></tr>
+                    @foreach ($user->properties->filter(fn ($p) => filled($p->value) && $p->key !== 'admin_notes') as $property)
+                        <tr><td>{{ $property->parent_property?->name ?? str($property->key)->headline() }}</td><td>{{ $property->value }}</td></tr>
+                    @endforeach
+                </table>
+                <a class="ao-cp-link" href="{{ \App\Admin\Resources\UserResource::getUrl('edit', ['record' => $user->id]) }}">
+                    <x-filament::icon icon="ri-user-settings-line" class="ao-cp-ic" /> Edit Client Details
+                </a>
+            </div>
+        </div>
+
+    @elseif ($tab === 'quotes')
+        <div class="ao-cs-band">
+            <h4>Quotes</h4>
+            <table class="ao-mu-grid">
+                <thead>
+                    <tr><th>ID</th><th>Subject</th><th>Date</th><th>Valid Until Date</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    @forelse ($rows as $quote)
+                        <tr>
+                            <td>{{ $quote->id }}</td>
+                            <td class="ao-mu-left">{{ $quote->subject }}</td>
+                            <td>{{ \Carbon\Carbon::parse($quote->created_at)->format('m/d/Y') }}</td>
+                            <td>{{ $quote->valid_until ? \Carbon\Carbon::parse($quote->valid_until)->format('m/d/Y') : '-' }}</td>
+                            <td>{{ ucfirst($quote->status) }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" class="ao-mu-none">No Records Found</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+    @elseif ($tab === 'notes')
+        {{-- The reference's Notes tab — same note the Summary panel edits, full width. --}}
+        <div class="ao-cp ao-cp-wide">
+            <h3>Admin Notes</h3>
+            <div class="ao-cp-body">
+                <textarea class="ao-cp-notes" rows="10" wire:model="adminNotes"></textarea>
+                <button type="button" class="ao-find-adv ao-cp-notes-save" wire:click="saveNotes">Submit</button>
+            </div>
+        </div>
 
     @else
         {{-- Every other tab is one list of one thing. `adminops::pages.client-tab` renders
