@@ -371,8 +371,15 @@
 
     /* Hover only — deliberately not `.fi-active`. Leandro: the menu being *on* the page it
        links to should not keep its cell shaded; the reference highlights on hover and on
-       press, never at rest. */
-    .fi-topbar-item-btn:hover {
+       press, never at rest. The explicit reset below is load-bearing: dropping our
+       `.fi-active` rule stops *us* shading it, but Filament's own stylesheet still paints
+       the active item, so at rest it must be told to paint nothing. */
+    .fi-topbar-item.fi-active .fi-topbar-item-btn {
+        background: transparent;
+    }
+
+    .fi-topbar-item-btn:hover,
+    .fi-topbar-item.fi-active .fi-topbar-item-btn:hover {
         background: var(--wa-blue-dark);
         color: #ffffff;
     }
@@ -735,7 +742,7 @@
     }
 
     .fi-ta-cell {
-        font-size: 13.5px;
+        font-size: 14px;
         padding-block: 0.5rem;
     }
 
@@ -778,7 +785,7 @@
        « Previous Page · 1 · Next Page » strip. */
     .fi-pagination {
         padding-block: 0.6rem;
-        font-size: 13.5px;
+        font-size: 14px;
     }
 
     .fi-pagination-item-btn,
@@ -811,7 +818,7 @@
     .fi-pagination-overview,
     .fi-pagination-records-per-page-select-ctn {
         color: var(--wa-text);
-        font-size: 13.5px;
+        font-size: 14px;
     }
 
     /* ── Forms ───────────────────────────────────────────────────────────────
@@ -821,7 +828,7 @@
        each resource form already declares. */
     .fi-fo-field-label,
     .fi-fo-field-label-content {
-        font-size: 13.5px;
+        font-size: 14px;
         font-weight: 600;
         color: var(--wa-ink);
     }
@@ -832,7 +839,7 @@
 
     .fi-input,
     .fi-select-input {
-        font-size: 13.5px;
+        font-size: 14px;
     }
 
     /* ── Stat tiles ──────────────────────────────────────────────────────────
@@ -848,7 +855,7 @@
     }
 
     .fi-wi-stats-overview-stat-label {
-        font-size: 13.5px;
+        font-size: 14px;
         font-weight: 400;
         color: var(--wa-text);
     }
@@ -863,7 +870,7 @@
        Square, small, WHMCS blue for the primary action. */
     .fi-btn {
         border-radius: var(--wa-radius);
-        font-size: 13.5px;
+        font-size: 14px;
         font-weight: 400;
         box-shadow: none;
     }
