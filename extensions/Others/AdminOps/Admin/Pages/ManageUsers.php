@@ -107,14 +107,33 @@ class ManageUsers extends Page
             'tfa_secret' => $this->mu['tfa'] ? $user->tfa_secret : null,
         ]);
 
+        if ($this->mu['tfa'] && !$user->tfa_secret) {
+            Notification::make()->title('Two-factor stays off')
+                ->body('Only the user can enable it, from their own account — it needs their authenticator app.')
+                ->warning()->send();
+        }
+
         $this->closeUser();
         Notification::make()->title('User saved')->success()->send();
     }
 
-    /** The dropdown's Password Reset: the same email the login page's Forgot Password sends. */
-    public function resetPassword(int $id): void
+    /** The row awaiting the reference's "Are you sure?" before a password reset is sent. */
+    public ?int $confirmingReset = null;
+
+    public function askResetPassword(int $id): void
     {
-        $user = User::whereNull('role_id')->findOrFail($id);
+        $this->confirmingReset = $id;
+    }
+
+    /** The dropdown's Password Reset: the same email the login page's Forgot Password sends. */
+    public function resetPassword(): void
+    {
+        if (!$this->confirmingReset) {
+            return;
+        }
+
+        $user = User::whereNull('role_id')->findOrFail($this->confirmingReset);
+        $this->confirmingReset = null;
 
         try {
             NotificationHelper::passwordResetNotification($user, ['url' => url(route('password.reset', [
