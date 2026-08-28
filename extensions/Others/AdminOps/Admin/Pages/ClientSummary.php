@@ -83,6 +83,28 @@ class ClientSummary extends Page
     public string $adminNotes = '';
 
     /**
+     * The Profile tab's editable fields — the reference's Profile is the client's edit
+     * form, not a read-only sheet. Names and email live on the user; the rest are
+     * properties, saved by {@see saveProfile()}.
+     *
+     * @var array<string, string>
+     */
+    public array $pf = [];
+
+    /** @var array<string, bool> email_pref_* on the profile, editable */
+    public array $pfPrefs = [];
+
+    /** @var array<string, bool> setting_* on the profile, editable */
+    public array $pfSettings = [];
+
+    /** The property keys the Profile form edits besides the user's own columns. */
+    private const PF_PROPS = ['company_name', 'address', 'address2', 'city', 'state', 'zip', 'country', 'phone', 'currency'];
+
+    private const PREF_KEYS = ['general', 'invoice', 'support', 'product', 'domain', 'affiliate'];
+
+    private const SETTING_KEYS = ['late_fees', 'overdue_notices', 'tax_exempt', 'separate_invoices', 'disable_cc', 'marketing_optin', 'status_update', 'single_sign_on'];
+
+    /**
      * The reference's tabs, less the ones Paymenter has nothing behind.
      *
      * Dropped deliberately rather than shown empty: **Domains** (removed from this store
@@ -145,6 +167,65 @@ class ClientSummary extends Page
 
         $this->adminNotes = (string) $this->customer->properties
             ->firstWhere('key', 'admin_notes')?->value;
+
+        $prop = fn (string $key): string => (string) $this->customer->properties->firstWhere('key', $key)?->value;
+
+        $this->pf = [
+            'first_name' => (string) $this->customer->first_name,
+            'last_name' => (string) $this->customer->last_name,
+            'email' => $this->customer->email,
+            ...collect(self::PF_PROPS)->mapWithKeys(fn ($key) => [$key => $prop($key)])->all(),
+        ];
+
+        foreach (self::PREF_KEYS as $key) {
+            // Missing means the client predates the standard; the standard default is on.
+            $this->pfPrefs[$key] = $prop('email_pref_' . $key) !== '0';
+        }
+
+        $settingDefaults = ['late_fees' => true, 'overdue_notices' => true, 'status_update' => true, 'single_sign_on' => true];
+
+        foreach (self::SETTING_KEYS as $key) {
+            $held = $prop('setting_' . $key);
+            $this->pfSettings[$key] = $held === '' ? ($settingDefaults[$key] ?? false) : $held === '1';
+        }
+    }
+
+    /** The Profile tab's Save Changes. Everything it writes is readable back on this page. */
+    public function saveProfile(): void
+    {
+        $this->validate([
+            'pf.first_name' => ['required', 'string', 'max:255'],
+            'pf.last_name' => ['required', 'string', 'max:255'],
+            'pf.email' => ['required', 'email', \Illuminate\Validation\Rule::unique('users', 'email')->ignore($this->customer->id)],
+        ]);
+
+        DB::transaction(function (): void {
+            $this->customer->update([
+                'first_name' => $this->pf['first_name'],
+                'last_name' => $this->pf['last_name'],
+                'email' => $this->pf['email'],
+            ]);
+
+            foreach (self::PF_PROPS as $key) {
+                $value = trim((string) ($this->pf[$key] ?? ''));
+
+                if ($value !== '') {
+                    $this->customer->properties()->updateOrCreate(['key' => $key], ['value' => $value]);
+                }
+            }
+
+            foreach ($this->pfPrefs as $key => $on) {
+                $this->customer->properties()->updateOrCreate(['key' => 'email_pref_' . $key], ['value' => $on ? '1' : '0']);
+            }
+
+            foreach ($this->pfSettings as $key => $on) {
+                $this->customer->properties()->updateOrCreate(['key' => 'setting_' . $key], ['value' => $on ? '1' : '0']);
+            }
+        });
+
+        $this->customer->refresh()->load('properties.parent_property');
+
+        Notification::make()->title('Profile saved')->success()->send();
     }
 
     /** The Admin Notes Submit button. Notes live on the customer, as the reference keeps them. */
@@ -293,6 +374,12 @@ class ClientSummary extends Page
             'recentEmails' => $this->emailRows()->take(5),
             'isActive' => $user->services()->whereIn('status', ['pending', 'active', 'suspended'])->exists(),
             'quoteRows' => $this->quoteRows(),
+            'acceptedQuotes' => Schema::hasTable('ext_quotes')
+                ? DB::table('ext_quotes')->where('user_id', $user->id)->where('status', 'accepted')->count()
+                : 0,
+            'affiliateSignups' => Schema::hasTable('ext_affiliates')
+                ? (int) DB::table('ext_affiliates')->where('user_id', $user->id)->value('signups')
+                : 0,
         ];
     }
 
@@ -305,7 +392,9 @@ class ClientSummary extends Page
     {
         $stats = [];
 
-        foreach (['paid' => Invoice::STATUS_PAID, 'unpaid' => Invoice::STATUS_PENDING, 'cancelled' => Invoice::STATUS_CANCELLED] as $label => $status) {
+        // Draft and refunded are extension-written statuses; a store without them simply
+        // counts zero, which is what the reference shows for an empty state too.
+        foreach (['paid' => Invoice::STATUS_PAID, 'draft' => 'draft', 'unpaid' => Invoice::STATUS_PENDING, 'cancelled' => Invoice::STATUS_CANCELLED, 'refunded' => 'refunded'] as $label => $status) {
             $invoices = $this->customer->invoices()->where('status', $status)->with(['items', 'transactions'])->get();
 
             $stats[$label] = [
@@ -327,13 +416,26 @@ class ClientSummary extends Page
     {
         $services = $this->customer->services()->with('product')->get();
 
-        return $services
+        $held = $services
             ->groupBy(fn ($service) => $service->product?->category?->name ?? 'Product/Service')
             ->map(fn ($group) => [
                 'open' => $group->whereIn('status', ['pending', 'active', 'suspended'])->count(),
                 'total' => $group->count(),
-            ])
-            ->all();
+            ]);
+
+        // Every product group, zeroes included — the reference lists "Shared Hosting
+        // 0 (0 Total)" for groups the client has nothing in, and so do we.
+        $all = [];
+
+        foreach (\App\Models\Category::query()->whereNull('parent_id')->orderBy('sort')->orderBy('name')->pluck('name') as $name) {
+            $all[$name] = $held[$name] ?? ['open' => 0, 'total' => 0];
+        }
+
+        foreach ($held as $name => $counts) {
+            $all[$name] ??= $counts;
+        }
+
+        return $all;
     }
 
     /**

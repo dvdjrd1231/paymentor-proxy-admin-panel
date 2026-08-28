@@ -19,11 +19,11 @@
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-wide">
                     <span>Client/Company Name</span>
-                    <input type="text" wire:model="name">
+                    <input type="text" wire:model="name" placeholder="Name or company">
                 </label>
                 <label class="ao-find-field ao-find-wide">
                     <span>Email Address</span>
-                    <input type="text" wire:model="email">
+                    <input type="text" wire:model="email" placeholder="user@example.com">
                 </label>
                 <label class="ao-find-field">
                     <span>Phone Number</span>
@@ -49,7 +49,7 @@
                 @if ($this->advanced)
                     <label class="ao-find-field">
                         <span>Client ID</span>
-                        <input type="text" wire:model="cid" inputmode="numeric">
+                        <input type="text" wire:model="cid" inputmode="numeric" placeholder="e.g. 813">
                     </label>
                     <label class="ao-find-field">
                         <span>Signed Up From</span>

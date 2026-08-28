@@ -50,8 +50,18 @@
             </select>
         </div>
 
+        @php
+            $flag = fn (string $key, bool $invert = false) => (($user->properties->firstWhere('key', $key)?->value ?? '') === '1') !== $invert;
+        @endphp
         <div class="ao-cs-head">
             <h2>#{{ $user->id }} - {{ trim($user->first_name . ' ' . $user->last_name) ?: $user->email }}</h2>
+            {{-- The reference's flags strip — read from the client's real setting_* rows. --}}
+            <div class="ao-cs-flags">
+                <span>Exempt from Tax: <b class="{{ $flag('setting_tax_exempt') ? 'ao-cs-yes' : 'ao-cs-no' }}">{{ $flag('setting_tax_exempt') ? 'Yes' : 'No' }}</b></span>
+                <span>Auto CC Processing: <b class="{{ $flag('setting_disable_cc', true) ? 'ao-cs-yes' : 'ao-cs-no' }}">{{ $flag('setting_disable_cc', true) ? 'Yes' : 'No' }}</b></span>
+                <span>Send Overdue Reminders: <b class="{{ $flag('setting_overdue_notices') ? 'ao-cs-yes' : 'ao-cs-no' }}">{{ $flag('setting_overdue_notices') ? 'Yes' : 'No' }}</b></span>
+                <span>Apply Late Fees: <b class="{{ $flag('setting_late_fees') ? 'ao-cs-yes' : 'ao-cs-no' }}">{{ $flag('setting_late_fees') ? 'Yes' : 'No' }}</b></span>
+            </div>
         </div>
 
         <div class="ao-cs-grid">
@@ -67,20 +77,32 @@
                                 <tr><td>{{ $label }}</td><td>{{ $value }}</td></tr>
                             @endforeach
                         </table>
-                        <a class="ao-cp-link" href="{{ \App\Admin\Resources\UserResource::getUrl('edit', ['record' => $user->id]) }}">
-                            <x-filament::icon icon="ri-user-settings-line" class="ao-cp-ic" /> Edit Client Details
-                        </a>
+                        {{-- The reference's Login as Owner — same impersonation the header
+                             action runs, from the panel where WHMCS puts it. --}}
+                        <button type="button" class="ao-cp-link" wire:click="mountAction('impersonate')">
+                            <x-filament::icon icon="ri-login-circle-line" class="ao-cp-ic" /> Login as Owner
+                        </button>
                     </div>
                 </div>
 
                 <div class="ao-cp">
                     <h3>Contacts</h3>
-                    <div class="ao-cp-body ao-cp-empty">No additional contacts setup</div>
+                    <div class="ao-cp-body">
+                        <div class="ao-cp-empty">No additional contacts setup</div>
+                        <span class="ao-cp-link ao-cp-dead" title="Contacts are not part of Paymenter">
+                            <x-filament::icon icon="ri-user-add-line" class="ao-cp-ic" /> Add Contact
+                        </span>
+                    </div>
                 </div>
 
                 <div class="ao-cp">
                     <h3>Pay Methods</h3>
-                    <div class="ao-cp-body ao-cp-empty">No Pay Methods</div>
+                    <div class="ao-cp-body">
+                        <div class="ao-cp-empty">No Pay Methods</div>
+                        <span class="ao-cp-link ao-cp-dead" title="Stored cards are not part of Paymenter">
+                            <x-filament::icon icon="ri-bank-card-line" class="ao-cp-ic" /> Add Credit Card
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -89,17 +111,24 @@
                     <h3>Invoices/Billing</h3>
                     <div class="ao-cp-body">
                         <table class="ao-cp-kv">
-                            <tr><td>Paid</td><td>{{ $invoiceStats['paid']['count'] }} (${{ number_format($invoiceStats['paid']['total'], 2) }} {{ $invoiceStats['paid']['code'] }})</td></tr>
-                            <tr><td>Unpaid/Due</td><td>{{ $invoiceStats['unpaid']['count'] }} (${{ number_format($invoiceStats['unpaid']['total'], 2) }} {{ $invoiceStats['unpaid']['code'] }})</td></tr>
-                            <tr><td>Cancelled</td><td>{{ $invoiceStats['cancelled']['count'] }} (${{ number_format($invoiceStats['cancelled']['total'], 2) }} {{ $invoiceStats['cancelled']['code'] }})</td></tr>
+                            @foreach (['paid' => 'Paid', 'draft' => 'Draft', 'unpaid' => 'Unpaid/Due', 'cancelled' => 'Cancelled', 'refunded' => 'Refunded'] as $key => $label)
+                                <tr><td>{{ $label }}</td><td>{{ $invoiceStats[$key]['count'] }} (${{ number_format($invoiceStats[$key]['total'], 2) }} {{ $invoiceStats[$key]['code'] }})</td></tr>
+                            @endforeach
                             <tr class="ao-cp-kv-band"><td colspan="2">Income</td></tr>
                             <tr><td>Gross Revenue</td><td>{{ $this->formatTotals($lifetime) }}</td></tr>
+                            <tr><td>Client Expenses</td><td>$0.00 USD</td></tr>
                             <tr><td>Net Income</td><td>{{ $this->formatTotals($lifetime) }}</td></tr>
                             <tr><td>Credit Balance</td><td><a class="ao-link" href="{{ $urls['credits'] }}">{{ $this->formatTotals($credits) }}</a></td></tr>
                         </table>
                         <a class="ao-cp-link" href="{{ \App\Admin\Resources\InvoiceResource::getUrl('create') }}">
                             <x-filament::icon icon="ri-bill-line" class="ao-cp-ic" /> Create Invoice
                         </a>
+                        <a class="ao-cp-link" href="{{ $urls['credits'] }}">
+                            <x-filament::icon icon="ri-money-dollar-circle-line" class="ao-cp-ic" /> Create Add Funds Invoice
+                        </a>
+                        <span class="ao-cp-link ao-cp-dead" title="Invoices are generated by the daily cron">
+                            <x-filament::icon icon="ri-refresh-line" class="ao-cp-ic" /> Generate Due Invoices
+                        </span>
                         <a class="ao-cp-link" href="{{ $urls['credits'] }}">
                             <x-filament::icon icon="ri-coins-line" class="ao-cp-ic" /> Manage Credits
                         </a>
@@ -162,6 +191,9 @@
                             @empty
                                 <tr><td colspan="2" class="ao-cp-empty">No services yet</td></tr>
                             @endforelse
+                            <tr><td>Accepted Quotes</td><td>{{ $acceptedQuotes }} ({{ $acceptedQuotes }} Total)</td></tr>
+                            <tr><td>Support Tickets</td><td>{{ $ticketCount ?? $user->tickets()->count() }} ({{ $ticketCount ?? $user->tickets()->count() }} Total)</td></tr>
+                            <tr><td>Affiliate Signups</td><td>{{ $affiliateSignups }}</td></tr>
                         </table>
                         <a class="ao-cp-link" href="{{ \App\Admin\Resources\OrderResource::getUrl('index') }}">
                             <x-filament::icon icon="ri-shopping-basket-2-line" class="ao-cp-ic" /> View Orders
@@ -226,8 +258,7 @@
                 <div class="ao-cp">
                     <h3>Admin Notes</h3>
                     <div class="ao-cp-body">
-                        <textarea class="ao-cp-notes" rows="5" wire:model="adminNotes"
-                            placeholder=""></textarea>
+                        <textarea class="ao-cp-notes" rows="5" wire:model="adminNotes" placeholder="Notes for staff only — the client never sees these"></textarea>
                         <button type="button" class="ao-find-adv ao-cp-notes-save" wire:click="saveNotes">Submit</button>
                     </div>
                 </div>
@@ -321,25 +352,90 @@
         </div>
 
     @elseif ($tab === 'profile')
-        {{-- The reference's Profile tab: the client's stored details in full. --}}
-        <div class="ao-cp ao-cp-wide">
-            <h3>Profile</h3>
-            <div class="ao-cp-body">
-                <table class="ao-cp-kv">
-                    <tr><td>First Name</td><td>{{ $user->first_name ?? '—' }}</td></tr>
-                    <tr><td>Last Name</td><td>{{ $user->last_name ?? '—' }}</td></tr>
-                    <tr><td>Email Address</td><td>{{ $user->email }}</td></tr>
-                    <tr><td>Email Verified</td><td>{{ $user->email_verified_at ? 'Yes' : 'No' }}</td></tr>
-                    <tr><td>Signup Date</td><td>{{ $user->created_at?->format('m/d/Y H:i') }}</td></tr>
-                    @foreach ($user->properties->filter(fn ($p) => filled($p->value) && $p->key !== 'admin_notes') as $property)
-                        <tr><td>{{ $property->parent_property?->name ?? str($property->key)->headline() }}</td><td>{{ $property->value }}</td></tr>
-                    @endforeach
-                </table>
-                <a class="ao-cp-link" href="{{ \App\Admin\Resources\UserResource::getUrl('edit', ['record' => $user->id]) }}">
-                    <x-filament::icon icon="ri-user-settings-line" class="ao-cp-ic" /> Edit Client Details
-                </a>
+        {{-- The reference's Profile tab is the client's *edit form*, prefilled — the same
+             two-column zebra the Add New Client page uses, saving back to the same user
+             columns and properties. --}}
+        <form class="ao-mu ao-anc" wire:submit.prevent="saveProfile">
+            <div class="ao-anc-card">
+                <div class="ao-anc-cols">
+                    <div class="ao-anc-col">
+                        <label class="ao-anc-row"><span>First Name</span><input type="text" wire:model="pf.first_name" placeholder="John" required></label>
+                        <label class="ao-anc-row"><span>Last Name</span><input type="text" wire:model="pf.last_name" placeholder="Doe" required></label>
+                        <label class="ao-anc-row">
+                            <span>Company Name</span>
+                            <span class="ao-anc-field"><input type="text" wire:model="pf.company_name" placeholder="Acme Technologies, Inc."><i>(Optional)</i></span>
+                        </label>
+                        <label class="ao-anc-row"><span>Email Address</span><input type="email" wire:model="pf.email" placeholder="user@example.com" required></label>
+                        <label class="ao-anc-row"><span>Language</span><select><option>Default</option></select></label>
+                        <label class="ao-anc-row"><span>Status</span><select><option>{{ $user->services()->whereIn('status', ['pending', 'active', 'suspended'])->exists() ? 'Active' : 'Inactive' }}</option></select></label>
+                        <label class="ao-anc-row"><span>Client Group</span><select><option>None</option></select></label>
+                    </div>
+                    <div class="ao-anc-col">
+                        <label class="ao-anc-row"><span>Address 1</span><input type="text" wire:model="pf.address" placeholder="123 Market Street"></label>
+                        <label class="ao-anc-row">
+                            <span>Address 2</span>
+                            <span class="ao-anc-field"><input type="text" wire:model="pf.address2" placeholder="Suite 400"><i>(Optional)</i></span>
+                        </label>
+                        <label class="ao-anc-row"><span>City</span><input type="text" wire:model="pf.city" placeholder="San Francisco"></label>
+                        <label class="ao-anc-row"><span>State/Region</span><input type="text" wire:model="pf.state" placeholder="—"></label>
+                        <label class="ao-anc-row"><span>Postcode</span><input type="text" wire:model="pf.zip" placeholder="94105"></label>
+                        <label class="ao-anc-row"><span>Country</span><input type="text" wire:model="pf.country" placeholder="United States"></label>
+                        <label class="ao-anc-row"><span>Phone Number</span><input type="text" wire:model="pf.phone" placeholder="+1 201-555-0123"></label>
+                        <label class="ao-anc-row"><span>Currency</span><input type="text" wire:model="pf.currency" placeholder="USD"></label>
+                    </div>
+                </div>
+
+                <div class="ao-anc-row ao-anc-row-wide ao-anc-grey">
+                    <span>Email Notifications</span>
+                    <div class="ao-anc-checks">
+                        @foreach ([
+                            'general' => 'General Emails - All account related emails',
+                            'invoice' => 'Invoice Emails - New Invoices, Reminders, & Overdue Notices',
+                            'support' => 'Support Emails - Receive a copy of all Support Ticket Communications',
+                            'product' => 'Product Emails - Welcome Emails, Suspensions & Other Lifecycle Notifications',
+                            'domain' => 'Domain Emails - Registration/Transfer Confirmation & Renewal Notices',
+                            'affiliate' => 'Affiliate Emails - Receive Affiliate Notifications',
+                        ] as $key => $label)
+                            <label><input type="checkbox" wire:model="pfPrefs.{{ $key }}"> {{ $label }}</label>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="ao-anc-row ao-anc-row-wide ao-anc-grey">
+                    <span>Settings</span>
+                    <div class="ao-anc-toggles">
+                        @foreach ([
+                            'late_fees' => 'Late Fees',
+                            'overdue_notices' => 'Overdue Notices',
+                            'tax_exempt' => 'Tax Exempt',
+                            'separate_invoices' => 'Separate Invoices',
+                            'disable_cc' => 'Disable CC Processing',
+                            'marketing_optin' => 'Marketing Emails Opt-in',
+                            'status_update' => 'Status Update',
+                            'single_sign_on' => 'Allow Single Sign-On',
+                        ] as $key => $label)
+                            <label class="ao-anc-switch">
+                                <input type="checkbox" wire:model="pfSettings.{{ $key }}">
+                                <i aria-hidden="true"></i>
+                                {{ $label }}
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
             </div>
-        </div>
+
+            @if ($errors->any())
+                <div class="ao-anc-errors">
+                    @foreach ($errors->all() as $error)
+                        <p>{{ $error }}</p>
+                    @endforeach
+                </div>
+            @endif
+
+            <div class="ao-anc-submit">
+                <button type="submit" class="ao-find-go">Save Changes</button>
+            </div>
+        </form>
 
     @elseif ($tab === 'quotes')
         <div class="ao-cs-band">
@@ -369,7 +465,7 @@
         <div class="ao-cp ao-cp-wide">
             <h3>Admin Notes</h3>
             <div class="ao-cp-body">
-                <textarea class="ao-cp-notes" rows="10" wire:model="adminNotes"></textarea>
+                <textarea class="ao-cp-notes" rows="10" wire:model="adminNotes" placeholder="Notes for staff only — the client never sees these"></textarea>
                 <button type="button" class="ao-find-adv ao-cp-notes-save" wire:click="saveNotes">Submit</button>
             </div>
         </div>
