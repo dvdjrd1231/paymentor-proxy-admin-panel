@@ -35,8 +35,8 @@
     .ao-tiles {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-        /* The same 25px the panel grid uses — one gutter, everywhere. */
-        gap: 25px;
+        /* The same 20px the panel grid uses — one gutter, everywhere. */
+        gap: 20px;
     }
 
     /* The reference's tiles: a darker block of the tile's own colour on the left with the
@@ -785,7 +785,7 @@
            they never loaded without scrolling. One class, one moment, both rules. */
         .fi-grid.ao-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            /* 25px columns, measured off the target screenshot — the reference's gutters
+            /* 20px columns — the first reading of the target said 25, a closer zoom says 20 — the reference's gutters
                are wider than they look.
 
                Row gap **zero**, and that is the fix for the one space that refused to be
@@ -795,7 +795,7 @@
                lives inside the measurement instead — pack() adds 25px to each panel's
                height and rounds to 5px rows, so the visible space below any panel is
                25–30px, every time. */
-            column-gap: 25px;
+            column-gap: 20px;
             row-gap: 0;
             grid-auto-rows: 5px;
             /* `dense` is what makes the distances *standard*: without it, auto-placement
@@ -818,9 +818,9 @@
            content. Start-aligned, a child's height is its content's, and packing
            converges. */
         .ao-grid > * {
-            /* 31 = a 128px lazy placeholder plus the 25px gutter, in 5px rows — so the
+            /* 30 = a 128px lazy placeholder plus the 20px gutter, in 5px rows — so the
                frame before the first pack() reserves roughly what is actually there. */
-            grid-row: span var(--ao-span, 31);
+            grid-row: span var(--ao-span, 30);
             align-self: start;
         }
 
