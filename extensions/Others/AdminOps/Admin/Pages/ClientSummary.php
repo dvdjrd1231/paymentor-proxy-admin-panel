@@ -247,14 +247,14 @@ class ClientSummary extends Page
         abort_unless(UserResource::canViewAny(), 403);
     }
 
+    /**
+     * The reference's h1 is the page's name, not the client's — the client is named by the
+     * picker under it and the "#id - name" heading. Repeating them in the header was
+     * Leandro's circled duplicate.
+     */
     public function getTitle(): string
     {
-        return $this->customer->name;
-    }
-
-    public function getSubheading(): ?string
-    {
-        return $this->customer->email;
+        return 'Client Profile';
     }
 
     protected function getHeaderActions(): array
@@ -311,6 +311,9 @@ class ClientSummary extends Page
                 ->whereNull('role_id')
                 ->orderBy('first_name')
                 ->limit(200)
+                // The reference names each option "name (company) - #id"; one eager load
+                // beats a company query per option.
+                ->with(['properties' => fn ($q) => $q->where('key', 'company_name')])
                 ->get(['id', 'first_name', 'last_name', 'email']),
             ...match (array_key_exists($this->tab, self::TABS) ? $this->tab : 'summary') {
                 'services' => ['rows' => $this->customer->services()->with('product')->latest()->limit(self::TAB_ROWS)->get()],
@@ -346,10 +349,29 @@ class ClientSummary extends Page
             )->all(),
             'lifetime' => $this->lifetimeSpend(),
             'outstanding' => $this->outstanding(),
-            'properties' => $user->properties
-                ->filter(fn ($property) => filled($property->value) && $property->parent_property)
-                ->mapWithKeys(fn ($property) => [$property->parent_property->name => $property->value])
-                ->all(),
+            // The reference's fixed rows, present whether filled or not, in its order —
+            // plus any other filled store property (CPF/CNPJ and friends) after them.
+            'properties' => (function () use ($user) {
+                $prop = fn (string $key): string => (string) ($user->properties->firstWhere('key', $key)?->value ?? '');
+                $fixed = [
+                    'Company Name' => $prop('company_name'),
+                    'Address 1' => $prop('address'),
+                    'Address 2' => $prop('address2'),
+                    'City' => $prop('city'),
+                    'State/Region' => $prop('state'),
+                    'Postcode' => $prop('zip'),
+                    'Country' => $prop('country'),
+                    'Phone Number' => $prop('phone'),
+                ];
+                $extra = $user->properties
+                    ->filter(fn ($property) => filled($property->value)
+                        && $property->parent_property
+                        && !in_array($property->key, ['company_name', 'address', 'address2', 'city', 'state', 'zip', 'country', 'phone'], true))
+                    ->mapWithKeys(fn ($property) => [$property->parent_property->name => $property->value])
+                    ->all();
+
+                return [...$fixed, ...$extra];
+            })(),
             'services' => $user->services()
                 ->with('product')
                 ->latest()

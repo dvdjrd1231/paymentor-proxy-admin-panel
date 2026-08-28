@@ -20,6 +20,19 @@
 @endphp
 
 <x-filament-panels::page>
+    {{-- The reference's client switcher sits above the tab bar, on every tab: pick any
+         client and land on their profile. Named its way: "name (company) - #id". --}}
+    <div class="ao-cs-switch">
+        <select onchange="if (this.value) window.location = '{{ url('/admin/client-summary') }}/' + this.value;">
+            @foreach ($clientsList as $client)
+                @php $switchCompany = $client->properties->first()?->value; @endphp
+                <option value="{{ $client->id }}" @selected($client->id === $user->id)>
+                    {{ trim($client->first_name . ' ' . $client->last_name) ?: $client->email }}{{ $switchCompany ? ' (' . $switchCompany . ')' : '' }} - #{{ $client->id }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
     {{-- The tab bar. `wire:click` rather than links: the page is a Livewire component, so
          switching costs one round trip and one query instead of a full page load. --}}
     <nav class="ao-tabs" role="tablist">
@@ -37,19 +50,7 @@
     <div class="ao-panel" style="display:flex;flex-direction:column;gap:1.5rem;">
 
     @if ($tab === 'summary')
-        {{-- The reference's Summary: the client switcher, four columns of panels, then the
-             banded tables. The switcher is the reference's dropdown under the title — pick
-             any client and land on their profile. --}}
-        <div class="ao-cs-switch">
-            <select onchange="if (this.value) window.location = '{{ url('/admin/client-summary') }}/' + this.value;">
-                @foreach ($clientsList as $client)
-                    <option value="{{ $client->id }}" @selected($client->id === $user->id)>
-                        {{ trim($client->first_name . ' ' . $client->last_name) ?: $client->email }} - #{{ $client->id }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-
+        {{-- The reference's Summary: four columns of panels, then the banded tables. --}}
         @php
             $flag = fn (string $key, bool $invert = false) => (($user->properties->firstWhere('key', $key)?->value ?? '') === '1') !== $invert;
         @endphp
@@ -114,6 +115,9 @@
                             @foreach (['paid' => 'Paid', 'draft' => 'Draft', 'unpaid' => 'Unpaid/Due', 'cancelled' => 'Cancelled', 'refunded' => 'Refunded'] as $key => $label)
                                 <tr><td>{{ $label }}</td><td>{{ $invoiceStats[$key]['count'] }} (${{ number_format($invoiceStats[$key]['total'], 2) }} {{ $invoiceStats[$key]['code'] }})</td></tr>
                             @endforeach
+                            {{-- No collections process exists, so zero is the truth — the
+                                 row is here because the reference has it. --}}
+                            <tr><td>Collections</td><td>0 ($0.00 {{ $invoiceStats['paid']['code'] }})</td></tr>
                             <tr class="ao-cp-kv-band"><td colspan="2">Income</td></tr>
                             <tr><td>Gross Revenue</td><td>{{ $this->formatTotals($lifetime) }}</td></tr>
                             <tr><td>Client Expenses</td><td>$0.00 USD</td></tr>
@@ -206,7 +210,12 @@
 
                 <div class="ao-cp">
                     <h3>Files</h3>
-                    <div class="ao-cp-body ao-cp-empty">No files uploaded</div>
+                    <div class="ao-cp-body">
+                        <div class="ao-cp-empty">No files uploaded</div>
+                        <span class="ao-cp-link ao-cp-dead" title="Paymenter has no per-client file storage">
+                            <x-filament::icon icon="ri-add-circle-line" class="ao-cp-ic" /> Add File
+                        </span>
+                    </div>
                 </div>
 
                 <div class="ao-cp">
@@ -244,6 +253,17 @@
                         @endif
                         <a class="ao-cp-link" href="{{ \App\Admin\Resources\UserResource::getUrl('edit', ['record' => $user->id]) }}">
                             <x-filament::icon icon="ri-user-settings-line" class="ao-cp-ic" /> Edit Client
+                        </a>
+                        <span class="ao-cp-link ao-cp-dead" title="Paymenter has no account merging">
+                            <x-filament::icon icon="ri-git-merge-line" class="ao-cp-ic" /> Merge Clients Accounts
+                        </span>
+                        <span class="ao-cp-link ao-cp-dead" title="Paymenter has no closed status — cancel the client's services instead">
+                            <x-filament::icon icon="ri-forbid-line" class="ao-cp-ic" /> Close Clients Account
+                        </span>
+                        {{-- Red, like the reference's: deletion itself lives on core's user
+                             edit page, behind its own confirmation. --}}
+                        <a class="ao-cp-link ao-cp-danger" href="{{ \App\Admin\Resources\UserResource::getUrl('edit', ['record' => $user->id]) }}">
+                            <x-filament::icon icon="ri-close-circle-line" class="ao-cp-ic" /> Delete Clients Account
                         </a>
                     </div>
                 </div>
