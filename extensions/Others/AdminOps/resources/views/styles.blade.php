@@ -1544,7 +1544,9 @@
        stripe, as its screenshot has them. */
     .ao-anc-row-wide {
         grid-template-columns: 9.5rem 1fr;
-        align-items: start;
+        /* Centred, not top-aligned: the reference sits "Email Notifications", "Settings",
+           "Owner" and "Admin Notes" in the vertical middle of their bands. */
+        align-items: center;
     }
 
     .ao-anc-grey { background: #f8f8f8; }
@@ -1565,7 +1567,7 @@
         cursor: pointer;
     }
 
-    .ao-anc-dim { color: var(--wa-muted, #999); cursor: not-allowed; }
+    .ao-anc-dim { cursor: not-allowed; }
 
     .ao-anc-checkall {
         align-self: flex-start;

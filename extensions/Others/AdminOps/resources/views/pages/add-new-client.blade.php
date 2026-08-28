@@ -64,7 +64,11 @@
                         <label class="ao-anc-row">
                             <span>{{ $label }}</span>
                             <span class="ao-anc-field">
-                                <input type="text" wire:model="props.{{ $key }}" @if ($fixed[$key]->required) required @endif>
+                                {{-- The reference defaults State/Region to "—"; the store's
+                                     property is free text, so the dash is the placeholder. --}}
+                                <input type="text" wire:model="props.{{ $key }}"
+                                    @if ($key === 'state') placeholder="—" @endif
+                                    @if ($fixed[$key]->required) required @endif>
                                 @unless ($fixed[$key]->required)
                                     <i>(Optional)</i>
                                 @endunless
@@ -142,7 +146,7 @@
 
         {{-- The reference's full-width rows under the columns: notifications, settings,
              owner, notes — each stored as real properties on the new profile. --}}
-        <div class="ao-anc-row ao-anc-row-wide">
+        <div class="ao-anc-row ao-anc-row-wide ao-anc-grey">
             <span>Email Notifications</span>
             <div class="ao-anc-checks">
                 @foreach ([
