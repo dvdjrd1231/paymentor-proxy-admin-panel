@@ -29,7 +29,8 @@ class ManageUsers extends Page
     /** Navigation is built by {@see WhmcsNavigation}. */
     protected static bool $shouldRegisterNavigation = false;
 
-    public const PER_PAGE = 25;
+    /** 100, as the reference pages it — "Showing 1 to 100" is in the screenshot. */
+    public const PER_PAGE = 100;
 
     #[Url]
     public string $q = '';

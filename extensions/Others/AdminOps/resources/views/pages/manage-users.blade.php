@@ -29,7 +29,9 @@
         </form>
 
         <div class="ao-mu-line">
-            <span>{{ number_format($users->total()) }} Records Found</span>
+            <span>
+                {{ number_format($users->total()) }} Records Found{{ $users->total() > 0 ? ', Showing ' . number_format($users->firstItem()) . ' to ' . number_format($users->lastItem()) : '' }}
+            </span>
             <label class="ao-mu-jump">
                 Jump to Page:
                 <select wire:change="jump($event.target.value)">
@@ -63,22 +65,36 @@
                         <td>{{ $user->id }}</td>
                         <td><a href="{{ $summary }}">{{ $user->first_name ?: '—' }}</a></td>
                         <td><a href="{{ $summary }}">{{ $user->last_name ?: '—' }}</a></td>
-                        <td><a href="{{ $summary }}">{{ $user->email }}</a></td>
                         <td>
-                            <span class="ao-mu-status {{ $user->tfa_secret ? 'ao-mu-active' : 'ao-mu-inactive' }}">
+                            <a href="{{ $summary }}">{{ $user->email }}</a>
+                            <i class="ao-mu-mail {{ $user->email_verified_at ? 'ao-mu-mail-ok' : 'ao-mu-mail-no' }}">
+                                {{ $user->email_verified_at ? 'Email Verified' : 'Email Unverified' }}
+                            </i>
+                        </td>
+                        <td>
+                            {{-- The reference's shield-and-word, not a pill: grey when off, green when on. --}}
+                            <span class="ao-mu-2fa {{ $user->tfa_secret ? 'ao-mu-2fa-on' : '' }}">
+                                <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12" aria-hidden="true">
+                                    <path d="M8 1 2.5 3v4.1c0 3.4 2.3 6.4 5.5 7.4 3.2-1 5.5-4 5.5-7.4V3L8 1Z"/>
+                                </svg>
                                 {{ $user->tfa_secret ? 'Enabled' : 'Disabled' }}
                             </span>
                         </td>
                         <td>
                             @if ($seen)
-                                <time title="{{ $seen->format('Y-m-d H:i:s') }}">{{ $seen->format('d/m/Y H:i') }}</time>
+                                <time title="{{ $seen->format('Y-m-d H:i:s') }}">{{ $seen->format('m/d/Y H:i') }}</time>
                             @else
                                 Never
                             @endif
                         </td>
                         <td class="ao-mu-actions">
-                            <a href="{{ $summary }}">Summary</a>
-                            <a href="{{ $edit }}">Edit</a>
+                            <details class="ao-mu-manage">
+                                <summary>Manage User <span aria-hidden="true">&#9662;</span></summary>
+                                <div class="ao-mu-manage-menu">
+                                    <a href="{{ $summary }}">Summary</a>
+                                    <a href="{{ $edit }}">Edit</a>
+                                </div>
+                            </details>
                         </td>
                     </tr>
                 @empty
