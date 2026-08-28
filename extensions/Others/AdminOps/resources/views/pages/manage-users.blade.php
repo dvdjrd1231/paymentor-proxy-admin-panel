@@ -88,13 +88,17 @@
                             @endif
                         </td>
                         <td class="ao-mu-actions">
-                            <details class="ao-mu-manage">
-                                <summary>Manage User <span aria-hidden="true">&#9662;</span></summary>
-                                <div class="ao-mu-manage-menu">
-                                    <a href="{{ $summary }}">Summary</a>
-                                    <a href="{{ $edit }}">Edit</a>
-                                </div>
-                            </details>
+                            {{-- The reference's split button: Manage User opens the modal;
+                                 the caret drops the Password Reset menu. --}}
+                            <span class="ao-mu-split">
+                                <button type="button" wire:click="openUser({{ $user->id }})">Manage User</button>
+                                <details class="ao-mu-manage">
+                                    <summary aria-label="More actions"><span aria-hidden="true">&#9662;</span></summary>
+                                    <div class="ao-mu-manage-menu">
+                                        <button type="button" wire:click="resetPassword({{ $user->id }})">Password Reset</button>
+                                    </div>
+                                </details>
+                            </span>
                         </td>
                     </tr>
                 @empty
@@ -110,5 +114,83 @@
             <button type="button" wire:click="jump({{ $users->currentPage() + 1 }})"
                 @disabled(!$users->hasMorePages())>Next Page &raquo;</button>
         </nav>
+
+        {{-- The reference's Manage User modal: navy title bar, right-aligned labels, the
+             two-factor switch, the Accounts table, and the delete/close/save footer. --}}
+        @if ($editing)
+            <div class="ao-mud-overlay" wire:click.self="closeUser">
+                <div class="ao-mud" role="dialog" aria-modal="true">
+                    <div class="ao-mud-head">
+                        Manage User: {{ $mu['email'] ?? '' }}
+                        <button type="button" wire:click="closeUser" aria-label="Close">&times;</button>
+                    </div>
+
+                    <form class="ao-mud-body" wire:submit.prevent="saveUser">
+                        <label class="ao-mud-row">
+                            <span>First Name</span>
+                            <input type="text" wire:model="mu.first_name" placeholder="John" required>
+                        </label>
+                        <label class="ao-mud-row">
+                            <span>Last Name</span>
+                            <input type="text" wire:model="mu.last_name" placeholder="Doe" required>
+                        </label>
+                        <label class="ao-mud-row">
+                            <span>Email Address</span>
+                            <input type="email" wire:model="mu.email" placeholder="user@example.com" required>
+                        </label>
+                        <label class="ao-mud-row">
+                            <span>Language</span>
+                            <select><option>Default</option></select>
+                        </label>
+                        <div class="ao-mud-row">
+                            <span>Two-Factor Authentication</span>
+                            {{-- Off unless the user enrolled: enabling needs their authenticator,
+                                 so the switch can only reflect or revoke. --}}
+                            <label class="ao-anc-switch ao-mud-switch">
+                                <input type="checkbox" wire:model="mu.tfa" @disabled(empty($mu['tfa']))>
+                                <i aria-hidden="true"></i>
+                            </label>
+                        </div>
+                        <div class="ao-mud-row ao-mud-accounts">
+                            <span>Accounts</span>
+                            <table>
+                                <thead>
+                                    <tr><th>ID</th><th>Client Name</th><th>Company Name</th><th>Owner</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>{{ $editing }}</td>
+                                        <td>
+                                            <a href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $editing]) }}">
+                                                {{ trim(($mu['first_name'] ?? '') . ' ' . ($mu['last_name'] ?? '')) }}
+                                            </a>
+                                        </td>
+                                        <td>{{ $mu['company'] ?? '' }}</td>
+                                        <td><span class="ao-mud-owner" aria-label="Owner">&#10003;</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        @if ($errors->any())
+                            <ul class="ao-anc-errors">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+
+                        <div class="ao-mud-foot">
+                            <button type="button" class="ao-mud-delete" wire:click="deleteUser"
+                                wire:confirm="Permanently delete this user? This cannot be undone.">Permanently Delete</button>
+                            <span class="ao-mud-foot-right">
+                                <button type="button" class="ao-mud-close" wire:click="closeUser">Close</button>
+                                <button type="submit" class="ao-mud-save">Save</button>
+                            </span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endif
     </div>
 </x-filament-panels::page>
