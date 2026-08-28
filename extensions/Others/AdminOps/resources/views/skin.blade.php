@@ -1198,8 +1198,17 @@
         {{-- mousedown, not click: the trigger's Alpine binding is `x-on:mousedown`, so a
              programmatic click() lands on nothing at all — found by reading the trigger's
              attributes after click() silently failed. --}}
-        const toggle = (item) => item.querySelector('.fi-dropdown-trigger')
-            ?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        const toggle = (item) => {
+            item.querySelector('.fi-dropdown-trigger')
+                ?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+
+            {{-- Fold at open time, every time. The fold used to run only when the pointer
+                 entered the panel — but on hover-open the pointer is still on the button,
+                 so the menu showed its raw flat list until the pointer moved down into it,
+                 and re-parented rows shifted under the cursor when it did. Folding in the
+                 same breath as opening means the panel is never visible unfolded. --}}
+            requestAnimationFrame(() => fold(panelOf(item)));
+        };
 
         document.addEventListener('mouseover', (event) => {
             const nav = event.target.closest('nav.fi-topbar');
@@ -1236,8 +1245,7 @@
              so the dropdown reads exactly as WHMCS's does. Done to the rendered markup
              because Filament's navigation cannot nest; idempotent per panel, so a menu
              processed once stays processed. --}}
-        document.addEventListener('mouseover', (event) => {
-            const panel = event.target.closest('nav.fi-topbar .fi-dropdown-panel');
+        const fold = (panel) => {
             if (!panel || panel.dataset.aoSubDone) return;
             panel.dataset.aoSubDone = '1';
 
@@ -1268,6 +1276,25 @@
 
                 index = next - 1;
             }
+        };
+
+        {{-- Every other way a menu can open — a real press on the trigger, a keyboard
+             enter/space, a touch — folds too, right after Alpine has shown the panel.
+             The mouseover backstop stays for anything that slips past both. --}}
+        document.addEventListener('mousedown', (event) => {
+            const item = event.target.closest('nav.fi-topbar .fi-dropdown');
+            if (item) requestAnimationFrame(() => fold(panelOf(item)));
+        }, true);
+
+        document.addEventListener('keyup', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            const item = event.target.closest?.('nav.fi-topbar .fi-dropdown');
+            if (item) requestAnimationFrame(() => fold(panelOf(item)));
+        }, true);
+
+        document.addEventListener('mouseover', (event) => {
+            const panel = event.target.closest('nav.fi-topbar .fi-dropdown-panel');
+            if (panel) fold(panel);
         });
     })();
 </script>
