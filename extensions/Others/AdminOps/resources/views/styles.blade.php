@@ -785,12 +785,19 @@
            they never loaded without scrolling. One class, one moment, both rules. */
         .fi-grid.ao-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            /* 25px, measured off the target screenshot — the reference's gutters are wider
-               than they look. An earlier 10px read as cramped next to it; "standard" means
-               *this* number everywhere, not the smallest one. The packer reads the gap
-               live, so the spans stay correct at any value. */
-            gap: 25px;
-            grid-auto-rows: 10px;
+            /* 25px columns, measured off the target screenshot — the reference's gutters
+               are wider than they look.
+
+               Row gap **zero**, and that is the fix for the one space that refused to be
+               standard: with a row-gap, every reserved masonry row costs row+gap, so the
+               leftover under a panel quantised in 35px steps and the gap below Support
+               could reach ~59px while its neighbours sat at 25. The vertical gutter now
+               lives inside the measurement instead — pack() adds 25px to each panel's
+               height and rounds to 5px rows, so the visible space below any panel is
+               25–30px, every time. */
+            column-gap: 25px;
+            row-gap: 0;
+            grid-auto-rows: 5px;
             /* `dense` is what makes the distances *standard*: without it, auto-placement
                walks forward only, and a tall panel earlier in the sequence strands a hole
                it never looks back to fill — the gaps Leandro boxed in orange. Dense
@@ -811,7 +818,9 @@
            content. Start-aligned, a child's height is its content's, and packing
            converges. */
         .ao-grid > * {
-            grid-row: span var(--ao-span, 13);
+            /* 31 = a 128px lazy placeholder plus the 25px gutter, in 5px rows — so the
+               frame before the first pack() reserves roughly what is actually there. */
+            grid-row: span var(--ao-span, 31);
             align-self: start;
         }
 

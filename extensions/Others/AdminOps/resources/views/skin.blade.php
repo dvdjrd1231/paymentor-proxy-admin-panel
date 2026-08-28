@@ -703,7 +703,13 @@
     /* ── Tables ──────────────────────────────────────────────────────────────
        The reference's solid blue header row with centred white labels, hairline-separated
        cells, and plain white rows underneath. */
-    /* 30px tall and closed by a #d9dadb rule — both measured off the reference. */
+    /* 30px tall and closed by a #d9dadb rule — both measured off the reference.
+
+       `thead th` as well as the named class: the actions column's header cell does not
+       carry `.fi-ta-header-cell`, so it alone stayed white at the end of every navy row —
+       the odd-one-out Leandro circled on Manage User Services. Painting every th in the
+       head means no column can opt out, whatever class Filament gives it. */
+    .fi-ta table > thead th,
     .fi-ta-header-cell {
         background: var(--wa-blue);
         color: #ffffff;

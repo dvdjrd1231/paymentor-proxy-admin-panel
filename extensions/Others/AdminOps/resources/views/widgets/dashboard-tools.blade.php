@@ -65,11 +65,16 @@
         // height is its *content's* height whatever span it holds — measuring it cannot
         // feed back into what was measured — and the chart canvas has a fixed 300px
         // height, so nothing sizes itself from the row any more.
-        const ROW = 10;
+        // 5px rows with a **zero** row-gap, and the 25px gutter added to each measurement
+        // instead. With a real row-gap every reserved row costs row+gap, so the leftover
+        // under a panel quantises in row+gap steps — at 10+25 that was up to 59px below one
+        // panel while its neighbour sat at 25, the "not standard" space. This way the
+        // visible gap below any panel is GUTTER to GUTTER+ROW-1: 25–29px, always.
+        // ROW must match `grid-auto-rows` and GUTTER the column-gap in styles.blade.php.
+        const ROW = 5;
+        const GUTTER = 25;
 
         const pack = () => {
-            const gap = parseFloat(getComputedStyle(grid).rowGap) || 0;
-
             for (const child of grid.children) {
                 // display:none (our collapsed widget, hidden panels) has no box; spanning
                 // it would hold empty rows open where the panel used to be.
@@ -78,7 +83,7 @@
                     continue;
                 }
 
-                const span = Math.max(1, Math.ceil((child.offsetHeight + gap) / (ROW + gap)));
+                const span = Math.max(1, Math.ceil((child.offsetHeight + GUTTER) / ROW));
 
                 // Write only on change: a ResizeObserver that sees its own writes is an
                 // infinite loop with extra steps.
