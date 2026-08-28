@@ -700,6 +700,19 @@
         padding: 0.9rem;
     }
 
+    /* ── Forms ───────────────────────────────────────────────────────────────
+       The same 14px reading size as everything else — Filament's inputs and labels were
+       the last place still under it, which is where "sometimes the fonts feel small"
+       was coming from: the edit screens. */
+    .fi-input,
+    .fi-select-input,
+    .fi-fo-field-label,
+    .fi-fo-field-label-content,
+    .fi-checkbox-label,
+    .fi-radio-label {
+        font-size: 14px;
+    }
+
     /* ── Tables ──────────────────────────────────────────────────────────────
        The reference's solid blue header row with centred white labels, hairline-separated
        cells, and plain white rows underneath. */

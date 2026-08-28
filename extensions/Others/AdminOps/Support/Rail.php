@@ -6,8 +6,8 @@ use App\Admin\Resources\InvoiceResource;
 use App\Admin\Resources\OrderResource;
 use App\Admin\Resources\ServiceResource;
 use App\Admin\Resources\TicketResource;
-use App\Admin\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewClient;
 
 /**
  * The data behind WHMCS's left rail: Shortcuts, System Information, Advanced Search and
@@ -64,7 +64,7 @@ class Rail
     public static function shortcuts(): array
     {
         return array_values(array_filter([
-            static::shortcut(UserResource::class, 'Add New Client', 'ri-user-add-line'),
+            static::pageShortcut(AddNewClient::class, 'Add New Client', 'ri-user-add-line'),
             static::shortcut(OrderResource::class, 'Add New Order', 'ri-shopping-cart-2-line'),
             static::shortcut('Paymenter\\Extensions\\Others\\Quotes\\Admin\\Resources\\QuoteResource', 'Create New Quote', 'ri-draft-line'),
             static::shortcut(InvoiceResource::class, 'Create Invoice', 'ri-bill-line'),
@@ -80,6 +80,20 @@ class Rail
      *
      * @return array{label: string, url: string, icon: string}|null
      */
+    /** A shortcut to one of our own pages, guarded by the page's own canAccess(). */
+    private static function pageShortcut(string $page, string $label, string $icon): ?array
+    {
+        if (!class_exists($page) || (method_exists($page, 'canAccess') && !$page::canAccess())) {
+            return null;
+        }
+
+        try {
+            return ['label' => $label, 'url' => $page::getUrl(), 'icon' => $icon];
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
     private static function shortcut(string $resource, string $label, string $icon): ?array
     {
         if (!class_exists($resource) || !static::reachable($resource) || !$resource::canCreate()) {

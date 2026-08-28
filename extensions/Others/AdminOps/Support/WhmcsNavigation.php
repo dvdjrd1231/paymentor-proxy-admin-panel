@@ -36,11 +36,13 @@ use Filament\Navigation\NavigationBuilder;
 use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewClient;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AutomationStatus;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\Catalogue;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageUsers;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ViewSearchClients;
-use Paymenter\Extensions\Others\Affiliates\Admin\Resources\AffiliateResource;
 use Paymenter\Extensions\Others\Announcements\Admin\Resources\AnnouncementResource;
 use Paymenter\Extensions\Others\BillableItems\Admin\Resources\BillableItemResource;
 use Paymenter\Extensions\Others\Cancellations\Admin\Resources\CancellationRequestResource;
@@ -175,9 +177,9 @@ class WhmcsNavigation
             // menu leads to them. Core's UserResource stays reachable through their Actions
             // column — it is still the only place a user is edited.
             static::page(ViewSearchClients::class, 'View/Search Clients'),
-            static::link(UserResource::class, 'Add New Client', page: 'create'),
+            static::page(AddNewClient::class, 'Add New Client'),
             static::page(ManageUsers::class, 'Manage Users'),
-            static::link(ServiceResource::class, 'Products/Services'),
+            static::page(ProductsServices::class, 'Products/Services'),
             // Ours, not core's: core's list offers Edit and Delete, and deleting a request is
             // indistinguishable from refusing it. Falls back to core's when the extension is
             // not installed, so the entry never disappears.
@@ -194,7 +196,7 @@ class WhmcsNavigation
                     badge: fn () => Metrics::cancellationsPending(),
                     badgeColor: 'danger',
                 ),
-            static::link(AffiliateResource::class, 'Manage Affiliates'),
+            static::page(ManageAffiliates::class, 'Manage Affiliates'),
         ]);
     }
 
