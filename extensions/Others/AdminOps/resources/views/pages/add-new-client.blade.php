@@ -132,6 +132,62 @@
             </div>
         @endif
 
+        {{-- The reference's full-width rows under the columns: notifications, settings,
+             owner, notes — each stored as real properties on the new profile. --}}
+        <div class="ao-anc-row ao-anc-row-wide">
+            <span>Email Notifications</span>
+            <div class="ao-anc-checks">
+                @foreach ([
+                    'general' => 'General Emails - All account related emails',
+                    'invoice' => 'Invoice Emails - New Invoices, Reminders, & Overdue Notices',
+                    'support' => 'Support Emails - Receive a copy of all Support Ticket Communications',
+                    'product' => 'Product Emails - Welcome Emails, Suspensions & Other Lifecycle Notifications',
+                    'domain' => 'Domain Emails - Registration/Transfer Confirmation & Renewal Notices',
+                    'affiliate' => 'Affiliate Emails - Receive Affiliate Notifications',
+                ] as $key => $label)
+                    <label><input type="checkbox" wire:model="prefs.{{ $key }}" data-ao-pref> {{ $label }}</label>
+                @endforeach
+                <button type="button" class="ao-anc-checkall" data-ao-check-all-prefs>Check All</button>
+            </div>
+        </div>
+
+        <div class="ao-anc-row ao-anc-row-wide">
+            <span>Settings</span>
+            <div class="ao-anc-toggles">
+                @foreach ([
+                    'late_fees' => 'Late Fees',
+                    'overdue_notices' => 'Overdue Notices',
+                    'tax_exempt' => 'Tax Exempt',
+                    'separate_invoices' => 'Separate Invoices',
+                    'disable_cc' => 'Disable CC Processing',
+                    'marketing_optin' => 'Marketing Emails Opt-in',
+                    'status_update' => 'Status Update',
+                    'single_sign_on' => 'Allow Single Sign-On',
+                ] as $key => $label)
+                    <label class="ao-anc-switch">
+                        <input type="checkbox" wire:model="settings.{{ $key }}">
+                        <i aria-hidden="true"></i>
+                        {{ $label }}
+                    </label>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="ao-anc-row ao-anc-row-wide">
+            <span>Owner</span>
+            <div class="ao-anc-checks">
+                <label><input type="radio" checked> Create a new user.</label>
+                {{-- Paymenter has no sub-account model to associate with; disabled says so
+                     rather than pretending. --}}
+                <label class="ao-anc-dim"><input type="radio" disabled title="Not available"> Associate with an existing user.</label>
+            </div>
+        </div>
+
+        <div class="ao-anc-row ao-anc-row-wide">
+            <span>Admin Notes</span>
+            <textarea class="ao-cp-notes" rows="4" wire:model="notes"></textarea>
+        </div>
+
         @if ($errors->any())
             <div class="ao-anc-errors">
                 @foreach ($errors->all() as $error)
@@ -139,6 +195,10 @@
                 @endforeach
             </div>
         @endif
+
+        <div class="ao-anc-send">
+            <label><input type="checkbox" wire:model="sendWelcome" checked> Check to send a New Account Information Message</label>
+        </div>
 
         <div class="ao-anc-submit">
             <button type="submit" class="ao-find-go">Add Client</button>
@@ -150,6 +210,20 @@
             const root = document.currentScript.closest('.fi-page') ?? document;
 
             root.addEventListener('click', (event) => {
+                if (event.target.closest('[data-ao-check-all-prefs]')) {
+                    for (const box of root.querySelectorAll('[data-ao-pref]')) {
+                        if (!box.checked) {
+                            box.checked = true;
+                            // 'change', not 'input': Livewire binds checkboxes on change,
+                            // so an input event ticks the box on screen and nowhere else —
+                            // found when a driven toggle flip never reached the server.
+                            box.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }
+
+                    return;
+                }
+
                 if (!event.target.closest('[data-ao-generate]')) return;
 
                 const field = root.querySelector('[data-ao-password]');

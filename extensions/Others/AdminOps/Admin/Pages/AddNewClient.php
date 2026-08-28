@@ -3,6 +3,7 @@
 namespace Paymenter\Extensions\Others\AdminOps\Admin\Pages;
 
 use App\Admin\Resources\UserResource;
+use App\Helpers\NotificationHelper;
 use App\Models\Currency;
 use App\Models\CustomProperty;
 use App\Models\User;
@@ -10,6 +11,7 @@ use Filament\Pages\Page;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
@@ -51,6 +53,43 @@ class AddNewClient extends Page
 
     /** @var array<string, string> property key => value, bound field by field in the view */
     public array $props = [];
+
+    /**
+     * The reference's Email Notifications block, all on by default as it ships them.
+     * Stored as `email_pref_*` properties, so they are real preferences on the profile.
+     *
+     * @var array<string, bool>
+     */
+    public array $prefs = [
+        'general' => true,
+        'invoice' => true,
+        'support' => true,
+        'product' => true,
+        'domain' => true,
+        'affiliate' => true,
+    ];
+
+    /**
+     * The reference's Settings toggles, with its defaults. Stored as `setting_*` properties.
+     *
+     * @var array<string, bool>
+     */
+    public array $settings = [
+        'late_fees' => true,
+        'overdue_notices' => true,
+        'tax_exempt' => false,
+        'separate_invoices' => false,
+        'disable_cc' => false,
+        'marketing_optin' => false,
+        'status_update' => true,
+        'single_sign_on' => true,
+    ];
+
+    /** The reference's Admin Notes — the same `admin_notes` property the profile edits. */
+    public string $notes = '';
+
+    /** "Check to send a New Account Information Message" — the account email, really sent. */
+    public bool $sendWelcome = true;
 
     public static function canAccess(): bool
     {
@@ -120,12 +159,39 @@ class AddNewClient extends Page
                 $values['currency'] = $this->currency;
             }
 
+            // The reference's blocks, as real stored preferences on the profile.
+            foreach ($this->prefs as $key => $on) {
+                $values['email_pref_' . $key] = $on ? '1' : '0';
+            }
+
+            foreach ($this->settings as $key => $on) {
+                $values['setting_' . $key] = $on ? '1' : '0';
+            }
+
+            if (trim($this->notes) !== '') {
+                $values['admin_notes'] = trim($this->notes);
+            }
+
             foreach ($values as $key => $value) {
                 $user->properties()->create(['key' => $key, 'value' => $value]);
             }
 
             return $user;
         });
+
+        // The reference's "New Account Information Message": the account email, through the
+        // same helper core uses. Best effort — a mail server that is down must not undo a
+        // client that was created.
+        if ($this->sendWelcome) {
+            try {
+                NotificationHelper::emailVerificationNotification($user);
+            } catch (\Throwable $e) {
+                Log::warning('AddNewClient: welcome email failed', [
+                    'user' => $user->id,
+                    'exception' => $e->getMessage(),
+                ]);
+            }
+        }
 
         return $this->redirect(ClientSummary::getUrl(['record' => $user->id]));
     }
