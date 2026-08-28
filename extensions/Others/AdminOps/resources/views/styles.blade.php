@@ -1531,6 +1531,104 @@
         .ao-anc-cols { grid-template-columns: 1fr; }
     }
 
+    /* The reference's full-width rows under the columns, striped like the rest. */
+    .ao-anc-row-wide {
+        grid-template-columns: 9.5rem 1fr;
+        align-items: start;
+    }
+
+    .ao-anc > .ao-anc-row-wide:nth-of-type(odd) { background: #f8f8f8; }
+
+    .ao-anc-checks {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .ao-anc-checks label {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        cursor: pointer;
+    }
+
+    .ao-anc-dim { color: var(--wa-muted, #999); cursor: not-allowed; }
+
+    .ao-anc-checkall {
+        align-self: flex-start;
+        margin-top: 0.2rem;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--wa-link, #337ab7);
+        cursor: pointer;
+    }
+
+    .ao-anc-checkall:hover { text-decoration: underline; }
+
+    /* The reference's ON/OFF switches, three to a row. */
+    .ao-anc-toggles {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.55rem 1.5rem;
+    }
+
+    @media (max-width: 1100px) { .ao-anc-toggles { grid-template-columns: 1fr; } }
+
+    .ao-anc-switch {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        cursor: pointer;
+    }
+
+    .ao-anc-switch input { display: none; }
+
+    .ao-anc-switch i {
+        flex: none;
+        width: 58px;
+        height: 20px;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 2px;
+        background: #fff;
+        position: relative;
+        font-style: normal;
+    }
+
+    .ao-anc-switch i::before {
+        content: 'OFF';
+        position: absolute;
+        inset-block: 0;
+        right: 0;
+        width: 55%;
+        display: grid;
+        place-items: center;
+        background: #e6e6e6;
+        color: #777;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .ao-anc-switch input:checked + i::before {
+        content: 'ON';
+        right: auto;
+        left: 0;
+        background: var(--wa-link, #337ab7);
+        color: #fff;
+    }
+
+    .ao-anc-send {
+        margin-top: 1.1rem;
+        text-align: center;
+    }
+
+    .ao-anc-send label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        cursor: pointer;
+    }
+
     /* --- Client Profile Summary: the reference's four panel columns and banded tables --- */
     .ao-cs-head h2 {
         font-size: 1.15rem;
