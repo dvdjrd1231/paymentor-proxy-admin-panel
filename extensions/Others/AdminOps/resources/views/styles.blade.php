@@ -1419,6 +1419,113 @@
     .ao-mu-status.ao-mu-active { background: #77c13a; }
     .ao-mu-status.ao-mu-inactive { background: #9ea6ad; }
 
+    /* Service states, in the reference's traffic colours. */
+    .ao-mu-status.ao-mu-st-active { background: #77c13a; }
+    .ao-mu-status.ao-mu-st-pending { background: #f0ad4e; }
+    .ao-mu-status.ao-mu-st-suspended { background: #9ea6ad; }
+    .ao-mu-status.ao-mu-st-cancelled { background: #d9534f; }
+
+    /* The reference's Search/Filter tab above the band. */
+    .ao-mu-tab {
+        display: inline-block;
+        margin-bottom: 0.7rem;
+        padding: 0.35rem 1rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px 3px 0 0;
+        background: #f0f0f0;
+        color: var(--wa-text, #4a4a4a);
+        cursor: pointer;
+    }
+
+    .ao-mu-tab.ao-on,
+    .ao-mu-tab:hover { background: #e2e2e2; }
+
+    .ao-mu-left { text-align: left !important; }
+
+    .ao-mu-dim { color: var(--wa-muted, #999); }
+
+    .ao-mu-cell-icon {
+        width: 1rem;
+        height: 1rem;
+        color: var(--wa-link, #337ab7);
+    }
+
+    /* --- Add New Client: the reference's two-column zebra form --- */
+    .ao-anc-cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 2.5rem;
+        align-items: start;
+    }
+
+    .ao-anc-row {
+        display: grid;
+        grid-template-columns: 9.5rem 1fr;
+        align-items: center;
+        gap: 0.9rem;
+        padding: 0.45rem 0.7rem;
+    }
+
+    /* The reference stripes alternate rows. */
+    .ao-anc-col > .ao-anc-row:nth-child(odd) { background: #f8f8f8; }
+
+    .ao-anc-row > span:first-child {
+        text-align: right;
+        font-weight: 600;
+        color: var(--wa-ink, #333);
+    }
+
+    .ao-anc-row input[type="text"],
+    .ao-anc-row input[type="email"],
+    .ao-anc-row select {
+        width: 100%;
+        height: 2.1rem;
+        padding: 0 0.55rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font-size: 14px;
+    }
+
+    .ao-anc-field {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .ao-anc-field i {
+        font-style: normal;
+        color: var(--wa-muted, #999);
+        white-space: nowrap;
+    }
+
+    .ao-anc-generate {
+        flex: none;
+        height: 2.1rem;
+        padding: 0 0.8rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .ao-anc-generate:hover { background: #f0f0f0; }
+
+    .ao-anc-errors {
+        margin-top: 1rem;
+        padding: 0.7rem 1rem;
+        border: 1px solid #ebccd1;
+        border-radius: 3px;
+        background: #f2dede;
+        color: #a94442;
+    }
+
+    .ao-anc-submit {
+        margin-top: 1.2rem;
+        text-align: center;
+    }
+
     /* Actions as the reference's small buttons, not bare links. */
     .ao-mu-actions a {
         display: inline-block;
