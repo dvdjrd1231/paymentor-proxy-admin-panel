@@ -457,7 +457,7 @@
         align-items: center;
         padding: 0.3rem;
         border-radius: 3px;
-        color: #a9a9a9;
+        color: #8a8a8a;
         cursor: pointer;
     }
 
@@ -654,7 +654,7 @@
        green, orange, pink — at regular weight, labels in quiet grey. Ours were black-on-black
        bold, which read as a different product. Sampled from the screenshot. */
     .ao-wi .fi-wi-stats-overview-stat-label {
-        color: #8b8b8b;
+        color: #6e6e6e;
         font-weight: 400;
         font-size: 0.8rem;
     }
@@ -679,11 +679,11 @@
     .ao-glance tbody tr:nth-child(4n)   td:not(:first-child) { color: #b57bd4; }
 
     .ao-glance tbody td:first-child {
-        color: #8b8b8b;
+        color: #6e6e6e;
     }
 
     .ao-wi .fi-wi-stats-overview-stat-description {
-        color: #8b8b8b;
+        color: #6e6e6e;
     }
 
     /* Blue panel titles, exactly as every WHMCS panel titles itself — it is the single most
@@ -1225,7 +1225,7 @@
        against the screenshots rather than remembered. */
     .ao-mu {
         font-size: 0.9375rem;
-        color: var(--wa-text, #4a4a4a);
+        color: var(--wa-text, #2b2b2b);
     }
 
     .ao-find {
@@ -1314,7 +1314,7 @@
         border: 1px solid var(--wa-border, #ccc);
         border-radius: var(--wa-radius, 3px);
         background: #fff;
-        color: var(--wa-text, #4a4a4a);
+        color: var(--wa-text, #2b2b2b);
         font-size: 0.875rem;
         white-space: nowrap;
         cursor: pointer;
@@ -1400,7 +1400,7 @@
 
     .ao-mu-none {
         padding: 0.8rem !important;
-        color: var(--wa-muted, #888);
+        color: var(--wa-muted, #6b6b6b);
     }
 
     /* Status as the reference badges it: a solid pill, uppercase white lettering — the
@@ -1433,7 +1433,7 @@
         border: 1px solid var(--wa-panel-border, #ddd);
         border-radius: 3px 3px 0 0;
         background: #f0f0f0;
-        color: var(--wa-text, #4a4a4a);
+        color: var(--wa-text, #2b2b2b);
         cursor: pointer;
     }
 
@@ -1442,7 +1442,7 @@
 
     .ao-mu-left { text-align: left !important; }
 
-    .ao-mu-dim { color: var(--wa-muted, #999); }
+    .ao-mu-dim { color: var(--wa-muted, #6b6b6b); }
 
     .ao-mu-cell-icon {
         width: 1rem;
@@ -1495,7 +1495,7 @@
 
     .ao-anc-field i {
         font-style: normal;
-        color: var(--wa-muted, #999);
+        color: var(--wa-muted, #6b6b6b);
         white-space: nowrap;
     }
 
@@ -1619,7 +1619,7 @@
         display: grid;
         place-items: center;
         background: #e6e6e6;
-        color: #777;
+        color: #555;
         font-size: 10px;
         font-weight: 700;
     }
@@ -1693,7 +1693,7 @@
 
     .ao-cp-empty {
         text-align: center;
-        color: var(--wa-muted, #999);
+        color: var(--wa-muted, #6b6b6b);
         padding-block: 0.9rem;
     }
 
@@ -1711,7 +1711,7 @@
 
     .ao-cp-kv td:first-child {
         width: 45%;
-        color: var(--wa-muted, #888);
+        color: var(--wa-muted, #6b6b6b);
     }
 
     .ao-cp-kv tr + tr td {
@@ -1744,7 +1744,7 @@
         width: 1rem;
         height: 1rem;
         flex: none;
-        color: var(--wa-muted, #999);
+        color: var(--wa-muted, #6b6b6b);
     }
 
     .ao-cp-mail {
@@ -1753,7 +1753,7 @@
         font-size: 0.8rem;
     }
 
-    .ao-cp-mail span { color: var(--wa-muted, #999); }
+    .ao-cp-mail span { color: var(--wa-muted, #6b6b6b); }
 
     .ao-cp-send {
         display: inline-flex;
@@ -1813,7 +1813,7 @@
         border: 1px solid var(--wa-border, #ccc);
         border-radius: 3px;
         background: #fff;
-        color: var(--wa-muted, #999);
+        color: var(--wa-muted, #6b6b6b);
     }
 
     .ao-cs-band-pages i {
@@ -1892,7 +1892,7 @@
         text-align: right;
         margin-bottom: 0.4rem;
         font-size: 0.85rem;
-        color: var(--wa-muted, #888);
+        color: var(--wa-muted, #6b6b6b);
     }
 
     .ao-cs-selected {
@@ -1982,7 +1982,7 @@
         border: 1px solid var(--wa-border, #ccc);
         border-radius: 3px;
         background: #fff;
-        color: var(--wa-text, #4a4a4a);
+        color: var(--wa-text, #2b2b2b);
         white-space: nowrap;
     }
 
@@ -2004,7 +2004,7 @@
         white-space: nowrap;
     }
 
-    .ao-mu-mail-ok { background: #ececec; color: #777; }
+    .ao-mu-mail-ok { background: #e6e6e6; color: #555; }
     .ao-mu-mail-no { background: #f6dede; color: #b94a48; }
 
     /* Two Factor, the reference's way: shield and word, grey off, green on — not a pill. */
@@ -2012,7 +2012,7 @@
         display: inline-flex;
         align-items: center;
         gap: 0.3rem;
-        color: #8b8b8b;
+        color: #6e6e6e;
     }
 
     .ao-mu-2fa-on { color: #3c763d; font-weight: 600; }
@@ -2057,12 +2057,202 @@
         text-align: left;
     }
 
-    .ao-mu-manage-menu a {
+    .ao-mu-manage-menu a,
+    .ao-mu-manage-menu button {
         display: block;
+        width: 100%;
         margin: 0;
         padding: 0.35rem 1rem;
         border: 0;
         border-radius: 0;
+        background: none;
+        text-align: start;
+        font: inherit;
+        color: var(--wa-text, #2b2b2b);
+        cursor: pointer;
+    }
+
+    .ao-mu-manage-menu a:hover,
+    .ao-mu-manage-menu button:hover { background: #f0f0f0; }
+
+    /* The reference's split button: Manage User plus a joined caret that drops the menu. */
+    .ao-mu-split {
+        display: inline-flex;
+        align-items: stretch;
+    }
+
+    .ao-mu-split > button {
+        padding: 0.25rem 0.75rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-start-end-radius: 0;
+        border-end-end-radius: 0;
+        border-start-start-radius: 3px;
+        border-end-start-radius: 3px;
+        background: #fff;
+        font: inherit;
+        color: var(--wa-text, #2b2b2b);
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .ao-mu-split > button:hover { background: #f0f0f0; }
+
+    .ao-mu-split .ao-mu-manage summary {
+        padding: 0.25rem 0.5rem;
+        margin-inline-start: -1px;
+        border-start-start-radius: 0;
+        border-end-start-radius: 0;
+        background: #e6e6e6;
+        height: 100%;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Manage User modal, to the reference: dimmed page, navy title bar, right-aligned
+       labels, the accounts table, and the delete/close/save footer. */
+    .ao-mud-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 4rem 1rem 2rem;
+        background: rgba(0, 0, 0, 0.5);
+        overflow-y: auto;
+    }
+
+    .ao-mud {
+        width: 56rem;
+        max-width: 100%;
+        border-radius: 4px;
+        background: #fff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        color: var(--wa-text, #2b2b2b);
+    }
+
+    .ao-mud-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.7rem 1.1rem;
+        border-radius: 4px 4px 0 0;
+        background: var(--wa-blue, #1a4d80);
+        color: #fff;
+        font-size: 1.05rem;
+    }
+
+    .ao-mud-head button {
+        border: 0;
+        background: none;
+        color: #fff;
+        opacity: 0.7;
+        font-size: 1.3rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .ao-mud-head button:hover { opacity: 1; }
+
+    .ao-mud-body { padding: 1.3rem 1.5rem 0; }
+
+    .ao-mud-row {
+        display: grid;
+        grid-template-columns: 11rem 1fr;
+        gap: 1.4rem;
+        align-items: center;
+        margin-bottom: 0.9rem;
+    }
+
+    .ao-mud-row > span:first-child {
+        text-align: end;
+        font-weight: 600;
+    }
+
+    .ao-mud-row input[type="text"],
+    .ao-mud-row input[type="email"],
+    .ao-mud-row select {
+        width: 100%;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font: inherit;
+    }
+
+    .ao-mud-switch { margin: 0; }
+
+    .ao-mud-accounts { align-items: start; }
+
+    .ao-mud-accounts > span:first-child { padding-top: 0.35rem; }
+
+    .ao-mud-accounts table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    .ao-mud-accounts th {
+        text-align: start;
+        padding: 0.35rem 0.6rem;
+        border-bottom: 1px solid var(--wa-rule, #d9dadb);
+        font-weight: 600;
+    }
+
+    .ao-mud-accounts td {
+        padding: 0.4rem 0.6rem;
+        background: #f0f4f8;
+    }
+
+    .ao-mud-owner { color: #3c763d; font-weight: 700; }
+
+    .ao-mud-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.6rem;
+        margin-top: 1.4rem;
+        padding: 0.9rem 1.5rem;
+        border-top: 1px solid var(--wa-panel-border, #ddd);
+        margin-inline: -1.5rem;
+    }
+
+    .ao-mud-foot button {
+        padding: 0.45rem 1rem;
+        border-radius: 3px;
+        border: 1px solid transparent;
+        font: inherit;
+        cursor: pointer;
+    }
+
+    .ao-mud-delete {
+        background: #e77471;
+        color: #fff;
+    }
+
+    .ao-mud-delete:hover { background: #d9534f; }
+
+    .ao-mud-foot-right { display: flex; gap: 0.6rem; }
+
+    .ao-mud-close {
+        background: #fff;
+        border-color: var(--wa-border, #ccc) !important;
+        color: var(--wa-text, #2b2b2b);
+    }
+
+    .ao-mud-close:hover { background: #f0f0f0; }
+
+    .ao-mud-save {
+        background: #337ab7;
+        color: #fff;
+    }
+
+    .ao-mud-save:hover { background: #286090; }
+
+    @media (max-width: 700px) {
+        .ao-mud-row { grid-template-columns: 1fr; gap: 0.3rem; }
+        .ao-mud-row > span:first-child { text-align: start; }
     }
 
     .ao-mu-selected {
@@ -2078,7 +2268,7 @@
         border: 1px solid var(--wa-border, #ccc);
         border-radius: var(--wa-radius, 3px);
         background: #fff;
-        color: var(--wa-text, #4a4a4a);
+        color: var(--wa-text, #2b2b2b);
         font-size: 0.875rem;
         cursor: pointer;
     }

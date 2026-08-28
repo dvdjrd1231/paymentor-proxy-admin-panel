@@ -21,8 +21,8 @@
         --wa-blue: #1a4d80;          /* top menu bar, table headers, footer — all one blue */
         --wa-blue-dark: #0d2640;     /* hover / open menu item */
         --wa-ink: #333333;           /* page headings */
-        --wa-text: #333333;          /* was #4a4a4a — Leandro: reads as grey, wants nearer black */
-        --wa-muted: #888888;
+        --wa-text: #2b2b2b;          /* was #333 — Leandro again: still reads light, wants nearer black */
+        --wa-muted: #6b6b6b;    /* darkened with the text: the old #888 washed out */
         --wa-link: #337ab7;          /* rail links, primary button */
         --wa-border: #cccccc;        /* rail edge, dropdown edge */
         --wa-panel-border: #dddddd;
