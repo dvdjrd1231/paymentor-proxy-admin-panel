@@ -75,11 +75,14 @@
                         {{-- No withdrawal ledger exists, so zero withdrawn is the truth. --}}
                         <td>$0.00 USD</td>
                         <td class="ao-mu-actions ao-mu-iconpair">
-                            <a href="mailto:{{ $affiliate->user?->email }}" title="Email affiliate">
-                                <x-filament::icon icon="ri-mail-line" class="ao-mu-cell-icon" />
+                            {{-- The reference's pair: a blue report icon and a red one. The
+                                 report opens the affiliate's client profile; the red opens
+                                 the affiliate record, where disabling and deleting live. --}}
+                            <a href="{{ $summary ?? $edit }}" title="View client profile">
+                                <x-filament::icon icon="ri-file-chart-line" class="ao-mu-cell-icon" />
                             </a>
-                            <a href="{{ $edit }}" title="Edit affiliate">
-                                <x-filament::icon icon="ri-edit-box-line" class="ao-mu-cell-icon" />
+                            <a href="{{ $edit }}" title="Manage affiliate">
+                                <x-filament::icon icon="ri-indeterminate-circle-line" class="ao-mu-cell-icon ao-mu-icon-red" />
                             </a>
                         </td>
                     </tr>

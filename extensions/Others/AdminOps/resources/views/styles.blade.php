@@ -1730,6 +1730,84 @@
 
     .ao-mu-iconpair a { margin-inline: 0.2rem; border: 0; padding: 0.1rem; background: none; }
 
+    .ao-mu-icon-red { color: #d9534f; }
+
+    /* The reference's tab strip: boxed buttons in a row, the active one white and joined to
+       the content below it — not the underline style Filament favours. */
+    .ao-tabs {
+        display: flex;
+        gap: 0.2rem;
+        flex-wrap: wrap;
+        border-bottom: 1px solid var(--wa-panel-border, #ddd);
+        margin-bottom: 1rem;
+    }
+
+    .ao-tab {
+        flex: none;
+        padding: 0.45rem 0.9rem;
+        margin-bottom: -1px;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px 3px 0 0;
+        background: #f5f5f5;
+        color: var(--wa-text, #333);
+        cursor: pointer;
+    }
+
+    .ao-tab:hover { background: #ececec; }
+
+    .ao-tab-active,
+    .ao-tab-active:hover {
+        background: #fff;
+        border-bottom-color: #fff;
+        color: var(--wa-ink, #333);
+        font-weight: 600;
+    }
+
+    /* The client switcher, as the reference draws it under the page title. */
+    .ao-cs-switch select {
+        min-width: 24rem;
+        height: 2.2rem;
+        padding: 0 0.6rem;
+        margin-bottom: 0.8rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font-size: inherit;
+    }
+
+    .ao-cs-filter-tag {
+        text-align: right;
+        margin-bottom: 0.4rem;
+        font-size: 0.85rem;
+        color: var(--wa-muted, #888);
+    }
+
+    .ao-cs-selected {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-top: -0.4rem;
+        margin-bottom: 1rem;
+    }
+
+    .ao-cs-selected button {
+        padding: 0.3rem 0.8rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        color: var(--wa-text, #333);
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    .ao-cs-selected .ao-cs-danger {
+        background: #d9534f;
+        border-color: #d43f3a;
+        color: #fff;
+    }
+
+    .ao-cp-wide { max-width: 56rem; }
+
     /* Wide grids scroll inside their panel rather than widening the page. */
     .ao-mu {
         overflow-x: auto;

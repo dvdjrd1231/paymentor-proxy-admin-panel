@@ -52,7 +52,7 @@
         background: var(--wa-canvas);
         color: var(--wa-text);
         font-family: 'Open Sans', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        font-size: 15px;
+        font-size: 16px;
     }
 
     /* ── Top menu bar ────────────────────────────────────────────────────────
