@@ -35,7 +35,8 @@
     .ao-tiles {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-        gap: 0.75rem;
+        /* The same 25px the panel grid uses — one gutter, everywhere. */
+        gap: 25px;
     }
 
     /* The reference's tiles: a darker block of the tile's own colour on the left with the
@@ -440,10 +441,11 @@
         top: 0;
     }
 
-    /* The reference's gear is ~20px; ours was 16 and read as a speck. */
+    /* The reference's gear, to its screenshot: ~22px, quiet grey, darkening on reach — big
+       enough to be furniture, not a speck. */
     .ao-dash-settings-button svg {
-        width: 20px;
-        height: 20px;
+        width: 22px;
+        height: 22px;
     }
 
     .ao-dash-settings {
@@ -455,12 +457,12 @@
         align-items: center;
         padding: 0.3rem;
         border-radius: 3px;
-        color: hsl(var(--color-base) / 0.55);
+        color: #a9a9a9;
         cursor: pointer;
     }
 
     .ao-dash-settings-button:hover {
-        color: hsl(var(--color-base));
+        color: #6d6d6d;
         background: hsl(var(--color-base) / 0.06);
     }
 
@@ -783,7 +785,11 @@
            they never loaded without scrolling. One class, one moment, both rules. */
         .fi-grid.ao-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 0.65rem;
+            /* 25px, measured off the target screenshot — the reference's gutters are wider
+               than they look. An earlier 10px read as cramped next to it; "standard" means
+               *this* number everywhere, not the smallest one. The packer reads the gap
+               live, so the spans stay correct at any value. */
+            gap: 25px;
             grid-auto-rows: 10px;
             /* `dense` is what makes the distances *standard*: without it, auto-placement
                walks forward only, and a tall panel earlier in the sequence strands a hole
