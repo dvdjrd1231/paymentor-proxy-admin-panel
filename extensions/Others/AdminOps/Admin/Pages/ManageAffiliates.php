@@ -32,6 +32,22 @@ class ManageAffiliates extends Page
     #[Url]
     public int $page = 1;
 
+    #[Url]
+    public bool $filter = false;
+
+    #[Url]
+    public string $q = '';
+
+    public function toggleFilter(): void
+    {
+        $this->filter = !$this->filter;
+    }
+
+    public function search(): void
+    {
+        $this->page = 1;
+    }
+
     public static function canAccess(): bool
     {
         return class_exists(AffiliateResource::class) && AffiliateResource::canViewAny();
@@ -52,6 +68,10 @@ class ManageAffiliates extends Page
         $affiliates = Affiliate::query()
             ->with(['user', 'orders'])
             ->join('users', 'users.id', '=', 'ext_affiliates.user_id')
+            ->when($this->q !== '', fn ($query) => $query->where(fn ($w) => $w
+                ->where('users.first_name', 'like', '%' . $this->q . '%')
+                ->orWhere('users.last_name', 'like', '%' . $this->q . '%')
+                ->orWhere('users.email', 'like', '%' . $this->q . '%')))
             ->orderBy('users.first_name')
             ->orderBy('users.last_name')
             ->select('ext_affiliates.*')

@@ -35,8 +35,8 @@
     .ao-tiles {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-        /* The same 20px the panel grid uses — one gutter, everywhere. */
-        gap: 20px;
+        /* The same 15px the panel grid uses — one gutter, everywhere. */
+        gap: 15px;
     }
 
     /* The reference's tiles: a darker block of the tile's own colour on the left with the
@@ -795,7 +795,7 @@
                lives inside the measurement instead — pack() adds 25px to each panel's
                height and rounds to 5px rows, so the visible space below any panel is
                25–30px, every time. */
-            column-gap: 20px;
+            column-gap: 15px;
             row-gap: 0;
             grid-auto-rows: 5px;
             /* `dense` is what makes the distances *standard*: without it, auto-placement
@@ -1542,9 +1542,9 @@
     .ao-cs-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 20px;
+        gap: 15px;
         align-items: start;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
     }
 
     @media (max-width: 1400px) { .ao-cs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -1553,7 +1553,7 @@
     .ao-cs-col {
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 15px;
         min-width: 0;
     }
 
@@ -1650,7 +1650,7 @@
 
     /* The banded tables under the panels — grey title strip, then the navy grid. */
     .ao-cs-band {
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         border: 1px solid var(--wa-panel-border, #ddd);
         border-radius: 3px;
         overflow: hidden;
@@ -1668,6 +1668,67 @@
     .ao-rail-sub a {
         padding-inline-start: 0.9rem;
     }
+
+    /* The reference's per-band footer: Show n entries · Showing x to y · Previous 1 Next. */
+    .ao-cs-band-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.45rem 0.75rem;
+        background: #fafafa;
+        border-top: 1px solid var(--wa-rule, #d9dadb);
+        font-size: 0.85rem;
+        color: var(--wa-text, #333);
+    }
+
+    .ao-cs-band-foot select {
+        padding: 0.05rem 0.3rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+    }
+
+    .ao-cs-band-pages {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .ao-cs-band-pages button {
+        padding: 0.2rem 0.7rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        color: var(--wa-muted, #999);
+    }
+
+    .ao-cs-band-pages i {
+        display: inline-grid;
+        place-items: center;
+        min-width: 1.7rem;
+        height: 1.7rem;
+        border-radius: 3px;
+        background: var(--wa-blue, #1a4d80);
+        color: #fff;
+        font-style: normal;
+        font-weight: 700;
+    }
+
+    .ao-cp-notes {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        font: inherit;
+        resize: vertical;
+    }
+
+    .ao-cp-notes-save {
+        margin-top: 0.5rem;
+    }
+
+    .ao-mu-iconpair a { margin-inline: 0.2rem; border: 0; padding: 0.1rem; background: none; }
 
     /* Wide grids scroll inside their panel rather than widening the page. */
     .ao-mu {

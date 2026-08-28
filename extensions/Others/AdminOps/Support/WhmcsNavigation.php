@@ -31,6 +31,7 @@ use App\Admin\Resources\ServiceResource;
 use App\Admin\Resources\TaxRateResource;
 use App\Admin\Resources\TicketResource;
 use App\Admin\Resources\UserResource;
+use App\Models\Category;
 use Filament\Facades\Filament;
 use Filament\Navigation\NavigationBuilder;
 use Filament\Navigation\NavigationGroup;
@@ -180,6 +181,10 @@ class WhmcsNavigation
             static::page(AddNewClient::class, 'Add New Client'),
             static::page(ManageUsers::class, 'Manage Users'),
             static::page(ProductsServices::class, 'Products/Services'),
+            // The reference's flyout, flattened: Filament's dropdown cannot nest, so the
+            // category entries sit indented under Products/Services exactly as the rail
+            // draws them — same labels, same filtered URLs.
+            ...static::categoryItems(),
             // Ours, not core's: core's list offers Edit and Delete, and deleting a request is
             // indistinguishable from refusing it. Falls back to core's when the extension is
             // not installed, so the entry never disappears.
@@ -198,6 +203,35 @@ class WhmcsNavigation
                 ),
             static::page(ManageAffiliates::class, 'Manage Affiliates'),
         ]);
+    }
+
+    /**
+     * A "- Category" entry per product group for the Clients dropdown, mirroring the rail.
+     * Empty on any failure: a menu without sub-entries, never a broken menu.
+     *
+     * @return array<int, NavigationItem>
+     */
+    private static function categoryItems(): array
+    {
+        if (!class_exists(ProductsServices::class) || !ProductsServices::canAccess()) {
+            return [];
+        }
+
+        try {
+            $base = ProductsServices::getUrl();
+
+            return Category::query()
+                ->whereNull('parent_id')
+                ->orderBy('sort')
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($category): NavigationItem => NavigationItem::make('- ' . $category->name)
+                    ->url($base . '?category=' . $category->id)
+                    ->isActiveWhen(fn (): bool => false))
+                ->all();
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     /**

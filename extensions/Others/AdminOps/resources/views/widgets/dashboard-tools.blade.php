@@ -69,10 +69,10 @@
         // instead. With a real row-gap every reserved row costs row+gap, so the leftover
         // under a panel quantises in row+gap steps — at 10+25 that was up to 59px below one
         // panel while its neighbour sat at the gutter, the "not standard" space. This way the
-        // visible gap below any panel is GUTTER to GUTTER+ROW-1: 20–24px, always.
+        // visible gap below any panel is GUTTER to GUTTER+ROW-1: 15–19px, always.
         // ROW must match `grid-auto-rows` and GUTTER the column-gap in styles.blade.php.
         const ROW = 5;
-        const GUTTER = 20;
+        const GUTTER = 15;
 
         const pack = () => {
             for (const child of grid.children) {

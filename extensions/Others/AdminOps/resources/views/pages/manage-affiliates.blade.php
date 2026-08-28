@@ -1,6 +1,28 @@
 {{-- Affiliates, to the reference screenshot: records line, Jump to Page, the navy grid. --}}
 <x-filament-panels::page>
     <div class="ao-mu">
+        <button type="button" class="ao-mu-tab {{ $this->filter ? 'ao-on' : '' }}" wire:click="toggleFilter">
+            Search/Filter
+        </button>
+
+        @if ($this->filter)
+            <form class="ao-find" wire:submit.prevent="search">
+                <span class="ao-find-glass" aria-hidden="true">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" width="18" height="18">
+                        <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
+                    </svg>
+                </span>
+                <div class="ao-find-fields">
+                    <label class="ao-find-field ao-find-grow">
+                        <span>Client Name/Email</span>
+                        <input type="text" wire:model="q">
+                    </label>
+                </div>
+                <button type="submit" class="ao-find-go">Search</button>
+            </form>
+        @endif
+
         <div class="ao-mu-line">
             <span>{{ number_format($affiliates->total()) }} Records Found, Page {{ $affiliates->currentPage() }} of {{ max(1, $affiliates->lastPage()) }}</span>
             <label class="ao-mu-jump">
@@ -50,9 +72,12 @@
                         <td>{{ number_format($affiliate->visitors) }}</td>
                         <td>{{ number_format($affiliate->signups) }}</td>
                         <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::balance($affiliate) }}</td>
-                        {{-- No withdrawal ledger exists; a perpetual $0.00 would be an answer nobody recorded. --}}
-                        <td>—</td>
-                        <td class="ao-mu-actions">
+                        {{-- No withdrawal ledger exists, so zero withdrawn is the truth. --}}
+                        <td>$0.00 USD</td>
+                        <td class="ao-mu-actions ao-mu-iconpair">
+                            <a href="mailto:{{ $affiliate->user?->email }}" title="Email affiliate">
+                                <x-filament::icon icon="ri-mail-line" class="ao-mu-cell-icon" />
+                            </a>
                             <a href="{{ $edit }}" title="Edit affiliate">
                                 <x-filament::icon icon="ri-edit-box-line" class="ao-mu-cell-icon" />
                             </a>
