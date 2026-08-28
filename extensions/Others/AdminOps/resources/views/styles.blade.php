@@ -49,9 +49,17 @@
         padding: 0;
         border-radius: 3px;
         overflow: hidden;
-        color: hsl(var(--color-inverted));
         background-color: hsl(var(--color-inactive));
         transition: filter 120ms ease;
+    }
+
+    /* White lettering, said twice over: explicit #fff because var(--color-inverted)
+       resolves to rgb(84,84,84) in this theme, and with the `a.` prefix because most tiles
+       are links and `.ao-panel a { color: inherit }` out-ranks a bare class — which is how
+       the figures were quietly repainted panel-grey on the coloured ground. */
+    a.ao-tile,
+    .ao-tile {
+        color: #fff;
     }
 
     .ao-tile:hover {
@@ -432,6 +440,12 @@
         top: 0;
     }
 
+    /* The reference's gear is ~20px; ours was 16 and read as a speck. */
+    .ao-dash-settings-button svg {
+        width: 20px;
+        height: 20px;
+    }
+
     .ao-dash-settings {
         position: relative;
     }
@@ -519,7 +533,9 @@
        nothing moves until the pointer goes down. */
     .ao-wi-header {
         position: relative;
-        cursor: grab;
+        /* The four-arrow cursor: hovering a title says "this object can be moved", which
+           grab did not — grab reads as scroll-drag on most desktops. */
+        cursor: move;
     }
 
     .ao-wi-header:focus-visible {
@@ -645,12 +661,24 @@
         font-weight: 400;
     }
 
-    /* Counted on the stats container's children, not on the stat class itself: each stat
-       sits in its own wrapper, so counting stats made every one a first child and the
-       whole rotation came out green. */
-    .ao-wi .fi-wi-stats-overview-stats-ctn > :nth-child(3n+1) .fi-wi-stats-overview-stat-value { color: #7ac143; }
-    .ao-wi .fi-wi-stats-overview-stats-ctn > :nth-child(3n+2) .fi-wi-stats-overview-stat-value { color: #f5a54a; }
-    .ao-wi .fi-wi-stats-overview-stats-ctn > :nth-child(3n)   .fi-wi-stats-overview-stat-value { color: #f062a2; }
+    /* Stamped by the widget script rather than counted by CSS: two attempts at counting
+       wrappers both lost — the stats' real ancestor chain matches neither the stat class
+       nor the container name — so decorate() stamps ao-stat-c1/2/3 on each stat in order
+       and colour follows the stamp. */
+    .ao-stat-c1 .fi-wi-stats-overview-stat-value { color: #7ac143; }
+    .ao-stat-c2 .fi-wi-stats-overview-stat-value { color: #f5a54a; }
+    .ao-stat-c3 .fi-wi-stats-overview-stat-value { color: #f062a2; }
+
+    /* At a glance rows in the same rotation the reference letters Automation Overview
+       with — grey measure names, coloured figures. */
+    .ao-glance tbody tr:nth-child(4n+1) td:not(:first-child) { color: #7ac143; }
+    .ao-glance tbody tr:nth-child(4n+2) td:not(:first-child) { color: #f5a54a; }
+    .ao-glance tbody tr:nth-child(4n+3) td:not(:first-child) { color: #f062a2; }
+    .ao-glance tbody tr:nth-child(4n)   td:not(:first-child) { color: #b57bd4; }
+
+    .ao-glance tbody td:first-child {
+        color: #8b8b8b;
+    }
 
     .ao-wi .fi-wi-stats-overview-stat-description {
         color: #8b8b8b;
@@ -682,14 +710,30 @@
         visibility: hidden;
     }
 
-    /* Carried (click-to-pick-up): the panel itself travels to the estimated slot as the
-       pointer moves, so it stays visible — dashes and a lift-shadow say "in hand". */
+    /* Carried (click-to-pick-up): the in-flow panel is the dashed estimate box — the same
+       treatment a native drag gets — while a fixed-position ghost of it follows the
+       cursor. That is the reference's picture exactly: the object in hand, the dashes
+       showing where it will land. */
     .ao-wi-carrying {
-        outline: 2px dashed #6ea3d8;
-        outline-offset: 2px;
-        opacity: 0.92;
-        box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
-        cursor: grabbing;
+        border: 2px dashed #6ea3d8;
+        background: #fbfbfb;
+    }
+
+    .ao-wi-carrying > * {
+        visibility: hidden;
+    }
+
+    .ao-wi-ghost {
+        position: fixed;
+        z-index: 60;
+        pointer-events: none;
+        margin: 0;
+        opacity: 0.93;
+        background: #fff;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px;
+        overflow: hidden;
+        box-shadow: 0 10px 28px rgb(0 0 0 / 0.25);
     }
 
     .ao-wi-hidden {

@@ -314,6 +314,15 @@
                 // section header *after* we have already given it one of our slim bars —
                 // the heading arrives with the second morph — and a per-header check then
                 // hands out a second set of tools, six icons in one panel.
+                // The reference's rotating stat colours. Stamped here because CSS cannot
+                // count them: the stats' ancestor chain matches neither the stat class nor
+                // any stable container name, and two counted attempts silently painted
+                // everything the first colour. Idempotent — adding a class an element
+                // already has is a no-op.
+                panel.root.querySelectorAll('.fi-wi-stats-overview-stat').forEach((stat, index) => {
+                    stat.classList.add('ao-stat-c' + (index % 3 + 1));
+                });
+
                 if (panel.block.querySelector('.ao-wi-tools')) return;
 
                 // If a real heading has since appeared, the stand-in is no longer wanted.
@@ -667,10 +676,15 @@
         // sets it down there. Escape puts it back. Shares the drag's placement logic and
         // its observer pause (`dragged`), so the two ways cannot disagree about anything.
         let carrying = null;
+        let ghost = null;
+        let grabX = 0;
+        let grabY = 0;
 
         const setDown = (cancel) => {
             if (!carrying) return;
 
+            ghost?.remove();
+            ghost = null;
             carrying.classList.remove('ao-wi-carrying');
 
             const moved = currentOrder().join() !== before;
@@ -707,11 +721,36 @@
             carrying = root;
             dragged = root; // pauses the observer, exactly as a native drag does
             before = currentOrder().join();
+
+            // The object in hand: a fixed-position copy that follows the cursor, while the
+            // in-flow panel becomes the dashed estimate box. A cloned chart canvas paints
+            // blank — the frame and title still identify it, which is all a ghost is for.
+            const box = root.getBoundingClientRect();
+            grabX = event.clientX - box.left;
+            grabY = event.clientY - box.top;
+
+            ghost = root.cloneNode(true);
+            ghost.classList.add('ao-wi-ghost');
+            ghost.classList.remove('ao-wi-carrying');
+            ghost.style.width = box.width + 'px';
+            ghost.style.height = box.height + 'px';
+            ghost.style.left = box.left + 'px';
+            ghost.style.top = box.top + 'px';
+            document.body.append(ghost);
+
             root.classList.add('ao-wi-carrying');
         });
 
-        grid.addEventListener('mousemove', (event) => {
+        // Document-level, not grid-level: the ghost must keep following even when the
+        // pointer strays off the grid for a moment. Placement still only changes over a
+        // real panel.
+        document.addEventListener('mousemove', (event) => {
             if (!carrying) return;
+
+            if (ghost) {
+                ghost.style.left = (event.clientX - grabX) + 'px';
+                ghost.style.top = (event.clientY - grabY) + 'px';
+            }
 
             const over = event.target.closest('[data-ao-widget]');
             if (!over || over === carrying || over.parentElement !== grid) return;
