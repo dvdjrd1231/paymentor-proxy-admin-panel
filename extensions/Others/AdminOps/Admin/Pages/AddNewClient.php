@@ -96,6 +96,20 @@ class AddNewClient extends Page
         return UserResource::canCreate();
     }
 
+    /** The reference's defaults: Currency USD, Country United States — when the store has them. */
+    public function mount(): void
+    {
+        $currencies = Currency::query()->pluck('code')->all();
+        $this->currency = in_array('USD', $currencies, true) ? 'USD' : ($currencies[0] ?? '');
+
+        $country = CustomProperty::query()->where('model', User::class)->where('key', 'country')->first();
+        $options = array_values((array) ($country?->allowed_values ?? []));
+
+        if (in_array('United States', $options, true)) {
+            $this->props['country'] = 'United States';
+        }
+    }
+
     public function getTitle(): string
     {
         return 'Add New Client';

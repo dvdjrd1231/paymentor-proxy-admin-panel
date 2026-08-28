@@ -1531,13 +1531,26 @@
         .ao-anc-cols { grid-template-columns: 1fr; }
     }
 
-    /* The reference's full-width rows under the columns, striped like the rest. */
+    /* The reference's bordered card around the whole form; the send line and the button
+       live below it. */
+    .ao-anc-card {
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px;
+        background: #fff;
+        padding: 0.8rem 1rem;
+    }
+
+    /* The reference's full-width rows under the columns; Settings and Owner sit on the
+       stripe, as its screenshot has them. */
     .ao-anc-row-wide {
         grid-template-columns: 9.5rem 1fr;
         align-items: start;
     }
 
-    .ao-anc > .ao-anc-row-wide:nth-of-type(odd) { background: #f8f8f8; }
+    .ao-anc-grey { background: #f8f8f8; }
+
+    /* The blank alignment rows must be as tall as a real one, or they align nothing. */
+    .ao-anc-row[aria-hidden] { min-height: calc(2.1rem + 0.9rem); }
 
     .ao-anc-checks {
         display: flex;

@@ -6,6 +6,9 @@
 --}}
 <x-filament-panels::page>
     <form class="ao-mu ao-anc" wire:submit.prevent="create">
+        {{-- The reference's bordered card around the whole form; the send-message line and
+             the button sit below it, as they do there. --}}
+        <div class="ao-anc-card">
         <div class="ao-anc-cols">
             <div class="ao-anc-col">
                 <label class="ao-anc-row">
@@ -36,6 +39,11 @@
                         <button type="button" class="ao-anc-generate" data-ao-generate>Generate Password</button>
                     </span>
                 </label>
+                {{-- Two blank striped rows, as the reference has them — they are what lines
+                     Language up with Payment Method across the two columns. --}}
+                <div class="ao-anc-row" aria-hidden="true"><span></span><span></span></div>
+                <div class="ao-anc-row" aria-hidden="true"><span></span><span></span></div>
+
                 <label class="ao-anc-row">
                     <span>Language</span>
                     <select><option>Default</option></select>
@@ -151,7 +159,7 @@
             </div>
         </div>
 
-        <div class="ao-anc-row ao-anc-row-wide">
+        <div class="ao-anc-row ao-anc-row-wide ao-anc-grey">
             <span>Settings</span>
             <div class="ao-anc-toggles">
                 @foreach ([
@@ -173,7 +181,7 @@
             </div>
         </div>
 
-        <div class="ao-anc-row ao-anc-row-wide">
+        <div class="ao-anc-row ao-anc-row-wide ao-anc-grey">
             <span>Owner</span>
             <div class="ao-anc-checks">
                 <label><input type="radio" checked> Create a new user.</label>
@@ -195,6 +203,8 @@
                 @endforeach
             </div>
         @endif
+
+        </div>{{-- /ao-anc-card --}}
 
         <div class="ao-anc-send">
             <label><input type="checkbox" wire:model="sendWelcome" checked> Check to send a New Account Information Message</label>
