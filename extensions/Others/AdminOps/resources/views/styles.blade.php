@@ -1436,6 +1436,80 @@
         text-decoration: none;
     }
 
+    /* The reference's email badges: quiet grey when verified, warm when not. */
+    .ao-mu-mail {
+        display: inline-block;
+        margin-inline-start: 0.4rem;
+        padding: 0.1rem 0.45rem;
+        border-radius: 3px;
+        font-size: 0.66rem;
+        font-style: normal;
+        font-weight: 600;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .ao-mu-mail-ok { background: #ececec; color: #777; }
+    .ao-mu-mail-no { background: #f6dede; color: #b94a48; }
+
+    /* Two Factor, the reference's way: shield and word, grey off, green on — not a pill. */
+    .ao-mu-2fa {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        color: #8b8b8b;
+    }
+
+    .ao-mu-2fa-on { color: #3c763d; font-weight: 600; }
+
+    /* Manage User: the reference's dropdown button, on a native <details> so it needs no
+       script and closes itself. The menu overlays; the row does not grow. */
+    .ao-mu-manage {
+        position: relative;
+        display: inline-block;
+    }
+
+    .ao-mu-manage summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 0.25rem 0.75rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        white-space: nowrap;
+    }
+
+    .ao-mu-manage summary::-webkit-details-marker { display: none; }
+
+    .ao-mu-manage summary:hover { background: #f0f0f0; }
+
+    .ao-mu-manage[open] summary {
+        background: #e6e6e6;
+        border-color: #adadad;
+    }
+
+    .ao-mu-manage-menu {
+        position: absolute;
+        inset-inline-end: 0;
+        top: calc(100% + 2px);
+        z-index: 20;
+        min-width: 8rem;
+        padding: 0.25rem 0;
+        border: 1px solid #c3c3c3;
+        border-radius: 3px;
+        background: #fff;
+        box-shadow: 0 6px 12px rgb(0 0 0 / 0.175);
+        text-align: left;
+    }
+
+    .ao-mu-manage-menu a {
+        display: block;
+        margin: 0;
+        padding: 0.35rem 1rem;
+        border: 0;
+        border-radius: 0;
+    }
+
     .ao-mu-selected {
         margin-top: 0.7rem;
         display: flex;
