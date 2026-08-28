@@ -429,6 +429,45 @@
         color: var(--wa-blue);
     }
 
+    /* The reference's flyout: the category entries open beside their parent on hover. The
+       wrapper is the hover surface, so the pointer can travel from the parent row into the
+       side panel without the panel closing under it. */
+    .ao-flyout {
+        position: relative;
+    }
+
+    .ao-flyout .ao-has-sub {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .ao-flyout .ao-has-sub::after {
+        content: '\25B8';
+        margin-inline-start: 1.2rem;
+        color: var(--wa-muted, #999);
+        font-size: 0.75rem;
+    }
+
+    .ao-flyout-panel {
+        display: none;
+        position: absolute;
+        left: 100%;
+        top: -0.35rem;
+        z-index: 40;
+        min-width: 13rem;
+        padding: 0.3rem 0;
+        background: #fff;
+        border: 1px solid #c3c3c3;
+        border-radius: var(--wa-radius);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+    }
+
+    .ao-flyout:hover > .ao-flyout-panel {
+        display: block;
+    }
+
     /* The reference rules off the last entry of its help menu — the one that answers "what
        is this installation", rather than "where do I get help". */
     .fi-dropdown-list-item.ao-drop-item-separated {
@@ -1190,6 +1229,45 @@
             closer = setTimeout(() => {
                 if (isOpen(item) && !item.matches(':hover')) toggle(item);
             }, 250);
+        });
+
+        {{-- The reference's flyout: the "- Category" rows the navigation flattens into the
+             menu are folded back into a side panel that opens on hovering their parent —
+             so the dropdown reads exactly as WHMCS's does. Done to the rendered markup
+             because Filament's navigation cannot nest; idempotent per panel, so a menu
+             processed once stays processed. --}}
+        document.addEventListener('mouseover', (event) => {
+            const panel = event.target.closest('nav.fi-topbar .fi-dropdown-panel');
+            if (!panel || panel.dataset.aoSubDone) return;
+            panel.dataset.aoSubDone = '1';
+
+            const items = [...panel.querySelectorAll('.fi-dropdown-list-item')];
+
+            for (let index = 0; index < items.length; index++) {
+                const subs = [];
+                let next = index + 1;
+
+                while (next < items.length && items[next].textContent.trim().startsWith('- ')) {
+                    subs.push(items[next]);
+                    next++;
+                }
+
+                if (!subs.length) continue;
+
+                const parent = items[index];
+                const wrap = document.createElement('div');
+                wrap.className = 'ao-flyout';
+                parent.before(wrap);
+                wrap.append(parent);
+                parent.classList.add('ao-has-sub');
+
+                const fly = document.createElement('div');
+                fly.className = 'ao-flyout-panel';
+                fly.append(...subs);
+                wrap.append(fly);
+
+                index = next - 1;
+            }
         });
     })();
 </script>
