@@ -21,7 +21,7 @@
         --wa-blue: #1a4d80;          /* top menu bar, table headers, footer — all one blue */
         --wa-blue-dark: #0d2640;     /* hover / open menu item */
         --wa-ink: #333333;           /* page headings */
-        --wa-text: #4a4a4a;
+        --wa-text: #333333;          /* was #4a4a4a — Leandro: reads as grey, wants nearer black */
         --wa-muted: #888888;
         --wa-link: #337ab7;          /* rail links, primary button */
         --wa-border: #cccccc;        /* rail edge, dropdown edge */
@@ -52,7 +52,7 @@
         background: var(--wa-canvas);
         color: var(--wa-text);
         font-family: 'Open Sans', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        font-size: 14px;
+        font-size: 15px;
     }
 
     /* ── Top menu bar ────────────────────────────────────────────────────────
@@ -364,7 +364,7 @@
         border-radius: 0;
         height: var(--wa-topbar-h);
         padding: 0 0.9rem;
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 400;
         line-height: var(--wa-topbar-h);
     }
@@ -400,7 +400,16 @@
         display: none;
     }
 
-    /* The dropdown panels themselves: square, bordered, tight rows. */
+    /* The dropdown panels themselves: square, bordered, tight rows.
+
+       The negative margin closes the strip Leandro circled between the bar and the open
+       menu: x-float positions the panel with an inline transform this stylesheet cannot
+       reach, so the margin pulls the box back up against the bar the way the reference's
+       menus sit. Topbar only — a form's select dropdown keeps its breathing room. */
+    nav.fi-topbar .fi-dropdown-panel {
+        margin-top: -7px;
+    }
+
     .fi-dropdown-panel {
         border-radius: var(--wa-radius);
         border: 1px solid #c3c3c3;
@@ -411,7 +420,7 @@
     .fi-dropdown-list-item {
         border-radius: 0;
         padding: 0.4rem 1.1rem;
-        font-size: 14px;
+        font-size: 15px;
         color: var(--wa-ink);
     }
 
@@ -691,7 +700,7 @@
     }
 
     .fi-section-header-heading {
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 400;
         color: var(--wa-ink);
     }
@@ -710,7 +719,7 @@
     .fi-fo-field-label-content,
     .fi-checkbox-label,
     .fi-radio-label {
-        font-size: 14px;
+        font-size: 15px;
     }
 
     /* ── Tables ──────────────────────────────────────────────────────────────
@@ -761,7 +770,7 @@
     }
 
     .fi-ta-cell {
-        font-size: 14px;
+        font-size: 15px;
         padding-block: 0.5rem;
     }
 
@@ -789,7 +798,7 @@
     }
 
     .fi-ta-empty-state-heading {
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 400;
         color: var(--wa-muted);
     }
@@ -804,7 +813,7 @@
        « Previous Page · 1 · Next Page » strip. */
     .fi-pagination {
         padding-block: 0.6rem;
-        font-size: 14px;
+        font-size: 15px;
     }
 
     .fi-pagination-item-btn,
@@ -837,7 +846,7 @@
     .fi-pagination-overview,
     .fi-pagination-records-per-page-select-ctn {
         color: var(--wa-text);
-        font-size: 14px;
+        font-size: 15px;
     }
 
     /* ── Forms ───────────────────────────────────────────────────────────────
@@ -847,7 +856,7 @@
        each resource form already declares. */
     .fi-fo-field-label,
     .fi-fo-field-label-content {
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 600;
         color: var(--wa-ink);
     }
@@ -858,7 +867,7 @@
 
     .fi-input,
     .fi-select-input {
-        font-size: 14px;
+        font-size: 15px;
     }
 
     /* ── Stat tiles ──────────────────────────────────────────────────────────
@@ -874,7 +883,7 @@
     }
 
     .fi-wi-stats-overview-stat-label {
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 400;
         color: var(--wa-text);
     }
@@ -889,7 +898,7 @@
        Square, small, WHMCS blue for the primary action. */
     .fi-btn {
         border-radius: var(--wa-radius);
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 400;
         box-shadow: none;
     }
@@ -1021,7 +1030,7 @@
         width: 100%;
         justify-content: center;
         padding-block: 0.5rem;
-        font-size: 14px;
+        font-size: 15px;
     }
 
     /* The CAPTCHA (`adminops::captcha`). reCAPTCHA v2's checkbox is a fixed 304px in a

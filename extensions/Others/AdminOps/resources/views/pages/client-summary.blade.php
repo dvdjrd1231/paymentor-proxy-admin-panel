@@ -145,6 +145,11 @@
                 </div>
 
                 <div class="ao-cp">
+                    <h3>Files</h3>
+                    <div class="ao-cp-body ao-cp-empty">No files uploaded</div>
+                </div>
+
+                <div class="ao-cp">
                     <h3>Recent Emails</h3>
                     <div class="ao-cp-body">
                         @forelse ($recentEmails as $mail)
@@ -187,6 +192,15 @@
                     <h3>Send Email</h3>
                     <div class="ao-cp-body">
                         <a class="ao-find-go ao-cp-send" href="mailto:{{ $user->email }}">New Message</a>
+                    </div>
+                </div>
+
+                <div class="ao-cp">
+                    <h3>Admin Notes</h3>
+                    <div class="ao-cp-body">
+                        <textarea class="ao-cp-notes" rows="5" wire:model="adminNotes"
+                            placeholder=""></textarea>
+                        <button type="button" class="ao-find-adv ao-cp-notes-save" wire:click="saveNotes">Submit</button>
                     </div>
                 </div>
             </div>
@@ -250,6 +264,20 @@
                         @endif
                     </tbody>
                 </table>
+
+                @php $bandCount = count($band['rows']); @endphp
+                <div class="ao-cs-band-foot">
+                    <span>Show
+                        <select disabled><option>50</option></select>
+                        entries
+                    </span>
+                    <span>Showing {{ $bandCount > 0 ? 1 : 0 }} to {{ $bandCount }} of {{ $bandCount }} entries</span>
+                    <span class="ao-cs-band-pages">
+                        <button type="button" disabled>Previous</button>
+                        <i>1</i>
+                        <button type="button" disabled>Next</button>
+                    </span>
+                </div>
             </div>
         @endforeach
 

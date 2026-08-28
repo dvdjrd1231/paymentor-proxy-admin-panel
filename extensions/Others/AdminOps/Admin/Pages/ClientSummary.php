@@ -12,6 +12,7 @@ use App\Models\InvoiceTransaction;
 use App\Models\User;
 use Carbon\Carbon;
 use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Panel;
 use Filament\Support\Icons\Heroicon;
@@ -78,6 +79,9 @@ class ClientSummary extends Page
     #[Url]
     public string $tab = 'summary';
 
+    /** The reference's Admin Notes box — stored as a user property, so it is real. */
+    public string $adminNotes = '';
+
     /**
      * The reference's tabs, less the ones Paymenter has nothing behind.
      *
@@ -122,6 +126,23 @@ class ClientSummary extends Page
         $this->customer = User::query()
             ->with(['role', 'credits', 'properties.parent_property'])
             ->findOrFail($record);
+
+        $this->adminNotes = (string) $this->customer->properties
+            ->firstWhere('key', 'admin_notes')?->value;
+    }
+
+    /** The Admin Notes Submit button. Notes live on the customer, as the reference keeps them. */
+    public function saveNotes(): void
+    {
+        $this->customer->properties()->updateOrCreate(
+            ['key' => 'admin_notes'],
+            ['value' => $this->adminNotes],
+        );
+
+        Notification::make()
+            ->title('Notes saved')
+            ->success()
+            ->send();
     }
 
     public static function authorizeResourceAccess(): void
