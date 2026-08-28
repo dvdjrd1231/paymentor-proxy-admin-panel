@@ -61,6 +61,24 @@ class ViewSearchClients extends Page
     #[Url]
     public int $page = 1;
 
+    /** The reference's "+ Advanced": a second row of narrower filters, closed by default. */
+    #[Url]
+    public bool $advanced = false;
+
+    #[Url]
+    public string $cid = '';
+
+    #[Url]
+    public string $from = '';
+
+    #[Url]
+    public string $to = '';
+
+    public function toggleAdvanced(): void
+    {
+        $this->advanced = !$this->advanced;
+    }
+
     public static function canAccess(): bool
     {
         return UserResource::canViewAny();
@@ -108,7 +126,13 @@ class ViewSearchClients extends Page
     private function query()
     {
         return $this->withFilters($this->hideInactive)
-            ->withCount(['services as services_count' => fn ($q) => $q->whereIn('status', self::OPEN)])
+            // Both figures, because the reference's Services column reads "1 (32)" — what
+            // they hold now, and everything they have ever had, which for a proxy store is
+            // the difference between a customer and a lapsed one.
+            ->withCount([
+                'services as services_count' => fn ($q) => $q->whereIn('status', self::OPEN),
+                'services as services_all_count',
+            ])
             ->with(['properties' => fn ($q) => $q->whereIn('key', ['company_name', 'company'])])
             ->orderByDesc('id');
     }
@@ -138,6 +162,18 @@ class ViewSearchClients extends Page
             $query->whereHas('properties', fn ($p) => $p
                 ->where('key', 'like', '%phone%')
                 ->where('value', 'like', '%' . $this->phone . '%'));
+        }
+
+        if ($this->cid !== '' && ctype_digit($this->cid)) {
+            $query->where('id', (int) $this->cid);
+        }
+
+        if ($this->from !== '') {
+            $query->whereDate('created_at', '>=', $this->from);
+        }
+
+        if ($this->to !== '') {
+            $query->whereDate('created_at', '<=', $this->to);
         }
 
         $active = fn ($q) => $q->whereHas('services', fn ($s) => $s->whereIn('status', self::OPEN));

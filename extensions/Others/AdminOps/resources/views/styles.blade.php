@@ -1306,6 +1306,22 @@
 
     .ao-find-go:hover { background: #286090; }
 
+    /* The reference's "+ Advanced": a quiet bordered button beside the blue Search. */
+    .ao-find-adv {
+        height: 2.1rem;
+        padding: 0 0.9rem;
+        flex: none;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: var(--wa-radius, 3px);
+        background: #fff;
+        color: var(--wa-text, #4a4a4a);
+        font-size: 0.875rem;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .ao-find-adv:hover { background: #f0f0f0; }
+
     .ao-mu-line {
         display: flex;
         align-items: center;

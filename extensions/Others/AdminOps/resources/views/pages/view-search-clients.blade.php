@@ -27,7 +27,15 @@
                 </label>
                 <label class="ao-find-field">
                     <span>Phone Number</span>
-                    <input type="text" wire:model="phone">
+                    <input type="text" wire:model="phone" placeholder="+1 201-555-0123">
+                </label>
+                <label class="ao-find-field">
+                    {{-- Paymenter has no client groups; the reference's control is kept so
+                         the band reads the same, with the one honest answer it has. --}}
+                    <span>Client Group</span>
+                    <select>
+                        <option>Any</option>
+                    </select>
                 </label>
                 <label class="ao-find-field">
                     <span>Status</span>
@@ -37,7 +45,26 @@
                         <option value="inactive">Inactive</option>
                     </select>
                 </label>
+
+                @if ($this->advanced)
+                    <label class="ao-find-field">
+                        <span>Client ID</span>
+                        <input type="text" wire:model="cid" inputmode="numeric">
+                    </label>
+                    <label class="ao-find-field">
+                        <span>Signed Up From</span>
+                        <input type="date" wire:model="from">
+                    </label>
+                    <label class="ao-find-field">
+                        <span>Signed Up To</span>
+                        <input type="date" wire:model="to">
+                    </label>
+                @endif
             </div>
+
+            <button type="button" class="ao-find-adv" wire:click="toggleAdvanced">
+                {{ $this->advanced ? '− Advanced' : '+ Advanced' }}
+            </button>
 
             <button type="submit" class="ao-find-go">
                 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
@@ -49,7 +76,9 @@
         </form>
 
         <div class="ao-mu-line">
-            <span>{{ number_format($clients->total()) }} Records Found</span>
+            <span>
+                {{ number_format($clients->total()) }} Records Found{{ $clients->total() > 0 ? ', Showing ' . number_format($clients->firstItem()) . ' to ' . number_format($clients->lastItem()) : '' }}
+            </span>
             <span class="ao-mu-line-right">
                 <button type="button" class="ao-mu-toggle {{ $hideInactive ? 'ao-on' : '' }}"
                     wire:click="toggleInactive">
@@ -95,7 +124,7 @@
                         <td><a href="{{ $summary }}">{{ $client->last_name ?: '—' }}</a></td>
                         <td>{{ $company ?: '' }}</td>
                         <td><a href="{{ $summary }}">{{ $client->email }}</a></td>
-                        <td>{{ $client->services_count }}</td>
+                        <td>{{ $client->services_count }} ({{ $client->services_all_count }})</td>
                         <td>{{ $client->created_at?->format('d/m/Y') }}</td>
                         <td>
                             <span class="ao-mu-status {{ $active ? 'ao-mu-active' : 'ao-mu-inactive' }}">
