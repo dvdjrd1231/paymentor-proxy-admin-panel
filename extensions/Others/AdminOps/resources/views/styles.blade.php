@@ -1892,11 +1892,17 @@
     }
 
     /* The client switcher, as the reference draws it under the page title. */
+    /* Above the tab bar now, as the reference places it. */
+    .ao-cs-switch { margin-bottom: 0.7rem; }
+
+    /* Doubled selector: .ao-cp-link sets its own colour later in the sheet, and the red
+       must beat it. */
+    .ao-cp-link.ao-cp-danger { color: #d9534f; }
+
     .ao-cs-switch select {
         min-width: 24rem;
         height: 2.2rem;
         padding: 0 0.6rem;
-        margin-bottom: 0.8rem;
         border: 1px solid var(--wa-border, #ccc);
         border-radius: 3px;
         background: #fff;
@@ -2148,6 +2154,8 @@
         background: #fff;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
         color: var(--wa-text, #2b2b2b);
+        /* The footer un-indents itself with negative margins; nothing may escape the box. */
+        overflow: hidden;
     }
 
     .ao-mud-head {
@@ -2280,6 +2288,10 @@
     .ao-mud-text { padding: 1.1rem 1.5rem 0; }
 
     .ao-mud-text p + p { margin-top: 0.8rem; }
+
+    /* Outside the padded form body the footer has nothing to un-indent from — the negative
+       margins that align it inside .ao-mud-body would push it out of the dialog here. */
+    .ao-mud > .ao-mud-foot { margin-inline: 0; }
 
     .ao-mud-foot-only-right { justify-content: flex-end; margin-top: 1.1rem; }
 
