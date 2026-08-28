@@ -95,7 +95,7 @@
                                 <details class="ao-mu-manage">
                                     <summary aria-label="More actions"><span aria-hidden="true">&#9662;</span></summary>
                                     <div class="ao-mu-manage-menu">
-                                        <button type="button" wire:click="resetPassword({{ $user->id }})">Password Reset</button>
+                                        <button type="button" wire:click="askResetPassword({{ $user->id }})">Password Reset</button>
                                     </div>
                                 </details>
                             </span>
@@ -144,10 +144,10 @@
                         </label>
                         <div class="ao-mud-row">
                             <span>Two-Factor Authentication</span>
-                            {{-- Off unless the user enrolled: enabling needs their authenticator,
-                                 so the switch can only reflect or revoke. --}}
+                            {{-- The switch moves freely; save() is the honest gate — it can
+                                 revoke enrolment but not conjure it, and says so. --}}
                             <label class="ao-anc-switch ao-mud-switch">
-                                <input type="checkbox" wire:model="mu.tfa" @disabled(empty($mu['tfa']))>
+                                <input type="checkbox" wire:model="mu.tfa">
                                 <i aria-hidden="true"></i>
                             </label>
                         </div>
@@ -189,6 +189,28 @@
                             </span>
                         </div>
                     </form>
+                </div>
+            </div>
+        @endif
+
+        {{-- The reference's "Are you sure?" before a reset email goes out, word for word. --}}
+        @if ($confirmingReset)
+            <div class="ao-mud-overlay" wire:click.self="$set('confirmingReset', null)">
+                <div class="ao-mud ao-mud-sm" role="alertdialog" aria-modal="true">
+                    <div class="ao-mud-head">
+                        Are you sure?
+                        <button type="button" wire:click="$set('confirmingReset', null)" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="ao-mud-text">
+                        <p>Are you sure you wish to initiate a password reset for this user?</p>
+                        <p>This will send the password reset email to the user containing a link which they can use to choose a new password.</p>
+                    </div>
+                    <div class="ao-mud-foot ao-mud-foot-only-right">
+                        <span class="ao-mud-foot-right">
+                            <button type="button" class="ao-mud-close" wire:click="$set('confirmingReset', null)">Cancel</button>
+                            <button type="button" class="ao-mud-save" wire:click="resetPassword">OK</button>
+                        </span>
+                    </div>
                 </div>
             </div>
         @endif

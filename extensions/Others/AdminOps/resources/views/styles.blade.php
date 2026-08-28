@@ -1262,7 +1262,10 @@
         display: flex;
         flex-direction: column;
         gap: 0.3rem;
-        min-width: 9rem;
+        /* Flex from a fixed basis, not content width: the reference fits its whole band on
+           one row, and content-sized inputs were what pushed Status onto a second line. */
+        flex: 1 1 9rem;
+        min-width: 8rem;
     }
 
     .ao-find-field > span {
@@ -1270,17 +1273,29 @@
         color: var(--wa-ink, #333);
     }
 
-    .ao-find-wide { flex: 1; min-width: 13rem; }
+    .ao-find-wide { flex: 2 1 12rem; min-width: 11rem; }
     .ao-find-grow { flex: 1; }
 
     .ao-find-field input,
     .ao-find-field select {
+        width: 100%;
+        min-width: 0;
         height: 2.1rem;
         padding: 0 0.55rem;
         border: 1px solid var(--wa-border, #ccc);
         border-radius: var(--wa-radius, 3px);
         background: #fff;
         font-size: 0.875rem;
+    }
+
+    /* Below tablet width the band stacks: full-width fields, full-width buttons, no glass. */
+    @media (max-width: 760px) {
+        .ao-find { flex-direction: column; align-items: stretch; }
+        .ao-find-glass { display: none; }
+        .ao-find-field,
+        .ao-find-wide { min-width: 100%; }
+        .ao-find-adv,
+        .ao-find-go { width: 100%; justify-content: center; }
     }
 
     .ao-find-field input:focus,
@@ -2012,8 +2027,10 @@
         display: inline-flex;
         align-items: center;
         gap: 0.3rem;
-        color: #6e6e6e;
+        color: var(--wa-text, #2b2b2b);
     }
+
+    .ao-mu-2fa svg { width: 14px; height: 14px; }
 
     .ao-mu-2fa-on { color: #3c763d; font-weight: 600; }
 
@@ -2068,8 +2085,10 @@
         background: none;
         text-align: start;
         font: inherit;
+        font-size: 0.85rem;
         color: var(--wa-text, #2b2b2b);
         cursor: pointer;
+        white-space: nowrap;
     }
 
     .ao-mu-manage-menu a:hover,
@@ -2254,6 +2273,15 @@
         .ao-mud-row { grid-template-columns: 1fr; gap: 0.3rem; }
         .ao-mud-row > span:first-child { text-align: start; }
     }
+
+    /* The small "Are you sure?" variant of the modal, as the reference confirms resets. */
+    .ao-mud-sm { width: 37rem; }
+
+    .ao-mud-text { padding: 1.1rem 1.5rem 0; }
+
+    .ao-mud-text p + p { margin-top: 0.8rem; }
+
+    .ao-mud-foot-only-right { justify-content: flex-end; margin-top: 1.1rem; }
 
     .ao-mu-selected {
         margin-top: 0.7rem;

@@ -419,8 +419,9 @@
 
     .fi-dropdown-list-item {
         border-radius: 0;
-        padding: 0.4rem 1.1rem;
-        font-size: 15px;
+        /* The reference's menu rows are tighter and a size down from the chrome. */
+        padding: 0.28rem 1rem;
+        font-size: 14px;
         color: var(--wa-ink);
     }
 
