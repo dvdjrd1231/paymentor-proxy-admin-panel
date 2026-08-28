@@ -72,6 +72,12 @@ class ManageUsers extends Page
     private function query()
     {
         $query = User::query()
+            // Client accounts only, as WHMCS's Manage Users is: its 808 records are client
+            // logins, and administrators live on their own screen. Leandro's point exactly —
+            // client user management and administrator management are separate concerns,
+            // so an admin never appears in this list. Administrators are managed from
+            // Utilities → Administrators (core's Users list, where roles are assigned).
+            ->whereNull('role_id')
             // One extra column beats a query per row: the newest session stamp, or NULL for
             // a user who has never signed in.
             ->addSelect(['last_login_at' => UserSession::query()
