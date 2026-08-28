@@ -13,29 +13,29 @@
             <div class="ao-anc-col">
                 <label class="ao-anc-row">
                     <span>First Name</span>
-                    <input type="text" wire:model="first_name" required>
+                    <input type="text" wire:model="first_name" placeholder="John" required>
                 </label>
                 <label class="ao-anc-row">
                     <span>Last Name</span>
-                    <input type="text" wire:model="last_name" required>
+                    <input type="text" wire:model="last_name" placeholder="Doe" required>
                 </label>
                 @isset($fixed['company_name'])
                     <label class="ao-anc-row">
                         <span>Company Name</span>
                         <span class="ao-anc-field">
-                            <input type="text" wire:model="props.company_name">
+                            <input type="text" wire:model="props.company_name" placeholder="Acme Technologies, Inc.">
                             <i>(Optional)</i>
                         </span>
                     </label>
                 @endisset
                 <label class="ao-anc-row">
                     <span>Email Address</span>
-                    <input type="email" wire:model="email" required>
+                    <input type="email" wire:model="email" placeholder="user@example.com" required>
                 </label>
                 <label class="ao-anc-row">
                     <span>Password</span>
                     <span class="ao-anc-field">
-                        <input type="text" wire:model="password" data-ao-password required>
+                        <input type="text" wire:model="password" placeholder="Minimum 8 characters" data-ao-password required>
                         <button type="button" class="ao-anc-generate" data-ao-generate>Generate Password</button>
                     </span>
                 </label>
@@ -59,15 +59,14 @@
             </div>
 
             <div class="ao-anc-col">
-                @foreach ([['address', 'Address 1'], ['address2', 'Address 2'], ['city', 'City'], ['state', 'State/Region'], ['zip', 'Postcode']] as [$key, $label])
+                @foreach ([['address', 'Address 1', '123 Market Street'], ['address2', 'Address 2', 'Suite 400'], ['city', 'City', 'San Francisco'], ['state', 'State/Region', '—'], ['zip', 'Postcode', '94105']] as [$key, $label, $hint])
                     @isset($fixed[$key])
                         <label class="ao-anc-row">
                             <span>{{ $label }}</span>
                             <span class="ao-anc-field">
                                 {{-- The reference defaults State/Region to "—"; the store's
                                      property is free text, so the dash is the placeholder. --}}
-                                <input type="text" wire:model="props.{{ $key }}"
-                                    @if ($key === 'state') placeholder="—" @endif
+                                <input type="text" wire:model="props.{{ $key }}" placeholder="{{ $hint }}"
                                     @if ($fixed[$key]->required) required @endif>
                                 @unless ($fixed[$key]->required)
                                     <i>(Optional)</i>
@@ -124,7 +123,7 @@
                             @if ($property->type === 'checkbox')
                                 <span class="ao-anc-field"><input type="checkbox" wire:model="props.{{ $property->key }}" value="1"></span>
                             @else
-                                <input type="text" wire:model="props.{{ $property->key }}">
+                                <input type="text" wire:model="props.{{ $property->key }}" placeholder="{{ $property->name }}">
                             @endif
                         </label>
                     @endforeach
@@ -136,7 +135,7 @@
                             @if ($property->type === 'checkbox')
                                 <span class="ao-anc-field"><input type="checkbox" wire:model="props.{{ $property->key }}" value="1"></span>
                             @else
-                                <input type="text" wire:model="props.{{ $property->key }}">
+                                <input type="text" wire:model="props.{{ $property->key }}" placeholder="{{ $property->name }}">
                             @endif
                         </label>
                     @endforeach
@@ -197,7 +196,7 @@
 
         <div class="ao-anc-row ao-anc-row-wide">
             <span>Admin Notes</span>
-            <textarea class="ao-cp-notes" rows="4" wire:model="notes"></textarea>
+            <textarea class="ao-cp-notes" rows="4" wire:model="notes" placeholder="Notes for staff only — the client never sees these"></textarea>
         </div>
 
         @if ($errors->any())

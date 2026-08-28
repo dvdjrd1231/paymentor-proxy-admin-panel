@@ -16,7 +16,7 @@
 <style>
     .ao-panel {
         color: hsl(var(--color-base));
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
     }
 
     .ao-panel a {
@@ -1224,7 +1224,7 @@
        round green glass, the records line, the navy grid, and the page buttons. Measured
        against the screenshots rather than remembered. */
     .ao-mu {
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
         color: var(--wa-text, #4a4a4a);
     }
 
@@ -1235,7 +1235,7 @@
         padding: 0.9rem 1.1rem;
         border: 1px solid var(--wa-panel-border, #ddd);
         border-radius: var(--wa-radius, 3px);
-        background: #f8f8f8;
+        background: #f0f0f0;
         margin-bottom: 0.9rem;
     }
 
@@ -1467,7 +1467,7 @@
     }
 
     /* The reference stripes alternate rows. */
-    .ao-anc-col > .ao-anc-row:nth-child(odd) { background: #f8f8f8; }
+    .ao-anc-col > .ao-anc-row:nth-child(odd) { background: #f0f0f0; }
 
     .ao-anc-row > span:first-child {
         text-align: right;
@@ -1549,7 +1549,7 @@
         align-items: center;
     }
 
-    .ao-anc-grey { background: #f8f8f8; }
+    .ao-anc-grey { background: #f0f0f0; }
 
     /* The blank alignment rows must be as tall as a real one, or they align nothing. */
     .ao-anc-row[aria-hidden] { min-height: calc(2.1rem + 0.9rem); }
@@ -1679,7 +1679,7 @@
     /* The reference's panel titles: navy on a quiet band, centred. */
     .ao-cp > h3 {
         padding: 0.5rem 0.75rem;
-        background: #f5f5f5;
+        background: #ededed;
         border-bottom: 1px solid var(--wa-panel-border, #ddd);
         text-align: center;
         font-size: 0.9rem;
@@ -1719,7 +1719,7 @@
     }
 
     .ao-cp-kv-band td {
-        background: #f5f5f5;
+        background: #ededed;
         font-weight: 700;
         color: var(--wa-ink, #333);
     }
@@ -1771,7 +1771,7 @@
 
     .ao-cs-band > h4 {
         padding: 0.45rem 0.75rem;
-        background: #efefef;
+        background: #e7e7e7;
         text-align: center;
         font-weight: 700;
         color: var(--wa-ink, #333);
@@ -1861,7 +1861,7 @@
         margin-bottom: -1px;
         border: 1px solid var(--wa-panel-border, #ddd);
         border-radius: 3px 3px 0 0;
-        background: #f5f5f5;
+        background: #ededed;
         color: var(--wa-text, #333);
         cursor: pointer;
     }
@@ -1920,6 +1920,54 @@
     }
 
     .ao-cp-wide { max-width: 56rem; }
+
+    /* The reference's flags strip beside the profile heading. */
+    .ao-cs-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+    }
+
+    .ao-cs-flags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px;
+        background: #f0f0f0;
+        font-size: 0.85rem;
+    }
+
+    .ao-cs-flags > span {
+        padding: 0.3rem 0.7rem;
+    }
+
+    .ao-cs-flags > span + span {
+        border-inline-start: 1px solid var(--wa-panel-border, #ddd);
+    }
+
+    .ao-cs-yes { color: #3c763d; text-decoration: underline; }
+    .ao-cs-no { color: #d9534f; text-decoration: underline; }
+
+    /* A control the reference draws that Paymenter has nothing behind: lettered like a
+       link, does nothing, says why on hover. */
+    .ao-cp-dead {
+        color: var(--wa-link, #337ab7);
+        opacity: 0.75;
+        cursor: not-allowed;
+    }
+
+    /* ── Responsive backstops ── */
+    .ao-cs-switch select { max-width: 100%; }
+
+    .ao-find { flex-wrap: wrap; }
+
+    @media (max-width: 900px) {
+        .ao-mu-line { flex-wrap: wrap; }
+        .ao-cs-flags { font-size: 0.78rem; }
+    }
 
     /* Wide grids scroll inside their panel rather than widening the page. */
     .ao-mu {

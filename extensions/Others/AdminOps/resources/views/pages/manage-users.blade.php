@@ -15,7 +15,7 @@
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-grow">
                     <span>User Name/Email Address</span>
-                    <input type="text" wire:model="q">
+                    <input type="text" wire:model="q" placeholder="Name or email address">
                 </label>
             </div>
 
