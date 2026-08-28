@@ -367,6 +367,10 @@ class WhmcsNavigation
     {
         return static::group('Utilities', 'ri-tools-line', [
             static::page(Updates::class, 'Update Paymenter'),
+            // Administrator accounts, kept apart from the Clients menu on purpose: Manage
+            // Users lists client logins only, as the reference does, and staff are managed
+            // here — core's Users list is where roles are assigned.
+            static::link(UserResource::class, 'Administrators'),
             class_exists(AutomationStatus::class)
                 ? static::page(AutomationStatus::class, 'Automation Status')
                 : static::page(CronStats::class, 'Automation Status'),

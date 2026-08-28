@@ -785,6 +785,13 @@
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 0.65rem;
             grid-auto-rows: 10px;
+            /* `dense` is what makes the distances *standard*: without it, auto-placement
+               walks forward only, and a tall panel earlier in the sequence strands a hole
+               it never looks back to fill — the gaps Leandro boxed in orange. Dense
+               backfills them, exactly as the reference's packer does; the cost is that a
+               later small panel may sit above an earlier tall one, which is also exactly
+               how the reference behaves. */
+            grid-auto-flow: dense;
         }
 
         /* `13` is a lazy placeholder's own height, so the frame before the first pack()
@@ -1202,7 +1209,7 @@
        round green glass, the records line, the navy grid, and the page buttons. Measured
        against the screenshots rather than remembered. */
     .ao-mu {
-        font-size: 0.8125rem;
+        font-size: 0.875rem;
         color: var(--wa-text, #4a4a4a);
     }
 
@@ -1258,7 +1265,7 @@
         border: 1px solid var(--wa-border, #ccc);
         border-radius: var(--wa-radius, 3px);
         background: #fff;
-        font-size: 0.8125rem;
+        font-size: 0.875rem;
     }
 
     .ao-find-field input:focus,
@@ -1278,7 +1285,7 @@
         background: var(--wa-link, #337ab7);
         color: #fff;
         font-weight: 600;
-        font-size: 0.8125rem;
+        font-size: 0.875rem;
         cursor: pointer;
     }
 
@@ -1365,10 +1372,38 @@
         color: var(--wa-muted, #888);
     }
 
-    .ao-mu-status.ao-mu-active { color: #3c763d; font-weight: 600; }
-    .ao-mu-status.ao-mu-inactive { color: var(--wa-muted, #888); }
+    /* Status as the reference badges it: a solid pill, uppercase white lettering — the
+       green ACTIVE column Leandro boxed. Plain coloured text did not read as a status. */
+    .ao-mu-status {
+        display: inline-block;
+        padding: 0.15rem 0.65rem;
+        border-radius: 3px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: #fff;
+    }
 
-    .ao-mu-actions a { margin-inline: 0.35rem; white-space: nowrap; }
+    .ao-mu-status.ao-mu-active { background: #77c13a; }
+    .ao-mu-status.ao-mu-inactive { background: #9ea6ad; }
+
+    /* Actions as the reference's small buttons, not bare links. */
+    .ao-mu-actions a {
+        display: inline-block;
+        margin-inline: 0.15rem;
+        padding: 0.25rem 0.75rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        color: var(--wa-text, #4a4a4a);
+        white-space: nowrap;
+    }
+
+    .ao-mu-actions a:hover {
+        background: #f0f0f0;
+        text-decoration: none;
+    }
 
     .ao-mu-selected {
         margin-top: 0.7rem;
@@ -1384,7 +1419,7 @@
         border-radius: var(--wa-radius, 3px);
         background: #fff;
         color: var(--wa-text, #4a4a4a);
-        font-size: 0.8125rem;
+        font-size: 0.875rem;
         cursor: pointer;
     }
 

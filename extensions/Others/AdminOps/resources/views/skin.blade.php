@@ -52,7 +52,7 @@
         background: var(--wa-canvas);
         color: var(--wa-text);
         font-family: 'Open Sans', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        font-size: 13px;
+        font-size: 14px;
     }
 
     /* ── Top menu bar ────────────────────────────────────────────────────────
@@ -364,13 +364,15 @@
         border-radius: 0;
         height: var(--wa-topbar-h);
         padding: 0 0.9rem;
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 400;
         line-height: var(--wa-topbar-h);
     }
 
-    .fi-topbar-item-btn:hover,
-    .fi-topbar-item.fi-active .fi-topbar-item-btn {
+    /* Hover only — deliberately not `.fi-active`. Leandro: the menu being *on* the page it
+       links to should not keep its cell shaded; the reference highlights on hover and on
+       press, never at rest. */
+    .fi-topbar-item-btn:hover {
         background: var(--wa-blue-dark);
         color: #ffffff;
     }
@@ -402,7 +404,7 @@
     .fi-dropdown-list-item {
         border-radius: 0;
         padding: 0.4rem 1.1rem;
-        font-size: 13px;
+        font-size: 14px;
         color: var(--wa-ink);
     }
 
@@ -733,7 +735,7 @@
     }
 
     .fi-ta-cell {
-        font-size: 12.5px;
+        font-size: 13.5px;
         padding-block: 0.5rem;
     }
 
@@ -761,7 +763,7 @@
     }
 
     .fi-ta-empty-state-heading {
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 400;
         color: var(--wa-muted);
     }
@@ -776,7 +778,7 @@
        « Previous Page · 1 · Next Page » strip. */
     .fi-pagination {
         padding-block: 0.6rem;
-        font-size: 12.5px;
+        font-size: 13.5px;
     }
 
     .fi-pagination-item-btn,
@@ -809,7 +811,7 @@
     .fi-pagination-overview,
     .fi-pagination-records-per-page-select-ctn {
         color: var(--wa-text);
-        font-size: 12.5px;
+        font-size: 13.5px;
     }
 
     /* ── Forms ───────────────────────────────────────────────────────────────
@@ -819,7 +821,7 @@
        each resource form already declares. */
     .fi-fo-field-label,
     .fi-fo-field-label-content {
-        font-size: 12.5px;
+        font-size: 13.5px;
         font-weight: 600;
         color: var(--wa-ink);
     }
@@ -830,7 +832,7 @@
 
     .fi-input,
     .fi-select-input {
-        font-size: 12.5px;
+        font-size: 13.5px;
     }
 
     /* ── Stat tiles ──────────────────────────────────────────────────────────
@@ -846,7 +848,7 @@
     }
 
     .fi-wi-stats-overview-stat-label {
-        font-size: 12.5px;
+        font-size: 13.5px;
         font-weight: 400;
         color: var(--wa-text);
     }
@@ -861,7 +863,7 @@
        Square, small, WHMCS blue for the primary action. */
     .fi-btn {
         border-radius: var(--wa-radius);
-        font-size: 12.5px;
+        font-size: 13.5px;
         font-weight: 400;
         box-shadow: none;
     }
@@ -993,7 +995,7 @@
         width: 100%;
         justify-content: center;
         padding-block: 0.5rem;
-        font-size: 13px;
+        font-size: 14px;
     }
 
     /* The CAPTCHA (`adminops::captcha`). reCAPTCHA v2's checkbox is a fixed 304px in a
@@ -1095,3 +1097,64 @@
        the chrome, so it stays readable either way, and forcing light would override a
        preference the panel offers to match a reference that never had the choice. */
 </style>
+
+<script>
+    {{-- The reference opens its menus on hover; Filament's dropdowns open on click. Rather
+         than replace the dropdown (Alpine owns it), the hover is translated into the click
+         Alpine expects: enter an item, its menu opens and any other closes; leave both the
+         item and its panel, it closes after a beat — the beat is what lets the pointer
+         travel from the label down into the panel without the menu vanishing en route.
+         Everything is delegated from the document, so it survives any re-render. --}}
+    (() => {
+        if (window.aoHoverMenus) return;
+        window.aoHoverMenus = true;
+
+        let closer = null;
+
+        {{-- The hover unit is `.fi-dropdown`, not `.fi-topbar-item`: Filament nests
+             `.fi-dropdown > .fi-dropdown-trigger > li.fi-topbar-item > button`, with the
+             panel a *sibling* of the trigger — so from the button, the first ancestor that
+             contains both halves is the dropdown itself. --}}
+        const panelOf = (item) => item.querySelector('.fi-dropdown-panel');
+        const isOpen = (item) => {
+            const panel = panelOf(item);
+
+            return !!panel && panel.style.display !== 'none' && panel.style.display !== '';
+        };
+        {{-- mousedown, not click: the trigger's Alpine binding is `x-on:mousedown`, so a
+             programmatic click() lands on nothing at all — found by reading the trigger's
+             attributes after click() silently failed. --}}
+        const toggle = (item) => item.querySelector('.fi-dropdown-trigger')
+            ?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+
+        document.addEventListener('mouseover', (event) => {
+            const nav = event.target.closest('nav.fi-topbar');
+            if (!nav) return;
+
+            const item = event.target.closest('.fi-dropdown');
+
+            clearTimeout(closer);
+
+            if (!item || !panelOf(item)) return;
+
+            for (const other of nav.querySelectorAll('.fi-dropdown')) {
+                if (other !== item && isOpen(other)) toggle(other);
+            }
+
+            if (!isOpen(item)) toggle(item);
+        });
+
+        document.addEventListener('mouseout', (event) => {
+            const item = event.target.closest('nav.fi-topbar .fi-dropdown');
+            if (!item || !panelOf(item)) return;
+
+            const to = event.relatedTarget;
+            if (to && item.contains(to)) return;
+
+            clearTimeout(closer);
+            closer = setTimeout(() => {
+                if (isOpen(item) && !item.matches(':hover')) toggle(item);
+            }, 250);
+        });
+    })();
+</script>
