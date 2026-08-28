@@ -6,6 +6,7 @@ use App\Admin\Resources\InvoiceResource;
 use App\Admin\Resources\OrderResource;
 use App\Admin\Resources\ServiceResource;
 use App\Admin\Resources\TicketResource;
+use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewClient;
 
@@ -53,6 +54,72 @@ class Rail
             'icon' => $group->getIcon(),
             'items' => $items,
         ];
+    }
+
+    /**
+     * The rail's sections — plural, because the reference's Clients area shows three at
+     * once: Clients, Products/Services (with a "- Category" sub-entry per product group,
+     * exactly as it lists "- Shared Hosting"), and Affiliates. Everywhere else the rail
+     * stays one section, the group you are in.
+     *
+     * @return array<int, array{label: string, icon: string|\BackedEnum|null, items: array<int, array{label: string, url: string, badge: ?string}>}>
+     */
+    public static function sections(): array
+    {
+        $section = static::section();
+
+        if (!$section) {
+            return [];
+        }
+
+        if ($section['label'] !== 'Clients') {
+            return [$section];
+        }
+
+        $find = fn (string $label): ?array => collect($section['items'])
+            ->first(fn (array $item): bool => $item['label'] === $label);
+
+        $item = fn (?array $found): array => $found ? [$found] : [];
+
+        $products = $item($find('Products/Services'));
+
+        if ($products !== []) {
+            $products[0]['label'] = 'List All Products/Services';
+
+            try {
+                foreach (Category::query()->whereNull('parent_id')->orderBy('sort')->orderBy('name')->get() as $category) {
+                    $products[] = [
+                        'label' => '- ' . $category->name,
+                        'url' => $products[0]['url'] . '?category=' . $category->id,
+                        'badge' => null,
+                    ];
+                }
+            } catch (\Throwable $e) {
+                // No categories is a rail without sub-entries, never a broken rail.
+            }
+        }
+
+        return array_values(array_filter([
+            [
+                'label' => 'Clients',
+                'icon' => 'ri-group-line',
+                'items' => array_merge(
+                    $item($find('View/Search Clients')),
+                    $item($find('Add New Client')),
+                    $item($find('Manage Users')),
+                ),
+            ],
+            [
+                'label' => 'Products/Services',
+                'icon' => 'ri-instance-line',
+                'items' => array_merge($products, $item($find('Cancellation Requests'))),
+            ],
+            [
+                'label' => 'Affiliates',
+                'icon' => 'ri-share-forward-line',
+                'items' => $item($find('Manage Affiliates')),
+            ],
+        ], fn (array $s): bool => $s['items'] !== []));
     }
 
     /**

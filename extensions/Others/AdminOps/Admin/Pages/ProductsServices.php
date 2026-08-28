@@ -37,6 +37,10 @@ class ProductsServices extends Page
     #[Url]
     public bool $filter = false;
 
+    /** The rail's "- Category" sub-entries land here, as the reference filters by group. */
+    #[Url]
+    public string $category = '';
+
     #[Url]
     public string $product = '';
 
@@ -113,6 +117,10 @@ class ProductsServices extends Page
 
         if ($this->product !== '') {
             $query->whereHas('product', fn ($q) => $q->where('name', 'like', '%' . $this->product . '%'));
+        }
+
+        if ($this->category !== '' && ctype_digit($this->category)) {
+            $query->whereHas('product', fn ($q) => $q->where('category_id', (int) $this->category));
         }
 
         if ($this->client !== '') {
