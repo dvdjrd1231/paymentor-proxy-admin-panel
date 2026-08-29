@@ -2,9 +2,13 @@
 
 namespace Paymenter\Extensions\Others\InvoiceOps\Admin\Pages;
 
+use App\Models\Gateway;
 use App\Models\InvoiceTransaction;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Paymenter\Extensions\Others\InvoiceOps\Models\InvoiceRefund;
 
 /**
@@ -75,8 +79,119 @@ class Transactions extends Page
         return [
             'rows' => $this->merge($rows, $refunds),
             'totals' => $this->totals(),
+            'deltas' => $this->deltas(),
+            'chart' => $this->chart(),
+            'balances' => $this->gatewayBalances(),
             'feesRecorded' => InvoiceTransaction::where('fee', '>', 0)->exists(),
         ];
+    }
+
+    /**
+     * The reference's area chart: net revenue per day (amount minus fee), last 30 days, in
+     * the store's default currency — the one line a chart without exchange rates can draw.
+     *
+     * @return array{currency: string, days: array<int, array{date: string, net: float}>}
+     */
+    private function chart(): array
+    {
+        $currency = config('settings.default_currency', 'USD');
+
+        $sums = InvoiceTransaction::query()
+            ->join('invoices', 'invoices.id', '=', 'invoice_transactions.invoice_id')
+            ->where('invoices.currency_code', $currency)
+            ->where('invoice_transactions.created_at', '>=', now()->subDays(30)->startOfDay())
+            ->groupBy(DB::raw('DATE(invoice_transactions.created_at)'))
+            ->selectRaw('DATE(invoice_transactions.created_at) as day, SUM(invoice_transactions.amount - invoice_transactions.fee) as net')
+            ->pluck('net', 'day');
+
+        $days = [];
+        for ($i = 30; $i >= 0; $i--) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            $days[] = ['date' => $date, 'net' => (float) ($sums[$date] ?? 0)];
+        }
+
+        return ['currency' => $currency, 'days' => $days];
+    }
+
+    /**
+     * The reference's "-1% from last 30 days" lines: this month against the month before,
+     * per currency, for income / fees / refunds.
+     *
+     * @return array<string, array{in: float|null, fee: float|null, out: float|null}>
+     */
+    private function deltas(): array
+    {
+        $window = fn ($from, $to) => InvoiceTransaction::query()
+            ->join('invoices', 'invoices.id', '=', 'invoice_transactions.invoice_id')
+            ->whereBetween('invoice_transactions.created_at', [$from, $to])
+            ->groupBy('invoices.currency_code')
+            ->selectRaw('invoices.currency_code as code, SUM(invoice_transactions.amount) as in_sum, SUM(invoice_transactions.fee) as fee_sum')
+            ->get()
+            ->keyBy('code');
+
+        $current = $window(now()->subDays(30), now());
+        $previous = $window(now()->subDays(60), now()->subDays(30));
+
+        $percent = function (?float $now, ?float $then): ?float {
+            if (!$then) {
+                return null;
+            }
+
+            return round((($now ?? 0) - $then) / $then * 100);
+        };
+
+        $deltas = [];
+        foreach ($current->keys()->merge($previous->keys())->unique() as $code) {
+            $deltas[$code] = [
+                'in' => $percent((float) ($current[$code]->in_sum ?? 0), (float) ($previous[$code]->in_sum ?? 0)),
+                'fee' => $percent((float) ($current[$code]->fee_sum ?? 0), (float) ($previous[$code]->fee_sum ?? 0)),
+                'out' => null,
+            ];
+        }
+
+        return $deltas;
+    }
+
+    /**
+     * The reference's Gateway Balances panel. Stripe is the one connected gateway with a
+     * balance API; asked politely, cached five minutes, and absent — not faked — when the
+     * key is missing or the call fails.
+     *
+     * @return array<int, array{gateway: string, label: string, amount: string}>
+     */
+    private function gatewayBalances(): array
+    {
+        return Cache::remember('invoiceops.gateway-balances', 300, function (): array {
+            try {
+                $secret = Gateway::where('extension', 'Stripe')->first()
+                    ?->settings->firstWhere('key', 'stripe_secret_key')?->value;
+
+                if (!$secret) {
+                    return [];
+                }
+
+                $response = Http::withToken($secret)->timeout(8)->get('https://api.stripe.com/v1/balance');
+
+                if (!$response->ok()) {
+                    return [];
+                }
+
+                $tiles = [];
+                foreach (['available' => 'Available', 'pending' => 'Pending'] as $key => $label) {
+                    foreach ($response->json($key, []) as $bucket) {
+                        $tiles[] = [
+                            'gateway' => 'Stripe',
+                            'label' => $label,
+                            'amount' => '$' . number_format($bucket['amount'] / 100, 2) . ' ' . strtoupper($bucket['currency']),
+                        ];
+                    }
+                }
+
+                return $tiles;
+            } catch (\Throwable $e) {
+                return [];
+            }
+        });
     }
 
     /**

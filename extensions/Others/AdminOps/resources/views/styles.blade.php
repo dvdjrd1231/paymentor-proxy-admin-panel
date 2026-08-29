@@ -1492,6 +1492,7 @@
 
     .ao-anc-row input[type="text"],
     .ao-anc-row input[type="email"],
+    .ao-anc-row input[type="number"],
     .ao-anc-row select {
         width: 100%;
         height: 2.1rem;
@@ -2281,6 +2282,232 @@
         .ao-mud-row { grid-template-columns: 1fr; gap: 0.3rem; }
         .ao-mud-row > span:first-child { text-align: start; }
     }
+
+    /* ── Manage Orders ──────────────────────────────────────────────────────
+       The reference's status words are coloured text, not pills. */
+    .ao-mo-complete { color: #3c763d; }
+    .ao-mo-incomplete { color: #d9534f; }
+    .ao-mo-active { color: #7ac143; }
+    .ao-mo-pending { color: #f0ad4e; }
+    .ao-mo-suspended { color: #d9534f; }
+    .ao-mo-terminated { color: var(--wa-muted, #6b6b6b); }
+
+    .ao-mo-delete {
+        border: 0;
+        background: none;
+        padding: 0;
+        cursor: pointer;
+        color: #d9534f;
+    }
+
+    .ao-mo-delete:hover { color: #b52b27; }
+
+    /* ── Add New Order ──────────────────────────────────────────────────────
+       The reference's split: the striped form on the left, Order Summary card right. */
+    .ao-ano {
+        display: flex;
+        gap: 2rem;
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .ao-ano-main { flex: 2 1 34rem; min-width: 0; }
+
+    .ao-ano-heading {
+        margin: 1.1rem 0 0.5rem;
+        font-weight: 700;
+    }
+
+    .ao-ano-checks {
+        display: flex;
+        gap: 1.2rem;
+        flex-wrap: wrap;
+    }
+
+    .ao-ano-checks label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .ao-ano-qty { max-width: 6rem; }
+
+    .ao-ano-side {
+        flex: 1 1 16rem;
+        max-width: 22rem;
+        text-align: center;
+    }
+
+    .ao-ano-side > h4 {
+        font-size: 1.15rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .ao-ano-card {
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 4px;
+        background: #fff;
+        margin-bottom: 1rem;
+        text-align: start;
+    }
+
+    .ao-ano-none {
+        padding: 0.7rem 1rem;
+        text-align: center;
+        color: var(--wa-muted, #6b6b6b);
+        border-bottom: 1px solid var(--wa-panel-border, #ddd);
+    }
+
+    .ao-ano-line,
+    .ao-ano-sub,
+    .ao-ano-total {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.55rem 0.9rem;
+    }
+
+    .ao-ano-line { border-bottom: 1px solid var(--wa-panel-border, #ddd); }
+
+    .ao-ano-sub { background: #fdfce5; border-bottom: 1px solid var(--wa-panel-border, #ddd); }
+
+    .ao-ano-total {
+        background: #eaf6e6;
+        font-size: 1.15rem;
+        font-weight: 700;
+    }
+
+    .ao-ano-submit { padding: 0.55rem 1.6rem; }
+
+    /* ── Invoices ───────────────────────────────────────────────────────────
+       The reference's headline bar: Paid green, Unpaid red, Overdue black-on-grey. */
+    .ao-inv-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 2rem;
+        padding: 0.8rem 1.1rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px;
+        background: #f0f0f0;
+        font-size: 1.05rem;
+        font-weight: 700;
+    }
+
+    .ao-inv-bar-paid { color: #3c763d; }
+    .ao-inv-bar-unpaid { color: #d9534f; }
+    .ao-inv-bar-overdue { color: var(--wa-text, #2b2b2b); }
+
+    .ao-inv-paid { color: #7ac143; }
+    .ao-inv-unpaid { color: #d9534f; }
+    .ao-inv-overdue { color: #b52b27; font-weight: 700; }
+    .ao-inv-cancelled { color: var(--wa-muted, #6b6b6b); }
+    .ao-inv-draft { color: #f0ad4e; }
+    .ao-inv-refunded { color: #5bc0de; }
+
+    /* ── Transactions ───────────────────────────────────────────────────────
+       The reference's chart-and-tiles top, then Gateway Balances. */
+    .ao-tx-tabs { display: flex; gap: 0.3rem; }
+
+    .ao-tx-tab-dead { opacity: 0.7; cursor: not-allowed; }
+
+    .ao-tx-top {
+        display: flex;
+        gap: 1.6rem;
+        align-items: stretch;
+        flex-wrap: wrap;
+        margin: 0.9rem 0;
+    }
+
+    .ao-tx-chart {
+        flex: 2 1 30rem;
+        min-width: 0;
+        position: relative;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px;
+        background: #fff;
+        padding: 1.6rem 0.8rem 0.4rem;
+    }
+
+    .ao-tx-chart svg { width: 100%; height: auto; display: block; }
+
+    .ao-tx-axis {
+        position: absolute;
+        top: 0.4rem;
+        left: 0.8rem;
+        font-size: 0.75rem;
+        color: var(--wa-muted, #6b6b6b);
+    }
+
+    .ao-tx-tiles {
+        flex: 1 1 16rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+        justify-content: center;
+    }
+
+    .ao-tx-tile {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+    }
+
+    .ao-tx-tile-ic {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        background: #f0f0f0;
+    }
+
+    .ao-tx-tile-ic svg { width: 1.4rem; height: 1.4rem; }
+
+    .ao-tx-ic-income { color: #3c763d; }
+    .ao-tx-ic-fees { color: #337ab7; }
+    .ao-tx-ic-out { color: #6b6b6b; }
+
+    .ao-tx-tile-body { display: flex; flex-direction: column; }
+
+    .ao-tx-tile-label { color: var(--wa-muted, #6b6b6b); }
+
+    .ao-tx-tile-body b { font-size: 1.25rem; }
+
+    .ao-tx-tile-body i,
+    .ao-tx-note { font-style: normal; font-size: 0.8rem; color: var(--wa-muted, #6b6b6b); }
+
+    .ao-tx-up { color: #3c763d; font-style: normal; font-size: 0.8rem; }
+    .ao-tx-down { color: #d9534f; font-style: normal; font-size: 0.8rem; }
+
+    .ao-tx-heading { font-weight: 700; margin: 0.4rem 0; }
+
+    .ao-tx-balances {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.9rem;
+    }
+
+    .ao-tx-balance {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        min-width: 11rem;
+        padding: 0.7rem 1rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px;
+        background: #fff;
+    }
+
+    .ao-tx-balance b { font-size: 1.05rem; }
+
+    .ao-tx-balance i { font-style: normal; font-size: 0.8rem; color: var(--wa-muted, #6b6b6b); }
+
+    .ao-tx-desc { max-width: 26rem; overflow-wrap: anywhere; }
+
+    .ao-tx-out { color: #d9534f; }
 
     /* The small "Are you sure?" variant of the modal, as the reference confirms resets. */
     .ao-mud-sm { width: 37rem; }

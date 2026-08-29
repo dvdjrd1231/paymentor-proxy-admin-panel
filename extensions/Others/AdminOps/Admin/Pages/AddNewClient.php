@@ -41,6 +41,18 @@ class AddNewClient extends Page
     /** The keys the fixed layout places itself; everything else renders in the extras rows. */
     public const PLACED = ['company_name', 'address', 'address2', 'city', 'state', 'zip', 'country', 'phone'];
 
+    /**
+     * Brazil's registry fields — RG and CPF for individuals, CNPJ and State Registration
+     * for companies. Leandro: Brazil is the only country that uses them, so they render
+     * (and save) only when the country is Brazil.
+     */
+    public const BRAZIL_ONLY = ['cpf', 'rg', 'trade_name', 'cnpj', 'state_registration', 'state_registration_exempt'];
+
+    public static function isBrazil(?string $country): bool
+    {
+        return in_array(strtolower(trim((string) $country)), ['brazil', 'brasil', 'br'], true);
+    }
+
     public string $first_name = '';
 
     public string $last_name = '';
@@ -132,7 +144,10 @@ class AddNewClient extends Page
 
         return [
             'fixed' => $properties->only(self::PLACED),
-            'extras' => $properties->except(self::PLACED),
+            // The Brazil-only registry fields fold away for every other country.
+            'extras' => static::isBrazil($this->props['country'] ?? null)
+                ? $properties->except(self::PLACED)
+                : $properties->except([...self::PLACED, ...self::BRAZIL_ONLY]),
             'currencies' => Currency::query()->pluck('code')->all(),
         ];
     }
@@ -142,7 +157,11 @@ class AddNewClient extends Page
         $required = CustomProperty::query()
             ->where('model', User::class)
             ->where('required', true)
-            ->pluck('key');
+            ->pluck('key')
+            // A hidden field cannot be demanded: the Brazil-only registry fields are
+            // neither required nor saved unless the country is Brazil.
+            ->when(!static::isBrazil($this->props['country'] ?? null),
+                fn ($keys) => $keys->reject(fn (string $key) => in_array($key, self::BRAZIL_ONLY, true)));
 
         $rules = [
             'first_name' => ['required', 'string', 'max:255'],
@@ -168,6 +187,10 @@ class AddNewClient extends Page
             ]);
 
             $values = array_filter(array_map(trim(...), $this->props), fn ($v) => $v !== '');
+
+            if (!static::isBrazil($values['country'] ?? null)) {
+                $values = array_diff_key($values, array_flip(self::BRAZIL_ONLY));
+            }
 
             if ($this->currency !== '') {
                 $values['currency'] = $this->currency;
