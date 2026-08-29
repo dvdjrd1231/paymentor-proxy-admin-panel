@@ -38,6 +38,9 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewClient;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewOrder;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AutomationStatus;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\Catalogue;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates;
@@ -240,20 +243,31 @@ class WhmcsNavigation
      */
     private static function orders(): ?NavigationGroup
     {
+        // Core's Orders and Services resources are reached from Manage Orders' rows now;
+        // marked placed so the Addons catch-all does not sweep them back in.
+        static::$placed[OrderResource::class] = true;
+        static::$placed[ServiceResource::class] = true;
+
+        // The reference's sidebar, on the reference's own page: one Manage Orders screen,
+        // the filters told apart by ?status=. {@see ManageOrders}.
         return static::group('Orders', 'ri-shopping-bag-4-line', [
-            static::link(OrderResource::class, 'List All Orders'),
-            static::link(
-                ServiceResource::class,
-                'Pending Orders',
-                params: ['filters' => ['status' => ['value' => 'pending']]],
+            static::pageLink(ManageOrders::class, 'List All Orders'),
+            static::pageLink(
+                ManageOrders::class,
+                '- Pending Orders',
+                params: ['status' => 'pending'],
                 badge: fn () => Metrics::servicesPending(),
                 badgeColor: 'info',
             ),
-            static::link(
-                ServiceResource::class,
-                'Active Orders',
-                params: ['filters' => ['status' => ['value' => 'active']]],
+            static::pageLink(ManageOrders::class, '- Active Orders', params: ['status' => 'active']),
+            static::pageLink(
+                ManageOrders::class,
+                '- Suspended Orders',
+                params: ['status' => 'suspended'],
+                badge: fn () => Metrics::servicesSuspended(),
+                badgeColor: 'warning',
             ),
+            static::pageLink(ManageOrders::class, '- Cancelled Orders', params: ['status' => 'cancelled']),
             // Beside the orders it constrains. The badge counts terms that are overdue and
             // still running, which should always be zero — a number there means the
             // every-minute scheduler is not running.
@@ -265,30 +279,49 @@ class WhmcsNavigation
                     : null,
                 badgeColor: 'danger',
             ),
-            static::link(
-                ServiceResource::class,
-                'Suspended Orders',
-                params: ['filters' => ['status' => ['value' => 'suspended']]],
-                badge: fn () => Metrics::servicesSuspended(),
-                badgeColor: 'warning',
-            ),
-            static::link(
-                ServiceResource::class,
-                'Cancelled Orders',
-                params: ['filters' => ['status' => ['value' => 'cancelled']]],
-            ),
-            static::link(OrderResource::class, 'Add New Order', page: 'create'),
+            static::page(AddNewOrder::class, 'Add New Order'),
         ]);
     }
 
     private static function billing(): ?NavigationGroup
     {
+        // Core's invoice list is reached from Manage Invoices' rows; placed for the same
+        // reason as OrderResource above.
+        static::$placed[InvoiceResource::class] = true;
+
+        // The reference's Billing menu, in the reference's order: Transactions List, then
+        // Invoices with its status flyout, then the rest. {@see ManageInvoices}.
         return static::group('Billing', 'ri-bill-line', [
-            static::link(InvoiceTransactionResource::class, 'Transactions List'),
-            // The reference's own Transactions page: Amount In, Fees, Amount Out, and the
-            // three tiles above them. Core's list has Amount and nothing else, which cannot
-            // answer what was actually kept.
-            static::page(Transactions::class, 'Transactions Report'),
+            static::page(Transactions::class, 'Transactions List'),
+            static::pageLink(ManageInvoices::class, 'Invoices'),
+            static::pageLink(ManageInvoices::class, '- Paid', params: ['status' => 'paid']),
+            static::pageLink(ManageInvoices::class, '- Draft', params: ['status' => 'draft']),
+            static::pageLink(
+                ManageInvoices::class,
+                '- Unpaid',
+                params: ['status' => 'unpaid'],
+                badge: fn () => Metrics::invoicesUnpaid(),
+                badgeColor: fn () => Metrics::invoicesOverdue() ? 'danger' : 'gray',
+            ),
+            static::pageLink(ManageInvoices::class, '- Overdue', params: ['status' => 'overdue']),
+            static::pageLink(ManageInvoices::class, '- Cancelled', params: ['status' => 'cancelled']),
+            static::pageLink(ManageInvoices::class, '- Refunded', params: ['status' => 'refunded']),
+            static::pageLink(ManageInvoices::class, '- Collections', params: ['status' => 'collections']),
+            static::pageLink(ManageInvoices::class, '- Payment Pending', params: ['status' => 'payment_pending']),
+            static::link(
+                BillableItemResource::class,
+                'Billable Items',
+                badge: fn () => class_exists(BillableItemResource::class)
+                    ? BillableItemResource::getNavigationBadge()
+                    : null,
+                badgeColor: 'warning',
+            ),
+            static::link(
+                QuoteResource::class,
+                'Quotes',
+                badge: fn () => class_exists(QuoteResource::class) ? QuoteResource::getNavigationBadge() : null,
+                badgeColor: 'info',
+            ),
             static::link(
                 RefundRequestResource::class,
                 'Refund Requests',
@@ -298,50 +331,11 @@ class WhmcsNavigation
                 badgeColor: 'danger',
             ),
             static::link(RefundResource::class, 'Refunds'),
-            static::link(InvoiceResource::class, 'All Invoices'),
-            static::link(
-                InvoiceResource::class,
-                'Unpaid Invoices',
-                params: ['filters' => ['status' => ['value' => 'pending']], 'sort' => 'due_at'],
-                badge: fn () => Metrics::invoicesUnpaid(),
-                badgeColor: fn () => Metrics::invoicesOverdue() ? 'danger' : 'gray',
-            ),
-            static::link(
-                InvoiceResource::class,
-                'Paid Invoices',
-                params: ['filters' => ['status' => ['value' => 'paid']]],
-            ),
-            static::link(
-                InvoiceResource::class,
-                'Cancelled Invoices',
-                params: ['filters' => ['status' => ['value' => 'cancelled']]],
-            ),
+            static::link(InvoiceOpsResource::class, 'Invoice Operations'),
+            static::link(InvoiceTransactionResource::class, 'Add Transaction'),
             // The reference keeps its gateway log under Billing, and this is the nearest
             // thing Paymenter has: every outbound HTTP call, gateways included. Also in
-            // Utilities, where core files it — two ways to one page, as with the invoice
-            // filters above.
-            // Publish a draft, record a refund, send one notice by hand — the three things
-            // the reference's invoice page can do that core's cannot.
-            static::link(
-                QuoteResource::class,
-                'Quotes',
-                badge: fn () => class_exists(QuoteResource::class) ? QuoteResource::getNavigationBadge() : null,
-                badgeColor: 'info',
-            ),
-            static::link(
-                BillableItemResource::class,
-                'Billable Items',
-                badge: fn () => class_exists(BillableItemResource::class)
-                    ? BillableItemResource::getNavigationBadge()
-                    : null,
-                badgeColor: 'warning',
-            ),
-            static::link(InvoiceOpsResource::class, 'Invoice Operations'),
-            static::link(
-                InvoiceResource::class,
-                'Draft Invoices',
-                params: ['filters' => ['status' => ['value' => 'draft']]],
-            ),
+            // Utilities, where core files it — two ways to one page.
             static::link(HttpLogResource::class, 'Gateway Log'),
             static::link(CouponResource::class, 'Coupons'),
             static::link(PaymentFeeRuleResource::class, 'Payment Fee Rules'),
@@ -568,6 +562,37 @@ class WhmcsNavigation
     private static function reachable(string $resource): bool
     {
         return !method_exists($resource, 'canAccess') || $resource::canAccess();
+    }
+
+    /**
+     * A link to a standalone page with query parameters — the reference's status filters
+     * ("Pending Orders", "- Paid") are one page told apart by `?status=`.
+     *
+     * @param  array<string, mixed>  $params
+     */
+    private static function pageLink(string $page, string $label, array $params = [], ?\Closure $badge = null, string|\Closure|null $badgeColor = null): ?NavigationItem
+    {
+        if (!class_exists($page)) {
+            return null;
+        }
+
+        if (method_exists($page, 'canAccess') && !$page::canAccess()) {
+            return null;
+        }
+
+        static::$placed[$page] = true;
+
+        $url = static::resolveUrl(fn (): string => $page::getUrl($params));
+
+        if ($url === null) {
+            return null;
+        }
+
+        $item = NavigationItem::make($label)
+            ->url($url)
+            ->isActiveWhen(fn (): bool => request()->fullUrl() === $url);
+
+        return static::withBadge($item, $badge, $badgeColor);
     }
 
     /** A link to a standalone page, same rules as {@see link()}. */

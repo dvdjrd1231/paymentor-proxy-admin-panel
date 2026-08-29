@@ -79,7 +79,9 @@
                 @isset($fixed['country'])
                     <label class="ao-anc-row">
                         <span>Country</span>
-                        <select wire:model="props.country" required>
+                        {{-- Live: the Brazil-only registry fields below fold in and out
+                             with this choice. --}}
+                        <select wire:model.live="props.country" required>
                             <option value="">—</option>
                             @foreach ($fixed['country']->allowed_values ?? [] as $value => $label)
                                 <option value="{{ is_int($value) ? $label : $value }}">{{ $label }}</option>
