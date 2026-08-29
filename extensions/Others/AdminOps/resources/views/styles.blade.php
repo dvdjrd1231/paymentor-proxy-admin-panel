@@ -2379,6 +2379,66 @@
 
     .ao-ano-submit { padding: 0.55rem 1.6rem; }
 
+    .ao-ano-item + .ao-ano-item { margin-top: 0.8rem; }
+
+    /* The reference's green "+ Add Another Product" pill. */
+    .ao-ano-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        margin-top: 0.8rem;
+        padding: 0.35rem 0.9rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.875rem;
+        color: var(--wa-text, #2b2b2b);
+        cursor: pointer;
+    }
+
+    .ao-ano-add span { color: #7ac143; }
+
+    .ao-ano-add:hover { background: #f0f0f0; }
+
+    .ao-ano-remove {
+        border: 0;
+        background: none;
+        padding: 0 0.3rem;
+        font-size: 1.1rem;
+        line-height: 1;
+        color: #d9534f;
+        cursor: pointer;
+    }
+
+    .ao-ano-promo {
+        white-space: nowrap;
+        font-size: 0.85rem;
+    }
+
+    /* The reference's Refresh / Last Updated line over the balance tiles. */
+    .ao-tx-bal-line {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--wa-muted, #6b6b6b);
+    }
+
+    .ao-tx-refresh {
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        padding: 0.2rem 0.6rem;
+        font: inherit;
+        font-size: 0.85rem;
+        color: var(--wa-text, #2b2b2b);
+        cursor: pointer;
+    }
+
+    .ao-tx-refresh:hover { background: #f0f0f0; }
+
     /* ── Invoices ───────────────────────────────────────────────────────────
        The reference's headline bar: Paid green, Unpaid red, Overdue black-on-grey. */
     .ao-inv-bar {

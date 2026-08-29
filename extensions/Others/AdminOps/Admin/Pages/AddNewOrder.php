@@ -18,12 +18,12 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
  * WHMCS's Add New Order, to its screenshot: client, payment method, promotion code, order
- * status, the product block (product, domain, billing cycle, quantity, price override), and
- * the Order Summary card with Submit Order.
+ * status, a Product/Service block **per line** with the reference's "+ Add Another
+ * Product", and the Order Summary card with Submit Order.
  *
  * The creation path is a copy of what checkout does ({@see \App\Livewire\Cart::checkout()}):
- * an Order row, a pending Service per product, and — when Generate Invoice is ticked — an
- * Invoice with one item per service, due in seven days. Same tables, same shapes, so
+ * an Order row, a pending Service per line, and — when Generate Invoice is ticked — one
+ * Invoice with an item per service, due in seven days. Same tables, same shapes, so
  * everything downstream (cron, provisioning, the client area) treats an admin-placed order
  * exactly like a customer-placed one.
  */
@@ -42,16 +42,12 @@ class AddNewOrder extends Page
 
     public ?int $couponId = null;
 
-    public ?int $productId = null;
-
-    public ?int $planId = null;
-
-    public int $quantity = 1;
-
-    public string $priceOverride = '';
-
-    /** The reference's Domain field — collected, stored as a service property, not required. */
-    public string $domain = '';
+    /**
+     * The reference's product lines: one row per "+ Add Another Product".
+     *
+     * @var array<int, array{productId: int|string|null, planId: int|string|null, quantity: int|string, priceOverride: string, domain: string}>
+     */
+    public array $items = [];
 
     public bool $generateInvoice = true;
 
@@ -67,27 +63,79 @@ class AddNewOrder extends Page
         return 'Add New Order';
     }
 
-    public function updatedProductId(): void
+    public function mount(): void
     {
-        $this->planId = $this->plans()->first()?->id;
+        $this->items = [self::blankItem()];
     }
 
-    /** The live Order Summary: unit price from the plan, or the override when given. */
+    private static function blankItem(): array
+    {
+        return ['productId' => null, 'planId' => null, 'quantity' => 1, 'priceOverride' => '', 'domain' => ''];
+    }
+
+    /** The reference's "+ Add Another Product". */
+    public function addItem(): void
+    {
+        $this->items[] = self::blankItem();
+    }
+
+    public function removeItem(int $index): void
+    {
+        unset($this->items[$index]);
+        $this->items = array_values($this->items) ?: [self::blankItem()];
+    }
+
+    /** A product pick defaults its line to the product's first plan. */
+    public function updatedItems($value, ?string $key = null): void
+    {
+        if ($key === null || !str_ends_with($key, '.productId')) {
+            return;
+        }
+
+        $index = (int) explode('.', $key)[0];
+        $this->items[$index]['planId'] = $this->plansFor($value)->first()?->id;
+    }
+
+    public function plansFor($productId)
+    {
+        return $productId
+            ? Plan::where('priceable_type', Product::class)->where('priceable_id', $productId)->get()
+            : collect();
+    }
+
+    /** The live Order Summary: a line per picked product, unit price or override. */
     public function summary(): array
     {
         $currency = config('settings.default_currency', 'USD');
-        $plan = $this->planId ? Plan::with('prices')->find($this->planId) : null;
-        $unit = $this->priceOverride !== '' && is_numeric($this->priceOverride)
-            ? (float) $this->priceOverride
-            : (float) ($plan?->price($currency)->price ?? 0);
-        $quantity = max(1, $this->quantity);
+        $products = Product::whereIn('id', collect($this->items)->pluck('productId')->filter())->get()->keyBy('id');
+
+        $lines = [];
+        foreach ($this->items as $index => $item) {
+            if (!$item['productId']) {
+                continue;
+            }
+
+            $plan = $item['planId'] ? Plan::with('prices')->find($item['planId']) : null;
+            $unit = $item['priceOverride'] !== '' && is_numeric($item['priceOverride'])
+                ? (float) $item['priceOverride']
+                : (float) ($plan?->price($currency)->price ?? 0);
+            $quantity = max(1, (int) $item['quantity']);
+
+            $lines[] = [
+                'index' => $index,
+                'label' => $products[$item['productId']]?->name ?? '—',
+                'plan' => $plan,
+                'unit' => $unit,
+                'quantity' => $quantity,
+                'total' => $unit * $quantity,
+                'domain' => trim($item['domain']),
+            ];
+        }
 
         return [
             'currency' => $currency,
-            'label' => $this->productId ? Product::find($this->productId)?->name : null,
-            'unit' => $unit,
-            'quantity' => $quantity,
-            'total' => $unit * $quantity,
+            'lines' => $lines,
+            'total' => array_sum(array_column($lines, 'total')),
         ];
     }
 
@@ -95,14 +143,28 @@ class AddNewOrder extends Page
     {
         $this->validate([
             'userId' => 'required|exists:users,id',
-            'productId' => 'required|exists:products,id',
-            'planId' => 'required|exists:plans,id',
-            'quantity' => 'required|integer|min:1',
-            'priceOverride' => 'nullable|numeric|min:0',
-        ], attributes: ['userId' => 'client', 'productId' => 'product', 'planId' => 'billing cycle']);
+            'items' => 'required|array|min:1',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.priceOverride' => 'nullable|numeric|min:0',
+        ], attributes: ['userId' => 'client']);
+
+        $summary = $this->summary();
+
+        if ($summary['lines'] === []) {
+            $this->addError('items', 'Pick at least one product.');
+
+            return;
+        }
+
+        foreach ($summary['lines'] as $line) {
+            if (!$line['plan']) {
+                $this->addError('items', 'Every product line needs a billing cycle.');
+
+                return;
+            }
+        }
 
         $user = User::whereNull('role_id')->findOrFail($this->userId);
-        $summary = $this->summary();
 
         $order = DB::transaction(function () use ($user, $summary): Order {
             $order = new Order([
@@ -114,21 +176,7 @@ class AddNewOrder extends Page
             $order->send_create_email = $this->sendEmail;
             $order->save();
 
-            $service = $order->services()->create([
-                'user_id' => $user->id,
-                'currency_code' => $summary['currency'],
-                'product_id' => $this->productId,
-                'plan_id' => $this->planId,
-                'price' => $summary['unit'],
-                'quantity' => $summary['quantity'],
-                'coupon_id' => $this->couponId,
-                'status' => Service::STATUS_PENDING,
-            ]);
-
-            if ($this->domain !== '') {
-                $service->properties()->updateOrCreate(['key' => 'domain'], ['name' => 'Domain', 'value' => $this->domain]);
-            }
-
+            $invoice = null;
             if ($this->generateInvoice && $summary['total'] > 0) {
                 $invoice = new Invoice([
                     'user_id' => $user->id,
@@ -136,12 +184,29 @@ class AddNewOrder extends Page
                     'currency_code' => $summary['currency'],
                 ]);
                 $invoice->save();
+            }
 
-                $invoice->items()->create([
+            foreach ($summary['lines'] as $line) {
+                $service = $order->services()->create([
+                    'user_id' => $user->id,
+                    'currency_code' => $summary['currency'],
+                    'product_id' => $this->items[$line['index']]['productId'],
+                    'plan_id' => $line['plan']->id,
+                    'price' => $line['unit'],
+                    'quantity' => $line['quantity'],
+                    'coupon_id' => $this->couponId,
+                    'status' => Service::STATUS_PENDING,
+                ]);
+
+                if ($line['domain'] !== '') {
+                    $service->properties()->updateOrCreate(['key' => 'domain'], ['name' => 'Domain', 'value' => $line['domain']]);
+                }
+
+                $invoice?->items()->create([
                     'reference_id' => $service->id,
                     'reference_type' => Service::class,
-                    'price' => $summary['total'],
-                    'quantity' => $summary['quantity'],
+                    'price' => $line['total'],
+                    'quantity' => $line['quantity'],
                     'description' => $service->description,
                 ]);
             }
@@ -150,17 +215,10 @@ class AddNewOrder extends Page
         });
 
         Notification::make()->title('Order #' . $order->id . ' placed')
-            ->body($summary['label'] . ' for ' . $user->name)
+            ->body(count($summary['lines']) . ' product(s) for ' . $user->name)
             ->success()->send();
 
         $this->redirect(ManageOrders::getUrl(['status' => 'pending']));
-    }
-
-    public function plans()
-    {
-        return $this->productId
-            ? Plan::where('priceable_type', Product::class)->where('priceable_id', $this->productId)->get()
-            : collect();
     }
 
     protected function getViewData(): array
@@ -170,7 +228,7 @@ class AddNewOrder extends Page
             'gateways' => Gateway::where('enabled', true)->get(['id', 'name']),
             'coupons' => Coupon::query()->orderBy('code')->limit(100)->get(['id', 'code']),
             'products' => Product::with('category')->orderBy('name')->get(['id', 'name', 'category_id']),
-            'plans' => $this->plans(),
+            'plansByItem' => collect($this->items)->map(fn ($item) => $this->plansFor($item['productId'])),
             'summary' => $this->summary(),
         ];
     }
