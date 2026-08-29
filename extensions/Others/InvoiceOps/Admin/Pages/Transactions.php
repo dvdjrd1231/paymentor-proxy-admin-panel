@@ -152,12 +152,18 @@ class Transactions extends Page
         return $deltas;
     }
 
+    /** The reference's Refresh button beside Gateway Balances: forget the cache, re-ask. */
+    public function refreshBalances(): void
+    {
+        Cache::forget('invoiceops.gateway-balances');
+    }
+
     /**
      * The reference's Gateway Balances panel. Stripe is the one connected gateway with a
      * balance API; asked politely, cached five minutes, and absent — not faked — when the
      * key is missing or the call fails.
      *
-     * @return array<int, array{gateway: string, label: string, amount: string}>
+     * @return array{at: string, tiles: array<int, array{gateway: string, label: string, amount: string}>}
      */
     private function gatewayBalances(): array
     {
@@ -167,13 +173,13 @@ class Transactions extends Page
                     ?->settings->firstWhere('key', 'stripe_secret_key')?->value;
 
                 if (!$secret) {
-                    return [];
+                    return ['at' => now()->toIso8601String(), 'tiles' => []];
                 }
 
                 $response = Http::withToken($secret)->timeout(8)->get('https://api.stripe.com/v1/balance');
 
                 if (!$response->ok()) {
-                    return [];
+                    return ['at' => now()->toIso8601String(), 'tiles' => []];
                 }
 
                 $tiles = [];
@@ -187,9 +193,9 @@ class Transactions extends Page
                     }
                 }
 
-                return $tiles;
+                return ['at' => now()->toIso8601String(), 'tiles' => $tiles];
             } catch (\Throwable $e) {
-                return [];
+                return ['at' => now()->toIso8601String(), 'tiles' => []];
             }
         });
     }

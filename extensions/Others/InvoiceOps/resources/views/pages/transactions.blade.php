@@ -110,10 +110,16 @@
             </div>
         </div>
 
-        @if ($balances)
+        @if ($balances['tiles'] ?? [])
             <h4 class="ao-tx-heading">Gateway Balances</h4>
+            <div class="ao-tx-bal-line">
+                <button type="button" class="ao-tx-refresh" wire:click="refreshBalances">
+                    &#8635; Refresh
+                </button>
+                <span>Last Updated: {{ \Carbon\Carbon::parse($balances['at'])->diffForHumans() }}</span>
+            </div>
             <div class="ao-tx-balances">
-                @foreach ($balances as $tile)
+                @foreach ($balances['tiles'] as $tile)
                     <div class="ao-tx-balance">
                         <span>{{ $tile['gateway'] }}</span>
                         <b class="{{ $tile['label'] === 'Available' ? 'ao-tx-up' : 'ao-tx-note' }}">{{ $tile['amount'] }}</b>

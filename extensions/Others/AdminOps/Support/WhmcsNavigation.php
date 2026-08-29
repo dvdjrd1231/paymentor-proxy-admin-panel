@@ -316,12 +316,23 @@ class WhmcsNavigation
                     : null,
                 badgeColor: 'warning',
             ),
+            // The reference's Billable Items sub-entries, on the resource's own filters.
+            static::link(BillableItemResource::class, '- Uninvoiced Items',
+                params: ['filters' => ['uninvoiced' => ['isActive' => true]]]),
+            static::link(BillableItemResource::class, '- Recurring Items',
+                params: ['filters' => ['recurring' => ['isActive' => true]]]),
             static::link(
                 QuoteResource::class,
                 'Quotes',
                 badge: fn () => class_exists(QuoteResource::class) ? QuoteResource::getNavigationBadge() : null,
                 badgeColor: 'info',
             ),
+            // The reference's Quotes sub-entries: the Valid/Expired split the resource
+            // already filters by.
+            static::link(QuoteResource::class, '- Valid',
+                params: ['filters' => ['valid' => ['isActive' => true]]]),
+            static::link(QuoteResource::class, '- Expired',
+                params: ['filters' => ['status' => ['value' => 'expired']]]),
             static::link(
                 RefundRequestResource::class,
                 'Refund Requests',
