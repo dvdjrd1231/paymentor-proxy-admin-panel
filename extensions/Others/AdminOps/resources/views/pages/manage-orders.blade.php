@@ -95,7 +95,7 @@
                             @endif
                         </td>
                         <td>{{ $payment['method'] }}</td>
-                        <td>{{ $order->formattedTotal }}</td>
+                        <td>${{ number_format((float) $order->total, 2) }} {{ $order->currency_code }}</td>
                         <td><span class="{{ $payment['class'] }}">{{ $payment['label'] }}</span></td>
                         <td><span class="{{ $statusClass }}">{{ $statusLabel }}</span></td>
                         <td class="ao-mu-actions">
