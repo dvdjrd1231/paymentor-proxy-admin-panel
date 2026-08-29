@@ -25,6 +25,9 @@ class QuoteItem extends Model
 
     public function total(): float
     {
-        return round((float) $this->price * (float) $this->quantity, 2);
+        // The reference's per-line discount, applied here so every total in the system —
+        // quote, PDF, the invoice it becomes — says the same number.
+        return round((float) $this->price * (float) $this->quantity
+            * (1 - (float) ($this->discount ?? 0) / 100), 2);
     }
 }

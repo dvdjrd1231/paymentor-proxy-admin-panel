@@ -80,7 +80,8 @@ class Quoting
 
             foreach ($quote->items as $item) {
                 $invoice->items()->create([
-                    'price' => $item->price,
+                    // Discounted, so the invoice charges what was quoted.
+                    'price' => round((float) $item->price * (1 - (float) ($item->discount ?? 0) / 100), 2),
                     'quantity' => $item->quantity,
                     'description' => $item->description,
                 ]);

@@ -157,7 +157,7 @@ class Rail
             'Invoices', '- Paid', '- Draft', '- Unpaid', '- Overdue', '- Cancelled',
             '- Refunded', '- Collections', '- Payment Pending',
             'Billable Items', '- Uninvoiced Items', '- Recurring Items',
-            'Quotes', '- Valid', '- Expired',
+            'Quotes', '- Valid', '- Expired', '- Create New Quote',
         ];
 
         $rest = $items->reject(fn (array $item): bool => in_array($item['label'], $claimed, true))->values()->all();
@@ -188,6 +188,7 @@ class Rail
                 'items' => array_merge(
                     $take('Quotes', 'List All Quotes'),
                     $take('- Valid'), $take('- Expired'),
+                    $take('- Create New Quote', 'Create New Quote'),
                 ),
             ],
         ], fn (array $s): bool => $s['items'] !== []));
