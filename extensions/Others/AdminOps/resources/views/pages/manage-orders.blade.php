@@ -28,6 +28,7 @@
                             <option value="">Any</option>
                             <option value="pending">Pending</option>
                             <option value="active">Active</option>
+                            <option value="fraud">Fraud</option>
                             <option value="suspended">Suspended</option>
                             <option value="cancelled">Cancelled</option>
                         </select>
@@ -85,7 +86,7 @@
                     <tr>
                         <td class="ao-mu-check"><input type="checkbox" data-ao-check value="{{ $order->id }}"></td>
                         <td><a href="{{ $edit }}">{{ $order->id }}</a></td>
-                        <td><a href="{{ $edit }}">{{ $payment['number'] ?? '—' }}</a></td>
+                        <td><a href="{{ $edit }}">{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders::numberOf($order) }}</a></td>
                         <td>{{ $order->created_at?->format('m/d/Y H:i') }}</td>
                         <td>
                             @if ($summary)

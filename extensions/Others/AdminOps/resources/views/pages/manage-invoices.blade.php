@@ -114,10 +114,14 @@
                         <td>${{ number_format((float) $invoice->total, 2) }} {{ $invoice->currency_code }}</td>
                         <td>{{ $lastTry?->gateway?->name ?? '—' }}</td>
                         <td><span class="{{ $statusClass }}">{{ $statusLabel }}</span></td>
-                        <td class="ao-mu-actions">
+                        <td class="ao-mu-actions ao-mu-iconpair">
                             <a href="{{ $edit }}" title="Open invoice">
                                 <x-filament::icon icon="ri-file-list-2-line" class="ao-mu-cell-icon" />
                             </a>
+                            <button type="button" class="ao-mo-delete" title="Delete invoice"
+                                wire:click="askDelete({{ $invoice->id }})">
+                                <x-filament::icon icon="ri-indeterminate-circle-fill" class="ao-mu-cell-icon" />
+                            </button>
                         </td>
                     </tr>
                 @empty
@@ -133,5 +137,26 @@
             <button type="button" wire:click="jump({{ $invoices->currentPage() + 1 }})"
                 @disabled(!$invoices->hasMorePages())>Next Page &raquo;</button>
         </nav>
+
+        @if ($confirmingDelete)
+            <div class="ao-mud-overlay" wire:click.self="$set('confirmingDelete', null)">
+                <div class="ao-mud ao-mud-sm" role="alertdialog" aria-modal="true">
+                    <div class="ao-mud-head">
+                        Are you sure?
+                        <button type="button" wire:click="$set('confirmingDelete', null)" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="ao-mud-text">
+                        <p>Are you sure you wish to delete this invoice?</p>
+                        <p>Paid invoices and invoices with transactions cannot be deleted — money that moved keeps its paperwork.</p>
+                    </div>
+                    <div class="ao-mud-foot ao-mud-foot-only-right">
+                        <span class="ao-mud-foot-right">
+                            <button type="button" class="ao-mud-close" wire:click="$set('confirmingDelete', null)">Cancel</button>
+                            <button type="button" class="ao-mud-delete" wire:click="deleteInvoice">Delete</button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 </x-filament-panels::page>

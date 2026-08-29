@@ -2411,10 +2411,21 @@
         cursor: pointer;
     }
 
+    /* The reference styles Create Custom Promo as a small bordered button. */
     .ao-ano-promo {
         white-space: nowrap;
         font-size: 0.85rem;
+        padding: 0.3rem 0.7rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
     }
+
+    .ao-ano-promo:hover { background: #f0f0f0; text-decoration: none; }
+
+    .ao-ano-off { color: var(--wa-muted, #6b6b6b); cursor: not-allowed; }
+
+    .ao-tx-trans { font-size: 0.85em; color: var(--wa-muted, #6b6b6b); }
 
     /* The reference's Refresh / Last Updated line over the balance tiles. */
     .ao-tx-bal-line {

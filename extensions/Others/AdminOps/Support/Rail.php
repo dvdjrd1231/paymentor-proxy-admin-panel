@@ -72,6 +72,10 @@ class Rail
             return [];
         }
 
+        if ($section['label'] === 'Billing') {
+            return static::billingSections($section);
+        }
+
         if ($section['label'] !== 'Clients') {
             return [$section];
         }
@@ -118,6 +122,73 @@ class Rail
                 'label' => 'Affiliates',
                 'icon' => 'ri-share-forward-line',
                 'items' => $item($find('Manage Affiliates')),
+            ],
+        ], fn (array $s): bool => $s['items'] !== []));
+    }
+
+    /**
+     * The reference's Billing rail is four boxes, not one: Billing, Invoices, Billable
+     * Items, Quotes — each list renamed the way the reference names it ("List All
+     * Invoices" under an "Invoices" heading). Built from the same one nav group, so the
+     * split can never disagree with the bar about what exists.
+     *
+     * @param  array{label: string, icon: string|\BackedEnum|null, items: array<int, array{label: string, url: string, badge: ?string}>}  $section
+     * @return array<int, array{label: string, icon: string|\BackedEnum|null, items: array<int, array{label: string, url: string, badge: ?string}>}>
+     */
+    private static function billingSections(array $section): array
+    {
+        $items = collect($section['items']);
+
+        $take = function (string $label, ?string $rename = null) use ($items): array {
+            $found = $items->first(fn (array $item): bool => $item['label'] === $label);
+
+            if (!$found) {
+                return [];
+            }
+
+            $found['label'] = $rename ?? $found['label'];
+
+            return [$found];
+        };
+
+        // Everything each named box claims; whatever is left stays in the Billing box, so
+        // a new entry appears rather than vanishing.
+        $claimed = [
+            'Invoices', '- Paid', '- Draft', '- Unpaid', '- Overdue', '- Cancelled',
+            '- Refunded', '- Collections', '- Payment Pending',
+            'Billable Items', '- Uninvoiced Items', '- Recurring Items',
+            'Quotes', '- Valid', '- Expired',
+        ];
+
+        $rest = $items->reject(fn (array $item): bool => in_array($item['label'], $claimed, true))->values()->all();
+
+        return array_values(array_filter([
+            ['label' => 'Billing', 'icon' => 'ri-bank-card-line', 'items' => $rest],
+            [
+                'label' => 'Invoices',
+                'icon' => 'ri-file-list-3-line',
+                'items' => array_merge(
+                    $take('Invoices', 'List All Invoices'),
+                    $take('- Paid'), $take('- Draft'), $take('- Unpaid'), $take('- Overdue'),
+                    $take('- Cancelled'), $take('- Refunded'), $take('- Collections'),
+                    $take('- Payment Pending'),
+                ),
+            ],
+            [
+                'label' => 'Billable Items',
+                'icon' => 'ri-price-tag-3-line',
+                'items' => array_merge(
+                    $take('Billable Items', 'List All Billable Items'),
+                    $take('- Uninvoiced Items'), $take('- Recurring Items'),
+                ),
+            ],
+            [
+                'label' => 'Quotes',
+                'icon' => 'ri-draft-line',
+                'items' => array_merge(
+                    $take('Quotes', 'List All Quotes'),
+                    $take('- Valid'), $take('- Expired'),
+                ),
             ],
         ], fn (array $s): bool => $s['items'] !== []));
     }

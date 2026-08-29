@@ -220,8 +220,10 @@ class Transactions extends Page
                 'method' => $transaction->is_credit_transaction
                     ? 'Account credit'
                     : ($transaction->gateway?->name ?? 'Unknown'),
-                'description' => 'Invoice #' . ($transaction->invoice?->number ?: $transaction->invoice_id)
-                    . ($transaction->transaction_id ? ' · ' . $transaction->transaction_id : ''),
+                // Two lines, as the reference prints them: the payment, then the gateway's
+                // transaction id underneath.
+                'description' => 'Invoice Payment (#' . ($transaction->invoice?->number ?: $transaction->invoice_id) . ')',
+                'trans' => $transaction->transaction_id ?: null,
                 'in' => (float) $transaction->amount,
                 'fee' => (float) ($transaction->fee ?? 0),
                 'out' => 0.0,
@@ -234,9 +236,9 @@ class Transactions extends Page
                 'at' => $refund->created_at,
                 'customer' => $refund->invoice?->user?->email ?? '—',
                 'method' => 'Refund · ' . ($refund->method === InvoiceRefund::METHOD_GATEWAY ? 'gateway' : 'offline'),
-                'description' => 'Invoice #' . ($refund->invoice?->number ?: $refund->invoice_id)
-                    . ($refund->reason ? ' · ' . str($refund->reason)->limit(60) : '')
+                'description' => 'Refund (#' . ($refund->invoice?->number ?: $refund->invoice_id) . ')'
                     . ($refund->admin ? ' · by ' . $refund->admin->name : ''),
+                'trans' => $refund->reason ? (string) str($refund->reason)->limit(80) : null,
                 'in' => 0.0,
                 'fee' => 0.0,
                 'out' => (float) $refund->amount,
