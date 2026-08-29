@@ -1264,6 +1264,14 @@
                 if (!subs.length) continue;
 
                 const parent = items[index];
+
+                {{-- The reference's Orders menu lists its "- " filters flat, while Billing's
+                     statuses fold behind "Invoices ▸" — the tell is the parent: a "List All
+                     …" entry keeps its filters beside it, a plain parent grows a flyout. --}}
+                if (parent.textContent.trim().startsWith('List All')) {
+                    index = next - 1;
+                    continue;
+                }
                 const wrap = document.createElement('div');
                 wrap.className = 'ao-flyout';
                 parent.before(wrap);

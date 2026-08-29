@@ -2300,6 +2300,15 @@
         color: #d9534f;
     }
 
+    /* The reference's green Accept Order in the With Selected bar. */
+    .ao-mu-selected .ao-mo-accept {
+        background: #5cb85c;
+        border-color: #4cae4c;
+        color: #fff;
+    }
+
+    .ao-mu-selected .ao-mo-accept:hover { background: #449d44; }
+
     .ao-mo-delete:hover { color: #b52b27; }
 
     /* ── Add New Order ──────────────────────────────────────────────────────

@@ -334,21 +334,24 @@ class WhmcsNavigation
                 params: ['filters' => ['valid' => ['isActive' => true]]]),
             static::link(QuoteResource::class, '- Expired',
                 params: ['filters' => ['status' => ['value' => 'expired']]]),
+            // The reference's last three, on their nearest honest homes: recording a manual
+            // payment IS offline card processing here, and a refund request is what a
+            // dispute looks like in Paymenter.
+            static::link(InvoiceTransactionResource::class, 'Offline CC Processing'),
             static::link(
                 RefundRequestResource::class,
-                'Refund Requests',
+                'Disputes',
                 badge: fn () => class_exists(RefundRequestResource::class)
                     ? RefundRequestResource::getNavigationBadge()
                     : null,
                 badgeColor: 'danger',
             ),
-            static::link(RefundResource::class, 'Refunds'),
-            static::link(InvoiceOpsResource::class, 'Invoice Operations'),
-            static::link(InvoiceTransactionResource::class, 'Add Transaction'),
             // The reference keeps its gateway log under Billing, and this is the nearest
             // thing Paymenter has: every outbound HTTP call, gateways included. Also in
             // Utilities, where core files it — two ways to one page.
             static::link(HttpLogResource::class, 'Gateway Log'),
+            static::link(RefundResource::class, 'Refunds'),
+            static::link(InvoiceOpsResource::class, 'Invoice Operations'),
             static::link(CouponResource::class, 'Coupons'),
             static::link(PaymentFeeRuleResource::class, 'Payment Fee Rules'),
             static::link(GatewayRuleResource::class, 'Gateway Rules'),
