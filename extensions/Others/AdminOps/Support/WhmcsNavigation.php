@@ -39,6 +39,7 @@ use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewClient;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewOrder;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\CreateQuote;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AutomationStatus;
@@ -334,6 +335,7 @@ class WhmcsNavigation
                 params: ['filters' => ['valid' => ['isActive' => true]]]),
             static::link(QuoteResource::class, '- Expired',
                 params: ['filters' => ['status' => ['value' => 'expired']]]),
+            static::pageLink(CreateQuote::class, '- Create New Quote'),
             // The reference's last three, on their nearest honest homes: recording a manual
             // payment IS offline card processing here, and a refund request is what a
             // dispute looks like in Paymenter.

@@ -2589,6 +2589,152 @@
 
     .ao-tx-out { color: #d9534f; }
 
+    /* ── Create New Quote ───────────────────────────────────────────────────
+       The reference's quote form: two-column General Information, the button row, the
+       line-items grid with inputs in its cells, sums on the right. */
+    .ao-cq-general {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 2rem;
+    }
+
+    @media (max-width: 900px) {
+        .ao-cq-general { grid-template-columns: 1fr; }
+    }
+
+    .ao-cq-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin: 0.9rem 0;
+    }
+
+    .ao-cq-buttons button,
+    .ao-cq-buttons a {
+        padding: 0.4rem 0.9rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.875rem;
+        color: var(--wa-text, #2b2b2b);
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .ao-cq-buttons button:hover,
+    .ao-cq-buttons a:hover { background: #f0f0f0; }
+
+    .ao-cq-buttons button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Compound selector, because .ao-cq-buttons button would otherwise repaint it white. */
+    .ao-cq-buttons .ao-find-go {
+        border-color: transparent;
+        background: #337ab7;
+        color: #fff;
+    }
+
+    .ao-cq-buttons .ao-find-go:hover { background: #286090; }
+
+    .ao-cq-buttons .ao-cq-delete {
+        background: #d9534f;
+        border-color: #d43f3a;
+        color: #fff;
+    }
+
+    .ao-cq-buttons .ao-cq-delete:hover:not(:disabled) { background: #c9302c; }
+
+    .ao-cq-radio {
+        display: block;
+        margin: 0.5rem 0 0.35rem;
+    }
+
+    .ao-cq-client {
+        width: 100%;
+        height: 2.2rem;
+        padding: 0 0.6rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        margin-bottom: 0.6rem;
+        font: inherit;
+    }
+
+    .ao-cq-items td { padding: 0.3rem 0.4rem; }
+
+    .ao-cq-items input[type="text"],
+    .ao-cq-items input[type="number"] {
+        width: 100%;
+        min-width: 4.5rem;
+        height: 2rem;
+        padding: 0 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        font: inherit;
+        font-size: 0.875rem;
+    }
+
+    .ao-cq-items .ao-cq-desc { min-width: 16rem; }
+
+    .ao-cq-qty { width: 4.5rem; }
+    .ao-cq-num { width: 7.5rem; }
+    .ao-cq-taxed { width: 4rem; text-align: center; }
+    .ao-cq-total { white-space: nowrap; }
+
+    .ao-cq-under {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 0.6rem;
+    }
+
+    .ao-cq-addline {
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        padding: 0.3rem 0.8rem;
+        font: inherit;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+
+    .ao-cq-pre { margin-inline-start: 0.8rem; font-size: 0.9rem; }
+
+    .ao-cq-pre select {
+        margin-inline-start: 0.4rem;
+        height: 2rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.85rem;
+    }
+
+    .ao-cq-sums td { padding: 0.25rem 0.9rem; text-align: end; }
+
+    .ao-cq-sums .ao-cq-due td { font-weight: 700; border-top: 1px solid var(--wa-rule, #d9dadb); }
+
+    .ao-cq-notes .ao-anc-row { align-items: start; }
+
+    .ao-cq-notes .ao-anc-row > span i {
+        display: block;
+        font-style: normal;
+        font-weight: 400;
+        font-size: 0.78rem;
+        color: var(--wa-muted, #6b6b6b);
+    }
+
+    .ao-cq-notes textarea {
+        width: 100%;
+        padding: 0.45rem 0.6rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        font: inherit;
+        font-size: 0.875rem;
+    }
+
     /* The small "Are you sure?" variant of the modal, as the reference confirms resets. */
     .ao-mud-sm { width: 37rem; }
 

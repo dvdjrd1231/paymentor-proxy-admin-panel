@@ -74,6 +74,27 @@ class AdminOps extends Extension
         $this->registerWhmcsSkin();
         $this->keepSignInsRecorded();
         $this->keepTheDailyLogWritable();
+        $this->registerQuotePdf();
+    }
+
+    /**
+     * The quote PDF, for {@see Admin\Pages\CreateQuote}'s View/Download/Printable buttons —
+     * core's own dompdf, a quote template instead of the invoice one. Admin-only: same
+     * permission that reads invoices, checked inside because route middleware cannot know
+     * the panel's guard at this point in boot.
+     */
+    private function registerQuotePdf(): void
+    {
+        \Illuminate\Support\Facades\Route::middleware(['web'])->get('/admin/quote-pdf/{quote}', function (int $quote) {
+            abort_unless((bool) \Illuminate\Support\Facades\Auth::user()?->hasPermission('admin.invoices.viewAny'), 403);
+            abort_unless(class_exists(\Paymenter\Extensions\Others\Quotes\Models\Quote::class), 404);
+
+            $record = \Paymenter\Extensions\Others\Quotes\Models\Quote::with(['items', 'user.properties'])->findOrFail($quote);
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('adminops::pdf.quote', ['quote' => $record]);
+            $name = 'quote-' . $record->id . '.pdf';
+
+            return request()->boolean('inline') ? $pdf->stream($name) : $pdf->download($name);
+        })->name('adminops.quote-pdf');
     }
 
     /**
