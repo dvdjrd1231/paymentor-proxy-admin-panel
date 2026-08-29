@@ -67,6 +67,41 @@ class ManageInvoices extends Page
         $this->page = max(1, $page);
     }
 
+    /** The row awaiting the "Are you sure?" before deletion. */
+    public ?int $confirmingDelete = null;
+
+    public function askDelete(int $id): void
+    {
+        $this->confirmingDelete = $id;
+    }
+
+    public function deleteInvoice(): void
+    {
+        if (!$this->confirmingDelete) {
+            return;
+        }
+
+        $invoice = Invoice::with('transactions')->findOrFail($this->confirmingDelete);
+        $this->confirmingDelete = null;
+
+        // Money that moved must keep its paperwork: a paid invoice, or one a gateway has
+        // already touched, stays. The reference refuses the same rows.
+        if ($invoice->status === 'paid' || $invoice->transactions->isNotEmpty()) {
+            \Filament\Notifications\Notification::make()->title('Cannot delete')
+                ->body('This invoice is paid or has transactions — cancel it instead.')
+                ->danger()->send();
+
+            return;
+        }
+
+        DB::transaction(function () use ($invoice): void {
+            $invoice->items()->delete();
+            $invoice->delete();
+        });
+
+        \Filament\Notifications\Notification::make()->title('Invoice deleted')->success()->send();
+    }
+
     /** The reference's status word and colour class for a row. */
     public static function statusOf(Invoice $invoice): array
     {

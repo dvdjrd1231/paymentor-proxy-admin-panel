@@ -105,6 +105,16 @@ class ManageOrders extends Page
         Notification::make()->title('Order deleted')->success()->send();
     }
 
+    /**
+     * The reference's ten-digit Order # — a stable number derived from the id, because
+     * Paymenter's orders table has no number column and core must stay unedited. Same id,
+     * same number, forever; the id column beside it remains the real key.
+     */
+    public static function numberOf(Order $order): string
+    {
+        return str_pad((string) (crc32('paymenter-order-' . $order->id) % 10_000_000_000), 10, '0', STR_PAD_LEFT);
+    }
+
     /** The derived Status column: what the order's services are collectively doing. */
     public static function statusOf(Order $order): array
     {
@@ -164,6 +174,8 @@ class ManageOrders extends Page
             // Cancelled the reference's way: every service terminated, none still going.
             'cancelled' => $query->whereHas('services')
                 ->whereDoesntHave('services', fn ($q) => $q->whereIn('status', ['pending', 'active', 'suspended'])),
+            // Paymenter has no fraud flag, so the reference's filter honestly lists nothing.
+            'fraud' => $query->whereRaw('1 = 0'),
             default => null,
         };
 

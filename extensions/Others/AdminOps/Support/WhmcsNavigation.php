@@ -260,6 +260,7 @@ class WhmcsNavigation
                 badgeColor: 'info',
             ),
             static::pageLink(ManageOrders::class, '- Active Orders', params: ['status' => 'active']),
+            static::pageLink(ManageOrders::class, '- Fraud Orders', params: ['status' => 'fraud']),
             static::pageLink(
                 ManageOrders::class,
                 '- Suspended Orders',

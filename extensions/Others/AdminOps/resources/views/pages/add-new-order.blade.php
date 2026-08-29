@@ -119,6 +119,20 @@
                 <span aria-hidden="true">&#10133;</span> Add Another Product
             </button>
 
+            {{-- The reference's Domain Registration block. No registrar is connected, so
+                 None is the one honest choice — the others say why they are off. --}}
+            <h4 class="ao-ano-heading">Domain Registration</h4>
+            <div class="ao-anc-card">
+                <div class="ao-anc-row">
+                    <span>Registration Type</span>
+                    <span class="ao-ano-checks" title="No domain registrar is connected to this store">
+                        <label><input type="radio" name="ao-regtype" checked> None</label>
+                        <label class="ao-ano-off"><input type="radio" name="ao-regtype" disabled> Registration</label>
+                        <label class="ao-ano-off"><input type="radio" name="ao-regtype" disabled> Transfer</label>
+                    </span>
+                </div>
+            </div>
+
             @if ($errors->any())
                 <ul class="ao-anc-errors">
                     @foreach ($errors->all() as $error)

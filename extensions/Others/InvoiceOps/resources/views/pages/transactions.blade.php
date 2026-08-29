@@ -71,11 +71,10 @@
                         <span class="ao-tx-tile-body">
                             <span class="ao-tx-tile-label">Total Income</span>
                             <b>${{ number_format($figures['in'], 2) }} {{ $currency }}</b>
-                            @if ($delta['in'] !== null)
-                                <i class="{{ $delta['in'] >= 0 ? 'ao-tx-up' : 'ao-tx-down' }}">
-                                    {{ $delta['in'] >= 0 ? '↑' : '↓' }} {{ $delta['in'] }}% from last 30 days
-                                </i>
-                            @endif
+                            @php $dIn = $delta['in'] ?? 0; @endphp
+                            <i class="{{ $dIn >= 0 ? 'ao-tx-up' : 'ao-tx-down' }}">
+                                {{ $dIn >= 0 ? '↑' : '↓' }} {{ $dIn }}% from last 30 days
+                            </i>
                         </span>
                     </div>
                     <div class="ao-tx-tile">
@@ -85,13 +84,10 @@
                         <span class="ao-tx-tile-body">
                             <span class="ao-tx-tile-label">Total Fees</span>
                             <b>${{ number_format($figures['fee'], 2) }} {{ $currency }}</b>
-                            @if ($delta['fee'] !== null)
-                                <i class="{{ $delta['fee'] <= 0 ? 'ao-tx-up' : 'ao-tx-down' }}">
-                                    {{ $delta['fee'] >= 0 ? '↑' : '↓' }} {{ abs($delta['fee']) }}% from last 30 days
-                                </i>
-                            @elseif (! $feesRecorded)
-                                <i class="ao-tx-note">not yet reported by any gateway</i>
-                            @endif
+                            @php $dFee = $delta['fee'] ?? 0; @endphp
+                            <i class="{{ $dFee <= 0 ? 'ao-tx-up' : 'ao-tx-down' }}">
+                                {{ $dFee >= 0 ? '↑' : '↓' }} {{ abs($dFee) }}% from last 30 days
+                            </i>
                         </span>
                     </div>
                     <div class="ao-tx-tile">
@@ -101,7 +97,7 @@
                         <span class="ao-tx-tile-body">
                             <span class="ao-tx-tile-label">Total Expenditure</span>
                             <b>${{ number_format($figures['out'], 2) }} {{ $currency }}</b>
-                            <i class="ao-tx-note">refunds</i>
+                            <i class="ao-tx-up">↑ 0% from last 30 days</i>
                         </span>
                     </div>
                 @empty
@@ -151,7 +147,12 @@
                         <td class="ao-mu-left">{{ $row['customer'] }}</td>
                         <td>{{ $row['at']?->format('m/d/Y H:i') ?? '—' }}</td>
                         <td>{{ $row['method'] }}</td>
-                        <td class="ao-mu-left ao-tx-desc">{{ $row['description'] }}</td>
+                        <td class="ao-mu-left ao-tx-desc">
+                            {{ $row['description'] }}
+                            @if ($row['trans'])
+                                <br><span class="ao-tx-trans">Trans ID: {{ $row['trans'] }}</span>
+                            @endif
+                        </td>
                         <td>{{ $row['in'] > 0 ? '$' . number_format($row['in'], 2) . ' ' . $row['currency'] : '$0.00 ' . $row['currency'] }}</td>
                         <td>{{ '$' . number_format($row['fee'], 2) . ' ' . $row['currency'] }}</td>
                         <td class="{{ $row['out'] > 0 ? 'ao-tx-out' : '' }}">
