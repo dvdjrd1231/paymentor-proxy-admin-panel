@@ -111,7 +111,7 @@
                         <td>{{ $invoice->created_at?->format('m/d/Y') }}</td>
                         <td>{{ $invoice->due_at?->format('m/d/Y') ?? '-' }}</td>
                         <td>{{ $invoice->status === 'pending' && $lastTry ? $lastTry->created_at?->format('m/d/Y') : 'N/A' }}</td>
-                        <td>{{ $invoice->formattedTotal }}</td>
+                        <td>${{ number_format((float) $invoice->total, 2) }} {{ $invoice->currency_code }}</td>
                         <td>{{ $lastTry?->gateway?->name ?? '—' }}</td>
                         <td><span class="{{ $statusClass }}">{{ $statusLabel }}</span></td>
                         <td class="ao-mu-actions">

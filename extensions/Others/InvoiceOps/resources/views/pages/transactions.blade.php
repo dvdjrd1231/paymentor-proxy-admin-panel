@@ -25,26 +25,37 @@
             <div class="ao-tx-chart">
                 @php
                     $days = $chart['days'];
-                    $max = max(1, collect($days)->max('net'));
-                    $w = 600; $h = 150; $pad = 8;
-                    $step = ($w - 2 * $pad) / max(1, count($days) - 1);
+                    // A rounded-up axis top, so the y labels read 0 / half / a whole number
+                    // the way the reference's do — not the raw maximum.
+                    $peak = max(1, collect($days)->max('net'));
+                    $mag = 10 ** max(0, strlen((string) (int) $peak) - 1);
+                    $max = (int) (ceil($peak / $mag) * $mag);
+                    $w = 600; $h = 150; $pad = 8; $left = 40;
+                    $step = ($w - $left - $pad) / max(1, count($days) - 1);
                     $points = collect($days)->values()->map(fn ($d, $i) => [
-                        round($pad + $i * $step, 1),
+                        round($left + $i * $step, 1),
                         round($h - $pad - ($d['net'] / $max) * ($h - 2 * $pad), 1),
                     ]);
                     $line = $points->map(fn ($p) => $p[0] . ',' . $p[1])->implode(' ');
-                    $area = $pad . ',' . ($h - $pad) . ' ' . $line . ' ' . ($w - $pad) . ',' . ($h - $pad);
+                    $area = $left . ',' . ($h - $pad) . ' ' . $line . ' ' . ($w - $pad) . ',' . ($h - $pad);
                 @endphp
                 <span class="ao-tx-axis">Net Revenue ({{ $chart['currency'] }})</span>
                 <svg viewBox="0 0 {{ $w }} {{ $h + 30 }}" preserveAspectRatio="none" role="img"
                     aria-label="Net revenue per day, last 30 days">
+                    @foreach ([0, 0.5, 1] as $tick)
+                        @php $y = round($h - $pad - $tick * ($h - 2 * $pad), 1); @endphp
+                        <line x1="{{ $left }}" y1="{{ $y }}" x2="{{ $w - $pad }}" y2="{{ $y }}"
+                            stroke="#e5e5e5" stroke-width="1" />
+                        <text x="{{ $left - 5 }}" y="{{ $y + 3 }}" font-size="9" fill="#6b6b6b"
+                            text-anchor="end">{{ number_format($max * $tick) }}</text>
+                    @endforeach
                     <polygon points="{{ $area }}" fill="rgba(122, 193, 67, 0.35)" />
                     <polyline points="{{ $line }}" fill="none" stroke="#7ac143" stroke-width="2" />
                     @foreach ($days as $i => $day)
                         @if ($i % 4 === 0)
-                            <text x="{{ round($pad + $i * $step, 1) }}" y="{{ $h + 22 }}"
+                            <text x="{{ round($left + $i * $step, 1) }}" y="{{ $h + 22 }}"
                                 font-size="9" fill="#6b6b6b" text-anchor="end"
-                                transform="rotate(-40 {{ round($pad + $i * $step, 1) }} {{ $h + 22 }})">{{ $day['date'] }}</text>
+                                transform="rotate(-40 {{ round($left + $i * $step, 1) }} {{ $h + 22 }})">{{ $day['date'] }}</text>
                         @endif
                     @endforeach
                 </svg>
