@@ -78,13 +78,13 @@
                     @php
                         [$statusLabel, $statusClass] = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders::statusOf($order);
                         $payment = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders::paymentOf($order);
-                        $edit = \App\Admin\Resources\OrderResource::getUrl('edit', ['record' => $order->id]);
+                        $edit = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditOrder::getUrl(['record' => $order->id]);
                         $summary = $order->user_id
                             ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $order->user_id])
                             : null;
                     @endphp
                     <tr>
-                        <td class="ao-mu-check"><input type="checkbox" data-ao-check value="{{ $order->id }}"></td>
+                        <td class="ao-mu-check"><input type="checkbox" data-ao-check wire:model="selected" value="{{ $order->id }}"></td>
                         <td><a href="{{ $edit }}">{{ $order->id }}</a></td>
                         <td><a href="{{ $edit }}">{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders::numberOf($order) }}</a></td>
                         <td>{{ $order->created_at?->format('m/d/Y H:i') }}</td>
@@ -111,6 +111,14 @@
                 @endforelse
             </tbody>
         </table>
+
+        <div class="ao-mu-selected">
+            With Selected:
+            <button type="button" class="ao-mo-accept" wire:click="acceptSelected"
+                wire:confirm="Activate every pending service on the selected orders?">Accept Order</button>
+            <button type="button" wire:click="cancelSelected"
+                wire:confirm="Cancel every running service on the selected orders?">Cancel Order</button>
+        </div>
 
         <nav class="ao-mu-pages">
             <button type="button" wire:click="jump({{ $orders->currentPage() - 1 }})"
@@ -141,4 +149,19 @@
             </div>
         @endif
     </div>
+    <script>
+        (() => {
+            const root = document.currentScript.closest('.fi-page') ?? document;
+            root.addEventListener('change', (event) => {
+                if (!event.target.matches('[data-ao-check-all]')) return;
+                for (const box of root.querySelectorAll('[data-ao-check]')) {
+                    if (box.checked !== event.target.checked) {
+                        box.checked = event.target.checked;
+                        // Livewire binds checkboxes on change, not input.
+                        box.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+            });
+        })();
+    </script>
 </x-filament-panels::page>

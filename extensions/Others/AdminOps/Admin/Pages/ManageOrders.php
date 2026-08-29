@@ -44,8 +44,62 @@ class ManageOrders extends Page
 
     public bool $filter = false;
 
+    /** The rows ticked for the With Selected bar. */
+    public array $selected = [];
+
     /** The row awaiting the "Are you sure?" before deletion. */
     public ?int $confirmingDelete = null;
+
+    /**
+     * With Selected → Accept Order, the reference's green button: every pending service on
+     * the ticked orders activates, provisioned the way checkout's zero-total path does.
+     */
+    public function acceptSelected(): void
+    {
+        $count = 0;
+
+        DB::transaction(function () use (&$count): void {
+            $orders = Order::with('services.product')->whereIn('id', array_map('intval', $this->selected))->get();
+
+            foreach ($orders as $order) {
+                foreach ($order->services->where('status', 'pending') as $service) {
+                    if ($service->product?->server) {
+                        \App\Jobs\Server\CreateJob::dispatch($service);
+                    }
+
+                    $service->status = 'active';
+                    $service->expires_at = $service->calculateNextDueDate();
+                    $service->save();
+                    $count++;
+                }
+            }
+        });
+
+        $this->selected = [];
+        Notification::make()->title($count ? 'Accepted: ' . $count . ' service(s) activated' : 'Nothing pending in the selected orders')
+            ->{$count ? 'success' : 'warning'}()->send();
+    }
+
+    /** With Selected → Cancel Order: pending and active services on the ticked orders stop. */
+    public function cancelSelected(): void
+    {
+        $count = 0;
+
+        DB::transaction(function () use (&$count): void {
+            $orders = Order::with('services')->whereIn('id', array_map('intval', $this->selected))->get();
+
+            foreach ($orders as $order) {
+                foreach ($order->services->whereIn('status', ['pending', 'active', 'suspended']) as $service) {
+                    $service->update(['status' => 'cancelled']);
+                    $count++;
+                }
+            }
+        });
+
+        $this->selected = [];
+        Notification::make()->title($count ? 'Cancelled: ' . $count . ' service(s)' : 'Nothing running in the selected orders')
+            ->{$count ? 'success' : 'warning'}()->send();
+    }
 
     public static function canAccess(): bool
     {
