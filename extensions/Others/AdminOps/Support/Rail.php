@@ -391,12 +391,28 @@ class Rail
         }
 
         return \Illuminate\Support\Facades\Cache::remember('adminops.version-label', 3600, function (): string {
-            $head = base_path('.git/HEAD');
-
             try {
-                $ref = trim((string) file_get_contents($head));
+                $ref = trim((string) file_get_contents(base_path('.git/HEAD')));
+
                 if (str_starts_with($ref, 'ref:')) {
-                    $ref = trim((string) file_get_contents(base_path('.git/' . trim(substr($ref, 4)))));
+                    $branch = trim(substr($ref, 4));
+
+                    // A loose ref file can be stale after git packs its refs; whichever of
+                    // the two files was written last holds the truth.
+                    $candidates = [];
+                    $loose = base_path('.git/' . $branch);
+                    if (is_file($loose)) {
+                        $candidates[filemtime($loose)] = trim((string) file_get_contents($loose));
+                    }
+
+                    $packed = base_path('.git/packed-refs');
+                    if (is_file($packed) && preg_match('/^([0-9a-f]{40}) ' . preg_quote($branch, '/') . '$/m',
+                        (string) file_get_contents($packed), $match)) {
+                        $candidates[filemtime($packed)] = $match[1];
+                    }
+
+                    krsort($candidates);
+                    $ref = (string) (reset($candidates) ?: '');
                 }
 
                 return $ref !== '' ? 'source @ ' . substr($ref, 0, 7) : 'development';
