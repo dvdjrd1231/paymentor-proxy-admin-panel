@@ -35,7 +35,9 @@
                         @endif
                         {{ $section['label'] }}
                     </h2>
-                    @if (($section['form'] ?? null) === 'filter-tickets')
+                    @if (($section['form'] ?? null) === 'tag-cloud')
+                        <p class="ao-rail-none">None</p>
+                    @elseif (($section['form'] ?? null) === 'filter-tickets')
                         {{-- The reference's Filter Tickets box: a real form — everything
                              lands on the tickets page as URL filters. --}}
                         <form class="ao-rail-filter" method="get" action="{{ $section['action'] }}">

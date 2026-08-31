@@ -18,8 +18,14 @@
                 </label>
                 <label class="ao-anc-row ao-an-body">
                     <span>Announcement</span>
-                    <textarea rows="10" wire:model="body"
-                        placeholder="The announcement itself — HTML works here, as the portal renders it" required></textarea>
+                    @if ($rich)
+                        {{-- The rendered view, as the portal will show it. Edits happen in
+                             the source view — the toggle below switches back. --}}
+                        <div class="ao-an-rendered">{!! $body ?: '<i>Nothing written yet.</i>' !!}</div>
+                    @else
+                        <textarea rows="10" wire:model="body"
+                            placeholder="The announcement itself — HTML works here, as the portal renders it" required></textarea>
+                    @endif
                 </label>
                 <label class="ao-anc-row">
                     <span>Published?</span>
@@ -37,8 +43,18 @@
 
             <div class="ao-pr-center">
                 <button type="button" class="ao-cq-addline" wire:click="backToList">Back to List</button>
+                <button type="button" class="ao-cq-addline" wire:click="$toggle('rich')">Enable/Disable Rich-Text Editor</button>
                 <button type="button" class="ao-find-go" wire:click="save">Save Changes</button>
             </div>
+
+            {{-- The reference's translations block. Paymenter announcements are a single
+                 text, so the languages are listed but not editable — and say why. --}}
+            <h4 class="ao-ano-heading">Multi-Lingual Translations</h4>
+            <ul class="ao-an-langs" title="Paymenter announcements have no per-language variants — the portal shows the one text to everyone">
+                @foreach (['Arabic', 'Azerbaijani', 'Catalan', 'Chinese', 'Croatian', 'Czech', 'Danish', 'Dutch', 'Estonian', 'Farsi', 'French', 'German', 'Hebrew', 'Hungarian', 'Italian', 'Macedonian', 'Norwegian', 'Portuguese-br', 'Portuguese-pt', 'Romanian', 'Russian', 'Spanish', 'Swedish', 'Turkish', 'Ukrainian'] as $language)
+                    <li>{{ $language }}</li>
+                @endforeach
+            </ul>
         @else
             <div class="ao-pr-center">
                 <button type="button" class="ao-find-go" wire:click="openForm">Add New Announcement</button>

@@ -89,6 +89,14 @@
             </tbody>
         </table>
 
+        {{-- The reference's button under the strip: the full services screen, filtered to
+             the picked client. --}}
+        <div class="ao-ont-viewall">
+            <a class="ao-cq-addline" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::getUrl($selectedUser ? ['client' => $selectedUser->email] : []) }}">
+                &#9776; View All Services
+            </a>
+        </div>
+
         {{-- The message box: the reference's toolbar buttons write markdown, and Preview
              renders it server-side — the same markdown tickets already speak. --}}
         <div class="ao-ont-editor">
@@ -120,7 +128,11 @@
             <div class="ao-anc-row">
                 <span>Attachments<br><i>Max file size: 10MB</i></span>
                 <span class="ao-anc-field">
-                    <input type="file" wire:model="attachments" multiple>
+                    <input type="file" wire:model="attachments" multiple data-ao-attach>
+                    {{-- The reference's Add More reopens the picker; the input is already
+                         multiple, so every pick adds to the set. --}}
+                    <button type="button" class="ao-cq-addline"
+                        onclick="this.closest('.ao-anc-field').querySelector('[data-ao-attach]').click()">Add More</button>
                 </span>
             </div>
             @error('attachments.*') <p class="ao-anc-errors">{{ $message }}</p> @enderror
