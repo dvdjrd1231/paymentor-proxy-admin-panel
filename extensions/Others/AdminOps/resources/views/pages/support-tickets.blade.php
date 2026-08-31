@@ -15,47 +15,74 @@
         </div>
 
         @if ($this->filter)
-            <form class="ao-find" wire:submit.prevent="search">
-                <span class="ao-find-glass" aria-hidden="true">
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" width="18" height="18">
-                        <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
-                    </svg>
-                </span>
-                <div class="ao-find-fields">
-                    <label class="ao-find-field ao-find-wide">
-                        <span>Subject/Message or Ticket ID</span>
-                        <input type="text" wire:model="q" placeholder="Subject or ticket ID">
-                    </label>
-                    <label class="ao-find-field">
-                        <span>Department</span>
-                        <select wire:model="dept">
-                            <option value="">Any</option>
-                            @foreach ($departments as $department)
-                                <option value="{{ $department }}">{{ $department }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-                    <label class="ao-find-field">
-                        <span>Email Address</span>
-                        <input type="text" wire:model="email" placeholder="user@example.com">
-                    </label>
-                    <label class="ao-find-field">
-                        <span>Status</span>
-                        <select wire:model="tab">
-                            @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets::VIEWS as $key => $label)
-                                <option value="{{ $key }}">{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </label>
+            {{-- The reference's framed filter: labels on the left, one control per row,
+                 the centred blue Search/Filter. Every row is a live filter. --}}
+            <form class="ao-stf" wire:submit.prevent="search">
+                <label class="ao-stf-row">
+                    <span>Client</span>
+                    <select wire:model="clientId">
+                        <option value="">Start Typing to Search Clients</option>
+                        @foreach ($clients as $row)
+                            <option value="{{ $row->id }}">
+                                {{ trim($row->first_name . ' ' . $row->last_name) ?: $row->email }} - #{{ $row->id }}
+                            </option>
+                        @endforeach
+                    </select>
+                </label>
+                <label class="ao-stf-row">
+                    <span>Department</span>
+                    <select wire:model="dept">
+                        <option value="">Any</option>
+                        @foreach ($departments as $department)
+                            <option value="{{ $department }}">{{ $department }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <label class="ao-stf-row">
+                    <span>Status</span>
+                    <select wire:model="tab">
+                        @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets::VIEWS as $key => $label)
+                            <option value="{{ $key }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <label class="ao-stf-row">
+                    <span>Tags</span>
+                    <input type="text" value="Any" disabled title="Paymenter tickets have no tags">
+                </label>
+                <label class="ao-stf-row">
+                    <span>Priority</span>
+                    <select wire:model="prio">
+                        <option value="">Any</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </label>
+                <label class="ao-stf-row">
+                    <span>Subject/Message</span>
+                    <input type="text" wire:model="q" placeholder="Words from the subject">
+                </label>
+                <label class="ao-stf-row">
+                    <span>Email Address</span>
+                    <input type="text" class="ao-stf-mid" wire:model="email" placeholder="user@example.com">
+                </label>
+                <label class="ao-stf-row">
+                    <span>Ticket ID</span>
+                    <input type="text" class="ao-stf-small" wire:model="tid" placeholder="e.g. 86">
+                </label>
+                <label class="ao-stf-row">
+                    <span>Assigned To</span>
+                    <select class="ao-stf-small" wire:model="assigned">
+                        <option value="">Any</option>
+                        @foreach ($admins as $admin)
+                            <option value="{{ $admin->id }}">{{ trim($admin->first_name . ' ' . $admin->last_name) ?: $admin->email }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <div class="ao-stf-submit">
+                    <button type="submit" class="ao-find-go">Search/Filter</button>
                 </div>
-                <button type="submit" class="ao-find-go">
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" width="13" height="13" aria-hidden="true">
-                        <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
-                    </svg>
-                    Search
-                </button>
             </form>
         @endif
 

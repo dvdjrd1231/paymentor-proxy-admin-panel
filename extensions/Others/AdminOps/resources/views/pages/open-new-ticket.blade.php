@@ -8,7 +8,7 @@
         <div class="ao-anc-card">
             <label class="ao-anc-row">
                 <span>Client</span>
-                <select wire:model.live="client" required>
+                <select class="ao-w-40" wire:model.live="client" required>
                     <option value="">Start Typing to Search Clients</option>
                     @foreach ($clients as $row)
                         <option value="{{ $row->id }}">
@@ -19,19 +19,19 @@
             </label>
             <label class="ao-anc-row">
                 <span>Name</span>
-                <input type="text" value="{{ $selectedUser ? trim($selectedUser->first_name . ' ' . $selectedUser->last_name) : '' }}"
+                <input type="text" class="ao-w-30" value="{{ $selectedUser ? trim($selectedUser->first_name . ' ' . $selectedUser->last_name) : '' }}"
                     placeholder="Chosen by the client picker" readonly>
             </label>
             <div class="ao-anc-row">
                 <span>Email Address</span>
                 <span class="ao-anc-field">
-                    <input type="text" value="{{ $selectedUser?->email }}" placeholder="Chosen by the client picker" readonly>
+                    <input type="text" class="ao-w-45" value="{{ $selectedUser?->email }}" placeholder="Chosen by the client picker" readonly>
                     <label class="ao-ont-send"><input type="checkbox" wire:model="sendEmail"> Send Email</label>
                 </span>
             </div>
             <label class="ao-anc-row">
                 <span>CC Recipients</span>
-                <input type="text" placeholder="Start Typing to Add or Select Recipient" disabled
+                <input type="text" class="ao-w-45" placeholder="Start Typing to Add or Select Recipient" disabled
                     title="Paymenter tickets have no CC list — the client and staff are notified">
             </label>
             <label class="ao-anc-row">

@@ -16,11 +16,11 @@
             <form class="ao-anc-card" wire:submit.prevent="save">
                 <label class="ao-anc-row">
                     <span>Title</span>
-                    <input type="text" wire:model="headline" placeholder="e.g. network issue" required>
+                    <input type="text" class="ao-w-40" wire:model="headline" placeholder="e.g. network issue" required>
                 </label>
                 <label class="ao-anc-row">
                     <span>Type</span>
-                    <select wire:model.live="type">
+                    <select class="ao-w-25" wire:model.live="type">
                         @foreach (\Paymenter\Extensions\Others\AdminOps\Models\NetworkIssue::TYPES as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
@@ -28,7 +28,7 @@
                 </label>
                 <label class="ao-anc-row">
                     <span>Server</span>
-                    <select wire:model="server" @disabled($type !== 'server')>
+                    <select class="ao-w-25" wire:model="server" @disabled($type !== 'server')>
                         <option value="">None</option>
                         @foreach ($servers as $row)
                             <option value="{{ $row->id }}">{{ $row->name }}</option>
@@ -37,7 +37,7 @@
                 </label>
                 <label class="ao-anc-row">
                     <span>Priority</span>
-                    <select wire:model="priority">
+                    <select class="ao-w-25" wire:model="priority">
                         @foreach (\Paymenter\Extensions\Others\AdminOps\Models\NetworkIssue::PRIORITIES as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
@@ -45,7 +45,7 @@
                 </label>
                 <label class="ao-anc-row">
                     <span>Status</span>
-                    <select wire:model="status">
+                    <select class="ao-w-25" wire:model="status">
                         @foreach (\Paymenter\Extensions\Others\AdminOps\Models\NetworkIssue::STATUSES as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach

@@ -2990,6 +2990,68 @@
 
     @media (max-width: 760px) { .ao-an-langs { columns: 1; } }
 
+    /* The reference's framed ticket filter: label left, one control per row. */
+    .ao-stf {
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px;
+        padding: 1rem 1.2rem 0.4rem;
+        margin-bottom: 0.9rem;
+    }
+
+    .ao-stf-row {
+        display: grid;
+        grid-template-columns: 9.5rem 1fr;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 0.6rem;
+    }
+
+    .ao-stf-row > span { text-align: end; font-weight: 600; }
+
+    .ao-stf-row input,
+    .ao-stf-row select {
+        width: 100%;
+        height: 2.2rem;
+        padding: 0 0.6rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.9rem;
+    }
+
+    .ao-stf-row input:disabled { background: #f5f5f5; color: var(--wa-muted, #6b6b6b); }
+
+    .ao-stf-row .ao-stf-mid { width: 60%; min-width: 16rem; }
+
+    .ao-stf-row .ao-stf-small { width: 30%; min-width: 11rem; }
+
+    .ao-stf-submit { text-align: center; margin: 0.9rem 0 0.6rem; }
+
+    @media (max-width: 700px) {
+        .ao-stf-row { grid-template-columns: 1fr; gap: 0.25rem; }
+        .ao-stf-row > span { text-align: start; }
+        .ao-stf-row .ao-stf-mid, .ao-stf-row .ao-stf-small { width: 100%; min-width: 0; }
+    }
+
+    /* The reference sizes its inputs to their meaning, not the page: width utilities the
+       support forms pin themselves with. */
+    /* Doubled class: the form rows size their inputs with attribute selectors, and the
+       utility must outrank them without resorting to !important. */
+    .ao-mu .ao-w-25.ao-w-25 { width: 25%; min-width: 11rem; flex: 0 0 auto; }
+    .ao-mu .ao-w-30.ao-w-30 { width: 30%; min-width: 13rem; flex: 0 0 auto; }
+    .ao-mu .ao-w-40.ao-w-40 { width: 40%; min-width: 16rem; flex: 0 0 auto; }
+    .ao-mu .ao-w-45.ao-w-45 { width: 45%; min-width: 18rem; flex: 0 0 auto; }
+    .ao-mu .ao-w-60.ao-w-60 { width: 60%; min-width: 20rem; flex: 0 0 auto; }
+
+    @media (max-width: 760px) {
+        .ao-mu .ao-w-25.ao-w-25, .ao-mu .ao-w-30.ao-w-30, .ao-mu .ao-w-40.ao-w-40,
+        .ao-mu .ao-w-45.ao-w-45, .ao-mu .ao-w-60.ao-w-60 {
+            width: 100%;
+            min-width: 0;
+        }
+    }
+
     /* The rail's Filter Tickets form. */
     .ao-rail-filter {
         display: flex;
