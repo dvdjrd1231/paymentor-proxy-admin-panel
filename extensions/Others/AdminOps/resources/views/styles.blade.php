@@ -16,7 +16,7 @@
 <style>
     .ao-panel {
         color: hsl(var(--color-base));
-        font-size: 0.9375rem;
+        font-size: 1rem;
     }
 
     .ao-panel a {
@@ -48,7 +48,7 @@
         align-items: stretch;
         gap: 1rem;
         padding: 0;
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         overflow: hidden;
         background-color: hsl(var(--color-inactive));
         transition: filter 120ms ease;
@@ -103,7 +103,7 @@
 
     .ao-tile-label {
         display: block;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         font-weight: 500;
         opacity: 0.9;
     }
@@ -260,7 +260,7 @@
         flex: none;
         padding: 0.5rem 0.85rem;
         border-bottom: 2px solid transparent;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         color: var(--wa-muted, hsl(var(--color-base) / 0.65));
         white-space: nowrap;
         cursor: pointer;
@@ -420,7 +420,7 @@
     }
 
     .fi-ta-cell .fi-ta-text-description {
-        font-size: 0.78rem;
+        font-size: 0.82rem;
         line-height: 1.3;
     }
 
@@ -456,7 +456,7 @@
         display: flex;
         align-items: center;
         padding: 0.3rem;
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         color: #8a8a8a;
         cursor: pointer;
     }
@@ -483,10 +483,10 @@
         max-height: min(70vh, 34rem);
         padding: 0.6rem 0.75rem;
         border: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
-        border-radius: var(--wa-radius, 3px);
+        border-radius: var(--wa-radius, 6px);
         background: var(--wa-canvas, hsl(var(--color-gray-50)));
         box-shadow: 0 4px 14px rgb(0 0 0 / 0.12);
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
 
     .ao-dash-menu h4 {
@@ -631,7 +631,7 @@
         gap: 0.5rem;
         padding: 0.4rem 0.75rem;
         border-bottom: 1px solid var(--wa-rule, hsl(var(--color-gray-200)));
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
         font-weight: 600;
         color: var(--wa-link, #337ab7);
     }
@@ -656,7 +656,7 @@
     .ao-wi .fi-wi-stats-overview-stat-label {
         color: #6e6e6e;
         font-weight: 400;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 
     .ao-wi .fi-wi-stats-overview-stat-value {
@@ -733,7 +733,7 @@
         opacity: 0.93;
         background: #fff;
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         overflow: hidden;
         box-shadow: 0 10px 28px rgb(0 0 0 / 0.25);
     }
@@ -749,7 +749,7 @@
        containers stop competing with it. */
     .fi-wi-widget.ao-wi {
         border: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
-        border-radius: var(--wa-radius, 3px);
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         overflow: hidden;
     }
@@ -887,9 +887,9 @@
         padding: 0.6rem 0.75rem;
         border: 1px solid hsl(var(--color-error) / 0.35);
         border-inline-start: 3px solid hsl(var(--color-error));
-        border-radius: var(--wa-radius, 3px);
+        border-radius: var(--wa-radius, 6px);
         background: hsl(var(--color-error) / 0.06);
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
 
     .ao-auto-problem p {
@@ -927,7 +927,7 @@
 
     .ao-auto-head-label {
         display: block;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         opacity: 0.9;
     }
 
@@ -936,7 +936,7 @@
         align-items: center;
         gap: 0.4rem;
         margin-bottom: 1rem;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         color: hsl(var(--color-base));
     }
 
@@ -958,14 +958,14 @@
 
     .ao-auto-tile {
         border: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
-        border-radius: var(--wa-radius, 3px);
+        border-radius: var(--wa-radius, 6px);
         background: var(--wa-canvas, hsl(var(--color-gray-50)));
     }
 
     .ao-auto-tile-head {
         padding: 0.45rem 0.75rem;
         border-bottom: 1px solid var(--wa-rule, hsl(var(--color-gray-200)));
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         font-weight: 600;
         color: var(--wa-ink, hsl(var(--color-base)));
     }
@@ -986,21 +986,21 @@
     }
 
     .ao-auto-tile-did {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         color: var(--wa-muted, hsl(var(--color-base) / 0.6));
     }
 
     /* The reference puts this in red at the end of the row, and only when it is not zero. */
     .ao-auto-tile-failed {
         margin-inline-start: auto;
-        font-size: 0.78rem;
+        font-size: 0.82rem;
         font-weight: 600;
         color: hsl(var(--color-error));
     }
 
     .ao-auto-tile-foot {
         padding: 0 0.75rem 0.6rem;
-        font-size: 0.72rem;
+        font-size: 0.78rem;
         color: var(--wa-muted, hsl(var(--color-base) / 0.6));
     }
 
@@ -1014,9 +1014,9 @@
     .ao-auto-clock {
         padding: 0.75rem;
         border: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
-        border-radius: var(--wa-radius, 3px);
+        border-radius: var(--wa-radius, 6px);
         background: var(--wa-canvas, hsl(var(--color-gray-50)));
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
 
     .ao-auto-clock-head {
@@ -1083,7 +1083,7 @@
 
     .ao-cat {
         border: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
-        border-radius: var(--wa-radius, 3px);
+        border-radius: var(--wa-radius, 6px);
         background: var(--wa-canvas, hsl(var(--color-gray-50)));
     }
 
@@ -1094,7 +1094,7 @@
         padding: 0.5rem 0.75rem;
         background: var(--wa-section, hsl(var(--color-gray-100)));
         border-bottom: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
     }
 
     .ao-cat-name {
@@ -1106,12 +1106,12 @@
        per-group icons. */
     .ao-cat-meta {
         margin-inline-start: auto;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         color: var(--wa-muted, hsl(var(--color-base) / 0.6));
     }
 
     .ao-cat-edit {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         color: var(--wa-link, hsl(var(--color-primary)));
     }
 
@@ -1121,7 +1121,7 @@
 
     .ao-cat-empty {
         padding: 0.6rem 0.75rem;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         color: var(--wa-muted, hsl(var(--color-base) / 0.6));
     }
 
@@ -1136,7 +1136,7 @@
     .ao-cat-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
 
     .ao-cat-table th {
@@ -1167,7 +1167,7 @@
 
     .ao-cat-flag {
         color: var(--wa-muted, hsl(var(--color-base) / 0.6));
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 
     .ao-col-grip { width: 1.75rem; }
@@ -1215,7 +1215,7 @@
     .ao-catalogue-count,
     .ao-catalogue-empty {
         margin-top: 0.75rem;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         color: var(--wa-muted, hsl(var(--color-base) / 0.6));
     }
 
@@ -1224,7 +1224,7 @@
        round green glass, the records line, the navy grid, and the page buttons. Measured
        against the screenshots rather than remembered. */
     .ao-mu {
-        font-size: 0.9375rem;
+        font-size: 1rem;
         color: var(--wa-text, #2b2b2b);
     }
 
@@ -1234,7 +1234,7 @@
         gap: 1rem;
         padding: 0.9rem 1.1rem;
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: var(--wa-radius, 3px);
+        border-radius: var(--wa-radius, 6px);
         background: #f0f0f0;
         margin-bottom: 0.9rem;
     }
@@ -1283,9 +1283,9 @@
         height: 2.1rem;
         padding: 0 0.55rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: var(--wa-radius, 3px);
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
     }
 
     /* Below tablet width the band stacks: full-width fields, full-width buttons, no glass. */
@@ -1311,11 +1311,11 @@
         height: 2.1rem;
         padding: 0 1.4rem;
         flex: none;
-        border-radius: var(--wa-radius, 3px);
+        border-radius: var(--wa-radius, 6px);
         background: var(--wa-link, #337ab7);
         color: #fff;
         font-weight: 600;
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
         cursor: pointer;
     }
 
@@ -1327,10 +1327,10 @@
         padding: 0 0.9rem;
         flex: none;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: var(--wa-radius, 3px);
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         color: var(--wa-text, #2b2b2b);
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
         white-space: nowrap;
         cursor: pointer;
     }
@@ -1355,7 +1355,7 @@
         margin-inline-start: 0.3rem;
         padding: 0.1rem 0.4rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: var(--wa-radius, 3px);
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
     }
 
@@ -1390,7 +1390,7 @@
         padding: 0.45rem 0.6rem;
         background: var(--wa-blue, #1a4d80);
         color: #fff;
-        font-size: 0.78rem;
+        font-size: 0.82rem;
         font-weight: 700;
         text-align: center;
         border-inline-end: 1px solid rgb(255 255 255 / 0.18);
@@ -1423,7 +1423,7 @@
     .ao-mu-status {
         display: inline-block;
         padding: 0.15rem 0.65rem;
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         font-size: 0.7rem;
         font-weight: 700;
         letter-spacing: 0.03em;
@@ -1446,7 +1446,7 @@
         margin-bottom: 0.7rem;
         padding: 0.35rem 1rem;
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px 3px 0 0;
+        border-radius: var(--wa-radius, 6px) 3px 0 0;
         background: #f0f0f0;
         color: var(--wa-text, #2b2b2b);
         cursor: pointer;
@@ -1498,7 +1498,7 @@
         height: 2.1rem;
         padding: 0 0.55rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         font-size: 14px;
     }
@@ -1520,7 +1520,7 @@
         height: 2.1rem;
         padding: 0 0.8rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         cursor: pointer;
         white-space: nowrap;
@@ -1532,7 +1532,7 @@
         margin-top: 1rem;
         padding: 0.7rem 1rem;
         border: 1px solid #ebccd1;
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #f2dede;
         color: #a94442;
     }
@@ -1551,7 +1551,7 @@
        live below it. */
     .ao-anc-card {
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         padding: 0.8rem 1rem;
     }
@@ -1688,7 +1688,7 @@
 
     .ao-cp {
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
     }
 
@@ -1766,7 +1766,7 @@
     .ao-cp-mail {
         padding: 0.25rem 0.1rem;
         border-bottom: 1px solid #f0f0f0;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 
     .ao-cp-mail span { color: var(--wa-muted, #6b6b6b); }
@@ -1781,7 +1781,7 @@
     .ao-cs-band {
         margin-bottom: 15px;
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         overflow: hidden;
     }
 
@@ -1807,14 +1807,14 @@
         padding: 0.45rem 0.75rem;
         background: #fafafa;
         border-top: 1px solid var(--wa-rule, #d9dadb);
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         color: var(--wa-text, #333);
     }
 
     .ao-cs-band-foot select {
         padding: 0.05rem 0.3rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
     }
 
@@ -1827,7 +1827,7 @@
     .ao-cs-band-pages button {
         padding: 0.2rem 0.7rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         color: var(--wa-muted, #6b6b6b);
     }
@@ -1837,7 +1837,7 @@
         place-items: center;
         min-width: 1.7rem;
         height: 1.7rem;
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: var(--wa-blue, #1a4d80);
         color: #fff;
         font-style: normal;
@@ -1848,7 +1848,7 @@
         width: 100%;
         padding: 0.5rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         font: inherit;
         resize: vertical;
     }
@@ -1876,7 +1876,7 @@
         padding: 0.45rem 0.9rem;
         margin-bottom: -1px;
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px 3px 0 0;
+        border-radius: var(--wa-radius, 6px) 3px 0 0;
         background: #ededed;
         color: var(--wa-text, #333);
         cursor: pointer;
@@ -1905,7 +1905,7 @@
         height: 2.2rem;
         padding: 0 0.6rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         font-size: inherit;
     }
@@ -1913,7 +1913,7 @@
     .ao-cs-filter-tag {
         text-align: right;
         margin-bottom: 0.4rem;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         color: var(--wa-muted, #6b6b6b);
     }
 
@@ -1928,7 +1928,7 @@
     .ao-cs-selected button {
         padding: 0.3rem 0.8rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         color: var(--wa-text, #333);
         opacity: 0.65;
@@ -1957,9 +1957,9 @@
         flex-wrap: wrap;
         gap: 0;
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #f0f0f0;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
 
     .ao-cs-flags > span {
@@ -1988,7 +1988,7 @@
 
     @media (max-width: 900px) {
         .ao-mu-line { flex-wrap: wrap; }
-        .ao-cs-flags { font-size: 0.78rem; }
+        .ao-cs-flags { font-size: 0.82rem; }
     }
 
     /* Wide grids scroll inside their panel rather than widening the page. */
@@ -2002,7 +2002,7 @@
         margin-inline: 0.15rem;
         padding: 0.25rem 0.75rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         color: var(--wa-text, #2b2b2b);
         white-space: nowrap;
@@ -2018,7 +2018,7 @@
         display: inline-block;
         margin-inline-start: 0.4rem;
         padding: 0.1rem 0.45rem;
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         font-size: 0.66rem;
         font-style: normal;
         font-weight: 600;
@@ -2053,7 +2053,7 @@
         cursor: pointer;
         padding: 0.25rem 0.75rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         white-space: nowrap;
     }
@@ -2075,7 +2075,7 @@
         min-width: 8rem;
         padding: 0.25rem 0;
         border: 1px solid #c3c3c3;
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         box-shadow: 0 6px 12px rgb(0 0 0 / 0.175);
         text-align: left;
@@ -2092,7 +2092,7 @@
         background: none;
         text-align: start;
         font: inherit;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         color: var(--wa-text, #2b2b2b);
         cursor: pointer;
         white-space: nowrap;
@@ -2151,7 +2151,7 @@
     .ao-mud {
         width: 56rem;
         max-width: 100%;
-        border-radius: 4px;
+        border-radius: 8px;
         background: #fff;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
         color: var(--wa-text, #2b2b2b);
@@ -2165,7 +2165,7 @@
         justify-content: space-between;
         gap: 1rem;
         padding: 0.7rem 1.1rem;
-        border-radius: 4px 4px 0 0;
+        border-radius: 8px 8px 0 0;
         background: var(--wa-blue, #1a4d80);
         color: #fff;
         font-size: 1.05rem;
@@ -2204,7 +2204,7 @@
         width: 100%;
         padding: 0.4rem 0.6rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         font: inherit;
     }
@@ -2248,7 +2248,7 @@
 
     .ao-mud-foot button {
         padding: 0.45rem 1rem;
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         border: 1px solid transparent;
         font: inherit;
         cursor: pointer;
@@ -2354,7 +2354,7 @@
 
     .ao-ano-card {
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 4px;
+        border-radius: 8px;
         background: #fff;
         margin-bottom: 1rem;
         text-align: start;
@@ -2398,10 +2398,10 @@
         margin-top: 0.8rem;
         padding: 0.35rem 0.9rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         font: inherit;
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
         color: var(--wa-text, #2b2b2b);
         cursor: pointer;
     }
@@ -2423,10 +2423,10 @@
     /* The reference styles Create Custom Promo as a small bordered button. */
     .ao-ano-promo {
         white-space: nowrap;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         padding: 0.3rem 0.7rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
     }
 
@@ -2442,17 +2442,17 @@
         align-items: center;
         gap: 0.8rem;
         margin-bottom: 0.5rem;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         color: var(--wa-muted, #6b6b6b);
     }
 
     .ao-tx-refresh {
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         padding: 0.2rem 0.6rem;
         font: inherit;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         color: var(--wa-text, #2b2b2b);
         cursor: pointer;
     }
@@ -2467,7 +2467,7 @@
         gap: 0.4rem 2rem;
         padding: 0.8rem 1.1rem;
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #f0f0f0;
         font-size: 1.05rem;
         font-weight: 700;
@@ -2503,7 +2503,7 @@
         min-width: 0;
         position: relative;
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         padding: 1.6rem 0.8rem 0.4rem;
     }
@@ -2556,10 +2556,10 @@
     .ao-tx-tile-body b { font-size: 1.25rem; }
 
     .ao-tx-tile-body i,
-    .ao-tx-note { font-style: normal; font-size: 0.8rem; color: var(--wa-muted, #6b6b6b); }
+    .ao-tx-note { font-style: normal; font-size: 0.85rem; color: var(--wa-muted, #6b6b6b); }
 
-    .ao-tx-up { color: #3c763d; font-style: normal; font-size: 0.8rem; }
-    .ao-tx-down { color: #d9534f; font-style: normal; font-size: 0.8rem; }
+    .ao-tx-up { color: #3c763d; font-style: normal; font-size: 0.85rem; }
+    .ao-tx-down { color: #d9534f; font-style: normal; font-size: 0.85rem; }
 
     .ao-tx-heading { font-weight: 700; margin: 0.4rem 0; }
 
@@ -2577,13 +2577,13 @@
         min-width: 11rem;
         padding: 0.7rem 1rem;
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
     }
 
     .ao-tx-balance b { font-size: 1.05rem; }
 
-    .ao-tx-balance i { font-style: normal; font-size: 0.8rem; color: var(--wa-muted, #6b6b6b); }
+    .ao-tx-balance i { font-style: normal; font-size: 0.85rem; color: var(--wa-muted, #6b6b6b); }
 
     .ao-tx-desc { max-width: 26rem; overflow-wrap: anywhere; }
 
@@ -2613,10 +2613,10 @@
     .ao-cq-buttons a {
         padding: 0.4rem 0.9rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         font: inherit;
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
         color: var(--wa-text, #2b2b2b);
         cursor: pointer;
         text-decoration: none;
@@ -2654,7 +2654,7 @@
         height: 2.2rem;
         padding: 0 0.6rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         margin-bottom: 0.6rem;
         font: inherit;
@@ -2669,9 +2669,9 @@
         height: 2rem;
         padding: 0 0.5rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         font: inherit;
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
     }
 
     .ao-cq-items .ao-cq-desc { min-width: 16rem; }
@@ -2692,11 +2692,11 @@
 
     .ao-cq-addline {
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         padding: 0.3rem 0.8rem;
         font: inherit;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         cursor: pointer;
     }
 
@@ -2706,10 +2706,10 @@
         margin-inline-start: 0.4rem;
         height: 2rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         font: inherit;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
 
     .ao-cq-sums td { padding: 0.25rem 0.9rem; text-align: end; }
@@ -2722,7 +2722,7 @@
         display: block;
         font-style: normal;
         font-weight: 400;
-        font-size: 0.78rem;
+        font-size: 0.82rem;
         color: var(--wa-muted, #6b6b6b);
     }
 
@@ -2730,9 +2730,9 @@
         width: 100%;
         padding: 0.45rem 0.6rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         font: inherit;
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
     }
 
     /* ── Support suite ──────────────────────────────────────────────────────
@@ -2749,10 +2749,10 @@
     .ao-st-bulk button {
         padding: 0.25rem 0.7rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         font: inherit;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         font-weight: 400;
         cursor: pointer;
     }
@@ -2777,7 +2777,7 @@
         display: block;
         margin-top: 0.15rem;
         font-style: normal;
-        font-size: 0.68rem;
+        font-size: 0.72rem;
         letter-spacing: 0.03em;
         color: #31708f;
         background: #d9edf7;
@@ -2791,7 +2791,7 @@
     .ao-so-band {
         padding: 0.6rem 0.9rem;
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #f0f0f0;
         margin-bottom: 1rem;
     }
@@ -2800,10 +2800,10 @@
         margin-inline-start: 0.5rem;
         height: 2rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         font: inherit;
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
     }
 
     .ao-so-tiles {
@@ -2815,7 +2815,7 @@
 
     .ao-so-tile {
         background: #fdf7e3;
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         padding: 0.9rem;
         text-align: center;
     }
@@ -2849,7 +2849,7 @@
 
     .ao-ont-editor {
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
     }
 
     .ao-ont-toolbar {
@@ -2864,10 +2864,10 @@
         min-width: 2rem;
         padding: 0.25rem 0.5rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         font: inherit;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         cursor: pointer;
     }
 
@@ -2907,7 +2907,7 @@
     .ao-ont-attach .ao-anc-row > span:first-child i {
         display: block;
         font-style: normal;
-        font-size: 0.78rem;
+        font-size: 0.82rem;
         color: var(--wa-muted, #6b6b6b);
     }
 
@@ -2940,13 +2940,13 @@
     .ao-dl-band {
         margin: 0.8rem 0 0.4rem;
         padding: 0.55rem 0.9rem;
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #f0f0f0;
         font-weight: 600;
         font-size: 1.05rem;
     }
 
-    .ao-dl-desc { color: var(--wa-muted, #6b6b6b); font-size: 0.85rem; }
+    .ao-dl-desc { color: var(--wa-muted, #6b6b6b); font-size: 0.9rem; }
 
     /* Network Issues: the reference's red validation banner. */
     .ao-ni-error {
@@ -2955,7 +2955,7 @@
         gap: 0.8rem;
         padding: 0.9rem 1.1rem;
         border: 1px solid #ebccd1;
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #f2dede;
         color: #a94442;
         margin-bottom: 1rem;
@@ -2967,7 +2967,7 @@
         width: 100%;
         padding: 0.6rem 0.8rem;
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         font: inherit;
         font-size: 0.9rem;
     }
@@ -2980,7 +2980,7 @@
         min-height: 12rem;
         padding: 0.7rem 0.9rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
     }
 
@@ -2993,7 +2993,7 @@
     /* The reference's framed ticket filter: label left, one control per row. */
     .ao-stf {
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         padding: 1rem 1.2rem 0.4rem;
         margin-bottom: 0.9rem;
     }
@@ -3014,7 +3014,7 @@
         height: 2.2rem;
         padding: 0 0.6rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         font: inherit;
         font-size: 0.9rem;
@@ -3075,7 +3075,7 @@
         display: inline-block;
         padding: 0.5rem 1rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         font-size: 0.9rem;
         color: var(--wa-text, #2b2b2b);
@@ -3137,12 +3137,38 @@
         height: 2.2rem;
         padding: 0 0.6rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         font: inherit;
         font-size: 0.9rem;
         flex: 0 0 auto;
     }
+
+    /* ── Colourful icons ────────────────────────────────────────────────────
+       Leandro: the reference's icons are always colourful — they signal function at a
+       glance. A cycling palette over every icon list, so neighbours never share a colour. */
+    .ao-cp-body .ao-cp-link:nth-of-type(5n+1) .ao-cp-ic { color: #337ab7; }
+    .ao-cp-body .ao-cp-link:nth-of-type(5n+2) .ao-cp-ic { color: #5cb85c; }
+    .ao-cp-body .ao-cp-link:nth-of-type(5n+3) .ao-cp-ic { color: #f0ad4e; }
+    .ao-cp-body .ao-cp-link:nth-of-type(5n+4) .ao-cp-ic { color: #9b59b6; }
+    .ao-cp-body .ao-cp-link:nth-of-type(5n+5) .ao-cp-ic { color: #5bc0de; }
+
+    .ao-cp-link.ao-cp-danger .ao-cp-ic,
+    .ao-mo-delete .ao-mu-cell-icon,
+    .ao-mu-icon-red { color: #d9534f; }
+
+    .ao-rail-panel:nth-of-type(6n+1) .ao-rail-heading-icon { color: #337ab7; }
+    .ao-rail-panel:nth-of-type(6n+2) .ao-rail-heading-icon { color: #5cb85c; }
+    .ao-rail-panel:nth-of-type(6n+3) .ao-rail-heading-icon { color: #f0ad4e; }
+    .ao-rail-panel:nth-of-type(6n+4) .ao-rail-heading-icon { color: #9b59b6; }
+    .ao-rail-panel:nth-of-type(6n+5) .ao-rail-heading-icon { color: #5bc0de; }
+    .ao-rail-panel:nth-of-type(6n+6) .ao-rail-heading-icon { color: #d9534f; }
+
+    .ao-rail-list li:nth-child(5n+1) .ao-rail-link-icon { color: #337ab7; }
+    .ao-rail-list li:nth-child(5n+2) .ao-rail-link-icon { color: #5cb85c; }
+    .ao-rail-list li:nth-child(5n+3) .ao-rail-link-icon { color: #f0ad4e; }
+    .ao-rail-list li:nth-child(5n+4) .ao-rail-link-icon { color: #9b59b6; }
+    .ao-rail-list li:nth-child(5n+5) .ao-rail-link-icon { color: #d9534f; }
 
     /* Database Status / System pages. */
     .ao-db-line { margin: 0.5rem 0 0.9rem; }
@@ -3163,7 +3189,7 @@
     .ao-phc-ok {
         padding: 0.9rem 1.1rem;
         border: 1px solid #d6e9c6;
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #dff0d8;
         color: #3c763d;
         margin-bottom: 1rem;
@@ -3178,7 +3204,7 @@
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         overflow: hidden;
     }
 
@@ -3187,7 +3213,7 @@
         color: #fff;
         text-align: center;
         padding: 0.4rem 0.2rem;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         font-weight: 600;
     }
 
@@ -3196,7 +3222,7 @@
         padding: 0.3rem 0.4rem;
         border-top: 1px solid var(--wa-rule, #e5e5e5);
         border-inline-start: 1px solid var(--wa-rule, #e5e5e5);
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 
     .ao-cal-blank { background: #f7f7f7; }
@@ -3210,7 +3236,7 @@
         margin-bottom: 0.2rem;
         padding: 0.1rem 0.35rem;
         border-radius: 2px;
-        font-size: 0.72rem;
+        font-size: 0.78rem;
         color: #fff;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -3229,9 +3255,9 @@
         margin-top: 0.9rem;
         padding: 0.9rem 1.1rem;
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fafafa;
-        font-size: 0.82rem;
+        font-size: 0.875rem;
         white-space: pre-wrap;
         word-break: break-word;
         max-height: 60vh;
@@ -3255,7 +3281,7 @@
         flex-direction: column;
         gap: 0.25rem;
         font-weight: 600;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
 
     .ao-rail-filter select,
@@ -3263,10 +3289,10 @@
         height: 1.9rem;
         padding: 0 0.45rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         font: inherit;
-        font-size: 0.82rem;
+        font-size: 0.875rem;
         font-weight: 400;
     }
 
@@ -3274,11 +3300,11 @@
         margin-top: 0.2rem;
         height: 2.1rem;
         border: 0;
-        border-radius: 3px;
+        border-radius: var(--wa-radius, 6px);
         background: #337ab7;
         color: #fff;
         font: inherit;
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
         cursor: pointer;
     }
 
@@ -3308,10 +3334,10 @@
     .ao-mu-pages button {
         padding: 0.35rem 0.9rem;
         border: 1px solid var(--wa-border, #ccc);
-        border-radius: var(--wa-radius, 3px);
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
         color: var(--wa-text, #2b2b2b);
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
         cursor: pointer;
     }
 
@@ -3333,7 +3359,7 @@
         place-items: center;
         min-width: 2.1rem;
         height: 2.1rem;
-        border-radius: var(--wa-radius, 3px);
+        border-radius: var(--wa-radius, 6px);
         background: var(--wa-blue, #1a4d80);
         color: #fff;
         font-weight: 700;

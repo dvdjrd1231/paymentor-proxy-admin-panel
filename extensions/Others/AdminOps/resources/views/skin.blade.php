@@ -30,7 +30,7 @@
         --wa-section: #e9e9e9;       /* rail heading band */
         --wa-rail: #f6f6f6;          /* rail body */
         --wa-canvas: #ffffff;        /* the reference's content area is white, not grey */
-        --wa-radius: 3px;
+        --wa-radius: 6px;   /* Leandro: rounded corners soften the design */
 
         /* Measured off the reference: the bar is 45px tall and the rail column is 195px
            wide plus its 1px rule. Kept as variables so the two places that need each
@@ -710,8 +710,9 @@
        centres it, which left a wide empty gutter beside the rail on a normal monitor. */
     .fi-main {
         max-width: none;
-        padding-block: 1rem;
-        padding-inline: 1rem;
+        /* Leandro: use the whole design area — thinner gutters, more page. */
+        padding-block: 0.75rem;
+        padding-inline: 0.75rem;
     }
 
     .fi-main-ctn {
