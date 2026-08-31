@@ -3271,6 +3271,15 @@
 
     .ao-td-done td.ao-mu-check, .ao-td-done td.ao-mu-actions { text-decoration: none; }
 
+    .ao-sa-hint {
+        padding: 0.8rem 1rem;
+        border: 1px solid #bce8f1;
+        border-radius: var(--wa-radius, 6px);
+        background: #d9edf7;
+        color: #31708f;
+        margin-bottom: 0.9rem;
+    }
+
     /* The rail's Filter Tickets form. */
     .ao-rail-filter {
         display: flex;
