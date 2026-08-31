@@ -283,17 +283,6 @@ class WhmcsNavigation
                 badgeColor: 'warning',
             ),
             static::pageLink(ManageOrders::class, '- Cancelled Orders', params: ['status' => 'cancelled']),
-            // Beside the orders it constrains. The badge counts terms that are overdue and
-            // still running, which should always be zero — a number there means the
-            // every-minute scheduler is not running.
-            static::link(
-                ServiceTermResource::class,
-                'Fixed Terms',
-                badge: fn () => class_exists(ServiceTermResource::class)
-                    ? ServiceTermResource::getNavigationBadge()
-                    : null,
-                badgeColor: 'danger',
-            ),
             static::page(AddNewOrder::class, 'Add New Order'),
         ]);
     }
@@ -365,12 +354,6 @@ class WhmcsNavigation
             // thing Paymenter has: every outbound HTTP call, gateways included. Also in
             // Utilities, where core files it — two ways to one page.
             static::link(HttpLogResource::class, 'Gateway Log'),
-            static::link(RefundResource::class, 'Refunds'),
-            static::link(InvoiceOpsResource::class, 'Invoice Operations'),
-            static::link(CouponResource::class, 'Coupons'),
-            static::link(PaymentFeeRuleResource::class, 'Payment Fee Rules'),
-            static::link(GatewayRuleResource::class, 'Gateway Rules'),
-            static::link(TaxRateResource::class, 'Tax Rates'),
         ]);
     }
 
@@ -403,10 +386,6 @@ class WhmcsNavigation
             static::pageLink(NetworkIssues::class, '- Scheduled', params: ['view' => 'scheduled']),
             static::pageLink(NetworkIssues::class, '- Resolved', params: ['view' => 'resolved']),
             static::pageLink(NetworkIssues::class, '- Create New', params: ['creating' => 1]),
-            // Paymenter's own screens the reference has no name for, kept reachable.
-            static::link(TicketResource::class, 'All Tickets (Core)'),
-            static::link(TicketNoteResource::class, 'Internal Notes'),
-            static::link(KbCategoryResource::class, 'Knowledgebase Categories'),
         ]);
     }
 
@@ -467,6 +446,25 @@ class WhmcsNavigation
             static::link(AuditResource::class, '- Audit Log'),
             static::link(ErrorLogResource::class, '- Error Log'),
             static::link(HttpLogResource::class, '- HTTP Log'),
+            // Paymenter screens the reference's menus have no slot for, kept reachable
+            // here — the reference's own System submenu is its junk drawer too.
+            static::link(
+                ServiceTermResource::class,
+                '- Fixed Terms',
+                badge: fn () => class_exists(ServiceTermResource::class)
+                    ? ServiceTermResource::getNavigationBadge()
+                    : null,
+                badgeColor: 'danger',
+            ),
+            static::link(TicketResource::class, '- All Tickets (Core)'),
+            static::link(TicketNoteResource::class, '- Internal Notes'),
+            static::link(KbCategoryResource::class, '- Knowledgebase Categories'),
+            static::link(RefundResource::class, '- Refunds'),
+            static::link(InvoiceOpsResource::class, '- Invoice Operations'),
+            static::link(CouponResource::class, '- Coupons'),
+            static::link(PaymentFeeRuleResource::class, '- Payment Fee Rules'),
+            static::link(GatewayRuleResource::class, '- Gateway Rules'),
+            static::link(TaxRateResource::class, '- Tax Rates'),
         ]);
     }
 

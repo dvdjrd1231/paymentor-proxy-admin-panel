@@ -3127,6 +3127,23 @@
 
     .ao-rv-table td:first-child { font-weight: 600; }
 
+    /* The reference's date boxes: compact bordered fields sized to a date, calendar
+       control inside — not a bare control stretched across the page. Leandro's circled
+       screenshot, Network Issues' Start/End dates. */
+    .ao-mu input[type="date"],
+    .ao-mu input[type="datetime-local"] {
+        width: auto;
+        max-width: 15rem;
+        height: 2.2rem;
+        padding: 0 0.6rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.9rem;
+        flex: 0 0 auto;
+    }
+
     /* ── Utilities: calendar, to-do, whois, resolver ───────────────────────── */
     .ao-cal-title { font-size: 1.15rem; }
 
