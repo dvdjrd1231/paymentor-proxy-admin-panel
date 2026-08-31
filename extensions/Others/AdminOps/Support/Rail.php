@@ -80,6 +80,23 @@ class Rail
             return static::supportSections($section);
         }
 
+        // The reference's Reports rail: every real report, A to Z.
+        if ($section['label'] === 'Reports'
+            && class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportView::class)) {
+            try {
+                $section['items'] = collect(Reports::railList())
+                    ->map(fn (string $key, string $label): array => [
+                        'label' => $label,
+                        'url' => \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportView::getUrl(['key' => $key]),
+                        'badge' => null,
+                    ])->values()->all();
+            } catch (\Throwable $e) {
+                // A rail without report links, never a broken rail.
+            }
+
+            return [$section];
+        }
+
         if ($section['label'] !== 'Clients') {
             return [$section];
         }

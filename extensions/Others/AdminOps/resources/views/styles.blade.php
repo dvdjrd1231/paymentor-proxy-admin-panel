@@ -3052,6 +3052,81 @@
         }
     }
 
+    /* ── Reports ────────────────────────────────────────────────────────────
+       The reference's landing grid — General cyan, Exports dark, the rest white — and
+       the report screen's chart and Tools. */
+    .ao-rp-intro { margin-bottom: 1.2rem; }
+
+    .ao-rp-cat {
+        text-align: center;
+        font-size: 1.2rem;
+        color: #555;
+        margin: 1.2rem 0 0.7rem;
+    }
+
+    .ao-rp-pills {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .ao-rp-pill {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font-size: 0.9rem;
+        color: var(--wa-text, #2b2b2b);
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .ao-rp-pill:hover { background: #f0f0f0; text-decoration: none; }
+
+    .ao-rp-pill.ao-rp-general {
+        background: #5bc0de;
+        border-color: #46b8da;
+        color: #fff;
+    }
+
+    .ao-rp-pill.ao-rp-general:hover { background: #31b0d5; }
+
+    .ao-rp-pill.ao-rp-exports {
+        background: #4a5a6a;
+        border-color: #3f4d5a;
+        color: #fff;
+        font: inherit;
+        font-size: 0.9rem;
+    }
+
+    .ao-rp-pill.ao-rp-exports:hover { background: #3f4d5a; }
+
+    .ao-rp-pill.ao-rp-dead { opacity: 0.55; cursor: not-allowed; }
+
+    .ao-rv-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .ao-rv-head h3 { font-size: 1.15rem; font-weight: 600; margin-bottom: 0.3rem; }
+
+    .ao-rv-note { margin-top: 0.4rem; }
+
+    .ao-rv-tools summary { white-space: nowrap; }
+
+    .ao-rv-chart { margin: 0.6rem 0 1.2rem; }
+
+    .ao-rv-chart h4 { font-weight: 700; margin: 0 0 0.3rem 3.2rem; }
+
+    .ao-rv-chart svg { width: 100%; max-width: 68rem; height: auto; }
+
+    .ao-rv-table td:first-child { font-weight: 600; }
+
     /* The rail's Filter Tickets form. */
     .ao-rail-filter {
         display: flex;
