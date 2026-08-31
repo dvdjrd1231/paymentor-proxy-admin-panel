@@ -3324,6 +3324,59 @@
         overflow: auto;
     }
 
+    /* The two-column framed filter (Service Addons) and the campaigns screen. */
+    .ao-stf-two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 2.5rem;
+    }
+
+    @media (max-width: 1000px) { .ao-stf-two { grid-template-columns: 1fr; } }
+
+    .ao-ec-banner {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        padding: 1rem 1.2rem;
+        border: 1px solid #bce8f1;
+        border-radius: var(--wa-radius, 6px);
+        background: #d9edf7;
+        color: #31708f;
+        margin-bottom: 1rem;
+    }
+
+    .ao-ec-banner-ic {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.2rem;
+        height: 2.2rem;
+        border-radius: 50%;
+        background: #31708f;
+        color: #fff;
+        font-weight: 700;
+        flex: none;
+    }
+
+    .ao-ec-intro { margin-bottom: 1rem; }
+
+    .ao-ec-radios { display: flex; gap: 1.4rem; flex-wrap: wrap; }
+
+    .ao-ec-multi { align-items: start; }
+
+    .ao-ec-multi select {
+        width: 100%;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: var(--wa-radius, 6px);
+        font: inherit;
+        font-size: 0.9rem;
+        padding: 0.2rem;
+    }
+
+    .ao-ec-count { margin-inline-end: 1rem; font-weight: 600; }
+
+    .ao-ec-foot { margin-top: 1rem; font-size: 0.9rem; color: var(--wa-muted, #6b6b6b); }
+
     /* The rail's Filter Tickets form. */
     .ao-rail-filter {
         display: flex;

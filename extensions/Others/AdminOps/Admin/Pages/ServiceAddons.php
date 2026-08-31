@@ -6,6 +6,7 @@ use App\Admin\Resources\ServiceResource;
 use App\Models\Category;
 use App\Models\Plan;
 use App\Models\Product;
+use App\Models\Server;
 use App\Models\Service;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -15,20 +16,14 @@ use Paymenter\Extensions\Others\AdminOps\Models\ServiceAddon;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
- * Issue #7 — WHMCS's Service Addons: an add-on linked to an active service (an extra IP,
- * more bandwidth), with its own recurring price.
- *
- * ## How it works here
+ * Issue #7 — WHMCS's Service Addons, now to its screenshot: the Search/Filter framed
+ * panel (addon, product/service, status, client name, server, billing cycle), the navy
+ * grid with the reference's columns, With Selected: Send Message, and Hide Inactive.
  *
  * An addon **is a service row** — that single decision buys the whole billing lifecycle:
  * core raises its renewal invoices, suspends it when unpaid, and the admin's normal
  * service tools all apply. What core cannot hold is whose addon it is; that link lives in
- * `ext_service_addons`, written when the addon is attached.
- *
- * The addon catalogue is a product category named **Service Addons**: staff define addons
- * as ordinary products there (name, monthly price), which keeps pricing where every other
- * price already lives. Attaching aligns the addon's next due date with its parent, so one
- * renewal invoice carries both — WHMCS's own behaviour.
+ * `ext_service_addons`. The catalogue is the **Service Addons** product category.
  */
 class ServiceAddons extends Page
 {
@@ -41,8 +36,28 @@ class ServiceAddons extends Page
 
     public const CATEGORY = 'Service Addons';
 
+    public bool $filter = false;
+
     #[Url]
-    public string $q = '';
+    public string $addon = '';
+
+    #[Url]
+    public string $parentProduct = '';
+
+    #[Url]
+    public string $status = '';
+
+    #[Url]
+    public string $clientName = '';
+
+    #[Url]
+    public string $server = '';
+
+    #[Url]
+    public string $cycle = '';
+
+    #[Url]
+    public bool $hideInactive = true;
 
     /** The "Add Addon" form. */
     public bool $adding = false;
@@ -67,9 +82,19 @@ class ServiceAddons extends Page
         return 'Service Addons';
     }
 
+    public function toggleFilter(): void
+    {
+        $this->filter = !$this->filter;
+    }
+
     public function toggleAdding(): void
     {
         $this->adding = !$this->adding;
+    }
+
+    public function toggleInactive(): void
+    {
+        $this->hideInactive = !$this->hideInactive;
     }
 
     /** Prefill the price from the picked addon product's plan when the admin has not typed one. */
@@ -116,7 +141,7 @@ class ServiceAddons extends Page
         });
 
         $this->adding = false;
-        $this->reset(['parentId', 'productId', 'quantity', 'price']);
+        $this->reset(['parentId', 'productId', 'price']);
         $this->quantity = 1;
         Notification::make()->title('Addon attached')
             ->body('It renews with its parent service on the same invoice.')->success()->send();
@@ -139,17 +164,31 @@ class ServiceAddons extends Page
         // The catalogue category, made once; staff add addon products to it normally.
         $category = Category::firstOrCreate(['name' => self::CATEGORY], ['sort' => 99, 'slug' => 'service-addons']);
 
-        $addons = ServiceAddon::with(['service.product', 'parent.product', 'parent.user'])
-            ->latest('id')->limit(200)->get()
-            ->filter(fn ($a) => $a->service && $a->parent)
-            ->when($this->q !== '', fn ($list) => $list->filter(fn ($a) => str_contains(
-                strtolower(($a->parent->user->email ?? '') . ' ' . ($a->service->product->name ?? '')),
-                strtolower($this->q),
-            )));
+        $addons = ServiceAddon::with(['service.product', 'service.plan', 'parent.product', 'parent.user'])
+            ->latest('id')->limit(300)->get()
+            ->filter(fn ($a) => $a->service && $a->parent);
+
+        $hiddenCount = $addons->filter(fn ($a) => $a->service->status === 'cancelled')->count();
+
+        $addons = $addons
+            ->when($this->hideInactive, fn ($list) => $list->filter(fn ($a) => $a->service->status !== 'cancelled'))
+            ->when($this->addon !== '', fn ($list) => $list->filter(fn ($a) => (string) $a->service->product_id === $this->addon))
+            ->when($this->parentProduct !== '', fn ($list) => $list->filter(fn ($a) => (string) $a->parent->product_id === $this->parentProduct))
+            ->when($this->status !== '', fn ($list) => $list->filter(fn ($a) => $a->service->status === $this->status))
+            ->when($this->server !== '', fn ($list) => $list->filter(fn ($a) => (string) ($a->parent->product?->server_id ?? '') === $this->server))
+            ->when($this->cycle !== '', fn ($list) => $list->filter(fn ($a) => ProductsServices::cycle($a->service) === $this->cycle))
+            ->when($this->clientName !== '', fn ($list) => $list->filter(fn ($a) => str_contains(
+                strtolower(($a->parent->user->first_name ?? '') . ' ' . ($a->parent->user->last_name ?? '') . ' ' . ($a->parent->user->email ?? '')),
+                strtolower($this->clientName),
+            )))
+            ->values();
 
         return [
             'addons' => $addons,
+            'hiddenCount' => $hiddenCount,
             'catalogue' => Product::where('category_id', $category->id)->orderBy('name')->get(['id', 'name']),
+            'parentProducts' => Product::where('category_id', '!=', $category->id)->orderBy('name')->get(['id', 'name']),
+            'servers' => Server::orderBy('name')->get(['id', 'name']),
             'parents' => Service::whereIn('status', ['active', 'suspended'])
                 ->where(fn ($q) => $q->whereNotIn('id', ServiceAddon::pluck('service_id')))
                 ->with(['product', 'user'])->latest('id')->limit(300)->get(),
