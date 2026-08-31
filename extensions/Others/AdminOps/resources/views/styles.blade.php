@@ -1323,6 +1323,9 @@
 
     /* The reference's "+ Advanced": a quiet bordered button beside the blue Search. */
     .ao-find-adv {
+        height: 2.4rem;
+        flex: none;
+        white-space: nowrap;
         height: 2.1rem;
         padding: 0 0.9rem;
         flex: none;
