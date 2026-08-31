@@ -255,6 +255,15 @@ class Rail
                 'counts' => $counts,
                 'departments' => (array) config('settings.ticket_departments'),
             ] : null,
+            // The reference shows Tag Cloud on its ticket list pages. Paymenter tickets
+            // have no tags, so its one honest word is "None" — the reference's own empty
+            // state.
+            str_contains(request()->path(), 'support-tickets') ? [
+                'label' => 'Tag Cloud',
+                'icon' => 'ri-price-tag-3-line',
+                'items' => [],
+                'form' => 'tag-cloud',
+            ] : null,
             [
                 'label' => 'Network Issues',
                 'icon' => 'ri-wifi-off-line',

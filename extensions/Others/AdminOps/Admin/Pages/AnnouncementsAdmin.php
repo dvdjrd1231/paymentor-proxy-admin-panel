@@ -47,6 +47,9 @@ class AnnouncementsAdmin extends Page
 
     public bool $published = false;
 
+    /** The reference's Enable/Disable Rich-Text Editor: source view or rendered view. */
+    public bool $rich = false;
+
     public static function canAccess(): bool
     {
         return class_exists(Announcement::class)

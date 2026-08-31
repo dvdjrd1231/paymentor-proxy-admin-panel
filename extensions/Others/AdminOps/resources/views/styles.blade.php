@@ -2972,6 +2972,24 @@
         font-size: 0.9rem;
     }
 
+    .ao-ont-viewall { margin: 0.2rem 0 0.9rem; }
+
+    .ao-rail-none { padding: 0.6rem 0.9rem; color: var(--wa-muted, #6b6b6b); }
+
+    .ao-an-rendered {
+        min-height: 12rem;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+    }
+
+    .ao-an-langs { columns: 3; margin: 0.4rem 0 1rem; }
+
+    .ao-an-langs li { font-weight: 700; padding: 0.3rem 0; break-inside: avoid; }
+
+    @media (max-width: 760px) { .ao-an-langs { columns: 1; } }
+
     /* The rail's Filter Tickets form. */
     .ao-rail-filter {
         display: flex;
