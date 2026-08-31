@@ -48,11 +48,16 @@
     /* ── Canvas ──────────────────────────────────────────────────────────────
        WHMCS sits on a flat grey canvas with white panels on it, rather than
        Filament's white page with subtle grey sections. */
+    /* Leandro, twice: the overall type is too small. Scaling the root grows every
+       rem-sized thing in the panel at once — Filament's own controls included — instead
+       of chasing sizes rule by rule. 17px base. */
+    html { font-size: 106.25%; }
+
     .fi-body {
         background: var(--wa-canvas);
         color: var(--wa-text);
         font-family: 'Open Sans', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        font-size: 16px;
+        font-size: 17px;
     }
 
     /* ── Top menu bar ────────────────────────────────────────────────────────
@@ -507,7 +512,7 @@
         padding: 0.7rem 0.4rem;
         border-radius: var(--wa-radius);
         color: var(--wa-ink);
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.3;
         text-align: center;
         text-decoration: none;
@@ -542,7 +547,7 @@
         display: flex;
         flex-direction: column;
         min-height: 100%;
-        font-size: 12px;
+        font-size: 14px;
     }
 
     .ao-rail-collapsed {
@@ -569,7 +574,7 @@
         padding: 6px 10px;
         background: var(--wa-section);
         border-block: 1px solid var(--wa-border);
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 700;
         color: var(--wa-ink);
         line-height: 1.35;
@@ -639,7 +644,7 @@
     .ao-rail-facts {
         margin: 0;
         padding: 0.4rem 0.75rem;
-        font-size: 12px;
+        font-size: 14px;
     }
 
     .ao-rail-facts dt {
@@ -776,7 +781,7 @@
     .fi-ta-header-cell {
         background: var(--wa-blue);
         color: #ffffff;
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 700;
         text-transform: none;
         letter-spacing: 0;
@@ -845,7 +850,7 @@
     }
 
     .fi-ta-empty-state-description {
-        font-size: 12px;
+        font-size: 14px;
         color: var(--wa-muted);
     }
 
@@ -1090,13 +1095,13 @@
     }
 
     .ao-captcha-note {
-        font-size: 12px;
+        font-size: 14px;
         color: var(--wa-muted);
         text-align: center;
     }
 
     .ao-captcha-error {
-        font-size: 12px;
+        font-size: 14px;
         color: #b42318;
         text-align: center;
     }
@@ -1137,7 +1142,7 @@
         padding: 0.5rem 1rem;
         background: var(--wa-blue);
         color: #ffffff;
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.4;
     }
 
