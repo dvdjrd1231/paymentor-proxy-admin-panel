@@ -3377,6 +3377,73 @@
 
     .ao-ec-foot { margin-top: 1rem; font-size: 0.9rem; color: var(--wa-muted, #6b6b6b); }
 
+    /* Issue #37: the dashboard's WHMCS panels — the stat pairs, the automation grid,
+       the ticket/client lists and their link rows. */
+    .ao-wg-cols { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+
+    .ao-wg-wrap > * { flex: 1 1 40%; }
+
+    .ao-wg-stat b { display: block; font-size: 1.6rem; font-weight: 600; }
+
+    .ao-wg-stat span { color: var(--wa-muted, #6b6b6b); }
+
+    .ao-wg-green { color: #5cb85c; }
+    .ao-wg-blue { color: #5bc0de; }
+    .ao-wg-orange { color: #f0ad4e; }
+    .ao-wg-pink { color: #e64d8a; }
+    .ao-wg-ink { color: var(--wa-text, #2b2b2b); }
+
+    .ao-wg-empty { color: var(--wa-muted, #6b6b6b); }
+
+    .ao-wg-auto {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.9rem 1.4rem;
+    }
+
+    .ao-wg-auto-stat { text-align: center; }
+
+    .ao-wg-auto-stat svg { width: 5.5rem; height: 1.4rem; display: block; margin: 0 auto 0.15rem; }
+
+    .ao-wg-auto-stat span { display: block; color: var(--wa-muted, #6b6b6b); font-size: 0.9rem; }
+
+    .ao-wg-auto-stat b { font-size: 1.25rem; }
+
+    .ao-wg-lastrun { margin-top: 0.8rem; color: var(--wa-muted, #6b6b6b); }
+
+    .ao-wg-icostat { display: flex; align-items: center; gap: 0.7rem; }
+
+    .ao-wg-icostat .ao-wg-ic { font-size: 1.8rem; }
+
+    .ao-wg-icostat b { font-size: 1.2rem; }
+
+    .ao-wg-tickets { list-style: none; margin: 0.9rem 0 0; padding: 0; }
+
+    .ao-wg-tickets li {
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+        padding: 0.35rem 0.2rem;
+        border-top: 1px solid var(--wa-rule, #e5e5e5);
+    }
+
+    .ao-wg-tickets li a { flex: 1; min-width: 0; }
+
+    .ao-wg-tickets li i { font-style: normal; color: var(--wa-link, #337ab7); font-size: 0.85rem; white-space: nowrap; }
+
+    .ao-wg-ip { color: var(--wa-muted, #6b6b6b); font-size: 0.82rem; font-style: italic; }
+
+    .ao-wg-links {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.8rem;
+        margin-top: 0.9rem;
+        padding-top: 0.6rem;
+        border-top: 1px solid var(--wa-rule, #e5e5e5);
+    }
+
+    .ao-wg-links a { text-decoration: underline; }
+
     /* The rail's Filter Tickets form. */
     .ao-rail-filter {
         display: flex;
