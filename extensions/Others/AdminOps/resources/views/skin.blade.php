@@ -416,10 +416,14 @@
     }
 
     .fi-dropdown-panel {
-        border-radius: var(--wa-radius);
+        /* Issue #36: the reference's menu is compact — 4px corners, slimmer panel,
+           tight rows. The 6px radius stays for content; menus are chrome. */
+        border-radius: 4px;
         border: 1px solid #c3c3c3;
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
-        padding: 0.3rem 0;
+        padding: 0.25rem 0;
+        min-width: 13rem;
+        width: max-content;
     }
 
     .fi-dropdown-list-item {

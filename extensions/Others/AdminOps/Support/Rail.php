@@ -302,13 +302,17 @@ class Rail
      */
     public static function shortcuts(): array
     {
+        // Issue #37: the reference's own shortcut list, in its order, each to the screen
+        // that really does the thing.
         return array_values(array_filter([
-            static::pageShortcut(AddNewClient::class, 'Add New Client', 'ri-user-add-line'),
-            static::shortcut(OrderResource::class, 'Add New Order', 'ri-shopping-cart-2-line'),
-            static::shortcut('Paymenter\\Extensions\\Others\\Quotes\\Admin\\Resources\\QuoteResource', 'Create New Quote', 'ri-draft-line'),
-            static::shortcut(InvoiceResource::class, 'Create Invoice', 'ri-bill-line'),
-            static::shortcut(TicketResource::class, 'Open New Ticket', 'ri-mail-add-line'),
-            static::shortcut(ServiceResource::class, 'Add New Service', 'ri-add-box-line'),
+            static::pageShortcut(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewClient::class, 'Add New Client', 'ri-user-add-line'),
+            static::pageShortcut(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewOrder::class, 'Add New Order', 'ri-shopping-cart-2-line'),
+            static::pageShortcut(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\CreateQuote::class, 'Create New Quote', 'ri-draft-line'),
+            static::pageShortcut(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\TodoList::class, 'Create New To-Do Entry', 'ri-checkbox-line'),
+            static::pageShortcut(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\OpenNewTicket::class, 'Open New Ticket', 'ri-mail-add-line'),
+            static::pageShortcut(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\WhoisLookup::class, 'WHOIS Lookup', 'ri-global-line'),
+            static::pageShortcut(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices::class, 'Generate Due Invoices', 'ri-refresh-line'),
+            static::pageShortcut(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddTransaction::class, 'Attempt CC Captures', 'ri-bank-card-line'),
         ]));
     }
 
