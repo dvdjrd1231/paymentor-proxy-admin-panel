@@ -3127,6 +3127,77 @@
 
     .ao-rv-table td:first-child { font-weight: 600; }
 
+    /* ── Utilities: calendar, to-do, whois, resolver ───────────────────────── */
+    .ao-cal-title { font-size: 1.15rem; }
+
+    .ao-cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .ao-cal-head {
+        background: var(--wa-blue, #1a4d80);
+        color: #fff;
+        text-align: center;
+        padding: 0.4rem 0.2rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .ao-cal-cell {
+        min-height: 6rem;
+        padding: 0.3rem 0.4rem;
+        border-top: 1px solid var(--wa-rule, #e5e5e5);
+        border-inline-start: 1px solid var(--wa-rule, #e5e5e5);
+        font-size: 0.8rem;
+    }
+
+    .ao-cal-blank { background: #f7f7f7; }
+
+    .ao-cal-today { background: #fdf7e3; }
+
+    .ao-cal-cell > b { display: block; margin-bottom: 0.25rem; }
+
+    .ao-cal-event {
+        display: block;
+        margin-bottom: 0.2rem;
+        padding: 0.1rem 0.35rem;
+        border-radius: 2px;
+        font-size: 0.72rem;
+        color: #fff;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .ao-cal-service { background: #337ab7; }
+
+    .ao-cal-invoice { background: #d9534f; }
+
+    .ao-cal-legend { margin-top: 0.7rem; display: flex; gap: 0.6rem; }
+
+    .ao-cal-legend .ao-cal-event { display: inline-block; }
+
+    .ao-who-result {
+        margin-top: 0.9rem;
+        padding: 0.9rem 1.1rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px;
+        background: #fafafa;
+        font-size: 0.82rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .ao-td-done td { color: var(--wa-muted, #6b6b6b); text-decoration: line-through; }
+
+    .ao-td-done td.ao-mu-check, .ao-td-done td.ao-mu-actions { text-decoration: none; }
+
     /* The rail's Filter Tickets form. */
     .ao-rail-filter {
         display: flex;
