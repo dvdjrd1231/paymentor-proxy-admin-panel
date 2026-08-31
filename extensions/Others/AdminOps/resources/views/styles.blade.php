@@ -3144,6 +3144,33 @@
         flex: 0 0 auto;
     }
 
+    /* Database Status / System pages. */
+    .ao-db-line { margin: 0.5rem 0 0.9rem; }
+
+    .ao-db-cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.2rem;
+        align-items: start;
+    }
+
+    @media (max-width: 900px) { .ao-db-cols { grid-template-columns: 1fr; } }
+
+    .ao-phi-facts { max-width: 46rem; }
+
+    .ao-phi-ext { color: var(--wa-muted, #6b6b6b); line-height: 1.7; }
+
+    .ao-phc-ok {
+        padding: 0.9rem 1.1rem;
+        border: 1px solid #d6e9c6;
+        border-radius: 3px;
+        background: #dff0d8;
+        color: #3c763d;
+        margin-bottom: 1rem;
+    }
+
+    .ao-phc-bad { color: #d9534f; }
+
     /* ── Utilities: calendar, to-do, whois, resolver ───────────────────────── */
     .ao-cal-title { font-size: 1.15rem; }
 

@@ -45,7 +45,11 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\NetworkIssues;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\OpenNewTicket;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\PredefinedReplies;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\DatabaseStatus;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\DomainResolver;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\PhpCompatibility;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\PhpInfo;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SystemCleanup;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportsHome;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportView;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\TodoList;
@@ -439,7 +443,12 @@ class WhmcsNavigation
             // Administrator accounts, kept apart from the Clients menu on purpose: Manage
             // Users lists client logins only, as the reference does, and staff are managed
             // here — core's Users list is where roles are assigned.
-            static::link(UserResource::class, 'System'),
+            static::pageLink(DatabaseStatus::class, 'System'),
+            // The reference's System submenu, its four entries first.
+            static::pageLink(DatabaseStatus::class, '- Database Status'),
+            static::pageLink(SystemCleanup::class, '- System Cleanup'),
+            static::pageLink(PhpInfo::class, '- PHP Info'),
+            static::pageLink(PhpCompatibility::class, '- PHP Version Compatibility'),
             static::link(UserResource::class, '- Administrators'),
             static::page(CronStats::class, '- Cron Statistics'),
             static::link(FailedJobResource::class, '- Failed Jobs'),
