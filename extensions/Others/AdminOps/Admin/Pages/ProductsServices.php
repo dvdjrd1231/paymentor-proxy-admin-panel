@@ -66,6 +66,14 @@ class ProductsServices extends Page
         return 'Products/Services';
     }
 
+    /** Issue #4 — the reference's "+" opens the row into an inline detail strip. */
+    public ?int $expanded = null;
+
+    public function expand(int $id): void
+    {
+        $this->expanded = $this->expanded === $id ? null : $id;
+    }
+
     public function toggleFilter(): void
     {
         $this->filter = !$this->filter;

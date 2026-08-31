@@ -112,8 +112,49 @@
                         <td>
                             <span class="ao-mu-status ao-mu-st-{{ $service->status }}">{{ $label }}</span>
                         </td>
-                        <td class="ao-mu-actions"><a href="{{ $edit }}" title="Open">+</a></td>
+                        <td class="ao-mu-actions">
+                            {{-- The reference's "+": the row opens in place; the edit screen
+                                 stays one more click away, inside the strip. --}}
+                            <button type="button" class="ao-ps-plus {{ $expanded === $service->id ? 'ao-on' : '' }}"
+                                wire:click="expand({{ $service->id }})">{{ $expanded === $service->id ? '−' : '+' }}</button>
+                        </td>
                     </tr>
+                    @if ($expanded === $service->id)
+                        <tr class="ao-ps-detail">
+                            <td colspan="10">
+                                <div class="ao-ps-detail-grid">
+                                    <dl>
+                                        <dt>Registration Date</dt><dd>{{ $service->created_at?->format('m/d/Y H:i') }}</dd>
+                                        <dt>First Payment</dt><dd>${{ number_format((float) $service->price, 2) }} {{ $service->currency_code }}</dd>
+                                        <dt>Recurring Amount</dt><dd>${{ number_format((float) $service->price * (float) $service->quantity, 2) }} {{ $service->currency_code }}</dd>
+                                        <dt>Quantity</dt><dd>{{ (int) $service->quantity }}</dd>
+                                    </dl>
+                                    <dl>
+                                        <dt>Billing Cycle</dt><dd>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::cycle($service) }}</dd>
+                                        <dt>Next Due Date</dt><dd>{{ $service->expires_at?->format('m/d/Y') ?? '—' }}</dd>
+                                        <dt>Order</dt><dd>#{{ $service->order_id }}</dd>
+                                        <dt>Status</dt><dd>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel($service->status) }}</dd>
+                                    </dl>
+                                    <dl>
+                                        <dt>Configuration</dt>
+                                        <dd>
+                                            @forelse ($service->configs as $config)
+                                                {{ $config->configOption?->name ?? 'Option' }}: {{ $config->configValue?->name ?? $config->value ?? '—' }}<br>
+                                            @empty
+                                                No configurable options
+                                            @endforelse
+                                        </dd>
+                                    </dl>
+                                    <div class="ao-ps-detail-actions">
+                                        <a class="ao-find-go" href="{{ $edit }}">Open Full Service</a>
+                                        @if ($summary)
+                                            <a class="ao-cq-addline" href="{{ $summary }}">Client Profile</a>
+                                        @endif
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    @endif
                 @empty
                     <tr><td colspan="10" class="ao-mu-none">No Records Found</td></tr>
                 @endforelse
