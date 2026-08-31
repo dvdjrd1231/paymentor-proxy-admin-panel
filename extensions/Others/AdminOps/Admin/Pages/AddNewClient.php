@@ -46,7 +46,7 @@ class AddNewClient extends Page
      * for companies. Leandro: Brazil is the only country that uses them, so they render
      * (and save) only when the country is Brazil.
      */
-    public const BRAZIL_ONLY = ['cpf', 'rg', 'trade_name', 'cnpj', 'state_registration', 'state_registration_exempt'];
+    public const BRAZIL_ONLY = ['cpf', 'rg', 'trade_name', 'cnpj', 'state_registration', 'state_registration_exempt', 'municipal_registration'];
 
     public static function isBrazil(?string $country): bool
     {

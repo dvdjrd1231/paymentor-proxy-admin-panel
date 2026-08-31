@@ -369,11 +369,41 @@ class Rail
     {
         return array_filter([
             'Store' => config('app.name'),
-            'Paymenter' => config('app.version') ?: null,
+            'Paymenter' => self::paymenterVersion(),
             'Laravel' => app()->version(),
             'PHP' => PHP_VERSION,
             'Environment' => ucfirst(app()->environment()),
         ]);
+    }
+
+    /**
+     * Issue #27: core ships `app.version = development` because this install runs from
+     * source rather than a tagged release — the string is core's, not a warning. Shown
+     * here as the deployed commit instead, which answers "what is running" honestly;
+     * the config value itself stays untouched for core's own update checks.
+     */
+    private static function paymenterVersion(): ?string
+    {
+        $version = config('app.version') ?: null;
+
+        if ($version !== 'development') {
+            return $version;
+        }
+
+        return \Illuminate\Support\Facades\Cache::remember('adminops.version-label', 3600, function (): string {
+            $head = base_path('.git/HEAD');
+
+            try {
+                $ref = trim((string) file_get_contents($head));
+                if (str_starts_with($ref, 'ref:')) {
+                    $ref = trim((string) file_get_contents(base_path('.git/' . trim(substr($ref, 4)))));
+                }
+
+                return $ref !== '' ? 'source @ ' . substr($ref, 0, 7) : 'development';
+            } catch (\Throwable $e) {
+                return 'development';
+            }
+        });
     }
 
     /**
