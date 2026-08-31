@@ -45,8 +45,12 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\NetworkIssues;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\OpenNewTicket;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\PredefinedReplies;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\DomainResolver;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportsHome;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportView;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\TodoList;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\UtilitiesCalendar;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\WhoisLookup;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportOverview;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices;
@@ -428,29 +432,41 @@ class WhmcsNavigation
     }
 
     /** Logs, the job queue, the cron and the updater — where the reference keeps them. */
+    /**
+     * The reference's Utilities menu, in its order, each slot the nearest real thing:
+     * Module Queue is the provisioning queue, Email Campaigns is the email log, and the
+     * reference's small tools — Calendar, To-Do List, WHOIS Lookup, Domain Resolver — are
+     * real pages. System folds the operational logs into the reference's submenu.
+     */
     private static function utilities(): ?NavigationGroup
     {
         return static::group('Utilities', 'ri-tools-line', [
             static::page(Updates::class, 'Update Paymenter'),
-            // Administrator accounts, kept apart from the Clients menu on purpose: Manage
-            // Users lists client logins only, as the reference does, and staff are managed
-            // here — core's Users list is where roles are assigned.
-            static::link(UserResource::class, 'Administrators'),
             class_exists(AutomationStatus::class)
                 ? static::page(AutomationStatus::class, 'Automation Status')
                 : static::page(CronStats::class, 'Automation Status'),
-            static::page(CronStats::class, 'Cron Statistics'),
             static::link(
                 ProvisioningOperationResource::class,
-                'Provisioning Operations',
+                'Module Queue',
                 badge: fn () => Metrics::provisioningFailures(),
                 badgeColor: 'danger',
             ),
-            static::link(FailedJobResource::class, 'Failed Jobs'),
-            static::link(EmailLogResource::class, 'Email Log'),
-            static::link(AuditResource::class, 'Audit Log'),
-            static::link(ErrorLogResource::class, 'Error Log'),
-            static::link(HttpLogResource::class, 'HTTP Log'),
+            static::link(EmailLogResource::class, 'Email Campaigns'),
+            static::link(NotificationTemplateResource::class, 'Email Marketer'),
+            static::page(UtilitiesCalendar::class, 'Calendar'),
+            static::page(TodoList::class, 'To-Do List'),
+            static::page(WhoisLookup::class, 'WHOIS Lookup'),
+            static::page(DomainResolver::class, 'Domain Resolver'),
+            // Administrator accounts, kept apart from the Clients menu on purpose: Manage
+            // Users lists client logins only, as the reference does, and staff are managed
+            // here — core's Users list is where roles are assigned.
+            static::link(UserResource::class, 'System'),
+            static::link(UserResource::class, '- Administrators'),
+            static::page(CronStats::class, '- Cron Statistics'),
+            static::link(FailedJobResource::class, '- Failed Jobs'),
+            static::link(AuditResource::class, '- Audit Log'),
+            static::link(ErrorLogResource::class, '- Error Log'),
+            static::link(HttpLogResource::class, '- HTTP Log'),
         ]);
     }
 
