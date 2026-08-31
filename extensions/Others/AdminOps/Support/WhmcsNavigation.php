@@ -42,6 +42,7 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewOrder;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AnnouncementsAdmin;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\CreateQuote;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailCampaigns;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\NetworkIssues;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\OpenNewTicket;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\PredefinedReplies;
@@ -441,7 +442,7 @@ class WhmcsNavigation
                 badge: fn () => Metrics::provisioningFailures(),
                 badgeColor: 'danger',
             ),
-            static::link(EmailLogResource::class, 'Email Campaigns'),
+            static::page(EmailCampaigns::class, 'Email Campaigns'),
             static::link(NotificationTemplateResource::class, 'Email Marketer'),
             static::page(UtilitiesCalendar::class, 'Calendar'),
             static::page(TodoList::class, 'To-Do List'),
