@@ -1263,17 +1263,22 @@
         flex-direction: column;
         gap: 0.3rem;
         /* Flex from a fixed basis, not content width: the reference fits its whole band on
-           one row, and content-sized inputs were what pushed Status onto a second line. */
-        flex: 1 1 9rem;
-        min-width: 8rem;
+           one row, and content-sized inputs were what pushed Status onto a second line.
+           Bases sized so the row still holds together on a 1280px screen — Leandro's own
+           window is ~1385, and the band wrapped there. */
+        flex: 1 1 7.5rem;
+        min-width: 6.5rem;
     }
 
     .ao-find-field > span {
         font-weight: 600;
         color: var(--wa-ink, #333);
+        /* A wrapped label pushes its input a line down and the whole band out of line. */
+        white-space: nowrap;
+        font-size: 0.9rem;
     }
 
-    .ao-find-wide { flex: 2 1 12rem; min-width: 11rem; }
+    .ao-find-wide { flex: 2 1 10rem; min-width: 9rem; }
     .ao-find-grow { flex: 1; }
 
     .ao-find-field input,
@@ -1286,6 +1291,15 @@
         border-radius: var(--wa-radius, 6px);
         background: #fff;
         font-size: 0.9375rem;
+    }
+
+    /* Laptop squeeze: below ~1320px the band drops its glass circle and tightens, so the
+       one-line promise holds down to 1280px screens. */
+    @media (max-width: 1320px) {
+        .ao-find { gap: 0.5rem; padding-inline: 0.7rem; }
+        .ao-find-fields { gap: 0.5rem; }
+        .ao-find-glass { display: none; }
+        .ao-find-adv, .ao-find-go { padding-inline: 0.7rem; }
     }
 
     /* Below tablet width the band stacks: full-width fields, full-width buttons, no glass. */
@@ -3362,7 +3376,7 @@
 
     .ao-ec-radios { display: flex; gap: 1.4rem; flex-wrap: wrap; }
 
-    .ao-ec-multi { align-items: start; }
+    .ao-ec-multi { align-items: center; }
 
     .ao-ec-multi select {
         width: 100%;
