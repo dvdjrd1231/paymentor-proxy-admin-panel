@@ -10,11 +10,11 @@
             <form class="ao-anc-card" wire:submit.prevent="save">
                 <label class="ao-anc-row">
                     <span>Date</span>
-                    <input type="datetime-local" wire:model="date" required>
+                    <input type="datetime-local" class="ao-w-25" wire:model="date" required>
                 </label>
                 <label class="ao-anc-row">
                     <span>Title</span>
-                    <input type="text" wire:model="headline" placeholder="What is being announced?" required>
+                    <input type="text" class="ao-w-60" wire:model="headline" placeholder="What is being announced?" required>
                 </label>
                 <label class="ao-anc-row ao-an-body">
                     <span>Announcement</span>

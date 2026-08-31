@@ -59,6 +59,18 @@ class SupportTickets extends Page
     public string $email = '';
 
     #[Url]
+    public ?int $clientId = null;
+
+    #[Url]
+    public string $prio = '';
+
+    #[Url]
+    public string $tid = '';
+
+    #[Url]
+    public ?int $assigned = null;
+
+    #[Url]
     public int $page = 1;
 
     public bool $filter = false;
@@ -185,6 +197,10 @@ class SupportTickets extends Page
             'departments' => (array) config('settings.ticket_departments'),
             'viewLabel' => self::VIEWS[$this->tab] ?? 'All Active Tickets',
             'statusCounts' => $this->statusCounts(),
+            'clients' => \App\Models\User::whereNull('role_id')->orderBy('first_name')->limit(500)
+                ->get(['id', 'first_name', 'last_name', 'email']),
+            'admins' => \App\Models\User::whereNotNull('role_id')->orderBy('first_name')
+                ->get(['id', 'first_name', 'last_name', 'email']),
         ];
     }
 
@@ -231,6 +247,22 @@ class SupportTickets extends Page
 
         if ($this->email !== '') {
             $query->whereHas('user', fn ($q) => $q->where('email', 'like', '%' . $this->email . '%'));
+        }
+
+        if ($this->clientId) {
+            $query->where('user_id', $this->clientId);
+        }
+
+        if ($this->prio !== '') {
+            $query->where('priority', $this->prio);
+        }
+
+        if ($this->tid !== '') {
+            $query->where('id', (int) trim($this->tid, '# '));
+        }
+
+        if ($this->assigned) {
+            $query->where('assigned_to', $this->assigned);
         }
 
         return $query->latest('updated_at');
