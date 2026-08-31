@@ -137,7 +137,7 @@ class Rail
             [
                 'label' => 'Products/Services',
                 'icon' => 'ri-instance-line',
-                'items' => array_merge($products, $item($find('Cancellation Requests'))),
+                'items' => array_merge($products, $item($find('Service Addons')), $item($find('Cancellation Requests'))),
             ],
             [
                 'label' => 'Affiliates',

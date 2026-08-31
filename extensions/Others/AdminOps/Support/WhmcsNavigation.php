@@ -52,6 +52,7 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\PhpInfo;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SystemCleanup;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportsHome;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportView;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServiceAddons;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\TodoList;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\UtilitiesCalendar;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\WhoisLookup;
@@ -206,6 +207,8 @@ class WhmcsNavigation
             // category entries sit indented under Products/Services exactly as the rail
             // draws them — same labels, same filtered URLs.
             ...static::categoryItems(),
+            // Issue #7: addons on running services, where the reference's sidebar puts them.
+            static::page(ServiceAddons::class, 'Service Addons'),
             // Ours, not core's: core's list offers Edit and Delete, and deleting a request is
             // indistinguishable from refusing it. Falls back to core's when the extension is
             // not installed, so the entry never disappears.
