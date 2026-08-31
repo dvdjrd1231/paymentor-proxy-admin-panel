@@ -3280,6 +3280,50 @@
         margin-bottom: 0.9rem;
     }
 
+    /* Issue #4: the "+" opens the row in place — the reference's inline detail strip. */
+    .ao-ps-plus {
+        min-width: 1.8rem;
+        padding: 0.15rem 0.45rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+        font: inherit;
+        font-weight: 700;
+        color: var(--wa-link, #337ab7);
+        cursor: pointer;
+    }
+
+    .ao-ps-plus:hover, .ao-ps-plus.ao-on { background: #f0f0f0; }
+
+    .ao-ps-detail td {
+        background: #f7fafd;
+        text-align: start;
+        padding: 0.9rem 1.1rem;
+    }
+
+    .ao-ps-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+        gap: 1.2rem;
+        align-items: start;
+    }
+
+    .ao-ps-detail-grid dt { font-weight: 700; margin-top: 0.35rem; }
+
+    .ao-ps-detail-grid dd { margin: 0 0 0.2rem; }
+
+    .ao-ps-detail-actions { display: flex; flex-direction: column; gap: 0.5rem; align-items: start; }
+
+    .ao-ps-detail-actions .ao-find-go { text-decoration: none; display: inline-flex; align-items: center; }
+
+    .ao-hl-pre {
+        white-space: pre-wrap;
+        word-break: break-all;
+        font-size: 0.85rem;
+        max-height: 24rem;
+        overflow: auto;
+    }
+
     /* The rail's Filter Tickets form. */
     .ao-rail-filter {
         display: flex;

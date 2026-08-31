@@ -52,7 +52,13 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\PhpInfo;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SystemCleanup;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportsHome;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportView;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddTransaction;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\BillableItemsList;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\HttpLogs;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\KnowledgebaseList;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\RefundRequests;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServiceAddons;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SystemSettings;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\TodoList;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\UtilitiesCalendar;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\WhoisLookup;
@@ -319,19 +325,18 @@ class WhmcsNavigation
             static::pageLink(ManageInvoices::class, '- Refunded', params: ['status' => 'refunded']),
             static::pageLink(ManageInvoices::class, '- Collections', params: ['status' => 'collections']),
             static::pageLink(ManageInvoices::class, '- Payment Pending', params: ['status' => 'payment_pending']),
-            static::link(
-                BillableItemResource::class,
+            // Issue #13: the WHMCS-shaped list and Add New form; the extension's own
+            // sweeper still does the invoicing.
+            static::pageLink(
+                BillableItemsList::class,
                 'Billable Items',
                 badge: fn () => class_exists(BillableItemResource::class)
                     ? BillableItemResource::getNavigationBadge()
                     : null,
                 badgeColor: 'warning',
             ),
-            // The reference's Billable Items sub-entries, on the resource's own filters.
-            static::link(BillableItemResource::class, '- Uninvoiced Items',
-                params: ['filters' => ['uninvoiced' => ['isActive' => true]]]),
-            static::link(BillableItemResource::class, '- Recurring Items',
-                params: ['filters' => ['recurring' => ['isActive' => true]]]),
+            static::pageLink(BillableItemsList::class, '- Uninvoiced Items', params: ['view' => 'uninvoiced']),
+            static::pageLink(BillableItemsList::class, '- Recurring Items', params: ['view' => 'recurring']),
             static::link(
                 QuoteResource::class,
                 'Quotes',
@@ -348,9 +353,9 @@ class WhmcsNavigation
             // The reference's last three, on their nearest honest homes: recording a manual
             // payment IS offline card processing here, and a refund request is what a
             // dispute looks like in Paymenter.
-            static::link(InvoiceTransactionResource::class, 'Offline CC Processing'),
-            static::link(
-                RefundRequestResource::class,
+            static::page(AddTransaction::class, 'Offline CC Processing'),
+            static::pageLink(
+                RefundRequests::class,
                 'Disputes',
                 badge: fn () => class_exists(RefundRequestResource::class)
                     ? RefundRequestResource::getNavigationBadge()
@@ -358,9 +363,8 @@ class WhmcsNavigation
                 badgeColor: 'danger',
             ),
             // The reference keeps its gateway log under Billing, and this is the nearest
-            // thing Paymenter has: every outbound HTTP call, gateways included. Also in
-            // Utilities, where core files it — two ways to one page.
-            static::link(HttpLogResource::class, 'Gateway Log'),
+            // thing Paymenter has: every outbound HTTP call, gateways included.
+            static::page(HttpLogs::class, 'Gateway Log'),
         ]);
     }
 
@@ -387,7 +391,7 @@ class WhmcsNavigation
             static::page(PredefinedReplies::class, 'Predefined Replies'),
             static::page(AnnouncementsAdmin::class, 'Announcements'),
             static::page(DownloadsAdmin::class, 'Downloads'),
-            static::link(KbArticleResource::class, 'Knowledgebase'),
+            static::page(KnowledgebaseList::class, 'Knowledgebase'),
             static::pageLink(NetworkIssues::class, 'Network Issues'),
             static::pageLink(NetworkIssues::class, '- Open', params: ['view' => 'open']),
             static::pageLink(NetworkIssues::class, '- Scheduled', params: ['view' => 'scheduled']),
