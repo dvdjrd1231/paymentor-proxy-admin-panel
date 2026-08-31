@@ -39,7 +39,14 @@ use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewClient;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewOrder;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AnnouncementsAdmin;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\CreateQuote;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\NetworkIssues;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\OpenNewTicket;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\PredefinedReplies;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportOverview;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AutomationStatus;
@@ -361,22 +368,39 @@ class WhmcsNavigation
         ]);
     }
 
+    /** The reference's Support menu, entry for entry; Paymenter-only screens follow it. */
     private static function support(): ?NavigationGroup
     {
         return static::group('Support', 'ri-customer-service-line', [
-            static::link(
-                TicketResource::class,
-                'Tickets Awaiting Reply',
-                params: ['tab' => 'open'],
+            static::page(SupportOverview::class, 'Support Overview'),
+            static::pageLink(
+                SupportTickets::class,
+                'Support Tickets',
                 badge: fn () => Metrics::ticketsAwaitingReply(),
                 badgeColor: 'warning',
             ),
-            static::link(TicketResource::class, 'All Tickets'),
-            static::link(CannedResponseResource::class, 'Canned Responses'),
+            static::pageLink(SupportTickets::class, '- Flagged Tickets', params: ['view' => 'flagged']),
+            static::pageLink(SupportTickets::class, '- All Active Tickets', params: ['view' => 'active']),
+            static::pageLink(SupportTickets::class, '- Open', params: ['view' => 'open']),
+            static::pageLink(SupportTickets::class, '- Answered', params: ['view' => 'answered']),
+            static::pageLink(SupportTickets::class, '- Customer-Reply', params: ['view' => 'customer-reply']),
+            static::pageLink(SupportTickets::class, '- On Hold', params: ['view' => 'on-hold']),
+            static::pageLink(SupportTickets::class, '- In Progress', params: ['view' => 'in-progress']),
+            static::pageLink(SupportTickets::class, '- Closed', params: ['view' => 'closed']),
+            static::page(OpenNewTicket::class, 'Open New Ticket'),
+            static::page(PredefinedReplies::class, 'Predefined Replies'),
+            static::page(AnnouncementsAdmin::class, 'Announcements'),
+            static::page(DownloadsAdmin::class, 'Downloads'),
+            static::link(KbArticleResource::class, 'Knowledgebase'),
+            static::pageLink(NetworkIssues::class, 'Network Issues'),
+            static::pageLink(NetworkIssues::class, '- Open', params: ['view' => 'open']),
+            static::pageLink(NetworkIssues::class, '- Scheduled', params: ['view' => 'scheduled']),
+            static::pageLink(NetworkIssues::class, '- Resolved', params: ['view' => 'resolved']),
+            static::pageLink(NetworkIssues::class, '- Create New', params: ['creating' => 1]),
+            // Paymenter's own screens the reference has no name for, kept reachable.
+            static::link(TicketResource::class, 'All Tickets (Core)'),
             static::link(TicketNoteResource::class, 'Internal Notes'),
-            static::link(KbArticleResource::class, 'Knowledgebase Articles'),
             static::link(KbCategoryResource::class, 'Knowledgebase Categories'),
-            static::link(AnnouncementResource::class, 'Announcements'),
         ]);
     }
 

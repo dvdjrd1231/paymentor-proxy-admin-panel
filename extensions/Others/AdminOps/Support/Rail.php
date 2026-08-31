@@ -76,6 +76,10 @@ class Rail
             return static::billingSections($section);
         }
 
+        if ($section['label'] === 'Support') {
+            return static::supportSections($section);
+        }
+
         if ($section['label'] !== 'Clients') {
             return [$section];
         }
@@ -192,6 +196,76 @@ class Rail
                 ),
             ],
         ], fn (array $s): bool => $s['items'] !== []));
+    }
+
+    /**
+     * The reference's Support rail: the Support box, the Filter Tickets form (a real form —
+     * its selects and inputs land on the tickets page as URL filters), and Network Issues.
+     * Ticket status views live in the form's Status select with their counts, which is why
+     * they are claimed out of the Support box.
+     *
+     * @param  array{label: string, icon: string|\BackedEnum|null, items: array<int, array{label: string, url: string, badge: ?string}>}  $section
+     * @return array<int, array<string, mixed>>
+     */
+    private static function supportSections(array $section): array
+    {
+        $items = collect($section['items']);
+
+        $take = function (string $label, ?string $rename = null) use ($items): array {
+            $found = $items->first(fn (array $item): bool => $item['label'] === $label);
+
+            if (!$found) {
+                return [];
+            }
+
+            $found['label'] = $rename ?? $found['label'];
+
+            return [$found];
+        };
+
+        $counts = [];
+        $ticketsUrl = $items->first(fn (array $item): bool => $item['label'] === 'Support Tickets')['url'] ?? null;
+
+        if (class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets::class) && $ticketsUrl) {
+            try {
+                $counts = (new \Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets)->statusCounts();
+            } catch (\Throwable $e) {
+            }
+        }
+
+        return array_values(array_filter([
+            [
+                'label' => 'Support',
+                'icon' => 'ri-customer-service-line',
+                'items' => array_merge(
+                    $take('Announcements'),
+                    $take('Downloads'),
+                    $take('Knowledgebase'),
+                    $take('Support Tickets'),
+                    $take('Open New Ticket'),
+                    $take('Predefined Replies'),
+                ),
+            ],
+            $ticketsUrl ? [
+                'label' => 'Filter Tickets',
+                'icon' => 'ri-filter-line',
+                'items' => [],
+                'form' => 'filter-tickets',
+                'action' => strtok($ticketsUrl, '?'),
+                'counts' => $counts,
+                'departments' => (array) config('settings.ticket_departments'),
+            ] : null,
+            [
+                'label' => 'Network Issues',
+                'icon' => 'ri-wifi-off-line',
+                'items' => array_merge(
+                    $take('- Open'),
+                    $take('- Scheduled'),
+                    $take('- Resolved'),
+                    $take('- Create New', 'Create New'),
+                ),
+            ],
+        ], fn (?array $s): bool => $s !== null && ($s['items'] !== [] || ($s['form'] ?? null))));
     }
 
     /**

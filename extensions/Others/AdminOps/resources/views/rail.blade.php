@@ -35,18 +35,49 @@
                         @endif
                         {{ $section['label'] }}
                     </h2>
-                    <ul class="ao-rail-list ao-rail-list-counted">
-                        @foreach ($section['items'] as $item)
-                            <li @if (str_starts_with($item['label'], '- ')) class="ao-rail-sub" @endif>
-                                <a href="{{ $item['url'] }}">
-                                    <span>{{ $item['label'] }}</span>
-                                    @if ($item['badge'])
-                                        <span class="ao-rail-count">{{ $item['badge'] }}</span>
-                                    @endif
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
+                    @if (($section['form'] ?? null) === 'filter-tickets')
+                        {{-- The reference's Filter Tickets box: a real form — everything
+                             lands on the tickets page as URL filters. --}}
+                        <form class="ao-rail-filter" method="get" action="{{ $section['action'] }}">
+                            <label>Status
+                                <select name="view">
+                                    <option value="open">Awaiting Reply ({{ number_format($section['counts']['open'] ?? 0) }})</option>
+                                    <option value="flagged">Flagged Tickets ({{ number_format($section['counts']['flagged'] ?? 0) }})</option>
+                                    <option value="active">All Active Tickets ({{ number_format($section['counts']['active'] ?? 0) }})</option>
+                                    <option value="answered">Answered ({{ number_format($section['counts']['answered'] ?? 0) }})</option>
+                                    <option value="closed">Closed ({{ number_format($section['counts']['closed'] ?? 0) }})</option>
+                                </select>
+                            </label>
+                            <label>Department
+                                <select name="dept">
+                                    <option value="">- Any -</option>
+                                    @foreach ($section['departments'] as $department)
+                                        <option value="{{ $department }}">{{ $department }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                            <label>Subject/Message
+                                <input type="text" name="q">
+                            </label>
+                            <label>Email Address
+                                <input type="text" name="email">
+                            </label>
+                            <button type="submit">Filter &raquo;</button>
+                        </form>
+                    @else
+                        <ul class="ao-rail-list ao-rail-list-counted">
+                            @foreach ($section['items'] as $item)
+                                <li @if (str_starts_with($item['label'], '- ')) class="ao-rail-sub" @endif>
+                                    <a href="{{ $item['url'] }}">
+                                        <span>{{ $item['label'] }}</span>
+                                        @if ($item['badge'])
+                                            <span class="ao-rail-count">{{ $item['badge'] }}</span>
+                                        @endif
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </section>
             @endforeach
         @elseif ($shortcuts)

@@ -2735,6 +2735,285 @@
         font-size: 0.875rem;
     }
 
+    /* ── Support suite ──────────────────────────────────────────────────────
+       Tickets, overview tiles and charts, predefined replies, downloads, network
+       issues — the reference's Support wing. */
+    .ao-st-bulk {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin: 0.6rem 0;
+        font-weight: 600;
+    }
+
+    .ao-st-bulk button {
+        padding: 0.25rem 0.7rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 400;
+        cursor: pointer;
+    }
+
+    .ao-st-bulk button:hover { background: #f0f0f0; }
+
+    .ao-st-bulk .ao-st-danger {
+        background: #d9534f;
+        border-color: #d43f3a;
+        color: #fff;
+    }
+
+    .ao-st-bulk .ao-st-danger:hover { background: #c9302c; }
+
+    .ao-st-flag { width: 1.6rem; color: #d9534f; }
+
+    .ao-st-open { color: #3c763d; }
+    .ao-st-answered { color: #8a6d3b; }
+    .ao-st-closed { color: #6b6b6b; }
+
+    .ao-st-operator {
+        display: block;
+        margin-top: 0.15rem;
+        font-style: normal;
+        font-size: 0.68rem;
+        letter-spacing: 0.03em;
+        color: #31708f;
+        background: #d9edf7;
+        border-radius: 2px;
+        padding: 0.05rem 0.3rem;
+        width: fit-content;
+        margin-inline: auto;
+    }
+
+    /* Support Overview: the Displaying band, the cream tiles, the two charts. */
+    .ao-so-band {
+        padding: 0.6rem 0.9rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px;
+        background: #f0f0f0;
+        margin-bottom: 1rem;
+    }
+
+    .ao-so-band select {
+        margin-inline-start: 0.5rem;
+        height: 2rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.875rem;
+    }
+
+    .ao-so-tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+        gap: 0.9rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .ao-so-tile {
+        background: #fdf7e3;
+        border-radius: 3px;
+        padding: 0.9rem;
+        text-align: center;
+    }
+
+    .ao-so-tile span { display: block; margin-bottom: 0.4rem; }
+
+    .ao-so-tile b { font-size: 1.5rem; color: var(--wa-blue, #1a4d80); }
+
+    .ao-so-charts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.2rem;
+    }
+
+    @media (max-width: 900px) {
+        .ao-so-charts { grid-template-columns: 1fr; }
+    }
+
+    .ao-so-chart h4 { font-weight: 700; margin-bottom: 0.5rem; text-align: center; }
+
+    .ao-so-none { text-align: center; color: var(--wa-muted, #6b6b6b); padding: 3rem 0; }
+
+    /* Open New Ticket. */
+    .ao-ont-send { white-space: nowrap; margin-inline-start: 0.6rem; }
+
+    .ao-ont-dept b { margin-inline-start: 1rem; }
+
+    .ao-ont-priority { max-width: 9rem; }
+
+    .ao-ont-services { margin: 1rem 0; }
+
+    .ao-ont-editor {
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px;
+    }
+
+    .ao-ont-toolbar {
+        display: flex;
+        gap: 0.25rem;
+        padding: 0.4rem;
+        border-bottom: 1px solid var(--wa-panel-border, #ddd);
+        background: #fafafa;
+    }
+
+    .ao-ont-toolbar button {
+        min-width: 2rem;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+
+    .ao-ont-toolbar button:hover { background: #f0f0f0; }
+
+    .ao-ont-toolbar .ao-ont-preview.ao-on,
+    .ao-ont-toolbar .ao-ont-preview:hover {
+        background: #337ab7;
+        border-color: #2e6da4;
+        color: #fff;
+    }
+
+    .ao-ont-editor textarea {
+        width: 100%;
+        border: 0;
+        padding: 0.7rem;
+        font: inherit;
+        font-size: 0.9rem;
+        resize: vertical;
+    }
+
+    .ao-ont-rendered { padding: 0.7rem 1rem; min-height: 12rem; }
+
+    .ao-ont-rendered :is(h1, h2, h3) { font-weight: 700; margin: 0.6rem 0 0.3rem; }
+
+    .ao-ont-rendered ul { list-style: disc; padding-inline-start: 1.4rem; }
+
+    .ao-ont-rendered ol { list-style: decimal; padding-inline-start: 1.4rem; }
+
+    .ao-ont-inserts {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin: 0.8rem 0;
+    }
+
+    .ao-ont-attach .ao-anc-row > span:first-child i {
+        display: block;
+        font-style: normal;
+        font-size: 0.78rem;
+        color: var(--wa-muted, #6b6b6b);
+    }
+
+    .ao-ont-submit { text-align: center; margin: 1rem 0; }
+
+    .ao-ont-pick { display: flex; flex-direction: column; gap: 0.3rem; max-height: 40vh; overflow-y: auto; }
+
+    /* Predefined Replies / Downloads shared furniture. */
+    .ao-pr-center { text-align: center; margin: 0.9rem 0; }
+
+    .ao-pr-crumb { margin: 0.8rem 0 0.6rem; }
+
+    .ao-pr-none { margin: 0.8rem 0; }
+
+    .ao-pr-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+        padding: 0.5rem 0.2rem;
+        border-bottom: 1px solid var(--wa-rule, #e5e5e5);
+    }
+
+    .ao-pr-name { font-weight: 600; }
+
+    .ao-pr-reply summary { cursor: pointer; font-weight: 600; }
+
+    .ao-pr-reply p { margin-top: 0.4rem; white-space: pre-wrap; color: var(--wa-text, #2b2b2b); }
+
+    .ao-dl-band {
+        margin: 0.8rem 0 0.4rem;
+        padding: 0.55rem 0.9rem;
+        border-radius: 3px;
+        background: #f0f0f0;
+        font-weight: 600;
+        font-size: 1.05rem;
+    }
+
+    .ao-dl-desc { color: var(--wa-muted, #6b6b6b); font-size: 0.85rem; }
+
+    /* Network Issues: the reference's red validation banner. */
+    .ao-ni-error {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        padding: 0.9rem 1.1rem;
+        border: 1px solid #ebccd1;
+        border-radius: 3px;
+        background: #f2dede;
+        color: #a94442;
+        margin-bottom: 1rem;
+    }
+
+    .ao-ni-error b { font-size: 1.05rem; }
+
+    .ao-ni-desc {
+        width: 100%;
+        padding: 0.6rem 0.8rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 3px;
+        font: inherit;
+        font-size: 0.9rem;
+    }
+
+    /* The rail's Filter Tickets form. */
+    .ao-rail-filter {
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        padding: 0.7rem 0.9rem;
+    }
+
+    .ao-rail-filter label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .ao-rail-filter select,
+    .ao-rail-filter input {
+        height: 1.9rem;
+        padding: 0 0.45rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 400;
+    }
+
+    .ao-rail-filter button {
+        margin-top: 0.2rem;
+        height: 2.1rem;
+        border: 0;
+        border-radius: 3px;
+        background: #337ab7;
+        color: #fff;
+        font: inherit;
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+
+    .ao-rail-filter button:hover { background: #286090; }
+
     /* The small "Are you sure?" variant of the modal, as the reference confirms resets. */
     .ao-mud-sm { width: 37rem; }
 
