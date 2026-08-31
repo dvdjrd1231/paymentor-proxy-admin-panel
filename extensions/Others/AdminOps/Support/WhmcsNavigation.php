@@ -45,6 +45,8 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\NetworkIssues;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\OpenNewTicket;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\PredefinedReplies;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportsHome;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportView;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportOverview;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices;
@@ -408,28 +410,20 @@ class WhmcsNavigation
      * Paymenter has no reporting module, so each entry is the pre-filtered list a report would
      * have been a view of. Staff look for this menu by name; filtered lists beat no menu.
      */
+    /** The reference's Reports menu, entry for entry, More… leading to the full grid. */
     private static function reports(): ?NavigationGroup
     {
         return static::group('Reports', 'ri-line-chart-line', [
-            static::link(InvoiceTransactionResource::class, 'Income (Transactions)'),
-            static::link(
-                InvoiceResource::class,
-                'Paid Invoices',
-                params: ['filters' => ['status' => ['value' => 'paid']]],
-            ),
-            static::link(
-                InvoiceResource::class,
-                'Overdue Invoices',
-                params: ['filters' => ['status' => ['value' => 'pending']], 'sort' => 'due_at'],
-                badge: fn () => Metrics::invoicesOverdue(),
-                badgeColor: 'danger',
-            ),
-            static::link(UserResource::class, 'New Customers', params: ['sort' => '-created_at']),
-            static::link(
-                ServiceResource::class,
-                'Active Services',
-                params: ['filters' => ['status' => ['value' => 'active']]],
-            ),
+            static::page(ReportsHome::class, 'Reports'),
+            static::pageLink(ReportView::class, 'Daily Performance', params: ['key' => 'daily-performance']),
+            static::pageLink(ReportView::class, 'Income Forecast', params: ['key' => 'income-forecast']),
+            static::pageLink(ReportView::class, 'Annual Income Report', params: ['key' => 'annual-income']),
+            static::pageLink(ReportView::class, 'New Customers', params: ['key' => 'new-customers']),
+            static::pageLink(ReportView::class, 'Ticket Feedback Scores', params: ['key' => 'ticket-feedback']),
+            // The reference's Batch Invoice PDF Export has no counterpart — invoice PDFs
+            // download per invoice — so its slot points at the grid that says so.
+            static::page(ReportsHome::class, 'Batch Invoice PDF Exp…'),
+            static::page(ReportsHome::class, 'More…'),
         ]);
     }
 
