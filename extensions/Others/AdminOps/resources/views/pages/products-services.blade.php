@@ -21,11 +21,11 @@
                 <div class="ao-find-fields">
                     <label class="ao-find-field ao-find-wide">
                         <span>Product/Service</span>
-                        <input @nofill type="text" wire:model="product" placeholder="Product name">
+                        <input @nofill type="search" wire:model="product" placeholder="Product name">
                     </label>
                     <label class="ao-find-field ao-find-wide">
                         <span>Client Name/Email</span>
-                        <input @nofill type="text" wire:model="client" placeholder="Client name or email">
+                        <input @nofill type="search" wire:model="client" placeholder="Client name or email">
                     </label>
                     <label class="ao-find-field">
                         <span>Status</span>

@@ -32,7 +32,7 @@
                 <div class="ao-find-fields">
                     <label class="ao-find-field ao-find-wide">
                         <span>Client Name/Email or Invoice ID</span>
-                        <input @nofill type="text" wire:model="q" placeholder="Client name, email or invoice ID">
+                        <input @nofill type="search" wire:model="q" placeholder="Client name, email or invoice ID">
                     </label>
                     <label class="ao-find-field">
                         <span>Status</span>

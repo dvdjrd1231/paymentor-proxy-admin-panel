@@ -20,7 +20,7 @@
                 <div class="ao-find-fields">
                     <label class="ao-find-field ao-find-wide">
                         <span>Client Name/Email or Order ID</span>
-                        <input @nofill type="text" wire:model="q" placeholder="Client name, email or order ID">
+                        <input @nofill type="search" wire:model="q" placeholder="Client name, email or order ID">
                     </label>
                     <label class="ao-find-field">
                         <span>Status</span>

@@ -5,7 +5,7 @@
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-grow">
                     <span>Domain</span>
-                    <input @nofill type="text" wire:model="domain" placeholder="example.com" required>
+                    <input @nofill type="search" wire:model="domain" placeholder="example.com" required>
                 </label>
             </div>
             <button type="submit" class="ao-find-go" wire:loading.attr="disabled">Lookup</button>

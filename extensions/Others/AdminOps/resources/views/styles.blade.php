@@ -1259,10 +1259,20 @@
         gap: 0.9rem;
     }
 
+    /* A label row and a control row, both a fixed height, and nothing below them.
+       Asking the browser to leave these fields alone turned out not to be enough — Chrome's
+       address autofill decorates a Name/Email/Phone row whatever the markup says, and a
+       decoration that lands in the field is an extra grid row that makes that one field
+       taller than its neighbours, which is what dropped + Advanced and Search below the line
+       of the inputs. With the rows declared and the height fixed there is no third row to
+       grow into: anything planted in a field lands outside the box and is clipped, and the
+       band measures the same whether it was decorated or not. */
     .ao-find-field {
-        display: flex;
-        flex-direction: column;
-        gap: 0.3rem;
+        display: grid;
+        grid-template-rows: 1.35rem 2.1rem;
+        row-gap: 0.3rem;
+        height: 3.75rem;
+        overflow: hidden;
         /* Flex from a fixed basis, not content width: the reference fits its whole band on
            one row, and content-sized inputs were what pushed Status onto a second line.
            Bases sized so the row still holds together on a 1280px screen — Leandro's own
@@ -1271,24 +1281,64 @@
         min-width: 6.5rem;
     }
 
-    /* Nothing but our own label and control lives in a field.
-       Password managers and form fillers (LastPass, 1Password, Dashlane, Bitwarden) decorate
-       any field they think is fillable, and Chrome's own address autofill does the same. On
-       the one machine running LastPass the band came out a hundred pixels short with a red
-       icon in Client/Company Name — which is why this looked like a difference between the
-       two installs when it was a difference between browsers.
-       Every control in a band now carries `@nofill`, which asks each of them by name to leave
-       it alone; these two rules are the backstop for whatever ignores that, covering both ways
-       a field gets decorated — an element planted beside the input, and a background image
-       painted into it. Neither can touch anything of ours: a field only ever holds a <span>
-       and its control, and our own inputs are a flat white fill. */
+    /* Ours are placed by hand, so an injected one has no row left to auto-place into. */
+    .ao-find-field > span:not(.ao-find-phone) { grid-row: 1; }
+
+    .ao-find-field > input,
+    .ao-find-field > select,
+    .ao-find-field > .ao-find-phone { grid-row: 2; }
+
+    /* And nothing but our own elements is laid out, at any level of the band: the form holds
+       the glass, the fields box and its buttons; the box holds labels; a label holds a <span>
+       and its control. Whatever else turns up is something the browser or an extension added,
+       and it is taken out of the layout rather than allowed to push our own furniture. */
+    .ao-find > :not(span):not(div):not(button),
+    .ao-find-fields > :not(label),
     .ao-find-field > :not(span):not(input):not(select),
     .ao-find-phone > :not(input):not(select) {
         display: none !important;
     }
 
+    /* Unless it has wrapped one of ours — some fillers re-parent the input rather than sit
+       beside it, and hiding the wrapper would take the field with it. Dissolved instead, so
+       the input stays exactly where the grid put it. */
+    .ao-find > :not(span):not(div):not(button):has(input, select, label),
+    .ao-find-fields > :not(label):has(input, select),
+    .ao-find-field > :not(span):not(input):not(select):has(input, select),
+    .ao-find-phone > :not(input):not(select):has(input, select) {
+        display: contents !important;
+    }
+
+    /* The other half of a decoration is painted rather than planted: an icon as a background
+       image, and autofill's own blue fill, which browsers apply through a shadow style that
+       ordinary declarations lose to. The inset shadow is the documented way to win. */
     .ao-find-field input {
         background-image: none !important;
+    }
+
+    .ao-find-field input:-webkit-autofill,
+    .ao-find-field input:-webkit-autofill:hover,
+    .ao-find-field input:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 30px #fff inset;
+        box-shadow: 0 0 0 30px #fff inset;
+        -webkit-text-fill-color: var(--wa-text, #2b2b2b);
+    }
+
+    /* These are search boxes and now say so, which is the one thing that actually keeps
+       Chrome's address autofill away: it reads Name / Email / Phone as an address form no
+       matter what autocomplete says, but it does not offer to fill a search field at all.
+       The type brings a clear button and a platform look with it; both are removed, so the
+       fields look exactly as they did. */
+    .ao-find-field input[type="search"] {
+        appearance: none;
+        -webkit-appearance: none;
+    }
+
+    .ao-find-field input[type="search"]::-webkit-search-cancel-button,
+    .ao-find-field input[type="search"]::-webkit-search-decoration,
+    .ao-find-field input[type="search"]::-webkit-search-results-button {
+        display: none;
+        -webkit-appearance: none;
     }
 
     .ao-find-field > span {

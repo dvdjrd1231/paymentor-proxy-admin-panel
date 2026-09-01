@@ -24,11 +24,11 @@
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-wide">
                     <span>Client/Company Name</span>
-                    <input @nofill type="text" wire:model="name" placeholder="Name or company">
+                    <input @nofill type="search" wire:model="name" placeholder="Name or company">
                 </label>
                 <label class="ao-find-field ao-find-wide">
                     <span>Email Address</span>
-                    <input @nofill type="text" wire:model="email" placeholder="user@example.com">
+                    <input @nofill type="search" wire:model="email" placeholder="user@example.com">
                 </label>
                 <label class="ao-find-field">
                     <span>Phone Number</span>
@@ -42,7 +42,7 @@
                                 <option value="{{ $code }}">{{ $label }}</option>
                             @endforeach
                         </select>
-                        <input @nofill type="text" wire:model="phone" placeholder="201-555-0123">
+                        <input @nofill type="search" wire:model="phone" placeholder="201-555-0123">
                     </span>
                 </label>
                 <label class="ao-find-field">
@@ -65,7 +65,7 @@
                 @if ($this->advanced)
                     <label class="ao-find-field">
                         <span>Client ID</span>
-                        <input @nofill type="text" wire:model="cid" inputmode="numeric" placeholder="e.g. 813">
+                        <input @nofill type="search" wire:model="cid" inputmode="numeric" placeholder="e.g. 813">
                     </label>
                     <label class="ao-find-field">
                         <span>Signed Up From</span>
