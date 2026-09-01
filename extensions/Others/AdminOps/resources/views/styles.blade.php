@@ -3474,6 +3474,24 @@
 
     .ao-ni-options .ao-ni-new { color: #5cb85c; font-weight: 600; }
 
+    /* The reference's dialling-code picker sits flush against its number field. */
+    .ao-find-phone { display: flex; }
+
+    .ao-find-phone select {
+        width: auto;
+        flex: none;
+        border-start-end-radius: 0;
+        border-end-end-radius: 0;
+        border-inline-end: 0;
+        background: #f0f0f0;
+        padding-inline: 0.4rem;
+    }
+
+    .ao-find-phone input {
+        border-start-start-radius: 0;
+        border-end-start-radius: 0;
+    }
+
     /* The rail's Filter Tickets form. */
     .ao-rail-filter {
         display: flex;

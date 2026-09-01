@@ -27,7 +27,18 @@
                 </label>
                 <label class="ao-find-field">
                     <span>Phone Number</span>
-                    <input type="text" wire:model="phone" placeholder="+1 201-555-0123">
+                    {{-- The reference puts a dialling-code picker in front of the number.
+                         Ours is real: the code and the number are searched together, so
+                         picking +55 finds the Brazilian numbers and nothing else. --}}
+                    <span class="ao-find-phone">
+                        <select wire:model="dialCode">
+                            <option value="">+1</option>
+                            @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ViewSearchClients::DIAL_CODES as $code => $label)
+                                <option value="{{ $code }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        <input type="text" wire:model="phone" placeholder="201-555-0123">
+                    </span>
                 </label>
                 <label class="ao-find-field">
                     {{-- Paymenter has no client groups; the reference's control is kept so
