@@ -52,6 +52,24 @@ class ViewSearchClients extends Page
     #[Url]
     public string $phone = '';
 
+    /** The reference's dialling-code picker in front of the phone field. */
+    #[Url]
+    public string $dialCode = '';
+
+    /** The codes this store's clients actually dial from, plus the reference's default. */
+    public const DIAL_CODES = [
+        '+1' => '+1',
+        '+44' => '+44',
+        '+55' => '+55',
+        '+351' => '+351',
+        '+34' => '+34',
+        '+49' => '+49',
+        '+33' => '+33',
+        '+81' => '+81',
+        '+86' => '+86',
+        '+91' => '+91',
+    ];
+
     #[Url]
     public string $status = '';
 
@@ -158,10 +176,20 @@ class ViewSearchClients extends Page
             $query->where('email', 'like', '%' . $this->email . '%');
         }
 
-        if ($this->phone !== '') {
-            $query->whereHas('properties', fn ($p) => $p
-                ->where('key', 'like', '%phone%')
-                ->where('value', 'like', '%' . $this->phone . '%'));
+        if ($this->phone !== '' || $this->dialCode !== '') {
+            // The code and the number are one search: picking +55 and typing nothing finds
+            // every Brazilian number, and typing both narrows to that number in that country.
+            $query->whereHas('properties', function ($p): void {
+                $p->where('key', 'like', '%phone%');
+
+                if ($this->dialCode !== '') {
+                    $p->where('value', 'like', '%' . ltrim($this->dialCode, '+') . '%');
+                }
+
+                if ($this->phone !== '') {
+                    $p->where('value', 'like', '%' . $this->phone . '%');
+                }
+            });
         }
 
         if ($this->cid !== '' && ctype_digit($this->cid)) {
