@@ -778,10 +778,19 @@
     }
 
     /* The rail keeps its column whatever the content does, and never rides a horizontal
-       scroll: its own text wraps instead. */
+       scroll: its own text wraps instead.
+
+       Sticky to the left edge as well, which is the belt to that braces. Leandro's laptop
+       still showed the rail sliced down its left side after the overflow fix, on a build
+       that measures clean here at his width, with the same scrollbars. Whatever is
+       different about that machine — zoom, an extension, a font setting — a rail pinned to
+       the viewport's left edge cannot be scrolled out of view by it. */
     .ao-rail {
         flex: none;
         overflow-wrap: anywhere;
+        position: sticky;
+        left: 0;
+        z-index: 5;
     }
 
     /* Wide tables scroll in their own box rather than stretching the page — the guarantee
