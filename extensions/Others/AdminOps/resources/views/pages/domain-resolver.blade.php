@@ -1,7 +1,7 @@
 {{-- Domain Resolver: the hostname box and its live DNS records. --}}
 <x-filament-panels::page>
     <div class="ao-mu ao-dns">
-        <form class="ao-find" wire:submit.prevent="resolve">
+        <form class="ao-find" autocomplete="off" wire:submit.prevent="resolve">
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-grow">
                     <span>Hostname</span>

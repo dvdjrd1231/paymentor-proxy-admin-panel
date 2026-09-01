@@ -1231,6 +1231,7 @@
     .ao-find {
         display: flex;
         align-items: flex-end;
+        flex-wrap: wrap;
         gap: 1rem;
         padding: 0.9rem 1.1rem;
         border: 1px solid var(--wa-panel-border, #ddd);
@@ -1268,6 +1269,20 @@
            window is ~1385, and the band wrapped there. */
         flex: 1 1 7.5rem;
         min-width: 6.5rem;
+    }
+
+    /* Nothing but our own label and control lives in a field.
+       Password managers and form fillers (LastPass, 1Password, Dashlane, Bitwarden) plant an
+       icon element inside any field they think is fillable, and Chrome's own address autofill
+       does the same. On a machine running one of those the injected node took a share of the
+       field — which is why this band read as misaligned for one person and correct for
+       everyone else, with a coloured icon sitting in the first input to give it away.
+       The forms now say autocomplete="off" and the skin's script stamps each extension's
+       documented opt-out attribute; this rule is the backstop for whatever ignores both.
+       It cannot hide anything of ours: a field only ever holds a <span> and its control. */
+    .ao-find-field > :not(span):not(input):not(select),
+    .ao-find-phone > :not(input):not(select) {
+        display: none !important;
     }
 
     .ao-find-field > span {

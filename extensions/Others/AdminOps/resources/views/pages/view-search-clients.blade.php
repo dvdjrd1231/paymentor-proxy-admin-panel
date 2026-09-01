@@ -8,7 +8,12 @@
 --}}
 <x-filament-panels::page>
     <div class="ao-mu">
-        <form class="ao-find" wire:submit.prevent="search">
+        {{-- autocomplete="off": these are search filters, not a form anyone signs in with.
+             Left on, Chrome reads Name/Email/Phone as an address form and password managers
+             read it as a login, and both then plant their own icon inside the first field —
+             which is how this band came out misaligned on one machine and right on every
+             other. The rest of the opt-out is stamped per field by the skin's script. --}}
+        <form class="ao-find" autocomplete="off" wire:submit.prevent="search">
             <span class="ao-find-glass" aria-hidden="true">
                 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" width="18" height="18">

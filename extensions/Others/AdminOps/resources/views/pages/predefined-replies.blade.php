@@ -32,7 +32,7 @@
                 <div class="ao-pr-center"><button type="submit" class="ao-find-go">Add Predefined Reply</button></div>
             </form>
         @elseif ($tab === 'search')
-            <form class="ao-find" wire:submit.prevent="$refresh">
+            <form class="ao-find" autocomplete="off" wire:submit.prevent="$refresh">
                 <div class="ao-find-fields">
                     <label class="ao-find-field ao-find-grow">
                         <span>Search Term</span>
