@@ -254,6 +254,10 @@ class WhmcsNavigation
 
             return Category::query()
                 ->whereNull('parent_id')
+                // The addon catalogue is a product category by construction, but it already
+                // has its own menu entry and its own screen — listing it here as well put
+                // "Service Addons" in the menu twice, one line above the other.
+                ->where('name', '!=', ServiceAddons::CATEGORY)
                 ->orderBy('sort')
                 ->orderBy('name')
                 ->get()
