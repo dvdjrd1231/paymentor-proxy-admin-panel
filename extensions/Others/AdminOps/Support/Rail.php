@@ -112,7 +112,11 @@ class Rail
             $products[0]['label'] = 'List All Products/Services';
 
             try {
-                foreach (Category::query()->whereNull('parent_id')->orderBy('sort')->orderBy('name')->get() as $category) {
+                // Same exclusion as the menu's: the addon catalogue is a category, but it
+                // has its own entry below and must not be listed twice.
+                foreach (Category::query()->whereNull('parent_id')
+                    ->where('name', '!=', \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServiceAddons::CATEGORY)
+                    ->orderBy('sort')->orderBy('name')->get() as $category) {
                     $products[] = [
                         'label' => '- ' . $category->name,
                         'url' => $products[0]['url'] . '?category=' . $category->id,
