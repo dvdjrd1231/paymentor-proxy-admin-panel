@@ -1638,6 +1638,51 @@
 
     .ao-anc-generate:hover { background: #f0f0f0; }
 
+    /* Brazil's registry block. Set apart from the rest of the form on purpose: it appears
+       only for one country, its contents change with the kind of person being registered,
+       and it is the part an admin has to get right for a tax document to be issuable. */
+    .ao-anc-brazil {
+        margin-top: 1.2rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 6px);
+        background: #fbfbfb;
+    }
+
+    .ao-anc-brazil-head {
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        padding: 0.6rem 1rem;
+        border-bottom: 1px solid var(--wa-panel-border, #ddd);
+        background: #f0f0f0;
+        border-start-start-radius: var(--wa-radius, 6px);
+        border-start-end-radius: var(--wa-radius, 6px);
+        font-weight: 600;
+    }
+
+    .ao-anc-brazil-head i {
+        font-style: normal;
+        font-weight: 400;
+        font-size: 0.9rem;
+        color: var(--wa-muted, #6b6b6b);
+    }
+
+    /* The Isento tick sits with the field it stands in for, not on a row of its own. */
+    .ao-anc-inline {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        flex: none;
+        white-space: nowrap;
+        font-weight: 400;
+    }
+
+    .ao-anc-field input:disabled {
+        background: #f0f0f0;
+        color: var(--wa-muted, #6b6b6b);
+    }
+
     .ao-anc-errors {
         margin-top: 1rem;
         padding: 0.7rem 1rem;

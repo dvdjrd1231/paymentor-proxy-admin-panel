@@ -87,14 +87,64 @@ class BrazilianRegistration extends Extension
         Validator::extend('cpf', fn ($attribute, $value) => $value === null || $value === '' || Documents::isValidCpf($value));
         Validator::extend('cnpj', fn ($attribute, $value) => $value === null || $value === '' || Documents::isValidCnpj($value));
 
+        // Issue #38: which documents are mandatory depends on two other answers on the same
+        // form — the country, and whether this is a Pessoa Física or a Pessoa Jurídica.
+        // `required_if` cannot express that: it takes one field and a literal value, and the
+        // literal here is an accented label that is free to be reworded. These read the
+        // sibling answers out of the validator's own data instead, so the rule survives a
+        // relabelling and applies to whatever form carries the fields.
+        //
+        // Registered as implicit rules: a plain extension is skipped when the value is
+        // empty, which is exactly the case they exist to catch.
+        $personType = fn ($validator) => (string) data_get($validator->getData(), 'properties.person_type', '');
+        $country = fn ($validator) => (string) data_get($validator->getData(), 'properties.country', '');
+
+        Validator::extendImplicit(
+            'brazil_person_type',
+            fn ($attribute, $value, $parameters, $validator) => !Documents::isBrazil($country($validator))
+                || trim((string) $value) !== '',
+        );
+
+        Validator::extendImplicit(
+            'cpf_required',
+            fn ($attribute, $value, $parameters, $validator) => !Documents::isIndividual($personType($validator))
+                || trim((string) $value) !== '',
+        );
+
+        Validator::extendImplicit(
+            'cnpj_required',
+            fn ($attribute, $value, $parameters, $validator) => !Documents::isCompany($personType($validator))
+                || trim((string) $value) !== '',
+        );
+
+        // Not mandatory, but not simply omittable either: a company either states its
+        // Inscrição Estadual or declares itself exempt from one.
+        Validator::extendImplicit(
+            'ie_or_exempt',
+            fn ($attribute, $value, $parameters, $validator) => !Documents::isCompany($personType($validator))
+                || trim((string) $value) !== ''
+                || filter_var(
+                    data_get($validator->getData(), 'properties.state_registration_exempt'),
+                    FILTER_VALIDATE_BOOL,
+                ),
+        );
+
         $messages = [
             'en' => [
                 'validation.cpf' => 'The :attribute is not a valid CPF.',
                 'validation.cnpj' => 'The :attribute is not a valid CNPJ.',
+                'validation.brazil_person_type' => 'Choose whether this is a Pessoa Física or a Pessoa Jurídica.',
+                'validation.cpf_required' => 'A Pessoa Física is registered by CPF, so the CPF is required.',
+                'validation.cnpj_required' => 'A Pessoa Jurídica is registered by CNPJ, so the CNPJ is required.',
+                'validation.ie_or_exempt' => 'Give the Inscrição Estadual, or tick Isento if the company is exempt.',
             ],
             'pt_BR' => [
                 'validation.cpf' => 'O :attribute informado não é um CPF válido.',
                 'validation.cnpj' => 'O :attribute informado não é um CNPJ válido.',
+                'validation.brazil_person_type' => 'Selecione se o cadastro é de Pessoa Física ou Pessoa Jurídica.',
+                'validation.cpf_required' => 'O CPF é obrigatório para Pessoa Física.',
+                'validation.cnpj_required' => 'O CNPJ é obrigatório para Pessoa Jurídica.',
+                'validation.ie_or_exempt' => 'Informe a Inscrição Estadual ou marque Isento.',
             ],
         ];
 

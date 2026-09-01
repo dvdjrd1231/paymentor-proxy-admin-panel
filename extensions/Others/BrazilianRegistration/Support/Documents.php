@@ -9,6 +9,37 @@ namespace Paymenter\Extensions\Others\BrazilianRegistration\Support;
  */
 class Documents
 {
+    /** The two kinds of registration, as seeded and as they must read on a tax document. */
+    public const INDIVIDUAL = 'Pessoa Física (Individual)';
+
+    public const COMPANY = 'Pessoa Jurídica (Company)';
+
+    /** What a company writes in Inscrição Estadual when it has none. */
+    public const EXEMPT = 'ISENTO';
+
+    /** Brazil under any of the spellings a country list might carry. */
+    public static function isBrazil(?string $country): bool
+    {
+        return in_array(strtolower(trim((string) $country)), ['brazil', 'brasil', 'br'], true);
+    }
+
+    /**
+     * Pessoa Jurídica. Matched loosely on purpose: the stored value is the label a tax
+     * document needs to read, so it must stay free to be reworded without silently
+     * changing which documents get demanded.
+     */
+    public static function isCompany(?string $personType): bool
+    {
+        $value = strtolower(trim((string) $personType));
+
+        return $value !== '' && (str_contains($value, 'jur') || str_contains($value, 'company') || $value === 'pj');
+    }
+
+    public static function isIndividual(?string $personType): bool
+    {
+        return trim((string) $personType) !== '' && !static::isCompany($personType);
+    }
+
     /** Strip everything that isn't a digit. */
     public static function digits(?string $value): string
     {
