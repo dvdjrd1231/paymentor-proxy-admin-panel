@@ -1399,9 +1399,18 @@
 
     .ao-mu-grid {
         width: 100%;
-        border-collapse: collapse;
+        /* Separate, not collapse: collapsed borders refuse corner radii, and issue #2 asks
+           for the grid's edges rounded like the reference's panels. */
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: var(--wa-radius, 6px);
         background: #fff;
     }
+
+    .ao-mu-grid thead th:first-child { border-start-start-radius: var(--wa-radius, 6px); }
+    .ao-mu-grid thead th:last-child { border-start-end-radius: var(--wa-radius, 6px); }
+    .ao-mu-grid tbody tr:last-child td:first-child { border-end-start-radius: var(--wa-radius, 6px); }
+    .ao-mu-grid tbody tr:last-child td:last-child { border-end-end-radius: var(--wa-radius, 6px); }
 
     .ao-mu-grid th {
         padding: 0.45rem 0.6rem;
