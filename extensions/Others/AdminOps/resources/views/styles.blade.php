@@ -2053,7 +2053,8 @@
     }
 
     .ao-mu-mail-ok { background: #e6e6e6; color: #555; }
-    .ao-mu-mail-no { background: #f6dede; color: #b94a48; }
+    /* Grey like Verified — the reference tints neither badge. */
+    .ao-mu-mail-no { background: #e6e6e6; color: #555; }
 
     /* Two Factor, the reference's way: shield and word, grey off, green on — not a pill. */
     .ao-mu-2fa {
