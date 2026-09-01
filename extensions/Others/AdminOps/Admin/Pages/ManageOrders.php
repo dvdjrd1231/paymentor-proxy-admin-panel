@@ -101,6 +101,36 @@ class ManageOrders extends Page
             ->{$count ? 'success' : 'warning'}()->send();
     }
 
+    /**
+     * The reference's third bulk button. Same guard as the per-row delete: an order whose
+     * services are live is not paperwork to throw away, and invoices stay regardless.
+     */
+    public function deleteSelected(): void
+    {
+        $deleted = 0;
+        $refused = 0;
+
+        DB::transaction(function () use (&$deleted, &$refused): void {
+            foreach (Order::with('services')->whereIn('id', array_map('intval', $this->selected))->get() as $order) {
+                if ($order->services->whereIn('status', ['active', 'suspended'])->isNotEmpty()) {
+                    $refused++;
+
+                    continue;
+                }
+
+                $order->services()->delete();
+                $order->delete();
+                $deleted++;
+            }
+        });
+
+        $this->selected = [];
+        Notification::make()
+            ->title($deleted . ' order(s) deleted' . ($refused ? ', ' . $refused . ' kept' : ''))
+            ->body($refused ? 'Orders with active or suspended services cannot be deleted.' : null)
+            ->{$deleted ? 'success' : 'warning'}()->send();
+    }
+
     public static function canAccess(): bool
     {
         return OrderResource::canViewAny();

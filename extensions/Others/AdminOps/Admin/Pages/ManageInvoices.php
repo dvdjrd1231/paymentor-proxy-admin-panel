@@ -4,6 +4,7 @@ namespace Paymenter\Extensions\Others\AdminOps\Admin\Pages;
 
 use App\Admin\Resources\InvoiceResource;
 use App\Models\Invoice;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
@@ -69,6 +70,126 @@ class ManageInvoices extends Page
 
     /** The row awaiting the "Are you sure?" before deletion. */
     public ?int $confirmingDelete = null;
+
+    /** @var array<int, string> The ticked rows, for the reference's With Selected bar. */
+    public array $selected = [];
+
+    /**
+     * The reference's six bulk buttons. Status moves go through the model so core's
+     * observers still fire; money that has moved is never quietly rewritten — an invoice
+     * with transactions cannot be marked unpaid or deleted, and says so.
+     *
+     * @return array<int, \App\Models\Invoice>
+     */
+    private function picked(): array
+    {
+        return Invoice::with(['items', 'transactions', 'user'])
+            ->whereIn('id', array_map('intval', array_filter($this->selected)))
+            ->get()->all();
+    }
+
+    public function markSelected(string $status): void
+    {
+        $done = 0;
+        $kept = 0;
+
+        foreach ($this->picked() as $invoice) {
+            // Unpaid and cancelled would contradict a recorded payment.
+            if ($status !== 'paid' && $invoice->transactions->isNotEmpty()) {
+                $kept++;
+
+                continue;
+            }
+
+            $invoice->update(['status' => $status]);
+            $done++;
+        }
+
+        $this->selected = [];
+        Notification::make()
+            ->title($done . ' invoice(s) marked ' . $status . ($kept ? ', ' . $kept . ' kept' : ''))
+            ->body($kept ? 'Invoices with recorded transactions keep their status.' : null)
+            ->{$done ? 'success' : 'warning'}()->send();
+    }
+
+    /** The reference's Duplicate Invoice: same lines, same client, a fresh pending copy. */
+    public function duplicateSelected(): void
+    {
+        $made = 0;
+
+        DB::transaction(function () use (&$made): void {
+            foreach ($this->picked() as $invoice) {
+                $copy = Invoice::create([
+                    'user_id' => $invoice->user_id,
+                    'status' => Invoice::STATUS_PENDING,
+                    'currency_code' => $invoice->currency_code,
+                    'due_at' => now()->addDays((int) config('settings.cronjob_invoice', 7)),
+                ]);
+
+                foreach ($invoice->items as $item) {
+                    $copy->items()->create($item->only(['price', 'quantity', 'description', 'reference_id', 'reference_type']));
+                }
+
+                $made++;
+            }
+        });
+
+        $this->selected = [];
+        Notification::make()->title($made . ' invoice(s) duplicated')->success()->send();
+    }
+
+    /**
+     * The reference's Send Reminder. Core ships no overdue template, so the reminder is
+     * the invoice notice itself — same mail, same PDF attached, which is what a customer
+     * being reminded actually needs to see.
+     */
+    public function remindSelected(): void
+    {
+        $sent = 0;
+
+        foreach ($this->picked() as $invoice) {
+            if ($invoice->status !== 'pending' || !$invoice->user) {
+                continue;
+            }
+
+            try {
+                \App\Helpers\NotificationHelper::invoiceNotification($invoice->user, $invoice, 'new_invoice_created');
+                $sent++;
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('ManageInvoices: reminder failed', ['invoice' => $invoice->id, 'error' => $e->getMessage()]);
+            }
+        }
+
+        $this->selected = [];
+        Notification::make()->title($sent . ' reminder(s) sent')
+            ->{$sent ? 'success' : 'warning'}()->send();
+    }
+
+    public function deleteSelected(): void
+    {
+        $deleted = 0;
+        $kept = 0;
+
+        DB::transaction(function () use (&$deleted, &$kept): void {
+            foreach ($this->picked() as $invoice) {
+                if ($invoice->status === 'paid' || $invoice->transactions->isNotEmpty()) {
+                    $kept++;
+
+                    continue;
+                }
+
+                $invoice->items()->delete();
+                $invoice->delete();
+                $deleted++;
+            }
+        });
+
+        $this->selected = [];
+        Notification::make()
+            ->title($deleted . ' invoice(s) deleted' . ($kept ? ', ' . $kept . ' kept' : ''))
+            ->body($kept ? 'Paid invoices and invoices with transactions keep their paperwork.' : null)
+            ->{$deleted ? 'success' : 'warning'}()->send();
+    }
 
     public function askDelete(int $id): void
     {
