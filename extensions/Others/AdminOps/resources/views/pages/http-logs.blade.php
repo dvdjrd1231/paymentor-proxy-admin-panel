@@ -4,7 +4,7 @@
         <form class="ao-find" autocomplete="off" wire:submit.prevent="$set('page', 1)">
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-grow">
-                    <span>Search</span>
+                    <span class="ao-find-label">Search</span>
                     <input @nofill type="search" wire:model="q" placeholder="Type or request contents">
                 </label>
             </div>

@@ -4,11 +4,11 @@
         <form class="ao-find" autocomplete="off" wire:submit.prevent="add">
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-grow">
-                    <span>Task</span>
+                    <span class="ao-find-label">Task</span>
                     <input @nofill type="text" wire:model="newTitle" placeholder="What needs doing?" required>
                 </label>
                 <label class="ao-find-field">
-                    <span>Due Date</span>
+                    <span class="ao-find-label">Due Date</span>
                     <input @nofill type="date" wire:model="newDue">
                 </label>
             </div>

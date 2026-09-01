@@ -23,15 +23,15 @@
 
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-wide">
-                    <span>Client/Company Name</span>
+                    <span class="ao-find-label">Client/Company Name</span>
                     <input @nofill type="search" wire:model="name" placeholder="Name or company">
                 </label>
                 <label class="ao-find-field ao-find-wide">
-                    <span>Email Address</span>
+                    <span class="ao-find-label">Email Address</span>
                     <input @nofill type="search" wire:model="email" placeholder="user@example.com">
                 </label>
                 <label class="ao-find-field">
-                    <span>Phone Number</span>
+                    <span class="ao-find-label">Phone Number</span>
                     {{-- The reference puts a dialling-code picker in front of the number.
                          Ours is real: the code and the number are searched together, so
                          picking +55 finds the Brazilian numbers and nothing else. --}}
@@ -48,13 +48,13 @@
                 <label class="ao-find-field">
                     {{-- Paymenter has no client groups; the reference's control is kept so
                          the band reads the same, with the one honest answer it has. --}}
-                    <span>Client Group</span>
+                    <span class="ao-find-label">Client Group</span>
                     <select @nofill>
                         <option>Any</option>
                     </select>
                 </label>
                 <label class="ao-find-field">
-                    <span>Status</span>
+                    <span class="ao-find-label">Status</span>
                     <select @nofill wire:model="status">
                         <option value="">Any</option>
                         <option value="active">Active</option>
@@ -64,15 +64,15 @@
 
                 @if ($this->advanced)
                     <label class="ao-find-field">
-                        <span>Client ID</span>
+                        <span class="ao-find-label">Client ID</span>
                         <input @nofill type="search" wire:model="cid" inputmode="numeric" placeholder="e.g. 813">
                     </label>
                     <label class="ao-find-field">
-                        <span>Signed Up From</span>
+                        <span class="ao-find-label">Signed Up From</span>
                         <input @nofill type="date" wire:model="from">
                     </label>
                     <label class="ao-find-field">
-                        <span>Signed Up To</span>
+                        <span class="ao-find-label">Signed Up To</span>
                         <input @nofill type="date" wire:model="to">
                     </label>
                 @endif

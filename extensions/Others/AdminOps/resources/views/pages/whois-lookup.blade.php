@@ -4,7 +4,7 @@
         <form class="ao-find" autocomplete="off" wire:submit.prevent="lookup">
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-grow">
-                    <span>Domain</span>
+                    <span class="ao-find-label">Domain</span>
                     <input @nofill type="search" wire:model="domain" placeholder="example.com" required>
                 </label>
             </div>
