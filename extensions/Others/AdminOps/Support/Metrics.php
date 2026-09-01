@@ -125,9 +125,26 @@ class Metrics
      */
     private static array $counted = [];
 
+    /**
+     * Memoised for the request, then cached for half a minute across requests.
+     *
+     * The per-request memo was not enough: one admin page is not one request. Filament
+     * renders each widget and each Livewire component separately, so a dashboard visit
+     * re-ran every badge count ten times over. These are sidebar hints and menu badges —
+     * thirty seconds of staleness is invisible, and the queries they replace are not.
+     *
+     * Cache failures fall through to the query rather than to an empty page: a panel that
+     * loads slowly is a nuisance, one that shows a wrong zero is a lie.
+     */
     private static function remember(string $key, callable $count): int
     {
-        return static::$counted[$key] ??= $count();
+        return static::$counted[$key] ??= (function () use ($key, $count): int {
+            try {
+                return (int) \Illuminate\Support\Facades\Cache::remember('adminops.metric.' . $key, 30, $count);
+            } catch (\Throwable $e) {
+                return (int) $count();
+            }
+        })();
     }
 
     /** Services waiting to be provisioned. */

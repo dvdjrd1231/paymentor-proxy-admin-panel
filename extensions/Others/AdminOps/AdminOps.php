@@ -113,10 +113,8 @@ class AdminOps extends Extension
      */
     private function registerWhmcsSkin(): void
     {
-        FilamentView::registerRenderHook(
-            'panels::head.end',
-            fn (): string => Blade::render('@include(\'adminops::skin\')'),
-        );
+        // The skin's CSS now rides in the one stylesheet registered by registerStyles();
+        // only the markup hooks below remain here.
 
         // The `+` sits between brand and menus; the utility icons after the search field.
         FilamentView::registerRenderHook(
@@ -158,10 +156,64 @@ class AdminOps extends Extension
      */
     private function registerStyles(): void
     {
+        // The skin and the widget styles are 160 KB of CSS between them. Injected inline
+        // they rode in the <head> of every response — never cached, re-parsed on every
+        // full page load, and counted against every HTML payload. Served as one file with
+        // a content-hashed URL the browser fetches them once and reuses them until they
+        // actually change. {@see registerSkinStylesheet}.
+        $this->registerSkinStylesheet();
+
         FilamentView::registerRenderHook(
             'panels::head.end',
-            fn (): string => Blade::render('@include(\'adminops::styles\')'),
+            fn (): string => '<link rel="stylesheet" href="' . e(static::styleUrl()) . '">',
         );
+    }
+
+    /** The one URL, versioned by the two blades' own content so a deploy invalidates it. */
+    public static function styleUrl(): string
+    {
+        $version = \Illuminate\Support\Facades\Cache::remember('adminops.style-version', 3600, function (): string {
+            $stamp = '';
+
+            foreach (['skin', 'styles'] as $part) {
+                $file = __DIR__ . '/resources/views/' . $part . '.blade.php';
+                $stamp .= is_file($file) ? filemtime($file) . ':' . filesize($file) . '|' : '';
+            }
+
+            return substr(md5($stamp), 0, 10);
+        });
+
+        return url('/admin/adminops-' . $version . '.css');
+    }
+
+    /**
+     * Serves both style sheets as one immutable file.
+     *
+     * Public on purpose: it is CSS, it carries no data, and the panel's login page needs it
+     * before anyone is authenticated. The version in the path is a content hash, so the
+     * far-future cache header can never serve a stale skin after a deploy.
+     */
+    private function registerSkinStylesheet(): void
+    {
+        \Illuminate\Support\Facades\Route::get('/admin/adminops-{version}.css', function (string $version) {
+            $css = \Illuminate\Support\Facades\Cache::remember('adminops.style-css', 3600, function (): string {
+                $out = '';
+
+                foreach (['skin', 'styles'] as $part) {
+                    $rendered = Blade::render('@include(\'adminops::' . $part . '\')');
+                    // The blades ship their own <style> wrapper for the inline case.
+                    $out .= preg_replace('#</?style[^>]*>#i', '', $rendered) . "\n";
+                }
+
+                return trim($out);
+            });
+
+            return response($css, 200, [
+                'Content-Type' => 'text/css; charset=UTF-8',
+                'Cache-Control' => 'public, max-age=31536000, immutable',
+                'ETag' => '"' . $version . '"',
+            ]);
+        })->where('version', '[a-z0-9]+')->name('adminops.styles');
     }
 
     /**
