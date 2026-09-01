@@ -78,21 +78,24 @@
                 <button type="button" class="ao-find-go" wire:click="save">Save Changes</button>
             </div>
         @else
-            <div class="ao-mu-line">
-                <span>{{ $viewLabel }} Issues: {{ number_format($rows->count()) }}</span>
-                <button type="button" class="ao-find-go" wire:click="openForm">Create New</button>
-            </div>
+            <p class="ao-ni-options">
+                Options:
+                <button type="button" class="ao-cp-link" wire:click="$set('tab', 'open')">Open</button> |
+                <button type="button" class="ao-cp-link" wire:click="$set('tab', 'scheduled')">Scheduled</button> |
+                <button type="button" class="ao-cp-link" wire:click="$set('tab', 'resolved')">Resolved</button> |
+                <button type="button" class="ao-cp-link ao-ni-new" wire:click="openForm">&#10010; Create New</button>
+            </p>
+            <h4 class="ao-ano-heading">{{ $viewLabel }} Issues</h4>
 
             <table class="ao-mu-grid">
                 <thead>
                     <tr>
                         <th>Title</th>
                         <th>Type</th>
-                        <th>Server</th>
                         <th>Priority</th>
                         <th>Status</th>
-                        <th>Start</th>
-                        <th>End</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -103,7 +106,6 @@
                                 <button type="button" class="ao-cp-link" wire:click="openForm({{ $row->id }})">{{ $row->title }}</button>
                             </td>
                             <td>{{ \Paymenter\Extensions\Others\AdminOps\Models\NetworkIssue::TYPES[$row->type] ?? ucfirst($row->type) }}</td>
-                            <td>{{ $row->server?->name ?? '—' }}</td>
                             <td>{{ \Paymenter\Extensions\Others\AdminOps\Models\NetworkIssue::PRIORITIES[$row->priority] ?? ucfirst($row->priority) }}</td>
                             <td>
                                 <span class="{{ $row->status === 'resolved' ? 'ao-st-closed' : ($row->status === 'outage' ? 'ao-st-open' : 'ao-st-answered') }}">
@@ -120,7 +122,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="ao-mu-none">No Records Found</td></tr>
+                        <tr><td colspan="7" class="ao-mu-none">No Records Found</td></tr>
                     @endforelse
                 </tbody>
             </table>
