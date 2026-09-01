@@ -51,6 +51,7 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\DomainResolver;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\PhpCompatibility;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\PhpInfo;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SystemCleanup;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\QuotesList;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportsHome;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportView;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddTransaction;
@@ -338,18 +339,16 @@ class WhmcsNavigation
             ),
             static::pageLink(BillableItemsList::class, '- Uninvoiced Items', params: ['view' => 'uninvoiced']),
             static::pageLink(BillableItemsList::class, '- Recurring Items', params: ['view' => 'recurring']),
-            static::link(
-                QuoteResource::class,
+            static::pageLink(
+                QuotesList::class,
                 'Quotes',
                 badge: fn () => class_exists(QuoteResource::class) ? QuoteResource::getNavigationBadge() : null,
                 badgeColor: 'info',
             ),
             // The reference's Quotes sub-entries: the Valid/Expired split the resource
             // already filters by.
-            static::link(QuoteResource::class, '- Valid',
-                params: ['filters' => ['valid' => ['isActive' => true]]]),
-            static::link(QuoteResource::class, '- Expired',
-                params: ['filters' => ['status' => ['value' => 'expired']]]),
+            static::pageLink(QuotesList::class, '- Valid', params: ['view' => 'valid']),
+            static::pageLink(QuotesList::class, '- Expired', params: ['view' => 'expired']),
             static::pageLink(CreateQuote::class, '- Create New Quote'),
             // The reference's last three, on their nearest honest homes: recording a manual
             // payment IS offline card processing here, and a refund request is what a

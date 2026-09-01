@@ -67,13 +67,15 @@
         <table class="ao-mu-grid">
             <thead>
                 <tr>
-                    <th>ID</th><th>Client</th><th>Description</th><th>Hours/Qty</th><th>Amount</th>
-                    <th>Invoice Action</th><th>Recurs</th><th>Next Due</th><th>Status</th><th></th>
+                    <th class="ao-mu-check"><input type="checkbox" data-ao-check-all></th>
+                    <th>ID &#9662;</th><th>Client Name</th><th>Description</th><th>Hours</th><th>Amount</th>
+                    <th>Invoice Action</th><th>Invoiced</th><th></th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($items as $item)
                     <tr>
+                        <td class="ao-mu-check"><input type="checkbox" data-ao-check wire:model="selected" value="{{ $item->id }}"></td>
                         <td>{{ $item->id }}</td>
                         <td>
                             <a href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $item->user_id]) }}">
@@ -84,11 +86,9 @@
                         <td>{{ (float) $item->quantity }}</td>
                         <td>${{ number_format((float) $item->amount, 2) }} {{ $item->currency_code }}</td>
                         <td>{{ $actions[$item->invoice_action] ?? $item->invoice_action }}</td>
-                        <td>{{ $item->recur_every ? 'Every ' . $item->recur_every : 'Never' }}</td>
-                        <td>{{ $item->next_due_at?->format('m/d/Y') ?? '—' }}</td>
-                        <td>
+                        <td title="{{ $item->recur_every ? 'Recurs every ' . $item->recur_every : 'Does not recur' }}{{ $item->next_due_at ? ' · next ' . $item->next_due_at->format('m/d/Y') : '' }}">
                             <span class="{{ $item->invoiced_at ? 'ao-st-open' : 'ao-st-answered' }}">
-                                {{ $item->invoiced_at ? 'Invoiced' : 'Uninvoiced' }}
+                                {{ $item->invoiced_at ? 'Yes' : 'No' }}
                             </span>
                         </td>
                         <td class="ao-mu-actions">
@@ -101,9 +101,33 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="10" class="ao-mu-none">No Records Found</td></tr>
+                    <tr><td colspan="9" class="ao-mu-none">No Records Found</td></tr>
                 @endforelse
             </tbody>
         </table>
+
+        {{-- The reference's With Selected bar. --}}
+        <div class="ao-st-bulk">
+            With Selected:
+            <button type="button" wire:click="invoiceSelected"
+                wire:confirm="Queue the selected items for the next daily invoice run?">Invoice on Next Cron Run</button>
+            <button type="button" class="ao-st-danger" wire:click="deleteSelected"
+                wire:confirm="Delete the selected items? Invoiced ones are kept.">Delete</button>
+        </div>
     </div>
+
+    <script>
+        (() => {
+            const root = document.currentScript.closest('.fi-page') ?? document;
+            root.addEventListener('change', (event) => {
+                if (!event.target.matches('[data-ao-check-all]')) return;
+                for (const box of root.querySelectorAll('[data-ao-check]')) {
+                    if (box.checked !== event.target.checked) {
+                        box.checked = event.target.checked;
+                        box.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+            });
+        })();
+    </script>
 </x-filament-panels::page>
