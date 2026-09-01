@@ -89,6 +89,36 @@ class BillableItemsList extends Page
         Notification::make()->title('Billable item added')->success()->send();
     }
 
+    /** @var array<int, string> The ticked rows, for the reference's With Selected bar. */
+    public array $selected = [];
+
+    /** The reference's first bulk button: hand the items to the daily invoice run. */
+    public function invoiceSelected(): void
+    {
+        $queued = BillableItem::whereIn('id', array_map('intval', array_filter($this->selected)))
+            ->whereNull('invoiced_at')
+            ->update(['invoice_action' => BillableItem::ACTION_IMMEDIATELY]);
+
+        $this->selected = [];
+        Notification::make()->title($queued . ' item(s) queued for the next run')
+            ->{$queued ? 'success' : 'warning'}()->send();
+    }
+
+    public function deleteSelected(): void
+    {
+        $items = BillableItem::whereIn('id', array_map('intval', array_filter($this->selected)))->get();
+        $deleted = $items->whereNull('invoiced_at');
+        $kept = $items->count() - $deleted->count();
+
+        BillableItem::whereIn('id', $deleted->pluck('id'))->delete();
+
+        $this->selected = [];
+        Notification::make()
+            ->title($deleted->count() . ' item(s) deleted' . ($kept ? ', ' . $kept . ' kept' : ''))
+            ->body($kept ? 'Invoiced items keep their paperwork.' : null)
+            ->{$deleted->count() ? 'success' : 'warning'}()->send();
+    }
+
     public function delete(int $id): void
     {
         $item = BillableItem::findOrFail($id);
