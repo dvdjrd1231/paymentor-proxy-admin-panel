@@ -20,15 +20,15 @@
 
                 <div class="ao-find-fields">
                     <label class="ao-find-field ao-find-wide">
-                        <span>Product/Service</span>
+                        <span class="ao-find-label">Product/Service</span>
                         <input @nofill type="search" wire:model="product" placeholder="Product name">
                     </label>
                     <label class="ao-find-field ao-find-wide">
-                        <span>Client Name/Email</span>
+                        <span class="ao-find-label">Client Name/Email</span>
                         <input @nofill type="search" wire:model="client" placeholder="Client name or email">
                     </label>
                     <label class="ao-find-field">
-                        <span>Status</span>
+                        <span class="ao-find-label">Status</span>
                         <select @nofill wire:model="status">
                             <option value="">Any</option>
                             <option value="pending">Pending</option>

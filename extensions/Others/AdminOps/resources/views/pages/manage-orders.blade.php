@@ -19,11 +19,11 @@
                 </span>
                 <div class="ao-find-fields">
                     <label class="ao-find-field ao-find-wide">
-                        <span>Client Name/Email or Order ID</span>
+                        <span class="ao-find-label">Client Name/Email or Order ID</span>
                         <input @nofill type="search" wire:model="q" placeholder="Client name, email or order ID">
                     </label>
                     <label class="ao-find-field">
-                        <span>Status</span>
+                        <span class="ao-find-label">Status</span>
                         <select @nofill wire:model="status">
                             <option value="">Any</option>
                             <option value="pending">Pending</option>

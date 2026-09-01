@@ -1269,7 +1269,14 @@
        band measures the same whether it was decorated or not. */
     .ao-find-field {
         display: grid;
+        /* One column and two rows, both declared, and any track the browser has to invent
+           beyond them is zero-sized — so an injected element can neither widen the field by
+           claiming a column nor lengthen it by claiming a row. The fixed height and the clip
+           are what make that final. */
+        grid-template-columns: minmax(0, 1fr);
         grid-template-rows: 1.35rem 2.1rem;
+        grid-auto-rows: 0;
+        grid-auto-columns: 0;
         row-gap: 0.3rem;
         height: 3.75rem;
         overflow: hidden;
@@ -1282,19 +1289,22 @@
     }
 
     /* Ours are placed by hand, so an injected one has no row left to auto-place into. */
-    .ao-find-field > span:not(.ao-find-phone) { grid-row: 1; }
+    .ao-find-field > .ao-find-label { grid-row: 1; }
 
     .ao-find-field > input,
     .ao-find-field > select,
     .ao-find-field > .ao-find-phone { grid-row: 2; }
 
-    /* And nothing but our own elements is laid out, at any level of the band: the form holds
-       the glass, the fields box and its buttons; the box holds labels; a label holds a <span>
-       and its control. Whatever else turns up is something the browser or an extension added,
-       and it is taken out of the layout rather than allowed to push our own furniture. */
-    .ao-find > :not(span):not(div):not(button),
-    .ao-find-fields > :not(label),
-    .ao-find-field > :not(span):not(input):not(select),
+    /* Nothing but our own elements is laid out, at any level of the band: the form holds the
+       glass, the fields box and its two buttons; the box holds fields; a field holds its
+       label and its control. Whatever else turns up is something the browser or an extension
+       added, and it is taken out of the layout rather than allowed to push our furniture.
+       By class, not by tag — a first attempt allowed any <span> in a field and any <div> in
+       the form, and an injected element is usually exactly those. Every piece of a band
+       carries a class for this reason, the label included. */
+    .ao-find > :not(.ao-find-glass):not(.ao-find-fields):not(.ao-find-adv):not(.ao-find-go),
+    .ao-find-fields > :not(.ao-find-field),
+    .ao-find-field > :not(.ao-find-label):not(.ao-find-phone):not(input):not(select),
     .ao-find-phone > :not(input):not(select) {
         display: none !important;
     }
@@ -1302,9 +1312,9 @@
     /* Unless it has wrapped one of ours — some fillers re-parent the input rather than sit
        beside it, and hiding the wrapper would take the field with it. Dissolved instead, so
        the input stays exactly where the grid put it. */
-    .ao-find > :not(span):not(div):not(button):has(input, select, label),
-    .ao-find-fields > :not(label):has(input, select),
-    .ao-find-field > :not(span):not(input):not(select):has(input, select),
+    .ao-find > :not(.ao-find-glass):not(.ao-find-fields):not(.ao-find-adv):not(.ao-find-go):has(input, select, label),
+    .ao-find-fields > :not(.ao-find-field):has(input, select),
+    .ao-find-field > :not(.ao-find-label):not(.ao-find-phone):not(input):not(select):has(input, select),
     .ao-find-phone > :not(input):not(select):has(input, select) {
         display: contents !important;
     }
@@ -1341,7 +1351,7 @@
         -webkit-appearance: none;
     }
 
-    .ao-find-field > span {
+    .ao-find-field > .ao-find-label {
         font-weight: 600;
         color: var(--wa-ink, #333);
         /* A wrapped label pushes its input a line down and the whole band out of line. */

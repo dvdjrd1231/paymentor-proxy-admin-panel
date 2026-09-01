@@ -35,7 +35,7 @@
             <form class="ao-find" autocomplete="off" wire:submit.prevent="$refresh">
                 <div class="ao-find-fields">
                     <label class="ao-find-field ao-find-grow">
-                        <span>Search Term</span>
+                        <span class="ao-find-label">Search Term</span>
                         <input @nofill type="search" wire:model="q" placeholder="Title or reply text">
                     </label>
                 </div>
