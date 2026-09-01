@@ -1,7 +1,7 @@
 {{-- WHOIS Lookup: the domain box and the registry's raw answer. --}}
 <x-filament-panels::page>
     <div class="ao-mu ao-who">
-        <form class="ao-find" wire:submit.prevent="lookup">
+        <form class="ao-find" autocomplete="off" wire:submit.prevent="lookup">
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-grow">
                     <span>Domain</span>

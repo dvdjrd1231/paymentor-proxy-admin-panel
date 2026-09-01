@@ -1,7 +1,7 @@
 {{-- Gateway Log, to issue #17: the outbound calls, each row unfolding its context. --}}
 <x-filament-panels::page>
     <div class="ao-mu">
-        <form class="ao-find" wire:submit.prevent="$set('page', 1)">
+        <form class="ao-find" autocomplete="off" wire:submit.prevent="$set('page', 1)">
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-grow">
                     <span>Search</span>

@@ -1,7 +1,7 @@
 {{-- To-Do List: add a task, tick it done, strike it off. --}}
 <x-filament-panels::page>
     <div class="ao-mu ao-td">
-        <form class="ao-find" wire:submit.prevent="add">
+        <form class="ao-find" autocomplete="off" wire:submit.prevent="add">
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-grow">
                     <span>Task</span>

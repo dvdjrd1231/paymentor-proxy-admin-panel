@@ -22,7 +22,7 @@
         </button>
 
         @if ($this->filter)
-            <form class="ao-find" wire:submit.prevent="search">
+            <form class="ao-find" autocomplete="off" wire:submit.prevent="search">
                 <span class="ao-find-glass" aria-hidden="true">
                     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" width="18" height="18">
