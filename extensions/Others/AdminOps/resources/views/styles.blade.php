@@ -1278,7 +1278,10 @@
         font-size: 0.9rem;
     }
 
-    .ao-find-wide { flex: 2 1 10rem; min-width: 9rem; }
+    /* Grow at the same rate as the rest, not twice as fast: with double share the name
+       and email fields took 212px each and pushed Status onto a second line, which is the
+       band "misaligning" itself. They still start wider, they just stop hogging the slack. */
+    .ao-find-wide { flex: 1 1 8rem; min-width: 7.5rem; }
     .ao-find-grow { flex: 1; }
 
     .ao-find-field input,
