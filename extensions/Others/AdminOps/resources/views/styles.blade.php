@@ -3468,6 +3468,12 @@
 
     .ao-wg-links a { text-decoration: underline; }
 
+    .ao-ni-options { margin-bottom: 0.6rem; }
+
+    .ao-ni-options .ao-cp-link { margin: 0 0.25rem; }
+
+    .ao-ni-options .ao-ni-new { color: #5cb85c; font-weight: 600; }
+
     /* The rail's Filter Tickets form. */
     .ao-rail-filter {
         display: flex;
