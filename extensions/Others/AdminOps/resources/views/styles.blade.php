@@ -2534,6 +2534,46 @@
 
     .ao-ano-line { border-bottom: 1px solid var(--wa-panel-border, #ddd); }
 
+    /* The reference's "» Region: …" annotation, indented under the line it belongs to. */
+    .ao-ano-note {
+        padding: 0 0.9rem 0.4rem 1.6rem;
+        margin-top: -0.55rem;
+        border-bottom: 1px solid var(--wa-panel-border, #ddd);
+        font-size: 0.85rem;
+        color: var(--wa-muted, #6b6b6b);
+    }
+
+    /* A line's Configurable Options — core's own tree plus a server's checkout fields
+       (ProxyPanel's Region among them) — set apart from the fixed fields above them, the
+       same way the reference sets its own Configurable Options block apart. */
+    .ao-ano-configs {
+        margin-top: 0.4rem;
+        padding-top: 0.6rem;
+        border-top: 1px dashed var(--wa-panel-border, #ddd);
+    }
+
+    .ao-ano-configs-head {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--wa-muted, #6b6b6b);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        margin-bottom: 0.3rem;
+    }
+
+    .ao-ano-radios {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem 1rem;
+    }
+
+    .ao-ano-radios label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-weight: 400;
+    }
+
     .ao-ano-sub { background: #fdfce5; border-bottom: 1px solid var(--wa-panel-border, #ddd); }
 
     .ao-ano-total {
