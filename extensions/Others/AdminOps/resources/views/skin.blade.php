@@ -45,6 +45,29 @@
         --ao-user-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z'/%3E%3Cpath d='M4.5 20a7.5 7.5 0 0 1 15 0'/%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3C/svg%3E");
     }
 
+    /* The panel is light, whatever the browser prefers — the reference ignores the
+       browser's appearance and so do we. The class is removed before paint (see
+       AdminOps::keepThePanelLight); this is the belt to that braces, so a dark-themed
+       browser cannot show dark Filament components even for one frame. */
+    html.dark, html.dark .fi-body { color-scheme: light; }
+
+    html.dark .fi-body,
+    html.dark .fi-main-ctn,
+    html.dark .fi-section,
+    html.dark .fi-modal-window,
+    html.dark .fi-dropdown-panel,
+    html.dark .fi-input-wrp,
+    html.dark .fi-ta-ctn,
+    html.dark .fi-fo-field-wrp .fi-input {
+        background-color: #ffffff;
+        color: var(--wa-text);
+    }
+
+    html.dark .fi-simple-main,
+    html.dark .fi-simple-layout {
+        background-color: var(--wa-canvas);
+    }
+
     /* ── Canvas ──────────────────────────────────────────────────────────────
        WHMCS sits on a flat grey canvas with white panels on it, rather than
        Filament's white page with subtle grey sections. */
