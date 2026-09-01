@@ -101,6 +101,9 @@ services:
       - "./config:/app/config"
       - appvar:/app/var               # persists .env + APP_KEY across restarts
       - ./storage/logs:/app/storage/logs
+      # PHP-FPM sizing. Replaces the image's own php-fpm.conf, which declares its pool
+      # inline and includes nothing — see the file for why, and for the measurements.
+      - ./docker/php-fpm.conf:/usr/local/etc/php-fpm.conf:ro
     networks: [paymenter_nw]
 
 networks:

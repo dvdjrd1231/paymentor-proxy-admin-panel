@@ -67,8 +67,26 @@ class EmailCampaigns extends Page
         return 'Email Campaigns';
     }
 
+    /**
+     * The matching set, computed once per request.
+     *
+     * It is asked for twice on every render — the count on screen and, on send, the list
+     * itself — and it walks every client with their services. Without this memo the page
+     * ran that walk on each Livewire round trip, which is every keystroke in a criteria
+     * field.
+     *
+     * @var array<int, array{user: User, service: ?\App\Models\Service}>|null
+     */
+    private ?array $recipientCache = null;
+
     /** @return array<int, array{user: User, service: ?\App\Models\Service}> */
     private function recipients(): array
+    {
+        return $this->recipientCache ??= $this->computeRecipients();
+    }
+
+    /** @return array<int, array{user: User, service: ?\App\Models\Service}> */
+    private function computeRecipients(): array
     {
         $users = User::whereNull('role_id')
             ->with(['properties' => fn ($q) => $q->where('key', 'country'), 'services'])
