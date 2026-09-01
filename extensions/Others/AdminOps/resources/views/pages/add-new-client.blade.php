@@ -116,6 +116,92 @@
             </div>
         </div>
 
+        {{-- Brazil's registry block. A tax document there is issued to one of two kinds of
+             person, and which one decides the whole set: a Pessoa Física is identified by
+             CPF (with the RG alongside it), a Pessoa Jurídica by CNPJ, plus the state and
+             municipal registrations. Showing both sets at once asked companies for a CPF,
+             which is the wrong question — so the selector comes first and the rest follows
+             from it. Everything here is live: nothing is submitted to find out. --}}
+        @if (in_array('person_type', $brazilFields, true))
+            <div class="ao-anc-brazil">
+                <div class="ao-anc-brazil-head">
+                    Brazilian Registration
+                    <i>Required for issuing tax documents in Brazil</i>
+                </div>
+
+                <div class="ao-anc-cols">
+                    <div class="ao-anc-col">
+                        <label class="ao-anc-row">
+                            <span>{{ $brazil['person_type']->name ?? 'Person Type' }}</span>
+                            <select wire:model.live="props.person_type" required>
+                                <option value="">— Select —</option>
+                                @foreach ($brazil['person_type']->allowed_values ?? [] as $value => $label)
+                                    <option value="{{ is_int($value) ? $label : $value }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+
+                        @foreach (['cpf', 'cnpj', 'trade_name'] as $key)
+                            @if (in_array($key, $brazilFields, true) && isset($brazil[$key]))
+                                <label class="ao-anc-row">
+                                    <span>{{ $brazil[$key]->name }}</span>
+                                    <span class="ao-anc-field">
+                                        <input type="text" wire:model="props.{{ $key }}"
+                                            placeholder="{{ $key === 'cpf' ? '000.000.000-00' : ($key === 'cnpj' ? '00.000.000/0000-00' : $brazil[$key]->name) }}"
+                                            @if (in_array($key, ['cpf', 'cnpj'], true)) required @endif>
+                                        @unless (in_array($key, ['cpf', 'cnpj'], true))
+                                            <i>(Optional)</i>
+                                        @endunless
+                                    </span>
+                                </label>
+                            @endif
+                        @endforeach
+                    </div>
+
+                    <div class="ao-anc-col">
+                        @if (in_array('rg', $brazilFields, true) && isset($brazil['rg']))
+                            <label class="ao-anc-row">
+                                <span>{{ $brazil['rg']->name }}</span>
+                                <span class="ao-anc-field">
+                                    <input type="text" wire:model="props.rg" placeholder="Identity document">
+                                    <i>(Optional)</i>
+                                </span>
+                            </label>
+                        @endif
+
+                        @if (in_array('state_registration', $brazilFields, true) && isset($brazil['state_registration']))
+                            <label class="ao-anc-row">
+                                <span>{{ $brazil['state_registration']->name }}</span>
+                                {{-- Not mandatory, but not simply blank either: a company
+                                     either states its IE or declares itself exempt, and
+                                     ticking Isento is what writes ISENTO on the invoice. --}}
+                                <span class="ao-anc-field">
+                                    <input type="text" wire:model="props.state_registration"
+                                        placeholder="Inscrição Estadual"
+                                        @disabled($isExempt)>
+                                    <label class="ao-anc-inline">
+                                        <input type="checkbox" wire:model.live="props.state_registration_exempt" value="1">
+                                        Isento
+                                    </label>
+                                </span>
+                            </label>
+                        @endif
+
+                        @if (in_array('municipal_registration', $brazilFields, true) && isset($brazil['municipal_registration']))
+                            <label class="ao-anc-row">
+                                <span>{{ $brazil['municipal_registration']->name }}</span>
+                                <span class="ao-anc-field">
+                                    <input type="text" wire:model="props.municipal_registration"
+                                        placeholder="Inscrição Municipal">
+                                    <i>(Optional)</i>
+                                </span>
+                            </label>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endif
+
         @if ($extras->isNotEmpty())
             <div class="ao-anc-cols">
                 <div class="ao-anc-col">
