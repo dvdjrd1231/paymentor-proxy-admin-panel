@@ -68,6 +68,13 @@
         background-color: var(--wa-canvas);
     }
 
+    /* The account menu's light/dark/system switcher goes: the panel is always light now
+       (see AdminOps::keepThePanelLight), so the control could only ever promise something
+       it would not deliver — and the reference's own account menu has no such thing. */
+    .fi-theme-switcher {
+        display: none;
+    }
+
     /* ── Canvas ──────────────────────────────────────────────────────────────
        WHMCS sits on a flat grey canvas with white panels on it, rather than
        Filament's white page with subtle grey sections. */
