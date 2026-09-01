@@ -762,6 +762,33 @@
 
     .fi-main-ctn {
         background: var(--wa-canvas);
+
+        /* A flex item will not shrink below its content unless told it may: the default
+           min-width:auto means one wide row — a long Brazilian company name, a long email
+           — can push the content column past the window instead of scrolling inside it.
+           The page then scrolls sideways and the rail slides out of view, which is what a
+           narrower laptop showed while a wide one did not. Nothing here is allowed to
+           widen the page: what is too wide scrolls in its own box. */
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .fi-main {
+        min-width: 0;
+    }
+
+    /* The rail keeps its column whatever the content does, and never rides a horizontal
+       scroll: its own text wraps instead. */
+    .ao-rail {
+        flex: none;
+        overflow-wrap: anywhere;
+    }
+
+    /* Wide tables scroll in their own box rather than stretching the page — the guarantee
+       the rule above depends on. */
+    .fi-ta-ctn,
+    .ao-mu-grid {
+        max-width: 100%;
     }
 
     /* ── Panels ──────────────────────────────────────────────────────────────
