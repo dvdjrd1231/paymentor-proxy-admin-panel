@@ -200,8 +200,28 @@ class AdminOps extends Extension
 
         FilamentView::registerRenderHook(
             'panels::head.end',
-            fn (): string => '<link rel="stylesheet" href="' . e(static::styleUrl()) . '">',
+            // The stylesheet by reference; the behaviour still inline. The skin blade
+            // carries the menu's flyout script as well as its CSS, and that script has to
+            // stay in the document — serving it as part of a .css file both broke the
+            // submenus and appended dead text to the sheet.
+            fn (): string => '<link rel="stylesheet" href="' . e(static::styleUrl()) . '">' . static::styleScripts(),
         );
+    }
+
+    /** The `<script>` blocks of the style blades, for inlining in the head. */
+    public static function styleScripts(): string
+    {
+        $out = '';
+
+        foreach (['skin', 'styles'] as $part) {
+            $rendered = Blade::render('@include(\'adminops::' . $part . '\')');
+
+            if (preg_match_all('#<script\b[^>]*>.*?</script>#is', $rendered, $matches)) {
+                $out .= implode('', $matches[0]);
+            }
+        }
+
+        return $out;
     }
 
     /** The one URL, versioned by the two blades' own content so a deploy invalidates it. */
@@ -236,8 +256,13 @@ class AdminOps extends Extension
 
                 foreach (['skin', 'styles'] as $part) {
                     $rendered = Blade::render('@include(\'adminops::' . $part . '\')');
-                    // The blades ship their own <style> wrapper for the inline case.
-                    $out .= preg_replace('#</?style[^>]*>#i', '', $rendered) . "\n";
+
+                    // Only what is inside <style>. The blades also carry <script> blocks,
+                    // and taking the whole file swept those into the sheet — where they
+                    // did nothing, having been removed from the page that needed them.
+                    if (preg_match_all('#<style\b[^>]*>(.*?)</style>#is', $rendered, $matches)) {
+                        $out .= implode("\n", $matches[1]) . "\n";
+                    }
                 }
 
                 return trim($out);

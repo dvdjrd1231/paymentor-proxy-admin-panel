@@ -208,12 +208,12 @@ class WhmcsNavigation
             // menu leads to them. Core's UserResource stays reachable through their Actions
             // column — it is still the only place a user is edited.
             static::page(ViewSearchClients::class, 'View/Search Clients'),
-            static::page(AddNewClient::class, 'Add New Client'),
+            // The reference's own order here: Manage Users sits between the two.
             static::page(ManageUsers::class, 'Manage Users'),
+            static::page(AddNewClient::class, 'Add New Client'),
             static::page(ProductsServices::class, 'Products/Services'),
-            // The reference's flyout, flattened: Filament's dropdown cannot nest, so the
-            // category entries sit indented under Products/Services exactly as the rail
-            // draws them — same labels, same filtered URLs.
+            // The category entries follow their parent, and the menu script folds them
+            // into the reference's side panel — "Products/Services ▸" opening on hover.
             ...static::categoryItems(),
             // Issue #7: addons on running services, where the reference's sidebar puts them.
             static::page(ServiceAddons::class, 'Service Addons'),
