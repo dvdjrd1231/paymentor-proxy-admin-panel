@@ -52,6 +52,15 @@
        CPF, so the form now asks the country, then the kind of person, then only what that
        kind actually has.
 
+       This serves the forms that render their properties generically through the
+       x-form.properties component — the account profile among them — which is why fields are
+       found by their `name`, the one attribute that component always sets. (Written without
+       angle brackets on purpose: Blade compiles a component tag wherever it appears, a JS
+       comment included, and an unclosed one breaks the view.) The Proxy theme's
+       registration view lays its fields out by hand and does the same toggling in Alpine, so
+       it carries no `name` attributes and nothing here matches it: the two never both act on
+       the same form.
+
        Presentation only: which documents are *required* is decided server-side by the
        conditional rules on each field, so this can be switched off, bypassed, or fail to run
        and the registration is still validated correctly. That is also why the default state

@@ -37,7 +37,29 @@
 {{-- The reference portal pulls the heading over the form column, leaving the
      "Already Registered?" rail alongside it rather than below it, so heading,
      breadcrumb and form all live in the right-hand column. --}}
-<div class="wf-page" x-data="{ country: @js($selectedCountry) }">
+{{-- `personType` drives which half of the Brazilian block is shown; the two getters keep
+     the matching in one place and match loosely, because the stored value is the label a
+     tax document has to read and is free to be reworded. `setExempt` writes ISENTO into the
+     field it replaces, so the form shows what the invoice will say rather than leaving a
+     disabled box looking empty — and takes it back out again if the tick is removed. --}}
+<div class="wf-page" x-data="{
+        country: @js($selectedCountry),
+        personType: @js($properties['person_type'] ?? ''),
+        exempt: @js((bool) ($properties['state_registration_exempt'] ?? false)),
+        get isCompany() {
+            const v = (this.personType || '').toLowerCase();
+            return v.includes('jur') || v.includes('company') || v === 'pj';
+        },
+        get isIndividual() { return !!this.personType && !this.isCompany; },
+        setExempt(on) {
+            this.exempt = on;
+            const ie = document.getElementById('state_registration');
+            if (!ie) return;
+            if (on && ie.value.trim() === '') { ie.value = 'ISENTO'; }
+            else if (!on && ie.value.trim() === 'ISENTO') { ie.value = ''; }
+            ie.dispatchEvent(new Event('input', { bubbles: true }));
+        },
+     }">
     <div class="wf-authgrid">
         {{-- ── "Already Registered?" rail ─────────────────────────────────
              The reference portal puts login and password recovery beside the form
@@ -194,10 +216,35 @@
                     <span>Dados fiscais &mdash; Brazilian tax details</span>
                 </div>
 
-                <div class="wf-grid">
+                {{-- Issue #38: the two naturezas need different documents, so the kind of
+                     person is asked first and the rest follows from it. Pessoa Física is a
+                     citizen (RG, CPF); Pessoa Jurídica is a registered company (CNPJ, and
+                     the state and municipal registrations). Toggled in Alpine for the same
+                     reason the country is — a live binding re-verifies the CAPTCHA on every
+                     property update. What is actually *required* is decided server-side by
+                     each field's own rules, so hiding one cannot bypass anything. --}}
+                @if ($has('person_type'))
+                    @php $personTypeProp = $props->firstWhere('key', 'person_type'); @endphp
+                    <div class="wf-grid">
+                        <div class="wf-field">
+                            <label for="person_type">Tipo de Pessoa <span class="wf-req">*</span></label>
+                            <select id="person_type" class="wf-select" wire:model="properties.person_type"
+                                    x-on:change="personType = $event.target.value">
+                                <option value="">Selecione &mdash; Pessoa Física ou Jurídica</option>
+                                @foreach ((array) ($personTypeProp->allowed_values ?? []) as $value)
+                                    <option value="{{ $value }}">{{ $value }}</option>
+                                @endforeach
+                            </select>
+                            @error('properties.person_type') <span class="wf-error">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Pessoa Física --}}
+                <div class="wf-grid" x-show="isIndividual" x-cloak>
                     @if ($has('cpf'))
                         <div class="wf-field">
-                            <label for="cpf">CPF</label>
+                            <label for="cpf">CPF <span class="wf-req">*</span></label>
                             <input id="cpf" type="text" class="wf-input" wire:model="properties.cpf"
                                 placeholder="000.000.000-00" inputmode="numeric" maxlength="14">
                             @error('properties.cpf') <span class="wf-error">{{ $message }}</span> @enderror
@@ -211,10 +258,13 @@
                             @error('properties.rg') <span class="wf-error">{{ $message }}</span> @enderror
                         </div>
                     @endif
+                </div>
 
+                {{-- Pessoa Jurídica --}}
+                <div class="wf-grid" x-show="isCompany" x-cloak>
                     @if ($has('cnpj'))
                         <div class="wf-field">
-                            <label for="cnpj">{{ __('theme.cnpj') }}</label>
+                            <label for="cnpj">{{ __('theme.cnpj') }} <span class="wf-req">*</span></label>
                             <input id="cnpj" type="text" class="wf-input" wire:model="properties.cnpj"
                                 placeholder="00.000.000/0000-00" inputmode="numeric" maxlength="18">
                             @error('properties.cnpj') <span class="wf-error">{{ $message }}</span> @enderror
@@ -233,8 +283,12 @@
                     @if ($has('state_registration'))
                         <div class="wf-field">
                             <label for="state_registration">Inscrição Estadual</label>
+                            {{-- Not mandatory, but not simply blank either: a company either
+                                 states its IE or declares itself exempt. Ticking Isento
+                                 writes the word the invoice has to carry. --}}
                             <input id="state_registration" type="text" class="wf-input"
-                                wire:model="properties.state_registration" placeholder="Inscrição Estadual">
+                                wire:model="properties.state_registration" placeholder="Inscrição Estadual"
+                                x-bind:disabled="exempt">
                             @error('properties.state_registration') <span class="wf-error">{{ $message }}</span> @enderror
                         </div>
                     @endif
@@ -242,10 +296,20 @@
                     @if ($has('state_registration_exempt'))
                         <div class="wf-field" style="justify-content:flex-end">
                             <label class="wf-check">
-                                <input type="checkbox" wire:model="properties.state_registration_exempt">
+                                <input type="checkbox" wire:model="properties.state_registration_exempt"
+                                    x-on:change="setExempt($event.target.checked)">
                                 <span>Isento de Inscrição Estadual</span>
                             </label>
                             @error('properties.state_registration_exempt') <span class="wf-error">{{ $message }}</span> @enderror
+                        </div>
+                    @endif
+
+                    @if ($has('municipal_registration'))
+                        <div class="wf-field">
+                            <label for="municipal_registration">Inscrição Municipal</label>
+                            <input id="municipal_registration" type="text" class="wf-input"
+                                wire:model="properties.municipal_registration" placeholder="Inscrição Municipal">
+                            @error('properties.municipal_registration') <span class="wf-error">{{ $message }}</span> @enderror
                         </div>
                     @endif
                 </div>
