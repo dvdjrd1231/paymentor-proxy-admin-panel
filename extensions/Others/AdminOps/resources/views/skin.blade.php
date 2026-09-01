@@ -51,7 +51,13 @@
     /* Leandro, twice: the overall type is too small. Scaling the root grows every
        rem-sized thing in the panel at once — Filament's own controls included — instead
        of chasing sizes rule by rule. 17px base. */
-    html { font-size: 106.25%; }
+    html {
+        font-size: 106.25%;
+        /* Issue #2's "objects move after the page loads": with SPA navigation, moving
+           between a long page and a short one pops the scrollbar in and out, and every
+           control shifts sideways. A stable gutter ends that. */
+        scrollbar-gutter: stable;
+    }
 
     .fi-body {
         background: var(--wa-canvas);
