@@ -154,8 +154,43 @@ class AdminOps extends Extension
      * The widgets' CSS, in the panel head rather than inside each widget: a Livewire component
      * needs a single root, and polling would re-send an inline `<style>` on every refresh.
      */
+    /**
+     * The panel is light, whatever the browser prefers.
+     *
+     * Filament stamps `class="dark"` on `<html>` when the OS or browser asks for dark, and
+     * every `dark:` rule in its compiled stylesheet then fires. Our skin repaints the
+     * surfaces it owns, but not Filament's own components — so on a dark-themed Chrome the
+     * login card, the inputs and assorted panels came out dark against a white page. The
+     * reference does not do this: WHMCS renders its own colours and ignores the browser.
+     *
+     * Removing the class is the whole fix — with it gone, not one `dark:` rule matches.
+     * It runs at `head.start`, before Filament's own theme script and before first paint,
+     * so there is no flash of the wrong theme; `theme` is pinned in localStorage so
+     * Filament's script does not put the class back, and the two events cover SPA
+     * navigation, where the document is never reloaded.
+     */
+    private function keepThePanelLight(): void
+    {
+        FilamentView::registerRenderHook('panels::head.start', fn (): string => <<<'HTML'
+            <script>
+                (() => {
+                    const light = () => {
+                        document.documentElement.classList.remove('dark');
+                        document.documentElement.style.colorScheme = 'light';
+                    };
+                    try { localStorage.setItem('theme', 'light'); } catch (e) {}
+                    light();
+                    document.addEventListener('DOMContentLoaded', light);
+                    document.addEventListener('livewire:navigated', light);
+                })();
+            </script>
+            HTML);
+    }
+
     private function registerStyles(): void
     {
+        $this->keepThePanelLight();
+
         // The skin and the widget styles are 160 KB of CSS between them. Injected inline
         // they rode in the <head> of every response — never cached, re-parsed on every
         // full page load, and counted against every HTML payload. Served as one file with
