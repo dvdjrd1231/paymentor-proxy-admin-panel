@@ -54,7 +54,12 @@
                 </div>
                 <label class="ao-anc-row">
                     <span>Order Status</span>
-                    <select><option>Pending</option></select>
+                    {{-- Active provisions immediately and skips Pending — for an order whose
+                         payment was already collected outside the system. --}}
+                    <select wire:model="orderStatus">
+                        <option value="pending">Pending</option>
+                        <option value="active">Active</option>
+                    </select>
                 </label>
                 <div class="ao-anc-row">
                     <span></span>
@@ -111,6 +116,88 @@
                             <i>(Only enter to manually override default product pricing)</i>
                         </span>
                     </label>
+
+                    {{-- Configurable Options: core's own ConfigOption tree (admin-managed
+                         under Configuration → Configurable Options) and, when this line's
+                         product has a server, that server's own checkout fields —
+                         ProxyPanel's Region among them, flags included. Not a special case:
+                         both come through the same ExtensionHelper call the storefront's own
+                         checkout uses, so this offers exactly what a customer placing the
+                         same order would see. --}}
+                    @if ($optionsByItem[$index]->isNotEmpty() || $checkoutFieldsByItem[$index] !== [])
+                        <div class="ao-ano-configs">
+                            <div class="ao-ano-configs-head">Configurable Options</div>
+
+                            @foreach ($optionsByItem[$index] as $option)
+                                <label class="ao-anc-row">
+                                    <span>{{ $option->name }}</span>
+                                    @switch($option->type)
+                                        @case('checkbox')
+                                            <span class="ao-anc-field">
+                                                <input type="checkbox" wire:model.live="items.{{ $index }}.configOptions.{{ $option->id }}">
+                                            </span>
+                                            @break
+
+                                        @case('text')
+                                        @case('number')
+                                            <input type="{{ $option->type === 'number' ? 'number' : 'text' }}"
+                                                wire:model.live="items.{{ $index }}.configOptions.{{ $option->id }}">
+                                            @break
+
+                                        @case('radio')
+                                            <span class="ao-anc-field ao-ano-radios">
+                                                @foreach ($option->children as $child)
+                                                    <label>
+                                                        <input type="radio" name="ao-cfg-{{ $index }}-{{ $option->id }}" value="{{ $child->id }}"
+                                                            wire:model.live="items.{{ $index }}.configOptions.{{ $option->id }}">
+                                                        {{ $child->name }}
+                                                    </label>
+                                                @endforeach
+                                            </span>
+                                            @break
+
+                                        @default {{-- select, slider --}}
+                                            <select wire:model.live="items.{{ $index }}.configOptions.{{ $option->id }}">
+                                                @foreach ($option->children as $child)
+                                                    <option value="{{ $child->id }}">{{ $child->name }}</option>
+                                                @endforeach
+                                            </select>
+                                    @endswitch
+                                </label>
+                            @endforeach
+
+                            @foreach ($checkoutFieldsByItem[$index] as $field)
+                                <label class="ao-anc-row">
+                                    <span>{{ $field['label'] ?? $field['name'] }}</span>
+                                    @switch($field['type'] ?? 'text')
+                                        @case('select')
+                                        @case('radio')
+                                            <select wire:model.live="items.{{ $index }}.checkoutConfig.{{ $field['name'] }}"
+                                                @disabled(!empty($field['disabled_options']) && count($field['disabled_options']) === count($field['options'] ?? []))>
+                                                @foreach ($field['options'] ?? [] as $value => $label)
+                                                    <option value="{{ $value }}" @selected(($item['checkoutConfig'][$field['name']] ?? '') === (string) $value)
+                                                        {{ in_array($value, $field['disabled_options'] ?? [], true) ? 'disabled' : '' }}>
+                                                        {{ $label }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @break
+
+                                        @case('checkbox')
+                                            <span class="ao-anc-field">
+                                                <input type="checkbox" wire:model.live="items.{{ $index }}.checkoutConfig.{{ $field['name'] }}">
+                                            </span>
+                                            @break
+
+                                        @default
+                                            <input type="{{ $field['type'] === 'number' ? 'number' : 'text' }}"
+                                                wire:model.live="items.{{ $index }}.checkoutConfig.{{ $field['name'] }}"
+                                                @if (!empty($field['description'])) title="{{ $field['description'] }}" @endif>
+                                    @endswitch
+                                </label>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
             @endforeach
 
@@ -150,6 +237,11 @@
                         <span>{{ $line['label'] }} &times; {{ $line['quantity'] }}{{ $line['domain'] !== '' ? ' — ' . $line['domain'] : '' }}</span>
                         <span>${{ number_format($line['total'], 2) }} {{ $summary['currency'] }}</span>
                     </div>
+                    {{-- The reference's "» Region: …" annotation under a line — one per
+                         option that has a value worth showing. --}}
+                    @foreach ($line['notes'] as $note)
+                        <div class="ao-ano-note">&raquo; {{ $note }}</div>
+                    @endforeach
                 @empty
                     <div class="ao-ano-none">No Items Selected</div>
                 @endforelse
