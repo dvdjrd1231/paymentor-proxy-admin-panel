@@ -83,7 +83,7 @@
                             ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $order->user_id])
                             : null;
                     @endphp
-                    <tr>
+                    <tr data-ao-email="{{ $order->user?->email }}">
                         <td class="ao-mu-check"><input type="checkbox" data-ao-check wire:model="selected" value="{{ $order->id }}"></td>
                         <td><a href="{{ $edit }}">{{ $order->id }}</a></td>
                         <td><a href="{{ $edit }}">{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders::numberOf($order) }}</a></td>
@@ -118,6 +118,10 @@
                 wire:confirm="Activate every pending service on the selected orders?">Accept Order</button>
             <button type="button" wire:click="cancelSelected"
                 wire:confirm="Cancel every running service on the selected orders?">Cancel Order</button>
+            {{-- The reference's other two bulk buttons. --}}
+            <button type="button" class="ao-st-danger" wire:click="deleteSelected"
+                wire:confirm="Delete the selected orders? Their services go; invoices are accounting records and stay.">Delete Order</button>
+            <button type="button" data-ao-send-message>Send Message</button>
         </div>
 
         <nav class="ao-mu-pages">
@@ -161,6 +165,17 @@
                         box.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 }
+            });
+
+            // The reference's Send Message: the ticked rows' clients, addressed in the
+            // admin's own mail client — the same one honest send every list here offers.
+            root.addEventListener('click', (event) => {
+                if (!event.target.closest('[data-ao-send-message]')) return;
+                const picked = [...root.querySelectorAll('tbody tr')]
+                    .filter((row) => row.querySelector('[data-ao-check]:checked'))
+                    .map((row) => row.dataset.aoEmail).filter(Boolean);
+                if (!picked.length) { alert('Tick at least one order first.'); return; }
+                window.location.href = 'mailto:' + encodeURIComponent([...new Set(picked)].join(','));
             });
         })();
     </script>
