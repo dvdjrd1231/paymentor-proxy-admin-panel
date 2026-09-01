@@ -5,7 +5,7 @@
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-grow">
                     <span>Hostname</span>
-                    <input type="text" wire:model="host" placeholder="example.com" required>
+                    <input @nofill type="text" wire:model="host" placeholder="example.com" required>
                 </label>
             </div>
             <button type="submit" class="ao-find-go" wire:loading.attr="disabled">Resolve</button>

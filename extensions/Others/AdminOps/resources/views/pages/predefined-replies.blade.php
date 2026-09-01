@@ -36,7 +36,7 @@
                 <div class="ao-find-fields">
                     <label class="ao-find-field ao-find-grow">
                         <span>Search Term</span>
-                        <input type="text" wire:model="q" placeholder="Title or reply text">
+                        <input @nofill type="text" wire:model="q" placeholder="Title or reply text">
                     </label>
                 </div>
                 <button type="submit" class="ao-find-go">Search</button>

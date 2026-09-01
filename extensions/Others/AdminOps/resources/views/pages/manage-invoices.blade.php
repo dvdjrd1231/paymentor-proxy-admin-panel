@@ -32,11 +32,11 @@
                 <div class="ao-find-fields">
                     <label class="ao-find-field ao-find-wide">
                         <span>Client Name/Email or Invoice ID</span>
-                        <input type="text" wire:model="q" placeholder="Client name, email or invoice ID">
+                        <input @nofill type="text" wire:model="q" placeholder="Client name, email or invoice ID">
                     </label>
                     <label class="ao-find-field">
                         <span>Status</span>
-                        <select wire:model="status">
+                        <select @nofill wire:model="status">
                             <option value="">Any</option>
                             <option value="paid">Paid</option>
                             <option value="draft">Draft</option>

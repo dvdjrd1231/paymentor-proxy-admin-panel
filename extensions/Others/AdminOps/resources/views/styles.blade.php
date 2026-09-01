@@ -1272,17 +1272,23 @@
     }
 
     /* Nothing but our own label and control lives in a field.
-       Password managers and form fillers (LastPass, 1Password, Dashlane, Bitwarden) plant an
-       icon element inside any field they think is fillable, and Chrome's own address autofill
-       does the same. On a machine running one of those the injected node took a share of the
-       field — which is why this band read as misaligned for one person and correct for
-       everyone else, with a coloured icon sitting in the first input to give it away.
-       The forms now say autocomplete="off" and the skin's script stamps each extension's
-       documented opt-out attribute; this rule is the backstop for whatever ignores both.
-       It cannot hide anything of ours: a field only ever holds a <span> and its control. */
+       Password managers and form fillers (LastPass, 1Password, Dashlane, Bitwarden) decorate
+       any field they think is fillable, and Chrome's own address autofill does the same. On
+       the one machine running LastPass the band came out a hundred pixels short with a red
+       icon in Client/Company Name — which is why this looked like a difference between the
+       two installs when it was a difference between browsers.
+       Every control in a band now carries `@nofill`, which asks each of them by name to leave
+       it alone; these two rules are the backstop for whatever ignores that, covering both ways
+       a field gets decorated — an element planted beside the input, and a background image
+       painted into it. Neither can touch anything of ours: a field only ever holds a <span>
+       and its control, and our own inputs are a flat white fill. */
     .ao-find-field > :not(span):not(input):not(select),
     .ao-find-phone > :not(input):not(select) {
         display: none !important;
+    }
+
+    .ao-find-field input {
+        background-image: none !important;
     }
 
     .ao-find-field > span {

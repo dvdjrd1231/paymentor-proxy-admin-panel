@@ -1388,42 +1388,4 @@
             if (panel) fold(panel);
         });
     })();
-
-    {{-- The search bands are filters, not a sign-in form, but a browser cannot tell: a row
-         reading Name / Email / Phone is exactly the shape Chrome's address autofill and every
-         password manager look for, and each of them then plants its own icon inside the first
-         field. The forms already say autocomplete="off"; these are the vendor-specific
-         opt-outs, which are per field and not inherited, so they are stamped here rather than
-         repeated across eleven blades. Anything that ignores all of it is caught by the CSS
-         backstop in styles.blade.php, which hides whatever is not our own label or control. --}}
-    (() => {
-        if (window.aoNoAutofill) return;
-        window.aoNoAutofill = true;
-
-        const marks = {
-            autocomplete: 'off',
-            'data-lpignore': 'true',        {{-- LastPass --}}
-            'data-1p-ignore': 'true',       {{-- 1Password --}}
-            'data-bwignore': 'true',        {{-- Bitwarden --}}
-            'data-form-type': 'other',      {{-- Dashlane --}}
-        };
-
-        const stamp = () => {
-            for (const field of document.querySelectorAll('.ao-find input, .ao-find select')) {
-                if (field.dataset.aoNoFill) continue;
-                field.dataset.aoNoFill = '1';
-
-                for (const [name, value] of Object.entries(marks)) {
-                    field.setAttribute(name, value);
-                }
-            }
-        };
-
-        {{-- Once now for a normal load, once per Livewire render for the bands that come and
-             go with + Advanced, and once on SPA navigation, where nothing reloads. --}}
-        stamp();
-        document.addEventListener('DOMContentLoaded', stamp);
-        document.addEventListener('livewire:navigated', stamp);
-        document.addEventListener('livewire:init', () => window.Livewire?.hook?.('morphed', stamp));
-    })();
 </script>

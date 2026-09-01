@@ -24,11 +24,11 @@
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-wide">
                     <span>Client/Company Name</span>
-                    <input type="text" wire:model="name" placeholder="Name or company">
+                    <input @nofill type="text" wire:model="name" placeholder="Name or company">
                 </label>
                 <label class="ao-find-field ao-find-wide">
                     <span>Email Address</span>
-                    <input type="text" wire:model="email" placeholder="user@example.com">
+                    <input @nofill type="text" wire:model="email" placeholder="user@example.com">
                 </label>
                 <label class="ao-find-field">
                     <span>Phone Number</span>
@@ -36,26 +36,26 @@
                          Ours is real: the code and the number are searched together, so
                          picking +55 finds the Brazilian numbers and nothing else. --}}
                     <span class="ao-find-phone">
-                        <select wire:model="dialCode">
+                        <select @nofill wire:model="dialCode">
                             <option value="">+1</option>
                             @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ViewSearchClients::DIAL_CODES as $code => $label)
                                 <option value="{{ $code }}">{{ $label }}</option>
                             @endforeach
                         </select>
-                        <input type="text" wire:model="phone" placeholder="201-555-0123">
+                        <input @nofill type="text" wire:model="phone" placeholder="201-555-0123">
                     </span>
                 </label>
                 <label class="ao-find-field">
                     {{-- Paymenter has no client groups; the reference's control is kept so
                          the band reads the same, with the one honest answer it has. --}}
                     <span>Client Group</span>
-                    <select>
+                    <select @nofill>
                         <option>Any</option>
                     </select>
                 </label>
                 <label class="ao-find-field">
                     <span>Status</span>
-                    <select wire:model="status">
+                    <select @nofill wire:model="status">
                         <option value="">Any</option>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
@@ -65,15 +65,15 @@
                 @if ($this->advanced)
                     <label class="ao-find-field">
                         <span>Client ID</span>
-                        <input type="text" wire:model="cid" inputmode="numeric" placeholder="e.g. 813">
+                        <input @nofill type="text" wire:model="cid" inputmode="numeric" placeholder="e.g. 813">
                     </label>
                     <label class="ao-find-field">
                         <span>Signed Up From</span>
-                        <input type="date" wire:model="from">
+                        <input @nofill type="date" wire:model="from">
                     </label>
                     <label class="ao-find-field">
                         <span>Signed Up To</span>
-                        <input type="date" wire:model="to">
+                        <input @nofill type="date" wire:model="to">
                     </label>
                 @endif
             </div>
