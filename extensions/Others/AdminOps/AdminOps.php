@@ -70,11 +70,34 @@ class AdminOps extends Extension
     {
         View::addNamespace('adminops', __DIR__ . '/resources/views');
 
+        $this->registerNoFillDirective();
         $this->registerStyles();
         $this->registerWhmcsSkin();
         $this->keepSignInsRecorded();
         $this->keepTheDailyLogWritable();
         $this->registerQuotePdf();
+    }
+
+    /**
+     * `@nofill` — keep browsers and password managers out of a field.
+     *
+     * A search band reading Name / Email / Phone is the exact shape Chrome's address autofill
+     * and every password manager scan for, and each answers by planting its own icon in the
+     * first field. LastPass's is a red square, and on the one machine running it the band came
+     * out short a hundred pixels while every other machine showed it correctly.
+     *
+     * These attributes have to be in the markup, not stamped on afterwards: an extension reads
+     * the field as soon as it appears, so anything applied from a DOMContentLoaded handler is
+     * racing something that has usually already decided. A directive rather than five
+     * attributes repeated across eleven blades — the reason lives here, once.
+     */
+    private function registerNoFillDirective(): void
+    {
+        Blade::directive('nofill', fn (): string => "<?php echo 'autocomplete=\"off\" "
+            . 'data-lpignore="true" '        // LastPass
+            . 'data-1p-ignore="true" '       // 1Password
+            . 'data-bwignore="true" '        // Bitwarden
+            . "data-form-type=\"other\"'; ?>");
     }
 
     /**

@@ -5,11 +5,11 @@
             <div class="ao-find-fields">
                 <label class="ao-find-field ao-find-grow">
                     <span>Task</span>
-                    <input type="text" wire:model="newTitle" placeholder="What needs doing?" required>
+                    <input @nofill type="text" wire:model="newTitle" placeholder="What needs doing?" required>
                 </label>
                 <label class="ao-find-field">
                     <span>Due Date</span>
-                    <input type="date" wire:model="newDue">
+                    <input @nofill type="date" wire:model="newDue">
                 </label>
             </div>
             <button type="submit" class="ao-find-go">Add Task</button>
