@@ -5,10 +5,23 @@
 --}}
 <x-filament-panels::page>
     <div class="ao-mu">
-        @if ($newUrl)
-            <div class="ao-tx-tabs">
-                <a class="ao-mu-tab ao-api-generate" href="{{ $newUrl }}">&#10010; Generate New API Credential</a>
-            </div>
+        <div class="ao-tx-tabs">
+            <button type="button" class="ao-mu-tab ao-api-generate {{ $generating ? 'ao-on' : '' }}" wire:click="toggleGenerating">&#10010; Generate New API Credential</button>
+        </div>
+
+        @if ($generating)
+            <form class="ao-anc-card" wire:submit.prevent="generate">
+                <label class="ao-anc-row">
+                    <span>Description</span>
+                    <input type="text" class="ao-w-40" wire:model="newName" placeholder="What this credential is for" required>
+                </label>
+                <div class="ao-pr-center"><button type="submit" class="ao-find-go">Generate</button></div>
+            </form>
+            @if ($errors->any())
+                <ul class="ao-anc-errors">
+                    @foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach
+                </ul>
+            @endif
         @endif
 
         <table class="ao-mu-grid">

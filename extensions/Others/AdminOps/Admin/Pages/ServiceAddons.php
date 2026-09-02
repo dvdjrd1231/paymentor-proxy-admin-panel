@@ -136,6 +136,16 @@ class ServiceAddons extends Page
         $product = Product::findOrFail($this->productId);
         $plan = Plan::where('priceable_type', Product::class)->where('priceable_id', $product->id)->first();
 
+        // A service without a plan crashes core wherever the plan is read (Service::
+        // description() and the service edit page both dereference it) — seen live as
+        // issue #4's 500 on an addon whose product had never been priced. Refused with
+        // the fix named rather than written as broken data.
+        if (!$plan) {
+            $this->addError('productId', 'This addon has no price plan yet. Open the addon product in the catalogue and add a monthly price first.');
+
+            return;
+        }
+
         DB::transaction(function () use ($parent, $product, $plan): void {
             $service = Service::create([
                 'order_id' => $parent->order_id,

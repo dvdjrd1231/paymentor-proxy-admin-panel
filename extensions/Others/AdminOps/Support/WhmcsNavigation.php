@@ -576,6 +576,8 @@ class WhmcsNavigation
         static::$placed[ConfigOptionResource::class] = true;
         // Issue #48: same for Email Templates — the menu entry is the grouped page.
         static::$placed[NotificationTemplateResource::class] = true;
+        // Issue #46: same for Currencies — the menu entry is the WHMCS-shaped page.
+        static::$placed[CurrencyResource::class] = true;
         // Issues #49/#50: same for Administrator Roles and API Credentials.
         static::$placed[RoleResource::class] = true;
         static::$placed[ApiResource::class] = true;
@@ -593,7 +595,7 @@ class WhmcsNavigation
             static::page(PanelLocations::class, 'Panel Locations'),
             // Issue #45: the quick-buttons page; core's resource stays claimed below.
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\PaymentGateways::class, 'Payment Gateways'),
-            static::link(CurrencyResource::class, 'Currencies'),
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\CurrenciesList::class, 'Currencies'),
             static::link(CustomPropertyResource::class, 'Custom Client Fields'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::class, 'Email Templates'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\AdminRoles::class, 'Administrator Roles'),
