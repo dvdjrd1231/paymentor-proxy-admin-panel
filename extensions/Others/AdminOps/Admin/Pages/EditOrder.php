@@ -123,6 +123,88 @@ class EditOrder extends Page
             : collect();
     }
 
+    /**
+     * The reference's row of whole-order buttons. Four of its five: Set as Fraud has no
+     * home here because Paymenter's Service has no fraud status to set — core defines
+     * pending/active/suspended/cancelled and nothing else, and ManageOrders' own "Fraud
+     * Orders" filter already says so honestly by matching nothing rather than pretending.
+     *
+     * Each acts on every one of this order's own services at once — the fast path for what
+     * the per-line Status dropdowns above already let you do one at a time.
+     */
+    public function acceptOrder(): void
+    {
+        $count = 0;
+
+        DB::transaction(function () use (&$count): void {
+            foreach ($this->order->services->where('status', 'pending') as $service) {
+                if ($service->product?->server) {
+                    CreateJob::dispatch($service);
+                }
+
+                $service->status = 'active';
+                $service->expires_at = $service->calculateNextDueDate();
+                $service->save();
+                $count++;
+            }
+        });
+
+        $this->refreshOrder();
+        Notification::make()->title($count ? 'Accepted: ' . $count . ' service(s) activated' : 'Nothing pending on this order')
+            ->{$count ? 'success' : 'warning'}()->send();
+    }
+
+    public function cancelOrder(): void
+    {
+        $count = $this->order->services->whereIn('status', ['pending', 'active', 'suspended'])->count();
+        $this->order->services()->whereIn('status', ['pending', 'active', 'suspended'])->update(['status' => 'cancelled']);
+
+        $this->refreshOrder();
+        Notification::make()->title($count ? 'Cancelled: ' . $count . ' service(s)' : 'Nothing running on this order')
+            ->{$count ? 'success' : 'warning'}()->send();
+    }
+
+    /**
+     * A metadata correction, not a deprovision: for reversing an order accepted by mistake
+     * before anything downstream depended on it being active. A service already delivered
+     * stays running on its panel regardless of what this column says — cancel it properly
+     * instead if the service itself needs to stop.
+     */
+    public function setOrderPending(): void
+    {
+        $count = $this->order->services->whereIn('status', ['active', 'suspended'])->count();
+        $this->order->services()->whereIn('status', ['active', 'suspended'])->update(['status' => 'pending']);
+
+        $this->refreshOrder();
+        Notification::make()->title($count ? 'Set back to pending: ' . $count . ' service(s)' : 'Nothing active or suspended on this order')
+            ->{$count ? 'success' : 'warning'}()->send();
+    }
+
+    /** Same guard as {@see ManageOrders::deleteSelected()}: a running order is not paperwork. */
+    public function deleteOrder(): void
+    {
+        if ($this->order->services->whereIn('status', ['active', 'suspended'])->isNotEmpty()) {
+            Notification::make()->title('Cannot delete')
+                ->body('This order has active or suspended services — cancel them first.')
+                ->danger()->send();
+
+            return;
+        }
+
+        $orderId = $this->order->id;
+        $this->order->services()->delete();
+        $this->order->delete();
+
+        Notification::make()->title('Order #' . $orderId . ' deleted')->success()->send();
+        $this->redirect(ManageOrders::getUrl());
+    }
+
+    private function refreshOrder(): void
+    {
+        $this->order->refresh()->load(['user', 'services.product']);
+        $this->mount($this->order->id);
+    }
+
     public function save(): void
     {
         $this->validate([

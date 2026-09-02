@@ -88,6 +88,16 @@
                     @endforeach
                 </ul>
             @endif
+
+            {{-- The reference's row of whole-order buttons — the fast path for what the
+                 per-line Status dropdowns above already let you do one service at a time.
+                 No Set as Fraud: Paymenter's Service has no fraud status to set one to. --}}
+            <div class="ao-eo-actions">
+                <button type="button" class="ao-eo-accept" wire:click="acceptOrder" wire:confirm="Activate every pending service on this order?">Accept Order</button>
+                <button type="button" class="ao-eo-cancel" wire:click="cancelOrder" wire:confirm="Cancel every running service on this order?">Cancel Order</button>
+                <button type="button" class="ao-eo-pending" wire:click="setOrderPending" wire:confirm="Set every active/suspended service on this order back to pending? The service itself keeps running on its panel — this only corrects the record.">Set Back to Pending</button>
+                <button type="button" class="ao-eo-delete" wire:click="deleteOrder" wire:confirm="Delete order #{{ $order->id }}? This cannot be undone.">Delete Order</button>
+            </div>
         </div>
 
         <aside class="ao-ano-side">
