@@ -112,32 +112,68 @@
         </div>
     @endif
 
-    <h3 class="ao-auto-section">Daily Actions</h3>
+    <div class="ao-auto-daily-head">
+        <h3 class="ao-auto-section">Daily Actions</h3>
+        <span class="ao-auto-today-label">Today</span>
+    </div>
 
-    @if (empty($tasks))
-        <p class="ao-catalogue-count">
-            No task has recorded anything in the last seven days, which on a working install
-            only happens on a brand new one.
-        </p>
-    @else
-        <div class="ao-auto-tiles">
-            @foreach ($tasks as $task)
-                <div class="ao-auto-tile">
-                    <div class="ao-auto-tile-head">{{ $task['title'] }}</div>
-                    <div class="ao-auto-tile-body">
-                        <span class="ao-auto-tile-figure">{{ number_format($task['today']) }}</span>
-                        <span class="ao-auto-tile-did">{{ $task['did'] }}</span>
-                        @if ($task['failed'] > 0)
-                            <span class="ao-auto-tile-failed">{{ number_format($task['failed']) }} Failed</span>
-                        @endif
-                    </div>
-                    <div class="ao-auto-tile-foot">
-                        {{ number_format($task['week']) }} in the last 7 days
-                    </div>
+    <div class="ao-auto-daily">
+        <div class="ao-auto-daily-tiles">
+            @if (empty($tasks))
+                <p class="ao-catalogue-count">
+                    No task has recorded anything in the last seven days, which on a working install
+                    only happens on a brand new one.
+                </p>
+            @else
+                <div class="ao-auto-tiles">
+                    @foreach ($tasks as $task)
+                        <div class="ao-auto-tile">
+                            <div class="ao-auto-tile-head">{{ $task['title'] }}</div>
+                            <div class="ao-auto-tile-body">
+                                <span class="ao-auto-tile-figure">{{ number_format($task['today']) }}</span>
+                                <span class="ao-auto-tile-did">{{ $task['did'] }}</span>
+                                @if ($task['failed'] > 0)
+                                    <span class="ao-auto-tile-failed">{{ number_format($task['failed']) }} Failed</span>
+                                @endif
+                            </div>
+                            <div class="ao-auto-tile-foot">
+                                {{ number_format($task['week']) }} in the last 7 days
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
-            @endforeach
+            @endif
         </div>
-    @endif
+
+        {{-- The reference's month calendar beside the tiles; each day opens the real
+             Calendar page, today carries its amber highlight. --}}
+        <aside class="ao-auto-cal">
+            <div class="ao-auto-cal-month">{{ $calendar['month'] }}</div>
+            <table class="ao-auto-cal-grid">
+                <thead>
+                    <tr>@foreach (['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as $dow)<th>{{ $dow }}</th>@endforeach</tr>
+                </thead>
+                <tbody>
+                    @foreach ($calendar['weeks'] as $week)
+                        <tr>
+                            @foreach ($week as $day)
+                                <td class="{{ $day['other'] ? 'ao-auto-cal-other' : '' }} {{ $day['today'] ? 'ao-auto-cal-today' : '' }}">
+                                    @if ($calendar['url'])
+                                        <a href="{{ $calendar['url'] }}">{{ $day['n'] }}</a>
+                                    @else
+                                        {{ $day['n'] }}
+                                    @endif
+                                </td>
+                            @endforeach
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            @if ($calendar['url'])
+                <a class="ao-auto-cal-today-btn" href="{{ $calendar['url'] }}">Today</a>
+            @endif
+        </aside>
+    </div>
 
     {{--
         Said plainly because the figures above are honest but misleading on their own: the

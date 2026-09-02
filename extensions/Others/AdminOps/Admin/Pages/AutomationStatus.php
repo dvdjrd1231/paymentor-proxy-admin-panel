@@ -11,6 +11,7 @@ use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\UtilitiesCalendar;
 
 /**
  * WHMCS's Automation Status: is the automation running, and what did it do.
@@ -145,7 +146,43 @@ class AutomationStatus extends Page
             'tasks' => $tasks,
             'problems' => $this->problems($heartbeat, $daily),
             'chart' => $this->chart(),
+            'calendar' => $this->calendar(),
         ];
+    }
+
+    /**
+     * The reference's month calendar beside Daily Actions: the current month's real
+     * weeks, today highlighted, each day a link to the Calendar page.
+     *
+     * @return array{month: string, weeks: array<int, array<int, array{n: int, other: bool, today: bool}>>, url: ?string}
+     */
+    private function calendar(): array
+    {
+        $today = now();
+        $cursor = $today->copy()->startOfMonth()->startOfWeek(\Carbon\CarbonInterface::SUNDAY);
+        $end = $today->copy()->endOfMonth()->endOfWeek(\Carbon\CarbonInterface::SATURDAY);
+
+        $weeks = [];
+        while ($cursor <= $end) {
+            $week = [];
+            for ($i = 0; $i < 7; $i++) {
+                $week[] = [
+                    'n' => $cursor->day,
+                    'other' => !$cursor->isSameMonth($today),
+                    'today' => $cursor->isToday(),
+                ];
+                $cursor = $cursor->addDay();
+            }
+            $weeks[] = $week;
+        }
+
+        $url = null;
+        try {
+            $url = UtilitiesCalendar::getUrl();
+        } catch (\Throwable $e) {
+        }
+
+        return ['month' => $today->format('F Y'), 'weeks' => $weeks, 'url' => $url];
     }
 
     /**
