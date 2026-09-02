@@ -584,11 +584,11 @@ class WhmcsNavigation
             // Issue #45: the quick-buttons page; core's resource stays claimed below.
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\PaymentGateways::class, 'Payment Gateways'),
             static::link(CurrencyResource::class, 'Currencies'),
-            static::link(CustomPropertyResource::class, 'Custom Properties'),
+            static::link(CustomPropertyResource::class, 'Custom Client Fields'),
             static::link(NotificationTemplateResource::class, 'Email Templates'),
             static::link(RoleResource::class, 'Administrator Roles'),
             static::link(ApiResource::class, 'API Keys'),
-            static::link(OauthClientResource::class, 'OAuth Clients'),
+            static::link(OauthClientResource::class, 'OpenID Connect'),
             static::link(ExtensionResource::class, 'Extensions'),
             // Issue #39: the WHMCS-shaped tabbed settings page; core's raw form stays
             // reachable as System Settings' first tile.
