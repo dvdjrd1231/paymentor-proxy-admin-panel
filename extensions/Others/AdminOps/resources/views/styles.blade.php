@@ -3954,6 +3954,24 @@
 
     .ao-wg-links a { text-decoration: underline; }
 
+    /* Cancellation Requests (issue #30): the reference's segmented Open/Completed
+       toggle — two joined buttons, the active one pressed darker. */
+    .ao-sc-toggle { display: flex; margin-bottom: 0.7rem; }
+
+    .ao-sc-toggle button {
+        padding: 0.45rem 1.1rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        background: #fff;
+        color: var(--wa-text, #2b2b2b);
+        cursor: pointer;
+    }
+
+    .ao-sc-toggle button:first-child { border-radius: var(--wa-radius, 6px) 0 0 var(--wa-radius, 6px); }
+
+    .ao-sc-toggle button:last-child { border-radius: 0 var(--wa-radius, 6px) var(--wa-radius, 6px) 0; border-left: 0; }
+
+    .ao-sc-toggle button.ao-on { background: #e8e8e8; font-weight: 600; }
+
     .ao-ni-options { margin-bottom: 0.6rem; }
 
     /* Issue #25: .ao-cp-link is a full-width flex block by default, which stacked the

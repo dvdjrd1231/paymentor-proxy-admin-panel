@@ -218,6 +218,13 @@ class WhmcsNavigation
         // un-styled "Service Cancellations".
         static::$placed[ServiceCancellationResource::class] = true;
 
+        // Issue #30: the menu entry is now the WHMCS-styled CancellationRequests page, so
+        // the extension's resource is no longer marked placed by link() — claim it here or
+        // the Addons catch-all resurfaces it (it redirects to that page anyway).
+        if (class_exists(CancellationRequestResource::class)) {
+            static::$placed[CancellationRequestResource::class] = true;
+        }
+
         return static::group('Clients', 'ri-group-line', [
             // The reference's own screens, not core's list: Leandro's feedback screenshots
             // are of View/Search Clients and Manage Users, so those pages exist here and the
@@ -238,13 +245,11 @@ class WhmcsNavigation
             // Ours, not core's: core's list offers Edit and Delete, and deleting a request is
             // indistinguishable from refusing it. Falls back to core's when the extension is
             // not installed, so the entry never disappears.
-            class_exists(CancellationRequestResource::class)
-                ? static::link(
-                    CancellationRequestResource::class,
-                    'Cancellation Requests',
-                    badge: fn () => Metrics::cancellationsPending(),
-                    badgeColor: 'danger',
-                )
+            // Issue #30: the WHMCS-styled page, with the Cancellations extension's real
+            // accept/refuse behind it. Falls back to core's resource when that extension
+            // is not installed, so the entry never disappears.
+            class_exists(\Paymenter\Extensions\Others\Cancellations\Support\Requests::class)
+                ? static::pageWithBadge(CancellationRequests::class, 'Cancellation Requests', fn () => Metrics::cancellationsPending(), 'danger')
                 : static::link(
                     ServiceCancellationResource::class,
                     'Cancellation Requests',
@@ -764,6 +769,26 @@ class WhmcsNavigation
         return NavigationItem::make($label)
             ->url($url)
             ->isActiveWhen(fn (): bool => request()->url() === $url);
+    }
+
+    /** {@see page()}, plus the badge treatment {@see link()} gives a resource entry. */
+    private static function pageWithBadge(string $page, string $label, \Closure $badge, string $badgeColor): ?NavigationItem
+    {
+        $item = static::page($page, $label);
+
+        if ($item === null) {
+            return null;
+        }
+
+        return $item->badge(function () use ($badge): ?string {
+            try {
+                $count = (int) $badge();
+
+                return $count > 0 ? (string) $count : null;
+            } catch (\Throwable $e) {
+                return null;
+            }
+        }, $badgeColor);
     }
 
     /**
