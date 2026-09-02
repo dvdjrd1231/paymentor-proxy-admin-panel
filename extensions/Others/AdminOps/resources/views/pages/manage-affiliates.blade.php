@@ -63,12 +63,29 @@
             </div>
 
             <div class="ao-tx-tabs ao-af-tabs">
-                @foreach (['referrals' => 'Referrals', 'commissions' => 'Commissions History', 'withdrawals' => 'Withdrawals History'] as $key => $label)
+                @foreach ([
+                    'referrals' => 'Referrals',
+                    'signups' => 'Referred Signups',
+                    'pending' => 'Pending Commissions (0)',
+                    'commissions' => 'Commissions History',
+                    'withdrawals' => 'Withdrawals History',
+                ] as $key => $label)
                     <button type="button" class="ao-mu-tab {{ $dtab === $key ? 'ao-on' : '' }}" wire:click="$set('dtab', '{{ $key }}')">{{ $label }}</button>
                 @endforeach
             </div>
 
-            @if ($dtab === 'withdrawals')
+            @if ($dtab === 'signups')
+                <p class="ao-gs-empty">
+                    {{ number_format($current->signups) }} {{ Str::plural('signup', $current->signups) }}
+                    referred by this affiliate's code. The extension keeps the count, not the
+                    individual accounts — the clients who went on to order appear under Referrals.
+                </p>
+            @elseif ($dtab === 'pending')
+                <p class="ao-gs-empty" title="Earnings are computed from referred orders as they are paid; no separate pending ledger exists">
+                    No pending commissions — earnings are computed from referred orders as they
+                    are paid, and every earned amount is already in Commissions History.
+                </p>
+            @elseif ($dtab === 'withdrawals')
                 <p class="ao-gs-empty" title="Paymenter's affiliate extension keeps no withdrawal ledger">
                     No withdrawals have been recorded — the affiliate extension keeps no
                     withdrawal ledger, so payouts are handled outside the panel.
