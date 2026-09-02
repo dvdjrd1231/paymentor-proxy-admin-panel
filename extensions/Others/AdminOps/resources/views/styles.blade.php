@@ -2805,6 +2805,12 @@
        The reference's chart-and-tiles top, then Gateway Balances. */
     .ao-tx-tabs { display: flex; gap: 0.3rem; }
 
+    /* Knowledgebase (issue #24): the reference's "Check to Hide" beside the name field,
+       and its empty Browse by Tag state. */
+    .ao-kb-hide { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+
+    .ao-kb-notags { margin: 0.3rem 0 0; }
+
     /* ── Issue #8's highlighted band ─────────────────────────────────────────
        The reference's page header is its own white panel: the title and the tab row
        share one bordered band, set off from the records area below. When the tab row

@@ -27,15 +27,63 @@ class KnowledgebaseList extends Page
     #[Url]
     public ?int $category = null;
 
-    /** The reference's Search/Filter band — every list page carries one; this one did not. */
-    public bool $filter = false;
+    /** Which tab's framed form is open: '', 'category', 'article' or 'search'. */
+    public string $tab = '';
 
     #[Url]
     public string $q = '';
 
-    public function toggleFilter(): void
+    public string $newCategory = '';
+
+    public string $newCategoryDescription = '';
+
+    public bool $newCategoryHidden = false;
+
+    public string $articleTitle = '';
+
+    public string $articleContent = '';
+
+    public function open(string $tab): void
     {
-        $this->filter = !$this->filter;
+        $this->tab = $this->tab === $tab ? '' : $tab;
+    }
+
+    public function addCategory(): void
+    {
+        $this->validate(['newCategory' => 'required|string|max:255']);
+
+        KbCategory::create([
+            'name' => $this->newCategory,
+            'slug' => str($this->newCategory)->slug() . '-' . dechex(crc32($this->newCategory . microtime())),
+            'description' => $this->newCategoryDescription,
+            'is_active' => !$this->newCategoryHidden,
+        ]);
+
+        $this->reset(['newCategory', 'newCategoryDescription', 'newCategoryHidden', 'tab']);
+        Notification::make()->title('Category added')->success()->send();
+    }
+
+    public function addArticle(): void
+    {
+        // The reference refuses this at top level with its exact wording; the form is
+        // only offered inside a category, so this guard should never fire — belt only.
+        if (!$this->category) {
+            return;
+        }
+
+        $this->validate(['articleTitle' => 'required|string|max:255', 'articleContent' => 'required|string']);
+
+        KbArticle::create([
+            'category_id' => $this->category,
+            'title' => $this->articleTitle,
+            'slug' => str($this->articleTitle)->slug() . '-' . dechex(crc32($this->articleTitle . microtime())),
+            'content' => $this->articleContent,
+            'is_active' => true,
+            'published_at' => now(),
+        ]);
+
+        $this->reset(['articleTitle', 'articleContent', 'tab']);
+        Notification::make()->title('Article added')->success()->send();
     }
 
     public static function canAccess(): bool
@@ -58,15 +106,6 @@ class KnowledgebaseList extends Page
 
     protected function getViewData(): array
     {
-        // "Manage Articles" used to be built here too — core's own KbArticleResource list,
-        // a second, un-styled copy of this very page. Categories is kept: a genuinely
-        // different screen, with no view of its own in this page.
-        $urls = ['category' => null];
-        try {
-            $urls['category'] = \Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbCategoryResource::getUrl('index');
-        } catch (\Throwable $e) {
-        }
-
         return [
             // A search clears the category walk — searching "the whole knowledgebase" and
             // being handed back only the one category you happened to be in would read as
@@ -77,7 +116,6 @@ class KnowledgebaseList extends Page
                 ->when($this->category && trim($this->q) === '', fn ($q) => $q->where('category_id', $this->category))
                 ->when(trim($this->q) !== '', fn ($q) => $q->where('title', 'like', '%' . trim($this->q) . '%'))
                 ->orderBy('title')->limit(200)->get(),
-            'urls' => $urls,
         ];
     }
 }
