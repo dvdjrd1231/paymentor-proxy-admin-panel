@@ -4026,6 +4026,85 @@
         .ao-gs-field input, .ao-gs-field select, .ao-gs-field textarea { min-width: 0; width: 100%; }
     }
 
+    /* Products/Services catalogue (issues #35, #41): the reference's one flat table —
+       a single navy header, group bands with icons at the right, product rows sharing
+       the same grid so every column lines up across groups. */
+    .ao-ct { --ao-ct-cols: minmax(0, 2.4fr) 1.3fr 0.9fr 0.55fr 1fr 7rem; }
+
+    .ao-ct-row {
+        display: grid;
+        grid-template-columns: var(--ao-ct-cols);
+        gap: 0 0.8rem;
+        align-items: center;
+        padding: 0.45rem 0.9rem;
+    }
+
+    .ao-ct-row > span { text-align: center; }
+
+    .ao-ct-row > .ao-ct-name { text-align: start; }
+
+    .ao-ct-head {
+        background: var(--wa-grid, #1a4d80);
+        color: #fff;
+        font-weight: 700;
+        border-radius: var(--wa-radius, 6px) var(--wa-radius, 6px) 0 0;
+    }
+
+    /* One continuous table like the reference — the old per-group panel gap, border
+       and radius are all flattened away inside .ao-ct. */
+    .ao-ct .ao-cat-list { list-style: none; margin: 0; padding: 0; display: block; gap: 0; }
+
+    .ao-ct .ao-cat { border: 0; border-radius: 0; background: transparent; }
+
+    .ao-ct { border: 1px solid var(--wa-panel-border, #ddd); border-radius: var(--wa-radius, 6px); overflow: hidden; }
+
+    .ao-ct .ao-catalogue-count { padding: 0.5rem 0.9rem; margin: 0; background: #fff; }
+
+    .ao-ct-band {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.5rem 0.9rem;
+        background: #ececec;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-inline-width: 0;
+    }
+
+    .ao-ct-band-name b { font-weight: 700; }
+
+    .ao-ct-band .ao-ct-icons { margin-left: auto; }
+
+    .ao-ct-icons {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.45rem;
+    }
+
+    .ao-ct-icons button { background: none; border: 0; padding: 0; cursor: pointer; display: inline-flex; }
+
+    .ao-ct-product { background: #fff; border-bottom: 1px solid #eee; }
+
+    .ao-ct-product:nth-child(even) { background: #f7f9fc; }
+
+    .ao-ct-product a { color: var(--wa-link, #337ab7); }
+
+    .ao-ct .ao-cat-empty {
+        margin: 0;
+        padding: 0.5rem 0.9rem;
+        background: #fff;
+        border-bottom: 1px solid #eee;
+        color: var(--wa-muted, #6b6b6b);
+    }
+
+    .ao-ct .ao-cat-children { padding-left: 1.4rem; }
+
+    @media (max-width: 900px) {
+        .ao-ct { --ao-ct-cols: minmax(0, 1fr) 6rem; }
+        .ao-ct-row > span:nth-child(2), .ao-ct-row > span:nth-child(3),
+        .ao-ct-row > span:nth-child(4), .ao-ct-row > span:nth-child(5) { display: none; }
+    }
+
     /* Affiliates detail (issue #6): the reference's framed two-column summary with
        label-left rows, editable commission fields inline. */
     .ao-af-frame {
