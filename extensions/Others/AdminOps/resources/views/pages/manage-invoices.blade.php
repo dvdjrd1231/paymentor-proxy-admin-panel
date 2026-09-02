@@ -17,9 +17,11 @@
             </div>
         @endif
 
-        <button type="button" class="ao-mu-tab {{ $this->filter ? 'ao-on' : '' }}" wire:click="toggleFilter">
-            Search/Filter
-        </button>
+        <div class="ao-tx-tabs">
+            <button type="button" class="ao-mu-tab {{ $this->filter ? 'ao-on' : '' }}" wire:click="toggleFilter">
+                Search/Filter
+            </button>
+        </div>
 
         @if ($this->filter)
             <form class="ao-find" autocomplete="off" wire:submit.prevent="search">

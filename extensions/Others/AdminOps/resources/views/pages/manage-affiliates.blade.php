@@ -1,9 +1,11 @@
 {{-- Affiliates, to the reference screenshot: records line, Jump to Page, the navy grid. --}}
 <x-filament-panels::page>
     <div class="ao-mu">
-        <button type="button" class="ao-mu-tab {{ $this->filter ? 'ao-on' : '' }}" wire:click="toggleFilter">
-            Search/Filter
-        </button>
+        <div class="ao-tx-tabs">
+            <button type="button" class="ao-mu-tab {{ $this->filter ? 'ao-on' : '' }}" wire:click="toggleFilter">
+                Search/Filter
+            </button>
+        </div>
 
         @if ($this->filter)
             <form class="ao-find" autocomplete="off" wire:submit.prevent="search">
