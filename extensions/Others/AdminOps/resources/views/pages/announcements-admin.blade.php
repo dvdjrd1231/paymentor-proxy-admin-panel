@@ -18,14 +18,13 @@
                 </label>
                 <label class="ao-anc-row ao-an-body">
                     <span>Announcement</span>
-                    @if ($rich)
-                        {{-- The rendered view, as the portal will show it. Edits happen in
-                             the source view — the toggle below switches back. --}}
-                        <div class="ao-an-rendered">{!! $body ?: '<i>Nothing written yet.</i>' !!}</div>
-                    @else
-                        <textarea rows="10" wire:model="body"
-                            placeholder="The announcement itself — HTML works here, as the portal renders it" required></textarea>
-                    @endif
+                    <span class="ao-anc-field ao-an-editor-wrap">
+                        {{-- wire:ignore inside the component keeps Livewire's morph from
+                             fighting the contenteditable div; this textarea is what it
+                             actually binds to. --}}
+                        <textarea wire:model="body" hidden></textarea>
+                        @include('adminops::components.rich-editor', ['model' => 'body', 'value' => $body])
+                    </span>
                 </label>
                 <label class="ao-anc-row">
                     <span>Published?</span>
@@ -43,7 +42,6 @@
 
             <div class="ao-pr-center">
                 <button type="button" class="ao-cq-addline" wire:click="backToList">Back to List</button>
-                <button type="button" class="ao-cq-addline" wire:click="$toggle('rich')">Enable/Disable Rich-Text Editor</button>
                 <button type="button" class="ao-find-go" wire:click="save">Save Changes</button>
             </div>
 

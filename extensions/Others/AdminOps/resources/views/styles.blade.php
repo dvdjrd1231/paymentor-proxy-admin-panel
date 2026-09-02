@@ -3243,12 +3243,79 @@
 
     .ao-rail-none { padding: 0.6rem 0.9rem; color: var(--wa-muted, #6b6b6b); }
 
-    .ao-an-rendered {
-        min-height: 12rem;
-        padding: 0.7rem 0.9rem;
+    /* ── Rich editor ─────────────────────────────────────────────────────────
+       {@see resources/views/components/rich-editor.blade.php}. One frame around a
+       toolbar and either half of the toggle — the reference's own two-state affordance,
+       both halves genuinely editable now rather than one being a read-only preview. */
+    .ao-an-editor-wrap { display: block; width: 100%; }
+
+    .ao-rte {
         border: 1px solid var(--wa-border, #ccc);
         border-radius: var(--wa-radius, 6px);
         background: #fff;
+        overflow: hidden;
+    }
+
+    .ao-rte-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.15rem;
+        padding: 0.4rem 0.5rem;
+        background: #f5f5f5;
+        border-bottom: 1px solid var(--wa-panel-border, #ddd);
+    }
+
+    .ao-rte-toolbar button {
+        min-width: 1.9rem;
+        height: 1.9rem;
+        padding: 0 0.4rem;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        background: transparent;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+
+    .ao-rte-toolbar button:hover {
+        background: #fff;
+        border-color: var(--wa-border, #ccc);
+    }
+
+    .ao-rte-toolbar [data-ao-rte-source] {
+        margin-inline-start: auto;
+        font-family: monospace;
+    }
+
+    .ao-rte-sep {
+        width: 1px;
+        height: 1.3rem;
+        background: var(--wa-panel-border, #ddd);
+        margin: 0 0.2rem;
+    }
+
+    .ao-rte-area,
+    .ao-rte-source {
+        min-height: 12rem;
+        padding: 0.7rem 0.9rem;
+        border: 0;
+        width: 100%;
+        font: inherit;
+        font-size: 0.9375rem;
+    }
+
+    .ao-rte-source { font-family: monospace; font-size: 0.85rem; resize: vertical; }
+
+    .ao-rte-area:focus,
+    .ao-rte-source:focus { outline: none; }
+
+    .ao-rte-area :where(ul, ol) { padding-inline-start: 1.5rem; }
+
+    .ao-rte-area blockquote {
+        margin: 0.5rem 0;
+        padding-inline-start: 0.8rem;
+        border-inline-start: 3px solid var(--wa-panel-border, #ddd);
+        color: var(--wa-muted, #6b6b6b);
     }
 
     .ao-an-langs { columns: 3; margin: 0.4rem 0 1rem; }
