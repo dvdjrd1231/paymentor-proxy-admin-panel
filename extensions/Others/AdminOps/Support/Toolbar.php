@@ -77,7 +77,13 @@ class Toolbar
     public static function utilities(): array
     {
         return array_values(array_filter([
-            static::iconLink('health', 'heroicon-o-cog-6-tooth', 'Automation Status', CronStats::class, static::health()),
+            // Issue #33: the cogs open the WHMCS-shaped Automation Status page, not
+            // core's raw CronStats chart.
+            static::iconLink('health', 'heroicon-o-cog-6-tooth', 'Automation Status',
+                class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\AutomationStatus::class)
+                    ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\AutomationStatus::class
+                    : CronStats::class,
+                static::health()),
             static::iconLink('updates', 'heroicon-o-arrow-down-tray', 'Update Paymenter', Updates::class),
             static::menu('setup', 'heroicon-o-wrench-screwdriver', 'Setup', static::setup(), grid: true),
             static::menu('help', 'heroicon-o-question-mark-circle', 'Help', static::help()),

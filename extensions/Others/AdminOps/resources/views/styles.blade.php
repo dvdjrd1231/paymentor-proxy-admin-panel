@@ -3954,6 +3954,71 @@
 
     .ao-wg-links a { text-decoration: underline; }
 
+    /* Automation Status (issue #33): the reference sets its month calendar beside the
+       Daily Actions tiles, with "Today" floated at the band's right. */
+    .ao-auto-daily-head { display: flex; align-items: baseline; justify-content: space-between; }
+
+    .ao-auto-today-label { font-size: 1.4rem; color: #c9c9c9; }
+
+    .ao-auto-daily { display: flex; gap: 1.2rem; align-items: flex-start; }
+
+    .ao-auto-daily-tiles { flex: 1 1 auto; min-width: 0; }
+
+    .ao-auto-cal {
+        flex: 0 0 21rem;
+        padding: 1rem;
+        border: 1px solid var(--wa-panel-border, #e2e2e2);
+        border-radius: var(--wa-radius, 6px);
+        background: var(--wa-canvas, #f7f7f7);
+    }
+
+    .ao-auto-cal-month {
+        text-align: center;
+        font-size: 1.1rem;
+        padding: 0.5rem 0;
+        background: #ececec;
+        border-radius: var(--wa-radius, 6px);
+        margin-bottom: 0.5rem;
+    }
+
+    .ao-auto-cal-grid { width: 100%; border-collapse: collapse; }
+
+    .ao-auto-cal-grid th { padding: 0.35rem 0; font-weight: 700; }
+
+    .ao-auto-cal-grid td { text-align: center; }
+
+    .ao-auto-cal-grid td a {
+        display: block;
+        padding: 0.35rem 0;
+        color: var(--wa-text, #2b2b2b);
+        text-decoration: none;
+        border-radius: 4px;
+    }
+
+    .ao-auto-cal-grid td a:hover { background: #e8e8e8; }
+
+    .ao-auto-cal-other a, .ao-auto-cal-other { color: #b5b5b5 !important; }
+
+    .ao-auto-cal-today a { background: #fcd487; font-weight: 700; }
+
+    .ao-auto-cal-today-btn {
+        display: block;
+        text-align: center;
+        margin-top: 0.5rem;
+        padding: 0.5rem 0;
+        background: #ececec;
+        border-radius: var(--wa-radius, 6px);
+        color: var(--wa-text, #2b2b2b);
+        text-decoration: none;
+    }
+
+    .ao-auto-cal-today-btn:hover { background: #e0e0e0; text-decoration: none; }
+
+    @media (max-width: 1100px) {
+        .ao-auto-daily { flex-direction: column; }
+        .ao-auto-cal { width: 100%; flex-basis: auto; }
+    }
+
     /* Cancellation Requests (issue #30): the reference's segmented Open/Completed
        toggle — two joined buttons, the active one pressed darker. */
     .ao-sc-toggle { display: flex; margin-bottom: 0.7rem; }

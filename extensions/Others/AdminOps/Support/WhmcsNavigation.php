@@ -520,7 +520,10 @@ class WhmcsNavigation
             static::pageLink(PhpInfo::class, '- PHP Info'),
             static::pageLink(PhpCompatibility::class, '- PHP Version Compatibility'),
             static::link(UserResource::class, '- Administrators'),
-            static::page(CronStats::class, '- Cron Statistics'),
+            // Issue #33: "I want it displayed similarly to WHMCS" — the WHMCS display of
+            // cron activity IS the Automation Status page, so the entry opens it. Core's
+            // raw CronStats chart page stays claimed so the Addons sweep leaves it be.
+            static::cronStatisticsEntry(),
             static::link(FailedJobResource::class, '- Failed Jobs'),
             static::link(AuditResource::class, '- Audit Log'),
             static::link(ErrorLogResource::class, '- Error Log'),
@@ -769,6 +772,29 @@ class WhmcsNavigation
         return NavigationItem::make($label)
             ->url($url)
             ->isActiveWhen(fn (): bool => request()->url() === $url);
+    }
+
+    /**
+     * Issue #33's "- Cron Statistics": opens {@see AutomationStatus} (the WHMCS-shaped
+     * display of the same data), with core's raw CronStats page claimed either way so the
+     * Addons sweep does not resurface it. Falls back to core's page when the extension
+     * page is unavailable.
+     */
+    private static function cronStatisticsEntry(): ?NavigationItem
+    {
+        static::$placed[CronStats::class] = true;
+
+        if (class_exists(AutomationStatus::class) && AutomationStatus::canAccess()) {
+            $url = static::resolveUrl(fn (): string => AutomationStatus::getUrl());
+
+            if ($url !== null) {
+                return NavigationItem::make('- Cron Statistics')
+                    ->url($url)
+                    ->isActiveWhen(fn (): bool => request()->url() === $url);
+            }
+        }
+
+        return static::page(CronStats::class, '- Cron Statistics');
     }
 
     /** {@see page()}, plus the badge treatment {@see link()} gives a resource entry. */
