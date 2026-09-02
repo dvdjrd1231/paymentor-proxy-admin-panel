@@ -3953,4 +3953,43 @@
         color: #fff;
         font-weight: 700;
     }
+
+    /* ── Edit Order's whole-order buttons ────────────────────────────────────
+       The reference's row under the order's line items — Accept green, Cancel and Set Back
+       to Pending neutral, Delete red, the same palette its With Selected bar uses. */
+    .ao-eo-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-top: 1.2rem;
+    }
+
+    .ao-eo-actions button {
+        padding: 0.5rem 1.1rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+        color: var(--wa-text, #2b2b2b);
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+    .ao-eo-accept {
+        background: #5cb85c !important;
+        border-color: #4cae4c !important;
+        color: #fff !important;
+    }
+
+    .ao-eo-accept:hover { background: #449d44 !important; }
+
+    .ao-eo-cancel:hover,
+    .ao-eo-pending:hover { background: #f0f0f0; }
+
+    .ao-eo-delete {
+        background: #d9534f !important;
+        border-color: #d43f3a !important;
+        color: #fff !important;
+    }
+
+    .ao-eo-delete:hover { background: #c9302c !important; }
 </style>
