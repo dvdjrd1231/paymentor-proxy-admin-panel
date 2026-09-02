@@ -2795,22 +2795,26 @@
         gap: 0.9rem;
     }
 
+    {{-- Issue #11: the reference draws these as plain grey squares with a white glyph, not
+         circular and not colour-coded by type — "colourful icons" is a menu/nav rule, and
+         following it here fought the one screenshot Leandro actually pointed at. --}}
     .ao-tx-tile-ic {
         width: 3rem;
         height: 3rem;
-        border-radius: 50%;
+        border-radius: var(--wa-radius, 6px);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         flex: none;
-        background: #f0f0f0;
+        background: #7c7c7c;
+        color: #ffffff;
     }
 
     .ao-tx-tile-ic svg { width: 1.4rem; height: 1.4rem; }
 
-    .ao-tx-ic-income { color: #3c763d; }
-    .ao-tx-ic-fees { color: #337ab7; }
-    .ao-tx-ic-out { color: #6b6b6b; }
+    .ao-tx-ic-income,
+    .ao-tx-ic-fees,
+    .ao-tx-ic-out { color: #ffffff; }
 
     .ao-tx-tile-body { display: flex; flex-direction: column; }
 
