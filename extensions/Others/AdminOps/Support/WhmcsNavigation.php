@@ -495,7 +495,7 @@ class WhmcsNavigation
     private static function utilities(): ?NavigationGroup
     {
         return static::group('Utilities', 'ri-tools-line', [
-            static::page(Updates::class, 'Update Paymenter'),
+            static::updatePaymenterEntry(),
             class_exists(AutomationStatus::class)
                 ? static::page(AutomationStatus::class, 'Automation Status')
                 : static::page(CronStats::class, 'Automation Status'),
@@ -802,6 +802,31 @@ class WhmcsNavigation
      * Addons sweep does not resurface it. Falls back to core's page when the extension
      * page is unavailable.
      */
+    /**
+     * Issue #27's "Update Paymenter": opens {@see UpdatePaymenter} (the WHMCS-shaped
+     * Update screen), with core's raw Updates page claimed either way so the Addons
+     * sweep does not resurface it. Falls back to core's page when the extension page
+     * is unavailable.
+     */
+    private static function updatePaymenterEntry(): ?NavigationItem
+    {
+        static::$placed[Updates::class] = true;
+
+        $page = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\UpdatePaymenter::class;
+
+        if (class_exists($page) && $page::canAccess()) {
+            $url = static::resolveUrl(fn (): string => $page::getUrl());
+
+            if ($url !== null) {
+                return NavigationItem::make('Update Paymenter')
+                    ->url($url)
+                    ->isActiveWhen(fn (): bool => request()->url() === $url);
+            }
+        }
+
+        return static::page(Updates::class, 'Update Paymenter');
+    }
+
     private static function cronStatisticsEntry(): ?NavigationItem
     {
         static::$placed[CronStats::class] = true;

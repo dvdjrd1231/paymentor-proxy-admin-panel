@@ -897,6 +897,103 @@
         color: hsl(var(--color-base) / 0.8);
     }
 
+    /* ── Update Paymenter (issue #27) ────────────────────────────────────────
+       The reference's Update WHMCS screen: a centred verdict line, the grey/blue version
+       tiles joined into one block, Update Now with the release links under it. */
+    .ao-up { max-width: 52rem; margin-inline: auto; text-align: center; }
+
+    .ao-up-verdict {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        margin: 1.5rem 0 1.75rem;
+        font-size: 1.8rem;
+        font-weight: 400;
+    }
+
+    .ao-up-verdict.ao-up-new, .ao-up-verdict.ao-up-ok { color: #7bab48; }
+
+    .ao-up-verdict-ic svg { width: 2.2rem; height: 2.2rem; }
+
+    .ao-up-tiles {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        max-width: 40rem;
+        margin: 0 auto 1.5rem;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .ao-up-tile-head {
+        padding: 0.7rem 1rem;
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .ao-up-yours .ao-up-tile-head { background: #4a4a4a; }
+    .ao-up-latest .ao-up-tile-head { background: #1a4d80; }
+
+    .ao-up-tile-body { padding: 1.1rem 1rem 0.9rem; color: #fff; }
+
+    .ao-up-yours .ao-up-tile-body { background: #7a7a7a; }
+    .ao-up-latest .ao-up-tile-body { background: #2e6da4; }
+
+    .ao-up-figure {
+        display: block;
+        font-size: 3.4rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+    .ao-up-line { display: block; font-size: 1.1rem; font-weight: 600; }
+
+    .ao-up-sub { display: block; margin-top: 0.35rem; font-size: 0.78rem; opacity: 0.85; }
+
+    .ao-up-actions { margin-bottom: 1.5rem; }
+
+    .ao-up-update {
+        display: inline-block;
+        padding: 0.5rem 1.1rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        color: var(--wa-muted, #6b6b6b);
+        font-size: 0.95rem;
+        cursor: not-allowed;
+    }
+
+    .ao-up-links { margin-top: 0.8rem; display: flex; justify-content: center; gap: 2.5rem; }
+
+    .ao-up-links a { color: #337ab7; font-size: 0.95rem; }
+
+    .ao-up-links a:hover { text-decoration: underline; }
+
+    .ao-up-warning {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        max-width: 46rem;
+        margin: 0 auto 1.25rem;
+        padding: 0.9rem 1.1rem;
+        border-radius: 4px;
+        background: #fcf8e3;
+        color: #8a6d3b;
+        font-size: 0.9rem;
+        text-align: left;
+    }
+
+    .ao-up-warning-ic { width: 1.6rem; height: 1.6rem; flex: none; }
+
+    .ao-up-warning strong { margin-inline-end: 0.3rem; }
+
+    .ao-up-checked { font-size: 0.9rem; color: var(--wa-muted, #6b6b6b); }
+
+    @media (max-width: 760px) {
+        .ao-up-tiles { grid-template-columns: 1fr; }
+    }
+
     /* The reference's three header tiles: verdict, last run, next run. Big figure, small
        label under it, colour carrying the verdict. */
     .ao-auto-head {
@@ -906,23 +1003,49 @@
         margin-bottom: 1rem;
     }
 
+    /* The reference's banner tile is two-tone: a darker square carrying the glyph, then
+       the lighter body with the figure and its label (issue #28). */
     .ao-auto-head-tile {
-        padding: 1rem 1.15rem;
+        display: flex;
+        align-items: stretch;
         border-radius: 0.375rem;
+        overflow: hidden;
         color: hsl(var(--color-inverted));
-        background: hsl(var(--color-inactive));
+        background: #b0b0b0;
     }
 
-    .ao-auto-head-tile.ao-auto-ok { background: hsl(var(--color-success)); }
-    .ao-auto-head-tile.ao-auto-bad { background: hsl(var(--color-error)); }
-    .ao-auto-head-tile.ao-auto-neutral { background: hsl(var(--color-warning)); }
-    .ao-auto-head-tile.ao-auto-quiet { background: hsl(var(--color-inactive)); }
+    .ao-auto-head-tile.ao-auto-ok { background: #5cb85c; }
+    .ao-auto-head-tile.ao-auto-bad { background: #d9534f; }
+    .ao-auto-head-tile.ao-auto-neutral { background: #f0ad4e; }
+    .ao-auto-head-tile.ao-auto-quiet { background: #b0b0b0; }
+
+    .ao-auto-head-ic {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        width: 4.5rem;
+        background: rgb(0 0 0 / 0.15);
+    }
+
+    .ao-auto-head-ic svg { width: 2.4rem; height: 2.4rem; }
+
+    .ao-auto-head-text {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0.85rem 1.15rem;
+        min-width: 0;
+    }
 
     .ao-auto-head-figure {
         display: block;
         font-size: 1.6rem;
         font-weight: 700;
         line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .ao-auto-head-label {
@@ -930,6 +1053,8 @@
         font-size: 0.85rem;
         opacity: 0.9;
     }
+
+    .ao-auto-head-label a { color: inherit; text-decoration: underline; }
 
     .ao-auto-heartbeat {
         display: flex;
@@ -1025,11 +1150,23 @@
     }
 
     .ao-auto-tile-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
         padding: 0.45rem 0.75rem;
         border-bottom: 1px solid var(--wa-rule, hsl(var(--color-gray-200)));
         font-size: 0.85rem;
         font-weight: 600;
         color: var(--wa-ink, hsl(var(--color-base)));
+    }
+
+    /* The reference's grey glyph in the tile's top right corner. */
+    .ao-auto-tile-ic {
+        width: 1.5rem;
+        height: 1.5rem;
+        flex: none;
+        color: #b8b8b8;
     }
 
     .ao-auto-tile-body {
@@ -1052,18 +1189,33 @@
         color: var(--wa-muted, hsl(var(--color-base) / 0.6));
     }
 
-    /* The reference puts this in red at the end of the row, and only when it is not zero. */
+    /* The reference puts this in red at the tile's bottom right, and only when not zero. */
     .ao-auto-tile-failed {
-        margin-inline-start: auto;
         font-size: 0.82rem;
         font-weight: 600;
         color: hsl(var(--color-error));
     }
 
     .ao-auto-tile-foot {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.5rem;
         padding: 0 0.75rem 0.6rem;
         font-size: 0.78rem;
         color: var(--wa-muted, hsl(var(--color-base) / 0.6));
+    }
+
+    /* The reference right-aligns both chart controls. */
+    .ao-auto-chart-head.ao-auto-chart-head-right { justify-content: flex-end; }
+
+    .ao-auto-chart-head.ao-auto-chart-head-right .ao-auto-chart-range {
+        padding: 0.35rem 0.7rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        color: var(--wa-ink, #2b2b2b);
+        font-weight: 400;
     }
 
     .ao-auto-clocks {
@@ -3627,6 +3779,176 @@
 
     @media (max-width: 700px) {
         .ao-ss-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── System Settings frame (issue #40) ───────────────────────────────────
+       The reference's landing frame around the cards: setup-tasks progress top right,
+       the left rail (search, areas, Recently Visited), and the "All Settings" band. */
+    .ao-ssx-hero {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 1rem;
+    }
+
+    .ao-ssx-tasks {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        column-gap: 0.6rem;
+        min-width: 19rem;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+    }
+
+    .ao-ssx-tasks-toggle {
+        grid-column: 1 / -1;
+        justify-self: start;
+        margin-bottom: 0.45rem;
+        font-weight: 700;
+        color: var(--wa-ink, #2b2b2b);
+        cursor: pointer;
+    }
+
+    .ao-ssx-tasks-toggle:hover { color: var(--wa-link, #337ab7); }
+
+    .ao-ssx-progress {
+        height: 0.9rem;
+        border-radius: 999px;
+        background: #eee;
+        overflow: hidden;
+    }
+
+    .ao-ssx-progress-bar {
+        display: block;
+        height: 100%;
+        background: #5cb85c;
+    }
+
+    .ao-ssx-progress-pct { font-size: 0.9rem; color: var(--wa-ink, #2b2b2b); }
+
+    .ao-ssx-tasklist {
+        grid-column: 1 / -1;
+        margin-top: 0.7rem;
+        display: grid;
+        gap: 0.35rem;
+        font-size: 0.9rem;
+    }
+
+    .ao-ssx-tasklist li { display: flex; align-items: center; gap: 0.45rem; }
+
+    .ao-ssx-task-ic { width: 1.1rem; height: 1.1rem; flex: none; color: #b8b8b8; }
+
+    .ao-ssx-task-done .ao-ssx-task-ic { color: #5cb85c; }
+
+    .ao-ssx-task-done span { color: var(--wa-muted, #6b6b6b); }
+
+    .ao-ssx-tasklist a { color: var(--wa-link, #337ab7); }
+
+    .ao-ssx-tasklist a:hover { text-decoration: underline; }
+
+    .ao-ssx-cols {
+        display: grid;
+        grid-template-columns: 15rem minmax(0, 1fr);
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    .ao-ssx-search {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0 0.7rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+    }
+
+    .ao-ssx-search-ic { width: 1.1rem; height: 1.1rem; flex: none; color: var(--wa-muted, #6b6b6b); }
+
+    .ao-ssx-search input {
+        width: 100%;
+        height: 2.4rem;
+        border: 0;
+        outline: none;
+        background: transparent;
+        font-size: 0.95rem;
+    }
+
+    /* The reference's area list: quiet rows, a green bar and tint on the active one. */
+    .ao-ssx-areas {
+        margin-top: 1rem;
+        border-left: 3px solid var(--wa-rule, #e5e5e5);
+    }
+
+    .ao-ssx-areas button {
+        display: block;
+        width: 100%;
+        padding: 0.55rem 0.9rem;
+        margin-left: -3px;
+        border-left: 3px solid transparent;
+        text-align: left;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--wa-ink, #2b2b2b);
+        cursor: pointer;
+    }
+
+    .ao-ssx-areas button:hover { background: #f5f5f5; }
+
+    .ao-ssx-areas button.ao-on {
+        border-left-color: #5cb85c;
+        background: #eef4e9;
+    }
+
+    .ao-ssx-recent { margin-top: 1.6rem; }
+
+    .ao-ssx-recent h4 {
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--wa-rule, #e5e5e5);
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--wa-ink, #2b2b2b);
+    }
+
+    .ao-ssx-recent ol { margin-top: 0.5rem; display: grid; gap: 0.3rem; font-size: 0.9rem; }
+
+    .ao-ssx-recent a { color: var(--wa-link, #337ab7); }
+
+    .ao-ssx-recent a:hover { text-decoration: underline; }
+
+    .ao-ssx-band {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding-bottom: 0.6rem;
+        border-bottom: 2px solid var(--wa-rule, #e5e5e5);
+        margin-bottom: 1rem;
+    }
+
+    .ao-ssx-band h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--wa-ink, #2b2b2b);
+    }
+
+    .ao-ssx-band select {
+        height: 2.2rem;
+        padding: 0 0.6rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        font-size: 0.9rem;
+    }
+
+    .ao-ssx-none { color: var(--wa-muted, #6b6b6b); }
+
+    @media (max-width: 900px) {
+        .ao-ssx-cols { grid-template-columns: 1fr; }
+        .ao-ssx-hero { justify-content: stretch; }
+        .ao-ssx-tasks { width: 100%; }
     }
 
     .ao-rv-head {

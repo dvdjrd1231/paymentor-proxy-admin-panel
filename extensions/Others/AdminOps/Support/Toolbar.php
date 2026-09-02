@@ -84,7 +84,12 @@ class Toolbar
                     ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\AutomationStatus::class
                     : CronStats::class,
                 static::health()),
-            static::iconLink('updates', 'heroicon-o-arrow-down-tray', 'Update Paymenter', Updates::class),
+            // Issue #27: the download arrow opens the WHMCS-shaped Update screen, not
+            // core's raw Updates page.
+            static::iconLink('updates', 'heroicon-o-arrow-down-tray', 'Update Paymenter',
+                class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\UpdatePaymenter::class)
+                    ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\UpdatePaymenter::class
+                    : Updates::class),
             static::menu('setup', 'heroicon-o-wrench-screwdriver', 'Setup', static::setup(), grid: true),
             static::menu('help', 'heroicon-o-question-mark-circle', 'Help', static::help()),
         ]));
@@ -137,7 +142,13 @@ class Toolbar
             static::external('Technical Support', 'https://github.com/Paymenter/Paymenter/issues'),
             static::external('Community Forums', 'https://discord.gg/paymenter'),
             static::external("What's New", 'https://github.com/Paymenter/Paymenter/releases'),
-            static::page(Updates::class, 'Version Information', separated: true),
+            static::page(
+                class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\UpdatePaymenter::class)
+                    ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\UpdatePaymenter::class
+                    : Updates::class,
+                'Version Information',
+                separated: true,
+            ),
         ]));
     }
 
