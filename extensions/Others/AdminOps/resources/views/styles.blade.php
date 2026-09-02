@@ -3439,6 +3439,64 @@
 
     .ao-rp-pill.ao-rp-dead { opacity: 0.55; cursor: not-allowed; }
 
+    /* ── System Settings cards ───────────────────────────────────────────────
+       Issue #40: the reference's own tiles here are a large muted icon over a title and a
+       one-line description — the same shape its Transactions dashboard uses, and for the
+       same reason: a feature-grid like this one carries its weight in the text, not in a
+       rainbow of icon colours, so the icons are toned down rather than picked out. */
+    .ao-ss-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+        gap: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .ao-ss-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        padding: 1rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 120ms, box-shadow 120ms;
+    }
+
+    .ao-ss-card:hover {
+        border-color: var(--wa-link, #337ab7);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        text-decoration: none;
+    }
+
+    .ao-ss-card-ic {
+        display: grid;
+        place-items: center;
+        flex: none;
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: var(--wa-radius, 6px);
+        background: #f0f0f0;
+        color: #8a8a8a;
+    }
+
+    .ao-ss-card-ic svg { width: 1.5rem; height: 1.5rem; }
+
+    .ao-ss-card-body { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+
+    .ao-ss-card-title { font-weight: 700; color: var(--wa-text, #2b2b2b); }
+
+    .ao-ss-card-desc {
+        font-size: 0.85rem;
+        color: var(--wa-muted, #6b6b6b);
+        line-height: 1.35;
+    }
+
+    @media (max-width: 700px) {
+        .ao-ss-grid { grid-template-columns: 1fr; }
+    }
+
     .ao-rv-head {
         display: flex;
         align-items: flex-start;
