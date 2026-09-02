@@ -112,7 +112,8 @@ class Toolbar
             static::index(ConfigOptionResource::class, 'Configurable Options', 'heroicon-o-adjustments-vertical'),
             static::index(ServerResource::class, 'Servers', 'heroicon-o-server-stack'),
             static::page(PanelLocations::class, 'Panel Locations', 'heroicon-o-globe-alt'),
-            static::index(GatewayResource::class, 'Payment Gateways', 'heroicon-o-credit-card'),
+            // Issue #45: the AdminOps page with the Enable/Disable/Edit quick buttons.
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\PaymentGateways::class, 'Payment Gateways', 'heroicon-o-credit-card'),
             static::index(CurrencyResource::class, 'Currencies', 'heroicon-o-banknotes'),
             static::index(CustomPropertyResource::class, 'Custom Properties', 'heroicon-o-tag'),
             static::index(NotificationTemplateResource::class, 'Email Templates', 'heroicon-o-envelope'),

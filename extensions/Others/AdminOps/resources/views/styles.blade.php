@@ -2244,7 +2244,10 @@
     }
 
     /* Actions as the reference's small buttons, not bare links. */
-    .ao-mu-actions a {
+    .ao-mu-actions a,
+    /* Wire-action buttons in the same cell read as the same small button (issue #45's
+       Enable/Disable beside Edit). */
+    .ao-mu-actions button.ao-pg-btn {
         display: inline-block;
         margin-inline: 0.15rem;
         padding: 0.25rem 0.75rem;
@@ -2253,7 +2256,11 @@
         background: #fff;
         color: var(--wa-text, #2b2b2b);
         white-space: nowrap;
+        cursor: pointer;
+        font-size: inherit;
     }
+
+    .ao-mu-actions button.ao-pg-btn:hover { background: #f0f0f0; }
 
     .ao-mu-actions a:hover {
         background: #f0f0f0;
