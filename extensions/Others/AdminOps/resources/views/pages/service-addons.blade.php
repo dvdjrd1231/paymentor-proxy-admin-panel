@@ -74,6 +74,15 @@
                     <span>Client Name</span>
                     <input type="text" class="ao-stf-mid" wire:model.live.debounce.500ms="clientName" placeholder="Name or email">
                 </label>
+                <label class="ao-stf-row">
+                    <span>Payment Method</span>
+                    <select class="ao-stf-small" wire:model.live="paymentMethod">
+                        <option value="">Any</option>
+                        @foreach ($gateways as $gateway)
+                            <option value="{{ $gateway->name }}">{{ $gateway->name }}</option>
+                        @endforeach
+                    </select>
+                </label>
             </div>
         @endif
 

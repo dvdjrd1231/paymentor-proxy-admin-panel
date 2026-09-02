@@ -56,6 +56,14 @@ class ServiceAddons extends Page
     #[Url]
     public string $cycle = '';
 
+    /**
+     * Not a stored value (there is none — a gateway is picked per invoice, not per order)
+     * but the same honest derivation {@see ManageOrders} already uses for its own
+     * "Payment Method" column: the parent order's transactions.
+     */
+    #[Url]
+    public string $paymentMethod = '';
+
     #[Url]
     public bool $hideInactive = true;
 
@@ -164,11 +172,15 @@ class ServiceAddons extends Page
         // The catalogue category, made once; staff add addon products to it normally.
         $category = Category::firstOrCreate(['name' => self::CATEGORY], ['sort' => 99, 'slug' => 'service-addons']);
 
-        $addons = ServiceAddon::with(['service.product', 'service.plan', 'parent.product', 'parent.user'])
+        $addons = ServiceAddon::with(['service.product', 'service.plan', 'parent.product', 'parent.user', 'parent.invoices.transactions.gateway'])
             ->latest('id')->limit(300)->get()
             ->filter(fn ($a) => $a->service && $a->parent);
 
         $hiddenCount = $addons->filter(fn ($a) => $a->service->status === 'cancelled')->count();
+
+        // Same derivation as Manage Orders' own "Payment Method" column — Paymenter has no
+        // per-order gateway field, so this reads it off the parent service's own invoices.
+        $paymentMethod = fn ($a) => $a->parent->invoices->flatMap->transactions->first()?->gateway?->name;
 
         $addons = $addons
             ->when($this->hideInactive, fn ($list) => $list->filter(fn ($a) => $a->service->status !== 'cancelled'))
@@ -177,6 +189,7 @@ class ServiceAddons extends Page
             ->when($this->status !== '', fn ($list) => $list->filter(fn ($a) => $a->service->status === $this->status))
             ->when($this->server !== '', fn ($list) => $list->filter(fn ($a) => (string) ($a->parent->product?->server_id ?? '') === $this->server))
             ->when($this->cycle !== '', fn ($list) => $list->filter(fn ($a) => ProductsServices::cycle($a->service) === $this->cycle))
+            ->when($this->paymentMethod !== '', fn ($list) => $list->filter(fn ($a) => $paymentMethod($a) === $this->paymentMethod))
             ->when($this->clientName !== '', fn ($list) => $list->filter(fn ($a) => str_contains(
                 strtolower(($a->parent->user->first_name ?? '') . ' ' . ($a->parent->user->last_name ?? '') . ' ' . ($a->parent->user->email ?? '')),
                 strtolower($this->clientName),
@@ -189,6 +202,7 @@ class ServiceAddons extends Page
             'catalogue' => Product::where('category_id', $category->id)->orderBy('name')->get(['id', 'name']),
             'parentProducts' => Product::where('category_id', '!=', $category->id)->orderBy('name')->get(['id', 'name']),
             'servers' => Server::orderBy('name')->get(['id', 'name']),
+            'gateways' => \App\Models\Gateway::orderBy('name')->get(['id', 'name']),
             'parents' => Service::whereIn('status', ['active', 'suspended'])
                 ->where(fn ($q) => $q->whereNotIn('id', ServiceAddon::pluck('service_id')))
                 ->with(['product', 'user'])->latest('id')->limit(300)->get(),
