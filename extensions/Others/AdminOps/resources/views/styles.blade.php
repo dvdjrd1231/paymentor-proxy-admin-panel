@@ -4112,6 +4112,27 @@
         .ao-ct-row > span:nth-child(4), .ao-ct-row > span:nth-child(5) { display: none; }
     }
 
+    /* Email Templates (issue #48): the reference's two-column category layout, each a
+       navy mini-grid with the green/red status dot. */
+    .ao-et-cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 2rem;
+        align-items: start;
+    }
+
+    @media (max-width: 1100px) { .ao-et-cols { grid-template-columns: 1fr; } }
+
+    .ao-et-status { width: 5.5rem; }
+
+    .ao-et-icon { width: 3rem; }
+
+    .ao-et-dot { font-weight: 700; }
+
+    .ao-et-dot.ao-on { color: #5cb85c; }
+
+    .ao-et-dot.ao-off { color: #d9534f; }
+
     /* Affiliates detail (issue #6): the reference's framed two-column summary with
        label-left rows, editable commission fields inline. */
     .ao-af-frame {
