@@ -1591,8 +1591,17 @@
         padding: 0.45rem 0.7rem;
     }
 
-    /* The reference stripes alternate rows. */
-    .ao-anc-col > .ao-anc-row:nth-child(odd) { background: #f0f0f0; }
+    /* The reference stripes alternate rows — both shapes a card comes in: the two-column
+       grid (.ao-anc-col, Add New Client's own layout) and the plain single-column card
+       every other .ao-anc-card form uses (Open New Ticket among fourteen pages). Only the
+       second was ever striped; the first was missed entirely, which is what read as pages
+       whose rows do not "align" with the reference the way Add New Client's do. Wide rows
+       are excluded — they already carry their own explicit background via .ao-anc-grey,
+       and striping on top would fight it depending on which rule happens to win. */
+    .ao-anc-col > .ao-anc-row:nth-child(odd),
+    .ao-anc-card > .ao-anc-row:not(.ao-anc-row-wide):nth-child(odd) {
+        background: #f0f0f0;
+    }
 
     .ao-anc-row > span:first-child {
         text-align: right;
@@ -1691,6 +1700,22 @@
         background: #f2dede;
         color: #a94442;
     }
+
+    /* Issue #27: the amber warning colour core itself uses for a genuine risk, not the red
+       reserved for a validation error — nothing has gone wrong here, the page just cannot
+       be trusted to update this particular install correctly. */
+    .ao-upd-notice {
+        margin: 1rem 0 1.4rem;
+        padding: 0.8rem 1rem;
+        border: 1px solid #f0e0b0;
+        border-radius: var(--wa-radius, 6px);
+        background: #fcf8e3;
+        color: #8a6d3b;
+        max-width: 46rem;
+    }
+
+    .ao-upd-notice p { margin: 0 0 0.5rem; }
+    .ao-upd-notice p:last-child { margin-bottom: 0; }
 
     .ao-anc-submit {
         margin-top: 1.2rem;

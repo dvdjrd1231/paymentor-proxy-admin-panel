@@ -52,6 +52,10 @@ return [
     'tickets_short' => 'Tickets',
     'invoices_short' => 'Invoices',
     'active_products_services' => 'Your Active Products/Services',
+    // Issue #7: an addon renews on its parent service's invoice, but read as a fully
+    // unrelated purchase on this list — the one place a client actually sees it — with
+    // nothing saying otherwise.
+    'addon_of' => 'Addon of :service',
     'overdue_invoices' => 'Overdue Invoices',
     'recent_tickets' => 'Recent Support Tickets',
     'open_new_ticket' => 'Open New Ticket',

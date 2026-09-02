@@ -93,7 +93,9 @@
                             <label class="ao-anc-row"><span>Postcode</span><input type="text" wire:model="nc.zip" placeholder="94105"></label>
                             <label class="ao-anc-row">
                                 <span>Country</span>
-                                <select wire:model="nc.country">
+                                {{-- .live: the Brazilian block below folds in and out with
+                                     this choice, the same as Add New Client's own. --}}
+                                <select wire:model.live="nc.country">
                                     <option value="">—</option>
                                     @foreach ($countries as $name)
                                         <option value="{{ $name }}">{{ $name }}</option>
@@ -102,6 +104,86 @@
                             </label>
                         </div>
                     </div>
+
+                    {{-- Issue #14: "the information for registering new customers in Brazil
+                         also applies to new customers being registered via a quote" — the
+                         same block Add New Client carries, because it is the same lead
+                         becoming the same kind of user account either way. --}}
+                    @if (in_array('person_type', $brazilFields, true))
+                        <div class="ao-anc-brazil">
+                            <div class="ao-anc-brazil-head">
+                                Brazilian Registration
+                                <i>Required for issuing tax documents in Brazil</i>
+                            </div>
+
+                            <div class="ao-anc-cols">
+                                <div class="ao-anc-col">
+                                    <label class="ao-anc-row">
+                                        <span>{{ $brazil['person_type']->name ?? 'Person Type' }}</span>
+                                        <select wire:model.live="nc.person_type" required>
+                                            <option value="">— Select —</option>
+                                            @foreach ($brazil['person_type']->allowed_values ?? [] as $value => $label)
+                                                <option value="{{ is_int($value) ? $label : $value }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </label>
+
+                                    @foreach (['cpf', 'cnpj', 'trade_name'] as $key)
+                                        @if (in_array($key, $brazilFields, true) && isset($brazil[$key]))
+                                            <label class="ao-anc-row">
+                                                <span>{{ $brazil[$key]->name }}</span>
+                                                <span class="ao-anc-field">
+                                                    <input type="text" wire:model="nc.{{ $key }}"
+                                                        placeholder="{{ $key === 'cpf' ? '000.000.000-00' : ($key === 'cnpj' ? '00.000.000/0000-00' : $brazil[$key]->name) }}"
+                                                        @if (in_array($key, ['cpf', 'cnpj'], true)) required @endif>
+                                                    @unless (in_array($key, ['cpf', 'cnpj'], true))
+                                                        <i>(Optional)</i>
+                                                    @endunless
+                                                </span>
+                                            </label>
+                                        @endif
+                                    @endforeach
+                                </div>
+
+                                <div class="ao-anc-col">
+                                    @if (in_array('rg', $brazilFields, true) && isset($brazil['rg']))
+                                        <label class="ao-anc-row">
+                                            <span>{{ $brazil['rg']->name }}</span>
+                                            <span class="ao-anc-field">
+                                                <input type="text" wire:model="nc.rg" placeholder="Identity document">
+                                                <i>(Optional)</i>
+                                            </span>
+                                        </label>
+                                    @endif
+
+                                    @if (in_array('state_registration', $brazilFields, true) && isset($brazil['state_registration']))
+                                        <label class="ao-anc-row">
+                                            <span>{{ $brazil['state_registration']->name }}</span>
+                                            <span class="ao-anc-field">
+                                                <input type="text" wire:model="nc.state_registration"
+                                                    placeholder="Inscrição Estadual" @disabled($isExempt)>
+                                                <label class="ao-anc-inline">
+                                                    <input type="checkbox" wire:model.live="nc.state_registration_exempt" value="1">
+                                                    Isento
+                                                </label>
+                                            </span>
+                                        </label>
+                                    @endif
+
+                                    @if (in_array('municipal_registration', $brazilFields, true) && isset($brazil['municipal_registration']))
+                                        <label class="ao-anc-row">
+                                            <span>{{ $brazil['municipal_registration']->name }}</span>
+                                            <span class="ao-anc-field">
+                                                <input type="text" wire:model="nc.municipal_registration"
+                                                    placeholder="Inscrição Municipal">
+                                                <i>(Optional)</i>
+                                            </span>
+                                        </label>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             @endif
         @endunless

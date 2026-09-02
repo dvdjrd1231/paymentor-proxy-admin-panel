@@ -813,6 +813,19 @@
         box-shadow: none;
     }
 
+    /* Issue #5: a rounded corner on the frame does nothing if what is inside it still
+       draws square — the reference's navy header row filled the frame's top edge, so from
+       a normal viewing distance the table read as sharp-cornered like the "default" table
+       everywhere else, not rounded like the reference. Every table on a Page class already
+       avoids this by rounding its own first/last cells directly ({@see .ao-mu-grid}); a
+       stock Filament resource table (Cancellation Requests among them) has no such per-cell
+       rule, so it is the frame itself that needs to clip its content instead. Scoped to
+       tables only — a form section or widget can legitimately need to overflow its own
+       box (a popover, a sticky action bar), and this must not silently clip those. */
+    .fi-ta-ctn {
+        overflow: hidden;
+    }
+
     /* Panel headings are the lighter #f5f5f5, not the rail's #e9e9e9 — the reference uses
        two different greys and collapsing them flattens the page. */
     .fi-section-header {
