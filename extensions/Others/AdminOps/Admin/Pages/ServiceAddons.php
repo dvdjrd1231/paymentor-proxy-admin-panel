@@ -68,8 +68,14 @@ class ServiceAddons extends Page
     public bool $hideInactive = true;
 
     /** The "Add Addon" form. */
+    /**
+     * Issue #7's WHMCS workflow: a "New Addon" button on the service opens this form
+     * with the service preselected — both are URL-bound so that button is just a link.
+     */
+    #[Url]
     public bool $adding = false;
 
+    #[Url(as: 'service')]
     public ?int $parentId = null;
 
     public ?int $productId = null;
