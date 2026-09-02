@@ -67,11 +67,20 @@ class PaymentGateways extends Page
 
     protected function getViewData(): array
     {
+        $extensionsUrl = null;
+        try {
+            $extensionsUrl = \App\Admin\Resources\ExtensionResource::canViewAny()
+                ? \App\Admin\Resources\ExtensionResource::getUrl('index')
+                : null;
+        } catch (\Throwable $e) {
+        }
+
         return [
             'gateways' => Gateway::orderBy('name')->get(),
             'canEdit' => fn (Gateway $gateway) => GatewayResource::canEdit($gateway)
                 ? GatewayResource::getUrl('edit', ['record' => $gateway])
                 : null,
+            'extensionsUrl' => $extensionsUrl,
         ];
     }
 }

@@ -94,11 +94,13 @@ class PanelLocations extends Page implements HasTable
             fn ($r) => ($r['status'] ?? 'enabled') === 'enabled' && (int) ($r['free'] ?? 0) > 0
         )->count();
 
-        // Issue #44 ("why store the locations here if they already exist in adminProxies?"):
-        // nothing is stored here — say so on the page, where the question was asked.
-        return count($rows) . ' locations, ' . $sellable . ' currently sellable. '
-            . 'Read live from the proxy panel — nothing is stored in Paymenter; this is the '
-            . 'same catalogue adminProxies holds, shown where the checkout stock it drives lives.';
+        // Issue #44 ("why store the locations here if they already exist in adminProxies?"
+        // then relabelled "I don't understand"): nothing is stored here. Said as plainly
+        // as possible, on the page, where the question keeps being asked.
+        return 'This page stores nothing. It is a live window into adminProxies: the same '
+            . count($rows) . ' locations, read over the API each time, shown here because their '
+            . 'stock and on/off switches decide which Regions customers can buy at checkout. '
+            . $sellable . ' currently sellable.';
     }
 
     public function table(Table $table): Table
