@@ -574,6 +574,8 @@ class WhmcsNavigation
         static::$placed[ServerResource::class] = true;
         // Issue #42: same for Configurable Options — the menu entry is the groups page.
         static::$placed[ConfigOptionResource::class] = true;
+        // Issue #48: same for Email Templates — the menu entry is the grouped page.
+        static::$placed[NotificationTemplateResource::class] = true;
 
         return static::group('Setup', 'ri-settings-3-line', [
             // First, as it is on the reference: the catalogue as a whole, ordered by
@@ -590,7 +592,7 @@ class WhmcsNavigation
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\PaymentGateways::class, 'Payment Gateways'),
             static::link(CurrencyResource::class, 'Currencies'),
             static::link(CustomPropertyResource::class, 'Custom Client Fields'),
-            static::link(NotificationTemplateResource::class, 'Email Templates'),
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::class, 'Email Templates'),
             static::link(RoleResource::class, 'Administrator Roles'),
             static::link(ApiResource::class, 'API Keys'),
             static::link(OauthClientResource::class, 'OpenID Connect'),

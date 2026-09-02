@@ -71,7 +71,7 @@ class SystemSettings extends Page
                 ['Client Fields', $url(\App\Admin\Resources\CustomPropertyResource::class), 'ri-list-settings-line', 'Extra fields collected on a client\'s profile'],
             ],
             'Communications' => [
-                ['Email Templates', $url(\App\Admin\Resources\NotificationTemplateResource::class), 'ri-mail-settings-line', 'What every automatic email says, per event'],
+                ['Email Templates', $url(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::class), 'ri-mail-settings-line', 'What every automatic email says, per event'],
                 ['Email Log', $url(\App\Admin\Resources\EmailLogResource::class), 'ri-mail-line', 'Every email this store has sent, and whether it went out'],
             ],
             'Extensions' => [
