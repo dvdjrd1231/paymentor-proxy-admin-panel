@@ -89,10 +89,28 @@
         scrollbar-gutter: stable;
     }
 
+    /* Issue #10: Windows renders flag emoji as bare letter pairs — it ships no flag
+       glyphs, and inside a native <option> no markup can substitute an image. This font
+       carries ONLY the flag codepoints (unicode-range guards it), so putting it first in
+       the stack draws real flags everywhere and changes nothing else. */
+    @font-face {
+        font-family: 'Twemoji Country Flags';
+        src: url('/admin/adminops-flags.woff2') format('woff2');
+        unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067,
+            U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;
+        font-display: swap;
+    }
+
+    .fi-body,
+    .fi-body select,
+    .fi-body input,
+    .fi-body button {
+        font-family: 'Twemoji Country Flags', 'Open Sans', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
     .fi-body {
         background: var(--wa-canvas);
         color: var(--wa-text);
-        font-family: 'Open Sans', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         font-size: 17px;
     }
 

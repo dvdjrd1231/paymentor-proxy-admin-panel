@@ -119,16 +119,16 @@
                         </span>
                     </label>
 
-                    {{-- Configurable Options: core's own ConfigOption tree (admin-managed
-                         under Configuration → Configurable Options) and, when this line's
-                         product has a server, that server's own checkout fields —
-                         ProxyPanel's Region among them, flags included. Not a special case:
-                         both come through the same ExtensionHelper call the storefront's own
-                         checkout uses, so this offers exactly what a customer placing the
-                         same order would see. --}}
+                    {{-- Core's own ConfigOption tree and, when this line's product has a
+                         server, that server's own checkout fields — ProxyPanel's Region
+                         among them, flags included. Both come through the same
+                         ExtensionHelper call the storefront's own checkout uses, so this
+                         offers exactly what a customer placing the same order would see.
+                         Leandro (issue #10): no "Configurable Options" heading — Paymenter
+                         does not present these as WHMCS's configurable-options concept, so
+                         the fields sit directly under the product they belong to. --}}
                     @if ($optionsByItem[$index]->isNotEmpty() || $checkoutFieldsByItem[$index] !== [])
                         <div class="ao-ano-configs">
-                            <div class="ao-ano-configs-head">Configurable Options</div>
 
                             @foreach ($optionsByItem[$index] as $option)
                                 <label class="ao-anc-row">

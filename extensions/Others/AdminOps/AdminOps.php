@@ -368,6 +368,22 @@ class AdminOps extends Extension
                 'ETag' => '"' . $version . '"',
             ]);
         })->where('version', '[a-z0-9]+')->name('adminops.styles');
+
+        // Issue #10's "add flag before the country name": Windows has no flag glyphs, so
+        // regional-indicator emoji fall back to two-letter codes — inside native <select>
+        // options, where no markup can help. This font (Twemoji Country Flags, MPL-2.0,
+        // flags CC-BY 4.0) covers only the flag codepoints; prepended to the font stack it
+        // fills exactly that gap and touches nothing else. Vendored, not a CDN.
+        \Illuminate\Support\Facades\Route::get('/admin/adminops-flags.woff2', function () {
+            $file = __DIR__ . '/resources/fonts/TwemojiCountryFlags.woff2';
+
+            abort_unless(is_file($file), 404);
+
+            return response()->file($file, [
+                'Content-Type' => 'font/woff2',
+                'Cache-Control' => 'public, max-age=31536000, immutable',
+            ]);
+        })->name('adminops.flags-font');
     }
 
     /**
