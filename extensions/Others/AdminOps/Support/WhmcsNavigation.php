@@ -569,6 +569,11 @@ class WhmcsNavigation
         // core resource is no longer claimed by link() — claim it here or the Addons
         // sweep resurfaces it (its edit form is still reached from that page's Edit).
         static::$placed[GatewayResource::class] = true;
+        // Issue #43: same treatment for Servers — the menu entry is the quick-actions
+        // page; core's resource (still the edit/create surface) is claimed here.
+        static::$placed[ServerResource::class] = true;
+        // Issue #42: same for Configurable Options — the menu entry is the groups page.
+        static::$placed[ConfigOptionResource::class] = true;
 
         return static::group('Setup', 'ri-settings-3-line', [
             // First, as it is on the reference: the catalogue as a whole, ordered by
@@ -578,8 +583,8 @@ class WhmcsNavigation
             // Pricing tab there and cannot here — a resource's form is no more extensible
             // from an extension than its table is.
             static::link(ProductTermResource::class, 'Auto Terminate'),
-            static::link(ConfigOptionResource::class, 'Configurable Options'),
-            static::link(ServerResource::class, 'Servers'),
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ConfigOptionGroups::class, 'Configurable Options'),
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServersList::class, 'Servers'),
             static::page(PanelLocations::class, 'Panel Locations'),
             // Issue #45: the quick-buttons page; core's resource stays claimed below.
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\PaymentGateways::class, 'Payment Gateways'),
