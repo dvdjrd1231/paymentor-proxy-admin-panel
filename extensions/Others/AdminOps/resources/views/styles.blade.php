@@ -1464,7 +1464,11 @@
         outline-offset: -1px;
     }
 
-    .ao-find-go {
+    .ao-find-go,
+    /* As a link too (Products/Services' "Open Full Service", issue #4): the skin's
+       generic anchor colour outweighed the button's white, leaving blue-on-blue —
+       a solid blue pill with invisible text. */
+    .fi-body a.ao-find-go {
         display: inline-flex;
         align-items: center;
         gap: 0.35rem;
@@ -1476,6 +1480,7 @@
         color: #fff;
         font-weight: 600;
         font-size: 0.9375rem;
+        text-decoration: none;
         cursor: pointer;
     }
 
