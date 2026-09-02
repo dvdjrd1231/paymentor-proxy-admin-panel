@@ -5,7 +5,6 @@ namespace Paymenter\Extensions\Others\AdminOps\Support;
 use App\Admin\Pages\CronStats;
 use App\Admin\Pages\Updates;
 use App\Admin\Resources\ApiResource;
-use App\Admin\Resources\CategoryResource;
 use App\Admin\Resources\ConfigOptionResource;
 use App\Admin\Resources\CurrencyResource;
 use App\Admin\Resources\CustomPropertyResource;
@@ -24,6 +23,7 @@ use App\Models\DebugLog;
 use App\Models\FailedJob;
 use Illuminate\Support\Facades\Schema;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewClient;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\Catalogue;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewOrder;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\OpenNewTicket;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SystemSettings;
@@ -99,8 +99,10 @@ class Toolbar
             // System Settings instead, whose first tile is that same page for whoever
             // wants the raw form directly. See {@see SystemSettings}.
             static::page(SystemSettings::class, 'System Settings', 'heroicon-o-adjustments-horizontal'),
-            static::index(ProductResource::class, 'Products', 'heroicon-o-cube'),
-            static::index(CategoryResource::class, 'Categories', 'heroicon-o-squares-2x2'),
+            // Issue #35: this used to open core's raw Products list, which cannot drag —
+            // Leandro landed there and read reordering as missing. The catalogue is the
+            // WHMCS surface (drag to reorder, Edit/Create for single records).
+            static::page(Catalogue::class, 'Products/Services', 'heroicon-o-cube'),
             static::index(ConfigOptionResource::class, 'Configurable Options', 'heroicon-o-adjustments-vertical'),
             static::index(ServerResource::class, 'Servers', 'heroicon-o-server-stack'),
             static::page(PanelLocations::class, 'Panel Locations', 'heroicon-o-globe-alt'),

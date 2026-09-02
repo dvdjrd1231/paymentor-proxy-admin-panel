@@ -549,13 +549,18 @@ class WhmcsNavigation
         // entry alongside ExtensionResource, which is placed below in this same group.
         static::$placed[ExtensionsCluster::class] = true;
 
+        // Issue #35: "Products" (core's raw resource, no drag) sat right under
+        // Products/Services (the catalogue, which drags) — Leandro opened the wrong one
+        // and read the feature as missing. The reference's Setup menu carries only
+        // Products/Services; single records are created/edited through the catalogue's
+        // own Edit and Create buttons, which land on these resources' pages.
+        static::$placed[ProductResource::class] = true;
+        static::$placed[CategoryResource::class] = true;
+
         return static::group('Setup', 'ri-settings-3-line', [
             // First, as it is on the reference: the catalogue as a whole, ordered by
-            // dragging. The two resource lists below it are where a single record is
-            // created, edited and deleted.
+            // dragging.
             static::page(Catalogue::class, 'Products/Services'),
-            static::link(ProductResource::class, 'Products'),
-            static::link(CategoryResource::class, 'Categories'),
             // The reference's Auto Terminate/Fixed Term field, which lives on the product's
             // Pricing tab there and cannot here — a resource's form is no more extensible
             // from an extension than its table is.
