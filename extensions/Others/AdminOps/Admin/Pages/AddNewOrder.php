@@ -72,6 +72,14 @@ class AddNewOrder extends Page
 
     public bool $sendEmail = true;
 
+    /**
+     * The reference's credit-balance choice. Only meaningful when {@see creditEligible()} —
+     * a line with no invoice, or a balance that does not fully cover it, has nothing to
+     * apply — but the property still needs a default, and "apply what's there" is the
+     * reference's own: its radio is pre-selected on the Apply option whenever it is offered.
+     */
+    public bool $applyCredit = true;
+
     public static function canAccess(): bool
     {
         return OrderResource::canCreate();
@@ -130,6 +138,23 @@ class AddNewOrder extends Page
             : collect();
     }
 
+    /**
+     * This client's spendable balance in the order's currency — the same row core's own
+     * {@see \App\Livewire\Invoices\Show::payWithCredit()} and ClientTools' `ApplyCredit`
+     * read, just for whichever client is picked here instead of the logged-in one.
+     */
+    public function creditBalance(): float
+    {
+        if (!$this->userId) {
+            return 0.0;
+        }
+
+        $currency = config('settings.default_currency', 'USD');
+
+        return (float) (User::find($this->userId)
+            ?->credits()->where('currency_code', $currency)->first()?->amount ?? 0);
+    }
+
     /** The live Order Summary: a line per picked product, unit price or override, options included. */
     public function summary(): array
     {
@@ -166,10 +191,36 @@ class AddNewOrder extends Page
             ];
         }
 
+        // The reference's "Recurring" banner: what keeps billing after this invoice, grouped
+        // by cycle rather than assumed singular — a mixed order (a monthly proxy plan and an
+        // annual add-on, say) gets one row per cycle, the same way the reference does when
+        // its own cart mixes them. A one-time or free line contributes nothing here; it is
+        // already the whole of what it will ever cost, and the reference does not label it
+        // "recurring" either.
+        $recurring = [];
+        foreach ($lines as $line) {
+            if (!$line['plan'] || in_array($line['plan']->type, ['free', 'one-time'], true)) {
+                continue;
+            }
+
+            $cycle = ProductConfig::cycleLabel($line['plan']);
+            $recurring[$cycle] = ($recurring[$cycle] ?? 0) + $line['total'];
+        }
+
+        $total = array_sum(array_column($lines, 'total'));
+        $credit = $this->creditBalance();
+
         return [
             'currency' => $currency,
             'lines' => $lines,
-            'total' => array_sum(array_column($lines, 'total')),
+            'total' => $total,
+            'recurring' => $recurring,
+            'creditBalance' => $credit,
+            // Only offered when it fully covers the order, matching the one shape the
+            // reference itself shows: "Apply $X … No further payment will be due." A partial
+            // balance is never silently part-applied — the admin sees no offer rather than
+            // one that would leave the invoice still owing something the form did not say.
+            'creditEligible' => $this->generateInvoice && $total > 0 && $credit >= $total,
         ];
     }
 
@@ -214,8 +265,14 @@ class AddNewOrder extends Page
 
         $user = User::whereNull('role_id')->findOrFail($this->userId);
         $activateNow = $this->orderStatus === 'active';
+        $wantsCredit = $this->applyCredit && $summary['creditEligible'];
 
-        $order = DB::transaction(function () use ($user, $summary, $activateNow): Order {
+        // Captured by reference so the credit application below — which needs a real,
+        // persisted Invoice — can run after this transaction commits rather than nested
+        // inside it for no reason.
+        $invoice = null;
+
+        $order = DB::transaction(function () use ($user, $summary, $activateNow, &$invoice): Order {
             $order = new Order([
                 'user_id' => $user->id,
                 'currency_code' => $summary['currency'],
@@ -225,7 +282,6 @@ class AddNewOrder extends Page
             $order->send_create_email = $this->sendEmail;
             $order->save();
 
-            $invoice = null;
             if ($this->generateInvoice && $summary['total'] > 0) {
                 $invoice = new Invoice([
                     'user_id' => $user->id,
@@ -280,8 +336,46 @@ class AddNewOrder extends Page
             return $order;
         });
 
+        // The reference's credit-balance choice. Applied after the order's own transaction
+        // commits, in its own — exactly the shape core's App\Livewire\Invoices\Show::
+        // payWithCredit() and ClientTools' ApplyCredit use to spend a balance against an
+        // invoice: lock the credit row and the invoice together, clamp to what is genuinely
+        // still owed and genuinely still there, decrement the one and pay the other. Nothing
+        // here is a new payment mechanism — it is that same, already-proven call, made for
+        // whichever client is picked on this form instead of the one signed into the client
+        // area. Re-checked from scratch rather than trusting $summary['creditEligible']:
+        // between the summary being computed and the order actually being placed, the
+        // balance could have been spent elsewhere.
+        $creditApplied = 0.0;
+
+        if ($invoice && $wantsCredit) {
+            DB::transaction(function () use ($user, $invoice, &$creditApplied): void {
+                $credit = $user->credits()->where('currency_code', $invoice->currency_code)->lockForUpdate()->first();
+                $freshInvoice = Invoice::whereKey($invoice->id)->lockForUpdate()->first();
+
+                if (!$credit || $credit->amount <= 0 || !$freshInvoice) {
+                    return;
+                }
+
+                $apply = round(min((float) $credit->amount, (float) $freshInvoice->remaining), 2);
+
+                if ($apply <= 0) {
+                    return;
+                }
+
+                $credit->amount -= $apply;
+                $credit->save();
+
+                ExtensionHelper::addPayment($freshInvoice->id, null, amount: $apply, isCreditTransaction: true);
+                $creditApplied = $apply;
+            });
+        }
+
         Notification::make()->title('Order #' . $order->id . ' placed')
-            ->body(count($summary['lines']) . ' product(s) for ' . $user->name)
+            ->body(
+                count($summary['lines']) . ' product(s) for ' . $user->name
+                . ($creditApplied > 0 ? ' — $' . number_format($creditApplied, 2) . ' ' . $summary['currency'] . ' applied from account credit' : ''),
+            )
             ->success()->send();
 
         $this->redirect(ManageOrders::getUrl(['status' => $activateNow ? 'active' : 'pending']));

@@ -24,6 +24,31 @@ use Illuminate\Validation\Rule;
  */
 class ProductConfig
 {
+    /**
+     * "Monthly", "2 Weeks", "One Time" — the reference's own wording for a plan's cycle.
+     * Copied from {@see \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::cycle()},
+     * which does the same match against an existing Service's plan; this one runs before a
+     * service exists, from the plan alone.
+     */
+    public static function cycleLabel(?Plan $plan): string
+    {
+        if (!$plan || $plan->type === 'one-time') {
+            return 'One Time';
+        }
+
+        if ($plan->type === 'free') {
+            return 'Free';
+        }
+
+        return match ($plan->billing_unit) {
+            'day' => $plan->billing_period == 1 ? 'Daily' : $plan->billing_period . ' Days',
+            'week' => $plan->billing_period == 1 ? 'Weekly' : $plan->billing_period . ' Weeks',
+            'month' => $plan->billing_period == 1 ? 'Monthly' : $plan->billing_period . ' Months',
+            'year' => $plan->billing_period == 1 ? 'Annually' : $plan->billing_period . ' Years',
+            default => ucfirst((string) $plan->type),
+        };
+    }
+
     /** Core's Configurable Options for a product, with their priced children preloaded. */
     public static function configOptions(?int $productId): Collection
     {

@@ -153,25 +153,14 @@ class ProductsServices extends Page
         return $status === Service::STATUS_CANCELLED ? 'Terminated' : ucfirst($status);
     }
 
-    /** One Time / Monthly / Weekly…, as the reference words a billing cycle. */
+    /**
+     * One Time / Monthly / Weekly…, as the reference words a billing cycle. The match itself
+     * lives in {@see \Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::cycleLabel()},
+     * which Add New Order also needs before a service exists to label — this keeps the one
+     * copy of the wording.
+     */
     public static function cycle(Service $service): string
     {
-        $plan = $service->plan;
-
-        if (!$plan || $plan->type === 'one-time') {
-            return 'One Time';
-        }
-
-        if ($plan->type === 'free') {
-            return 'Free';
-        }
-
-        return match ($plan->billing_unit) {
-            'day' => $plan->billing_period == 1 ? 'Daily' : $plan->billing_period . ' Days',
-            'week' => $plan->billing_period == 1 ? 'Weekly' : $plan->billing_period . ' Weeks',
-            'month' => $plan->billing_period == 1 ? 'Monthly' : $plan->billing_period . ' Months',
-            'year' => $plan->billing_period == 1 ? 'Annually' : $plan->billing_period . ' Years',
-            default => ucfirst((string) $plan->type),
-        };
+        return \Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::cycleLabel($service->plan);
     }
 }

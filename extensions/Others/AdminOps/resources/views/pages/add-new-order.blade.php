@@ -9,7 +9,9 @@
             <div class="ao-anc-card">
                 <label class="ao-anc-row">
                     <span>Client</span>
-                    <select wire:model="userId" required>
+                    {{-- .live: the Order Summary's credit-balance offer is this client's own
+                         balance, and has to refresh the moment a different one is picked. --}}
+                    <select wire:model.live="userId" required>
                         <option value="">Start Typing to Search Clients</option>
                         @foreach ($clients as $client)
                             <option value="{{ $client->id }}">
@@ -253,7 +255,35 @@
                     <span>Total</span>
                     <span>${{ number_format($summary['total'], 2) }} {{ $summary['currency'] }}</span>
                 </div>
+                {{-- The reference's pink "Recurring" banner: what keeps billing after this
+                     invoice. One row per cycle, in case a line's plan is a one-off (the
+                     add-on charged once) beside another that renews. --}}
+                @foreach ($summary['recurring'] as $cycle => $amount)
+                    <div class="ao-ano-recurring">
+                        <span>Recurring</span>
+                        <span>${{ number_format($amount, 2) }} {{ $summary['currency'] }} {{ $cycle }}</span>
+                    </div>
+                @endforeach
             </div>
+
+            {{-- The reference's credit-balance choice. Offered only when the client's own
+                 balance fully covers this order — a partial one is never silently part-
+                 applied, so there is nothing here to misread as "this order is paid" when
+                 it would not quite be. --}}
+            @if ($summary['creditEligible'])
+                <div class="ao-ano-credit">
+                    <p>Clients available credit balance is ${{ number_format($summary['creditBalance'], 2) }} {{ $summary['currency'] }}.</p>
+                    <label class="ao-ano-credit-opt">
+                        <input type="radio" name="ao-ano-credit" value="1" wire:model="applyCredit">
+                        Apply <strong>${{ number_format($summary['total'], 2) }} {{ $summary['currency'] }}</strong> from clients credit balance to this order. No further payment will be due.
+                    </label>
+                    <label class="ao-ano-credit-opt">
+                        <input type="radio" name="ao-ano-credit" value="0" wire:model="applyCredit">
+                        Do not apply any credit from clients credit balance to this order. Client will pay for it using the selected payment method.
+                    </label>
+                </div>
+            @endif
+
             <button type="submit" class="ao-find-go ao-ano-submit">Submit Order &raquo;</button>
         </aside>
     </form>
