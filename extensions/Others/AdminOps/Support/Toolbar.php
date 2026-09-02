@@ -115,11 +115,11 @@ class Toolbar
             // Issue #45: the AdminOps page with the Enable/Disable/Edit quick buttons.
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\PaymentGateways::class, 'Payment Gateways', 'heroicon-o-credit-card'),
             static::index(CurrencyResource::class, 'Currencies', 'heroicon-o-banknotes'),
-            static::index(CustomPropertyResource::class, 'Custom Properties', 'heroicon-o-tag'),
+            static::index(CustomPropertyResource::class, 'Custom Client Fields', 'heroicon-o-tag'),
             static::index(NotificationTemplateResource::class, 'Email Templates', 'heroicon-o-envelope'),
             static::index(RoleResource::class, 'Administrator Roles', 'heroicon-o-user-group'),
             static::index(ApiResource::class, 'API Keys', 'heroicon-o-key'),
-            static::index(OauthClientResource::class, 'OAuth Clients', 'heroicon-o-finger-print'),
+            static::index(OauthClientResource::class, 'OpenID Connect', 'heroicon-o-finger-print'),
             static::index(ExtensionResource::class, 'Extensions', 'heroicon-o-puzzle-piece'),
         ]));
     }
