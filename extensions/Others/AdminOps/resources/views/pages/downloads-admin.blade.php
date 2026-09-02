@@ -56,7 +56,11 @@
             @endif
         </p>
 
-        <div class="ao-dl-band">Categories</div>
+        {{-- Issue #23: the reference's empty Download Home shows nothing below the
+             crumb — the band only appears once there is something to put under it. --}}
+        @if ($categories->isNotEmpty())
+            <div class="ao-dl-band">Categories</div>
+        @endif
 
         @forelse ($categories as $row)
             <div class="ao-pr-row">
@@ -74,9 +78,6 @@
                 </button>
             </div>
         @empty
-            @if (!$current)
-                <p class="ao-pr-none">No Categories Found</p>
-            @endif
         @endforelse
 
         @if ($files->isNotEmpty())
