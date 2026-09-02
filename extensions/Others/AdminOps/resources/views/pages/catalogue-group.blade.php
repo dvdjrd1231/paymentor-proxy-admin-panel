@@ -1,11 +1,16 @@
 {{--
-    One group: its heading band, its products, and any child groups.
+    One group, to issues #35 and #41: the reference's grey band — drag handle at its left,
+    "Group Name: X", edit and delete icons at its right — then the group's products as rows
+    of the one shared grid, each with its own drag/edit/delete icons in the last column.
 
-    Included recursively — a child group is the same thing one level in — so the depth of
-    the tree is whatever `categories.parent_id` says rather than a fixed two.
+    Included recursively — a child group is the same thing one level in.
 
     `$node` is `['category' => Category, 'children' => array]`; everything else
     (`$canReorderCategories`, `$canReorderProducts`) comes from the parent view.
+
+    `wire:key` on every row that can move: a drag reorders the DOM before the server knows
+    anything about it, so the re-render that follows morphs new HTML onto a list in a
+    different order than it was sent in. Keyed, Livewire matches rows by identity.
 --}}
 @php
     $category = $node['category'];
@@ -13,79 +18,69 @@
     $categoryUrl = $this->categoryUrl($category);
 @endphp
 
-{{--
-    `wire:key` on every row that can move. A drag reorders the DOM before the server knows
-    anything about it, so the re-render that follows is morphing new HTML onto a list in a
-    different order than it was sent in. Keyed, Livewire matches rows by identity and moves
-    them; unkeyed, it matches by position and rewrites each row's contents in place — which
-    looks like the drag half-worked.
---}}
 <li class="ao-cat" data-ao-id="{{ $category->id }}" wire:key="ao-cat-{{ $category->id }}">
-    <div class="ao-cat-head">
+    <div class="ao-ct-band">
         @if ($canReorderCategories)
             <span class="ao-grip" data-ao-grip role="button" tabindex="0"
                 aria-label="Reorder the group {{ $category->name }}. Drag, or use the arrow keys."
                 title="Drag to reorder">&#10021;</span>
         @endif
 
-        <span class="ao-cat-name">Group Name: {{ $category->name }}</span>
+        <span class="ao-ct-band-name"><b>Group Name:</b> {{ $category->name }}</span>
 
-        <span class="ao-cat-meta">
-            {{ $products->count() }} {{ Str::plural('product', $products->count()) }}
+        <span class="ao-ct-icons">
+            @if ($categoryUrl)
+                <a href="{{ $categoryUrl }}" title="Edit group">
+                    <x-filament::icon icon="ri-edit-box-line" class="ao-mu-cell-icon" />
+                </a>
+            @endif
+            <button type="button" title="Delete group" wire:click="confirmDelete('category', {{ $category->id }})">
+                <x-filament::icon icon="ri-indeterminate-circle-fill" class="ao-mu-cell-icon ao-mu-icon-red" />
+            </button>
         </span>
-
-        @if ($categoryUrl)
-            <a class="ao-cat-edit" href="{{ $categoryUrl }}">Edit</a>
-        @endif
     </div>
 
     @if ($products->isEmpty())
         <p class="ao-cat-empty">No products in this group.</p>
     @else
-        <table class="ao-cat-table">
-            <thead>
-                <tr>
-                    @if ($canReorderProducts)
-                        <th class="ao-col-grip"><span class="sr-only">Reorder</span></th>
-                    @endif
-                    <th>Product Name</th>
-                    <th>Type</th>
-                    <th>Pay Type</th>
-                    <th class="ao-col-stock">Stock</th>
-                </tr>
-            </thead>
-            <tbody data-ao-scope="product" data-ao-category="{{ $category->id }}">
-                @foreach ($products as $product)
-                    @php $productUrl = $this->productUrl($product); @endphp
-                    <tr data-ao-id="{{ $product->id }}" wire:key="ao-prod-{{ $product->id }}">
-                        @if ($canReorderProducts)
-                            <td class="ao-col-grip">
-                                <span class="ao-grip" data-ao-grip role="button" tabindex="0"
-                                    aria-label="Reorder {{ $product->name }}. Drag, or use the arrow keys."
-                                    title="Drag to reorder">&#10021;</span>
-                            </td>
+        <div data-ao-scope="product" data-ao-category="{{ $category->id }}">
+            @foreach ($products as $product)
+                @php $productUrl = $this->productUrl($product); @endphp
+                <div class="ao-ct-row ao-ct-product" data-ao-id="{{ $product->id }}" wire:key="ao-prod-{{ $product->id }}">
+                    <span class="ao-ct-name">
+                        @if ($productUrl)
+                            <a href="{{ $productUrl }}">{{ $product->name }}</a>
+                        @else
+                            {{ $product->name }}
                         @endif
 
-                        <td>
-                            @if ($productUrl)
-                                <a href="{{ $productUrl }}">{{ $product->name }}</a>
-                            @else
-                                {{ $product->name }}
-                            @endif
-
-                            {{-- The reference marks these the same way, in the name itself. --}}
-                            @if ($product->hidden)
-                                <span class="ao-cat-flag">(Hidden)</span>
-                            @endif
-                        </td>
-
-                        <td>{{ $this->typeLabel($product) }}</td>
-                        <td>{{ $this->payTypeLabel($product) }}</td>
-                        <td class="ao-col-stock">{{ $product->stock ?? '—' }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+                        {{-- The reference marks these the same way, in the name itself. --}}
+                        @if ($product->hidden)
+                            <i class="ao-cat-flag">(Hidden)</i>
+                        @endif
+                    </span>
+                    <span>{{ $this->typeLabel($product) }}</span>
+                    <span>{{ $this->payTypeLabel($product) }}</span>
+                    <span>{{ $product->stock ?? '-' }}</span>
+                    <span>{{ $this->autoSetupLabel($product) }}</span>
+                    <span class="ao-ct-icons">
+                        @if ($canReorderProducts)
+                            <span class="ao-grip" data-ao-grip role="button" tabindex="0"
+                                aria-label="Reorder {{ $product->name }}. Drag, or use the arrow keys."
+                                title="Drag to reorder">&#10021;</span>
+                        @endif
+                        @if ($productUrl)
+                            <a href="{{ $productUrl }}" title="Edit product">
+                                <x-filament::icon icon="ri-edit-box-line" class="ao-mu-cell-icon" />
+                            </a>
+                        @endif
+                        <button type="button" title="Delete product" wire:click="confirmDelete('product', {{ $product->id }})">
+                            <x-filament::icon icon="ri-indeterminate-circle-fill" class="ao-mu-cell-icon ao-mu-icon-red" />
+                        </button>
+                    </span>
+                </div>
+            @endforeach
+        </div>
     @endif
 
     @if (! empty($node['children']))

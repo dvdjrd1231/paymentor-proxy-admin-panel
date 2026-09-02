@@ -11,13 +11,55 @@
     is the HTML5 drag API rather than a library — nothing to bundle, nothing to version.
 --}}
 <x-filament-panels::page>
+    <div class="ao-mu">
+        {{-- The reference's three buttons, in its order (issue #35). --}}
+        <div class="ao-tx-tabs">
+            @if ($urls['newCategory'])
+                <a class="ao-mu-tab" href="{{ $urls['newCategory'] }}">&#10010; Create a New Group</a>
+            @endif
+            @if ($urls['newProduct'])
+                <a class="ao-mu-tab" href="{{ $urls['newProduct'] }}">&#10010; Create a New Product</a>
+            @endif
+            <button type="button" class="ao-mu-tab {{ $duplicating ? 'ao-on' : '' }}" wire:click="toggleDuplicating">Duplicate a Product</button>
+        </div>
+
+        @if ($duplicating)
+            <form class="ao-anc-card" wire:submit.prevent="duplicate">
+                <label class="ao-anc-row">
+                    <span>Product to Duplicate</span>
+                    <select class="ao-w-40" wire:model="duplicateSource" required>
+                        <option value="">Choose a product</option>
+                        @foreach ($allProducts as $option)
+                            <option value="{{ $option->id }}">{{ $option->name }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <div class="ao-pr-center"><button type="submit" class="ao-find-go">Duplicate</button></div>
+            </form>
+            @if ($errors->any())
+                <ul class="ao-anc-errors">
+                    @foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach
+                </ul>
+            @endif
+        @endif
+
     @if (empty($tree))
         <div class="ao-catalogue-empty">
             <p>No product groups yet.</p>
             <p>A group has to exist before a product can go in one.</p>
         </div>
     @else
-        <div class="ao-catalogue" data-ao-catalogue>
+        <div class="ao-catalogue ao-ct" data-ao-catalogue>
+            {{-- The reference's one navy header over the whole catalogue. --}}
+            <div class="ao-ct-row ao-ct-head">
+                <span>Product Name</span>
+                <span>Type</span>
+                <span>Pay Type</span>
+                <span>Stock</span>
+                <span>Auto Setup</span>
+                <span></span>
+            </div>
+
             <ul class="ao-cat-list" data-ao-scope="category" data-ao-parent="">
                 @foreach ($tree as $node)
                     @include('adminops::pages.catalogue-group', ['node' => $node])
@@ -29,6 +71,32 @@
                 {{ $productCount }} {{ Str::plural('product', $productCount) }}
             </p>
         </div>
+
+        @if ($confirmKind)
+            <div class="ao-mud-overlay" wire:click.self="$set('confirmKind', null)">
+                <div class="ao-mud ao-mud-sm" role="alertdialog" aria-modal="true">
+                    <div class="ao-mud-head">
+                        Are you sure?
+                        <button type="button" wire:click="$set('confirmKind', null)" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="ao-mud-text">
+                        @if ($confirmKind === 'product')
+                            <p>Are you sure you wish to delete this product?</p>
+                            <p>A product with services attached will be refused.</p>
+                        @else
+                            <p>Are you sure you wish to delete this group?</p>
+                            <p>A group that still holds products will be refused.</p>
+                        @endif
+                    </div>
+                    <div class="ao-mud-foot ao-mud-foot-only-right">
+                        <span class="ao-mud-foot-right">
+                            <button type="button" class="ao-mud-close" wire:click="$set('confirmKind', null)">Cancel</button>
+                            <button type="button" class="ao-mud-delete" wire:click="runDelete">OK</button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         @if ($canReorder)
             <script>
@@ -174,4 +242,5 @@
             </script>
         @endif
     @endif
+    </div>
 </x-filament-panels::page>

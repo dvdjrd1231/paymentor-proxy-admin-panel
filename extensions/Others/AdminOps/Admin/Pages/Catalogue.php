@@ -74,29 +74,127 @@ class Catalogue extends Page
         return 'Products/Services';
     }
 
+    /** The reference's own intro paragraph, verbatim (issues #35 and #41). */
     public function getSubheading(): ?string
     {
-        return $this->canReorder()
-            ? 'Drag a group or a product by its handle to change the order customers see. Saved as you drop.'
-            : 'The order customers see. Reordering needs the update permission.';
+        return 'This is where you configure all your products and services. Each product must be '
+            . 'assigned to a group which can either be visible or hidden from the order page '
+            . '(products may also be hidden individually). A product which is in a hidden group can '
+            . 'still be ordered using the Direct Order Link shown when editing the package.';
     }
 
-    protected function getHeaderActions(): array
-    {
-        return [
-            Action::make('newProduct')
-                ->label('Create a New Product')
-                ->icon(Heroicon::Plus)
-                ->url(fn (): string => ProductResource::getUrl('create'))
-                ->visible(fn (): bool => ProductResource::canCreate()),
+    /** The reference's Duplicate a Product panel (issue #35). */
+    public bool $duplicating = false;
 
-            Action::make('newCategory')
-                ->label('Create a New Group')
-                ->icon(Heroicon::FolderPlus)
-                ->color('gray')
-                ->url(fn (): string => CategoryResource::getUrl('create'))
-                ->visible(fn (): bool => CategoryResource::canCreate()),
-        ];
+    public ?int $duplicateSource = null;
+
+    /** ['product'|'category', id] awaiting the "Are you sure?" modal, or null. */
+    public ?string $confirmKind = null;
+
+    public ?int $confirmId = null;
+
+    public function toggleDuplicating(): void
+    {
+        $this->duplicating = !$this->duplicating;
+    }
+
+    /**
+     * WHMCS's Duplicate a Product: a full copy — the product row, its plans and their
+     * prices, its settings, and its configurable-option links — under "<name> (Copy)".
+     */
+    public function duplicate(): void
+    {
+        if (!ProductResource::canCreate()) {
+            $this->refuse('You do not have permission to create products.');
+
+            return;
+        }
+
+        $this->validate(['duplicateSource' => 'required|exists:products,id'], attributes: ['duplicateSource' => 'product']);
+
+        $source = Product::with(['plans.prices', 'settings'])->findOrFail($this->duplicateSource);
+
+        DB::transaction(function () use ($source): void {
+            $copy = $source->replicate(['sort']);
+            $copy->name = $source->name . ' (Copy)';
+            $copy->slug = ($source->slug ?: str($source->name)->slug()) . '-copy-' . dechex(crc32($source->id . microtime()));
+            $copy->save();
+
+            foreach ($source->plans as $plan) {
+                $planCopy = $plan->replicate();
+                $planCopy->priceable_id = $copy->id;
+                $planCopy->save();
+
+                foreach ($plan->prices as $price) {
+                    $priceCopy = $price->replicate();
+                    $priceCopy->plan_id = $planCopy->id;
+                    $priceCopy->save();
+                }
+            }
+
+            foreach ($source->settings as $setting) {
+                $settingCopy = $setting->replicate();
+                $settingCopy->settingable_id = $copy->id;
+                $settingCopy->save();
+            }
+
+            DB::table('config_option_products')
+                ->where('product_id', $source->id)
+                ->get()
+                ->each(fn ($link) => DB::table('config_option_products')->insert([
+                    'config_option_id' => $link->config_option_id,
+                    'product_id' => $copy->id,
+                ]));
+        });
+
+        $this->reset(['duplicating', 'duplicateSource']);
+        Notification::make()->title('Product duplicated')
+            ->body('The copy sits in the same group, named "(Copy)".')->success()->send();
+    }
+
+    public function confirmDelete(string $kind, int $id): void
+    {
+        $this->confirmKind = in_array($kind, ['product', 'category'], true) ? $kind : null;
+        $this->confirmId = $id;
+    }
+
+    /**
+     * The reference's red delete dot, guarded: a product with services, or a group with
+     * products or children, is refused — deleting those from a reorder screen would take
+     * live billing history with it.
+     */
+    public function runDelete(): void
+    {
+        [$kind, $id] = [$this->confirmKind, $this->confirmId];
+        $this->reset(['confirmKind', 'confirmId']);
+
+        if ($kind === 'product' && $id) {
+            $product = Product::withCount('services')->find($id);
+
+            if (!$product || !ProductResource::canDelete($product)) {
+                $this->refuse('You do not have permission to delete this product.');
+            } elseif ($product->services_count > 0) {
+                $this->refuse('This product has services attached. Cancel or move them first.');
+            } else {
+                $product->delete();
+                Notification::make()->title('Product deleted')->success()->send();
+            }
+
+            return;
+        }
+
+        if ($kind === 'category' && $id) {
+            $category = Category::withCount('products')->find($id);
+
+            if (!$category || !CategoryResource::canDelete($category)) {
+                $this->refuse('You do not have permission to delete this group.');
+            } elseif ($category->products_count > 0 || Category::where('parent_id', $category->id)->exists()) {
+                $this->refuse('This group still holds products or child groups. Empty it first.');
+            } else {
+                $category->delete();
+                Notification::make()->title('Group deleted')->success()->send();
+            }
+        }
     }
 
     protected function getViewData(): array
@@ -121,6 +219,11 @@ class Catalogue extends Page
             'canReorderCategories' => $this->canReorderCategories(),
             'canReorderProducts' => $this->canReorderProducts(),
             'productCount' => $categories->sum(fn (Category $category): int => $category->products->count()),
+            'allProducts' => Product::orderBy('name')->get(['id', 'name']),
+            'urls' => [
+                'newProduct' => ProductResource::canCreate() ? ProductResource::getUrl('create') : null,
+                'newCategory' => CategoryResource::canCreate() ? CategoryResource::getUrl('create') : null,
+            ],
         ];
     }
 
@@ -189,6 +292,16 @@ class Catalogue extends Page
             ->values();
 
         return $types->isEmpty() ? 'Not priced' : $types->implode(' · ');
+    }
+
+    /**
+     * The reference's Auto Setup column. Paymenter provisions a service the moment its
+     * order is paid — the reference's "After First Payment" — and a product with no
+     * server module is never set up automatically.
+     */
+    public function autoSetupLabel(Product $product): string
+    {
+        return $product->server ? 'After First Payment' : '—';
     }
 
     public function productUrl(Product $product): ?string
