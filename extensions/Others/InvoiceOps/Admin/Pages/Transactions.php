@@ -57,11 +57,6 @@ class Transactions extends Page
         return 'Transactions';
     }
 
-    public function getSubheading(): ?string
-    {
-        return 'What came in, what the gateways took, and what went back out.';
-    }
-
     protected function getViewData(): array
     {
         $rows = InvoiceTransaction::query()

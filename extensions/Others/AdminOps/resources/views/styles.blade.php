@@ -2918,6 +2918,8 @@
 
     .ao-tx-up { color: #3c763d; font-style: normal; font-size: 0.85rem; }
     .ao-tx-down { color: #d9534f; font-style: normal; font-size: 0.85rem; }
+    /* Issue #11: the reference's Pending gateway balance is teal, not green. */
+    .ao-tx-pending { color: #4fc0c8; font-style: normal; }
 
     .ao-tx-heading { font-weight: 700; margin: 0.4rem 0; }
 
