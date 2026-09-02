@@ -9,6 +9,9 @@ use App\Admin\Resources\TicketResource;
 use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewClient;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets;
 
 /**
  * The data behind WHMCS's left rail: Shortcuts, System Information, Advanced Search and
@@ -450,6 +453,13 @@ class Rail
     /**
      * @return array<int, array{label: string, count: int, url: string}>
      */
+    /**
+     * Every link here used to point at core's own resource screen — reachable, but the plain
+     * Filament table Leandro's screenshots were never of. The permission check still reads
+     * the resource (a service/invoice/ticket policy, not a page's own), because that is the
+     * real gate; only the destination changes, to the WHMCS-styled page the rest of the menu
+     * already leads to for the same records.
+     */
     private static function buildSearches(): array
     {
         $searches = [];
@@ -458,12 +468,12 @@ class Rail
             $searches[] = [
                 'label' => 'Pending services',
                 'count' => Metrics::servicesPending(),
-                'url' => ServiceResource::getUrl('index', ['filters' => ['status' => ['value' => 'pending']]]),
+                'url' => ProductsServices::getUrl(['status' => 'pending']),
             ];
             $searches[] = [
                 'label' => 'Suspended services',
                 'count' => Metrics::servicesSuspended(),
-                'url' => ServiceResource::getUrl('index', ['filters' => ['status' => ['value' => 'suspended']]]),
+                'url' => ProductsServices::getUrl(['status' => 'suspended']),
             ];
         }
 
@@ -471,7 +481,7 @@ class Rail
             $searches[] = [
                 'label' => 'Unpaid invoices',
                 'count' => Metrics::invoicesUnpaid(),
-                'url' => InvoiceResource::getUrl('index', ['filters' => ['status' => ['value' => 'pending']], 'sort' => 'due_at']),
+                'url' => ManageInvoices::getUrl(['status' => 'unpaid']),
             ];
         }
 
@@ -479,7 +489,7 @@ class Rail
             $searches[] = [
                 'label' => 'Tickets awaiting reply',
                 'count' => Metrics::ticketsAwaitingReply(),
-                'url' => TicketResource::getUrl('index', ['tab' => 'open']),
+                'url' => SupportTickets::getUrl(['view' => 'open']),
             ];
         }
 
