@@ -1,6 +1,109 @@
-{{-- Affiliates, to the reference screenshot: records line, Jump to Page, the navy grid. --}}
+{{--
+    Affiliates, to issue #6's reference screenshots: the navy list, and the per-affiliate
+    detail screen its blue icon opens — the framed two-column summary with the editable
+    commission fields, Save/Cancel, and the Referrals / Commissions / Withdrawals tabs.
+--}}
 <x-filament-panels::page>
     <div class="ao-mu">
+        @if ($current)
+            @php
+                $name = trim(($current->user->first_name ?? '') . ' ' . ($current->user->last_name ?? '')) ?: ($current->user->email ?? '—');
+                $referred = $current->orders->filter(fn ($row) => $row->order !== null);
+                $earned = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::balance($current);
+                $conversion = (int) $edit['visitors'] > 0 ? round($referred->count() / max(1, (int) $edit['visitors']) * 100) : 0;
+            @endphp
+
+            <div class="ao-tx-tabs">
+                <button type="button" class="ao-mu-tab" wire:click="$set('affiliate', null)">&laquo; Back to List</button>
+            </div>
+
+            <div class="ao-af-frame">
+                <div class="ao-af-cols">
+                    <div>
+                        <div class="ao-af-row"><span>Affiliate ID</span><b>{{ $current->id }}</b></div>
+                        <div class="ao-af-row"><span>Client Name</span><b>{{ $name }}</b></div>
+                        <div class="ao-af-row">
+                            <span>Commission</span>
+                            <span class="ao-af-field"><input type="text" inputmode="decimal" wire:model="edit.reward"> % of each referred order</span>
+                        </div>
+                        <div class="ao-af-row">
+                            <span>Referral Discount</span>
+                            <span class="ao-af-field"><input type="text" inputmode="decimal" wire:model="edit.discount"> % off for the referred client</span>
+                        </div>
+                        <div class="ao-af-row">
+                            <span>Visitors Referred</span>
+                            <span class="ao-af-field"><input type="number" min="0" wire:model="edit.visitors"></span>
+                        </div>
+                        <div class="ao-af-row"><span>Referral Code</span><b>{{ $current->code }}</b></div>
+                    </div>
+                    <div>
+                        <div class="ao-af-row"><span>Signup Date</span><b>{{ $current->created_at?->format('m/d/Y') }}</b></div>
+                        <div class="ao-af-row"><span>Total Earned</span><b>{{ $earned }}</b></div>
+                        <div class="ao-af-row"><span>Orders Referred</span><b>{{ number_format($referred->count()) }}</b></div>
+                        <div class="ao-af-row"><span>Conversion Rate</span><b>{{ $conversion }}%</b></div>
+                        {{-- The reference also edits a withdrawal balance here; Paymenter's
+                             affiliate extension keeps no withdrawal ledger, so there is no
+                             number to edit — the tab below says the same. --}}
+                        <div class="ao-af-row"><span>Withdrawn Amount</span><b title="No withdrawal ledger — the affiliate extension records none">—</b></div>
+                    </div>
+                </div>
+
+                @if ($errors->any())
+                    <ul class="ao-anc-errors">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+
+                <div class="ao-gs-actions">
+                    <button type="button" class="ao-find-go" wire:click="saveAffiliate">Save Changes</button>
+                    <button type="button" class="ao-gs-cancel" wire:click="openAffiliate({{ $current->id }})">Cancel Changes</button>
+                </div>
+            </div>
+
+            <div class="ao-tx-tabs ao-af-tabs">
+                @foreach (['referrals' => 'Referrals', 'commissions' => 'Commissions History', 'withdrawals' => 'Withdrawals History'] as $key => $label)
+                    <button type="button" class="ao-mu-tab {{ $dtab === $key ? 'ao-on' : '' }}" wire:click="$set('dtab', '{{ $key }}')">{{ $label }}</button>
+                @endforeach
+            </div>
+
+            @if ($dtab === 'withdrawals')
+                <p class="ao-gs-empty" title="Paymenter's affiliate extension keeps no withdrawal ledger">
+                    No withdrawals have been recorded — the affiliate extension keeps no
+                    withdrawal ledger, so payouts are handled outside the panel.
+                </p>
+            @else
+                <table class="ao-mu-grid">
+                    <thead>
+                        <tr><th>Order</th><th>Date</th><th>Client</th><th>Product/Service</th><th>Earned</th></tr>
+                    </thead>
+                    <tbody>
+                        @php
+                            $rows = $dtab === 'commissions'
+                                ? $referred->filter(fn ($row) => array_filter($row->earnings) !== [])
+                                : $referred;
+                        @endphp
+                        @forelse ($rows as $row)
+                            <tr>
+                                <td>#{{ $row->order_id }}</td>
+                                <td>{{ $row->order->created_at?->format('m/d/Y') }}</td>
+                                <td class="ao-mu-left">
+                                    {{ trim(($row->order->user->first_name ?? '') . ' ' . ($row->order->user->last_name ?? '')) ?: ($row->order->user->email ?? '—') }}
+                                </td>
+                                <td class="ao-mu-left">{{ $row->order->services->first()?->product?->name ?? '—' }}</td>
+                                <td>
+                                    @php $sums = array_filter($row->earnings); @endphp
+                                    {{ $sums === [] ? '—' : implode(' · ', array_map(fn ($t, $c) => '$' . number_format((float) $t, 2) . ' ' . $c, $sums, array_keys($sums))) }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="5" class="ao-mu-none">No Records Found</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            @endif
+        @else
         <div class="ao-tx-tabs">
             <button type="button" class="ao-mu-tab {{ $this->filter ? 'ao-on' : '' }}" wire:click="toggleFilter">
                 Search/Filter
@@ -54,9 +157,6 @@
             <tbody>
                 @forelse ($affiliates as $affiliate)
                     @php
-                        $summary = $affiliate->user_id
-                            ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $affiliate->user_id])
-                            : null;
                         $edit = \Paymenter\Extensions\Others\Affiliates\Admin\Resources\AffiliateResource::getUrl('edit', ['record' => $affiliate->id]);
                         $name = trim(($affiliate->user->first_name ?? '') . ' ' . ($affiliate->user->last_name ?? '')) ?: ($affiliate->user->email ?? '—');
                     @endphp
@@ -65,11 +165,7 @@
                         <td>{{ $affiliate->id }}</td>
                         <td>{{ $affiliate->created_at?->format('m/d/Y') }}</td>
                         <td class="ao-mu-left">
-                            @if ($summary)
-                                <a href="{{ $summary }}">{{ $name }}</a>
-                            @else
-                                {{ $name }}
-                            @endif
+                            <button type="button" class="ao-cp-link" wire:click="openAffiliate({{ $affiliate->id }})">{{ $name }}</button>
                         </td>
                         <td>{{ number_format($affiliate->visitors) }}</td>
                         <td>{{ number_format($affiliate->signups) }}</td>
@@ -77,13 +173,13 @@
                         {{-- No withdrawal ledger exists, so zero withdrawn is the truth. --}}
                         <td>$0.00 USD</td>
                         <td class="ao-mu-actions ao-mu-iconpair">
-                            {{-- The reference's pair: a blue report icon and a red one. The
-                                 report opens the affiliate's client profile; the red opens
-                                 the affiliate record, where disabling and deleting live. --}}
-                            <a href="{{ $summary ?? $edit }}" title="View client profile">
+                            {{-- The reference's pair: the blue icon opens the affiliate's
+                                 detail screen (issue #6); the red opens the raw record,
+                                 where disabling and deleting live. --}}
+                            <button type="button" title="Open affiliate detail" wire:click="openAffiliate({{ $affiliate->id }})">
                                 <x-filament::icon icon="ri-file-chart-line" class="ao-mu-cell-icon" />
-                            </a>
-                            <a href="{{ $edit }}" title="Manage affiliate">
+                            </button>
+                            <a href="{{ $edit }}" title="Manage affiliate record">
                                 <x-filament::icon icon="ri-indeterminate-circle-line" class="ao-mu-cell-icon ao-mu-icon-red" />
                             </a>
                         </td>
@@ -101,5 +197,6 @@
             <button type="button" wire:click="jump({{ $affiliates->currentPage() + 1 }})"
                 @disabled(!$affiliates->hasMorePages())>Next Page &raquo;</button>
         </nav>
+        @endif
     </div>
 </x-filament-panels::page>

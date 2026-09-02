@@ -4026,6 +4026,44 @@
         .ao-gs-field input, .ao-gs-field select, .ao-gs-field textarea { min-width: 0; width: 100%; }
     }
 
+    /* Affiliates detail (issue #6): the reference's framed two-column summary with
+       label-left rows, editable commission fields inline. */
+    .ao-af-frame {
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+        padding: 1rem 1.2rem;
+        margin-bottom: 0.9rem;
+    }
+
+    .ao-af-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.5rem; }
+
+    .ao-af-row {
+        display: grid;
+        grid-template-columns: 11rem 1fr;
+        gap: 1rem;
+        align-items: center;
+        padding: 0.4rem 0.6rem;
+    }
+
+    .ao-af-row:nth-child(odd) { background: #f7f7f7; }
+
+    .ao-af-row > span:first-child { text-align: end; font-weight: 600; }
+
+    .ao-af-field { display: flex; align-items: center; gap: 0.5rem; color: var(--wa-muted, #6b6b6b); }
+
+    .ao-af-field input {
+        width: 7rem;
+        padding: 0.3rem 0.5rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+    }
+
+    .ao-af-tabs { margin-top: 0.4rem; }
+
+    @media (max-width: 1000px) { .ao-af-cols { grid-template-columns: 1fr; } }
+
     /* Automation Status (issue #33): the reference sets its month calendar beside the
        Daily Actions tiles, with "Today" floated at the band's right. */
     .ao-auto-daily-head { display: flex; align-items: baseline; justify-content: space-between; }
