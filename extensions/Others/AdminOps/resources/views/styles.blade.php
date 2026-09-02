@@ -2582,6 +2582,48 @@
         font-weight: 700;
     }
 
+    /* The reference's pink "Recurring" strip under Total — what keeps billing after this
+       invoice, separate from the one-off Total above it. */
+    .ao-ano-recurring {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.45rem 0.9rem;
+        background: #f2dede;
+        color: #a94442;
+        font-size: 0.9rem;
+        border-bottom: 1px solid var(--wa-panel-border, #ddd);
+    }
+
+    .ao-ano-recurring:last-child { border-bottom: none; }
+
+    /* The reference's credit-balance card: a plain note plus the two-way choice, sitting
+       between the summary card and Submit Order the way the reference has it. */
+    .ao-ano-credit {
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 8px);
+        background: #fbfbfb;
+        padding: 0.8rem 1rem;
+        margin-bottom: 1rem;
+        text-align: start;
+        font-size: 0.9rem;
+    }
+
+    .ao-ano-credit p { margin: 0 0 0.6rem; color: var(--wa-text, #2b2b2b); }
+
+    .ao-ano-credit-opt {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        font-weight: 400;
+        line-height: 1.35;
+        margin-bottom: 0.5rem;
+    }
+
+    .ao-ano-credit-opt:last-child { margin-bottom: 0; }
+
+    .ao-ano-credit-opt input { margin-top: 0.2rem; flex: none; }
+
     .ao-ano-submit { padding: 0.55rem 1.6rem; }
 
     .ao-ano-item + .ao-ano-item { margin-top: 0.8rem; }
