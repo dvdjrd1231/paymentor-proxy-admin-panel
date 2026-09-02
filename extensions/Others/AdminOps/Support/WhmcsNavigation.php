@@ -2,6 +2,9 @@
 
 namespace Paymenter\Extensions\Others\AdminOps\Support;
 
+use App\Admin\Clusters\Extensions as ExtensionsCluster;
+use App\Admin\Clusters\InvoiceCluster;
+use App\Admin\Clusters\Services as ServicesCluster;
 use App\Admin\Pages\CronStats;
 use App\Admin\Pages\Settings;
 use App\Admin\Pages\Updates;
@@ -74,6 +77,7 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageUsers;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ViewSearchClients;
+use Paymenter\Extensions\Others\Affiliates\Admin\Resources\AffiliateResource;
 use Paymenter\Extensions\Others\Announcements\Admin\Resources\AnnouncementResource;
 use Paymenter\Extensions\Others\BillableItems\Admin\Resources\BillableItemResource;
 use Paymenter\Extensions\Others\Cancellations\Admin\Resources\CancellationRequestResource;
@@ -145,6 +149,7 @@ class WhmcsNavigation
         // Reset per build, not per process: a stale array would leak between requests under
         // a persistent worker and silently empty the Addons menu.
         static::$placed = [];
+        static::markSystemSettingsPlaced();
 
         $groups = array_values(array_filter([
             static::clients(),
@@ -202,6 +207,16 @@ class WhmcsNavigation
 
     private static function clients(): ?NavigationGroup
     {
+        // Never placed, so the extension's own resource sat in Addons as a second,
+        // un-styled "Affiliate" beside Manage Affiliates below.
+        static::$placed[AffiliateResource::class] = true;
+
+        // Whichever branch the Cancellation Requests ternary below does not take is placed
+        // here regardless — static::link() only marks placed the resource it actually links,
+        // so the other one sat unclaimed and the Addons catch-all picked it up as a second,
+        // un-styled "Service Cancellations".
+        static::$placed[ServiceCancellationResource::class] = true;
+
         return static::group('Clients', 'ri-group-line', [
             // The reference's own screens, not core's list: Leandro's feedback screenshots
             // are of View/Search Clients and Manage Users, so those pages exist here and the
@@ -280,6 +295,10 @@ class WhmcsNavigation
         // marked placed so the Addons catch-all does not sweep them back in.
         static::$placed[OrderResource::class] = true;
         static::$placed[ServiceResource::class] = true;
+        // The cluster that groups ServiceResource for core's own navigation is a second,
+        // separate entry Filament registers as a page, not a resource — missed the first
+        // time round, which is how "Services" ended up in Addons anyway.
+        static::$placed[ServicesCluster::class] = true;
 
         // The reference's sidebar, on the reference's own page: one Manage Orders screen,
         // the filters told apart by ?status=. {@see ManageOrders}.
@@ -311,6 +330,17 @@ class WhmcsNavigation
         // Core's invoice list is reached from Manage Invoices' rows; placed for the same
         // reason as OrderResource above.
         static::$placed[InvoiceResource::class] = true;
+        // Same cluster gap as ServicesCluster in orders() — its own separate page entry.
+        static::$placed[InvoiceCluster::class] = true;
+
+        // These three were never placed at all — only ever read for a badge count, never
+        // excluded from the Addons sweep — so the extension's own native resource sat in
+        // Addons the whole time as a second, un-styled "Billable Items" / "Quotes" /
+        // "Refund Requests", one menu below the page that actually replaces it. Placed here,
+        // next to the pages that supersede them, rather than where they are read.
+        static::$placed[BillableItemResource::class] = true;
+        static::$placed[QuoteResource::class] = true;
+        static::$placed[RefundRequestResource::class] = true;
 
         // The reference's Billing menu, in the reference's order: Transactions List, then
         // Invoices with its status flyout, then the rest. {@see ManageInvoices}.
@@ -375,6 +405,16 @@ class WhmcsNavigation
     /** The reference's Support menu, entry for entry; Paymenter-only screens follow it. */
     private static function support(): ?NavigationGroup
     {
+        // Same story as the three placed in billing() above: read for nothing here, never
+        // excluded, so the extension's own resource sat in Addons as a second, un-styled
+        // "Announcement" / "Kb Article" the whole time.
+        static::$placed[AnnouncementResource::class] = true;
+        static::$placed[KbArticleResource::class] = true;
+        // Predefined Replies below reads and writes the same CannedResponse rows this
+        // resource does — the two are one feature under two names, and only one was ever
+        // excluded from the catch-all.
+        static::$placed[CannedResponseResource::class] = true;
+
         return static::group('Support', 'ri-customer-service-line', [
             static::page(SupportOverview::class, 'Support Overview'),
             static::pageLink(
@@ -491,6 +531,10 @@ class WhmcsNavigation
     /** WHMCS's Setup menu — the spanner in its top-right corner. */
     private static function setup(): ?NavigationGroup
     {
+        // Same cluster gap as ServicesCluster/InvoiceCluster above — its own separate page
+        // entry alongside ExtensionResource, which is placed below in this same group.
+        static::$placed[ExtensionsCluster::class] = true;
+
         return static::group('Setup', 'ri-settings-3-line', [
             // First, as it is on the reference: the catalogue as a whole, ordered by
             // dragging. The two resource lists below it are where a single record is
@@ -516,6 +560,19 @@ class WhmcsNavigation
             static::page(Settings::class, 'General Settings'),
             // Updates lives in Utilities, as it does on the reference ("Update WHMCS").
         ]);
+    }
+
+    /**
+     * Not a menu of its own — {@see Toolbar} is what actually links System Settings, from
+     * the wrench. This exists only to mark the page placed, the same way building (and
+     * discarding) setup() above does for everything in it: without this, an unplaced Page
+     * is exactly what the Addons catch-all is for, and System Settings would end up
+     * reachable from the wrench *and* from Addons — a second, harder to find copy of the
+     * one link that was just fixed.
+     */
+    private static function markSystemSettingsPlaced(): void
+    {
+        static::$placed[SystemSettings::class] = true;
     }
 
     /**

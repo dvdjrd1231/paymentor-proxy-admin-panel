@@ -3,7 +3,6 @@
 namespace Paymenter\Extensions\Others\AdminOps\Support;
 
 use App\Admin\Pages\CronStats;
-use App\Admin\Pages\Settings;
 use App\Admin\Pages\Updates;
 use App\Admin\Resources\ApiResource;
 use App\Admin\Resources\CategoryResource;
@@ -25,6 +24,7 @@ use App\Admin\Resources\UserResource;
 use App\Models\DebugLog;
 use App\Models\FailedJob;
 use Illuminate\Support\Facades\Schema;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SystemSettings;
 use Paymenter\Extensions\Servers\ProxyPanel\Admin\Pages\PanelLocations;
 
 /**
@@ -85,7 +85,11 @@ class Toolbar
     private static function setup(): array
     {
         return array_values(array_filter([
-            static::page(Settings::class, 'General Settings', 'heroicon-o-adjustments-horizontal'),
+            // WHMCS's own Configuration screen is a landing grid of named areas, not one
+            // long form — core's Settings page is the latter, so the wrench now leads to
+            // System Settings instead, whose first tile is that same page for whoever
+            // wants the raw form directly. See {@see SystemSettings}.
+            static::page(SystemSettings::class, 'System Settings', 'heroicon-o-adjustments-horizontal'),
             static::index(ProductResource::class, 'Products', 'heroicon-o-cube'),
             static::index(CategoryResource::class, 'Categories', 'heroicon-o-squares-2x2'),
             static::index(ConfigOptionResource::class, 'Configurable Options', 'heroicon-o-adjustments-vertical'),
