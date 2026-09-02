@@ -3954,6 +3954,73 @@
 
     .ao-wg-links a { text-decoration: underline; }
 
+    /* General Settings (issue #39): WHMCS's file-folder tab bar over a framed form of
+       label-left rows, hint text inline after each field. */
+    .ao-gs-tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: -1px; position: relative; z-index: 1; }
+
+    .ao-gs-tab {
+        padding: 0.45rem 1rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: var(--wa-radius, 6px) var(--wa-radius, 6px) 0 0;
+        background: #f0f0f0;
+        color: var(--wa-text, #2b2b2b);
+        cursor: pointer;
+    }
+
+    .ao-gs-tab.ao-on { background: #fff; border-bottom-color: #fff; font-weight: 600; }
+
+    .ao-gs-frame {
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: 0 var(--wa-radius, 6px) var(--wa-radius, 6px) var(--wa-radius, 6px);
+        background: #fff;
+        padding: 1.2rem 1.4rem;
+    }
+
+    .ao-gs-row {
+        display: grid;
+        grid-template-columns: 16rem 1fr;
+        gap: 1.2rem;
+        align-items: start;
+        padding: 0.45rem 0;
+    }
+
+    .ao-gs-row:nth-child(odd) { background: #f7f7f7; }
+
+    .ao-gs-label { text-align: end; font-weight: 600; padding-top: 0.35rem; }
+
+    .ao-gs-field { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+
+    .ao-gs-field input[type="text"],
+    .ao-gs-field input[type="password"],
+    .ao-gs-field input[type="number"],
+    .ao-gs-field input[type="time"],
+    .ao-gs-field select { min-width: 22rem; }
+
+    .ao-gs-field textarea { min-width: 30rem; }
+
+    .ao-gs-hint { color: var(--wa-muted, #6b6b6b); }
+
+    .ao-gs-empty { margin: 0.4rem 0; }
+
+    .ao-gs-actions { display: flex; justify-content: center; gap: 0.6rem; margin-top: 1rem; }
+
+    .ao-gs-cancel {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.45rem 1.1rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+        color: var(--wa-text, #2b2b2b);
+        text-decoration: none;
+    }
+
+    @media (max-width: 900px) {
+        .ao-gs-row { grid-template-columns: 1fr; gap: 0.25rem; }
+        .ao-gs-label { text-align: start; }
+        .ao-gs-field input, .ao-gs-field select, .ao-gs-field textarea { min-width: 0; width: 100%; }
+    }
+
     /* Automation Status (issue #33): the reference sets its month calendar beside the
        Daily Actions tiles, with "Today" floated at the band's right. */
     .ao-auto-daily-head { display: flex; align-items: baseline; justify-content: space-between; }
