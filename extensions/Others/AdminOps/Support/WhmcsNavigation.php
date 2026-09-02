@@ -565,6 +565,10 @@ class WhmcsNavigation
         // own Edit and Create buttons, which land on these resources' pages.
         static::$placed[ProductResource::class] = true;
         static::$placed[CategoryResource::class] = true;
+        // Issue #45: the menu entry is now the quick-buttons PaymentGateways page, so the
+        // core resource is no longer claimed by link() — claim it here or the Addons
+        // sweep resurfaces it (its edit form is still reached from that page's Edit).
+        static::$placed[GatewayResource::class] = true;
 
         return static::group('Setup', 'ri-settings-3-line', [
             // First, as it is on the reference: the catalogue as a whole, ordered by
@@ -577,7 +581,8 @@ class WhmcsNavigation
             static::link(ConfigOptionResource::class, 'Configurable Options'),
             static::link(ServerResource::class, 'Servers'),
             static::page(PanelLocations::class, 'Panel Locations'),
-            static::link(GatewayResource::class, 'Payment Gateways'),
+            // Issue #45: the quick-buttons page; core's resource stays claimed below.
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\PaymentGateways::class, 'Payment Gateways'),
             static::link(CurrencyResource::class, 'Currencies'),
             static::link(CustomPropertyResource::class, 'Custom Properties'),
             static::link(NotificationTemplateResource::class, 'Email Templates'),

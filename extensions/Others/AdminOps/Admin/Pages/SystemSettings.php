@@ -57,7 +57,7 @@ class SystemSettings extends Page
                 ['Audit Log', $url(\App\Admin\Resources\AuditResource::class), 'ri-history-line', 'Every change made in the admin, who made it and when'],
             ],
             'Billing' => [
-                ['Payment Gateways', $url(\App\Admin\Resources\GatewayResource::class), 'ri-bank-card-line', 'Which gateways can take a payment, and their credentials'],
+                ['Payment Gateways', $url(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\PaymentGateways::class), 'ri-bank-card-line', 'Which gateways can take a payment, and their credentials'],
                 ['Currencies', $url(\App\Admin\Resources\CurrencyResource::class), 'ri-money-dollar-circle-line', 'What this store charges in, and the exchange rates behind it'],
                 ['Tax Rates', $url(\App\Admin\Resources\TaxRateResource::class), 'ri-percent-line', 'Rates applied to invoices by country or region'],
                 ['Coupons', $url(\App\Admin\Resources\CouponResource::class), 'ri-coupon-3-line', 'Discount codes clients can redeem at checkout'],
