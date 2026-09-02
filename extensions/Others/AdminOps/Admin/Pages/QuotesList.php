@@ -25,6 +25,15 @@ class QuotesList extends Page
     #[Url(as: 'view')]
     public string $tab = 'all';
 
+    /** The reference's Search/Filter band — every list page carries one; this one did not. */
+    public bool $filter = false;
+
+    #[Url]
+    public string $q = '';
+
+    #[Url]
+    public string $stage = '';
+
     public static function canAccess(): bool
     {
         return class_exists(Quote::class)
@@ -36,6 +45,11 @@ class QuotesList extends Page
         return 'Quotes';
     }
 
+    public function toggleFilter(): void
+    {
+        $this->filter = !$this->filter;
+    }
+
     protected function getViewData(): array
     {
         $quotes = Quote::with(['user', 'items'])
@@ -44,6 +58,16 @@ class QuotesList extends Page
             ->when($this->tab === 'expired', fn ($q) => $q->where(fn ($w) => $w->where('status', Quote::STATUS_EXPIRED)
                 ->orWhere(fn ($e) => $e->whereIn('status', [Quote::STATUS_DRAFT, Quote::STATUS_SENT])
                     ->whereNotNull('valid_until')->where('valid_until', '<', now()->toDateString()))))
+            ->when($this->stage !== '', fn ($q) => $q->where('status', $this->stage))
+            ->when(trim($this->q) !== '', function ($query) {
+                $needle = trim($this->q);
+                $query->where(function ($w) use ($needle) {
+                    $w->where('subject', 'like', "%{$needle}%")
+                        ->orWhereHas('user', fn ($u) => $u->where('first_name', 'like', "%{$needle}%")
+                            ->orWhere('last_name', 'like', "%{$needle}%")
+                            ->orWhere('email', 'like', "%{$needle}%"));
+                });
+            })
             ->latest('updated_at')->limit(200)->get();
 
         return ['quotes' => $quotes, 'stages' => CreateQuote::STAGES];

@@ -466,13 +466,18 @@
         border-radius: 0;
         /* The reference's menu rows are tighter and a size down from the chrome. */
         padding: 0.28rem 1rem;
+        margin-inline: 0.25rem;
+        width: calc(100% - 0.5rem);
         font-size: 14px;
         color: var(--wa-ink);
     }
 
+    /* Issue #36: a highlighted row in the reference is a rounded rectangle inset from the
+       panel's own edges, not a hard-cornered bar flush with them. */
     .fi-dropdown-list-item:hover {
         background: #f5f5f5;
         color: var(--wa-blue);
+        border-radius: var(--wa-radius, 6px);
     }
 
     /* The reference's flyout: the category entries open beside their parent on hover. The
