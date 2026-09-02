@@ -30,6 +30,96 @@ class SystemSettings extends Page
         return 'System Settings';
     }
 
+    /** The reference's line under the title, in this store's name. */
+    public function getSubheading(): ?string
+    {
+        return 'Set up and configure your Paymenter installation.';
+    }
+
+    /** The left rail's areas, matching the section map in {@see getViewData()}. */
+    private const AREAS = ['General', 'Billing', 'Products', 'Communications', 'Extensions'];
+
+    /** Which category the left rail has picked; 'All' is the reference's default. */
+    public string $area = 'All';
+
+    /** The reference's sort control: its curated order, or plain A → Z. */
+    public string $sort = 'popularity';
+
+    /** Whether the setup-tasks list under the progress bar is open. */
+    public bool $tasksOpen = false;
+
+    /**
+     * The reference's "Click here to view the setup tasks" checklist, over real state —
+     * each line is something this store either has or does not, with the screen that
+     * fixes it. Every probe is guarded: this renders on a landing page, and a broken
+     * count must read as "not done", not take the page down.
+     *
+     * @return array<int, array{label: string, done: bool, url: ?string}>
+     */
+    private function setupTasks(): array
+    {
+        $probe = function (\Closure $check): bool {
+            try {
+                return (bool) $check();
+            } catch (\Throwable) {
+                return false;
+            }
+        };
+
+        $url = fn (string $class) => $this->safeUrl($class);
+
+        return [
+            [
+                'label' => 'Add your first product',
+                'done' => $probe(fn () => \App\Models\Product::query()->exists()),
+                'url' => $url(Catalogue::class),
+            ],
+            [
+                'label' => 'Configure a payment gateway',
+                'done' => $probe(fn () => \App\Models\Gateway::query()->exists()),
+                'url' => $url(PaymentGateways::class),
+            ],
+            [
+                'label' => 'Set up a currency',
+                'done' => $probe(fn () => \App\Models\Currency::query()->exists()),
+                'url' => $url(\App\Admin\Resources\CurrencyResource::class),
+            ],
+            [
+                'label' => 'Connect a provisioning server',
+                'done' => $probe(fn () => \App\Models\Server::query()->exists()),
+                'url' => $url(\App\Admin\Resources\ServerResource::class),
+            ],
+            [
+                'label' => 'Get the automation running',
+                'done' => $probe(function (): bool {
+                    $value = \App\Models\Setting::query()
+                        ->where('key', 'last_scheduler_run')
+                        ->where('settingable_type', \App\Models\CronStat::class)
+                        ->value('value');
+
+                    return $value && \Carbon\Carbon::parse($value)->diffInMinutes(now()) <= 10;
+                }),
+                'url' => $url(AutomationStatus::class),
+            ],
+        ];
+    }
+
+    /** {@see getViewData()}'s URL resolver, shared with the setup tasks. */
+    private function safeUrl(string $class, string $page = 'index'): ?string
+    {
+        try {
+            if (!class_exists($class)) {
+                return null;
+            }
+
+            return method_exists($class, 'getUrl')
+                ? (is_subclass_of($class, \Filament\Resources\Resource::class) ? $class::getUrl($page) : $class::getUrl())
+                : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
     protected function getViewData(): array
     {
         $url = function (string $class, string $page = 'index'): ?string {
@@ -51,7 +141,8 @@ class SystemSettings extends Page
         // family used everywhere else in this skin, not a new one for this page alone.
         $sections = [
             'General' => [
-                ['General Settings', $url(\App\Admin\Pages\Settings::class), 'ri-settings-3-line', 'Company name, timezone, language and the store\'s core configuration'],
+                // Issue #39's tabbed page when it exists; core's raw form otherwise.
+                ['General Settings', $url(GeneralSettings::class) ?? $url(\App\Admin\Pages\Settings::class), 'ri-settings-3-line', 'Company name, timezone, language and the store\'s core configuration'],
                 ['Administrators', $url(\App\Admin\Resources\UserResource::class), 'ri-shield-user-line', 'Staff accounts and what each one can do'],
                 ['API Credentials', $url(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ApiCredentials::class), 'ri-key-2-line', 'Keys for talking to this store from the outside'],
                 ['Audit Log', $url(\App\Admin\Resources\AuditResource::class), 'ri-history-line', 'Every change made in the admin, who made it and when'],
@@ -85,6 +176,28 @@ class SystemSettings extends Page
             ->filter(fn (array $tiles) => $tiles !== [])
             ->all();
 
-        return ['sections' => $sections];
+        // The left rail's pick narrows the grid; A → Z reorders inside each area.
+        if ($this->area !== 'All' && isset($sections[$this->area])) {
+            $sections = [$this->area => $sections[$this->area]];
+        }
+
+        if ($this->sort === 'alphabetical') {
+            $sections = array_map(function (array $tiles): array {
+                usort($tiles, fn ($a, $b) => strcasecmp($a[0], $b[0]));
+
+                return $tiles;
+            }, $sections);
+        }
+
+        $tasks = $this->setupTasks();
+        $done = count(array_filter($tasks, fn ($t) => $t['done']));
+
+        return [
+            'sections' => $sections,
+            'areas' => self::AREAS,
+            'tasks' => $tasks,
+            'tasksDone' => $done,
+            'tasksPct' => count($tasks) > 0 ? (int) round($done / count($tasks) * 100) : 0,
+        ];
     }
 }

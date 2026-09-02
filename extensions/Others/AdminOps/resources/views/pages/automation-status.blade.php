@@ -12,29 +12,46 @@
     is a working scheduler and a failing job.
 --}}
 <x-filament-panels::page>
+    {{-- The reference's three banner tiles: a darker icon square on the left, the big
+         figure and its label on the right (issue #28). --}}
     <div class="ao-auto-head">
         <div class="ao-auto-head-tile {{ ($heartbeat['healthy'] && $daily['healthy']) ? 'ao-auto-ok' : 'ao-auto-bad' }}">
-            <span class="ao-auto-head-figure">
-                {{ ($heartbeat['healthy'] && $daily['healthy']) ? 'OK' : 'Error' }}
+            <span class="ao-auto-head-ic">
+                <x-filament::icon :icon="($heartbeat['healthy'] && $daily['healthy']) ? 'ri-check-line' : 'ri-close-line'" />
             </span>
-            <span class="ao-auto-head-label">
-                {{ ($heartbeat['healthy'] && $daily['healthy'])
-                    ? 'Automation is running'
-                    : 'See below to resolve' }}
+            <span class="ao-auto-head-text">
+                <span class="ao-auto-head-figure">
+                    {{ ($heartbeat['healthy'] && $daily['healthy']) ? 'Ok' : 'Error' }}
+                </span>
+                <span class="ao-auto-head-label">
+                    @if ($cronStatsUrl)
+                        <a href="{{ $cronStatsUrl }}">View cron status</a>
+                    @else
+                        {{ ($heartbeat['healthy'] && $daily['healthy']) ? 'Automation is running' : 'See below to resolve' }}
+                    @endif
+                </span>
             </span>
         </div>
 
         <div class="ao-auto-head-tile ao-auto-neutral">
-            <span class="ao-auto-head-figure">
-                {{ $daily['at']?->diffForHumans(short: true) ?? 'Never' }}
+            <span class="ao-auto-head-ic"><x-filament::icon icon="ri-calendar-line" /></span>
+            <span class="ao-auto-head-text">
+                <span class="ao-auto-head-figure">
+                    {{ $heartbeat['at']?->diffForHumans() ?? 'Never' }}
+                </span>
+                <span class="ao-auto-head-label">Last Cron Invocation</span>
             </span>
-            <span class="ao-auto-head-label">Last Daily Run</span>
         </div>
 
         <div class="ao-auto-head-tile ao-auto-quiet">
-            <span class="ao-auto-head-figure">{{ $nextRun->diffForHumans(short: true) }}</span>
-            <span class="ao-auto-head-label">
-                Next Daily Task Run · {{ $nextRun->format('H:i') }}
+            <span class="ao-auto-head-ic"><x-filament::icon icon="ri-calendar-check-line" /></span>
+            <span class="ao-auto-head-text">
+                <span class="ao-auto-head-figure">
+                    {{ $nextRun->diffForHumans(syntax: \Carbon\CarbonInterface::DIFF_ABSOLUTE) }}
+                </span>
+                <span class="ao-auto-head-label">
+                    Next Daily Task Run · {{ $nextRun->format('H:i') }}
+                </span>
             </span>
         </div>
     </div>
@@ -51,20 +68,20 @@
     @endif
 
     {{--
-        The heartbeat gets a line of its own rather than a tile. It is not one of the daily
-        actions — it is the thing that makes all of them possible — and it is the only clock
-        on this page measured in minutes.
+        The daily pass gets a line of its own now that the middle tile carries the
+        reference's Last Cron Invocation (the heartbeat). The two clocks fail differently
+        — this is the one that says whether `app:cron-job` itself is completing.
     --}}
-    <p class="ao-auto-heartbeat {{ $heartbeat['healthy'] ? 'ao-auto-ok' : 'ao-auto-bad' }}">
+    <p class="ao-auto-heartbeat {{ $daily['healthy'] ? 'ao-auto-ok' : 'ao-auto-bad' }}">
         <span class="ao-auto-dot"></span>
-        Scheduler heartbeat:
-        <strong>{{ $heartbeat['healthy'] ? 'running' : 'not running' }}</strong>
-        @if ($heartbeat['at'])
-            · last seen {{ $heartbeat['at']->diffForHumans() }}
+        Daily automation pass:
+        <strong>{{ $daily['healthy'] ? 'completing' : 'not completing' }}</strong>
+        @if ($daily['at'])
+            · last completed {{ $daily['at']->diffForHumans() }}
         @else
-            · never seen
+            · never completed
         @endif
-        <span class="ao-auto-exact">(stale after {{ $heartbeat['threshold'] }})</span>
+        <span class="ao-auto-exact">(stale after {{ $daily['threshold'] }})</span>
     </p>
 
     {{-- The reference's "Viewing X ▾ / This Week ▾" chart — a real trend line over each
@@ -73,7 +90,8 @@
          a dropdown offering a choice that does nothing. --}}
     @if (!empty($tasks))
         <div class="ao-auto-chart">
-            <div class="ao-auto-chart-head">
+            {{-- Both controls sit at the right, as the reference draws them. --}}
+            <div class="ao-auto-chart-head ao-auto-chart-head-right">
                 <label class="ao-auto-chart-pick">
                     Viewing
                     <select wire:model.live="viewing">
@@ -128,16 +146,21 @@
                 <div class="ao-auto-tiles">
                     @foreach ($tasks as $task)
                         <div class="ao-auto-tile">
-                            <div class="ao-auto-tile-head">{{ $task['title'] }}</div>
+                            {{-- The reference's grey glyph in the tile's top right corner. --}}
+                            <div class="ao-auto-tile-head">
+                                {{ $task['title'] }}
+                                <x-filament::icon :icon="$task['icon']" class="ao-auto-tile-ic" />
+                            </div>
                             <div class="ao-auto-tile-body">
                                 <span class="ao-auto-tile-figure">{{ number_format($task['today']) }}</span>
                                 <span class="ao-auto-tile-did">{{ $task['did'] }}</span>
+                            </div>
+                            {{-- Week total left, the reference's red failed count right. --}}
+                            <div class="ao-auto-tile-foot">
+                                <span>{{ number_format($task['week']) }} in the last 7 days</span>
                                 @if ($task['failed'] > 0)
                                     <span class="ao-auto-tile-failed">{{ number_format($task['failed']) }} Failed</span>
                                 @endif
-                            </div>
-                            <div class="ao-auto-tile-foot">
-                                {{ number_format($task['week']) }} in the last 7 days
                             </div>
                         </div>
                     @endforeach

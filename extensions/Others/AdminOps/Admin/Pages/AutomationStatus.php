@@ -74,21 +74,24 @@ class AutomationStatus extends Page
      * always going to end on a date. Merged, a fixed-term module that had stopped would hide
      * behind an overdue ladder that had not.
      *
-     * @var array<string, array{0: string, 1: string}>
+     * The third element is the tile's glyph — the reference puts a grey icon in the top
+     * right corner of every Daily Actions tile, one per task (issue #28).
+     *
+     * @var array<string, array{0: string, 1: string, 2: string}>
      */
     private const TASKS = [
-        'invoices_created' => ['Invoices', 'Generated'],
-        'invoice_charged' => ['Payment Captures', 'Captured'],
-        'cancellations_processed' => ['Cancellation Requests', 'Processed'],
-        'services_suspended' => ['Overdue Suspensions', 'Suspended'],
-        'services_terminated' => ['Overdue Terminations', 'Terminated'],
-        'fixed_term_terminations' => ['Fixed Term Terminations', 'Terminated'],
-        'orders_cancelled' => ['Unpaid Orders', 'Cancelled'],
-        'upgrade_invoices_updated' => ['Upgrade Invoices', 'Updated'],
-        'billable_items_invoiced' => ['Billable Items', 'Invoiced'],
-        'quotes_expired' => ['Quotes', 'Expired'],
-        'tickets_closed' => ['Inactive Tickets', 'Closed'],
-        'email_logs_deleted' => ['Email Logs', 'Deleted'],
+        'invoices_created' => ['Invoices', 'Generated', 'ri-file-text-line'],
+        'invoice_charged' => ['Payment Captures', 'Captured', 'ri-bank-card-line'],
+        'cancellations_processed' => ['Cancellation Requests', 'Processed', 'ri-close-circle-line'],
+        'services_suspended' => ['Overdue Suspensions', 'Suspended', 'ri-notification-3-line'],
+        'services_terminated' => ['Overdue Terminations', 'Terminated', 'ri-calendar-close-line'],
+        'fixed_term_terminations' => ['Fixed Term Terminations', 'Terminated', 'ri-plug-line'],
+        'orders_cancelled' => ['Unpaid Orders', 'Cancelled', 'ri-shopping-cart-2-line'],
+        'upgrade_invoices_updated' => ['Upgrade Invoices', 'Updated', 'ri-arrow-up-circle-line'],
+        'billable_items_invoiced' => ['Billable Items', 'Invoiced', 'ri-money-dollar-circle-line'],
+        'quotes_expired' => ['Quotes', 'Expired', 'ri-file-paper-2-line'],
+        'tickets_closed' => ['Inactive Tickets', 'Closed', 'ri-inbox-archive-line'],
+        'email_logs_deleted' => ['Email Logs', 'Deleted', 'ri-mail-close-line'],
     ];
 
     /** How many days the reference's "This Week" view covers, inclusive of today. */
@@ -143,11 +146,22 @@ class AutomationStatus extends Page
                 'threshold' => self::DAILY_STALE_HOURS . ' hours',
             ],
             'nextRun' => $this->nextDailyRun(),
+            'cronStatsUrl' => $this->safeCronStatsUrl(),
             'tasks' => $tasks,
             'problems' => $this->problems($heartbeat, $daily),
             'chart' => $this->chart(),
             'calendar' => $this->calendar(),
         ];
+    }
+
+    /** The verdict tile's "View cron status" link target, or null when unroutable. */
+    private function safeCronStatsUrl(): ?string
+    {
+        try {
+            return CronStats::getUrl();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**
@@ -193,7 +207,7 @@ class AutomationStatus extends Page
      */
     private function chart(): array
     {
-        [$label, $did] = self::TASKS[$this->viewing] ?? ['—', ''];
+        [$label, $did] = self::TASKS[$this->viewing] ?? ['—', '', ''];
 
         // Grouped by a plain formatted string, not the column directly: `date` is cast to
         // Carbon, so grouping by the raw attribute keys the result by that Carbon object's
@@ -281,7 +295,7 @@ class AutomationStatus extends Page
         $today = now()->toDateString();
         $tiles = [];
 
-        foreach (self::TASKS as $key => [$title, $did]) {
+        foreach (self::TASKS as $key => [$title, $did, $icon]) {
             $group = $rows->get($key);
 
             // A task that has never recorded anything gets no tile. The reference does the
@@ -302,6 +316,7 @@ class AutomationStatus extends Page
                 'key' => $key,
                 'title' => $title,
                 'did' => $did,
+                'icon' => $icon,
                 'today' => (int) $group->filter($isToday)->sum('value'),
                 'week' => (int) $group->sum('value'),
                 // The reference puts a failed count on every tile, in red, beside the figure.
