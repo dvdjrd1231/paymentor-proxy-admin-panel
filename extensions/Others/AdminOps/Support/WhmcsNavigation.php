@@ -58,6 +58,7 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\QuotesList;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportsHome;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ReportView;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddTransaction;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\OfflineCcProcessing;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\BillableItemsList;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\HttpLogs;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\KnowledgebaseList;
@@ -387,7 +388,11 @@ class WhmcsNavigation
             // The reference's last three, on their nearest honest homes: recording a manual
             // payment IS offline card processing here, and a refund request is what a
             // dispute looks like in Paymenter.
-            static::page(AddTransaction::class, 'Offline CC Processing'),
+            // Issue #15: the reference's own page is a queue — invoices belonging to a
+            // client with a card on file — not a form. Add Transaction is still real and
+            // still reachable, just no longer standing in for a screen it never was.
+            static::page(OfflineCcProcessing::class, 'Offline CC Processing'),
+            static::page(AddTransaction::class, '- Add Transaction'),
             static::pageLink(
                 RefundRequests::class,
                 'Disputes',
