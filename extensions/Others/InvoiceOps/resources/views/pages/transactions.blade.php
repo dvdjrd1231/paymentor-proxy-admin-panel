@@ -129,6 +129,11 @@
 
         <div class="ao-mu-line">
             <span>{{ number_format(count($rows)) }} Records Found, Page 1 of 1</span>
+            {{-- The reference's Jump to Page control, present even on a one-page list. --}}
+            <label class="ao-mu-jump">
+                Jump to Page:
+                <select disabled><option>1</option></select>
+            </label>
         </div>
 
         <table class="ao-mu-grid">

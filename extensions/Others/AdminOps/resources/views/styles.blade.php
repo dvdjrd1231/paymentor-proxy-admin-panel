@@ -2942,8 +2942,12 @@
     .ao-tx-tile-body i,
     .ao-tx-note { font-style: normal; font-size: 0.85rem; color: var(--wa-muted, #6b6b6b); }
 
-    .ao-tx-up { color: #3c763d; font-style: normal; font-size: 0.85rem; }
-    .ao-tx-down { color: #d9534f; font-style: normal; font-size: 0.85rem; }
+    /* The tile context (.ao-tx-tile-body i) outweighed the bare class and painted the
+       reference's green/red trend lines grey — matched here at higher specificity. */
+    .ao-tx-up,
+    .ao-tx-tile-body i.ao-tx-up { color: #3c763d; font-style: normal; font-size: 0.85rem; }
+    .ao-tx-down,
+    .ao-tx-tile-body i.ao-tx-down { color: #d9534f; font-style: normal; font-size: 0.85rem; }
     /* Issue #11: the reference's Pending gateway balance is teal, not green. */
     .ao-tx-pending { color: #4fc0c8; font-style: normal; }
 
