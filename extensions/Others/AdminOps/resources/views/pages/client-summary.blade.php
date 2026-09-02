@@ -136,24 +136,18 @@
                         <a class="ao-cp-link" href="{{ $urls['credits'] }}">
                             <x-filament::icon icon="ri-coins-line" class="ao-cp-ic" /> Manage Credits
                         </a>
-                        @php
-                            // The resource creates via modal, so a 'create' route may not
-                            // exist — resolved defensively, exactly like the nav does.
-                            $billableUrl = null;
-                            try {
-                                if (class_exists(\Paymenter\Extensions\Others\BillableItems\Admin\Resources\BillableItemResource::class)) {
-                                    $billableUrl = \Paymenter\Extensions\Others\BillableItems\Admin\Resources\BillableItemResource::getUrl('index');
-                                }
-                            } catch (\Throwable $e) {
-                            }
-                        @endphp
-                        @if ($billableUrl)
-                            <a class="ao-cp-link" href="{{ $billableUrl }}">
+                        {{-- Both used to point at core's own resource — Billable Items at
+                             its bare list-plus-modal, Quotes at an index with no create
+                             route at all (the button did not even open a form). Both now
+                             lead to the pages the rest of the menu already leads to for the
+                             same records. --}}
+                        @if (class_exists(\Paymenter\Extensions\Others\BillableItems\Models\BillableItem::class))
+                            <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\BillableItemsList::getUrl() }}">
                                 <x-filament::icon icon="ri-price-tag-3-line" class="ao-cp-ic" /> Add Billable Item
                             </a>
                         @endif
-                        @if (class_exists(\Paymenter\Extensions\Others\Quotes\Admin\Resources\QuoteResource::class))
-                            <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\Quotes\Admin\Resources\QuoteResource::getUrl('index') }}">
+                        @if (class_exists(\Paymenter\Extensions\Others\Quotes\Models\Quote::class))
+                            <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\CreateQuote::getUrl() }}">
                                 <x-filament::icon icon="ri-draft-line" class="ao-cp-ic" /> Create New Quote
                             </a>
                         @endif
@@ -199,10 +193,15 @@
                             <tr><td>Support Tickets</td><td>{{ $ticketCount ?? $user->tickets()->count() }} ({{ $ticketCount ?? $user->tickets()->count() }} Total)</td></tr>
                             <tr><td>Affiliate Signups</td><td>{{ $affiliateSignups }}</td></tr>
                         </table>
-                        <a class="ao-cp-link" href="{{ \App\Admin\Resources\OrderResource::getUrl('index') }}">
+                        {{-- View Orders used to be every order in the store, not this
+                             client's — core's OrderResource has no client filter of its
+                             own, and neither of the reference's two words told you that.
+                             Manage Orders' free-text search takes the client's email just
+                             as well as a dedicated filter would. --}}
+                        <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders::getUrl(['q' => $user->email]) }}">
                             <x-filament::icon icon="ri-shopping-basket-2-line" class="ao-cp-ic" /> View Orders
                         </a>
-                        <a class="ao-cp-link" href="{{ \App\Admin\Resources\OrderResource::getUrl('create') }}">
+                        <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewOrder::getUrl() }}">
                             <x-filament::icon icon="ri-add-box-line" class="ao-cp-ic" /> Add New Order
                         </a>
                     </div>

@@ -1,10 +1,10 @@
 {{-- Knowledgebase, to issue #24: categories, then the level's articles. --}}
 <x-filament-panels::page>
     <div class="ao-mu">
+        {{-- "Manage Articles" used to sit here too, pointed at core's own KbArticleResource
+             list — a second, un-styled copy of the page already being looked at. Categories
+             stay: a genuinely different screen this page has no view of. --}}
         <div class="ao-tx-tabs">
-            @if ($urls['article'])
-                <a class="ao-mu-tab" href="{{ $urls['article'] }}">Manage Articles</a>
-            @endif
             @if ($urls['category'])
                 <a class="ao-mu-tab" href="{{ $urls['category'] }}">Manage Categories</a>
             @endif
