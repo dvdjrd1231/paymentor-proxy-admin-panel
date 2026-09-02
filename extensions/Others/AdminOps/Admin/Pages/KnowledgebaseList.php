@@ -47,9 +47,11 @@ class KnowledgebaseList extends Page
 
     protected function getViewData(): array
     {
-        $urls = ['article' => null, 'category' => null];
+        // "Manage Articles" used to be built here too — core's own KbArticleResource list,
+        // a second, un-styled copy of this very page. Categories is kept: a genuinely
+        // different screen, with no view of its own in this page.
+        $urls = ['category' => null];
         try {
-            $urls['article'] = \Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbArticleResource::getUrl('index');
             $urls['category'] = \Paymenter\Extensions\Others\Knowledgebase\Admin\Resources\KbCategoryResource::getUrl('index');
         } catch (\Throwable $e) {
         }

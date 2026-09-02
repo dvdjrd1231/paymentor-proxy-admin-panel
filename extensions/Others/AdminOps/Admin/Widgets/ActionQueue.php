@@ -2,13 +2,13 @@
 
 namespace Paymenter\Extensions\Others\AdminOps\Admin\Widgets;
 
-use App\Admin\Resources\InvoiceResource;
 use App\Admin\Resources\InvoiceTransactions\InvoiceTransactionResource;
-use App\Admin\Resources\ServiceResource;
-use App\Admin\Resources\TicketResource;
 use Filament\Widgets\Concerns\CanPoll;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets;
 use Paymenter\Extensions\Others\AdminOps\Support\Links;
 use Paymenter\Extensions\Others\AdminOps\Support\Metrics;
 
@@ -76,7 +76,7 @@ class ActionQueue extends Widget
                 'label' => 'Tickets awaiting reply',
                 'note' => 'The customer wrote last',
                 'tone' => 'warning',
-                'url' => TicketResource::getUrl('index', ['tab' => 'open']),
+                'url' => SupportTickets::getUrl(['view' => 'open']),
             ];
         }
 
@@ -86,9 +86,7 @@ class ActionQueue extends Widget
                 'label' => 'Services awaiting provisioning',
                 'note' => 'Ordered but not yet active',
                 'tone' => 'info',
-                'url' => ServiceResource::getUrl('index', [
-                    'filters' => ['status' => ['value' => 'pending']],
-                ]),
+                'url' => ProductsServices::getUrl(['status' => 'pending']),
             ];
         }
 
@@ -98,9 +96,7 @@ class ActionQueue extends Widget
                 'label' => 'Suspended services',
                 'note' => 'Usually non-payment — unsuspend once settled',
                 'tone' => 'warning',
-                'url' => ServiceResource::getUrl('index', [
-                    'filters' => ['status' => ['value' => 'suspended']],
-                ]),
+                'url' => ProductsServices::getUrl(['status' => 'suspended']),
             ];
         }
 
@@ -129,10 +125,7 @@ class ActionQueue extends Widget
                     ? $overdue . ' of them ' . ($overdue === 1 ? 'is' : 'are') . ' past the due date'
                     : 'Issued and not yet settled — none overdue',
                 'tone' => $overdue ? 'danger' : 'neutral',
-                'url' => InvoiceResource::getUrl('index', [
-                    'filters' => ['status' => ['value' => 'pending']],
-                    'sort' => 'due_at',
-                ]),
+                'url' => ManageInvoices::getUrl(['status' => 'unpaid']),
             ];
         }
 
@@ -142,9 +135,7 @@ class ActionQueue extends Widget
                 'label' => 'Services due within 7 days',
                 'note' => 'Renewal invoices are raised by the cron',
                 'tone' => 'neutral',
-                'url' => ServiceResource::getUrl('index', [
-                    'filters' => ['status' => ['value' => 'active']],
-                ]),
+                'url' => ProductsServices::getUrl(['status' => 'active']),
             ];
         }
 

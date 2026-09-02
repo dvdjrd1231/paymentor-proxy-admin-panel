@@ -20,10 +20,12 @@ use App\Admin\Resources\RoleResource;
 use App\Admin\Resources\ServerResource;
 use App\Admin\Resources\ServiceResource;
 use App\Admin\Resources\TicketResource;
-use App\Admin\Resources\UserResource;
 use App\Models\DebugLog;
 use App\Models\FailedJob;
 use Illuminate\Support\Facades\Schema;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewClient;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewOrder;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\OpenNewTicket;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SystemSettings;
 use Paymenter\Extensions\Servers\ProxyPanel\Admin\Pages\PanelLocations;
 
@@ -45,15 +47,22 @@ use Paymenter\Extensions\Servers\ProxyPanel\Admin\Pages\PanelLocations;
  */
 class Toolbar
 {
-    /** @return array<int, array{label: string, url: string}> */
+    /**
+     * Three of these six used to build straight from core's own resource — reachable, but
+     * the bare create form behind it rather than the WHMCS-styled page the rest of the menu
+     * already leads to for the same action. The other three (Invoice, Service, Product) stay
+     * on core: nothing in this project replaces a plain "create one record" form for them.
+     *
+     * @return array<int, array{label: string, url: string}>
+     */
     public static function quickCreate(): array
     {
         return array_values(array_filter([
-            static::create(UserResource::class, 'New Client'),
-            static::create(OrderResource::class, 'New Order'),
+            static::page(AddNewClient::class, 'New Client'),
+            static::page(AddNewOrder::class, 'New Order'),
             static::create(InvoiceResource::class, 'New Invoice'),
             static::create(ServiceResource::class, 'New Service'),
-            static::create(TicketResource::class, 'New Ticket'),
+            static::page(OpenNewTicket::class, 'New Ticket'),
             static::create(ProductResource::class, 'New Product'),
         ]));
     }

@@ -3,13 +3,14 @@
 namespace Paymenter\Extensions\Others\AdminOps\Admin\Widgets;
 
 use App\Admin\Resources\ServiceCancellationResource;
-use App\Admin\Resources\ServiceResource;
-use App\Admin\Resources\TicketResource;
 use Filament\Widgets\Concerns\CanPoll;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets;
 use Paymenter\Extensions\Others\AdminOps\Support\Links;
 use Paymenter\Extensions\Others\AdminOps\Support\Metrics;
+use Paymenter\Extensions\Others\Cancellations\Admin\Resources\CancellationRequestResource;
 
 /**
  * The four tiles across the top of WHMCS's homepage.
@@ -62,14 +63,19 @@ class HeadlineTiles extends Widget
 
     protected function getViewData(): array
     {
+        // Issue #30: all three of these used to build their URL from core's own resource —
+        // reachable, but the plain Filament table underneath the WHMCS-styled page the rest
+        // of the menu already leads to for the same records. A dashboard tile is a click a
+        // client makes constantly, so it is exactly where landing on the old page instead
+        // of the new one was most visible.
         $tiles = [
             [
                 'count' => Metrics::servicesPending(),
                 'label' => 'Pending Orders',
                 'icon' => 'heroicon-o-shopping-cart',
                 'tone' => 'success',
-                'url' => ServiceResource::canViewAny()
-                    ? ServiceResource::getUrl('index', ['filters' => ['status' => ['value' => 'pending']]])
+                'url' => ManageOrders::canAccess()
+                    ? ManageOrders::getUrl(['status' => 'pending'])
                     : null,
             ],
             [
@@ -77,8 +83,8 @@ class HeadlineTiles extends Widget
                 'label' => 'Tickets Waiting',
                 'icon' => 'heroicon-o-chat-bubble-left-right',
                 'tone' => 'brand',
-                'url' => TicketResource::canViewAny()
-                    ? TicketResource::getUrl('index', ['tab' => 'open'])
+                'url' => SupportTickets::canAccess()
+                    ? SupportTickets::getUrl(['view' => 'open'])
                     : null,
             ],
             [
@@ -86,9 +92,12 @@ class HeadlineTiles extends Widget
                 'label' => 'Pending Cancellations',
                 'icon' => 'heroicon-o-no-symbol',
                 'tone' => 'warning',
-                'url' => ServiceCancellationResource::canViewAny()
-                    ? ServiceCancellationResource::getUrl('index')
-                    : null,
+                // Same fallback WhmcsNavigation's own Cancellation Requests entry uses:
+                // ours when the extension providing it is installed, core's otherwise, so
+                // the tile is never a dead link on an install that lacks the extension.
+                'url' => class_exists(CancellationRequestResource::class)
+                    ? (CancellationRequestResource::canViewAny() ? CancellationRequestResource::getUrl('index') : null)
+                    : (ServiceCancellationResource::canViewAny() ? ServiceCancellationResource::getUrl('index') : null),
             ],
         ];
 

@@ -506,7 +506,7 @@ class CreateQuote extends Page
         });
 
         Notification::make()->title('Quote deleted')->success()->send();
-        $this->redirect(\Paymenter\Extensions\Others\Quotes\Admin\Resources\QuoteResource::getUrl('index'));
+        $this->redirect(QuotesList::getUrl());
     }
 
     protected function getViewData(): array
