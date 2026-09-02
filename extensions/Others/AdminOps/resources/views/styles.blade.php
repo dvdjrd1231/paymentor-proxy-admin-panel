@@ -3956,7 +3956,14 @@
 
     .ao-ni-options { margin-bottom: 0.6rem; }
 
-    .ao-ni-options .ao-cp-link { margin: 0 0.25rem; }
+    /* Issue #25: .ao-cp-link is a full-width flex block by default, which stacked the
+       reference's one-line "Options: Open | Scheduled | Resolved | Create New" row into
+       a column — and its width overflow was the page's stray horizontal scrollbar. */
+    .ao-ni-options .ao-cp-link {
+        display: inline-flex;
+        width: auto;
+        margin: 0 0.25rem;
+    }
 
     .ao-ni-options .ao-ni-new { color: #5cb85c; font-weight: 600; }
 
