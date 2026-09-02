@@ -38,6 +38,60 @@ class ManageAffiliates extends Page
     #[Url]
     public string $q = '';
 
+    /** Issue #6: the reference's per-affiliate detail screen, opened by the list's edit icon. */
+    #[Url]
+    public ?int $affiliate = null;
+
+    #[Url(as: 'detail')]
+    public string $dtab = 'referrals';
+
+    /** The detail form's editable fields — the extension's real columns. */
+    public array $edit = ['reward' => '', 'discount' => '', 'visitors' => 0];
+
+    public function openAffiliate(int $id): void
+    {
+        $this->affiliate = $id;
+        $this->dtab = 'referrals';
+        $this->loadEdit();
+    }
+
+    public function mount(): void
+    {
+        if ($this->affiliate) {
+            $this->loadEdit();
+        }
+    }
+
+    private function loadEdit(): void
+    {
+        if ($row = Affiliate::find($this->affiliate)) {
+            $this->edit = [
+                'reward' => (string) $row->reward,
+                'discount' => (string) $row->discount,
+                'visitors' => (int) $row->visitors,
+            ];
+        }
+    }
+
+    public function saveAffiliate(): void
+    {
+        // Nullable on purpose: a live affiliate row can carry NULL discount/reward, and
+        // an empty box means "none" — required-validation locked such rows out of saving.
+        $this->validate([
+            'edit.reward' => 'nullable|numeric|min:0|max:100',
+            'edit.discount' => 'nullable|numeric|min:0|max:100',
+            'edit.visitors' => 'required|integer|min:0',
+        ], attributes: ['edit.reward' => 'commission', 'edit.discount' => 'discount', 'edit.visitors' => 'visitors referred']);
+
+        Affiliate::findOrFail($this->affiliate)->update([
+            'reward' => $this->edit['reward'] === '' ? 0 : $this->edit['reward'],
+            'discount' => $this->edit['discount'] === '' ? 0 : $this->edit['discount'],
+            'visitors' => $this->edit['visitors'],
+        ]);
+
+        \Filament\Notifications\Notification::make()->title('Affiliate saved')->success()->send();
+    }
+
     public function toggleFilter(): void
     {
         $this->filter = !$this->filter;
@@ -65,6 +119,16 @@ class ManageAffiliates extends Page
 
     protected function getViewData(): array
     {
+        if ($this->affiliate) {
+            $current = Affiliate::with(['user', 'orders.order.user', 'orders.order.services.product'])->find($this->affiliate);
+
+            if ($current) {
+                return ['current' => $current, 'affiliates' => null];
+            }
+
+            $this->affiliate = null;
+        }
+
         $affiliates = Affiliate::query()
             ->with(['user', 'orders'])
             ->join('users', 'users.id', '=', 'ext_affiliates.user_id')
@@ -77,7 +141,7 @@ class ManageAffiliates extends Page
             ->select('ext_affiliates.*')
             ->paginate(self::PER_PAGE, page: $this->page);
 
-        return ['affiliates' => $affiliates];
+        return ['affiliates' => $affiliates, 'current' => null];
     }
 
     /** "$18.90 USD", or "$0.00 USD" for an affiliate whose referrals have paid nothing. */
