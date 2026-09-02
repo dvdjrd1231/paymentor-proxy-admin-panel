@@ -947,6 +947,68 @@
         color: var(--wa-ink, hsl(var(--color-base)));
     }
 
+    /* ── Automation Status chart ─────────────────────────────────────────────
+       The reference's amber area chart. Plain SVG — a polygon for the fill, a polyline for
+       the edge — plotted from real CronStat rows, so an install with nothing to plot draws
+       a flat line at zero rather than an empty box pretending to be a chart. */
+    .ao-auto-chart {
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+        padding: 0.9rem 1.1rem 0.6rem;
+        margin-bottom: 1.4rem;
+    }
+
+    .ao-auto-chart-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.6rem;
+        font-size: 0.9rem;
+    }
+
+    .ao-auto-chart-pick {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-weight: 600;
+    }
+
+    .ao-auto-chart-pick select {
+        height: 2rem;
+        padding: 0 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+        font-size: 0.85rem;
+    }
+
+    .ao-auto-chart-range {
+        color: var(--wa-muted, #6b6b6b);
+        font-weight: 600;
+    }
+
+    .ao-auto-chart-svg { width: 100%; height: 220px; display: block; }
+
+    .ao-auto-chart-fill { fill: #fdf0d5; }
+
+    .ao-auto-chart-line {
+        fill: none;
+        stroke: #f0ad4e;
+        stroke-width: 2;
+    }
+
+    .ao-auto-chart-dot { fill: #f0ad4e; }
+
+    .ao-auto-chart-axis {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.3rem;
+        font-size: 0.8rem;
+        color: var(--wa-muted, #6b6b6b);
+    }
+
     /* Daily Actions. `auto-fit` rather than the reference's fixed three columns, so the grid
        reflows on a narrow window instead of overflowing — and still looks deliberate when
        an extension that owns two of the tiles is not installed. */

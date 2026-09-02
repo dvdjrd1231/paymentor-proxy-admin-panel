@@ -67,6 +67,51 @@
         <span class="ao-auto-exact">(stale after {{ $heartbeat['threshold'] }})</span>
     </p>
 
+    {{-- The reference's "Viewing X ▾ / This Week ▾" chart — a real trend line over each
+         task's own CronStat rows, not a canned illustration. Only one range exists (the
+         same seven days the tiles below already total), so it is a plain label rather than
+         a dropdown offering a choice that does nothing. --}}
+    @if (!empty($tasks))
+        <div class="ao-auto-chart">
+            <div class="ao-auto-chart-head">
+                <label class="ao-auto-chart-pick">
+                    Viewing
+                    <select wire:model.live="viewing">
+                        @foreach ($tasks as $task)
+                            <option value="{{ $task['key'] }}">{{ $task['title'] }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <span class="ao-auto-chart-range">This Week</span>
+            </div>
+
+            @php
+                $max = max(1, ...array_column($chart['days'], 'value'));
+                $w = 700;
+                $h = 220;
+                $stepX = $w / max(1, count($chart['days']) - 1);
+                $points = collect($chart['days'])->values()->map(fn ($day, $i) => [
+                    'x' => round($i * $stepX, 1),
+                    'y' => round($h - ($day['value'] / $max) * ($h - 20), 1),
+                ]);
+                $line = $points->map(fn ($p) => "{$p['x']},{$p['y']}")->implode(' ');
+                $area = "0,{$h} {$line} {$w},{$h}";
+            @endphp
+            <svg viewBox="0 0 {{ $w }} {{ $h }}" class="ao-auto-chart-svg" preserveAspectRatio="none">
+                <polygon points="{{ $area }}" class="ao-auto-chart-fill" />
+                <polyline points="{{ $line }}" class="ao-auto-chart-line" />
+                @foreach ($points as $p)
+                    <circle cx="{{ $p['x'] }}" cy="{{ $p['y'] }}" r="3" class="ao-auto-chart-dot" />
+                @endforeach
+            </svg>
+            <div class="ao-auto-chart-axis">
+                @foreach ($chart['days'] as $day)
+                    <span title="{{ $day['value'] }} {{ $chart['did'] }}">{{ $day['label'] }}</span>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <h3 class="ao-auto-section">Daily Actions</h3>
 
     @if (empty($tasks))

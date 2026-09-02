@@ -10,6 +10,7 @@ use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Url;
 
 /**
  * WHMCS's Automation Status: is the automation running, and what did it do.
@@ -89,6 +90,13 @@ class AutomationStatus extends Page
         'email_logs_deleted' => ['Email Logs', 'Deleted'],
     ];
 
+    /** How many days the reference's "This Week" view covers, inclusive of today. */
+    private const CHART_DAYS = 7;
+
+    /** The reference's "Viewing X ▾" picker — which task's daily figures the chart plots. */
+    #[Url]
+    public string $viewing = '';
+
     public static function canAccess(): bool
     {
         return (bool) Auth::user()?->hasPermission('admin.settings.view');
@@ -114,6 +122,13 @@ class AutomationStatus extends Page
     {
         $heartbeat = $this->stamp('last_scheduler_run');
         $daily = $this->stamp('last_cron_run');
+        $tasks = $this->tasks();
+
+        // Default to whatever the tile grid actually shows — the first task this install
+        // has ever recorded — rather than a fixed key that might not exist here.
+        if ($this->viewing === '' || !in_array($this->viewing, array_column($tasks, 'key'), true)) {
+            $this->viewing = $tasks[0]['key'] ?? '';
+        }
 
         return [
             'heartbeat' => [
@@ -127,9 +142,44 @@ class AutomationStatus extends Page
                 'threshold' => self::DAILY_STALE_HOURS . ' hours',
             ],
             'nextRun' => $this->nextDailyRun(),
-            'tasks' => $this->tasks(),
+            'tasks' => $tasks,
             'problems' => $this->problems($heartbeat, $daily),
+            'chart' => $this->chart(),
         ];
+    }
+
+    /**
+     * The reference's "Viewing X / This Week" chart: the picked task's real daily count,
+     * one point per of the last seven days, zero-filled for a day nothing ran.
+     *
+     * @return array{label: string, did: string, days: array<int, array{date: string, label: string, value: int}>}
+     */
+    private function chart(): array
+    {
+        [$label, $did] = self::TASKS[$this->viewing] ?? ['—', ''];
+
+        // Grouped by a plain formatted string, not the column directly: `date` is cast to
+        // Carbon, so grouping by the raw attribute keys the result by that Carbon object's
+        // own __toString() ("2026-08-31 00:00:00"), which the lookup below — a bare
+        // toDateString() — never matches. Every day silently read as zero until this was
+        // pinned down with a planted row that should have moved the line and did not.
+        $rows = CronStat::query()
+            ->where('key', $this->viewing)
+            ->where('date', '>=', now()->subDays(self::CHART_DAYS - 1)->toDateString())
+            ->get()
+            ->groupBy(fn (CronStat $row) => $row->date->toDateString());
+
+        $days = [];
+        for ($i = self::CHART_DAYS - 1; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $days[] = [
+                'date' => $date->toDateString(),
+                'label' => $date->format('jS'),
+                'value' => (int) ($rows->get($date->toDateString())?->sum('value') ?? 0),
+            ];
+        }
+
+        return ['label' => $label, 'did' => $did, 'days' => $days];
     }
 
     /**
@@ -204,13 +254,21 @@ class AutomationStatus extends Page
                 continue;
             }
 
+            // Collection::where('date', $today) compares a Carbon object (the cast column)
+            // against a bare "Y-m-d" string with PHP's == — which stringifies the Carbon side
+            // as "Y-m-d H:i:s" first, so it never matched and every "today" figure has always
+            // read zero regardless of what actually ran. filter() with an explicit
+            // ->toDateString() on each row is what the comparison needed.
+            $isToday = fn ($row) => $row->date->toDateString() === $today;
+
             $tiles[] = [
+                'key' => $key,
                 'title' => $title,
                 'did' => $did,
-                'today' => (int) $group->where('date', $today)->sum('value'),
+                'today' => (int) $group->filter($isToday)->sum('value'),
                 'week' => (int) $group->sum('value'),
                 // The reference puts a failed count on every tile, in red, beside the figure.
-                'failed' => (int) ($rows->get($key . '_failed')?->where('date', $today)->sum('value') ?? 0),
+                'failed' => (int) ($rows->get($key . '_failed')?->filter($isToday)->sum('value') ?? 0),
                 'lastSeen' => $group->max('date'),
             ];
         }
