@@ -341,6 +341,11 @@ class WhmcsNavigation
         // next to the pages that supersede them, rather than where they are read.
         static::$placed[BillableItemResource::class] = true;
         static::$placed[QuoteResource::class] = true;
+        // Add Transaction: real, reachable from a row on Offline CC Processing below, but
+        // the reference has no menu entry for it at all — opened from an invoice, not
+        // browsed to — so none is invented here either. Placed anyway so the Addons
+        // catch-all does not sweep it in as an entry the reference never had.
+        static::$placed[AddTransaction::class] = true;
         static::$placed[RefundRequestResource::class] = true;
 
         // The reference's Billing menu, in the reference's order: Transactions List, then
@@ -389,10 +394,12 @@ class WhmcsNavigation
             // payment IS offline card processing here, and a refund request is what a
             // dispute looks like in Paymenter.
             // Issue #15: the reference's own page is a queue — invoices belonging to a
-            // client with a card on file — not a form. Add Transaction is still real and
-            // still reachable, just no longer standing in for a screen it never was.
+            // client with a card on file — not a form. Add Transaction is real and still
+            // reachable (an Attempt Charge link on a row here goes straight to it), but the
+            // reference has no menu entry for it at all — it is opened from an invoice, not
+            // browsed to — so this does not invent one either. See its placement above,
+            // next to where the item for it used to be.
             static::page(OfflineCcProcessing::class, 'Offline CC Processing'),
-            static::page(AddTransaction::class, '- Add Transaction'),
             static::pageLink(
                 RefundRequests::class,
                 'Disputes',
