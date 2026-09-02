@@ -109,8 +109,8 @@ class Toolbar
             // Leandro landed there and read reordering as missing. The catalogue is the
             // WHMCS surface (drag to reorder, Edit/Create for single records).
             static::page(Catalogue::class, 'Products/Services', 'heroicon-o-cube'),
-            static::index(ConfigOptionResource::class, 'Configurable Options', 'heroicon-o-adjustments-vertical'),
-            static::index(ServerResource::class, 'Servers', 'heroicon-o-server-stack'),
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ConfigOptionGroups::class, 'Configurable Options', 'heroicon-o-adjustments-vertical'),
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServersList::class, 'Servers', 'heroicon-o-server-stack'),
             static::page(PanelLocations::class, 'Panel Locations', 'heroicon-o-globe-alt'),
             // Issue #45: the AdminOps page with the Enable/Disable/Edit quick buttons.
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\PaymentGateways::class, 'Payment Gateways', 'heroicon-o-credit-card'),

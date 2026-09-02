@@ -66,7 +66,7 @@ class SystemSettings extends Page
             ],
             'Products' => [
                 ['Products/Services', $url(Catalogue::class), 'ri-shopping-bag-3-line', 'The catalogue itself — every product this store sells'],
-                ['Configurable Options', $url(\App\Admin\Resources\ConfigOptionResource::class), 'ri-equalizer-line', 'Choices a client makes at checkout, like region or plan size'],
+                ['Configurable Options', $url(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ConfigOptionGroups::class), 'ri-equalizer-line', 'Choices a client makes at checkout, like region or plan size'],
                 ['Servers', $url(\App\Admin\Resources\ServerResource::class), 'ri-server-line', 'The provisioning modules a product can be delivered through'],
                 ['Client Fields', $url(\App\Admin\Resources\CustomPropertyResource::class), 'ri-list-settings-line', 'Extra fields collected on a client\'s profile'],
             ],
