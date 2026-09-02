@@ -118,7 +118,9 @@
                 @foreach ($balances['tiles'] as $tile)
                     <div class="ao-tx-balance">
                         <span>{{ $tile['gateway'] }}</span>
-                        <b class="{{ $tile['label'] === 'Available' ? 'ao-tx-up' : 'ao-tx-note' }}">{{ $tile['amount'] }}</b>
+                        {{-- Issue #11: the reference gives Available and Pending the same
+                             muted teal figure — nothing there marks Pending as lesser. --}}
+                        <b class="ao-tx-up">{{ $tile['amount'] }}</b>
                         <i>{{ $tile['label'] }}</i>
                     </div>
                 @endforeach
