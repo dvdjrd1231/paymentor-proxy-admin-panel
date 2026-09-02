@@ -100,7 +100,9 @@ class PanelLocations extends Page implements HasTable
         return 'This page stores nothing. It is a live window into adminProxies: the same '
             . count($rows) . ' locations, read over the API each time, shown here because their '
             . 'stock and on/off switches decide which Regions customers can buy at checkout. '
-            . $sellable . ' currently sellable.';
+            . 'The Tunnels / Used / Free counts are the panel\'s own figures at this moment — '
+            . 'inventory is counted on the adminProxies side, and re-checked there again at '
+            . 'the moment of provisioning. ' . $sellable . ' currently sellable.';
     }
 
     public function table(Table $table): Table

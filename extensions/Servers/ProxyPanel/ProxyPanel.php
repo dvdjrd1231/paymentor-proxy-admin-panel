@@ -117,18 +117,22 @@ class ProxyPanel extends Server
             [
                 'name' => 'api_token',
                 'label' => 'Panel Token',
-                'type' => 'text',
-                'description' => 'Sent as the "Panel" header on every request. Stored encrypted.',
+                // Password, not text (Leandro): the value is stored encrypted, but a text
+                // input printed the decrypted token on screen every time the form opened —
+                // one screenshot or shoulder-glance and the key has leaked. Masked now,
+                // with the reveal eye for when it is genuinely needed.
+                'type' => 'password',
+                'description' => 'Sent as the "Panel" header on every request. Stored encrypted; shown masked.',
                 'required' => true,
                 'encrypted' => true,
             ],
             [
                 'name' => 'callback_secret',
                 'label' => 'Callback Secret',
-                'type' => 'text',
+                'type' => 'password',
                 'description' => 'Shared secret the panel must present when calling back into Paymenter, '
                     . 'as "X-Panel-Secret" or as an HMAC-SHA256 of the raw body in "X-Panel-Signature". '
-                    . 'Leave empty to disable the callback endpoint. Stored encrypted.',
+                    . 'Leave empty to disable the callback endpoint. Stored encrypted; shown masked.',
                 'required' => false,
                 'encrypted' => true,
             ],
