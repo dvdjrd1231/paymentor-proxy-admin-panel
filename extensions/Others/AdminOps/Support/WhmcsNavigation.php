@@ -46,6 +46,7 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AnnouncementsAdmin;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\CreateQuote;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailCampaigns;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\GeneralSettings;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\NetworkIssues;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\OpenNewTicket;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\PredefinedReplies;
@@ -584,7 +585,9 @@ class WhmcsNavigation
             static::link(ApiResource::class, 'API Keys'),
             static::link(OauthClientResource::class, 'OAuth Clients'),
             static::link(ExtensionResource::class, 'Extensions'),
-            static::page(Settings::class, 'General Settings'),
+            // Issue #39: the WHMCS-shaped tabbed settings page; core's raw form stays
+            // reachable as System Settings' first tile.
+            static::page(GeneralSettings::class, 'General Settings'),
             // Updates lives in Utilities, as it does on the reference ("Update WHMCS").
         ]);
     }
@@ -600,6 +603,10 @@ class WhmcsNavigation
     private static function markSystemSettingsPlaced(): void
     {
         static::$placed[SystemSettings::class] = true;
+        // Issue #39: the menu's General Settings entry is now the WHMCS-shaped tabbed
+        // page; core's raw form stays reachable as System Settings' first tile, and is
+        // claimed here so the Addons sweep leaves it be.
+        static::$placed[Settings::class] = true;
     }
 
     /**
