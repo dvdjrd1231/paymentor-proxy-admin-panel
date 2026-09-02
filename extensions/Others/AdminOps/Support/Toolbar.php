@@ -117,8 +117,8 @@ class Toolbar
             static::index(CurrencyResource::class, 'Currencies', 'heroicon-o-banknotes'),
             static::index(CustomPropertyResource::class, 'Custom Client Fields', 'heroicon-o-tag'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::class, 'Email Templates', 'heroicon-o-envelope'),
-            static::index(RoleResource::class, 'Administrator Roles', 'heroicon-o-user-group'),
-            static::index(ApiResource::class, 'API Keys', 'heroicon-o-key'),
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\AdminRoles::class, 'Administrator Roles', 'heroicon-o-user-group'),
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ApiCredentials::class, 'API Credentials', 'heroicon-o-key'),
             static::index(OauthClientResource::class, 'OpenID Connect', 'heroicon-o-finger-print'),
             static::index(ExtensionResource::class, 'Extensions', 'heroicon-o-puzzle-piece'),
         ]));

@@ -4133,6 +4133,11 @@
 
     .ao-et-dot.ao-off { color: #d9534f; }
 
+    /* API Credentials (issue #50): the reference's Generate button is green. */
+    .ao-api-generate { background: #5cb85c; border-color: #4cae4c; color: #fff; }
+
+    .ao-api-generate:hover { background: #449d44; color: #fff; }
+
     /* Affiliates detail (issue #6): the reference's framed two-column summary with
        label-left rows, editable commission fields inline. */
     .ao-af-frame {
