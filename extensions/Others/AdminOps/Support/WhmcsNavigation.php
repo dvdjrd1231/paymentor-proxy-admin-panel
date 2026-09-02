@@ -576,6 +576,9 @@ class WhmcsNavigation
         static::$placed[ConfigOptionResource::class] = true;
         // Issue #48: same for Email Templates — the menu entry is the grouped page.
         static::$placed[NotificationTemplateResource::class] = true;
+        // Issues #49/#50: same for Administrator Roles and API Credentials.
+        static::$placed[RoleResource::class] = true;
+        static::$placed[ApiResource::class] = true;
 
         return static::group('Setup', 'ri-settings-3-line', [
             // First, as it is on the reference: the catalogue as a whole, ordered by
@@ -593,8 +596,8 @@ class WhmcsNavigation
             static::link(CurrencyResource::class, 'Currencies'),
             static::link(CustomPropertyResource::class, 'Custom Client Fields'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::class, 'Email Templates'),
-            static::link(RoleResource::class, 'Administrator Roles'),
-            static::link(ApiResource::class, 'API Keys'),
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\AdminRoles::class, 'Administrator Roles'),
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ApiCredentials::class, 'API Credentials'),
             static::link(OauthClientResource::class, 'OpenID Connect'),
             static::link(ExtensionResource::class, 'Extensions'),
             // Issue #39: the WHMCS-shaped tabbed settings page; core's raw form stays

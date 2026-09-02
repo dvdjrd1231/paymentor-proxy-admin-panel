@@ -53,7 +53,7 @@ class SystemSettings extends Page
             'General' => [
                 ['General Settings', $url(\App\Admin\Pages\Settings::class), 'ri-settings-3-line', 'Company name, timezone, language and the store\'s core configuration'],
                 ['Administrators', $url(\App\Admin\Resources\UserResource::class), 'ri-shield-user-line', 'Staff accounts and what each one can do'],
-                ['API Credentials', $url(\App\Admin\Resources\ApiResource::class), 'ri-key-2-line', 'Keys for talking to this store from the outside'],
+                ['API Credentials', $url(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ApiCredentials::class), 'ri-key-2-line', 'Keys for talking to this store from the outside'],
                 ['Audit Log', $url(\App\Admin\Resources\AuditResource::class), 'ri-history-line', 'Every change made in the admin, who made it and when'],
             ],
             'Billing' => [
