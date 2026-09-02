@@ -17,6 +17,9 @@
             </div>
         @endif
 
+        {{-- Issue #12: the reference frames the tab, the filter and the records line
+             together in one bordered panel under the totals bar. --}}
+        <div class="ao-inv-panel">
         <div class="ao-tx-tabs">
             <button type="button" class="ao-mu-tab {{ $this->filter ? 'ao-on' : '' }}" wire:click="toggleFilter">
                 Search/Filter
@@ -74,6 +77,7 @@
                 </select>
             </label>
         </div>
+        </div>
 
         {{-- The reference's With Selected bar, above and below the grid. --}}
         <div class="ao-st-bulk">
@@ -119,7 +123,10 @@
                     @endphp
                     <tr>
                         <td class="ao-mu-check"><input type="checkbox" data-ao-check wire:model="selected" value="{{ $invoice->id }}"></td>
-                        <td><a href="{{ $edit }}">{{ $invoice->number ?? $invoice->id }}</a></td>
+                        {{-- Issue #12: the reference numbers its invoices by date —
+                             "2026 08 29 4212". Same derivation, from the real created
+                             date and id; the stored number still drives lookups. --}}
+                        <td><a href="{{ $edit }}">{{ $invoice->created_at?->format('Y m d') }} {{ $invoice->id }}</a></td>
                         <td>
                             @if ($summary)
                                 <a href="{{ $summary }}">{{ trim(($invoice->user->first_name ?? '') . ' ' . ($invoice->user->last_name ?? '')) ?: ($invoice->user->email ?? '—') }}</a>

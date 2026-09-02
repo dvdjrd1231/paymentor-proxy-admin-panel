@@ -2778,17 +2778,31 @@
 
     /* ── Invoices ───────────────────────────────────────────────────────────
        The reference's headline bar: Paid green, Unpaid red, Overdue black-on-grey. */
+    /* Issue #12: the reference's totals bar is a centred line in a teal-bordered white
+       box, not a grey band. */
     .ao-inv-bar {
         display: flex;
         flex-wrap: wrap;
+        justify-content: center;
         gap: 0.4rem 2rem;
         padding: 0.8rem 1.1rem;
-        border: 1px solid var(--wa-panel-border, #ddd);
+        border: 2px solid #7edfe6;
         border-radius: var(--wa-radius, 6px);
-        background: #f0f0f0;
+        background: #fff;
         font-size: 1.05rem;
         font-weight: 700;
     }
+
+    /* Issue #12: the reference's tab + filter + records line share one bordered panel. */
+    .ao-inv-panel {
+        border: 1px solid #7edfe6;
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+        padding: 0.7rem 1rem 0.4rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .ao-inv-panel .ao-mu-line { margin-bottom: 0.2rem; }
 
     .ao-inv-bar-paid { color: #3c763d; }
     .ao-inv-bar-unpaid { color: #d9534f; }
