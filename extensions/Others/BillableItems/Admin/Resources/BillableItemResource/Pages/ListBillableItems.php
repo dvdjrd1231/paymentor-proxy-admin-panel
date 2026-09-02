@@ -4,17 +4,23 @@ namespace Paymenter\Extensions\Others\BillableItems\Admin\Resources\BillableItem
 
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\BillableItemsList;
+use Paymenter\Extensions\Others\AdminOps\Support\RedirectsToWhmcsPage;
 use Paymenter\Extensions\Others\BillableItems\Admin\Resources\BillableItemResource;
 
 /**
- * The list, with create and edit in modals rather than on pages of their own.
- *
- * A billable item is eight fields and is usually written while looking at the list of what
- * else is waiting for that customer — a full page would lose that context for no gain.
+ * Was the list, with create and edit in modals. {@see BillableItemsList} replaced it.
  */
 class ListBillableItems extends ListRecords
 {
+    use RedirectsToWhmcsPage;
+
     protected static string $resource = BillableItemResource::class;
+
+    protected static function whmcsPageUrl(): string
+    {
+        return BillableItemsList::getUrl();
+    }
 
     protected function getHeaderActions(): array
     {
