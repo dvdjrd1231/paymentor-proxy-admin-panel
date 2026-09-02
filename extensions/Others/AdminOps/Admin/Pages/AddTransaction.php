@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Url;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
@@ -28,6 +29,8 @@ class AddTransaction extends Page
     /** Navigation is built by {@see WhmcsNavigation}. */
     protected static bool $shouldRegisterNavigation = false;
 
+    /** Bound to the URL so Offline CC Processing can land here with the invoice preselected. */
+    #[Url]
     public ?int $invoiceId = null;
 
     public string $gateway = '';
@@ -46,6 +49,14 @@ class AddTransaction extends Page
     public function getTitle(): string
     {
         return 'Add Transaction';
+    }
+
+    public function mount(): void
+    {
+        // #[Url] hydrates the property before mount() runs but does not fire updatedInvoiceId
+        // — that only fires on a later, interactive change — so a deep link with ?invoiceId=
+        // would otherwise show the picker filled in with no amount to match.
+        $this->updatedInvoiceId();
     }
 
     /** Prefill the remaining balance when an invoice is picked. */
