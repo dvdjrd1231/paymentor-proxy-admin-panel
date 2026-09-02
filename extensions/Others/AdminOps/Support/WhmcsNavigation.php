@@ -224,9 +224,11 @@ class WhmcsNavigation
             // menu leads to them. Core's UserResource stays reachable through their Actions
             // column — it is still the only place a user is edited.
             static::page(ViewSearchClients::class, 'View/Search Clients'),
-            // The reference's own order here: Manage Users sits between the two.
-            static::page(ManageUsers::class, 'Manage Users'),
+            // Issue #36: the reference's actual order is View/Search Clients, Add New
+            // Client, Manage Users — the previous comment here had Manage Users sitting
+            // between the two, which the reference's own dropdown does not.
             static::page(AddNewClient::class, 'Add New Client'),
+            static::page(ManageUsers::class, 'Manage Users'),
             static::page(ProductsServices::class, 'Products/Services'),
             // The category entries follow their parent, and the menu script folds them
             // into the reference's side panel — "Products/Services ▸" opening on hover.
