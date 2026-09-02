@@ -27,6 +27,17 @@ class KnowledgebaseList extends Page
     #[Url]
     public ?int $category = null;
 
+    /** The reference's Search/Filter band — every list page carries one; this one did not. */
+    public bool $filter = false;
+
+    #[Url]
+    public string $q = '';
+
+    public function toggleFilter(): void
+    {
+        $this->filter = !$this->filter;
+    }
+
     public static function canAccess(): bool
     {
         return class_exists(KbArticle::class)
@@ -57,10 +68,14 @@ class KnowledgebaseList extends Page
         }
 
         return [
-            'categories' => $this->category ? collect() : KbCategory::withCount('articles')->orderBy('name')->get(),
-            'current' => $this->category ? KbCategory::find($this->category) : null,
+            // A search clears the category walk — searching "the whole knowledgebase" and
+            // being handed back only the one category you happened to be in would read as
+            // the search having silently failed.
+            'categories' => ($this->category && trim($this->q) === '') ? collect() : KbCategory::withCount('articles')->orderBy('name')->get(),
+            'current' => ($this->category && trim($this->q) === '') ? KbCategory::find($this->category) : null,
             'articles' => KbArticle::with('category')
-                ->when($this->category, fn ($q) => $q->where('category_id', $this->category))
+                ->when($this->category && trim($this->q) === '', fn ($q) => $q->where('category_id', $this->category))
+                ->when(trim($this->q) !== '', fn ($q) => $q->where('title', 'like', '%' . trim($this->q) . '%'))
                 ->orderBy('title')->limit(200)->get(),
             'urls' => $urls,
         ];

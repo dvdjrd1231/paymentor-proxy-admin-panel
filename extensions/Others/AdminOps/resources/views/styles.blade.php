@@ -3773,6 +3773,11 @@
         font-size: 0.85rem;
         max-height: 24rem;
         overflow: auto;
+        margin: 0.4rem 0;
+        padding: 0.9rem 1rem;
+        border: 1px solid var(--wa-border, #e2e2e2);
+        border-radius: var(--wa-radius, 6px);
+        background: var(--wa-canvas, hsl(var(--color-gray-50)));
     }
 
     /* The two-column framed filter (Service Addons) and the campaigns screen. */
