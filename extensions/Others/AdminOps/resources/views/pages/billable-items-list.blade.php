@@ -6,7 +6,26 @@
             <button type="button" class="ao-mu-tab {{ $tab === 'all' ? 'ao-on' : '' }}" wire:click="$set('tab', 'all')">List All Billable Items</button>
             <button type="button" class="ao-mu-tab {{ $tab === 'uninvoiced' ? 'ao-on' : '' }}" wire:click="$set('tab', 'uninvoiced')">Uninvoiced Items</button>
             <button type="button" class="ao-mu-tab {{ $tab === 'recurring' ? 'ao-on' : '' }}" wire:click="$set('tab', 'recurring')">Recurring Items</button>
+            <button type="button" class="ao-mu-tab {{ $filter ? 'ao-on' : '' }}" wire:click="toggleFilter">Search/Filter</button>
         </div>
+
+        @if ($filter)
+            <form class="ao-find" autocomplete="off" wire:submit.prevent="$refresh">
+                <span class="ao-find-glass" aria-hidden="true">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" width="18" height="18">
+                        <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
+                    </svg>
+                </span>
+                <div class="ao-find-fields">
+                    <label class="ao-find-field ao-find-grow">
+                        <span class="ao-find-label">Client or Description</span>
+                        <input @nofill type="search" wire:model.live.debounce.500ms="q" placeholder="Client name, email or description">
+                    </label>
+                </div>
+                <button type="submit" class="ao-find-go">Search</button>
+            </form>
+        @endif
 
         @if ($adding)
             <form class="ao-anc-card" wire:submit.prevent="create">
@@ -62,7 +81,7 @@
             @endif
         @endif
 
-        <div class="ao-mu-line"><span>{{ number_format($items->count()) }} Records Found</span></div>
+        <div class="ao-mu-line"><span>{{ number_format($items->count()) }} Records Found, Page 1 of 1</span></div>
 
         <table class="ao-mu-grid">
             <thead>
@@ -114,6 +133,12 @@
             <button type="button" class="ao-st-danger" wire:click="deleteSelected"
                 wire:confirm="Delete the selected items? Invoiced ones are kept.">Delete</button>
         </div>
+
+        <nav class="ao-mu-pages">
+            <button type="button" disabled>&laquo; Previous Page</button>
+            <span class="ao-mu-page-now">1</span>
+            <button type="button" disabled>Next Page &raquo;</button>
+        </nav>
     </div>
 
     <script>

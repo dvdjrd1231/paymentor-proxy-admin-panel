@@ -27,6 +27,17 @@ class BillableItemsList extends Page
     #[Url(as: 'view')]
     public string $tab = 'all';
 
+    /** The reference's Search/Filter band — every list page carries one; this one did not. */
+    public bool $filter = false;
+
+    #[Url]
+    public string $q = '';
+
+    public function toggleFilter(): void
+    {
+        $this->filter = !$this->filter;
+    }
+
     public bool $adding = false;
 
     public ?int $userId = null;
@@ -138,6 +149,13 @@ class BillableItemsList extends Page
         $items = BillableItem::with(['user'])
             ->when($this->tab === 'uninvoiced', fn ($q) => $q->whereNull('invoiced_at'))
             ->when($this->tab === 'recurring', fn ($q) => $q->whereNotNull('recur_every'))
+            ->when(trim($this->q) !== '', function ($query) {
+                $needle = trim($this->q);
+                $query->where(fn ($w) => $w->where('description', 'like', "%{$needle}%")
+                    ->orWhereHas('user', fn ($u) => $u->where('first_name', 'like', "%{$needle}%")
+                        ->orWhere('last_name', 'like', "%{$needle}%")
+                        ->orWhere('email', 'like', "%{$needle}%")));
+            })
             ->latest('id')->limit(200)->get();
 
         return [
