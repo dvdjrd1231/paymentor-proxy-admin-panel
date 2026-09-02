@@ -23,15 +23,21 @@ class AffiliatesRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('affiliate_id')
             ->columns([
-                TextColumn::make('order.id'),
+                TextColumn::make('order.id')->label('Order'),
+                // ->affiliate->earnings is the affiliate's whole-history total, the same
+                // number on every row regardless of which order it belongs to — found
+                // comparing two orders side by side and seeing identical figures. The
+                // order's own ->earnings (defined right next to it on the AffiliateOrder
+                // model) is what this column is actually meant to show: what *this*
+                // referral earned.
                 TextColumn::make('earnings')->formatStateUsing(function (AffiliateOrder $affiliateOrder) {
-                    if (count($affiliateOrder->affiliate->earnings) <= 0) {
+                    if (count($affiliateOrder->earnings) <= 0) {
                         return null;
                     }
 
                     return implode(', ', array_map(function ($key, $value) {
                         return "$key: $value";
-                    }, array_keys($affiliateOrder->affiliate->earnings), $affiliateOrder->affiliate->earnings));
+                    }, array_keys($affiliateOrder->earnings), $affiliateOrder->earnings));
                 })->label('Earning'),
                 TextColumn::make('order.created_at')
                     ->label('Created At')
