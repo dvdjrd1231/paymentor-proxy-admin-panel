@@ -25,6 +25,17 @@ class RefundRequests extends Page
     #[Url(as: 'view')]
     public string $tab = 'pending';
 
+    /** The reference's Search/Filter band — every list page carries one; this one did not. */
+    public bool $filter = false;
+
+    #[Url]
+    public string $q = '';
+
+    public function toggleFilter(): void
+    {
+        $this->filter = !$this->filter;
+    }
+
     public static function canAccess(): bool
     {
         return class_exists(RefundRequest::class)
@@ -41,6 +52,13 @@ class RefundRequests extends Page
         return [
             'rows' => RefundRequest::with(['user', 'invoice'])
                 ->when($this->tab !== 'all', fn ($q) => $q->where('status', $this->tab))
+                ->when(trim($this->q) !== '', function ($query) {
+                    $needle = trim($this->q);
+                    $query->where(fn ($w) => $w->where('reason', 'like', "%{$needle}%")
+                        ->orWhereHas('user', fn ($u) => $u->where('first_name', 'like', "%{$needle}%")
+                            ->orWhere('last_name', 'like', "%{$needle}%")
+                            ->orWhere('email', 'like', "%{$needle}%")));
+                })
                 ->latest('id')->limit(200)->get(),
         ];
     }

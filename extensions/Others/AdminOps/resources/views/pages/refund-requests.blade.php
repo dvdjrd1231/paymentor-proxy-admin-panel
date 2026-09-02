@@ -5,7 +5,26 @@
             @foreach (['pending' => 'Pending', 'approved' => 'Approved', 'denied' => 'Denied', 'all' => 'All'] as $key => $label)
                 <button type="button" class="ao-mu-tab {{ $tab === $key ? 'ao-on' : '' }}" wire:click="$set('tab', '{{ $key }}')">{{ $label }}</button>
             @endforeach
+            <button type="button" class="ao-mu-tab {{ $filter ? 'ao-on' : '' }}" wire:click="toggleFilter">Search/Filter</button>
         </div>
+
+        @if ($filter)
+            <form class="ao-find" autocomplete="off" wire:submit.prevent="$refresh">
+                <span class="ao-find-glass" aria-hidden="true">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" width="18" height="18">
+                        <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
+                    </svg>
+                </span>
+                <div class="ao-find-fields">
+                    <label class="ao-find-field ao-find-grow">
+                        <span class="ao-find-label">Client or Reason</span>
+                        <input @nofill type="search" wire:model.live.debounce.500ms="q" placeholder="Client name, email or reason">
+                    </label>
+                </div>
+                <button type="submit" class="ao-find-go">Search</button>
+            </form>
+        @endif
 
         <div class="ao-mu-line"><span>{{ number_format($rows->count()) }} Records Found</span></div>
 
