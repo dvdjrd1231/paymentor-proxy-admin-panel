@@ -212,8 +212,10 @@ class AddNewClient extends Page
      * invoice will say instead of leaving a disabled box looking empty. Unticking takes it
      * back out, but only if it is still the word we put there.
      */
-    public function updatedProps(mixed $value, string $key): void
+    public function updatedProps(mixed $value, ?string $key = null): void
     {
+        // Livewire passes no $key when the whole array is replaced (entangled selects do
+        // this) — seen live as issue #38's "Error while loading page" toasts.
         if ($key !== 'state_registration_exempt') {
             return;
         }

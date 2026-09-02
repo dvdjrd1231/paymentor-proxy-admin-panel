@@ -107,8 +107,9 @@ class CreateQuote extends Page
     }
 
     /** Mirrors Add New Client: ticking Isento writes the word into the field it replaces. */
-    public function updatedNc(mixed $value, string $key): void
+    public function updatedNc(mixed $value, ?string $key = null): void
     {
+        // No $key when Livewire replaces the whole array — same crash as issue #38's.
         if ($key !== 'state_registration_exempt') {
             return;
         }
