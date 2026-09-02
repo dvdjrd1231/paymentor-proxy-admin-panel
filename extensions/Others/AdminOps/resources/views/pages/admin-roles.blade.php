@@ -52,6 +52,13 @@
                                 <a href="{{ $entry['edit'] }}" title="Edit role group">
                                     <x-filament::icon icon="ri-edit-box-line" class="ao-mu-cell-icon" />
                                 </a>
+                            @else
+                                {{-- Issue #49: an empty cell read as a missing button. Core
+                                     protects the full-administrator role (id 1) from edits;
+                                     the lock says so instead of looking broken. --}}
+                                <span title="This role group is protected — the platform does not allow editing the full administrator role">
+                                    <x-filament::icon icon="ri-lock-line" class="ao-mu-cell-icon" />
+                                </span>
                             @endif
                             <button type="button" class="ao-mo-delete" title="Delete role group"
                                 wire:click="$set('confirming', {{ $role->id }})">

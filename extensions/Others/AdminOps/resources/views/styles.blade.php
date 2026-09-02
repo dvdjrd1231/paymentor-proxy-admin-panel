@@ -2398,8 +2398,10 @@
     /* Actions as the reference's small buttons, not bare links. */
     .ao-mu-actions a,
     /* Wire-action buttons in the same cell read as the same small button (issue #45's
-       Enable/Disable beside Edit). */
-    .ao-mu-actions button.ao-pg-btn {
+       Enable/Disable beside Edit) — and the same class works standalone wherever a
+       quick-action button sits outside a table cell (Currencies' update pair). */
+    button.ao-pg-btn,
+    a.ao-pg-btn {
         display: inline-block;
         margin-inline: 0.15rem;
         padding: 0.25rem 0.75rem;
@@ -2412,7 +2414,7 @@
         font-size: inherit;
     }
 
-    .ao-mu-actions button.ao-pg-btn:hover { background: #f0f0f0; }
+    button.ao-pg-btn:hover, a.ao-pg-btn:hover { background: #f0f0f0; }
 
     .ao-mu-actions a:hover {
         background: #f0f0f0;

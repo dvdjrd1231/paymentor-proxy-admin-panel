@@ -27,9 +27,50 @@ class ApiCredentials extends Page
 
     public ?int $confirming = null;
 
+    /** Issue #50 ("switch to the new window standard"): Generate lives on this page now. */
+    public bool $generating = false;
+
+    public string $newName = '';
+
     public static function canAccess(): bool
     {
         return ApiResource::canViewAny();
+    }
+
+    public function toggleGenerating(): void
+    {
+        $this->generating = !$this->generating;
+    }
+
+    /**
+     * Core's own token pattern, verbatim: PAYM + 64 hex chars, only the SHA-256 hash
+     * stored, the plaintext shown once. Permissions are refined afterwards on the
+     * credential's edit screen.
+     */
+    public function generate(): void
+    {
+        if (!ApiResource::canCreate()) {
+            Notification::make()->title('Not allowed')->danger()->send();
+
+            return;
+        }
+
+        $this->validate(['newName' => 'required|string|max:255'], attributes: ['newName' => 'description']);
+
+        $token = 'PAYM' . bin2hex(random_bytes(32));
+
+        ApiKey::create([
+            'name' => $this->newName,
+            'token' => hash('sha256', $token),
+            'user_id' => \Illuminate\Support\Facades\Auth::id(),
+            'enabled' => true,
+        ]);
+
+        $this->reset(['generating', 'newName']);
+        Notification::make()->title('API credential generated')
+            ->body("Copy the token now — it is not shown again.\n\n" . $token)
+            ->persistent()
+            ->success()->send();
     }
 
     public function getTitle(): string
