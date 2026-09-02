@@ -195,6 +195,12 @@
                                     </dl>
                                     <div class="ao-ps-detail-actions">
                                         <a class="ao-find-go" href="{{ $edit }}">Open Full Service</a>
+                                        {{-- Issue #7: the reference's "+ New Addon" on the service —
+                                             opens Service Addons with this service preselected. --}}
+                                        <a class="ao-find-go"
+                                            href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServiceAddons::getUrl(['adding' => 1, 'service' => $service->id]) }}">
+                                            &#10010; New Addon
+                                        </a>
                                         @if ($summary)
                                             <a class="ao-cq-addline" href="{{ $summary }}">Client Profile</a>
                                         @endif
