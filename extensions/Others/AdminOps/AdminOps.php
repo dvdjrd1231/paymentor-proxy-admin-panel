@@ -76,6 +76,7 @@ class AdminOps extends Extension
         $this->keepSignInsRecorded();
         $this->keepTheDailyLogWritable();
         $this->registerQuotePdf();
+        $this->registerUpdatesNotice();
     }
 
     /**
@@ -118,6 +119,76 @@ class AdminOps extends Extension
 
             return request()->boolean('inline') ? $pdf->stream($name) : $pdf->download($name);
         })->name('adminops.quote-pdf');
+    }
+
+    /**
+     * Issue #27 — core's own Utilities → Updates page, unedited (a core touchpoint we cannot
+     * remove), reads Your Version as "development": this deployment has no tagged release,
+     * it is a git checkout that moves with every commit, which is exactly why "development"
+     * is the honest label rather than a bug. What actually IS wrong is core's "Update"
+     * button sitting right there regardless — it runs `artisan app:upgrade`, core's own
+     * self-updater, which downloads and applies an official Paymenter release package. That
+     * assumes an install core manages entirely; this one is git-deployed, Docker-based, and
+     * carries our own extension layer on top. Letting that updater run for real risks
+     * overwriting files our git history and deploy scripts do not expect touched, on a store
+     * that is live.
+     *
+     * Not core's page to be told apart from a real one — core has no signal to give it. The
+     * banner is added from here, scoped to this one route so it never leaks onto a page it
+     * was not written for, and the two buttons are guarded by a confirm() that says what
+     * they would actually try to do before either is allowed to fire.
+     */
+    private function registerUpdatesNotice(): void
+    {
+        FilamentView::registerRenderHook('panels::page.header.heading.after', function (): string {
+            if (!request()->is('admin/updates')) {
+                return '';
+            }
+
+            return <<<'HTML'
+                <div class="ao-upd-notice">
+                    <p>
+                        <strong>"development" is correct, not broken.</strong> This store runs from a
+                        git checkout that is redeployed on every commit, not a tagged release core can
+                        version — there is no release number for it to show.
+                    </p>
+                    <p>
+                        <strong>Do not use Check for Updates or Update below.</strong> Both run core's
+                        own self-updater, which downloads and installs an official Paymenter package —
+                        something this deployment's Docker setup, extensions, and git history are not
+                        built to survive. To update this store, have it redeployed from git instead.
+                    </p>
+                </div>
+                <script>
+                    (() => {
+                        const warn = (label, verb) => {
+                            const btn = [...document.querySelectorAll('button, a')]
+                                .find((el) => el.textContent.trim() === label);
+                            if (!btn || btn.dataset.aoWarned) return;
+                            btn.dataset.aoWarned = '1';
+                            btn.addEventListener('click', (event) => {
+                                if (btn.dataset.aoConfirmed) { delete btn.dataset.aoConfirmed; return; }
+                                event.stopImmediatePropagation();
+                                event.preventDefault();
+                                if (confirm(
+                                    'This runs core\'s own updater, which tries to install an official '
+                                    + 'Paymenter package over this git-deployed, Docker-based store — not '
+                                    + 'how this install is updated. ' + verb + ' anyway?'
+                                )) {
+                                    btn.dataset.aoConfirmed = '1';
+                                    btn.click();
+                                }
+                            }, true);
+                        };
+
+                        const run = () => { warn('Check for updates', 'Check'); warn('Update', 'Update'); };
+                        run();
+                        document.addEventListener('livewire:navigated', run);
+                        document.addEventListener('livewire:init', () => window.Livewire?.hook?.('morphed', run));
+                    })();
+                </script>
+                HTML;
+        });
     }
 
     /**

@@ -54,12 +54,71 @@ class CreateQuote extends Page
 
     public ?int $userId = null;
 
-    /** @var array<string, string> The "Quote for new client" block. */
+    /**
+     * The "Quote for new client" block. Issue #14: Leandro's Brazilian requirement applies
+     * here exactly as it does on Add New Client — the lead becomes a real user account the
+     * moment the quote saves, so it needs the same registry fields a client created any
+     * other way would. {@see \Paymenter\Extensions\Others\BrazilianRegistration\Support\Documents}
+     * is where that logic already lives; this reuses it rather than copying it a third time.
+     *
+     * @var array<string, string>
+     */
     public array $nc = [
         'first_name' => '', 'last_name' => '', 'company_name' => '', 'email' => '',
         'phone' => '', 'currency' => '', 'address' => '', 'address2' => '',
         'city' => '', 'state' => '', 'zip' => '', 'country' => '',
+        'person_type' => '', 'cpf' => '', 'rg' => '', 'trade_name' => '',
+        'cnpj' => '', 'state_registration' => '', 'state_registration_exempt' => '',
+        'municipal_registration' => '',
     ];
+
+    /** Brazil's registry fields — kept in one place so validation, save and the view agree. */
+    public const BRAZIL_ONLY = ['person_type', 'cpf', 'rg', 'trade_name', 'cnpj', 'state_registration', 'state_registration_exempt', 'municipal_registration'];
+
+    public const INDIVIDUAL_FIELDS = ['cpf', 'rg'];
+
+    public const COMPANY_FIELDS = ['trade_name', 'cnpj', 'state_registration', 'state_registration_exempt', 'municipal_registration'];
+
+    /**
+     * Which registry fields apply to the new-client block right now: none outside Brazil,
+     * the selector alone until a natureza is chosen, then that natureza's own documents.
+     *
+     * @return array<int, string>
+     */
+    public function brazilFields(): array
+    {
+        if (!\Paymenter\Extensions\Others\BrazilianRegistration\Support\Documents::isBrazil($this->nc['country'] ?? null)) {
+            return [];
+        }
+
+        $type = $this->nc['person_type'] ?? '';
+        $documents = \Paymenter\Extensions\Others\BrazilianRegistration\Support\Documents::class;
+
+        return match (true) {
+            $documents::isCompany($type) => ['person_type', ...self::COMPANY_FIELDS],
+            $documents::isIndividual($type) => ['person_type', ...self::INDIVIDUAL_FIELDS],
+            default => ['person_type'],
+        };
+    }
+
+    public function isExempt(): bool
+    {
+        return filter_var($this->nc['state_registration_exempt'] ?? false, FILTER_VALIDATE_BOOL);
+    }
+
+    /** Mirrors Add New Client: ticking Isento writes the word into the field it replaces. */
+    public function updatedNc(mixed $value, string $key): void
+    {
+        if ($key !== 'state_registration_exempt') {
+            return;
+        }
+
+        if (filter_var($value, FILTER_VALIDATE_BOOL)) {
+            $this->nc['state_registration'] = 'ISENTO';
+        } elseif (($this->nc['state_registration'] ?? '') === 'ISENTO') {
+            $this->nc['state_registration'] = '';
+        }
+    }
 
     /** @var array<int, array{quantity: int|string, description: string, price: string, discount: string, taxed: bool}> */
     public array $items = [];
@@ -185,18 +244,67 @@ class CreateQuote extends Page
             'items.*.discount' => 'nullable|numeric|min:0|max:100',
         ];
 
+        $brazilAttributes = [];
+
         if ($this->clientMode === 'existing' || $this->quote) {
             $rules['userId'] = 'required|exists:users,id';
         } else {
             $rules['nc.first_name'] = 'required|string|max:255';
             $rules['nc.last_name'] = 'required|string|max:255';
             $rules['nc.email'] = ['required', 'email', Rule::unique('users', 'email')];
+
+            $fields = $this->brazilFields();
+            if ($fields !== []) {
+                $rules['nc.person_type'] = ['required', 'string'];
+                $brazilAttributes['nc.person_type'] = 'person type';
+
+                if (in_array('cpf', $fields, true)) {
+                    $rules['nc.cpf'] = ['required', 'string'];
+                    $rules['nc.rg'] = ['nullable', 'string', 'max:20'];
+                    $brazilAttributes['nc.cpf'] = 'CPF';
+                }
+
+                if (in_array('cnpj', $fields, true)) {
+                    $rules['nc.cnpj'] = ['required', 'string'];
+                    $rules['nc.state_registration'] = ['nullable', 'string', 'max:30'];
+                    $rules['nc.municipal_registration'] = ['nullable', 'string', 'max:30'];
+                    $brazilAttributes['nc.cnpj'] = 'CNPJ';
+                    $brazilAttributes['nc.state_registration'] = 'Inscrição Estadual';
+                }
+            }
         }
 
         $this->validate($rules, attributes: [
             'userId' => 'client', 'nc.first_name' => 'first name',
             'nc.last_name' => 'last name', 'nc.email' => 'email address',
+            ...$brazilAttributes,
         ]);
+
+        if ($this->clientMode !== 'existing' && !$this->quote) {
+            $documents = \Paymenter\Extensions\Others\BrazilianRegistration\Support\Documents::class;
+            $fields = $this->brazilFields();
+            $value = fn (string $key) => trim((string) ($this->nc[$key] ?? ''));
+
+            if (in_array('cpf', $fields, true) && class_exists($documents)
+                && $value('cpf') !== '' && !$documents::isValidCpf($value('cpf'))) {
+                $this->addError('nc.cpf', 'That CPF is not valid — check the digits.');
+
+                return;
+            }
+
+            if (in_array('cnpj', $fields, true) && class_exists($documents)
+                && $value('cnpj') !== '' && !$documents::isValidCnpj($value('cnpj'))) {
+                $this->addError('nc.cnpj', 'That CNPJ is not valid — check the digits.');
+
+                return;
+            }
+
+            if (in_array('state_registration', $fields, true) && $value('state_registration') === '' && !$this->isExempt()) {
+                $this->addError('nc.state_registration', 'Give the Inscrição Estadual, or tick Isento if the company is exempt.');
+
+                return;
+            }
+        }
 
         $quote = DB::transaction(function (): Quote {
             $user = $this->resolveUser();
@@ -264,13 +372,30 @@ class CreateQuote extends Page
             'password' => Hash::make(Str::password(32)),
         ]);
 
-        $keys = ['company_name', 'phone', 'address', 'address2', 'city', 'state', 'zip', 'country', 'currency'];
+        // Only the registry fields this lead's own natureza actually asked for — the same
+        // guard Add New Client applies, so a CPF typed before switching to Jurídica is
+        // discarded rather than stored on a company account.
+        $fields = $this->brazilFields();
+        $keys = [
+            'company_name', 'phone', 'address', 'address2', 'city', 'state', 'zip', 'country', 'currency',
+            ...$fields,
+        ];
         $known = CustomProperty::where('model', User::class)->pluck('key')->all();
+
         foreach ($keys as $key) {
             $value = trim((string) ($this->nc[$key] ?? ''));
-            if ($value !== '' && (in_array($key, $known, true) || $key === 'currency')) {
+            if ($value !== '' && (in_array($key, $known, true) || in_array($key, ['currency', ...self::BRAZIL_ONLY], true))) {
                 $user->properties()->create(['key' => $key, 'value' => $value]);
             }
+        }
+
+        // A company either states its Inscrição Estadual or is exempt — the exempt flag is
+        // a checkbox, so `trim()` on it above never sees a value to save; write it here.
+        if (in_array('state_registration', $fields, true)) {
+            $user->properties()->updateOrCreate(
+                ['key' => 'state_registration_exempt'],
+                ['value' => $this->isExempt() ? '1' : '0'],
+            );
         }
 
         $this->userId = $user->id;
@@ -394,6 +519,10 @@ class CreateQuote extends Page
             'currencies' => Currency::pluck('code')->all(),
             'countries' => array_values((array) ($country?->allowed_values ?? [])),
             'pdfUrl' => $this->quote ? url('/admin/quote-pdf/' . $this->quote->id) : null,
+            'brazil' => CustomProperty::where('model', User::class)
+                ->whereIn('key', self::BRAZIL_ONLY)->get()->toBase()->keyBy('key'),
+            'brazilFields' => $this->brazilFields(),
+            'isExempt' => $this->isExempt(),
         ];
     }
 }

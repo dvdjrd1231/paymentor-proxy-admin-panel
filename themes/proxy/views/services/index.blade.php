@@ -13,6 +13,16 @@
     $creditsEnabled = (bool) config('settings.credits_enabled', false);
     $currency = session('currency', config('settings.default_currency'));
     $credit = $creditsEnabled ? $user->credits()->where('currency_code', $currency)->first() : null;
+
+    // Issue #7: "in Paymenter, it simply functions as a service" — an addon *is* a service
+    // row (that is what buys it the whole billing lifecycle for free), but nothing on the
+    // one list a client actually looks at ever said so. core's own Services\Index knows
+    // nothing of ServiceAddon and cannot be taught without editing it, so the tie is read
+    // here instead, scoped to the page of services actually being shown.
+    $addonParents = class_exists(\Paymenter\Extensions\Others\AdminOps\Models\ServiceAddon::class)
+        ? \Paymenter\Extensions\Others\AdminOps\Models\ServiceAddon::whereIn('service_id', $services->pluck('id'))
+            ->with('parent.product')->get()->keyBy('service_id')
+        : collect();
 @endphp
 
 <div class="wf-page">
@@ -96,12 +106,23 @@
                                 default => '',
                             };
                         @endphp
+                        @php($addon = $addonParents->get($service->id))
                         <tr>
                             <td>
                                 <a href="{{ route('services.show', $service) }}" wire:navigate>
-                                    <span class="wf-list-title">{{ $service->label }}</span>
+                                    <span class="wf-list-title">
+                                        {{-- The reference nests an addon under the service it
+                                             extends rather than listing it as its own thing. --}}
+                                        @if ($addon?->parent)&#8618; @endif{{ $service->label }}
+                                    </span>
                                 </a>
-                                <span class="wf-list-sub">{{ $service->product?->category?->name }}</span>
+                                <span class="wf-list-sub">
+                                    @if ($addon?->parent)
+                                        {{ __('theme.addon_of', ['service' => $addon->parent->product?->name ?? ('#' . $addon->parent->id)]) }}
+                                    @else
+                                        {{ $service->product?->category?->name }}
+                                    @endif
+                                </span>
                             </td>
                             <td>{{ $service->expires_at ? $service->expires_at->format('M d, Y') : '—' }}</td>
                             <td style="text-align:end"><span class="wf-label {{ $tone }}">{{ ucfirst($service->status) }}</span></td>
