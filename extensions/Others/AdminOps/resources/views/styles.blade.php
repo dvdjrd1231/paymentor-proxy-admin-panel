@@ -694,7 +694,7 @@
     .ao-wi .fi-wi-chart-header-heading,
     .ao-wi .ao-wi-bar {
         color: var(--wa-link, #337ab7);
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 400;
     }
 
@@ -1681,7 +1681,7 @@
         border: 1px solid var(--wa-border, #ccc);
         border-radius: var(--wa-radius, 6px);
         background: #fff;
-        font-size: 14px;
+        font-size: 15px;
     }
 
     .ao-anc-field {
@@ -3502,27 +3502,26 @@
     .ao-rp-pill.ao-rp-dead { opacity: 0.55; cursor: not-allowed; }
 
     /* ── System Settings cards ───────────────────────────────────────────────
-       Issue #40: the reference's own tiles here are a large muted icon over a title and a
-       one-line description — the same shape its Transactions dashboard uses, and for the
-       same reason: a feature-grid like this one carries its weight in the text, not in a
-       rainbow of icon colours, so the icons are toned down rather than picked out. */
+       Issue #40, from the reference screenshots: each card is a tall tile — a large,
+       pale icon centred in its own zone, a rule under it, then a bold NAVY title over a
+       grey one-liner. Leandro's "everything is in shades of grey" was ours reading title
+       and icon in the same tone; the reference's contrast lives in the navy title. */
     .ao-ss-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-        gap: 0.9rem;
+        gap: 1.1rem;
         margin-bottom: 0.5rem;
     }
 
     .ao-ss-card {
         display: flex;
-        align-items: flex-start;
-        gap: 0.8rem;
-        padding: 1rem;
+        flex-direction: column;
         border: 1px solid var(--wa-panel-border, #ddd);
         border-radius: var(--wa-radius, 6px);
         background: #fff;
         text-decoration: none;
         color: inherit;
+        overflow: hidden;
         transition: border-color 120ms, box-shadow 120ms;
     }
 
@@ -3532,27 +3531,37 @@
         text-decoration: none;
     }
 
+    .ao-ss-card:hover .ao-ss-card-ic { color: var(--wa-link, #337ab7); }
+
     .ao-ss-card-ic {
         display: grid;
         place-items: center;
-        flex: none;
-        width: 2.75rem;
-        height: 2.75rem;
-        border-radius: var(--wa-radius, 6px);
-        background: #f0f0f0;
-        color: #8a8a8a;
+        padding: 1.4rem 0 1.2rem;
+        border-bottom: 1px solid var(--wa-panel-border, #e5e5e5);
+        color: #c8ccd0;
+        transition: color 120ms;
     }
 
-    .ao-ss-card-ic svg { width: 1.5rem; height: 1.5rem; }
+    .ao-ss-card-ic svg { width: 3.25rem; height: 3.25rem; }
 
-    .ao-ss-card-body { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+    .ao-ss-card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        min-width: 0;
+        padding: 0.9rem 1.1rem 1.1rem;
+    }
 
-    .ao-ss-card-title { font-weight: 700; color: var(--wa-text, #2b2b2b); }
+    .ao-ss-card-title {
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: #14385e;
+    }
 
     .ao-ss-card-desc {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         color: var(--wa-muted, #6b6b6b);
-        line-height: 1.35;
+        line-height: 1.4;
     }
 
     @media (max-width: 700px) {

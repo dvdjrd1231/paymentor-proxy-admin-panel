@@ -405,7 +405,7 @@
         border-radius: 0;
         height: var(--wa-topbar-h);
         padding: 0 0.9rem;
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 400;
         line-height: var(--wa-topbar-h);
     }
@@ -468,7 +468,7 @@
         padding: 0.28rem 1rem;
         margin-inline: 0.25rem;
         width: calc(100% - 0.5rem);
-        font-size: 14px;
+        font-size: 15px;
         color: var(--wa-ink);
     }
 
@@ -557,7 +557,7 @@
         padding: 0.7rem 0.4rem;
         border-radius: var(--wa-radius);
         color: var(--wa-ink);
-        font-size: 14px;
+        font-size: 15px;
         line-height: 1.3;
         text-align: center;
         text-decoration: none;
@@ -592,7 +592,7 @@
         display: flex;
         flex-direction: column;
         min-height: 100%;
-        font-size: 14px;
+        font-size: 15px;
     }
 
     .ao-rail-collapsed {
@@ -619,7 +619,7 @@
         padding: 6px 10px;
         background: var(--wa-section);
         border-block: 1px solid var(--wa-border);
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 700;
         color: var(--wa-ink);
         line-height: 1.35;
@@ -689,7 +689,7 @@
     .ao-rail-facts {
         margin: 0;
         padding: 0.4rem 0.75rem;
-        font-size: 14px;
+        font-size: 15px;
     }
 
     .ao-rail-facts dt {
@@ -840,7 +840,7 @@
     }
 
     .fi-section-header-heading {
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 400;
         color: var(--wa-ink);
     }
@@ -859,7 +859,7 @@
     .fi-fo-field-label-content,
     .fi-checkbox-label,
     .fi-radio-label {
-        font-size: 15px;
+        font-size: 16px;
     }
 
     /* ── Tables ──────────────────────────────────────────────────────────────
@@ -875,7 +875,7 @@
     .fi-ta-header-cell {
         background: var(--wa-blue);
         color: #ffffff;
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 700;
         text-transform: none;
         letter-spacing: 0;
@@ -910,7 +910,7 @@
     }
 
     .fi-ta-cell {
-        font-size: 15px;
+        font-size: 16px;
         padding-block: 0.5rem;
     }
 
@@ -938,13 +938,13 @@
     }
 
     .fi-ta-empty-state-heading {
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 400;
         color: var(--wa-muted);
     }
 
     .fi-ta-empty-state-description {
-        font-size: 14px;
+        font-size: 15px;
         color: var(--wa-muted);
     }
 
@@ -953,7 +953,7 @@
        « Previous Page · 1 · Next Page » strip. */
     .fi-pagination {
         padding-block: 0.6rem;
-        font-size: 15px;
+        font-size: 16px;
     }
 
     .fi-pagination-item-btn,
@@ -986,7 +986,7 @@
     .fi-pagination-overview,
     .fi-pagination-records-per-page-select-ctn {
         color: var(--wa-text);
-        font-size: 15px;
+        font-size: 16px;
     }
 
     /* ── Forms ───────────────────────────────────────────────────────────────
@@ -996,7 +996,7 @@
        each resource form already declares. */
     .fi-fo-field-label,
     .fi-fo-field-label-content {
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 600;
         color: var(--wa-ink);
     }
@@ -1007,7 +1007,7 @@
 
     .fi-input,
     .fi-select-input {
-        font-size: 15px;
+        font-size: 16px;
     }
 
     /* ── Stat tiles ──────────────────────────────────────────────────────────
@@ -1023,7 +1023,7 @@
     }
 
     .fi-wi-stats-overview-stat-label {
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 400;
         color: var(--wa-text);
     }
@@ -1038,7 +1038,7 @@
        Square, small, WHMCS blue for the primary action. */
     .fi-btn {
         border-radius: var(--wa-radius);
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 400;
         box-shadow: none;
     }
@@ -1170,7 +1170,7 @@
         width: 100%;
         justify-content: center;
         padding-block: 0.5rem;
-        font-size: 15px;
+        font-size: 16px;
     }
 
     /* The CAPTCHA (`adminops::captcha`). reCAPTCHA v2's checkbox is a fixed 304px in a
@@ -1189,13 +1189,13 @@
     }
 
     .ao-captcha-note {
-        font-size: 14px;
+        font-size: 15px;
         color: var(--wa-muted);
         text-align: center;
     }
 
     .ao-captcha-error {
-        font-size: 14px;
+        font-size: 15px;
         color: #b42318;
         text-align: center;
     }
@@ -1236,7 +1236,7 @@
         padding: 0.5rem 1rem;
         background: var(--wa-blue);
         color: #ffffff;
-        font-size: 14px;
+        font-size: 15px;
         line-height: 1.4;
     }
 
