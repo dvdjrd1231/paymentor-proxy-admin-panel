@@ -3,6 +3,8 @@
 namespace Paymenter\Extensions\Others\AdminOps\Admin\Pages;
 
 use App\Admin\Resources\ServiceResource;
+use App\Models\Category;
+use App\Models\Server;
 use App\Models\Service;
 use Filament\Pages\Page;
 use Livewire\Attributes\Url;
@@ -49,6 +51,21 @@ class ProductsServices extends Page
 
     #[Url]
     public string $status = '';
+
+    /**
+     * Issue #4 — three of the reference's Search/Filter fields the band never exposed:
+     * Product Type is the category filter the rail's own links already set via URL, given a
+     * visible control here for the first time; Billing Cycle and Server are new. Payment
+     * Method and the Custom Field pair are the reference's own but left out — a service
+     * carries no gateway of its own to filter by (that lives on its invoices), and Paymenter
+     * has no per-product custom fields to search, so both would be a control that always
+     * returns nothing. Domain is the same story and already documented above.
+     */
+    #[Url]
+    public string $cycle = '';
+
+    #[Url]
+    public string $server = '';
 
     #[Url]
     public bool $hideInactive = true;
@@ -109,6 +126,12 @@ class ProductsServices extends Page
             'hiddenCount' => $this->hideInactive
                 ? $this->filtered(false)->count() - $this->filtered(true)->count()
                 : 0,
+            'categories' => Category::orderBy('name')->get(['id', 'name']),
+            'servers' => Server::orderBy('name')->get(['id', 'name']),
+            // Batched once for the whole page rather than per row — the same tie the
+            // client's own service list reads, {@see themes/proxy/views/services/index.blade.php}.
+            'addonParents' => \Paymenter\Extensions\Others\AdminOps\Models\ServiceAddon::whereIn('service_id', $services->pluck('id'))
+                ->with('parent.product')->get()->keyBy('service_id'),
         ];
     }
 
@@ -142,6 +165,22 @@ class ProductsServices extends Page
             $query->where('status', $this->status);
         } elseif ($hideInactive) {
             $query->whereIn('status', self::OPEN);
+        }
+
+        if ($this->server !== '' && ctype_digit($this->server)) {
+            $query->whereHas('product', fn ($q) => $q->where('server_id', (int) $this->server));
+        }
+
+        if ($this->cycle !== '') {
+            // A billing cycle is derived (unit + period + type), not a column — filtering by
+            // it means asking the same question cycle() answers, for every plan a service
+            // could have, and keeping the ones that match. Small tables (plans, not
+            // services), so this stays a handful of queries rather than one enormous join.
+            $matching = \App\Models\Plan::query()
+                ->get(['id', 'type', 'billing_unit', 'billing_period'])
+                ->filter(fn ($plan) => \Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::cycleLabel($plan) === $this->cycle)
+                ->pluck('id');
+            $query->whereIn('plan_id', $matching);
         }
 
         return $query;

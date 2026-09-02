@@ -37,6 +37,33 @@
                             <option value="cancelled">Terminated</option>
                         </select>
                     </label>
+                    <label class="ao-find-field">
+                        <span class="ao-find-label">Product Type</span>
+                        <select @nofill wire:model="category">
+                            <option value="">Any</option>
+                            @foreach ($categories as $row)
+                                <option value="{{ $row->id }}">{{ $row->name }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label class="ao-find-field">
+                        <span class="ao-find-label">Billing Cycle</span>
+                        <select @nofill wire:model="cycle">
+                            <option value="">Any</option>
+                            @foreach (['Daily', 'Weekly', 'Monthly', 'Annually', 'One Time'] as $label)
+                                <option value="{{ $label }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label class="ao-find-field">
+                        <span class="ao-find-label">Server</span>
+                        <select @nofill wire:model="server">
+                            <option value="">Any</option>
+                            @foreach ($servers as $row)
+                                <option value="{{ $row->id }}">{{ $row->name }}</option>
+                            @endforeach
+                        </select>
+                    </label>
                 </div>
 
                 <button type="submit" class="ao-find-go">
@@ -93,11 +120,21 @@
                             ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $service->user_id])
                             : null;
                         $label = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel($service->status);
+                        // Issue #7: the same addon-of tie the client's own service list now
+                        // shows, so an addon does not read as an ordinary product here either.
+                        $addon = $addonParents->get($service->id);
                     @endphp
                     <tr>
                         <td class="ao-mu-check"><input type="checkbox" data-ao-check value="{{ $service->user?->email }}"></td>
                         <td>{{ $service->id }}</td>
-                        <td class="ao-mu-left"><a href="{{ $edit }}">{{ $service->product?->name ?? '—' }}</a></td>
+                        <td class="ao-mu-left">
+                            <a href="{{ $edit }}">
+                                @if ($addon?->parent)&#8618; @endif{{ $service->product?->name ?? '—' }}
+                            </a>
+                            @if ($addon?->parent)
+                                <span class="ao-mu-dim">{{ __('theme.addon_of', ['service' => $addon->parent->product?->name ?? ('#' . $addon->parent->id)]) }}</span>
+                            @endif
+                        </td>
                         <td><span class="ao-mu-dim">(No Domain)</span></td>
                         <td>
                             @if ($summary)
@@ -120,6 +157,13 @@
                         </td>
                     </tr>
                     @if ($expanded === $service->id)
+                        @php
+                            // Issue #4: the reference's Server/Username pair, which for this
+                            // store's own proxy service is real, stored data — the ProxyPanel
+                            // module's own service properties — not something to invent.
+                            $props = $service->properties;
+                            $username = $props->firstWhere('key', 'proxy_username')?->value;
+                        @endphp
                         <tr class="ao-ps-detail">
                             <td colspan="10">
                                 <div class="ao-ps-detail-grid">
@@ -136,6 +180,8 @@
                                         <dt>Status</dt><dd>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel($service->status) }}</dd>
                                     </dl>
                                     <dl>
+                                        <dt>Server</dt><dd>{{ $service->product?->server?->name ?? '—' }}</dd>
+                                        <dt>Username</dt><dd>{{ $username ?? '—' }}</dd>
                                         <dt>Configuration</dt>
                                         <dd>
                                             @forelse ($service->configs as $config)
