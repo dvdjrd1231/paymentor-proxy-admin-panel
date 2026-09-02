@@ -2805,6 +2805,37 @@
        The reference's chart-and-tiles top, then Gateway Balances. */
     .ao-tx-tabs { display: flex; gap: 0.3rem; }
 
+    /* ── Issue #8's highlighted band ─────────────────────────────────────────
+       The reference's page header is its own white panel: the title and the tab row
+       share one bordered band, set off from the records area below. When the tab row
+       leads the page content it fuses with the title's panel; when something else comes
+       first (Invoices' totals bar) the title panel simply closes on its own. */
+    .fi-page:has(.ao-mu) .fi-page-header-main-ctn { gap: 0; }
+
+    .fi-page:has(.ao-mu) .fi-header {
+        background: #fff;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 6px);
+        padding: 1.1rem 1.2rem 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .fi-page:has(.ao-mu > .ao-tx-tabs:first-child) .fi-header {
+        border-bottom: 0;
+        border-radius: var(--wa-radius, 6px) var(--wa-radius, 6px) 0 0;
+        padding-bottom: 0.3rem;
+        margin-bottom: 0;
+    }
+
+    .ao-mu > .ao-tx-tabs:first-child {
+        background: #fff;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-top: 0;
+        border-radius: 0 0 var(--wa-radius, 6px) var(--wa-radius, 6px);
+        margin: 0 0 1rem;
+        padding: 0.15rem 1.2rem 0.35rem;
+    }
+
     .ao-tx-tab-dead { opacity: 0.7; cursor: not-allowed; }
 
     .ao-tx-top {
