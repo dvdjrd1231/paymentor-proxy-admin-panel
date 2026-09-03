@@ -7,11 +7,12 @@
     This widget draws no panel of its own. It renders the settings menu into the corner the
     reference puts it in and then decorates its neighbours, which is why it sorts first.
 
-    Plain JS and the HTML5 drag API, as everywhere else in this extension: `extensions/` is
+    Plain JS and pointer events, as everywhere else in this extension: `extensions/` is
     not scanned by the admin theme and there is no build step in the deployment path, so
-    there is nothing here to bundle and nothing to version. The reference uses Packery for a
-    masonry layout; Filament's dashboard is a CSS grid, which reflows on its own, so what is
-    needed is the ordering, not the layout engine.
+    there is nothing here to bundle and nothing to version. The reference uses Packery plus
+    Draggabilly; Filament's dashboard is a CSS grid, which reflows on its own, so what is
+    needed is the ordering and Draggabilly's feel — the panel in hand following the
+    pointer, a dashed box holding its slot — not the layout engine.
 --}}
 @php
     $layout = $this->getLayout();
@@ -548,8 +549,17 @@
         }
 
         // ── Dragging ─────────────────────────────────────────────────────────────────
-        // By the heading, as the reference does (`handle: '.panel-title'`). A widget full
-        // of links and buttons cannot be draggable everywhere or nothing in it is clickable.
+        // By the heading, as the reference does (`handle: '.panel-title'`), and with the
+        // reference's *feel*: press, and the panel itself lifts and follows the pointer
+        // while a dashed box holds its place, gliding between slots as the neighbours
+        // FLIP out of the way; release, and the panel glides into the dashes.
+        //
+        // Pointer events end to end — not the HTML5 drag API. That API paints its own
+        // half-transparent snapshot, snaps it to the OS drag loop, and fires nothing on
+        // touch screens; every part of "the drag isn't smooth" traced back to it. One
+        // pointer pipeline is also one machinery: the old click-to-carry mode collapses
+        // into this (a click without movement simply never crosses the threshold), so the
+        // two modes can no longer disagree.
         // (`dragged` and `before` are declared up by the observer, which reads them.)
         const currentOrder = () => Array.from(grid.querySelectorAll(':scope > [data-ao-widget]'))
             .map((root) => root.dataset.aoWidget);
@@ -563,47 +573,6 @@
 
             return now;
         };
-
-        // On hover, not on mousedown — and that is the whole reason dragging did not work.
-        //
-        // Chrome decides whether a gesture is a drag when the button goes *down*: an element
-        // that becomes draggable during its own `mousedown` is already too late, and no
-        // `dragstart` is ever fired. (The handlers below were fine all along — synthetic drag
-        // events reordered the dashboard correctly. Nothing was ever starting them.)
-        //
-        // So the panel under the pointer is made draggable as soon as the pointer is over its
-        // heading, and only one panel is draggable at a time. Interactive things in the
-        // heading are excluded, or the tool buttons could not be clicked.
-        grid.addEventListener('mouseover', (event) => {
-            const header = event.target.closest('.ao-wi-header');
-            const interactive = event.target.closest('a, button, input, select, canvas');
-            const root = header && !interactive ? header.closest('[data-ao-widget]') : null;
-
-            for (const el of grid.querySelectorAll('[data-ao-widget][draggable]')) {
-                if (el !== root && el !== dragged) el.removeAttribute('draggable');
-            }
-
-            root?.setAttribute('draggable', 'true');
-        });
-
-        grid.addEventListener('dragstart', (event) => {
-            // A native drag must not start over a click-carry already in progress — the two
-            // modes share the machinery and would tangle.
-            if (carrying) {
-                event.preventDefault();
-
-                return;
-            }
-
-            const root = event.target.closest('[data-ao-widget]');
-            if (!root || root.getAttribute('draggable') !== 'true') return;
-
-            dragged = root;
-            before = currentOrder().join();
-            event.dataTransfer.effectAllowed = 'move';
-            event.dataTransfer.setData('text/plain', root.dataset.aoWidget);
-            root.classList.add('ao-wi-dragging');
-        });
 
         // FLIP: record where every panel is, make the change, then let each panel *slide*
         // from its old place to its new one. Without it a reorder is a teleport — the grid
@@ -632,107 +601,29 @@
             }
         };
 
-        grid.addEventListener('dragover', (event) => {
-            if (!dragged) return;
-
-            const over = event.target.closest('[data-ao-widget]');
-            if (!over || over === dragged || over.parentElement !== grid) return;
-
-            event.preventDefault();
-            event.dataTransfer.dropEffect = 'move';
-
-            // A grid wraps, so "after" is right-of *or* below — comparing the pointer with
-            // the middle of the box on both axes puts the panel where it looks like it will go.
-            const box = over.getBoundingClientRect();
-            const after = (event.clientY - box.top) / box.height > 0.5
-                || (event.clientX - box.left) / box.width > 0.5;
-
-            const ref = after ? over.nextSibling : over;
-
-            // dragover fires on every mouse move; only act when the drop point actually
-            // changed, or the grid re-lays-out dozens of times a second for nothing.
-            if (ref === dragged || ref === dragged.nextSibling) return;
-
-            flip(() => grid.insertBefore(dragged, ref));
-        });
-
-        grid.addEventListener('drop', (event) => event.preventDefault());
-
-        // Chrome fires no `drop` unless `dragover` was cancelled over the exact element
-        // released on; `dragend` always runs.
-        grid.addEventListener('dragend', () => {
-            if (!dragged) return;
-
-            dragged.classList.remove('ao-wi-dragging');
-            dragged.removeAttribute('draggable');
-
-            if (currentOrder().join() !== before) persistOrder();
-
-            dragged = null;
-
-            // The observer stayed silent for the whole drag; run the pass it skipped, now
-            // that the DOM order and the saved order agree again.
-            sync();
-        });
-
-        // ── Click-carry ──────────────────────────────────────────────────────────────
-        // The other way to move a panel: one click on its heading picks it up, the panel
-        // travels to the estimated slot as the pointer crosses the grid, a second click
-        // sets it down there. Escape puts it back. Shares the drag's placement logic and
-        // its observer pause (`dragged`), so the two ways cannot disagree about anything.
+        // ── The pointer drag ─────────────────────────────────────────────────────────
+        // Press on a heading arms it; five pixels of travel picks the panel up. The object
+        // in hand is a fixed-position copy following the cursor (a cloned chart canvas
+        // paints blank — the frame and title still identify it, which is all a ghost is
+        // for), while the in-flow panel becomes the dashed estimate box. Release glides
+        // the ghost into the dashes; Escape puts everything back.
         let carrying = null;
         let ghost = null;
+        let armed = null;
         let grabX = 0;
         let grabY = 0;
+        let pressX = 0;
+        let pressY = 0;
+        const DRAG_MIN = 5;
 
-        const setDown = (cancel) => {
-            if (!carrying) return;
-
-            ghost?.remove();
-            ghost = null;
-            carrying.classList.remove('ao-wi-carrying');
-
-            const moved = currentOrder().join() !== before;
-            carrying = null;
-            dragged = null;
-
-            if (!cancel && moved) persistOrder();
-
-            // On cancel, decorate() lays the grid back out to the saved order — the same
-            // pass that snapped panels back mid-drag, doing it on purpose this time.
-            sync();
-        };
-
-        grid.addEventListener('click', (event) => {
-            // Order matters: while carrying, *any* click in the grid is the set-down —
-            // including one that happens to land on a link or a chart. Bailing for
-            // interactive elements first left the panel stuck in hand and the click
-            // navigating away, which is the worst of both.
-            if (carrying) {
-                event.preventDefault();
-                event.stopPropagation();
-                setDown(false);
-
-                return;
-            }
-
-            if (event.target.closest('a, button, input, select, canvas')) return;
-
-            const header = event.target.closest('.ao-wi-header');
-            const root = header?.closest('[data-ao-widget]');
-            if (!root) return;
-
-            event.preventDefault();
+        const pickUp = (root, x, y) => {
             carrying = root;
-            dragged = root; // pauses the observer, exactly as a native drag does
+            dragged = root; // pauses the observer for the whole flight
             before = currentOrder().join();
 
-            // The object in hand: a fixed-position copy that follows the cursor, while the
-            // in-flow panel becomes the dashed estimate box. A cloned chart canvas paints
-            // blank — the frame and title still identify it, which is all a ghost is for.
             const box = root.getBoundingClientRect();
-            grabX = event.clientX - box.left;
-            grabY = event.clientY - box.top;
+            grabX = x - box.left;
+            grabY = y - box.top;
 
             ghost = root.cloneNode(true);
             ghost.classList.add('ao-wi-ghost');
@@ -744,22 +635,86 @@
             document.body.append(ghost);
 
             root.classList.add('ao-wi-carrying');
+            document.body.classList.add('ao-wi-grabbing');
+        };
+
+        const setDown = (cancel) => {
+            if (!carrying) return;
+
+            const panel = carrying;
+            const flown = ghost;
+            carrying = null;
+            ghost = null;
+            armed = null;
+            document.body.classList.remove('ao-wi-grabbing');
+
+            const moved = currentOrder().join() !== before;
+
+            const finish = () => {
+                flown?.remove();
+                panel.classList.remove('ao-wi-carrying');
+                dragged = null;
+
+                if (!cancel && moved) persistOrder();
+
+                // On cancel, decorate() lays the grid back out to the saved order — the
+                // same pass the observer skipped all flight, doing it on purpose this time.
+                sync();
+            };
+
+            // The landing: the ghost glides into the dashed box and only then hands the
+            // panel back — the reference's own settle. On cancel it just lets go.
+            if (flown && !cancel) {
+                const box = panel.getBoundingClientRect();
+                flown.style.transition = 'left 160ms ease, top 160ms ease, opacity 160ms ease';
+                flown.style.left = box.left + 'px';
+                flown.style.top = box.top + 'px';
+                setTimeout(finish, 170);
+            } else {
+                finish();
+            }
+        };
+
+        grid.addEventListener('pointerdown', (event) => {
+            if (event.button !== 0 || carrying) return;
+            if (event.target.closest('a, button, input, select, canvas')) return;
+
+            const header = event.target.closest('.ao-wi-header');
+            const root = header?.closest('[data-ao-widget]');
+            if (!root) return;
+
+            // Arm only: the pick-up waits for real movement, so a plain click on a heading
+            // stays a click and never leaves a panel stuck to the pointer.
+            event.preventDefault();
+            armed = root;
+            pressX = event.clientX;
+            pressY = event.clientY;
         });
 
         // Document-level, not grid-level: the ghost must keep following even when the
         // pointer strays off the grid for a moment. Placement still only changes over a
         // real panel.
-        document.addEventListener('mousemove', (event) => {
-            if (!carrying) return;
+        document.addEventListener('pointermove', (event) => {
+            if (armed && !carrying) {
+                if (Math.hypot(event.clientX - pressX, event.clientY - pressY) < DRAG_MIN) return;
 
-            if (ghost) {
-                ghost.style.left = (event.clientX - grabX) + 'px';
-                ghost.style.top = (event.clientY - grabY) + 'px';
+                pickUp(armed, event.clientX, event.clientY);
             }
 
-            const over = event.target.closest('[data-ao-widget]');
+            if (!carrying) return;
+
+            ghost.style.left = (event.clientX - grabX) + 'px';
+            ghost.style.top = (event.clientY - grabY) + 'px';
+
+            // The ghost is pointer-events: none, so the grid is what the point hits.
+            const over = document.elementFromPoint(event.clientX, event.clientY)
+                ?.closest('[data-ao-widget]');
             if (!over || over === carrying || over.parentElement !== grid) return;
 
+            // A grid wraps, so "after" is right-of *or* below — comparing the pointer with
+            // the middle of the box on both axes puts the panel where it looks like it
+            // will go. Only act when the slot actually changed, or the grid re-lays-out
+            // dozens of times a second for nothing.
             const box = over.getBoundingClientRect();
             const after = (event.clientY - box.top) / box.height > 0.5
                 || (event.clientX - box.left) / box.width > 0.5;
@@ -768,6 +723,18 @@
             if (ref === carrying || ref === carrying.nextSibling) return;
 
             flip(() => grid.insertBefore(carrying, ref));
+        });
+
+        document.addEventListener('pointerup', () => {
+            armed = null;
+
+            if (carrying) setDown(false);
+        });
+
+        document.addEventListener('pointercancel', () => {
+            armed = null;
+
+            if (carrying) setDown(true);
         });
 
         document.addEventListener('keydown', (event) => {

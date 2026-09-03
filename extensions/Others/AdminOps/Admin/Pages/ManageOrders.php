@@ -4,8 +4,11 @@ namespace Paymenter\Extensions\Others\AdminOps\Admin\Pages;
 
 use App\Admin\Resources\OrderResource;
 use App\Models\Order;
+use App\Models\User;
+use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
@@ -38,6 +41,31 @@ class ManageOrders extends Page
 
     #[Url]
     public string $q = '';
+
+    // The reference's Search/Filter panel, field for field. Every one is a URL, so a
+    // filtered list can be pasted into a ticket.
+    #[Url]
+    public string $oid = '';
+
+    /** The ten-digit Order # — matched against {@see numberOf()}, since no column holds it. */
+    #[Url]
+    public string $onum = '';
+
+    /** "MM/DD/YYYY - MM/DD/YYYY", or a single date — the reference's one range field. */
+    #[Url]
+    public string $dates = '';
+
+    /** Exact order total; derived in PHP because core's `total` is an accessor, not a column. */
+    #[Url]
+    public string $amount = '';
+
+    /** Client name or email; the input offers a typeahead list of real clients. */
+    #[Url]
+    public string $client = '';
+
+    /** '' | complete | incomplete — the Payment Status column's own two values. */
+    #[Url]
+    public string $pay = '';
 
     #[Url]
     public int $page = 1;
@@ -235,14 +263,69 @@ class ManageOrders extends Page
 
     protected function getViewData(): array
     {
-        $orders = $this->query()->paginate(self::PER_PAGE, page: $this->page);
+        $orders = $this->paginated();
 
         if ($this->page > 1 && $orders->isEmpty()) {
             $this->page = max(1, $orders->lastPage());
-            $orders = $this->query()->paginate(self::PER_PAGE, page: $this->page);
+            $orders = $this->paginated();
         }
 
-        return ['orders' => $orders];
+        return [
+            'orders' => $orders,
+            // The Client field's typeahead: real clients, as the reference's picker offers.
+            'clientOptions' => User::query()->whereNull('role_id')
+                ->orderBy('first_name')->limit(500)
+                ->get(['first_name', 'last_name', 'email'])
+                ->map(fn (User $user): string => trim($user->first_name . ' ' . $user->last_name) . ' (' . $user->email . ')')
+                ->all(),
+        ];
+    }
+
+    /**
+     * Order #, Amount and Payment Status exist only in PHP — the number is derived from the
+     * id, the total is an accessor over services, and payment state reads the invoices — so
+     * when any of them is set the SQL-filtered set is filtered here and paged by hand. The
+     * relations are eager either way, so this walks nothing the grid was not about to render.
+     */
+    private function paginated(): LengthAwarePaginator
+    {
+        if ($this->onum === '' && $this->amount === '' && $this->pay === '') {
+            return $this->query()->paginate(self::PER_PAGE, page: $this->page);
+        }
+
+        $all = $this->query()->get()
+            ->filter(function (Order $order): bool {
+                if ($this->onum !== '' && !str_contains(static::numberOf($order), preg_replace('/\D/', '', $this->onum))) {
+                    return false;
+                }
+
+                if ($this->amount !== '' && is_numeric($this->amount)
+                    && abs((float) $order->total - (float) $this->amount) >= 0.005) {
+                    return false;
+                }
+
+                if ($this->pay !== '') {
+                    $label = static::paymentOf($order)['label'];
+
+                    if ($this->pay === 'complete' && $label !== 'Complete') {
+                        return false;
+                    }
+
+                    if ($this->pay === 'incomplete' && $label !== 'Incomplete') {
+                        return false;
+                    }
+                }
+
+                return true;
+            })
+            ->values();
+
+        return new LengthAwarePaginator(
+            $all->forPage($this->page, self::PER_PAGE)->values(),
+            $all->count(),
+            self::PER_PAGE,
+            $this->page,
+        );
     }
 
     private function query()
@@ -277,6 +360,76 @@ class ManageOrders extends Page
             });
         }
 
+        if ($this->oid !== '' && ctype_digit(trim($this->oid))) {
+            $query->where('id', (int) trim($this->oid));
+        }
+
+        if ($this->client !== '') {
+            // A typeahead pick arrives as "First Last (email)"; typed text is just text.
+            // Either way, match what the person means, not the parentheses.
+            $email = preg_match('/\(([^)]+@[^)]+)\)/', $this->client, $m) ? $m[1] : null;
+            $name = trim((string) preg_replace('/\s*\([^)]*\)\s*/', ' ', $this->client));
+
+            $query->whereHas('user', function ($q) use ($email, $name): void {
+                if ($email !== null) {
+                    $q->where('email', $email);
+
+                    return;
+                }
+
+                $q->where(function ($inner) use ($name): void {
+                    $inner->where('first_name', 'like', '%' . $name . '%')
+                        ->orWhere('last_name', 'like', '%' . $name . '%')
+                        ->orWhere('email', 'like', '%' . $name . '%')
+                        ->orWhereRaw("concat(first_name, ' ', last_name) like ?", ['%' . $name . '%']);
+                });
+            });
+        }
+
+        [$from, $to] = $this->dateRange();
+
+        if ($from) {
+            $query->whereDate('created_at', '>=', $from);
+        }
+
+        if ($to) {
+            $query->whereDate('created_at', '<=', $to);
+        }
+
         return $query;
+    }
+
+    /**
+     * The Date Range field, parsed the way the reference writes it: "MM/DD/YYYY - MM/DD/YYYY",
+     * or a single date meaning that one day. Unparseable text filters nothing rather than
+     * everything.
+     *
+     * @return array{?Carbon, ?Carbon}
+     */
+    private function dateRange(): array
+    {
+        $text = trim($this->dates);
+
+        if ($text === '') {
+            return [null, null];
+        }
+
+        $parse = function (string $piece): ?Carbon {
+            foreach (['m/d/Y', 'Y-m-d', 'd/m/Y'] as $format) {
+                try {
+                    return Carbon::createFromFormat($format, trim($piece));
+                } catch (\Throwable $e) {
+                }
+            }
+
+            return null;
+        };
+
+        // Split on a spaced hyphen only — the dates' own slashes and Y-m-d hyphens survive.
+        $pieces = preg_split('/\s+[-–]\s+/', $text, 2);
+        $from = $parse($pieces[0]);
+        $to = isset($pieces[1]) ? $parse($pieces[1]) : $from;
+
+        return [$from, $to];
     }
 }

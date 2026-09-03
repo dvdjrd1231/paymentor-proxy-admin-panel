@@ -698,32 +698,31 @@
         font-weight: 400;
     }
 
-    /* While a drag is in flight the in-flow panel becomes the reference's estimate box:
-       the browser's ghost carries the picture under the cursor, and the dashed outline
-       shows where it will land, gliding between candidate slots as the others FLIP out
-       of the way. `visibility` rather than `display` on the contents, so the box keeps
-       the panel's exact size. */
-    .ao-wi-dragging {
-        border: 2px dashed #b9b9b9;
-        background: #fbfbfb;
-    }
-
-    .ao-wi-dragging > * {
-        visibility: hidden;
-    }
-
-    /* Carried (click-to-pick-up): the in-flow panel is the dashed estimate box — the same
-       treatment a native drag gets — while a fixed-position ghost of it follows the
-       cursor. That is the reference's picture exactly: the object in hand, the dashes
-       showing where it will land. */
+    /* While a drag is in flight the in-flow panel becomes the reference's estimate box —
+       the grey dashed outline showing where the panel in hand will land, gliding between
+       candidate slots as the others FLIP out of the way. `visibility` rather than
+       `display` on the contents, so the box keeps the panel's exact size.
+       Written at (0,3,0): the panel's own `.fi-wi-widget.ao-wi` border sits at (0,2,0)
+       later in this sheet, and at equal-or-lower specificity it won — every drag showed
+       the panel's solid border instead of the reference's dashes. */
+    .fi-wi-widget.ao-wi.ao-wi-carrying,
     .ao-wi-carrying {
-        border: 2px dashed #6ea3d8;
+        border: 2px dashed #b9b9b9;
         background: #fbfbfb;
     }
 
     .ao-wi-carrying > * {
         visibility: hidden;
     }
+
+    /* A heading is a handle: no text selection while dragging by it, and no page scroll
+       on a touch drag. (The cursor stays `move`, chosen above over grab on purpose.) */
+    .ao-wi-header {
+        user-select: none;
+        touch-action: none;
+    }
+
+    body.ao-wi-grabbing, body.ao-wi-grabbing * { cursor: grabbing !important; }
 
     .ao-wi-ghost {
         position: fixed;
@@ -1516,7 +1515,7 @@
        By class, not by tag — a first attempt allowed any <span> in a field and any <div> in
        the form, and an injected element is usually exactly those. Every piece of a band
        carries a class for this reason, the label included. */
-    .ao-find > :not(.ao-find-glass):not(.ao-find-fields):not(.ao-find-adv):not(.ao-find-go),
+    .ao-find:not(.ao-of) > :not(.ao-find-glass):not(.ao-find-fields):not(.ao-find-adv):not(.ao-find-go),
     .ao-find-fields > :not(.ao-find-field),
     .ao-find-field > :not(.ao-find-label):not(.ao-find-phone):not(input):not(select),
     .ao-find-phone > :not(input):not(select) {
@@ -1526,7 +1525,7 @@
     /* Unless it has wrapped one of ours — some fillers re-parent the input rather than sit
        beside it, and hiding the wrapper would take the field with it. Dissolved instead, so
        the input stays exactly where the grid put it. */
-    .ao-find > :not(.ao-find-glass):not(.ao-find-fields):not(.ao-find-adv):not(.ao-find-go):has(input, select, label),
+    .ao-find:not(.ao-of) > :not(.ao-find-glass):not(.ao-find-fields):not(.ao-find-adv):not(.ao-find-go):has(input, select, label),
     .ao-find-fields > :not(.ao-find-field):has(input, select),
     .ao-find-field > :not(.ao-find-label):not(.ao-find-phone):not(input):not(select):has(input, select),
     .ao-find-phone > :not(input):not(select):has(input, select) {
@@ -1637,6 +1636,107 @@
     }
 
     .ao-find-go:hover { background: #286090; }
+
+    /* ── Manage Orders' Search/Filter panel ──────────────────────────────────
+       The reference's two-column form: label/field rows striped grey and white, labels
+       right-aligned, the Search button centred underneath on the page background. The
+       form itself is unpainted; the rows box carries the border, so the button can sit
+       outside it the way the reference draws it. */
+    .ao-find.ao-of {
+        display: block;
+        padding: 0;
+        border: 0;
+        background: transparent;
+    }
+
+    .ao-of-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+    }
+
+    /* Attached under the Search/Filter tab strip, as the band it replaces was. */
+    .ao-tx-tabs + .ao-of .ao-of-rows {
+        border-top: 0;
+        border-radius: 0 0 var(--wa-radius, 6px) var(--wa-radius, 6px);
+    }
+
+    .ao-of-row {
+        display: grid;
+        grid-template-columns: 9rem minmax(0, 1fr) 9.5rem minmax(0, 1fr);
+        align-items: center;
+        column-gap: 0.9rem;
+        padding: 0.45rem 0.7rem;
+        border-radius: 3px;
+    }
+
+    .ao-of-row:nth-child(odd) { background: #ececec; }
+
+    .ao-of-label {
+        text-align: right;
+        font-size: 0.9rem;
+        color: var(--wa-ink, #2b2b2b);
+    }
+
+    .ao-of-row input,
+    .ao-of-row select {
+        height: 1.9rem;
+        padding: 0 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.9rem;
+    }
+
+    .ao-of-sm { width: 7.5rem; }
+    .ao-of-md { width: 11rem; }
+    .ao-of-lg { width: 100%; max-width: 22rem; }
+
+    .ao-of-row input:focus,
+    .ao-of-row select:focus {
+        outline: 2px solid var(--wa-link, #337ab7);
+        outline-offset: -1px;
+    }
+
+    /* The reference's calendar glyph, inside the left edge of the range field. */
+    .ao-of-date { position: relative; display: inline-flex; align-items: center; }
+
+    .ao-of-date svg { position: absolute; left: 0.5rem; color: #777; pointer-events: none; }
+
+    .ao-of-date input { padding-left: 1.65rem; }
+
+    /* The honestly-dead IP field: readable as a field, unmistakably inert. */
+    .ao-of-row input:disabled {
+        background: #f4f4f4;
+        color: #9a9a9a;
+        cursor: help;
+    }
+
+    .ao-of-go {
+        display: block;
+        margin: 0.8rem auto 0;
+        height: 2rem;
+        padding: 0 1.2rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        color: var(--wa-ink, #2b2b2b);
+        font: inherit;
+        font-size: 0.9375rem;
+    }
+
+    .ao-of-go:hover { background: #ededed; }
+
+    /* The reference folds to one label/field pair per line on narrow screens. */
+    @media (max-width: 900px) {
+        .ao-of-row { grid-template-columns: 7rem minmax(0, 1fr); row-gap: 0.4rem; }
+        .ao-of-lg { max-width: none; }
+    }
 
     /* The reference's "+ Advanced": a quiet bordered button beside the blue Search. */
     .ao-find-adv {
