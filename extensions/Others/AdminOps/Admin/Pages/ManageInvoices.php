@@ -38,9 +38,48 @@ class ManageInvoices extends Page
     #[Url]
     public string $q = '';
 
+    // The reference's Search/Filter panel, field for field. Every one is a URL.
+
+    #[Url]
+    public string $client = '';
+
+    #[Url]
+    public string $inum = '';
+
+    #[Url]
+    public string $item = '';
+
+    /** Gateway name — derived off the invoice's transactions, filtered in PHP. */
+    #[Url]
+    public string $method = '';
+
+    /** Total Due From/To — the invoice total is an accessor, filtered in PHP. */
+    #[Url]
+    public string $totalFrom = '';
+
+    #[Url]
+    public string $totalTo = '';
+
+    /** Single dates, 'MM/DD/YYYY', each from the shared calendar. */
+    #[Url]
+    public string $dInvoice = '';
+
+    #[Url]
+    public string $dDue = '';
+
+    #[Url]
+    public string $dPaid = '';
+
+    #[Url]
+    public string $dRefunded = '';
+
+    #[Url]
+    public string $dCancelled = '';
+
     #[Url]
     public int $page = 1;
 
+    #[Url]
     public bool $filter = false;
 
     public static function canAccess(): bool
@@ -242,14 +281,62 @@ class ManageInvoices extends Page
 
     protected function getViewData(): array
     {
-        $invoices = $this->query()->paginate(self::PER_PAGE, page: $this->page);
+        $invoices = $this->paginated();
 
         if ($this->page > 1 && $invoices->isEmpty()) {
             $this->page = max(1, $invoices->lastPage());
-            $invoices = $this->query()->paginate(self::PER_PAGE, page: $this->page);
+            $invoices = $this->paginated();
         }
 
-        return ['invoices' => $invoices, 'bar' => $this->totalsBar()];
+        return [
+            'invoices' => $invoices,
+            'bar' => $this->totalsBar(),
+            'gateways' => \App\Models\Gateway::orderBy('name')->get(['id', 'name']),
+        ];
+    }
+
+    /**
+     * Payment Method and Total Due are derived — the gateway off the transactions, the
+     * total an accessor over items — so when either is set the SQL-narrowed set is
+     * filtered here and paged by hand, the same pattern Manage Orders uses.
+     */
+    private function paginated()
+    {
+        $derived = $this->method !== ''
+            || (trim($this->totalFrom) !== '' && is_numeric(trim($this->totalFrom)))
+            || (trim($this->totalTo) !== '' && is_numeric(trim($this->totalTo)));
+
+        if (!$derived) {
+            return $this->query()->paginate(self::PER_PAGE, page: $this->page);
+        }
+
+        $all = $this->query()->get()
+            ->filter(function (Invoice $invoice): bool {
+                if ($this->method !== ''
+                    && $invoice->transactions->first()?->gateway?->name !== $this->method) {
+                    return false;
+                }
+
+                $total = (float) $invoice->total;
+
+                if (trim($this->totalFrom) !== '' && is_numeric(trim($this->totalFrom)) && $total < (float) trim($this->totalFrom)) {
+                    return false;
+                }
+
+                if (trim($this->totalTo) !== '' && is_numeric(trim($this->totalTo)) && $total > (float) trim($this->totalTo)) {
+                    return false;
+                }
+
+                return true;
+            })
+            ->values();
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $all->forPage($this->page, self::PER_PAGE)->values(),
+            $all->count(),
+            self::PER_PAGE,
+            $this->page,
+        );
     }
 
     /**
@@ -315,6 +402,66 @@ class ManageInvoices extends Page
             });
         }
 
+        if (trim($this->client) !== '') {
+            $needle = trim($this->client);
+            $query->whereHas('user', fn ($q) => $q->where('first_name', 'like', "%{$needle}%")
+                ->orWhere('last_name', 'like', "%{$needle}%")
+                ->orWhere('email', 'like', "%{$needle}%"));
+        }
+
+        if (trim($this->inum) !== '') {
+            $needle = trim($this->inum);
+            $query->where(fn ($w) => $w->where('number', 'like', "%{$needle}%")
+                ->when(ctype_digit($needle), fn ($q) => $q->orWhere('invoices.id', (int) $needle)));
+        }
+
+        if (trim($this->item) !== '') {
+            $query->whereHas('items', fn ($q) => $q->where('description', 'like', '%' . trim($this->item) . '%'));
+        }
+
+        if ($day = $this->day($this->dInvoice)) {
+            $query->whereDate('created_at', $day);
+        }
+
+        if ($day = $this->day($this->dDue)) {
+            $query->whereDate('due_at', $day);
+        }
+
+        // Date Paid: the day a settling transaction landed — the honest record of payment.
+        if ($day = $this->day($this->dPaid)) {
+            $query->whereHas('transactions', fn ($q) => $q->whereDate('created_at', $day));
+        }
+
+        // Date Refunded, from the refund ledger when the InvoiceOps extension carries one.
+        if (($day = $this->day($this->dRefunded)) !== null) {
+            $refunded = class_exists(\Paymenter\Extensions\Others\InvoiceOps\Models\InvoiceRefund::class)
+                ? \Paymenter\Extensions\Others\InvoiceOps\Models\InvoiceRefund::whereDate('created_at', $day)->pluck('invoice_id')
+                : collect();
+            $query->whereIn('invoices.id', $refunded);
+        }
+
+        // Date Cancelled, from the audit trail: the update that wrote status = cancelled.
+        if (($day = $this->day($this->dCancelled)) !== null) {
+            $query->whereIn('invoices.id', \Illuminate\Support\Facades\DB::table('audits')
+                ->where('auditable_type', Invoice::class)
+                ->where('new_values', 'like', '%"status":"cancelled"%')
+                ->whereDate('created_at', $day)
+                ->pluck('auditable_id'));
+        }
+
         return $query;
+    }
+
+    /** 'MM/DD/YYYY' (or blank) from the shared calendar, as a query-ready date. */
+    private function day(string $text): ?string
+    {
+        foreach (['m/d/Y', 'Y-m-d'] as $format) {
+            try {
+                return \Carbon\Carbon::createFromFormat($format, trim($text))->format('Y-m-d');
+            } catch (\Throwable $e) {
+            }
+        }
+
+        return null;
     }
 }

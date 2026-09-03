@@ -26,15 +26,10 @@
                             <option value="credit">Account Credit</option>
                         </select></span>
                         <label class="ao-of-label" for="ao-tx-dates">Date Range</label>
-                        <span class="ao-of-date">
-                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"
-                                width="13" height="13" aria-hidden="true">
-                                <rect x="1.8" y="2.8" width="12.4" height="11.4" rx="1.5" />
-                                <path d="M1.8 6.2h12.4M5 1.2v3.2M11 1.2v3.2" />
-                            </svg>
-                            <input @nofill id="ao-tx-dates" class="ao-of-lg" type="text"
-                                wire:model="dates" placeholder="MM/DD/YYYY - MM/DD/YYYY">
-                        </span>
+                        @include('adminops::partials.datepicker', [
+                            'model' => 'dates', 'range' => true, 'id' => 'ao-tx-dates',
+                            'placeholder' => 'MM/DD/YYYY - MM/DD/YYYY', 'class' => 'ao-of-lg',
+                        ])
                     </div>
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-tx-q">Description</label>
@@ -70,15 +65,10 @@
                 <div class="ao-of-rows">
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-tx-date">Date</label>
-                        <span class="ao-of-date">
-                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"
-                                width="13" height="13" aria-hidden="true">
-                                <rect x="1.8" y="2.8" width="12.4" height="11.4" rx="1.5" />
-                                <path d="M1.8 6.2h12.4M5 1.2v3.2M11 1.2v3.2" />
-                            </svg>
-                            <input @nofill id="ao-tx-date" class="ao-of-md" type="text" wire:model="txDate"
-                                placeholder="MM/DD/YYYY">
-                        </span>
+                        @include('adminops::partials.datepicker', [
+                            'model' => 'txDate', 'range' => false, 'id' => 'ao-tx-date',
+                            'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                        ])
                         <label class="ao-of-label" for="ao-tx-currency">Currency</label>
                         <span class="ao-of-inline">
                             <select @nofill id="ao-tx-currency" class="ao-of-sm" wire:model="txCurrency">

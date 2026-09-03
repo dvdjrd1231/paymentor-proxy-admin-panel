@@ -4,15 +4,37 @@
     below the navy grid, and the "Are you sure?" before anything destructive.
 --}}
 <x-filament-panels::page>
-    <div class="ao-mu" wire:poll.120s>
+    <div class="ao-mu" @if ($refreshEvery > 0) wire:poll.{{ $refreshEvery * 60 }}s @endif>
         <div class="ao-tx-tabs">
             <button type="button" class="ao-mu-tab {{ $this->filter ? 'ao-on' : '' }}" wire:click="toggleFilter">
                 Search/Filter
             </button>
-            {{-- The page already refreshes itself every two minutes (wire:poll); the tab
-                 names the behaviour rather than switching anything. --}}
-            <span class="ao-mu-tab ao-tx-tab-dead" title="This list refreshes itself every two minutes">Auto Refresh</span>
+            {{-- The reference's Auto Refresh tab: a real band now — the select drives the
+                 page's own polling interval, and Never (the reference's default) stops it. --}}
+            <button type="button" class="ao-mu-tab {{ $autoTab ? 'ao-on' : '' }}" wire:click="toggleAutoTab">
+                Auto Refresh
+            </button>
         </div>
+
+        @if ($autoTab)
+            <form class="ao-find ao-of" wire:submit.prevent="setAutoRefresh">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-st-refresh">Auto Refresh Every</label>
+                        <span class="ao-of-inline">
+                            <select id="ao-st-refresh" class="ao-of-md" wire:model="refreshEvery">
+                                <option value="0">Never</option>
+                                <option value="1">1 Minute</option>
+                                <option value="2">2 Minutes</option>
+                                <option value="5">5 Minutes</option>
+                                <option value="10">10 Minutes</option>
+                            </select>
+                            <button type="submit" class="ao-find-go">Set Auto Refresh</button>
+                        </span>
+                    </div>
+                </div>
+            </form>
+        @endif
 
         @if ($this->filter)
             {{-- The reference's framed filter: labels on the left, one control per row,

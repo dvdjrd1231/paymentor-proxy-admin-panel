@@ -78,6 +78,8 @@ class ManageOrders extends Page
     #[Url]
     public int $page = 1;
 
+    /** URL-bound like every other panel toggle, so a filtered view can be linked. */
+    #[Url]
     public bool $filter = false;
 
     /** The rows ticked for the With Selected bar. */
@@ -182,136 +184,9 @@ class ManageOrders extends Page
         $this->filter = !$this->filter;
     }
 
-    // ── The reference's Date Range picker ────────────────────────────────────
-    // Presets down the left, two months side by side, Clear and Apply — rendered by
-    // Livewire so there is no date library to ship and every click is a real state
-    // change the tests can drive.
-
-    public bool $pickerOpen = false;
-
-    /** First day of the left-hand month, 'Y-m-01'. */
-    public string $pickerMonth = '';
-
-    public ?string $pickStart = null;
-
-    public ?string $pickEnd = null;
-
-    public const PRESETS = [
-        'today' => 'Today',
-        'yesterday' => 'Yesterday',
-        'last7' => 'Last 7 Days',
-        'last30' => 'Last 30 Days',
-        'this_month' => 'This Month',
-        'month_ago' => '1 Month Ago',
-        'this_year' => 'This Year',
-        'year_ago' => '1 Year Ago',
-        'custom' => 'Custom',
-    ];
-
-    public function openPicker(): void
-    {
-        [$from, $to] = $this->dateRange();
-        $this->pickStart = $from?->format('Y-m-d');
-        $this->pickEnd = $to?->format('Y-m-d');
-        $this->pickerMonth = ($from ?? now())->startOfMonth()->format('Y-m-d');
-        $this->pickerOpen = true;
-    }
-
-    public function pickerNav(int $step): void
-    {
-        $this->pickerMonth = Carbon::parse($this->pickerMonth ?: now()->startOfMonth())
-            ->addMonths($step)->startOfMonth()->format('Y-m-d');
-    }
-
-    public function pickerMonthTo(string $ym): void
-    {
-        try {
-            $this->pickerMonth = Carbon::createFromFormat('Y-m', $ym)->startOfMonth()->format('Y-m-d');
-        } catch (\Throwable $e) {
-        }
-    }
-
-    public function pickDay(string $day): void
-    {
-        if (!$this->pickStart || ($this->pickStart && $this->pickEnd)) {
-            $this->pickStart = $day;
-            $this->pickEnd = null;
-
-            return;
-        }
-
-        $day < $this->pickStart
-            ? [$this->pickEnd, $this->pickStart] = [$this->pickStart, $day]
-            : $this->pickEnd = $day;
-    }
-
-    public function pickerPreset(string $key): void
-    {
-        [$from, $to] = match ($key) {
-            'today' => [now(), now()],
-            'yesterday' => [now()->subDay(), now()->subDay()],
-            'last7' => [now()->subDays(6), now()],
-            'last30' => [now()->subDays(29), now()],
-            'this_month' => [now()->startOfMonth(), now()],
-            'month_ago' => [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()],
-            'this_year' => [now()->startOfYear(), now()],
-            'year_ago' => [now()->subYear()->startOfYear(), now()->subYear()->endOfYear()],
-            default => [null, null],
-        };
-
-        $this->pickStart = $from?->format('Y-m-d');
-        $this->pickEnd = $to?->format('Y-m-d');
-        $this->pickerMonth = ($from ?? now())->copy()->startOfMonth()->format('Y-m-d');
-    }
-
-    public function pickerClear(): void
-    {
-        $this->pickStart = null;
-        $this->pickEnd = null;
-        $this->dates = '';
-    }
-
-    public function pickerApply(): void
-    {
-        if ($this->pickStart) {
-            $from = Carbon::parse($this->pickStart)->format('m/d/Y');
-            $to = Carbon::parse($this->pickEnd ?? $this->pickStart)->format('m/d/Y');
-            $this->dates = $from === $to ? $from : $from . ' - ' . $to;
-        }
-
-        $this->pickerOpen = false;
-        $this->search();
-    }
-
-    /**
-     * The weeks of one month, Sunday-first as the reference draws them; days outside the
-     * month come along greyed so the grid is always six by seven.
-     *
-     * @return array{label: string, ym: string, weeks: array<int, array<int, array{d: string, day: int, in: bool}>>}
-     */
-    public static function pickerGrid(string $firstOfMonth): array
-    {
-        $month = Carbon::parse($firstOfMonth)->startOfMonth();
-        $cursor = $month->copy()->startOfWeek(Carbon::SUNDAY);
-        $weeks = [];
-
-        for ($w = 0; $w < 6; $w++) {
-            $week = [];
-
-            for ($d = 0; $d < 7; $d++) {
-                $week[] = [
-                    'd' => $cursor->format('Y-m-d'),
-                    'day' => (int) $cursor->format('j'),
-                    'in' => $cursor->month === $month->month,
-                ];
-                $cursor->addDay();
-            }
-
-            $weeks[] = $week;
-        }
-
-        return ['label' => $month->format('F'), 'ym' => $month->format('Y-m'), 'weeks' => $weeks];
-    }
+    // The Date Range calendar is the shared client-side one —
+    // adminops::partials.datepicker — which lands its value in $dates; opening it and
+    // paging months never touch the server, which is what keeps it instant.
 
     public function search(): void
     {

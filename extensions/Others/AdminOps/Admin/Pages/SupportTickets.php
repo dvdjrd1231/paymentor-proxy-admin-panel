@@ -75,6 +75,28 @@ class SupportTickets extends Page
 
     public bool $filter = false;
 
+    /** The reference's Auto Refresh tab: its band, and the minutes the page then polls at. */
+    public bool $autoTab = false;
+
+    /** 0 is the reference's Never; otherwise minutes between refreshes. */
+    #[Url]
+    public int $refreshEvery = 0;
+
+    public function toggleAutoTab(): void
+    {
+        $this->autoTab = !$this->autoTab;
+
+        if ($this->autoTab) {
+            $this->filter = false;
+        }
+    }
+
+    /** The band's Set Auto Refresh button: the value is already bound; just fold the band. */
+    public function setAutoRefresh(): void
+    {
+        $this->autoTab = false;
+    }
+
     /** @var array<int|string, bool> Checked rows, keyed by ticket id. */
     public array $selected = [];
 
