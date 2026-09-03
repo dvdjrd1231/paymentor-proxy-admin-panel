@@ -115,13 +115,12 @@
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-tx-invoice">Invoice ID(s)</label>
                         <span class="ao-of-inline">
-                            {{-- Core's invoice_transactions row has no nullable invoice_id —
-                                 unlike the reference, an Amount In here always needs one
-                                 (or Credit ticked instead); the placeholder says so rather
-                                 than only the submit-time error. --}}
+                            {{-- Optional, as the reference's own field is: an Amount In with
+                                 no invoice and no Credit tick is recorded as an unapplied
+                                 payment (UnappliedTransaction) rather than refused. --}}
                             <input @nofill id="ao-tx-invoice" class="ao-of-md" type="text" inputmode="numeric"
-                                wire:model="txInvoice" placeholder="Required for Amount In — e.g. 214"
-                                title="An Amount In is recorded against an invoice — pick one here, or tick Credit instead">
+                                wire:model="txInvoice" placeholder="e.g. 214"
+                                title="Leave blank to record this as an unapplied payment — money in, nothing to apply it to yet">
                             Comma Separated
                         </span>
                         <label class="ao-of-label">Credit</label>
