@@ -1729,10 +1729,12 @@
     .ao-mu-grid td {
         padding: 0.45rem 0.6rem;
         text-align: center;
-        border-bottom: 1px solid var(--wa-rule, #d9dadb);
+        /* WHMCS's .table-themed td border is exactly #ebebeb. */
+        border-bottom: 1px solid #ebebeb;
     }
 
-    .ao-mu-grid tbody tr:hover { background: #f5f8fb; }
+    /* WHMCS's .table-themed row hover is exactly #eff2f9. */
+    .ao-mu-grid tbody tr:hover { background: #eff2f9; }
 
     .ao-mu-grid a {
         color: var(--wa-link, #337ab7);
