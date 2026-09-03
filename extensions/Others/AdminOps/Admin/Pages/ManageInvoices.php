@@ -70,6 +70,10 @@ class ManageInvoices extends Page
     #[Url]
     public string $dPaid = '';
 
+    /** Last Capture Attempt — any transaction on that day, succeeded or not. */
+    #[Url]
+    public string $dCapture = '';
+
     #[Url]
     public string $dRefunded = '';
 
@@ -427,8 +431,14 @@ class ManageInvoices extends Page
             $query->whereDate('due_at', $day);
         }
 
-        // Date Paid: the day a settling transaction landed — the honest record of payment.
+        // Date Paid: the day a SETTLING transaction landed — the honest record of payment.
         if ($day = $this->day($this->dPaid)) {
+            $query->whereHas('transactions', fn ($q) => $q->where('status', 'succeeded')->whereDate('created_at', $day));
+        }
+
+        // Last Capture Attempt: any attempt that day, failed and pending ones included —
+        // which is exactly what distinguishes it from Date Paid.
+        if ($day = $this->day($this->dCapture)) {
             $query->whereHas('transactions', fn ($q) => $q->whereDate('created_at', $day));
         }
 

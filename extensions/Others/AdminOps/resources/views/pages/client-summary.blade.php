@@ -517,8 +517,11 @@
                         {{ $svcModel->order_id }} -
                         <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditOrder::getUrl(['record' => $svcModel->order_id]) }}">View Order</a>
                     </span>
-                    <span class="ao-of-label">Registration Date</span>
-                    <span class="ao-eo-fact">{{ $svcModel->created_at?->format('m/d/Y') }}</span>
+                    <label class="ao-of-label" for="ao-cs-reg">Registration Date</label>
+                    @include('adminops::partials.datepicker', [
+                        'model' => 'svc.regDate', 'range' => false, 'id' => 'ao-cs-reg',
+                        'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                    ])
                 </div>
                 <div class="ao-of-row">
                     <label class="ao-of-label" for="ao-cs-product">Product/Service</label>
@@ -552,16 +555,16 @@
                     ])
                 </div>
                 <div class="ao-of-row">
-                    <span class="ao-of-label">Username</span>
-                    <span class="ao-eo-fact">{{ $svcModel->properties->firstWhere('key', 'proxy_username')?->value ?? '—' }}</span>
+                    <label class="ao-of-label" for="ao-cs-user">Username</label>
+                    <span><input id="ao-cs-user" class="ao-of-md" type="text" wire:model="svc.username"></span>
                     <span class="ao-of-label">Termination Date</span>
-                    <span class="ao-eo-fact" title="Paymenter records no termination date; a cancelled service simply stops renewing">—</span>
+                    <span><input class="ao-of-md" type="text" disabled placeholder=""
+                        title="Paymenter records no termination date; a cancelled service simply stops renewing"></span>
                 </div>
                 <div class="ao-of-row">
-                    <span class="ao-of-label">Password</span>
-                    <span class="ao-eo-fact" title="Panel credentials render masked here — the panel itself is where they are read">
-                        {{ $svcModel->properties->firstWhere('key', 'proxy_password') ? '••••••••' : '—' }}
-                    </span>
+                    <label class="ao-of-label" for="ao-cs-pass">Password</label>
+                    <span><input id="ao-cs-pass" class="ao-of-md" type="password" wire:model="svc.password"
+                        title="Masked on screen (the standing credentials convention); the value itself edits and saves"></span>
                     <label class="ao-of-label" for="ao-cs-plan">Billing Cycle</label>
                     <span><select id="ao-cs-plan" class="ao-of-md" wire:model="svc.planId">
                         @forelse ($svcPlans as $plan)
@@ -583,16 +586,23 @@
                     <span class="ao-eo-fact">{{ $svcPayment }}</span>
                 </div>
                 <div class="ao-of-row">
-                    <span class="ao-of-label">{{ $svcModel->configs->isNotEmpty() ? 'Configuration' : '' }}</span>
-                    <span class="ao-eo-fact">
-                        @forelse ($svcModel->configs as $config)
-                            {{ $config->configOption?->name ?? 'Option' }}: {{ $config->configValue?->name ?? '—' }}<br>
-                        @empty
-                        @endforelse
-                    </span>
+                    <span class="ao-of-label"></span>
+                    <span></span>
                     <span class="ao-of-label">Promotion Code</span>
                     <span class="ao-eo-fact">{{ $svcModel->coupon?->code ?? 'None' }}</span>
                 </div>
+                {{-- The reference's Region row (and any other configurable option): a real
+                     select over that option's own values, saving with the form. --}}
+                @foreach ($svcConfigChoices as $optionId => $choice)
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-cs-cfg-{{ $optionId }}">{{ $choice['label'] }}</label>
+                        <span><select id="ao-cs-cfg-{{ $optionId }}" class="ao-of-lg" wire:model="svc.configs.{{ $optionId }}">
+                            @foreach ($choice['values'] as $value)
+                                <option value="{{ $value->id }}">{{ $value->name }}</option>
+                            @endforeach
+                        </select></span>
+                    </div>
+                @endforeach
                 <div class="ao-of-row ao-of-row-single">
                     <span class="ao-of-label">Module Commands</span>
                     <span class="ao-of-inline">
@@ -616,28 +626,55 @@
                 </div>
                 <div class="ao-of-row ao-of-row-single">
                     <span class="ao-of-label">Addons</span>
-                    <span class="ao-eo-fact">
-                        @forelse ($svcAddons as $addon)
-                            #{{ $addon->service_id }} · {{ $addon->service?->product?->name }} ·
-                            {{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel((string) $addon->service?->status) }}<br>
-                        @empty
-                            No Records Found
-                        @endforelse
+                    <span>
+                        <table class="ao-mu-grid ao-cs-addons">
+                            <thead>
+                                <tr><th>Reg Date</th><th>Name</th><th>Pricing</th><th>Status</th><th>Next Due Date</th></tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($svcAddons as $addon)
+                                    <tr>
+                                        <td>{{ $addon->service?->created_at?->format('m/d/Y') }}</td>
+                                        <td class="ao-mu-left">{{ $addon->service?->product?->name }}</td>
+                                        <td>${{ number_format((float) $addon->service?->price, 2) }} {{ $addon->service?->currency_code }}</td>
+                                        <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel((string) $addon->service?->status) }}</td>
+                                        <td>{{ $addon->service?->expires_at?->format('m/d/Y') ?? '—' }}</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="5" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </span>
                 </div>
-                @foreach ($svcModel->properties->whereNotIn('key', ['domain', 'dedicated_ip', 'admin_notes', 'proxy_username', 'proxy_password']) as $property)
+                {{-- The reference's custom fields — Proxies, Service ID, api-key and
+                     whatever else the module stored — editable in place. --}}
+                @foreach ($svc['props'] ?? [] as $index => $row)
                     <div class="ao-of-row ao-of-row-single">
-                        <span class="ao-of-label">{{ $property->name ?: $property->key }}</span>
-                        <span class="ao-eo-fact">
-                            {{-- Secrets render masked, the standing convention (issue #43). --}}
-                            @if (str_contains(strtolower($property->key), 'key') || str_contains(strtolower($property->key), 'password') || str_contains(strtolower($property->key), 'secret'))
-                                ••••••••
+                        <label class="ao-of-label" for="ao-cs-prop-{{ $index }}">{{ $row['name'] }}</label>
+                        <span>
+                            @if (str_contains(strtolower($row['key']), 'proxies') || strlen($row['value']) > 90)
+                                <textarea id="ao-cs-prop-{{ $index }}" rows="3" wire:model="svc.props.{{ $index }}.value"></textarea>
                             @else
-                                {{ str($property->value)->limit(120) }}
+                                <input id="ao-cs-prop-{{ $index }}" class="ao-of-xl" type="text" wire:model="svc.props.{{ $index }}.value">
                             @endif
                         </span>
                     </div>
                 @endforeach
+                <div class="ao-of-row ao-of-row-single">
+                    <span class="ao-of-label">Override Auto-Suspend</span>
+                    <span class="ao-of-check" title="Paymenter's daily run has no per-service suspension override to honour">
+                        <input type="checkbox" disabled> Do not suspend until
+                        <input class="ao-of-sm" type="text" disabled>
+                    </span>
+                </div>
+                <div class="ao-of-row ao-of-row-single">
+                    <span class="ao-of-label">Auto-Terminate End of Cycle</span>
+                    <span class="ao-of-check" title="Paymenter has no end-of-cycle auto-termination flag; cancellation requests carry that intent">
+                        <input type="checkbox" disabled> Reason
+                        <input class="ao-of-md" type="text" disabled>
+                    </span>
+                </div>
                 <div class="ao-of-row ao-of-row-single">
                     <label class="ao-of-label" for="ao-cs-notes">Admin Notes</label>
                     <span><textarea id="ao-cs-notes" rows="3" wire:model="svc.svcNotes"

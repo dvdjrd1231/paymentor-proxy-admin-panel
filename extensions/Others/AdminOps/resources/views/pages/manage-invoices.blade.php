@@ -30,8 +30,9 @@
             {{-- The reference's Search/Filter panel, field for field: Client Name,
                  Invoice #, Line Item Description, Payment Method, Status and Total Due
                  From/To on the left; the five date fields on the right, each with the
-                 shared calendar. Last Capture Attempt is the one honest dead field —
-                 no capture scheduler exists to stamp it (its column reads N/A). --}}
+                 shared calendar — Last Capture Attempt included: it matches any
+                 transaction attempt that day, failed and pending ones too, which is
+                 exactly what tells it apart from Date Paid. --}}
             <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="search">
                 <div class="ao-of-rows">
                     <div class="ao-of-row">
@@ -73,9 +74,10 @@
                             @endforeach
                         </select></span>
                         <label class="ao-of-label" for="ao-mi-dcapture">Last Capture Attempt</label>
-                        <span><input id="ao-mi-dcapture" class="ao-of-md" type="text" disabled
-                            placeholder="N/A"
-                            title="No capture scheduler exists to stamp this — the column itself reads N/A"></span>
+                        @include('adminops::partials.datepicker', [
+                            'model' => 'dCapture', 'range' => false, 'id' => 'ao-mi-dcapture',
+                            'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                        ])
                     </div>
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-mi-status">Status</label>
