@@ -83,7 +83,10 @@
                 <button type="button" class="ao-cp-link" wire:click="$set('tab', 'open')">Open</button> |
                 <button type="button" class="ao-cp-link" wire:click="$set('tab', 'scheduled')">Scheduled</button> |
                 <button type="button" class="ao-cp-link" wire:click="$set('tab', 'resolved')">Resolved</button> |
-                <button type="button" class="ao-cp-link ao-ni-new" wire:click="openForm">&#10010; Create New</button>
+                {{-- The reference's green circled-plus icon, not a bare plus (issue #25). --}}
+                <button type="button" class="ao-cp-link ao-ni-new" wire:click="openForm">
+                    <x-filament::icon icon="ri-add-circle-fill" class="ao-ni-new-ic" /> Create New
+                </button>
             </p>
             <h4 class="ao-ano-heading">{{ $viewLabel }} Issues</h4>
 

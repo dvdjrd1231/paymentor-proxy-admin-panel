@@ -12,7 +12,7 @@
 
     $sections = Rail::sections();
     $shortcuts = Rail::shortcuts();
-    $searches = Rail::searches();
+    $search = Rail::advancedSearch();
     $staff = Rail::staffOnline();
 @endphp
 
@@ -70,12 +70,18 @@
                         <ul class="ao-rail-list ao-rail-list-counted">
                             @foreach ($section['items'] as $item)
                                 <li @if (str_starts_with($item['label'], '- ')) class="ao-rail-sub" @endif>
-                                    <a href="{{ $item['url'] }}">
-                                        <span>{{ $item['label'] }}</span>
-                                        @if ($item['badge'])
-                                            <span class="ao-rail-count">{{ $item['badge'] }}</span>
-                                        @endif
-                                    </a>
+                                    @if ($item['url'] ?? false)
+                                        <a href="{{ $item['url'] }}">
+                                            <span>{{ $item['label'] }}</span>
+                                            @if ($item['badge'])
+                                                <span class="ao-rail-count">{{ $item['badge'] }}</span>
+                                            @endif
+                                        </a>
+                                    @else
+                                        {{-- An honestly-dead entry: listed where the reference
+                                             lists it, the reason it does nothing on its title. --}}
+                                        <span class="ao-rail-dead" title="{{ $item['title'] ?? '' }}">{{ $item['label'] }}</span>
+                                    @endif
                                 </li>
                             @endforeach
                         </ul>
@@ -101,37 +107,38 @@
             </section>
         @endif
 
-        <section class="ao-rail-panel">
-            <h2 class="ao-rail-heading">
-                <x-filament::icon icon="ri-home-4-line" class="ao-rail-heading-icon" />
-                System Information
-            </h2>
-            <dl class="ao-rail-facts">
-                @foreach (Rail::systemInformation() as $label => $value)
-                    <dt>{{ $label }}</dt>
-                    <dd>{{ $value }}</dd>
-                @endforeach
-            </dl>
-        </section>
+        {{-- No System Information box: the reference's rail never carries one (issue #25 —
+             the extra box also ran the rail taller than the window, which is where the
+             permanent page scrollbar came from). Those facts live on the dashboard. --}}
 
-        @if ($searches)
+        @if ($search)
+            {{-- The reference's Advanced Search widget: area, field, term, Search. A plain
+                 GET form — the term submits as the chosen field's query param, which the
+                 destination page already reads as a #[Url] filter. --}}
             <section class="ao-rail-panel">
                 <h2 class="ao-rail-heading">
                     <x-filament::icon icon="ri-search-eye-line" class="ao-rail-heading-icon" />
                     Advanced Search
                 </h2>
-                <ul class="ao-rail-list ao-rail-list-counted">
-                    @foreach ($searches as $search)
-                        <li>
-                            <a href="{{ $search['url'] }}">
-                                <span>{{ $search['label'] }}</span>
-                                <span @class(['ao-rail-count', 'ao-rail-count-zero' => $search['count'] === 0])>
-                                    {{ number_format($search['count']) }}
-                                </span>
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
+                <form class="ao-rail-filter" method="get"
+                    x-data="{ types: {{ \Illuminate\Support\Js::from($search) }}, type: 0, field: 0 }"
+                    x-bind:action="types[type].action">
+                    <select x-model.number="type" x-on:change="field = 0" aria-label="Search in">
+                        <template x-for="(t, i) in types" :key="i">
+                            <option :value="i" x-text="t.label"></option>
+                        </template>
+                    </select>
+                    <select x-model.number="field" aria-label="Search by">
+                        <template x-for="(f, i) in types[type].fields" :key="type + '-' + i">
+                            <option :value="i" x-text="f.label"></option>
+                        </template>
+                    </select>
+                    <div class="ao-rail-search-row">
+                        <input type="text" x-bind:name="types[type].fields[field].param"
+                            x-bind:placeholder="types[type].fields[field].label" aria-label="Search term">
+                        <button type="submit">Search</button>
+                    </div>
+                </form>
             </section>
         @endif
 

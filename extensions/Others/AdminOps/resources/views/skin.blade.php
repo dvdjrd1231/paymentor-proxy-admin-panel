@@ -37,7 +37,7 @@
            number cannot drift apart. */
         --wa-topbar-h: 45px;
         --wa-rail-w: 195px;
-        --wa-footer-h: 34px;
+        --wa-footer-h: 38px; /* measured: the bar grew with the font bump */
 
         /* The account menu's person glyph, inline so it needs no request and cannot 404 —
            see the note at `.fi-user-menu-trigger`. Black in the data URI because it is used
@@ -634,7 +634,7 @@
         align-items: center;
         gap: 0.4rem;
         margin: 0;
-        padding: 6px 10px;
+        padding: 5px 10px;
         background: var(--wa-section);
         border-block: 1px solid var(--wa-border);
         font-size: 15px;
@@ -660,7 +660,7 @@
     .ao-rail-staff {
         list-style: none;
         margin: 0;
-        padding: 6px 10px;
+        padding: 5px 10px;
     }
 
     /* Underlined blue links, tight leading, as on the reference. */
@@ -1244,6 +1244,16 @@
        column, so it needs no negative margin and no knowledge of how wide the rail is.
 
        It wraps rather than shrinks on a narrow window, so neither half is ever truncated. */
+    /* Issue #25 ("remove the scrollbars… as same with WHMCS"): the reference's frame is
+       one screen — top bar, content, footer — with a scrollbar only when the content
+       needs one. Filament sizes the layout to the viewport *before* the footer, so every
+       page ran one footer taller than the window. Sized so the three rows total 100dvh:
+       a short page (the target screenshot's Network Issues) now shows no scrollbar, and
+       a long one scrolls exactly as before. */
+    .fi-body .fi-layout {
+        min-height: calc(100dvh - var(--wa-topbar-h) - var(--wa-footer-h));
+    }
+
     .ao-admin-footer {
         display: flex;
         flex-wrap: wrap;
