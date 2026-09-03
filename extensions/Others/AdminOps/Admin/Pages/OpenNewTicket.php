@@ -37,6 +37,13 @@ class OpenNewTicket extends Page
     #[Url]
     public ?int $client = null;
 
+    /**
+     * The related service the reference's radio column picks — null/'' is its "None".
+     * Untyped: the None radio's value is the empty string, and Livewire would refuse
+     * to write '' into a ?int property.
+     */
+    public $service = null;
+
     public string $subject = '';
 
     public string $department = '';
@@ -65,6 +72,12 @@ class OpenNewTicket extends Page
         return 'Open New Ticket';
     }
 
+    /** A picked service belongs to the previous client; a new client starts at None. */
+    public function updatedClient(): void
+    {
+        $this->service = null;
+    }
+
     public function insert(string $text): void
     {
         $this->message = rtrim($this->message) === '' ? $text : rtrim($this->message) . "\n\n" . $text;
@@ -73,6 +86,9 @@ class OpenNewTicket extends Page
 
     public function create(): void
     {
+        // The None radio submits '' — normalised before the exists rule sees it.
+        $this->service = $this->service ?: null;
+
         $departments = (array) config('settings.ticket_departments');
 
         $this->validate([
@@ -82,7 +98,13 @@ class OpenNewTicket extends Page
             'department' => $departments !== [] ? 'required|in:' . implode(',', $departments) : 'nullable',
             'priority' => 'in:low,medium,high',
             'attachments.*' => 'file|max:10240',
-        ], attributes: ['client' => 'client']);
+            // The ids come from the client side, so the picked service must really be
+            // this client's — not just any service id (issue #20).
+            'service' => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('services', 'id')->where('user_id', $this->client),
+            ],
+        ], attributes: ['client' => 'client', 'service' => 'related service']);
 
         $ticket = DB::transaction(function (): Ticket {
             $ticket = Ticket::create([
@@ -91,6 +113,9 @@ class OpenNewTicket extends Page
                 'priority' => $this->priority,
                 'department' => $this->department ?: null,
                 'user_id' => $this->client,
+                // The reference's radio column: the ticket carries the service it is
+                // about, on core's own ticket column (issue #20).
+                'service_id' => $this->service ?: null,
                 'assigned_to' => Auth::id(),
             ]);
 
