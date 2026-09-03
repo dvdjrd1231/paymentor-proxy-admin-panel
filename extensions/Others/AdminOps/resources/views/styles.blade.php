@@ -1706,6 +1706,141 @@
     /* The reference's calendar glyph, inside the left edge of the range field. */
     .ao-of-date { position: relative; display: inline-flex; align-items: center; }
 
+    /* ── The Date Range picker ───────────────────────────────────────────────
+       The reference's dropdown: presets down the left, two months side by side,
+       the chosen range with Clear and the blue Apply in the footer. */
+    .ao-dr {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        z-index: 40;
+        display: flex;
+        background: #fff;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+        font-size: 0.85rem;
+    }
+
+    .ao-dr-presets {
+        margin: 0;
+        padding: 0.3rem 0;
+        list-style: none;
+        border-right: 1px solid var(--wa-panel-border, #ddd);
+        min-width: 8.2rem;
+    }
+
+    .ao-dr-presets button {
+        display: block;
+        width: 100%;
+        padding: 0.35rem 0.8rem;
+        border: 0;
+        background: none;
+        text-align: left;
+        font: inherit;
+        cursor: pointer;
+    }
+
+    .ao-dr-presets button:hover { background: var(--wa-link, #337ab7); color: #fff; }
+
+    .ao-dr-main { padding: 0.6rem 0.7rem; }
+
+    .ao-dr-months { display: flex; gap: 1.1rem; }
+
+    .ao-dr-head {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .ao-dr-head select {
+        height: 1.6rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.82rem;
+    }
+
+    .ao-dr-nav {
+        border: 0;
+        background: none;
+        font-size: 1.15rem;
+        line-height: 1;
+        padding: 0 0.35rem;
+        cursor: pointer;
+        color: var(--wa-ink, #2b2b2b);
+    }
+
+    .ao-dr-grid { border-collapse: collapse; }
+
+    .ao-dr-grid th {
+        padding: 0.15rem 0;
+        width: 1.9rem;
+        font-weight: 600;
+        text-align: center;
+        color: var(--wa-muted, #6b6b6b);
+    }
+
+    .ao-dr-grid td { padding: 1px; text-align: center; }
+
+    .ao-dr-grid td button {
+        width: 1.8rem;
+        height: 1.5rem;
+        border: 0;
+        border-radius: 3px;
+        background: none;
+        font: inherit;
+        font-size: 0.82rem;
+        color: var(--wa-link, #337ab7);
+        cursor: pointer;
+    }
+
+    .ao-dr-grid td button:hover { background: #e8eef5; }
+
+    .ao-dr-grid td button.ao-dr-out { color: #b9b9b9; }
+
+    .ao-dr-grid td button.ao-dr-in { background: #e8eef5; border-radius: 0; }
+
+    .ao-dr-grid td button.ao-dr-edge { background: var(--wa-link, #337ab7); color: #fff; }
+
+    .ao-dr-foot {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--wa-panel-border, #ddd);
+    }
+
+    .ao-dr-chosen { color: var(--wa-ink, #2b2b2b); margin-right: 0.3rem; }
+
+    .ao-dr-clear,
+    .ao-dr-apply {
+        height: 1.8rem;
+        padding: 0 0.9rem;
+        border-radius: 3px;
+        font: inherit;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+
+    .ao-dr-clear { border: 1px solid var(--wa-border, #ccc); background: #fff; }
+
+    .ao-dr-clear:hover { background: #ededed; }
+
+    .ao-dr-apply { border: 1px solid var(--wa-link, #337ab7); background: var(--wa-link, #337ab7); color: #fff; }
+
+    .ao-dr-apply:hover { background: #286090; }
+
+    @media (max-width: 900px) {
+        .ao-dr { flex-direction: column; max-width: min(94vw, 24rem); overflow: auto; }
+        .ao-dr-months { flex-direction: column; }
+        .ao-dr-presets { border-right: 0; border-bottom: 1px solid var(--wa-panel-border, #ddd); }
+    }
+
     .ao-of-date svg { position: absolute; left: 0.5rem; color: #777; pointer-events: none; }
 
     .ao-of-date input { padding-left: 1.65rem; }
