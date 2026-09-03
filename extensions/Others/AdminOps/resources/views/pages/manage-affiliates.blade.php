@@ -41,10 +41,9 @@
                         <div class="ao-af-row"><span>Total Earned</span><b>{{ $earned }}</b></div>
                         <div class="ao-af-row"><span>Orders Referred</span><b>{{ number_format($referred->count()) }}</b></div>
                         <div class="ao-af-row"><span>Conversion Rate</span><b>{{ $conversion }}%</b></div>
-                        {{-- The reference also edits a withdrawal balance here; Paymenter's
-                             affiliate extension keeps no withdrawal ledger, so there is no
-                             number to edit — the tab below says the same. --}}
-                        <div class="ao-af-row"><span>Withdrawn Amount</span><b title="No withdrawal ledger — the affiliate extension records none">—</b></div>
+                        {{-- Fed by AdminOps's own payout ledger (issue #6) — recorded on
+                             the Withdrawals History tab below. --}}
+                        <div class="ao-af-row"><span>Withdrawn Amount</span><b>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::withdrawn($current) }}</b></div>
                     </div>
                 </div>
 
@@ -86,10 +85,42 @@
                     are paid, and every earned amount is already in Commissions History.
                 </p>
             @elseif ($dtab === 'withdrawals')
-                <p class="ao-gs-empty" title="Paymenter's affiliate extension keeps no withdrawal ledger">
-                    No withdrawals have been recorded — the affiliate extension keeps no
-                    withdrawal ledger, so payouts are handled outside the panel.
-                </p>
+                @if (!\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::withdrawalsReady())
+                    <p class="ao-gs-empty">
+                        The withdrawals ledger has not been migrated on this install yet.
+                    </p>
+                @else
+                    @php
+                        $ledger = \Paymenter\Extensions\Others\AdminOps\Models\AffiliateWithdrawal::query()
+                            ->where('affiliate_id', $current->id)->latest()->get();
+                    @endphp
+                    <table class="ao-mu-grid">
+                        <thead>
+                            <tr><th>Date</th><th>Amount</th><th>Note</th></tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($ledger as $row)
+                                <tr>
+                                    <td>{{ $row->created_at?->format('m/d/Y') }}</td>
+                                    <td>${{ number_format((float) $row->amount, 2) }} {{ $row->currency_code }}</td>
+                                    <td class="ao-mu-left">{{ $row->note ?? '—' }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" class="ao-mu-none">No Records Found</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+
+                    {{-- The payout itself happens outside the panel — bank, PIX, credit —
+                         and is recorded here, which is how the reference does it too. --}}
+                    <form class="ao-af-withdraw" wire:submit.prevent="recordWithdrawal">
+                        <b>Record Withdrawal</b>
+                        <input type="text" inputmode="decimal" placeholder="Amount" wire:model="withdraw.amount" aria-label="Amount">
+                        <input type="text" maxlength="3" placeholder="USD" wire:model="withdraw.currency" aria-label="Currency">
+                        <input type="text" placeholder="Note — how it was paid (optional)" wire:model="withdraw.note" aria-label="Note">
+                        <button type="submit" class="ao-find-go">Record</button>
+                    </form>
+                @endif
             @else
                 <table class="ao-mu-grid">
                     <thead>
@@ -187,8 +218,7 @@
                         <td>{{ number_format($affiliate->visitors) }}</td>
                         <td>{{ number_format($affiliate->signups) }}</td>
                         <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::balance($affiliate) }}</td>
-                        {{-- No withdrawal ledger exists, so zero withdrawn is the truth. --}}
-                        <td>$0.00 USD</td>
+                        <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::withdrawn($affiliate) }}</td>
                         <td class="ao-mu-actions ao-mu-iconpair">
                             {{-- The reference's pair: the blue icon opens the affiliate's
                                  detail screen (issue #6); the red opens the raw record,
