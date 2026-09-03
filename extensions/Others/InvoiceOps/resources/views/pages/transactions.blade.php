@@ -7,18 +7,157 @@
 <x-filament-panels::page>
     <div class="ao-mu">
         <div class="ao-tx-tabs">
-            <span class="ao-mu-tab ao-tx-tab-dead" title="Use the filters on the invoice pages">Search/Filter</span>
-            @php
-                $addUrl = null;
-                try {
-                    $addUrl = \App\Admin\Resources\InvoiceTransactions\InvoiceTransactionResource::getUrl('index');
-                } catch (\Throwable $e) {
-                }
-            @endphp
-            @if ($addUrl)
-                <a class="ao-mu-tab" href="{{ $addUrl }}">Add Transaction</a>
-            @endif
+            <button type="button" class="ao-mu-tab {{ $filter ? 'ao-on' : '' }}" wire:click="toggleFilter">Search/Filter</button>
+            <button type="button" class="ao-mu-tab {{ $adding ? 'ao-on' : '' }}" wire:click="toggleAdding">Add Transaction</button>
         </div>
+
+        @if ($filter)
+            {{-- The reference's Search/Filter panel, field for field: Show, Description,
+                 Transaction ID on the left; Date Range, Amount, Payment Method on the
+                 right; the Search/Filter button centred below. --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="$refresh">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-tx-show">Show</label>
+                        <span><select @nofill id="ao-tx-show" class="ao-of-md" wire:model="show">
+                            <option value="">All Activity</option>
+                            <option value="in">Payments</option>
+                            <option value="out">Refunds</option>
+                            <option value="credit">Account Credit</option>
+                        </select></span>
+                        <label class="ao-of-label" for="ao-tx-dates">Date Range</label>
+                        <span class="ao-of-date">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"
+                                width="13" height="13" aria-hidden="true">
+                                <rect x="1.8" y="2.8" width="12.4" height="11.4" rx="1.5" />
+                                <path d="M1.8 6.2h12.4M5 1.2v3.2M11 1.2v3.2" />
+                            </svg>
+                            <input @nofill id="ao-tx-dates" class="ao-of-lg" type="text"
+                                wire:model="dates" placeholder="MM/DD/YYYY - MM/DD/YYYY">
+                        </span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-tx-q">Description</label>
+                        <span><input @nofill id="ao-tx-q" class="ao-of-lg" type="text"
+                            wire:model="q" placeholder="Words from the description or client"></span>
+                        <label class="ao-of-label" for="ao-tx-amount">Amount</label>
+                        <span><input @nofill id="ao-tx-amount" class="ao-of-sm" type="text" inputmode="decimal"
+                            wire:model="amount" placeholder="0.00"></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-tx-tid">Transaction ID</label>
+                        <span><input @nofill id="ao-tx-tid" class="ao-of-lg" type="text"
+                            wire:model="tid" placeholder="Gateway transaction ID"></span>
+                        <label class="ao-of-label" for="ao-tx-method">Payment Method</label>
+                        <span><select @nofill id="ao-tx-method" class="ao-of-md" wire:model="method">
+                            <option value="">Any</option>
+                            @foreach ($gateways as $gateway)
+                                <option value="{{ $gateway->name }}">{{ $gateway->name }}</option>
+                            @endforeach
+                            <option value="Account credit">Account credit</option>
+                        </select></span>
+                    </div>
+                </div>
+                <button type="submit" class="ao-of-go">Search/Filter</button>
+            </form>
+        @endif
+
+        @if ($adding)
+            {{-- The reference's Add Transaction form. Money in goes through core's own
+                 idempotent payment path against one invoice; ticking Credit tops up the
+                 client's real credit balance; an Amount Out records an offline refund. --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="addTransaction">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-tx-date">Date</label>
+                        <span class="ao-of-date">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"
+                                width="13" height="13" aria-hidden="true">
+                                <rect x="1.8" y="2.8" width="12.4" height="11.4" rx="1.5" />
+                                <path d="M1.8 6.2h12.4M5 1.2v3.2M11 1.2v3.2" />
+                            </svg>
+                            <input @nofill id="ao-tx-date" class="ao-of-md" type="text" wire:model="txDate"
+                                placeholder="MM/DD/YYYY">
+                        </span>
+                        <label class="ao-of-label" for="ao-tx-currency">Currency</label>
+                        <span class="ao-of-inline">
+                            <select @nofill id="ao-tx-currency" class="ao-of-sm" wire:model="txCurrency">
+                                @foreach ($currencies as $code)
+                                    <option value="{{ $code }}">{{ $code }}</option>
+                                @endforeach
+                            </select>
+                            (Non Client Only)
+                        </span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-tx-client">Related Client</label>
+                        <span><select @nofill id="ao-tx-client" class="ao-of-lg" wire:model="txClient">
+                            <option value="">Start Typing to Search Clients</option>
+                            @foreach ($clients as $client)
+                                <option value="{{ $client->id }}">
+                                    {{ trim($client->first_name . ' ' . $client->last_name) ?: $client->email }} - #{{ $client->id }}
+                                </option>
+                            @endforeach
+                        </select></span>
+                        <label class="ao-of-label" for="ao-tx-in">Amount In</label>
+                        <span><input @nofill id="ao-tx-in" class="ao-of-sm" type="text" inputmode="decimal"
+                            wire:model="txIn" placeholder="0.00"></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-tx-desc">Description</label>
+                        <span><input id="ao-tx-desc" class="ao-of-lg" type="text" disabled
+                            placeholder="Derived from the invoice"
+                            title="Paymenter transactions carry no description column — the ledger derives it from the invoice the payment lands on"></span>
+                        <label class="ao-of-label" for="ao-tx-fees">Fees</label>
+                        <span><input @nofill id="ao-tx-fees" class="ao-of-sm" type="text" inputmode="decimal"
+                            wire:model="txFees" placeholder="0.00"></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-tx-txid">Transaction ID</label>
+                        <span><input @nofill id="ao-tx-txid" class="ao-of-lg" type="text"
+                            wire:model="txId" placeholder="Optional — repeats are refused, not double-paid"></span>
+                        <label class="ao-of-label" for="ao-tx-out">Amount Out</label>
+                        <span><input @nofill id="ao-tx-out" class="ao-of-sm" type="text" inputmode="decimal"
+                            wire:model="txOut" placeholder="0.00"></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-tx-invoice">Invoice ID(s)</label>
+                        <span class="ao-of-inline">
+                            <input @nofill id="ao-tx-invoice" class="ao-of-md" type="text" inputmode="numeric"
+                                wire:model="txInvoice" placeholder="e.g. 214">
+                            Comma Separated
+                        </span>
+                        <label class="ao-of-label">Credit</label>
+                        <label class="ao-of-check">
+                            <input type="checkbox" wire:model="txCredit">
+                            Add to Client's Credit Balance
+                        </label>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-tx-gateway">Payment Method</label>
+                        {{-- Values are the gateway's extension key — the identifier core's
+                             addPayment() resolves — with the display name as the label. --}}
+                        <span><select @nofill id="ao-tx-gateway" class="ao-of-md" wire:model="txMethod">
+                            <option value="">None</option>
+                            @foreach ($gateways as $gateway)
+                                <option value="{{ $gateway->extension }}">{{ $gateway->name }}</option>
+                            @endforeach
+                        </select></span>
+                    </div>
+                </div>
+                <div class="ao-of-buttons">
+                    <button type="submit" class="ao-find-go">Add Transaction</button>
+                </div>
+            </form>
+
+            @if ($errors->any())
+                <ul class="ao-anc-errors">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            @endif
+        @endif
 
         {{-- The chart and the tiles, as the reference lays them out. --}}
         <div class="ao-tx-top">

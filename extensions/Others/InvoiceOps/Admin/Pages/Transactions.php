@@ -46,6 +46,57 @@ class Transactions extends Page
 
     protected static bool $shouldRegisterNavigation = false;
 
+    // ── The reference's Search/Filter panel ──────────────────────────────────
+    // Every field is a URL, so a filtered ledger can be pasted into a ticket.
+
+    #[\Livewire\Attributes\Url]
+    public bool $filter = false;
+
+    /** '' (All Activity) | in (Payments) | out (Refunds) | credit (Account Credit). */
+    #[\Livewire\Attributes\Url]
+    public string $show = '';
+
+    #[\Livewire\Attributes\Url]
+    public string $q = '';
+
+    #[\Livewire\Attributes\Url]
+    public string $tid = '';
+
+    /** "MM/DD/YYYY - MM/DD/YYYY", or a single date. */
+    #[\Livewire\Attributes\Url]
+    public string $dates = '';
+
+    #[\Livewire\Attributes\Url]
+    public string $amount = '';
+
+    #[\Livewire\Attributes\Url]
+    public string $method = '';
+
+    // ── The reference's Add Transaction tab ──────────────────────────────────
+
+    #[\Livewire\Attributes\Url]
+    public bool $adding = false;
+
+    public string $txDate = '';
+
+    public ?int $txClient = null;
+
+    public string $txId = '';
+
+    public string $txInvoice = '';
+
+    public string $txMethod = '';
+
+    public string $txCurrency = '';
+
+    public string $txIn = '';
+
+    public string $txFees = '';
+
+    public string $txOut = '';
+
+    public bool $txCredit = false;
+
     /** A page of money. Reading it needs the permission that governs reading invoices. */
     public static function canAccess(): bool
     {
@@ -55,6 +106,147 @@ class Transactions extends Page
     public function getTitle(): string
     {
         return 'Transactions';
+    }
+
+    public function mount(): void
+    {
+        $this->txDate = now()->format('m/d/Y');
+        $this->txCurrency = (string) config('settings.default_currency', 'USD');
+    }
+
+    public function toggleFilter(): void
+    {
+        $this->filter = !$this->filter;
+
+        if ($this->filter) {
+            $this->adding = false;
+        }
+    }
+
+    public function toggleAdding(): void
+    {
+        $this->adding = !$this->adding;
+
+        if ($this->adding) {
+            $this->filter = false;
+        }
+    }
+
+    /**
+     * The reference's Add Transaction, over the writes this panel already trusts:
+     * money in goes through core's idempotent {@see ExtensionHelper::addPayment} against
+     * one invoice; money out records an offline refund; the Credit box tops up the
+     * client's real credit balance. Each is refused, not faked, when its target is
+     * missing.
+     */
+    public function addTransaction(): void
+    {
+        $this->validate([
+            'txIn' => 'nullable|numeric|min:0',
+            'txFees' => 'nullable|numeric|min:0',
+            'txOut' => 'nullable|numeric|min:0',
+            'txInvoice' => 'nullable|string|max:64',
+            'txId' => 'nullable|string|max:255',
+        ], attributes: ['txIn' => 'amount in', 'txFees' => 'fees', 'txOut' => 'amount out', 'txInvoice' => 'invoice ID']);
+
+        $in = (float) ($this->txIn ?: 0);
+        $out = (float) ($this->txOut ?: 0);
+        $invoiceIds = array_values(array_filter(array_map('trim', explode(',', $this->txInvoice))));
+
+        if (count($invoiceIds) > 1) {
+            $this->addError('txInvoice', 'Paymenter records a transaction against one invoice — enter a single ID.');
+
+            return;
+        }
+
+        $invoice = $invoiceIds !== [] ? \App\Models\Invoice::find((int) $invoiceIds[0]) : null;
+
+        if ($invoiceIds !== [] && !$invoice) {
+            $this->addError('txInvoice', 'No invoice #' . $invoiceIds[0] . ' exists.');
+
+            return;
+        }
+
+        if ($in <= 0 && $out <= 0) {
+            $this->addError('txIn', 'Enter an Amount In or an Amount Out.');
+
+            return;
+        }
+
+        try {
+            if ($in > 0 && $invoice) {
+                $transaction = ExtensionHelper::addPayment(
+                    $invoice->id,
+                    $this->txMethod ?: null,
+                    $in,
+                    $this->txFees !== '' ? (float) $this->txFees : null,
+                    $this->txId ?: null,
+                );
+
+                // The reference's Date field: an offline payment recorded after the fact
+                // belongs on the day it happened, not the day it was typed in.
+                if ($transaction && ($when = $this->pickedDate())) {
+                    $transaction->created_at = $when;
+                    $transaction->save();
+                }
+            } elseif ($in > 0 && !$this->txCredit) {
+                $this->addError('txInvoice', 'An Amount In needs an invoice — or tick Credit to top up the client\'s balance instead.');
+
+                return;
+            }
+
+            if ($in > 0 && $this->txCredit) {
+                if (!$this->txClient) {
+                    $this->addError('txClient', 'Pick the client whose credit balance this tops up.');
+
+                    return;
+                }
+
+                $credit = \App\Models\Credit::firstOrCreate(
+                    ['user_id' => $this->txClient, 'currency_code' => strtoupper($this->txCurrency ?: config('settings.default_currency', 'USD'))],
+                    ['amount' => 0],
+                );
+                $credit->increment('amount', $in);
+            }
+
+            if ($out > 0) {
+                if (!$invoice) {
+                    $this->addError('txOut', 'An Amount Out needs the Invoice ID it refunds.');
+
+                    return;
+                }
+
+                InvoiceRefund::create([
+                    'invoice_id' => $invoice->id,
+                    'transaction_id' => null,
+                    'amount' => $out,
+                    'currency_code' => $invoice->currency_code,
+                    'method' => InvoiceRefund::METHOD_OFFLINE,
+                    'reason' => $this->txId ?: 'Recorded from Add Transaction',
+                    'admin_id' => Auth::id(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Notification::make()->title('Transaction not recorded')->body($e->getMessage())->danger()->send();
+
+            return;
+        }
+
+        Notification::make()->title('Transaction recorded')->success()->send();
+        $this->reset(['txClient', 'txId', 'txInvoice', 'txIn', 'txFees', 'txOut', 'txCredit']);
+        $this->adding = false;
+    }
+
+    private function pickedDate(): ?\Carbon\Carbon
+    {
+        foreach (['m/d/Y', 'Y-m-d'] as $format) {
+            try {
+                return \Carbon\Carbon::createFromFormat($format, trim($this->txDate))->setTimeFrom(now());
+            } catch (\Throwable $e) {
+            }
+        }
+
+        return null;
     }
 
     protected function getViewData(): array
@@ -72,13 +264,98 @@ class Transactions extends Page
             ->get();
 
         return [
-            'rows' => $this->merge($rows, $refunds),
+            'rows' => $this->sift($this->merge($rows, $refunds)),
             'totals' => $this->totals(),
             'deltas' => $this->deltas(),
             'chart' => $this->chart(),
             'balances' => $this->gatewayBalances(),
             'feesRecorded' => InvoiceTransaction::where('fee', '>', 0)->exists(),
+            'gateways' => Gateway::orderBy('name')->get(['id', 'name', 'extension']),
+            'clients' => \App\Models\User::whereNull('role_id')->orderBy('first_name')->limit(500)
+                ->get(['id', 'first_name', 'last_name', 'email']),
+            'currencies' => \App\Models\Currency::pluck('code')->all() ?: [config('settings.default_currency', 'USD')],
         ];
+    }
+
+    /**
+     * The Search/Filter panel, applied to the merged ledger — the same rows the grid
+     * shows, so what the filter answers is exactly what the eye would have scanned for.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function sift(array $rows): array
+    {
+        [$from, $to] = $this->parsedDates();
+
+        return array_values(array_filter($rows, function (array $row) use ($from, $to): bool {
+            if ($this->show === 'in' && $row['in'] <= 0) {
+                return false;
+            }
+
+            if ($this->show === 'out' && $row['out'] <= 0) {
+                return false;
+            }
+
+            if ($this->show === 'credit' && $row['method'] !== 'Account credit') {
+                return false;
+            }
+
+            if ($this->q !== '' && !str_contains(strtolower($row['description'] . ' ' . $row['customer']), strtolower($this->q))) {
+                return false;
+            }
+
+            if ($this->tid !== '' && !str_contains(strtolower((string) $row['trans']), strtolower($this->tid))) {
+                return false;
+            }
+
+            if ($this->amount !== '' && is_numeric($this->amount)
+                && abs($row['in'] - (float) $this->amount) >= 0.005
+                && abs($row['out'] - (float) $this->amount) >= 0.005) {
+                return false;
+            }
+
+            if ($this->method !== '' && $row['method'] !== $this->method) {
+                return false;
+            }
+
+            if ($from && $row['at'] && $row['at']->lt($from->startOfDay())) {
+                return false;
+            }
+
+            if ($to && $row['at'] && $row['at']->gt($to->copy()->endOfDay())) {
+                return false;
+            }
+
+            return true;
+        }));
+    }
+
+    /** @return array{?\Carbon\Carbon, ?\Carbon\Carbon} */
+    private function parsedDates(): array
+    {
+        $text = trim($this->dates);
+
+        if ($text === '') {
+            return [null, null];
+        }
+
+        $parse = function (string $piece): ?\Carbon\Carbon {
+            foreach (['m/d/Y', 'Y-m-d', 'd/m/Y'] as $format) {
+                try {
+                    return \Carbon\Carbon::createFromFormat($format, trim($piece));
+                } catch (\Throwable $e) {
+                }
+            }
+
+            return null;
+        };
+
+        $pieces = preg_split('/\s+[-–]\s+/', $text, 2);
+        $from = $parse($pieces[0]);
+        $to = isset($pieces[1]) ? $parse($pieces[1]) : $from;
+
+        return [$from, $to];
     }
 
     /**
