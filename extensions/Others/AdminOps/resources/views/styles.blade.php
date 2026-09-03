@@ -1769,13 +1769,14 @@
     .ao-mu-status.ao-mu-st-suspended { background: #9ea6ad; }
     .ao-mu-status.ao-mu-st-cancelled { background: #d9534f; }
 
-    /* The reference's Search/Filter tab above the band. */
+    /* The reference's Search/Filter tab: a file-folder tab that sits on its strip's
+       full-width rule — the -1px pull lets the tab's own border merge into the line. */
     .ao-mu-tab {
         display: inline-block;
-        margin-bottom: 0.7rem;
+        margin-bottom: -1px;
         padding: 0.35rem 1rem;
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: var(--wa-radius, 6px) 3px 0 0;
+        border-radius: 4px 4px 0 0;
         background: #f0f0f0;
         color: var(--wa-text, #2b2b2b);
         cursor: pointer;
@@ -2983,7 +2984,22 @@
 
     /* ── Transactions ───────────────────────────────────────────────────────
        The reference's chart-and-tiles top, then Gateway Balances. */
-    .ao-tx-tabs { display: flex; gap: 0.3rem; }
+    .ao-tx-tabs {
+        display: flex;
+        gap: 0.3rem;
+        align-items: flex-end;
+        border-bottom: 1px solid var(--wa-panel-border, #ddd);
+        margin-bottom: 0.9rem;
+    }
+
+    /* An open Search/Filter band hangs straight off the strip's rule, as the
+       reference's does — the rule becomes the band's top edge. */
+    .ao-tx-tabs:has(+ .ao-find) { margin-bottom: 0; }
+
+    .ao-tx-tabs + .ao-find {
+        border-top: 0;
+        border-radius: 0 0 var(--wa-radius, 6px) var(--wa-radius, 6px);
+    }
 
     /* Knowledgebase (issue #24): the reference's "Check to Hide" beside the name field,
        and its empty Browse by Tag state. */
@@ -2991,36 +3007,14 @@
 
     .ao-kb-notags { margin: 0.3rem 0 0; }
 
-    /* ── Issue #8's highlighted band ─────────────────────────────────────────
-       The reference's page header is its own white panel: the title and the tab row
-       share one bordered band, set off from the records area below. When the tab row
-       leads the page content it fuses with the title's panel; when something else comes
-       first (Invoices' totals bar) the title panel simply closes on its own. */
+    /* ── Issue #8, corrected ─────────────────────────────────────────────────
+       The reference's page title is plain text on the page background — no panel,
+       no border (the earlier white band misread the screenshots; the follow-up
+       comparisons settled it). The Search/Filter strip below carries the page-wide
+       rule instead — that lives on .ao-tx-tabs. Only the spacing is tuned here. */
     .fi-page:has(.ao-mu) .fi-page-header-main-ctn { gap: 0; }
 
-    .fi-page:has(.ao-mu) .fi-header {
-        background: #fff;
-        border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: var(--wa-radius, 6px);
-        padding: 1.1rem 1.2rem 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .fi-page:has(.ao-mu > .ao-tx-tabs:first-child) .fi-header {
-        border-bottom: 0;
-        border-radius: var(--wa-radius, 6px) var(--wa-radius, 6px) 0 0;
-        padding-bottom: 0.3rem;
-        margin-bottom: 0;
-    }
-
-    .ao-mu > .ao-tx-tabs:first-child {
-        background: #fff;
-        border: 1px solid var(--wa-panel-border, #ddd);
-        border-top: 0;
-        border-radius: 0 0 var(--wa-radius, 6px) var(--wa-radius, 6px);
-        margin: 0 0 1rem;
-        padding: 0.15rem 1.2rem 0.35rem;
-    }
+    .fi-page:has(.ao-mu) .fi-header { margin-bottom: 0.75rem; }
 
     .ao-tx-tab-dead { opacity: 0.7; cursor: not-allowed; }
 
