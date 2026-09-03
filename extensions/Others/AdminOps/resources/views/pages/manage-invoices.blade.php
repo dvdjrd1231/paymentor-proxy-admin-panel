@@ -135,23 +135,6 @@
             </label>
         </div>
 
-        {{-- The reference's With Selected bar, above and below the grid. --}}
-        <div class="ao-st-bulk">
-            With Selected:
-            <button type="button" class="ao-mo-accept" wire:click="markSelected('paid')"
-                wire:confirm="Mark the selected invoices paid?">Mark Paid</button>
-            <button type="button" wire:click="markSelected('pending')"
-                wire:confirm="Mark the selected invoices unpaid?">Mark Unpaid</button>
-            <button type="button" wire:click="markSelected('cancelled')"
-                wire:confirm="Mark the selected invoices cancelled?">Mark Cancelled</button>
-            <button type="button" wire:click="duplicateSelected"
-                wire:confirm="Duplicate the selected invoices as fresh unpaid copies?">Duplicate Invoice</button>
-            <button type="button" wire:click="remindSelected"
-                wire:confirm="Email the selected clients their unpaid invoices?">Send Reminder</button>
-            <button type="button" class="ao-st-danger" wire:click="deleteSelected"
-                wire:confirm="Delete the selected invoices? Paid ones and any with transactions are kept.">Delete</button>
-        </div>
-
         <table class="ao-mu-grid">
             <thead>
                 <tr>
@@ -212,7 +195,9 @@
             </tbody>
         </table>
 
-        {{-- The reference's With Selected bar, above and below the grid. --}}
+        {{-- The reference's With Selected bar sits exactly once, between the grid and
+             pagination — confirmed against two real screenshots (populated and empty),
+             not above the grid too. --}}
         <div class="ao-st-bulk">
             With Selected:
             <button type="button" class="ao-mo-accept" wire:click="markSelected('paid')"
