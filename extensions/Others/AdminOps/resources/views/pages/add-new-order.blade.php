@@ -11,33 +11,38 @@
                     <span>Client</span>
                     {{-- .live: the Order Summary's credit-balance offer is this client's own
                          balance, and has to refresh the moment a different one is picked. --}}
-                    <select wire:model.live="userId" required>
-                        <option value="">Start Typing to Search Clients</option>
-                        @foreach ($clients as $client)
-                            <option value="{{ $client->id }}">
-                                {{ trim($client->first_name . ' ' . $client->last_name) ?: $client->email }} - #{{ $client->id }}
-                            </option>
-                        @endforeach
-                    </select>
+                    @php
+                        $clientOptions = [['value' => '', 'label' => 'Start Typing to Search Clients', 'group' => false]];
+                        foreach ($clients as $client) {
+                            $clientOptions[] = [
+                                'value' => $client->id,
+                                'label' => (trim($client->first_name . ' ' . $client->last_name) ?: $client->email) . ' - #' . $client->id,
+                                'group' => false,
+                            ];
+                        }
+                    @endphp
+                    @include('adminops::partials.select', ['model' => 'userId', 'live' => true, 'options' => $clientOptions, 'placeholder' => 'Start Typing to Search Clients'])
                 </label>
                 <label class="ao-anc-row">
                     <span>Payment Method</span>
-                    <select wire:model="gatewayId">
-                        <option value="">Default</option>
-                        @foreach ($gateways as $gateway)
-                            <option value="{{ $gateway->id }}">{{ $gateway->name }}</option>
-                        @endforeach
-                    </select>
+                    @php
+                        $gatewayOptions = [['value' => '', 'label' => 'Default', 'group' => false]];
+                        foreach ($gateways as $gateway) {
+                            $gatewayOptions[] = ['value' => $gateway->id, 'label' => $gateway->name, 'group' => false];
+                        }
+                    @endphp
+                    @include('adminops::partials.select', ['model' => 'gatewayId', 'live' => false, 'options' => $gatewayOptions, 'placeholder' => 'Default'])
                 </label>
                 <div class="ao-anc-row">
                     <span>Promotion Code</span>
                     <span class="ao-anc-field">
-                        <select wire:model="couponId">
-                            <option value="">None</option>
-                            @foreach ($coupons as $coupon)
-                                <option value="{{ $coupon->id }}">{{ $coupon->code }}</option>
-                            @endforeach
-                        </select>
+                        @php
+                            $couponOptions = [['value' => '', 'label' => 'None', 'group' => false]];
+                            foreach ($coupons as $coupon) {
+                                $couponOptions[] = ['value' => $coupon->id, 'label' => $coupon->code, 'group' => false];
+                            }
+                        @endphp
+                        @include('adminops::partials.select', ['model' => 'couponId', 'live' => false, 'options' => $couponOptions, 'placeholder' => 'None'])
                         @php
                             $promoUrl = null;
                             try {
@@ -58,10 +63,13 @@
                     <span>Order Status</span>
                     {{-- Active provisions immediately and skips Pending — for an order whose
                          payment was already collected outside the system. --}}
-                    <select wire:model="orderStatus">
-                        <option value="pending">Pending</option>
-                        <option value="active">Active</option>
-                    </select>
+                    @include('adminops::partials.select', [
+                        'model' => 'orderStatus', 'live' => false,
+                        'options' => [
+                            ['value' => 'pending', 'label' => 'Pending', 'group' => false],
+                            ['value' => 'active', 'label' => 'Active', 'group' => false],
+                        ],
+                    ])
                 </label>
                 <div class="ao-anc-row">
                     <span></span>
@@ -79,14 +87,22 @@
                     <label class="ao-anc-row">
                         <span>Product/Service</span>
                         <span class="ao-anc-field">
-                            <select wire:model.live="items.{{ $index }}.productId" @required($index === 0)>
-                                <option value="">None</option>
-                                @foreach ($products as $product)
-                                    <option value="{{ $product->id }}">
-                                        {{ $product->category?->name }} - {{ $product->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            {{-- Grouped by category, the way the reference's own optgroups
+                                 read — real headings in a list the page renders, not a
+                                 native popup whose group styling Windows ignores. --}}
+                            @php
+                                $productOptions = [['value' => '', 'label' => 'None', 'group' => false]];
+                                foreach ($products->groupBy(fn ($p) => $p->category?->name ?? '—') as $categoryName => $categoryProducts) {
+                                    $productOptions[] = ['value' => '', 'label' => $categoryName, 'group' => true];
+                                    foreach ($categoryProducts as $product) {
+                                        $productOptions[] = ['value' => $product->id, 'label' => $product->name, 'group' => false];
+                                    }
+                                }
+                            @endphp
+                            @include('adminops::partials.select', [
+                                'model' => "items.{$index}.productId", 'live' => true,
+                                'options' => $productOptions, 'placeholder' => 'None',
+                            ])
                             @if (count($items) > 1)
                                 <button type="button" class="ao-ano-remove" title="Remove this product"
                                     wire:click="removeItem({{ $index }})">&times;</button>
@@ -99,13 +115,25 @@
                     </label>
                     <label class="ao-anc-row">
                         <span>Billing Cycle</span>
-                        <select wire:model.live="items.{{ $index }}.planId" @disabled($plansByItem[$index]->isEmpty())>
-                            @forelse ($plansByItem[$index] as $plan)
-                                <option value="{{ $plan->id }}">{{ $plan->name }}</option>
-                            @empty
-                                <option value="">Select a product first</option>
-                            @endforelse
-                        </select>
+                        @if ($plansByItem[$index]->isEmpty())
+                            {{-- Nothing to pick yet — a disabled real select reads better
+                                 here than a custom one with a single dead row. --}}
+                            <select disabled><option>Select a product first</option></select>
+                        @else
+                            @php
+                                $planOptions = $plansByItem[$index]->map(fn ($plan) => [
+                                    'value' => $plan->id, 'label' => $plan->name, 'group' => false,
+                                ])->all();
+                            @endphp
+                            {{-- Keyed by the product: picking a different one changes which
+                                 plans exist, and the key change is what tells Alpine's
+                                 morph to actually read the new list instead of keeping
+                                 the one it opened with. --}}
+                            @include('adminops::partials.select', [
+                                'model' => "items.{$index}.planId", 'live' => true, 'options' => $planOptions,
+                                'key' => "plan-select-{$index}-{$item['productId']}",
+                            ])
+                        @endif
                     </label>
                     <label class="ao-anc-row">
                         <span>Quantity</span>
@@ -159,11 +187,16 @@
                                             @break
 
                                         @default {{-- select, slider --}}
-                                            <select wire:model.live="items.{{ $index }}.configOptions.{{ $option->id }}">
-                                                @foreach ($option->children as $child)
-                                                    <option value="{{ $child->id }}">{{ $child->name }}</option>
-                                                @endforeach
-                                            </select>
+                                            @php
+                                                $childOptions = $option->children->map(fn ($child) => [
+                                                    'value' => $child->id, 'label' => $child->name, 'group' => false,
+                                                ])->all();
+                                            @endphp
+                                            @include('adminops::partials.select', [
+                                                'model' => "items.{$index}.configOptions.{$option->id}",
+                                                'live' => true, 'options' => $childOptions,
+                                                'key' => "cfgopt-select-{$index}-{$option->id}",
+                                            ])
                                     @endswitch
                                 </label>
                             @endforeach
@@ -174,15 +207,39 @@
                                     @switch($field['type'] ?? 'text')
                                         @case('select')
                                         @case('radio')
-                                            <select wire:model.live="items.{{ $index }}.checkoutConfig.{{ $field['name'] }}"
-                                                @disabled(!empty($field['disabled_options']) && count($field['disabled_options']) === count($field['options'] ?? []))>
-                                                @foreach ($field['options'] ?? [] as $value => $label)
-                                                    <option value="{{ $value }}" @selected(($item['checkoutConfig'][$field['name']] ?? '') === (string) $value)
-                                                        {{ in_array($value, $field['disabled_options'] ?? [], true) ? 'disabled' : '' }}>
-                                                        {{ $label }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
+                                            @php
+                                                $allDisabled = !empty($field['disabled_options'])
+                                                    && count($field['disabled_options']) === count($field['options'] ?? []);
+                                            @endphp
+                                            @if ($allDisabled)
+                                                {{-- Every option disabled (e.g. every region out of
+                                                     stock) — a plain disabled select says that
+                                                     plainly, matching the old control's behaviour. --}}
+                                                <select disabled>
+                                                    <option>{{ reset($field['options']) ?: '—' }}</option>
+                                                </select>
+                                            @else
+                                                {{-- This is where a Windows admin was reading "us"
+                                                     instead of 🇺🇸 — a native <option> popup is
+                                                     OS-drawn there and cannot show the flag webfont
+                                                     or the page's own font at all. Rendered as real
+                                                     page content instead, both finally show. --}}
+                                                @php
+                                                    $fieldOptions = collect($field['options'] ?? [])->map(fn ($label, $value) => [
+                                                        'value' => (string) $value, 'label' => $label, 'group' => false,
+                                                        'disabled' => in_array($value, $field['disabled_options'] ?? [], true),
+                                                    ])->values()->all();
+                                                @endphp
+                                                {{-- Keyed by the product: this is the Region
+                                                     field, and a different product can mean a
+                                                     different server with a different, freshly
+                                                     fetched stock list. --}}
+                                                @include('adminops::partials.select', [
+                                                    'model' => "items.{$index}.checkoutConfig.{$field['name']}",
+                                                    'live' => true, 'options' => $fieldOptions,
+                                                    'key' => "checkout-select-{$index}-{$field['name']}-{$item['productId']}",
+                                                ])
+                                            @endif
                                             @break
 
                                         @case('checkbox')

@@ -230,6 +230,9 @@ class AddNewOrder extends Page
 
     public function create(): void
     {
+        // No product line chosen is already caught below (`'Pick at least one product.'`)
+        // after validate() runs — real server enforcement, not the removed <select>'s
+        // browser-only `required`. Issue #10's custom dropdown needed nothing added here.
         $rules = [
             'userId' => 'required|exists:users,id',
             'items' => 'required|array|min:1',

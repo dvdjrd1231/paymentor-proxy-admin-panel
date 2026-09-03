@@ -2190,6 +2190,106 @@
         color: var(--wa-muted, #6b6b6b);
     }
 
+    /* ── The custom select (issue #10 / #4) ──────────────────────────────────
+       A native <select>'s open list is drawn by the OS on Windows — no page font, no
+       flag webfont, no colour crosses that boundary, which is why WHMCS does not use one
+       either: every dropdown there is selectize.js, a real HTML list the page controls.
+       Values below are selectize.bootstrap3's own (input border #ccc, radius 4px, dropdown
+       shadow, hover #f5f5f5/#262626, optgroup header #777) — read straight from the
+       reference's shipped CSS, not approximated. */
+    .ao-xsel {
+        position: relative;
+        display: block;
+        width: 100%;
+    }
+
+    .ao-xsel-btn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        width: 100%;
+        height: 2.1rem;
+        padding: 0 0.55rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background: #fff;
+        font-size: 15px;
+        font-family: inherit;
+        color: #333;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .ao-xsel-btn:focus,
+    .ao-xsel-btn[aria-expanded="true"] {
+        outline: none;
+        border-color: var(--wa-link, #337ab7);
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+    }
+
+    .ao-xsel-label {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .ao-xsel-chev {
+        flex: none;
+        color: #888;
+    }
+
+    .ao-xsel-list {
+        position: absolute;
+        z-index: 30;
+        top: 100%;
+        left: 0;
+        right: 0;
+        margin-top: 2px;
+        max-height: 15rem;
+        overflow-y: auto;
+        border: 1px solid #d0d0d0;
+        border-radius: 4px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        list-style: none;
+        padding: 0.25rem 0;
+    }
+
+    .ao-xsel-opt {
+        padding: 0.3rem 0.75rem;
+        font-size: 15px;
+        color: #333;
+        cursor: pointer;
+        white-space: normal;
+    }
+
+    .ao-xsel-opt:hover,
+    .ao-xsel-opt.ao-on {
+        background: #f5f5f5;
+        color: #262626;
+    }
+
+    .ao-xsel-opt.ao-on { font-weight: 600; }
+
+    .ao-xsel-opt.ao-off {
+        color: #999;
+        cursor: not-allowed;
+    }
+
+    .ao-xsel-opt.ao-off:hover { background: none; }
+
+    /* The reference's optgroup-header: quiet, not pickable, sits flush against the
+       group above it exactly as selectize draws it. */
+    .ao-xsel-group {
+        padding: 0.2rem 0.75rem;
+        color: #777;
+        background: #fff;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: default;
+    }
+
     .ao-anc-errors {
         margin-top: 1rem;
         padding: 0.7rem 1rem;
@@ -2556,14 +2656,39 @@
     .ao-mu-iconpair a:hover,
     .ao-mu-iconpair button:hover { background: #f0f0f0 !important; }
 
-    /* The pair sits centred in its own slim column, never hugging the row's edge —
-       issue: the icons rode high and right of their row on Affiliates. */
+    /* The pair sits centred in its own slim column, never hugging the row's edge.
+       Every control in the cell — icon anchors, icon buttons, the +/− toggle — takes the
+       SAME fixed box, vertically centred on the row: the misalignment was each page's own
+       button rule (the pill anchors, .ao-sa-toggle's 1.4rem, .ao-ps-plus's padding)
+       giving its member a different height and baseline. */
     td.ao-mu-iconpair {
         text-align: center;
         vertical-align: middle;
         white-space: nowrap;
-        width: 4.2rem;
+        width: 4.6rem;
     }
+
+    td.ao-mu-iconpair > a,
+    td.ao-mu-iconpair > button {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 1.7rem !important;
+        height: 1.7rem !important;
+        min-width: 0 !important;
+        margin: 0 0.1rem !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 4px;
+        background: none !important;
+        box-shadow: none !important;
+        vertical-align: middle;
+        line-height: 1;
+        font-size: 1.05rem;
+    }
+
+    td.ao-mu-iconpair > a:hover,
+    td.ao-mu-iconpair > button:hover { background: #f0f0f0 !important; }
 
     .ao-mu-iconpair .ao-mu-cell-icon { width: 1.05rem; height: 1.05rem; display: block; }
 
@@ -3819,9 +3944,13 @@
         margin: 0.6rem 0;
     }
 
+    /* One shared height keeps the select, Go and New Addon on one baseline — the strip
+       read misaligned when each brought its own. */
     .ao-cs-pickrow select {
-        height: 1.9rem;
+        height: 2.1rem;
+        flex: 1;
         max-width: 26rem;
+        padding: 0 0.5rem;
         border: 1px solid var(--wa-border, #ccc);
         border-radius: 4px;
         background: #fff;
@@ -3830,7 +3959,21 @@
     }
 
     .ao-cs-pickrow .ao-of-go,
-    .ao-cs-pickrow .ao-find-go { margin: 0; display: inline-flex; text-decoration: none; }
+    .ao-cs-pickrow .ao-find-go {
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        height: 2.1rem;
+        text-decoration: none;
+    }
+
+    /* The editor's full-width custom-field inputs (Service ID, api-key). */
+    .ao-of-xl { width: 100%; max-width: 46rem; }
+
+    /* The Addons mini-table inside the editor: the navy header even when empty. */
+    .ao-cs-addons { width: 100%; max-width: 46rem; }
+
+    .ao-cs-addons .ao-mu-none { text-align: left; padding-left: 0.6rem; }
 
     /* The related-service radio column (issue #20). */
     .ao-ont-radio { width: 2rem; text-align: center; }

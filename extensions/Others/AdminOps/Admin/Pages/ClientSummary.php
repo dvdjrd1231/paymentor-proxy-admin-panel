@@ -244,11 +244,29 @@ class ClientSummary extends Page
             'quantity' => (int) $service->quantity,
             'price' => number_format((float) $service->price, 2, '.', ''),
             'status' => (string) $service->status,
+            'regDate' => $service->created_at?->format('m/d/Y') ?? '',
             'nextDue' => $service->expires_at?->format('m/d/Y') ?? '',
             'subscriptionId' => (string) $service->subscription_id,
             'domain' => $prop('domain'),
             'dedicatedIp' => $prop('dedicated_ip'),
+            'username' => $prop('proxy_username'),
+            'password' => $prop('proxy_password'),
             'svcNotes' => $prop('admin_notes'),
+            // The remaining properties (Proxies, Service ID, api-key…), editable as the
+            // reference's custom fields are. A list, not a key-map: property keys can
+            // carry characters wire:model paths cannot.
+            'props' => $service->properties
+                ->whereNotIn('key', ['domain', 'dedicated_ip', 'admin_notes', 'proxy_username', 'proxy_password'])
+                ->map(fn ($property): array => [
+                    'key' => (string) $property->key,
+                    'name' => (string) ($property->name ?: $property->key),
+                    'value' => (string) $property->value,
+                ])->values()->all(),
+            // The reference's Region select and friends: each config option, its picked
+            // value editable among that option's own children.
+            'configs' => $service->configs
+                ->mapWithKeys(fn ($config) => [(string) $config->config_option_id => (string) $config->config_value_id])
+                ->all(),
         ];
     }
 
@@ -269,16 +287,21 @@ class ClientSummary extends Page
             'svc.planId' => 'required|exists:plans,id',
         ], attributes: ['svc.quantity' => 'quantity', 'svc.price' => 'first payment amount', 'svc.status' => 'status', 'svc.productId' => 'product', 'svc.planId' => 'billing cycle']);
 
-        $nextDue = null;
-        foreach (['m/d/Y', 'Y-m-d'] as $format) {
-            try {
-                $nextDue = \Carbon\Carbon::createFromFormat($format, trim((string) $this->svc['nextDue']));
-                break;
-            } catch (\Throwable $e) {
+        $parseDay = function (string $text): ?\Carbon\Carbon {
+            foreach (['m/d/Y', 'Y-m-d'] as $format) {
+                try {
+                    return \Carbon\Carbon::createFromFormat($format, trim($text));
+                } catch (\Throwable $e) {
+                }
             }
-        }
 
-        DB::transaction(function () use ($service, $nextDue): void {
+            return null;
+        };
+
+        $nextDue = $parseDay((string) $this->svc['nextDue']);
+        $regDate = $parseDay((string) ($this->svc['regDate'] ?? ''));
+
+        DB::transaction(function () use ($service, $nextDue, $regDate): void {
             $service->update([
                 'product_id' => (int) $this->svc['productId'],
                 'plan_id' => (int) $this->svc['planId'],
@@ -289,13 +312,48 @@ class ClientSummary extends Page
                 'expires_at' => $nextDue,
             ]);
 
-            foreach (['domain' => 'Domain', 'dedicated_ip' => 'Dedicated IP', 'admin_notes' => 'Admin Notes'] as $key => $name) {
-                $value = trim((string) ($this->svc[$key === 'admin_notes' ? 'svcNotes' : ($key === 'dedicated_ip' ? 'dedicatedIp' : 'domain')]));
+            // The reference's editable Registration Date — the same column, corrected.
+            if ($regDate && !$regDate->isSameDay($service->created_at ?? now())) {
+                $service->created_at = $regDate->setTimeFrom($service->created_at ?? now());
+                $service->save();
+            }
 
+            $namedProps = [
+                'domain' => ['Domain', trim((string) $this->svc['domain'])],
+                'dedicated_ip' => ['Dedicated IP', trim((string) $this->svc['dedicatedIp'])],
+                'admin_notes' => ['Admin Notes', trim((string) $this->svc['svcNotes'])],
+                'proxy_username' => ['Username', trim((string) $this->svc['username'])],
+                'proxy_password' => ['Password', trim((string) $this->svc['password'])],
+            ];
+
+            foreach ($namedProps as $key => [$name, $value]) {
                 if ($value !== '') {
                     $service->properties()->updateOrCreate(['key' => $key], ['name' => $name, 'value' => $value]);
                 } else {
                     $service->properties()->where('key', $key)->delete();
+                }
+            }
+
+            // The custom-field rows: whatever the module stored, edited in place. An
+            // emptied field keeps its row — clearing a provisioning reference by accident
+            // should not delete the record of it having existed.
+            foreach ($this->svc['props'] ?? [] as $row) {
+                $service->properties()->where('key', $row['key'])->update(['value' => (string) $row['value']]);
+            }
+
+            // The reference's Region (and any other config option): the picked value must
+            // be one of that option's own children, or the row stays as it was.
+            foreach ($this->svc['configs'] ?? [] as $optionId => $valueId) {
+                if (!ctype_digit((string) $valueId)) {
+                    continue;
+                }
+
+                $valid = \App\Models\ConfigOption::where('parent_id', (int) $optionId)
+                    ->where('id', (int) $valueId)->exists();
+
+                if ($valid) {
+                    $service->configs()->where('config_option_id', (int) $optionId)
+                        ->update(['config_value_id' => (int) $valueId]);
                 }
             }
         });
@@ -391,6 +449,14 @@ class ClientSummary extends Page
                     ->where('parent_service_id', $service->id)->get()
                 : collect(),
             'svcPayment' => $service->invoices->flatMap->transactions->first()?->gateway?->name ?? '—',
+            // Each config option with its child values, for the editable Region-style selects.
+            'svcConfigChoices' => $service->configs->mapWithKeys(fn ($config) => [
+                (string) $config->config_option_id => [
+                    'label' => $config->configOption?->name ?? 'Option',
+                    'values' => \App\Models\ConfigOption::where('parent_id', $config->config_option_id)
+                        ->orderBy('sort')->orderBy('name')->get(['id', 'name']),
+                ],
+            ])->all(),
         ];
     }
 
