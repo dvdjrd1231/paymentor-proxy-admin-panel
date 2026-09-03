@@ -159,7 +159,8 @@ class AddNewOrder extends Page
     public function summary(): array
     {
         $currency = config('settings.default_currency', 'USD');
-        $products = Product::whereIn('id', collect($this->items)->pluck('productId')->filter())->get()->keyBy('id');
+        $products = Product::with('category')
+            ->whereIn('id', collect($this->items)->pluck('productId')->filter())->get()->keyBy('id');
 
         $lines = [];
         foreach ($this->items as $index => $item) {
@@ -179,7 +180,10 @@ class AddNewOrder extends Page
 
             $lines[] = [
                 'index' => $index,
-                'label' => $products[$item['productId']]?->name ?? '—',
+                // The reference's wording: "1 x Category - Product", cycle underneath.
+                'label' => trim(($products[$item['productId']]?->category?->name ? $products[$item['productId']]->category->name . ' - ' : '')
+                    . ($products[$item['productId']]?->name ?? '—')),
+                'cycle' => $plan ? ProductConfig::cycleLabel($plan) : null,
                 'plan' => $plan,
                 'unit' => $unit,
                 'quantity' => $quantity,
