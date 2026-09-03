@@ -249,13 +249,14 @@
                         <td class="ao-mu-actions ao-mu-iconpair">
                             {{-- The reference's pair, in the panel's standard icons: the
                                  blue open-record glyph every other list uses (Invoices'
-                                 own), then the red one for the raw record where disabling
-                                 and deleting live. --}}
+                                 own), then the blue edit-box glyph every other list's Edit
+                                 link uses — this one opens the raw record's edit screen,
+                                 not a delete, so it takes the edit icon, not the red one. --}}
                             <button type="button" title="Open affiliate detail" wire:click="openAffiliate({{ $affiliate->id }})">
                                 <x-filament::icon icon="ri-file-list-2-line" class="ao-mu-cell-icon" />
                             </button>
-                            <a href="{{ $edit }}" title="Manage affiliate record">
-                                <x-filament::icon icon="ri-indeterminate-circle-fill" class="ao-mu-cell-icon ao-mu-icon-red" />
+                            <a href="{{ $edit }}" title="Edit affiliate record">
+                                <x-filament::icon icon="ri-edit-box-line" class="ao-mu-cell-icon" />
                             </a>
                         </td>
                     </tr>
