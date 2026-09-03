@@ -400,6 +400,7 @@ class WhmcsNavigation
             ),
             static::pageLink(BillableItemsList::class, '- Uninvoiced Items', params: ['view' => 'uninvoiced']),
             static::pageLink(BillableItemsList::class, '- Recurring Items', params: ['view' => 'recurring']),
+            static::pageLink(BillableItemsList::class, 'Add New', params: ['adding' => 1]),
             static::pageLink(
                 QuotesList::class,
                 'Quotes',

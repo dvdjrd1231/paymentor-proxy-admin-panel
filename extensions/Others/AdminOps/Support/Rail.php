@@ -196,7 +196,7 @@ class Rail
         $claimed = [
             'Invoices', '- Paid', '- Draft', '- Unpaid', '- Overdue', '- Cancelled',
             '- Refunded', '- Collections', '- Payment Pending',
-            'Billable Items', '- Uninvoiced Items', '- Recurring Items',
+            'Billable Items', '- Uninvoiced Items', '- Recurring Items', 'Add New',
             'Quotes', '- Valid', '- Expired', '- Create New Quote',
         ];
 
@@ -217,9 +217,12 @@ class Rail
             [
                 'label' => 'Billable Items',
                 'icon' => 'ri-price-tag-3-line',
+                // The reference's own order: List All, Uninvoiced, Recurring, then Add
+                // New last.
                 'items' => array_merge(
                     $take('Billable Items', 'List All Billable Items'),
                     $take('- Uninvoiced Items'), $take('- Recurring Items'),
+                    $take('Add New'),
                 ),
             ],
             [
