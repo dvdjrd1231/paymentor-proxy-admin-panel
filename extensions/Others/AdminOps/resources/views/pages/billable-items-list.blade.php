@@ -40,7 +40,7 @@
                 </label>
                 <label class="ao-anc-row">
                     <span>Description</span>
-                    <input type="text" class="ao-w-60" wire:model="description" placeholder="e.g. Setup assistance, 2 hours" required>
+                    <input type="text" class="ao-w-45" wire:model="description" placeholder="e.g. Setup assistance, 2 hours" required>
                 </label>
                 <label class="ao-anc-row">
                     <span>Hours/Qty</span>
@@ -52,7 +52,7 @@
                 </label>
                 <label class="ao-anc-row">
                     <span>Invoice Action</span>
-                    <select class="ao-w-40" wire:model="action">
+                    <select class="ao-w-45" wire:model="action">
                         @foreach ($actions as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
@@ -70,7 +70,7 @@
                 </label>
                 <label class="ao-anc-row">
                     <span>Due Date</span>
-                    <input type="date" wire:model="dueDate">
+                    <input type="date" class="ao-w-25" wire:model="dueDate">
                 </label>
                 <div class="ao-pr-center"><button type="submit" class="ao-find-go">Save Changes</button></div>
             </form>
