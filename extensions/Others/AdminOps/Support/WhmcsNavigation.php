@@ -359,6 +359,11 @@ class WhmcsNavigation
         static::$placed[AddTransaction::class] = true;
         static::$placed[RefundRequestResource::class] = true;
 
+        // Issue #11: core's raw Invoice Transactions list is the old window standard —
+        // its home is the Transactions List page above, so it is claimed here and the
+        // Addons sweep stops resurfacing it.
+        static::$placed[InvoiceTransactionResource::class] = true;
+
         // The reference's Billing menu, in the reference's order: Transactions List, then
         // Invoices with its status flyout, then the rest. {@see ManageInvoices}.
         return static::group('Billing', 'ri-bill-line', [
@@ -508,7 +513,7 @@ class WhmcsNavigation
                 badge: fn () => Metrics::provisioningFailures(),
                 badgeColor: 'danger',
             ),
-            static::page(EmailCampaigns::class, 'Email Campaigns'),
+            static::emailCampaignsEntry(),
             static::link(NotificationTemplateResource::class, 'Email Marketer'),
             static::page(UtilitiesCalendar::class, 'Calendar'),
             static::page(TodoList::class, 'To-Do List'),
@@ -531,7 +536,11 @@ class WhmcsNavigation
             static::link(FailedJobResource::class, '- Failed Jobs'),
             static::link(AuditResource::class, '- Audit Log'),
             static::link(ErrorLogResource::class, '- Error Log'),
-            static::link(HttpLogResource::class, '- HTTP Log'),
+            // Issue #17's "Nothing was modified": this entry pointed at core's raw
+            // HttpLogResource, so the WHMCS-shaped page (Billing's Gateway Log) was
+            // never what a click here reached. Same page here now; the raw resource
+            // stays claimed so the Addons sweep leaves it be.
+            static::httpLogEntry(),
             // Paymenter screens the reference's menus have no slot for, kept reachable
             // here — the reference's own System submenu is its junk drawer too.
             static::link(
@@ -584,6 +593,8 @@ class WhmcsNavigation
         // Issues #49/#50: same for Administrator Roles and API Credentials.
         static::$placed[RoleResource::class] = true;
         static::$placed[ApiResource::class] = true;
+        // Issue #51: same for OAuth clients — the menu entry is the WHMCS-shaped page.
+        static::$placed[OauthClientResource::class] = true;
 
         return static::group('Setup', 'ri-settings-3-line', [
             // First, as it is on the reference: the catalogue as a whole, ordered by
@@ -603,7 +614,11 @@ class WhmcsNavigation
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::class, 'Email Templates'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\AdminRoles::class, 'Administrator Roles'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ApiCredentials::class, 'API Credentials'),
-            static::link(OauthClientResource::class, 'OpenID Connect'),
+            // Issue #51: the WHMCS-shaped list; core's resource keeps create/edit and
+            // is claimed just below so the Addons sweep leaves it be.
+            class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\OauthClients::class)
+                ? static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\OauthClients::class, 'OpenID Connect')
+                : static::link(OauthClientResource::class, 'OpenID Connect'),
             static::link(ExtensionResource::class, 'Extensions'),
             // Issue #39: the WHMCS-shaped tabbed settings page; core's raw form stays
             // reachable as System Settings' first tile.
@@ -627,6 +642,11 @@ class WhmcsNavigation
         // page; core's raw form stays reachable as System Settings' first tile, and is
         // claimed here so the Addons sweep leaves it be.
         static::$placed[Settings::class] = true;
+
+        // Core's "Available Extensions" page is deliberately NOT claimed: the reference's
+        // top bar has an Addons menu, and with every other stray claimed (issue #11) this
+        // page is what honestly belongs in it — WHMCS's Addons lists addon modules, and
+        // extensions are exactly that here.
     }
 
     /**
@@ -807,6 +827,36 @@ class WhmcsNavigation
      * Addons sweep does not resurface it. Falls back to core's page when the extension
      * page is unavailable.
      */
+    /** {@see utilities()}'s "- HTTP Log" — the WHMCS-shaped log, never the raw list. */
+    private static function httpLogEntry(): ?NavigationItem
+    {
+        static::$placed[HttpLogResource::class] = true;
+
+        if (class_exists(HttpLogs::class) && HttpLogs::canAccess()) {
+            $url = static::resolveUrl(fn (): string => HttpLogs::getUrl());
+
+            if ($url !== null) {
+                return NavigationItem::make('- HTTP Log')
+                    ->url($url)
+                    ->isActiveWhen(fn (): bool => request()->url() === $url);
+            }
+        }
+
+        return static::link(HttpLogResource::class, '- HTTP Log');
+    }
+
+    /**
+     * Email Campaigns is the email log's WHMCS face, so the raw EmailLogResource is
+     * claimed with it — unclaimed it sat in the Addons sweep as a second "Email Logs"
+     * in the old window standard (issue #11's complaint, spotted on its sibling).
+     */
+    private static function emailCampaignsEntry(): ?NavigationItem
+    {
+        static::$placed[EmailLogResource::class] = true;
+
+        return static::page(EmailCampaigns::class, 'Email Campaigns');
+    }
+
     /**
      * Issue #27's "Update Paymenter": opens {@see UpdatePaymenter} (the WHMCS-shaped
      * Update screen), with core's raw Updates page claimed either way so the Addons
@@ -818,6 +868,11 @@ class WhmcsNavigation
         static::$placed[Updates::class] = true;
 
         $page = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\UpdatePaymenter::class;
+
+        // The new page itself is claimed too — NavigationItem::make() does not mark
+        // placed the way static::page() does, so the Addons sweep listed it a second
+        // time in the raw style (seen in issue #11's screenshot).
+        static::$placed[$page] = true;
 
         if (class_exists($page) && $page::canAccess()) {
             $url = static::resolveUrl(fn (): string => $page::getUrl());
