@@ -50,7 +50,7 @@
         <p class="ao-pr-crumb">
             You are here:
             @if (!$current)
-                Download Home
+                <span class="ao-pr-here">Download Home</span>
             @else
                 <button type="button" class="ao-cp-link" wire:click="$set('category', null)">Download Home</button> &raquo; {{ $current->name }}
             @endif

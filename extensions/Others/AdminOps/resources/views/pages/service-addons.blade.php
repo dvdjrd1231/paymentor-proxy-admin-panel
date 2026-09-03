@@ -177,6 +177,11 @@
                         <td>{{ $addon->service->expires_at?->format('m/d/Y') ?? '-' }}</td>
                         <td><span class="ao-mu-status ao-mu-st-{{ $addon->service->status }}">{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel($addon->service->status) }}</span></td>
                         <td class="ao-mu-actions">
+                            {{-- The reference's +/− toggle: each row unfolds its detail
+                                 band (issue #7). --}}
+                            <button type="button" class="ao-sa-toggle" wire:click="$set('expanded', {{ $expanded === $addon->id ? 'null' : $addon->id }})"
+                                title="{{ $expanded === $addon->id ? 'Hide details' : 'Show details' }}"
+                                aria-expanded="{{ $expanded === $addon->id ? 'true' : 'false' }}">{{ $expanded === $addon->id ? '−' : '+' }}</button>
                             @if ($addon->service->status !== 'cancelled')
                                 <button type="button" class="ao-mo-delete" title="Cancel addon"
                                     wire:click="$set('confirmingCancel', '{{ $addon->id }}')">
@@ -185,6 +190,28 @@
                             @endif
                         </td>
                     </tr>
+                    @if ($expanded === $addon->id)
+                        {{-- The reference's unfolded band: Order #, Registration Date,
+                             Server, the parent service, Payment Method. --}}
+                        <tr class="ao-sa-detail" wire:key="ao-sa-detail-{{ $addon->id }}">
+                            <td colspan="10">
+                                <div class="ao-sa-detail-grid">
+                                    <span>
+                                        <b>Order #:</b>
+                                        {{ $addon->parent->order ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders::numberOf($addon->parent->order) : '-' }}<br>
+                                        <b>Registration Date:</b> {{ $addon->service->created_at?->format('m/d/Y') ?? '-' }}
+                                    </span>
+                                    <span>
+                                        <b>Server:</b> {{ $addon->parent->product?->server?->name ?? '-' }}<br>
+                                        <b>Parent Service:</b> #{{ $addon->parent->id }} · {{ $addon->parent->product?->name ?? '—' }}
+                                    </span>
+                                    <span>
+                                        <b>Payment Method:</b> {{ $addon->parent->order ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders::paymentOf($addon->parent->order)['method'] : '—' }}
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                    @endif
                 @empty
                     <tr><td colspan="10" class="ao-mu-none">No Records Found</td></tr>
                 @endforelse

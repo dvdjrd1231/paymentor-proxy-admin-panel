@@ -73,7 +73,7 @@
         <p class="ao-pr-crumb">
             You are here:
             @if (!$current)
-                Knowledgebase Home
+                <span class="ao-pr-here">Knowledgebase Home</span>
             @else
                 <button type="button" class="ao-cp-link" wire:click="$set('category', null)">Knowledgebase Home</button>
                 &raquo; {{ $current->name }}
