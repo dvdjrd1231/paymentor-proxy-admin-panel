@@ -2,8 +2,10 @@
 
 namespace Paymenter\Extensions\Others\InvoiceOps\Admin\Pages;
 
+use App\Helpers\ExtensionHelper;
 use App\Models\Gateway;
 use App\Models\InvoiceTransaction;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -11,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Paymenter\Extensions\Others\InvoiceOps\Models\InvoiceRefund;
 use Paymenter\Extensions\Others\InvoiceOps\Models\TransactionNote;
+use Paymenter\Extensions\Others\InvoiceOps\Models\UnappliedTransaction;
 
 /**
  * The reference's **Transactions** page: money in, fees, money out.
@@ -204,9 +207,21 @@ class Transactions extends Page
                     ]);
                 }
             } elseif ($in > 0 && !$this->txCredit) {
-                $this->addError('txInvoice', 'An Amount In needs an invoice — or tick Credit to top up the client\'s balance instead.');
-
-                return;
+                // The reference's own case: an Amount In with no invoice and no Credit tick
+                // is money recorded now, applied to something later — not an error. See
+                // UnappliedTransaction's migration for why this cannot be a core
+                // invoice_transactions row instead.
+                UnappliedTransaction::create([
+                    'user_id' => $this->txClient ?: null,
+                    'gateway_id' => $this->gatewayIdFor($this->txMethod),
+                    'admin_id' => Auth::id(),
+                    'amount' => $in,
+                    'fee' => $this->txFees !== '' ? (float) $this->txFees : 0,
+                    'currency_code' => strtoupper($this->txCurrency ?: config('settings.default_currency', 'USD')),
+                    'transaction_id' => $this->txId ?: null,
+                    'description' => trim($this->txDescription) ?: null,
+                    'created_at' => $this->pickedDate() ?? now(),
+                ]);
             }
 
             if ($in > 0 && $this->txCredit) {
@@ -253,6 +268,12 @@ class Transactions extends Page
         $this->adding = false;
     }
 
+    /** The Payment Method select's value is the gateway's extension key, not its id. */
+    private function gatewayIdFor(string $method): ?int
+    {
+        return $method !== '' ? Gateway::where('extension', $method)->value('id') : null;
+    }
+
     private function pickedDate(): ?\Carbon\Carbon
     {
         foreach (['m/d/Y', 'Y-m-d'] as $format) {
@@ -279,12 +300,19 @@ class Transactions extends Page
             ->limit(200)
             ->get();
 
+        // The reference's own case: money in with nothing to apply it to yet.
+        $unapplied = UnappliedTransaction::query()
+            ->with(['user', 'gateway'])
+            ->latest('id')
+            ->limit(200)
+            ->get();
+
         // One query for every note the visible page of transactions might have, keyed by
         // transaction id — merge() reads this rather than each row firing its own lookup.
         $notes = TransactionNote::whereIn('transaction_id', $rows->pluck('id'))->pluck('note', 'transaction_id');
 
         return [
-            'rows' => $this->sift($this->merge($rows, $refunds, $notes)),
+            'rows' => $this->sift($this->merge($rows, $refunds, $notes, $unapplied)),
             'totals' => $this->totals(),
             'deltas' => $this->deltas(),
             'chart' => $this->chart(),
@@ -501,7 +529,7 @@ class Transactions extends Page
      *
      * @return array<int, array<string, mixed>>
      */
-    private function merge($transactions, $refunds, $notes = null): array
+    private function merge($transactions, $refunds, $notes = null, $unapplied = null): array
     {
         $rows = [];
 
@@ -540,6 +568,22 @@ class Transactions extends Page
             ];
         }
 
+        // The reference's own case: recorded, nothing to apply it to yet — no invoice
+        // number to synthesise a description from, so it says so plainly instead.
+        foreach ($unapplied ?? [] as $row) {
+            $rows[] = [
+                'at' => $row->created_at,
+                'customer' => $row->user?->email ?? '—',
+                'method' => $row->gateway?->name ?? 'Unknown',
+                'description' => $row->description ?: 'Unapplied Payment',
+                'trans' => $row->transaction_id ?: null,
+                'in' => (float) $row->amount,
+                'fee' => (float) $row->fee,
+                'out' => 0.0,
+                'currency' => $row->currency_code,
+            ];
+        }
+
         usort($rows, fn (array $a, array $b): int => $b['at'] <=> $a['at']);
 
         return array_slice($rows, 0, 200);
@@ -565,6 +609,17 @@ class Transactions extends Page
             ->each(function ($row) use (&$totals): void {
                 $totals[$row->code]['in'] = (float) $row->amount_sum;
                 $totals[$row->code]['fee'] = (float) $row->fee_sum;
+            });
+
+        // Real money received, same as any other payment — it just has nowhere to be
+        // applied yet, which is not the same as not having arrived.
+        UnappliedTransaction::query()
+            ->groupBy('currency_code')
+            ->selectRaw('currency_code as code, SUM(amount) as amount_sum, SUM(fee) as fee_sum')
+            ->get()
+            ->each(function ($row) use (&$totals): void {
+                $totals[$row->code]['in'] = ($totals[$row->code]['in'] ?? 0.0) + (float) $row->amount_sum;
+                $totals[$row->code]['fee'] = ($totals[$row->code]['fee'] ?? 0.0) + (float) $row->fee_sum;
             });
 
         InvoiceRefund::query()
