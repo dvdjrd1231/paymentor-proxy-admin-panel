@@ -27,21 +27,16 @@
         </div>
 
         @if ($this->filter)
-            <form class="ao-find" autocomplete="off" wire:submit.prevent="search">
-                <span class="ao-find-glass" aria-hidden="true">
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" width="18" height="18">
-                        <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
-                    </svg>
-                </span>
-                <div class="ao-find-fields">
-                    <label class="ao-find-field ao-find-wide">
-                        <span class="ao-find-label">Client Name/Email or Invoice ID</span>
-                        <input @nofill type="search" wire:model="q" placeholder="Client name, email or invoice ID">
-                    </label>
-                    <label class="ao-find-field">
-                        <span class="ao-find-label">Status</span>
-                        <select @nofill wire:model="status">
+            {{-- The reference's Search/Filter panel — the same two-column striped rows as
+                 Manage Orders', which is the shape every list page's panel takes. --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="search">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-mi-q">Invoice # / Client</label>
+                        <span><input @nofill id="ao-mi-q" class="ao-of-lg" type="text"
+                            wire:model="q" placeholder="Client name, email or invoice ID"></span>
+                        <label class="ao-of-label" for="ao-mi-status">Status</label>
+                        <span><select @nofill id="ao-mi-status" class="ao-of-md" wire:model="status">
                             <option value="">Any</option>
                             <option value="paid">Paid</option>
                             <option value="draft">Draft</option>
@@ -51,16 +46,10 @@
                             <option value="refunded">Refunded</option>
                             <option value="collections">Collections</option>
                             <option value="payment_pending">Payment Pending</option>
-                        </select>
-                    </label>
+                        </select></span>
+                    </div>
                 </div>
-                <button type="submit" class="ao-find-go">
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" width="13" height="13" aria-hidden="true">
-                        <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
-                    </svg>
-                    Search
-                </button>
+                <button type="submit" class="ao-of-go">Search</button>
             </form>
         @endif
 

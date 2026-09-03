@@ -78,6 +78,7 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AutomationStatus;
 // namespace that does not exist, and the class_exists guard silently dropped the entry.
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\CancellationRequests;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\Catalogue;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\DomainRegistrations;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageUsers;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices;
@@ -246,6 +247,10 @@ class WhmcsNavigation
             ...static::categoryItems(),
             // Issue #7: addons on running services, where the reference's sidebar puts them.
             static::page(ServiceAddons::class, 'Service Addons'),
+            // The reference's Domain Registrations screen — a real page, honestly empty,
+            // because this store registers no domains. It replaced a dead rail label that
+            // read as a rendering fault.
+            static::page(DomainRegistrations::class, 'Domain Registrations'),
             // Ours, not core's: core's list offers Edit and Delete, and deleting a request is
             // indistinguishable from refusing it. Falls back to core's when the extension is
             // not installed, so the entry never disappears.

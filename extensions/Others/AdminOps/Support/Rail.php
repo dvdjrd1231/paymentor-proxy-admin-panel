@@ -151,16 +151,10 @@ class Rail
                     $products,
                     $item($find('Service Addons')),
                     // The reference lists Domain Registrations between Service Addons and
-                    // Cancellation Requests. This store registers no domains, so the entry
-                    // is honestly dead — visible where the reference puts it, the reason on
-                    // its title — the same convention the Ordering settings note and the
-                    // Add New Order domain radios already follow.
-                    [[
-                        'label' => 'Domain Registrations',
-                        'url' => null,
-                        'badge' => null,
-                        'title' => 'Domain registration is not offered — this store sells proxy services only',
-                    ]],
+                    // Cancellation Requests — a real page here (honestly empty; the store
+                    // registers no domains), so the rail takes it from the menu like any
+                    // other entry.
+                    $item($find('Domain Registrations')),
                     $item($find('Cancellation Requests')),
                 ),
             ],

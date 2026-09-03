@@ -12,69 +12,85 @@
         </div>
 
         @if ($this->filter)
-            <form class="ao-find" autocomplete="off" wire:submit.prevent="search">
-                <span class="ao-find-glass" aria-hidden="true">
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" width="18" height="18">
-                        <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
-                    </svg>
-                </span>
-
-                <div class="ao-find-fields">
-                    <label class="ao-find-field ao-find-wide">
-                        <span class="ao-find-label">Product/Service</span>
-                        <input @nofill type="search" wire:model="product" placeholder="Product name">
-                    </label>
-                    <label class="ao-find-field ao-find-wide">
-                        <span class="ao-find-label">Client Name/Email</span>
-                        <input @nofill type="search" wire:model="client" placeholder="Client name or email">
-                    </label>
-                    <label class="ao-find-field">
-                        <span class="ao-find-label">Status</span>
-                        <select @nofill wire:model="status">
+            {{-- The reference's Search/Filter panel, field for field and in its order:
+                 Product Type, Product/Service, Billing Cycle, Domain, Client Name on the
+                 left; Server, Payment Method, Status, Custom Field, Custom Field Value on
+                 the right. Domain is the one honestly-dead field — proxy services carry
+                 none — with the reason on its title. --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="search">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-ps-category">Product Type</label>
+                        <span><select @nofill id="ao-ps-category" class="ao-of-md" wire:model="category">
+                            <option value="">Any</option>
+                            @foreach ($categories as $row)
+                                <option value="{{ $row->id }}">{{ $row->name }}</option>
+                            @endforeach
+                        </select></span>
+                        <label class="ao-of-label" for="ao-ps-server">Server</label>
+                        <span><select @nofill id="ao-ps-server" class="ao-of-md" wire:model="server">
+                            <option value="">Any</option>
+                            @foreach ($servers as $row)
+                                <option value="{{ $row->id }}">{{ $row->name }}</option>
+                            @endforeach
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-ps-product">Product/Service</label>
+                        <span><select @nofill id="ao-ps-product" class="ao-of-md" wire:model="product">
+                            <option value="">Any</option>
+                            @foreach ($products as $row)
+                                <option value="{{ $row->id }}">{{ $row->name }}</option>
+                            @endforeach
+                        </select></span>
+                        <label class="ao-of-label" for="ao-ps-pay">Payment Method</label>
+                        <span><select @nofill id="ao-ps-pay" class="ao-of-md" wire:model="paymentMethod">
+                            <option value="">Any</option>
+                            @foreach ($gateways as $row)
+                                <option value="{{ $row->name }}">{{ $row->name }}</option>
+                            @endforeach
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-ps-cycle">Billing Cycle</label>
+                        <span><select @nofill id="ao-ps-cycle" class="ao-of-sm" wire:model="cycle">
+                            <option value="">Any</option>
+                            @foreach (['Daily', 'Weekly', 'Monthly', 'Annually', 'One Time'] as $label)
+                                <option value="{{ $label }}">{{ $label }}</option>
+                            @endforeach
+                        </select></span>
+                        <label class="ao-of-label" for="ao-ps-status">Status</label>
+                        <span><select @nofill id="ao-ps-status" class="ao-of-sm" wire:model="status">
                             <option value="">Any</option>
                             <option value="pending">Pending</option>
                             <option value="active">Active</option>
                             <option value="suspended">Suspended</option>
                             <option value="cancelled">Terminated</option>
-                        </select>
-                    </label>
-                    <label class="ao-find-field">
-                        <span class="ao-find-label">Product Type</span>
-                        <select @nofill wire:model="category">
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-ps-domain">Domain</label>
+                        <span><input id="ao-ps-domain" class="ao-of-md" type="text" disabled
+                            placeholder="Not recorded"
+                            title="Proxy services carry no domain, so this field cannot filter anything"></span>
+                        <label class="ao-of-label" for="ao-ps-cf">Custom Field</label>
+                        <span><select @nofill id="ao-ps-cf" class="ao-of-md" wire:model="cfField">
                             <option value="">Any</option>
-                            @foreach ($categories as $row)
+                            @foreach ($customFields as $row)
                                 <option value="{{ $row->id }}">{{ $row->name }}</option>
                             @endforeach
-                        </select>
-                    </label>
-                    <label class="ao-find-field">
-                        <span class="ao-find-label">Billing Cycle</span>
-                        <select @nofill wire:model="cycle">
-                            <option value="">Any</option>
-                            @foreach (['Daily', 'Weekly', 'Monthly', 'Annually', 'One Time'] as $label)
-                                <option value="{{ $label }}">{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-                    <label class="ao-find-field">
-                        <span class="ao-find-label">Server</span>
-                        <select @nofill wire:model="server">
-                            <option value="">Any</option>
-                            @foreach ($servers as $row)
-                                <option value="{{ $row->id }}">{{ $row->name }}</option>
-                            @endforeach
-                        </select>
-                    </label>
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-ps-client">Client Name</label>
+                        <span><input @nofill id="ao-ps-client" class="ao-of-lg" type="text"
+                            wire:model="client" placeholder="Client name or email"></span>
+                        <label class="ao-of-label" for="ao-ps-cfv">Custom Field Value</label>
+                        <span><input @nofill id="ao-ps-cfv" class="ao-of-lg" type="text"
+                            wire:model="cfValue" placeholder="Value within the chosen field"></span>
+                    </div>
                 </div>
-
-                <button type="submit" class="ao-find-go">
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" width="13" height="13" aria-hidden="true">
-                        <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
-                    </svg>
-                    Search
-                </button>
+                <button type="submit" class="ao-of-go">Search</button>
             </form>
         @endif
 
@@ -83,13 +99,17 @@
                 {{ number_format($services->total()) }} Records Found{{ $services->total() > 0 ? ', Showing ' . number_format($services->firstItem()) . ' to ' . number_format($services->lastItem()) : '' }}
             </span>
             <span class="ao-mu-line-right">
+                {{-- The reference's order and wording: the Jump to Page label first, the
+                     Hide Inactive Clients pill between it and its select. --}}
+                <label class="ao-mu-jump">
+                    Jump to Page:
+                </label>
                 <button type="button" class="ao-mu-toggle {{ $hideInactive ? 'ao-on' : '' }}"
                     wire:click="toggleInactive">
                     <i>{{ $hideInactive ? 'ON' : 'OFF' }}</i>
-                    Hide Inactive ({{ number_format($hiddenCount) }})
+                    Hide Inactive Clients ({{ number_format($hiddenCount) }})
                 </button>
                 <label class="ao-mu-jump">
-                    Jump to Page:
                     <select wire:change="jump($event.target.value)">
                         @foreach (range(1, max(1, $services->lastPage())) as $number)
                             <option value="{{ $number }}" @selected($number === $services->currentPage())>{{ $number }}</option>

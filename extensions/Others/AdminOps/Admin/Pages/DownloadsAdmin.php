@@ -38,11 +38,43 @@ class DownloadsAdmin extends Page
 
     public string $newCategoryDescription = '';
 
+    /** The reference's "Check to Hide" beside the category name. */
+    public bool $newCategoryHidden = false;
+
+    /** The reference's Type select — a display grouping, stored as chosen. */
+    public string $fileType = 'zip';
+
     public string $fileTitle = '';
 
     public string $fileDescription = '';
 
+    /** upload | manual — the reference's two Upload File radios. */
+    public string $source = 'manual';
+
+    /** Manual FTP upload: the name of a file already placed in `downloads/`. */
+    public string $manualFilename = '';
+
+    public bool $clientsOnly = false;
+
+    public bool $productDownload = false;
+
+    public bool $fileHidden = false;
+
     public $upload = null;
+
+    /** The reference's Type options, as WHMCS lists them. */
+    public const TYPES = [
+        'zip' => 'ZIP File',
+        'msi' => 'MSI File',
+        'exe' => 'EXE File',
+        'pdf' => 'PDF File',
+        'word' => 'Word Document',
+        'excel' => 'Excel Spreadsheet',
+        'image' => 'Image File',
+        'video' => 'Video File',
+        'audio' => 'Audio File',
+        'other' => 'Other',
+    ];
 
     public static function canAccess(): bool
     {
@@ -63,9 +95,12 @@ class DownloadsAdmin extends Page
     {
         $this->validate(['newCategory' => 'required|string|max:255'], attributes: ['newCategory' => 'category name']);
 
-        DownloadCategory::create(['name' => $this->newCategory, 'description' => $this->newCategoryDescription ?: null]);
-        $this->newCategory = '';
-        $this->newCategoryDescription = '';
+        DownloadCategory::create([
+            'name' => $this->newCategory,
+            'description' => $this->newCategoryDescription ?: null,
+            'hidden' => $this->newCategoryHidden,
+        ]);
+        $this->reset(['newCategory', 'newCategoryDescription', 'newCategoryHidden']);
         $this->tab = null;
         Notification::make()->title('Category added')->success()->send();
     }
@@ -74,27 +109,91 @@ class DownloadsAdmin extends Page
     {
         $this->validate([
             'fileTitle' => 'required|string|max:255',
-            'upload' => 'required|file|max:102400',
-        ], attributes: ['fileTitle' => 'title', 'upload' => 'file']);
+            'fileType' => 'required|in:' . implode(',', array_keys(self::TYPES)),
+        ], attributes: ['fileTitle' => 'title']);
 
-        $name = \Illuminate\Support\Str::ulid() . '.' . $this->upload->getClientOriginalExtension();
-        $this->upload->storeAs('downloads', $name);
+        // The reference's two sources: a browser upload, or a file already placed in the
+        // downloads folder by hand (its "Manual FTP Upload") — registered here by name.
+        if ($this->source === 'manual') {
+            $this->validate(['manualFilename' => 'required|string|max:255'], attributes: ['manualFilename' => 'filename']);
+            $name = basename(trim($this->manualFilename));
+
+            if (!\Illuminate\Support\Facades\Storage::exists('downloads/' . $name)) {
+                $this->addError('manualFilename', 'No file named "' . $name . '" exists in the downloads folder — upload it there first, or use Upload File.');
+
+                return;
+            }
+
+            $path = 'downloads/' . $name;
+            $original = $name;
+            $size = \Illuminate\Support\Facades\Storage::size($path);
+            $mime = \Illuminate\Support\Facades\Storage::mimeType($path) ?: null;
+        } else {
+            $this->validate(['upload' => 'required|file|max:102400'], attributes: ['upload' => 'file']);
+
+            $name = \Illuminate\Support\Str::ulid() . '.' . $this->upload->getClientOriginalExtension();
+            $this->upload->storeAs('downloads', $name);
+            $path = 'downloads/' . $name;
+            $original = $this->upload->getClientOriginalName();
+            $size = $this->upload->getSize();
+            $mime = (string) $this->upload->getMimeType();
+        }
 
         DownloadFile::create([
             'category_id' => $this->category,
+            'type' => $this->fileType,
             'title' => $this->fileTitle,
             'description' => $this->fileDescription ?: null,
-            'filename' => $this->upload->getClientOriginalName(),
-            'path' => 'downloads/' . $name,
-            'filesize' => $this->upload->getSize(),
-            'mime_type' => (string) $this->upload->getMimeType(),
+            'filename' => $original,
+            'path' => $path,
+            'filesize' => $size,
+            'mime_type' => $mime,
+            'clients_only' => $this->clientsOnly,
+            'product_download' => $this->productDownload,
+            'hidden' => $this->fileHidden,
         ]);
 
-        $this->fileTitle = '';
-        $this->fileDescription = '';
-        $this->upload = null;
+        $this->resetDownloadForm();
         $this->tab = null;
         Notification::make()->title('Download added')->success()->send();
+    }
+
+    /** The reference's Cancel Changes: clear the form and close the tab. */
+    public function cancelChanges(): void
+    {
+        $this->resetDownloadForm();
+        $this->reset(['newCategory', 'newCategoryDescription', 'newCategoryHidden']);
+        $this->tab = null;
+    }
+
+    private function resetDownloadForm(): void
+    {
+        $this->reset(['fileType', 'fileTitle', 'fileDescription', 'source', 'manualFilename',
+            'clientsOnly', 'productDownload', 'fileHidden', 'upload']);
+    }
+
+    /**
+     * The reference's red note states the server's real ceiling. Ours is whichever is
+     * smallest of PHP's two ini limits and the validator's own 100 MB cap.
+     */
+    public static function uploadLimit(): string
+    {
+        $bytes = fn (string $v): int => match (strtoupper(substr(trim($v), -1))) {
+            'G' => (int) $v * 1024 ** 3,
+            'M' => (int) $v * 1024 ** 2,
+            'K' => (int) $v * 1024,
+            default => (int) $v,
+        };
+
+        $limit = min(
+            $bytes((string) ini_get('upload_max_filesize')),
+            $bytes((string) ini_get('post_max_size')),
+            100 * 1024 ** 2,
+        );
+
+        return $limit >= 1024 ** 3
+            ? round($limit / 1024 ** 3, 1) . 'G'
+            : round($limit / 1024 ** 2) . 'MB';
     }
 
     public function deleteCategory(int $id): void

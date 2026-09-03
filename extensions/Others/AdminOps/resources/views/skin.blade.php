@@ -85,8 +85,11 @@
         font-size: 106.25%;
         /* Issue #2's "objects move after the page loads": with SPA navigation, moving
            between a long page and a short one pops the scrollbar in and out, and every
-           control shifts sideways. A stable gutter ends that. */
-        scrollbar-gutter: stable;
+           control shifts sideways. A permanent scrollbar ends that — and unlike the
+           `scrollbar-gutter: stable` this replaces, it does not leave a blank strip down
+           the right of every short page: the reserved width is a visible (inactive)
+           scrollbar track, which is what the reference shows, not empty page. */
+        overflow-y: scroll;
     }
 
     /* Issue #10: Windows renders flag emoji as bare letter pairs — it ships no flag

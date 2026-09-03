@@ -159,20 +159,47 @@
         </div>
 
         @if ($this->filter)
-            <form class="ao-find" autocomplete="off" wire:submit.prevent="search">
-                <span class="ao-find-glass" aria-hidden="true">
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" width="18" height="18">
-                        <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
-                    </svg>
-                </span>
-                <div class="ao-find-fields">
-                    <label class="ao-find-field ao-find-grow">
-                        <span class="ao-find-label">Client Name/Email</span>
-                        <input @nofill type="search" wire:model="q" placeholder="Client name or email">
-                    </label>
+            {{-- The reference's Search/Filter panel, field for field: Client Name and
+                 Visitors Referred on the left, Balance and Withdrawn on the right, each
+                 comparator a Greater/Less Than select with its number. --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="search">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-ma-q">Client Name</label>
+                        <span><input @nofill id="ao-ma-q" class="ao-of-lg" type="text"
+                            wire:model="q" placeholder="Client name or email"></span>
+                        <label class="ao-of-label" for="ao-ma-bval">Balance</label>
+                        <span class="ao-of-inline">
+                            <select @nofill class="ao-of-sm" wire:model="bop" aria-label="Balance comparison">
+                                <option value="gt">Greater Than</option>
+                                <option value="lt">Less Than</option>
+                            </select>
+                            <input @nofill id="ao-ma-bval" class="ao-of-sm" type="text" inputmode="decimal"
+                                wire:model="bval" placeholder="0.00">
+                        </span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-ma-vval">Visitors Referred</label>
+                        <span class="ao-of-inline">
+                            <select @nofill class="ao-of-sm" wire:model="vop" aria-label="Visitors comparison">
+                                <option value="gt">Greater Than</option>
+                                <option value="lt">Less Than</option>
+                            </select>
+                            <input @nofill id="ao-ma-vval" class="ao-of-sm" type="text" inputmode="numeric"
+                                wire:model="vval" placeholder="0">
+                        </span>
+                        <label class="ao-of-label" for="ao-ma-wval">Withdrawn</label>
+                        <span class="ao-of-inline">
+                            <select @nofill class="ao-of-sm" wire:model="wop" aria-label="Withdrawn comparison">
+                                <option value="gt">Greater Than</option>
+                                <option value="lt">Less Than</option>
+                            </select>
+                            <input @nofill id="ao-ma-wval" class="ao-of-sm" type="text" inputmode="decimal"
+                                wire:model="wval" placeholder="0.00">
+                        </span>
+                    </div>
                 </div>
-                <button type="submit" class="ao-find-go">Search</button>
+                <button type="submit" class="ao-of-go">Search</button>
             </form>
         @endif
 

@@ -9,20 +9,16 @@
         </div>
 
         @if ($filter)
-            <form class="ao-find" autocomplete="off" wire:submit.prevent="$refresh">
-                <span class="ao-find-glass" aria-hidden="true">
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" width="18" height="18">
-                        <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
-                    </svg>
-                </span>
-                <div class="ao-find-fields">
-                    <label class="ao-find-field ao-find-grow">
-                        <span class="ao-find-label">Client or Reason</span>
-                        <input @nofill type="search" wire:model.live.debounce.500ms="q" placeholder="Client name, email or reason">
-                    </label>
+            {{-- The reference's Search/Filter panel — the same striped rows as Manage Orders'. --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="$refresh">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-rr-q">Client or Reason</label>
+                        <span><input @nofill id="ao-rr-q" class="ao-of-lg" type="text"
+                            wire:model.live.debounce.500ms="q" placeholder="Client name, email or reason"></span>
+                    </div>
                 </div>
-                <button type="submit" class="ao-find-go">Search</button>
+                <button type="submit" class="ao-of-go">Search</button>
             </form>
         @endif
 
