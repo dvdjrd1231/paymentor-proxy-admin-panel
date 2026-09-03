@@ -548,14 +548,7 @@ class WhmcsNavigation
             static::httpLogEntry(),
             // Paymenter screens the reference's menus have no slot for, kept reachable
             // here — the reference's own System submenu is its junk drawer too.
-            static::link(
-                ServiceTermResource::class,
-                '- Fixed Terms',
-                badge: fn () => class_exists(ServiceTermResource::class)
-                    ? ServiceTermResource::getNavigationBadge()
-                    : null,
-                badgeColor: 'danger',
-            ),
+            static::fixedTermsEntry(),
             static::link(TicketResource::class, '- All Tickets (Core)'),
             static::link(TicketNoteResource::class, '- Internal Notes'),
             static::link(KbCategoryResource::class, '- Knowledgebase Categories'),
@@ -833,6 +826,36 @@ class WhmcsNavigation
      * page is unavailable.
      */
     /** {@see utilities()}'s "- HTTP Log" — the WHMCS-shaped log, never the raw list. */
+    /**
+     * "- Fixed Terms": the new-window-standard page {@see \Paymenter\Extensions\Others\AdminOps\Admin\Pages\FixedTerms},
+     * carrying the same overdue-terms badge the raw resource had. Core's resource stays
+     * claimed either way so the Addons sweep does not resurface it a second time.
+     */
+    private static function fixedTermsEntry(): ?NavigationItem
+    {
+        static::$placed[ServiceTermResource::class] = true;
+
+        $badge = fn (): ?string => class_exists(ServiceTermResource::class)
+            ? ServiceTermResource::getNavigationBadge()
+            : null;
+
+        $page = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\FixedTerms::class;
+
+        if (class_exists($page) && $page::canAccess()) {
+            static::$placed[$page] = true;
+            $url = static::resolveUrl(fn (): string => $page::getUrl());
+
+            if ($url !== null) {
+                return NavigationItem::make('- Fixed Terms')
+                    ->url($url)
+                    ->isActiveWhen(fn (): bool => request()->url() === $url)
+                    ->badge($badge, 'danger');
+            }
+        }
+
+        return static::link(ServiceTermResource::class, '- Fixed Terms', badge: $badge, badgeColor: 'danger');
+    }
+
     private static function httpLogEntry(): ?NavigationItem
     {
         static::$placed[HttpLogResource::class] = true;

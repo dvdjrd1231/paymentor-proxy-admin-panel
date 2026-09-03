@@ -3064,7 +3064,9 @@
 
     .ao-mud-row input[type="text"],
     .ao-mud-row input[type="email"],
-    .ao-mud-row select {
+    .ao-mud-row input[type="number"],
+    .ao-mud-row select,
+    .ao-mud-row textarea {
         width: 100%;
         padding: 0.4rem 0.6rem;
         border: 1px solid var(--wa-border, #ccc);
@@ -3073,11 +3075,19 @@
         font: inherit;
     }
 
+    .ao-mud-row textarea { resize: vertical; }
+
     .ao-mud-switch { margin: 0; }
 
     .ao-mud-accounts { align-items: start; }
 
     .ao-mud-accounts > span:first-child { padding-top: 0.35rem; }
+
+    /* A multi-line field (Fixed Terms' Extend reason) — the label sits at the top of the
+       row instead of vertically centred against a single-line input's height. */
+    .ao-mud-row-top { align-items: start; }
+
+    .ao-mud-row-top > span:first-child { padding-top: 0.4rem; }
 
     .ao-mud-accounts table {
         width: 100%;
