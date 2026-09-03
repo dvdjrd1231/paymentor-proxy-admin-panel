@@ -1,11 +1,13 @@
-{{-- Billable Items, to issue #13: the list, its views, and the reference's Add New form. --}}
+{{--
+    Billable Items, to the reference: List All / Uninvoiced / Recurring / Add New are the
+    sidebar's own separate links (WhmcsNavigation), not tabs on this page — the reference's
+    page-level tab row carries only Search/Filter. $tab and $adding still answer to the
+    sidebar's `view`/`adding` URL params exactly as they did as tabs; only the redundant
+    buttons are gone.
+--}}
 <x-filament-panels::page>
     <div class="ao-mu">
         <div class="ao-tx-tabs">
-            <button type="button" class="ao-mu-tab {{ $adding ? 'ao-on' : '' }}" wire:click="toggleAdding">Add New</button>
-            <button type="button" class="ao-mu-tab {{ $tab === 'all' ? 'ao-on' : '' }}" wire:click="$set('tab', 'all')">List All Billable Items</button>
-            <button type="button" class="ao-mu-tab {{ $tab === 'uninvoiced' ? 'ao-on' : '' }}" wire:click="$set('tab', 'uninvoiced')">Uninvoiced Items</button>
-            <button type="button" class="ao-mu-tab {{ $tab === 'recurring' ? 'ao-on' : '' }}" wire:click="$set('tab', 'recurring')">Recurring Items</button>
             <button type="button" class="ao-mu-tab {{ $filter ? 'ao-on' : '' }}" wire:click="toggleFilter">Search/Filter</button>
         </div>
 
