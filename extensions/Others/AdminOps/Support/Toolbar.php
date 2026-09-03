@@ -124,7 +124,10 @@ class Toolbar
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::class, 'Email Templates', 'heroicon-o-envelope'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\AdminRoles::class, 'Administrator Roles', 'heroicon-o-user-group'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ApiCredentials::class, 'API Credentials', 'heroicon-o-key'),
-            static::index(OauthClientResource::class, 'OpenID Connect', 'heroicon-o-finger-print'),
+            // Issue #51: the WHMCS-shaped list, not core's raw resource.
+            class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\OauthClients::class)
+                ? static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\OauthClients::class, 'OpenID Connect', 'heroicon-o-finger-print')
+                : static::index(OauthClientResource::class, 'OpenID Connect', 'heroicon-o-finger-print'),
             static::index(ExtensionResource::class, 'Extensions', 'heroicon-o-puzzle-piece'),
         ]));
     }
