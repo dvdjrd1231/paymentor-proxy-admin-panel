@@ -1732,10 +1732,51 @@
 
     .ao-of-go:hover { background: #ededed; }
 
+    /* A row that carries one label/field pair across the panel's full width — the shape
+       the reference's forms (Downloads) and single-field filters take. */
+    .ao-of-row-single { grid-template-columns: 10rem minmax(0, 1fr); }
+
+    /* An operator+number pair, or an input with a trailing checkbox, on one line. */
+    .ao-of-inline { display: inline-flex; align-items: center; gap: 0.45rem; min-width: 0; }
+
+    /* Stacked lines inside one field cell — the reference's Upload File radios. */
+    .ao-of-stack { display: flex; flex-direction: column; gap: 0.35rem; padding-block: 0.15rem; }
+
+    .ao-of-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .ao-of-check input { accent-color: var(--wa-link, #337ab7); }
+
+    /* The reference's red php.ini note under the upload controls. */
+    .ao-of-note { color: #cc0000; font-size: 0.85rem; }
+
+    .ao-of-row textarea {
+        width: 100%;
+        max-width: 34rem;
+        padding: 0.35rem 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.9rem;
+        resize: vertical;
+    }
+
+    /* The reference's button pair under a form panel: blue action, quiet cancel. */
+    .ao-of-buttons { display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.8rem; }
+
+    .ao-of-buttons .ao-of-go { display: inline-block; margin: 0; }
+
     /* The reference folds to one label/field pair per line on narrow screens. */
     @media (max-width: 900px) {
         .ao-of-row { grid-template-columns: 7rem minmax(0, 1fr); row-gap: 0.4rem; }
         .ao-of-lg { max-width: none; }
+        .ao-of-check { white-space: normal; }
     }
 
     /* The reference's "+ Advanced": a quiet bordered button beside the blue Search. */

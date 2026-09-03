@@ -32,14 +32,16 @@
                 <div class="ao-pr-center"><button type="submit" class="ao-find-go">Add Predefined Reply</button></div>
             </form>
         @elseif ($tab === 'search')
-            <form class="ao-find" autocomplete="off" wire:submit.prevent="$refresh">
-                <div class="ao-find-fields">
-                    <label class="ao-find-field ao-find-grow">
-                        <span class="ao-find-label">Search Term</span>
-                        <input @nofill type="search" wire:model="q" placeholder="Title or reply text">
-                    </label>
+            {{-- The reference's Search/Filter panel — the same striped rows as Manage Orders'. --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="$refresh">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-pr-q">Search Term</label>
+                        <span><input @nofill id="ao-pr-q" class="ao-of-lg" type="text"
+                            wire:model="q" placeholder="Title or reply text"></span>
+                    </div>
                 </div>
-                <button type="submit" class="ao-find-go">Search</button>
+                <button type="submit" class="ao-of-go">Search</button>
             </form>
         @endif
 

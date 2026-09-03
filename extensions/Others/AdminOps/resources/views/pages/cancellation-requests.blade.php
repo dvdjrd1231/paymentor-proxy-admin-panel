@@ -10,20 +10,39 @@
         </div>
 
         @if ($filter)
-            <form class="ao-find" autocomplete="off" wire:submit.prevent="$refresh">
-                <span class="ao-find-glass" aria-hidden="true">
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" width="18" height="18">
-                        <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
-                    </svg>
-                </span>
-                <div class="ao-find-fields">
-                    <label class="ao-find-field ao-find-grow">
-                        <span class="ao-find-label">Client, Product or Reason</span>
-                        <input @nofill type="search" wire:model.live.debounce.500ms="q" placeholder="Client name, email, product or reason">
-                    </label>
+            {{-- The reference's Search/Filter panel, field for field: Reason, Domain,
+                 Service ID on the left; Client and Type on the right; the Filter button
+                 centred below. Domain is the one honestly-dead field — proxy services
+                 carry no domain — with the reason on its title. --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="$refresh">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-cr-reason">Reason</label>
+                        <span><input @nofill id="ao-cr-reason" class="ao-of-lg" type="text"
+                            wire:model.live.debounce.500ms="reason" placeholder="Words from the reason"></span>
+                        <label class="ao-of-label" for="ao-cr-client">Client</label>
+                        <span><input @nofill id="ao-cr-client" class="ao-of-lg" type="text"
+                            wire:model.live.debounce.500ms="client" placeholder="Start Typing to Search Clients"></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-cr-domain">Domain</label>
+                        <span><input id="ao-cr-domain" class="ao-of-md" type="text" disabled
+                            placeholder="Not recorded"
+                            title="Proxy services carry no domain, so this field cannot filter anything"></span>
+                        <label class="ao-of-label" for="ao-cr-type">Type</label>
+                        <span><select @nofill id="ao-cr-type" class="ao-of-md" wire:model.live="type">
+                            <option value="">Any</option>
+                            <option value="immediate">Immediate</option>
+                            <option value="end_of_period">End of Billing Period</option>
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-cr-svc">Service ID</label>
+                        <span><input @nofill id="ao-cr-svc" class="ao-of-sm" type="text" inputmode="numeric"
+                            wire:model.live.debounce.500ms="svc" placeholder="ID"></span>
+                    </div>
                 </div>
-                <button type="submit" class="ao-find-go">Search</button>
+                <button type="submit" class="ao-of-go">Filter</button>
             </form>
         @endif
 

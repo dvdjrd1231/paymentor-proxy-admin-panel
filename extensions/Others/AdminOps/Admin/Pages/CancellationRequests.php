@@ -32,8 +32,24 @@ class CancellationRequests extends Page
 
     public bool $filter = false;
 
+    /** The one-box search the rail's Advanced Search still submits; the panel's own
+     *  fields below are the reference's. */
     #[Url]
     public string $q = '';
+
+    #[Url]
+    public string $reason = '';
+
+    #[Url]
+    public string $client = '';
+
+    /** Service ID — the reference's field, over the id the request actually carries. */
+    #[Url]
+    public string $svc = '';
+
+    /** '' | immediate | end_of_period — the Type column's own two values. */
+    #[Url]
+    public string $type = '';
 
     public ?string $confirming = null;
 
@@ -106,6 +122,24 @@ class CancellationRequests extends Page
                     . ($row->reason ?? ''),
                 ), $needle));
             })
+            ->when(trim($this->reason) !== '', fn ($list) => $list->filter(
+                fn (ServiceCancellation $row) => str_contains(strtolower($row->reason ?? ''), strtolower(trim($this->reason))),
+            ))
+            ->when(trim($this->client) !== '', function ($list) {
+                $needle = strtolower(trim($this->client));
+
+                return $list->filter(fn (ServiceCancellation $row) => str_contains(strtolower(
+                    ($row->service->user->first_name ?? '') . ' '
+                    . ($row->service->user->last_name ?? '') . ' '
+                    . ($row->service->user->email ?? ''),
+                ), $needle));
+            })
+            ->when(ctype_digit(trim($this->svc)), fn ($list) => $list->filter(
+                fn (ServiceCancellation $row) => $row->service_id === (int) trim($this->svc),
+            ))
+            ->when($this->type !== '', fn ($list) => $list->filter(
+                fn (ServiceCancellation $row) => $row->type === $this->type,
+            ))
             ->values();
 
         return ['rows' => $rows];

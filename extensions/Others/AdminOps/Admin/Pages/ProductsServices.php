@@ -67,6 +67,17 @@ class ProductsServices extends Page
     #[Url]
     public string $server = '';
 
+    /** Gateway name — derived per service off its invoices, filtered in PHP. */
+    #[Url]
+    public string $paymentMethod = '';
+
+    /** A config option id; its value text below narrows within that option. */
+    #[Url]
+    public string $cfField = '';
+
+    #[Url]
+    public string $cfValue = '';
+
     #[Url]
     public bool $hideInactive = true;
 
@@ -114,11 +125,11 @@ class ProductsServices extends Page
 
     protected function getViewData(): array
     {
-        $services = $this->query()->paginate(self::PER_PAGE, page: $this->page);
+        $services = $this->paginated();
 
         if ($this->page > 1 && $services->isEmpty()) {
             $this->page = max(1, $services->lastPage());
-            $services = $this->query()->paginate(self::PER_PAGE, page: $this->page);
+            $services = $this->paginated();
         }
 
         return [
@@ -128,11 +139,38 @@ class ProductsServices extends Page
                 : 0,
             'categories' => Category::orderBy('name')->get(['id', 'name']),
             'servers' => Server::orderBy('name')->get(['id', 'name']),
+            'products' => \App\Models\Product::orderBy('name')->get(['id', 'name']),
+            'gateways' => \App\Models\Gateway::orderBy('name')->get(['id', 'name']),
+            'customFields' => \App\Models\ConfigOption::whereNull('parent_id')->orderBy('name')->get(['id', 'name']),
             // Batched once for the whole page rather than per row — the same tie the
             // client's own service list reads, {@see themes/proxy/views/services/index.blade.php}.
             'addonParents' => \Paymenter\Extensions\Others\AdminOps\Models\ServiceAddon::whereIn('service_id', $services->pluck('id'))
                 ->with('parent.product')->get()->keyBy('service_id'),
         ];
+    }
+
+    /**
+     * Payment Method is derived per service — the gateway on its invoices' transactions,
+     * the same read the Manage Orders column does — so that one filter narrows the
+     * SQL-filtered set in PHP behind a hand-built paginator.
+     */
+    private function paginated()
+    {
+        if ($this->paymentMethod === '') {
+            return $this->query()->paginate(self::PER_PAGE, page: $this->page);
+        }
+
+        $all = $this->query()->with('invoices.transactions.gateway')->get()
+            ->filter(fn (Service $service): bool => $service->invoices->flatMap->transactions
+                ->first()?->gateway?->name === $this->paymentMethod)
+            ->values();
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $all->forPage($this->page, self::PER_PAGE)->values(),
+            $all->count(),
+            self::PER_PAGE,
+            $this->page,
+        );
     }
 
     private function query()
@@ -147,7 +185,25 @@ class ProductsServices extends Page
         $query = Service::query();
 
         if ($this->product !== '') {
-            $query->whereHas('product', fn ($q) => $q->where('name', 'like', '%' . $this->product . '%'));
+            // The panel's select sends the product id; the rail's Advanced Search still
+            // sends free text. Both mean "this product".
+            ctype_digit($this->product)
+                ? $query->where('product_id', (int) $this->product)
+                : $query->whereHas('product', fn ($q) => $q->where('name', 'like', '%' . $this->product . '%'));
+        }
+
+        if ($this->cfField !== '' && ctype_digit($this->cfField)) {
+            $query->whereHas('configs', function ($q): void {
+                $q->where('config_option_id', (int) $this->cfField);
+
+                if ($this->cfValue !== '') {
+                    $q->whereIn('config_value_id', \App\Models\ConfigOption::query()
+                        ->where('parent_id', (int) $this->cfField)
+                        ->where(fn ($w) => $w->where('name', 'like', '%' . $this->cfValue . '%')
+                            ->orWhere('env_variable', 'like', '%' . $this->cfValue . '%'))
+                        ->pluck('id'));
+                }
+            });
         }
 
         if ($this->category !== '' && ctype_digit($this->category)) {

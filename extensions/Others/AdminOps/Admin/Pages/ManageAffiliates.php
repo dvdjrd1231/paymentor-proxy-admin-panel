@@ -38,6 +38,26 @@ class ManageAffiliates extends Page
     #[Url]
     public string $q = '';
 
+    // The reference's comparator fields: an operator (gt | lt) and a number each, for
+    // Visitors Referred, Balance and Withdrawn.
+    #[Url]
+    public string $vop = 'gt';
+
+    #[Url]
+    public string $vval = '';
+
+    #[Url]
+    public string $bop = 'gt';
+
+    #[Url]
+    public string $bval = '';
+
+    #[Url]
+    public string $wop = 'gt';
+
+    #[Url]
+    public string $wval = '';
+
     /** Issue #6: the reference's per-affiliate detail screen, opened by the list's edit icon. */
     #[Url]
     public ?int $affiliate = null;
@@ -220,19 +240,57 @@ class ManageAffiliates extends Page
             $this->affiliate = null;
         }
 
-        $affiliates = Affiliate::query()
+        $query = Affiliate::query()
             ->with(['user', 'orders'])
             ->join('users', 'users.id', '=', 'ext_affiliates.user_id')
             ->when($this->q !== '', fn ($query) => $query->where(fn ($w) => $w
                 ->where('users.first_name', 'like', '%' . $this->q . '%')
                 ->orWhere('users.last_name', 'like', '%' . $this->q . '%')
                 ->orWhere('users.email', 'like', '%' . $this->q . '%')))
+            ->when(is_numeric($this->vval), fn ($query) => $query
+                ->where('ext_affiliates.visitors', $this->vop === 'lt' ? '<' : '>', (int) $this->vval))
             ->orderBy('users.first_name')
             ->orderBy('users.last_name')
-            ->select('ext_affiliates.*')
-            ->paginate(self::PER_PAGE, page: $this->page);
+            ->select('ext_affiliates.*');
 
-        return ['affiliates' => $affiliates, 'current' => null];
+        // Balance and Withdrawn are derived (earnings per currency, payout sums), so those
+        // comparators filter the SQL-narrowed set here and page by hand — the same pattern
+        // Manage Orders uses for its derived columns.
+        if (!is_numeric($this->bval) && !is_numeric($this->wval)) {
+            return ['affiliates' => $query->paginate(self::PER_PAGE, page: $this->page), 'current' => null];
+        }
+
+        $compare = fn (float $actual, string $op, string $wanted): bool => $op === 'lt'
+            ? $actual < (float) $wanted
+            : $actual > (float) $wanted;
+
+        $all = $query->get()
+            ->filter(fn (Affiliate $row): bool => !is_numeric($this->bval)
+                || $compare((float) array_sum(array_filter($row->earnings)), $this->bop, $this->bval))
+            ->filter(fn (Affiliate $row): bool => !is_numeric($this->wval)
+                || $compare(self::withdrawnTotal($row), $this->wop, $this->wval))
+            ->values();
+
+        return [
+            'affiliates' => new \Illuminate\Pagination\LengthAwarePaginator(
+                $all->forPage($this->page, self::PER_PAGE)->values(),
+                $all->count(),
+                self::PER_PAGE,
+                $this->page,
+            ),
+            'current' => null,
+        ];
+    }
+
+    /** The recorded payouts as one number, currencies summed — the comparator's view of them. */
+    private static function withdrawnTotal(Affiliate $affiliate): float
+    {
+        if (!self::withdrawalsReady()) {
+            return 0.0;
+        }
+
+        return (float) \Paymenter\Extensions\Others\AdminOps\Models\AffiliateWithdrawal::query()
+            ->where('affiliate_id', $affiliate->id)->sum('amount');
     }
 
     /** "$18.90 USD", or "$0.00 USD" for an affiliate whose referrals have paid nothing. */
