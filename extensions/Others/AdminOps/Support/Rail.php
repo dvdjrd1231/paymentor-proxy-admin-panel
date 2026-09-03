@@ -196,7 +196,7 @@ class Rail
         $claimed = [
             'Invoices', '- Paid', '- Draft', '- Unpaid', '- Overdue', '- Cancelled',
             '- Refunded', '- Collections', '- Payment Pending',
-            'Billable Items', '- Uninvoiced Items', '- Recurring Items', 'Add New',
+            'Billable Items', '- Uninvoiced Items', '- Recurring Items', '- Add New',
             'Quotes', '- Valid', '- Expired', '- Create New Quote',
         ];
 
@@ -222,7 +222,10 @@ class Rail
                 'items' => array_merge(
                     $take('Billable Items', 'List All Billable Items'),
                     $take('- Uninvoiced Items'), $take('- Recurring Items'),
-                    $take('Add New'),
+                    // The reference's own sidebar drops the dash on Add New, unlike
+                    // the dropdown menu, which now carries it for the same reason
+                    // Uninvoiced/Recurring Items do — see WhmcsNavigation::billing().
+                    $take('- Add New', 'Add New'),
                 ),
             ],
             [
