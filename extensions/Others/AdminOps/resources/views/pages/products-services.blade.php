@@ -148,7 +148,15 @@
                     @endphp
                     <tr>
                         <td class="ao-mu-check"><input type="checkbox" data-ao-check value="{{ $service->user?->email }}"></td>
-                        <td>{{ $service->id }}</td>
+                        {{-- The reference's hop: the ID opens the client's profile on its
+                             Products/Services tab with this service's editor selected. --}}
+                        <td>
+                            @if ($service->user_id)
+                                <a href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $service->user_id, 'tab' => 'services', 'service' => $service->id]) }}">{{ $service->id }}</a>
+                            @else
+                                {{ $service->id }}
+                            @endif
+                        </td>
                         <td class="ao-mu-left">
                             <a href="{{ $edit }}">
                                 @if ($addon?->parent)&#8618; @endif{{ $service->product?->name ?? '—' }}

@@ -489,6 +489,167 @@
             </div>
         </div>
 
+    @elseif ($tab === 'services' && ($svcModel ?? null))
+        {{-- The reference's per-service editor inside the profile, reached from the order
+             view's "Product/Service" link and the services list's ID column. Every field
+             is the real column or property; the few WHMCS controls with no home here are
+             dead with the reason on their titles. --}}
+        <div class="ao-cs-pickrow">
+            <select class="ao-of-lg" wire:change="goService($event.target.value)">
+                @foreach ($rows as $row)
+                    <option value="{{ $row->id }}" @selected($row->id === $svcModel->id)>
+                        #{{ $row->id }} · {{ $row->product?->name }}
+                    </option>
+                @endforeach
+            </select>
+            <button type="button" class="ao-of-go" wire:click="$refresh">Go</button>
+            <a class="ao-find-go"
+                href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServiceAddons::getUrl(['adding' => 1, 'service' => $svcModel->id]) }}">
+                &#10010; New Addon
+            </a>
+        </div>
+
+        <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="saveService">
+            <div class="ao-of-rows">
+                <div class="ao-of-row">
+                    <span class="ao-of-label">Order #</span>
+                    <span class="ao-eo-fact">
+                        {{ $svcModel->order_id }} -
+                        <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditOrder::getUrl(['record' => $svcModel->order_id]) }}">View Order</a>
+                    </span>
+                    <span class="ao-of-label">Registration Date</span>
+                    <span class="ao-eo-fact">{{ $svcModel->created_at?->format('m/d/Y') }}</span>
+                </div>
+                <div class="ao-of-row">
+                    <label class="ao-of-label" for="ao-cs-product">Product/Service</label>
+                    <span><select id="ao-cs-product" class="ao-of-lg" wire:model.live="svc.productId">
+                        @foreach ($svcProducts as $product)
+                            <option value="{{ $product->id }}">{{ $product->category?->name }} - {{ $product->name }}</option>
+                        @endforeach
+                    </select></span>
+                    <label class="ao-of-label" for="ao-cs-qty">Quantity</label>
+                    <span><input id="ao-cs-qty" class="ao-of-sm" type="number" min="1" wire:model="svc.quantity"></span>
+                </div>
+                <div class="ao-of-row">
+                    <span class="ao-of-label">Server</span>
+                    <span class="ao-eo-fact">{{ $svcModel->product?->server?->name ?? 'None' }}</span>
+                    <label class="ao-of-label" for="ao-cs-price">First Payment Amount</label>
+                    <span><input id="ao-cs-price" class="ao-of-sm" type="text" inputmode="decimal" wire:model="svc.price"></span>
+                </div>
+                <div class="ao-of-row">
+                    <label class="ao-of-label" for="ao-cs-domain">Domain</label>
+                    <span><input id="ao-cs-domain" class="ao-of-md" type="text" wire:model="svc.domain" placeholder=""></span>
+                    <span class="ao-of-label">Recurring Amount</span>
+                    <span class="ao-eo-fact">${{ number_format((float) $svcModel->price * max(1, (int) $svcModel->quantity), 2) }} {{ $svcModel->currency_code }}</span>
+                </div>
+                <div class="ao-of-row">
+                    <label class="ao-of-label" for="ao-cs-dip">Dedicated IP</label>
+                    <span><input id="ao-cs-dip" class="ao-of-md" type="text" wire:model="svc.dedicatedIp" placeholder=""></span>
+                    <label class="ao-of-label" for="ao-cs-due">Next Due Date</label>
+                    @include('adminops::partials.datepicker', [
+                        'model' => 'svc.nextDue', 'range' => false, 'id' => 'ao-cs-due',
+                        'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                    ])
+                </div>
+                <div class="ao-of-row">
+                    <span class="ao-of-label">Username</span>
+                    <span class="ao-eo-fact">{{ $svcModel->properties->firstWhere('key', 'proxy_username')?->value ?? '—' }}</span>
+                    <span class="ao-of-label">Termination Date</span>
+                    <span class="ao-eo-fact" title="Paymenter records no termination date; a cancelled service simply stops renewing">—</span>
+                </div>
+                <div class="ao-of-row">
+                    <span class="ao-of-label">Password</span>
+                    <span class="ao-eo-fact" title="Panel credentials render masked here — the panel itself is where they are read">
+                        {{ $svcModel->properties->firstWhere('key', 'proxy_password') ? '••••••••' : '—' }}
+                    </span>
+                    <label class="ao-of-label" for="ao-cs-plan">Billing Cycle</label>
+                    <span><select id="ao-cs-plan" class="ao-of-md" wire:model="svc.planId">
+                        @forelse ($svcPlans as $plan)
+                            <option value="{{ $plan->id }}">{{ \Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::cycleLabel($plan) }}</option>
+                        @empty
+                            <option value="">No plans on this product</option>
+                        @endforelse
+                    </select></span>
+                </div>
+                <div class="ao-of-row">
+                    <label class="ao-of-label" for="ao-cs-status">Status</label>
+                    <span><select id="ao-cs-status" class="ao-of-sm" wire:model="svc.status">
+                        <option value="pending">Pending</option>
+                        <option value="active">Active</option>
+                        <option value="suspended">Suspended</option>
+                        <option value="cancelled">Terminated</option>
+                    </select></span>
+                    <span class="ao-of-label">Payment Method</span>
+                    <span class="ao-eo-fact">{{ $svcPayment }}</span>
+                </div>
+                <div class="ao-of-row">
+                    <span class="ao-of-label">{{ $svcModel->configs->isNotEmpty() ? 'Configuration' : '' }}</span>
+                    <span class="ao-eo-fact">
+                        @forelse ($svcModel->configs as $config)
+                            {{ $config->configOption?->name ?? 'Option' }}: {{ $config->configValue?->name ?? '—' }}<br>
+                        @empty
+                        @endforelse
+                    </span>
+                    <span class="ao-of-label">Promotion Code</span>
+                    <span class="ao-eo-fact">{{ $svcModel->coupon?->code ?? 'None' }}</span>
+                </div>
+                <div class="ao-of-row ao-of-row-single">
+                    <span class="ao-of-label">Module Commands</span>
+                    <span class="ao-of-inline">
+                        <button type="button" class="ao-of-go" wire:click="runModule('create')"
+                            wire:confirm="Provision this service on its panel now?">Create</button>
+                        <button type="button" class="ao-of-go" wire:click="runModule('suspend')"
+                            wire:confirm="Suspend this service on its panel?">Suspend</button>
+                        <button type="button" class="ao-of-go" wire:click="runModule('unsuspend')"
+                            wire:confirm="Unsuspend this service on its panel?">Unsuspend</button>
+                        <button type="button" class="ao-of-go" wire:click="runModule('terminate')"
+                            wire:confirm="Terminate this service on its panel? This deprovisions it.">Terminate</button>
+                        <button type="button" class="ao-of-go ao-eo-dead-btn" disabled
+                            title="Changing package is Save Changes with a different Product/Service picked — no separate module call exists">Change Package</button>
+                        <button type="button" class="ao-of-go ao-eo-dead-btn" disabled
+                            title="Panel credentials are managed on the proxy panel itself">Change Password</button>
+                    </span>
+                </div>
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cs-sub">Subscription ID</label>
+                    <span><input id="ao-cs-sub" class="ao-of-md" type="text" wire:model="svc.subscriptionId"></span>
+                </div>
+                <div class="ao-of-row ao-of-row-single">
+                    <span class="ao-of-label">Addons</span>
+                    <span class="ao-eo-fact">
+                        @forelse ($svcAddons as $addon)
+                            #{{ $addon->service_id }} · {{ $addon->service?->product?->name }} ·
+                            {{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel((string) $addon->service?->status) }}<br>
+                        @empty
+                            No Records Found
+                        @endforelse
+                    </span>
+                </div>
+                @foreach ($svcModel->properties->whereNotIn('key', ['domain', 'dedicated_ip', 'admin_notes', 'proxy_username', 'proxy_password']) as $property)
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">{{ $property->name ?: $property->key }}</span>
+                        <span class="ao-eo-fact">
+                            {{-- Secrets render masked, the standing convention (issue #43). --}}
+                            @if (str_contains(strtolower($property->key), 'key') || str_contains(strtolower($property->key), 'password') || str_contains(strtolower($property->key), 'secret'))
+                                ••••••••
+                            @else
+                                {{ str($property->value)->limit(120) }}
+                            @endif
+                        </span>
+                    </div>
+                @endforeach
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cs-notes">Admin Notes</label>
+                    <span><textarea id="ao-cs-notes" rows="3" wire:model="svc.svcNotes"
+                        placeholder="Notes for staff only"></textarea></span>
+                </div>
+            </div>
+            <div class="ao-of-buttons">
+                <button type="submit" class="ao-find-go">Save Changes</button>
+                <button type="button" class="ao-of-go" wire:click="goService({{ $svcModel->id }})">Cancel Changes</button>
+            </div>
+        </form>
+
     @else
         {{-- Every other tab is one list of one thing. `adminops::pages.client-tab` renders
              whichever it is, so a new tab is a case there rather than another block here. --}}

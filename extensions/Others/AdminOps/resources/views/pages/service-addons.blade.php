@@ -215,16 +215,17 @@
                         <td>${{ number_format((float) $addon->service->price, 2) }} {{ $addon->service->currency_code }}</td>
                         <td>{{ $addon->service->expires_at?->format('m/d/Y') ?? '-' }}</td>
                         <td><span class="ao-mu-status ao-mu-st-{{ $addon->service->status }}">{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel($addon->service->status) }}</span></td>
-                        <td class="ao-mu-actions">
-                            {{-- The reference's +/− toggle: each row unfolds its detail
-                                 band (issue #7). --}}
+                        <td class="ao-mu-actions ao-mu-iconpair">
+                            {{-- The panel's standard pair, aligned the way every other
+                                 list's is: the +/− unfolds the detail band (issue #7),
+                                 the red one cancels. --}}
                             <button type="button" class="ao-sa-toggle" wire:click="$set('expanded', {{ $expanded === $addon->id ? 'null' : $addon->id }})"
                                 title="{{ $expanded === $addon->id ? 'Hide details' : 'Show details' }}"
                                 aria-expanded="{{ $expanded === $addon->id ? 'true' : 'false' }}">{{ $expanded === $addon->id ? '−' : '+' }}</button>
                             @if ($addon->service->status !== 'cancelled')
                                 <button type="button" class="ao-mo-delete" title="Cancel addon"
                                     wire:click="$set('confirmingCancel', '{{ $addon->id }}')">
-                                    <x-filament::icon icon="ri-indeterminate-circle-fill" class="ao-mu-cell-icon" />
+                                    <x-filament::icon icon="ri-indeterminate-circle-fill" class="ao-mu-cell-icon ao-mu-icon-red" />
                                 </button>
                             @endif
                         </td>

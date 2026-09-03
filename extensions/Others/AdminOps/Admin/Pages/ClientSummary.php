@@ -79,6 +79,17 @@ class ClientSummary extends Page
     #[Url]
     public string $tab = 'summary';
 
+    /**
+     * The Products/Services tab's selected service — the reference's per-service editor.
+     * URL-bound so the order view's "Product/Service" link and the services list's ID
+     * column land here with the service already open.
+     */
+    #[Url]
+    public ?int $service = null;
+
+    /** The service editor's form state. */
+    public array $svc = [];
+
     /** The reference's Admin Notes box — stored as a user property, so it is real. */
     public string $adminNotes = '';
 
@@ -188,6 +199,199 @@ class ClientSummary extends Page
             $held = $prop('setting_' . $key);
             $this->pfSettings[$key] = $held === '' ? ($settingDefaults[$key] ?? false) : $held === '1';
         }
+
+        if ($this->service) {
+            $this->loadSvc();
+        }
+    }
+
+    // ── The Products/Services tab's service editor ───────────────────────────
+    // The reference's per-service screen inside the client profile: reached from the
+    // order view's "Product/Service" link and the services list's ID column.
+
+    public function updatedService(): void
+    {
+        $this->loadSvc();
+    }
+
+    /** The tab's own picker: choose a service, press Go. */
+    public function goService(?int $id): void
+    {
+        $this->service = $id ?: null;
+        $this->loadSvc();
+    }
+
+    private function loadSvc(): void
+    {
+        $service = $this->service
+            ? $this->customer->services()
+                ->with(['product.server', 'plan', 'properties', 'configs.configOption', 'coupon'])
+                ->find($this->service)
+            : null;
+
+        if (!$service) {
+            $this->service = null;
+            $this->svc = [];
+
+            return;
+        }
+
+        $prop = fn (string $key): string => (string) $service->properties->firstWhere('key', $key)?->value;
+
+        $this->svc = [
+            'productId' => $service->product_id,
+            'planId' => $service->plan_id,
+            'quantity' => (int) $service->quantity,
+            'price' => number_format((float) $service->price, 2, '.', ''),
+            'status' => (string) $service->status,
+            'nextDue' => $service->expires_at?->format('m/d/Y') ?? '',
+            'subscriptionId' => (string) $service->subscription_id,
+            'domain' => $prop('domain'),
+            'dedicatedIp' => $prop('dedicated_ip'),
+            'svcNotes' => $prop('admin_notes'),
+        ];
+    }
+
+    /** The editor's Save Changes — every field lands on the real column or property. */
+    public function saveService(): void
+    {
+        $service = $this->customer->services()->find($this->service);
+
+        if (!$service) {
+            return;
+        }
+
+        $this->validate([
+            'svc.quantity' => 'required|integer|min:1',
+            'svc.price' => 'required|numeric|min:0',
+            'svc.status' => 'required|in:pending,active,suspended,cancelled',
+            'svc.productId' => 'required|exists:products,id',
+            'svc.planId' => 'required|exists:plans,id',
+        ], attributes: ['svc.quantity' => 'quantity', 'svc.price' => 'first payment amount', 'svc.status' => 'status', 'svc.productId' => 'product', 'svc.planId' => 'billing cycle']);
+
+        $nextDue = null;
+        foreach (['m/d/Y', 'Y-m-d'] as $format) {
+            try {
+                $nextDue = \Carbon\Carbon::createFromFormat($format, trim((string) $this->svc['nextDue']));
+                break;
+            } catch (\Throwable $e) {
+            }
+        }
+
+        DB::transaction(function () use ($service, $nextDue): void {
+            $service->update([
+                'product_id' => (int) $this->svc['productId'],
+                'plan_id' => (int) $this->svc['planId'],
+                'quantity' => max(1, (int) $this->svc['quantity']),
+                'price' => (float) $this->svc['price'],
+                'status' => $this->svc['status'],
+                'subscription_id' => trim((string) $this->svc['subscriptionId']) ?: null,
+                'expires_at' => $nextDue,
+            ]);
+
+            foreach (['domain' => 'Domain', 'dedicated_ip' => 'Dedicated IP', 'admin_notes' => 'Admin Notes'] as $key => $name) {
+                $value = trim((string) ($this->svc[$key === 'admin_notes' ? 'svcNotes' : ($key === 'dedicated_ip' ? 'dedicatedIp' : 'domain')]));
+
+                if ($value !== '') {
+                    $service->properties()->updateOrCreate(['key' => $key], ['name' => $name, 'value' => $value]);
+                } else {
+                    $service->properties()->where('key', $key)->delete();
+                }
+            }
+        });
+
+        $this->loadSvc();
+        Notification::make()->title('Service saved')->success()->send();
+    }
+
+    /**
+     * The reference's Module Commands, over core's own provisioning jobs — the same
+     * dispatches checkout and the daily run make. Each is refused, not faked, when the
+     * service's state cannot take it.
+     */
+    public function runModule(string $command): void
+    {
+        $service = $this->customer->services()->with('product')->find($this->service);
+
+        if (!$service) {
+            return;
+        }
+
+        if (!$service->product?->server) {
+            Notification::make()->title('No server module')
+                ->body('This product has no server attached, so there is nothing to command.')->danger()->send();
+
+            return;
+        }
+
+        $ran = match (true) {
+            $command === 'create' && $service->status === 'pending' => (function () use ($service): string {
+                \App\Jobs\Server\CreateJob::dispatch($service);
+                $service->status = 'active';
+                $service->expires_at = $service->calculateNextDueDate();
+                $service->save();
+
+                return 'Create dispatched — the service is provisioning and now reads Active.';
+            })(),
+            $command === 'suspend' && $service->status === 'active' => (function () use ($service): string {
+                \App\Jobs\Server\SuspendJob::dispatch($service);
+                $service->update(['status' => 'suspended']);
+
+                return 'Suspend dispatched.';
+            })(),
+            $command === 'unsuspend' && $service->status === 'suspended' => (function () use ($service): string {
+                \App\Jobs\Server\UnsuspendJob::dispatch($service);
+                $service->update(['status' => 'active']);
+
+                return 'Unsuspend dispatched.';
+            })(),
+            $command === 'terminate' && in_array($service->status, ['active', 'suspended'], true) => (function () use ($service): string {
+                \App\Jobs\Server\TerminateJob::dispatch($service);
+                $service->update(['status' => 'cancelled']);
+
+                return 'Terminate dispatched.';
+            })(),
+            default => null,
+        };
+
+        if ($ran === null) {
+            Notification::make()->title('Nothing to do')
+                ->body(ucfirst($command) . ' does not apply to a ' . $service->status . ' service.')->warning()->send();
+
+            return;
+        }
+
+        $this->loadSvc();
+        Notification::make()->title($ran)->success()->send();
+    }
+
+    /**
+     * Everything the editor's blade reads for the selected service.
+     *
+     * @return array<string, mixed>
+     */
+    private function serviceEditorData(): array
+    {
+        $service = $this->customer->services()
+            ->with(['product.category', 'product.server', 'plan', 'properties', 'configs.configOption',
+                'coupon', 'invoices.transactions.gateway'])
+            ->find($this->service);
+
+        if (!$service) {
+            return ['svcModel' => null];
+        }
+
+        return [
+            'svcModel' => $service,
+            'svcProducts' => \App\Models\Product::with('category')->orderBy('name')->get(['id', 'name', 'category_id']),
+            'svcPlans' => \App\Models\Plan::where('priceable_type', \App\Models\Product::class)
+                ->where('priceable_id', $this->svc['productId'] ?? $service->product_id)->get(),
+            'svcAddons' => class_exists(\Paymenter\Extensions\Others\AdminOps\Models\ServiceAddon::class)
+                ? \Paymenter\Extensions\Others\AdminOps\Models\ServiceAddon::with('service.product')
+                    ->where('parent_service_id', $service->id)->get()
+                : collect(),
+            'svcPayment' => $service->invoices->flatMap->transactions->first()?->gateway?->name ?? '—',
+        ];
     }
 
     /** The Profile tab's Save Changes. Everything it writes is readable back on this page. */
@@ -316,7 +520,10 @@ class ClientSummary extends Page
                 ->with(['properties' => fn ($q) => $q->where('key', 'company_name')])
                 ->get(['id', 'first_name', 'last_name', 'email']),
             ...match (array_key_exists($this->tab, self::TABS) ? $this->tab : 'summary') {
-                'services' => ['rows' => $this->customer->services()->with('product')->latest()->limit(self::TAB_ROWS)->get()],
+                'services' => [
+                    'rows' => $this->customer->services()->with('product')->latest()->limit(self::TAB_ROWS)->get(),
+                    ...($this->service ? $this->serviceEditorData() : ['svcModel' => null]),
+                ],
                 'billable' => ['rows' => $this->billableItems()],
                 'invoices' => ['rows' => $this->customer->invoices()->with(['items', 'transactions'])->latest()->limit(self::TAB_ROWS)->get()],
                 'transactions' => ['rows' => $this->transactionRows()],

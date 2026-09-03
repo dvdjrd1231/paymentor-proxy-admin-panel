@@ -247,14 +247,15 @@
                         <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::balance($affiliate) }}</td>
                         <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::withdrawn($affiliate) }}</td>
                         <td class="ao-mu-actions ao-mu-iconpair">
-                            {{-- The reference's pair: the blue icon opens the affiliate's
-                                 detail screen (issue #6); the red opens the raw record,
-                                 where disabling and deleting live. --}}
+                            {{-- The reference's pair, in the panel's standard icons: the
+                                 blue open-record glyph every other list uses (Invoices'
+                                 own), then the red one for the raw record where disabling
+                                 and deleting live. --}}
                             <button type="button" title="Open affiliate detail" wire:click="openAffiliate({{ $affiliate->id }})">
-                                <x-filament::icon icon="ri-file-chart-line" class="ao-mu-cell-icon" />
+                                <x-filament::icon icon="ri-file-list-2-line" class="ao-mu-cell-icon" />
                             </button>
                             <a href="{{ $edit }}" title="Manage affiliate record">
-                                <x-filament::icon icon="ri-indeterminate-circle-line" class="ao-mu-cell-icon ao-mu-icon-red" />
+                                <x-filament::icon icon="ri-indeterminate-circle-fill" class="ao-mu-cell-icon ao-mu-icon-red" />
                             </a>
                         </td>
                     </tr>

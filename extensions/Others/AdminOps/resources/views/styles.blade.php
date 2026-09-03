@@ -2556,6 +2556,17 @@
     .ao-mu-iconpair a:hover,
     .ao-mu-iconpair button:hover { background: #f0f0f0 !important; }
 
+    /* The pair sits centred in its own slim column, never hugging the row's edge —
+       issue: the icons rode high and right of their row on Affiliates. */
+    td.ao-mu-iconpair {
+        text-align: center;
+        vertical-align: middle;
+        white-space: nowrap;
+        width: 4.2rem;
+    }
+
+    .ao-mu-iconpair .ao-mu-cell-icon { width: 1.05rem; height: 1.05rem; display: block; }
+
     /* The Record Withdrawal line under the ledger (issue #6). */
     .ao-af-withdraw {
         display: flex;
@@ -3775,6 +3786,51 @@
 
     /* The reference's green ⊕ on Add More. */
     .ao-ont-plus { color: #5cb85c; font-size: 0.8rem; }
+
+    /* ── The order view (EditOrder) ─────────────────────────────────────────── */
+    .ao-eo-fact { font-size: 0.9rem; color: var(--wa-ink, #2b2b2b); line-height: 1.45; }
+
+    .ao-eo-fact i { color: var(--wa-muted, #6b6b6b); font-style: normal; font-size: 0.85rem; }
+
+    /* An honestly-dead control in the facts band: reads as its neighbours do, the reason
+       on its title. */
+    .ao-eo-dead { color: var(--wa-muted, #6b6b6b); cursor: help; text-decoration: none; }
+
+    .ao-eo-items-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 0.9rem 0 0.4rem;
+    }
+
+    .ao-eo-items-head h4 { margin: 0; font-weight: 600; }
+
+    .ao-eo-total td { background: var(--wa-navy, #1a4d80); color: #fff; font-weight: 700; }
+
+    .ao-eo-total .ao-eo-total-label { text-align: right; }
+
+    .ao-eo-dead-btn { opacity: 0.55; cursor: help; }
+
+    /* The service editor's picker row: the reference's select + Go + New Addon strip. */
+    .ao-cs-pickrow {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.6rem 0;
+    }
+
+    .ao-cs-pickrow select {
+        height: 1.9rem;
+        max-width: 26rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.9rem;
+    }
+
+    .ao-cs-pickrow .ao-of-go,
+    .ao-cs-pickrow .ao-find-go { margin: 0; display: inline-flex; text-decoration: none; }
 
     /* The related-service radio column (issue #20). */
     .ao-ont-radio { width: 2rem; text-align: center; }
