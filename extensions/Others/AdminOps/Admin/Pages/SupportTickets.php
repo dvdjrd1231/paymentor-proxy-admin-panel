@@ -49,6 +49,16 @@ class SupportTickets extends Page
     #[Url(as: 'view')]
     public string $tab = 'active';
 
+    /**
+     * The filter panel's own Status — a real multi-select, several of {@see VIEWS} OR'd
+     * together, independent of whichever single one the sidebar has open. Empty means
+     * "not narrowed here"; {@see query()} falls back to $tab when this is empty.
+     *
+     * @var array<int, string>
+     */
+    #[Url]
+    public array $statusFilter = [];
+
     #[Url]
     public string $q = '';
 
@@ -60,6 +70,15 @@ class SupportTickets extends Page
 
     #[Url]
     public ?int $clientId = null;
+
+    /**
+     * Real input, honestly inert: Paymenter tickets carry no tag column at all, so this
+     * can never narrow the list — same as typing a tag WHMCS itself had never created.
+     * Kept live rather than disabled because a field an admin cannot type into reads as
+     * broken, not as "nothing to search"; the title says why nothing changes.
+     */
+    #[Url]
+    public string $tags = '';
 
     #[Url]
     public string $prio = '';
@@ -116,6 +135,20 @@ class SupportTickets extends Page
     public function toggleFilter(): void
     {
         $this->filter = !$this->filter;
+    }
+
+    /** The Status field's own "+ Add status" select — one chip per pick, no duplicates. */
+    public function addStatus(string $key): void
+    {
+        if ($key !== '' && isset(self::VIEWS[$key]) && !in_array($key, $this->statusFilter, true)) {
+            $this->statusFilter[] = $key;
+        }
+    }
+
+    /** The chip's own "×" — removes just that one status from the filter. */
+    public function removeStatus(string $key): void
+    {
+        $this->statusFilter = array_values(array_diff($this->statusFilter, [$key]));
     }
 
     public function search(): void
@@ -244,19 +277,18 @@ class SupportTickets extends Page
     {
         $query = Ticket::query()->with(['user', 'assignedTo', 'messages' => fn ($q) => $q->latest()->limit(1)]);
 
-        $query = match ($this->tab) {
-            'flagged' => $query->whereNotNull('assigned_to')->where('status', '!=', 'closed'),
-            'open' => $query->where('status', 'open'),
-            'answered' => $query->where('status', 'replied'),
-            'customer-reply' => $query->where('status', 'open')
-                ->whereHas('messages', fn ($q) => $q->whereColumn('ticket_messages.user_id', 'tickets.user_id')
-                    ->whereRaw('ticket_messages.id = (select max(id) from ticket_messages tm where tm.ticket_id = tickets.id)')),
-            // No such state exists here; an empty list is the honest rendering.
-            'on-hold' => $query->whereRaw('1 = 0'),
-            'in-progress' => $query->whereNotNull('assigned_to')->where('status', '!=', 'closed'),
-            'closed' => $query->where('status', 'closed'),
-            default => $query->where('status', '!=', 'closed'),
-        };
+        // The reference's filter panel Status is a real multi-select — several views
+        // OR'd together, independent of which single one the sidebar has open — so it
+        // takes priority over $tab whenever the admin has actually picked one or more.
+        if ($this->statusFilter !== []) {
+            $query->where(function ($outer): void {
+                foreach ($this->statusFilter as $view) {
+                    $outer->orWhere(fn ($inner) => $this->applyView($inner, $view));
+                }
+            });
+        } else {
+            $this->applyView($query, $this->tab);
+        }
 
         if ($this->q !== '') {
             $query->where(fn ($q) => $q->where('subject', 'like', '%' . $this->q . '%')
@@ -269,6 +301,12 @@ class SupportTickets extends Page
 
         if ($this->email !== '') {
             $query->whereHas('user', fn ($q) => $q->where('email', 'like', '%' . $this->email . '%'));
+        }
+
+        // No ticket carries a tag, so a real search for one honestly matches none — the
+        // same answer WHMCS itself gives for a tag nobody has ever created.
+        if ($this->tags !== '') {
+            $query->whereRaw('1 = 0');
         }
 
         if ($this->clientId) {
@@ -288,5 +326,27 @@ class SupportTickets extends Page
         }
 
         return $query->latest('updated_at');
+    }
+
+    /**
+     * One view's own condition, applied to whatever query builder it is handed — the
+     * sidebar's single `$tab`, or one arm of the filter panel's OR'd-together
+     * `$statusFilter`. Kept as one copy so the two never drift apart.
+     */
+    private function applyView($query, string $view)
+    {
+        return match ($view) {
+            'flagged' => $query->whereNotNull('assigned_to')->where('status', '!=', 'closed'),
+            'open' => $query->where('status', 'open'),
+            'answered' => $query->where('status', 'replied'),
+            'customer-reply' => $query->where('status', 'open')
+                ->whereHas('messages', fn ($q) => $q->whereColumn('ticket_messages.user_id', 'tickets.user_id')
+                    ->whereRaw('ticket_messages.id = (select max(id) from ticket_messages tm where tm.ticket_id = tickets.id)')),
+            // No such state exists here; an empty list is the honest rendering.
+            'on-hold' => $query->whereRaw('1 = 0'),
+            'in-progress' => $query->whereNotNull('assigned_to')->where('status', '!=', 'closed'),
+            'closed' => $query->where('status', 'closed'),
+            default => $query->where('status', '!=', 'closed'),
+        };
     }
 }

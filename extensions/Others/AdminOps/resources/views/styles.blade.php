@@ -4184,10 +4184,70 @@
 
     .ao-stf-submit { text-align: center; margin: 0.9rem 0 0.6rem; }
 
+    /* Support Tickets' Status multi-select: the reference's own chip box — a pill per
+       picked view, each with its own ×, then the "+ Add status" select at the end. */
+    .ao-stf-row-top { align-items: start; padding-top: 0.1rem; }
+
+    .ao-stf-row-top > span:first-child { padding-top: 0.35rem; }
+
+    .ao-stf-chips {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4rem;
+        width: 100%;
+        min-height: 2.2rem;
+        padding: 0.3rem 0.5rem;
+        border: 1px solid var(--wa-link, #337ab7);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+    }
+
+    .ao-stf-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.15rem 0.3rem 0.15rem 0.6rem;
+        border-radius: 999px;
+        background: var(--wa-link, #337ab7);
+        color: #fff;
+        font-size: 0.82rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .ao-stf-chip button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.1rem;
+        height: 1.1rem;
+        border-radius: 50%;
+        background: rgb(255 255 255 / 0.25);
+        color: #fff;
+        font-size: 0.85rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .ao-stf-chip button:hover { background: rgb(255 255 255 / 0.4); }
+
+    .ao-stf-chip-add {
+        flex: 1 1 8rem;
+        min-width: 8rem;
+        height: 1.9rem;
+        border: 0;
+        background: transparent;
+        font: inherit;
+        font-size: 0.9rem;
+        color: var(--wa-muted, #6b6b6b);
+    }
+
     @media (max-width: 700px) {
         .ao-stf-row { grid-template-columns: 1fr; gap: 0.25rem; }
         .ao-stf-row > span { text-align: start; }
         .ao-stf-row .ao-stf-mid, .ao-stf-row .ao-stf-small { width: 100%; min-width: 0; }
+        .ao-stf-row-top > span:first-child { padding-top: 0; }
     }
 
     /* The reference sizes its inputs to their meaning, not the page: width utilities the
