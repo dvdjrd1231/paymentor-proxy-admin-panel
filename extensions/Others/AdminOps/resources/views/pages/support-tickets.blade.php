@@ -60,17 +60,35 @@
                         @endforeach
                     </select>
                 </label>
-                <label class="ao-stf-row">
+                {{-- The reference's Status is a real multi-select: a chip per picked view,
+                     each removable, several OR'd together — not the sidebar's single pick.
+                     See SupportTickets::$statusFilter / applyView(). --}}
+                <label class="ao-stf-row ao-stf-row-top">
                     <span>Status</span>
-                    <select wire:model="tab">
-                        @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets::VIEWS as $key => $label)
-                            <option value="{{ $key }}">{{ $label }}</option>
+                    <span class="ao-stf-chips">
+                        @foreach ($statusFilter as $key)
+                            <span class="ao-stf-chip">
+                                {{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets::VIEWS[$key] ?? $key }}
+                                <button type="button" wire:click="removeStatus('{{ $key }}')" aria-label="Remove {{ $key }}">&times;</button>
+                            </span>
                         @endforeach
-                    </select>
+                        <select wire:change="addStatus($event.target.value)" class="ao-stf-chip-add">
+                            <option value="">{{ $statusFilter === [] ? 'Any' : '+ Add status…' }}</option>
+                            @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets::VIEWS as $key => $label)
+                                @unless (in_array($key, $statusFilter, true))
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                @endunless
+                            @endforeach
+                        </select>
+                    </span>
                 </label>
                 <label class="ao-stf-row">
                     <span>Tags</span>
-                    <input type="text" value="Any" disabled title="Paymenter tickets have no tags">
+                    {{-- Real input, not disabled: Paymenter tickets carry no tag column,
+                         so a search here always matches none — honest, not fake, and the
+                         title says so; see SupportTickets::query(). --}}
+                    <input type="text" wire:model="tags" placeholder="Any"
+                        title="Paymenter tickets carry no tags — a search here will always match none">
                 </label>
                 <label class="ao-stf-row">
                     <span>Priority</span>
