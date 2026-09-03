@@ -6,12 +6,15 @@ use App\Admin\Resources\InvoiceResource;
 use App\Admin\Resources\OrderResource;
 use App\Admin\Resources\ServiceResource;
 use App\Admin\Resources\TicketResource;
+use App\Admin\Resources\UserResource;
 use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewClient;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ViewSearchClients;
 
 /**
  * The data behind WHMCS's left rail: Shortcuts, System Information, Advanced Search and
@@ -144,7 +147,22 @@ class Rail
             [
                 'label' => 'Products/Services',
                 'icon' => 'ri-instance-line',
-                'items' => array_merge($products, $item($find('Service Addons')), $item($find('Cancellation Requests'))),
+                'items' => array_merge(
+                    $products,
+                    $item($find('Service Addons')),
+                    // The reference lists Domain Registrations between Service Addons and
+                    // Cancellation Requests. This store registers no domains, so the entry
+                    // is honestly dead — visible where the reference puts it, the reason on
+                    // its title — the same convention the Ordering settings note and the
+                    // Add New Order domain radios already follow.
+                    [[
+                        'label' => 'Domain Registrations',
+                        'url' => null,
+                        'badge' => null,
+                        'title' => 'Domain registration is not offered — this store sells proxy services only',
+                    ]],
+                    $item($find('Cancellation Requests')),
+                ),
             ],
             [
                 'label' => 'Affiliates',
@@ -434,66 +452,79 @@ class Rail
     }
 
     /**
-     * The filtered lists WHMCS puts under Advanced Search, each with its count. Counts come
-     * from {@see Metrics} so the rail and the menu badges cannot disagree.
+     * WHMCS's Advanced Search widget: pick an area, pick a field, type, Search. It replaced
+     * the earlier count-link list because the reference's box is this form — and the form is
+     * real: every field maps to a URL filter the destination page already reads, so it can
+     * only offer searches that actually run, over records the role may view.
      *
-     * @return array<int, array{label: string, count: int, url: string}>
+     * @return array<int, array{label: string, action: string, fields: array<int, array{label: string, param: string}>}>
      */
-    public static function searches(): array
+    public static function advancedSearch(): array
     {
         try {
-            return static::buildSearches();
+            return static::buildAdvancedSearch();
         } catch (\Throwable $e) {
-            // Same rule as the shortcuts: this rail is on every admin page, so a counting
-            // query or a route that fails must cost the panel a box, not a 500.
+            // Same rule as the shortcuts: this rail is on every admin page, so a URL that
+            // fails to resolve must cost the panel a box, not a 500.
             return [];
         }
     }
 
     /**
-     * @return array<int, array{label: string, count: int, url: string}>
+     * The permission check reads the resource (a user/service/invoice/ticket policy, not a
+     * page's own), because that is the real gate; the action lands on the WHMCS-styled page
+     * the rest of the menu already leads to for the same records.
+     *
+     * @return array<int, array{label: string, action: string, fields: array<int, array{label: string, param: string}>}>
      */
-    /**
-     * Every link here used to point at core's own resource screen — reachable, but the plain
-     * Filament table Leandro's screenshots were never of. The permission check still reads
-     * the resource (a service/invoice/ticket policy, not a page's own), because that is the
-     * real gate; only the destination changes, to the WHMCS-styled page the rest of the menu
-     * already leads to for the same records.
-     */
-    private static function buildSearches(): array
+    private static function buildAdvancedSearch(): array
     {
-        $searches = [];
+        $types = [];
 
-        if (ServiceResource::canViewAny()) {
-            $searches[] = [
-                'label' => 'Pending services',
-                'count' => Metrics::servicesPending(),
-                'url' => ProductsServices::getUrl(['status' => 'pending']),
-            ];
-            $searches[] = [
-                'label' => 'Suspended services',
-                'count' => Metrics::servicesSuspended(),
-                'url' => ProductsServices::getUrl(['status' => 'suspended']),
-            ];
-        }
+        $add = function (string $page, string $resource, string $label, array $fields) use (&$types): void {
+            if (!class_exists($page) || !class_exists($resource) || !$resource::canViewAny()) {
+                return;
+            }
 
-        if (InvoiceResource::canViewAny()) {
-            $searches[] = [
-                'label' => 'Unpaid invoices',
-                'count' => Metrics::invoicesUnpaid(),
-                'url' => ManageInvoices::getUrl(['status' => 'unpaid']),
-            ];
-        }
+            if (method_exists($page, 'canAccess') && !$page::canAccess()) {
+                return;
+            }
 
-        if (TicketResource::canViewAny()) {
-            $searches[] = [
-                'label' => 'Tickets awaiting reply',
-                'count' => Metrics::ticketsAwaitingReply(),
-                'url' => SupportTickets::getUrl(['view' => 'open']),
+            $types[] = [
+                'label' => $label,
+                // The path alone: the form appends its one field as the query string.
+                'action' => strtok((string) $page::getUrl(), '?'),
+                'fields' => collect($fields)
+                    ->map(fn (string $param, string $field): array => ['label' => $field, 'param' => $param])
+                    ->values()->all(),
             ];
-        }
+        };
 
-        return $searches;
+        // Each param below is a #[Url] property the page filters by — the same filters its
+        // own Search/Filter band submits.
+        $add(ViewSearchClients::class, UserResource::class, 'Clients', [
+            'Client Name' => 'name',
+            'Email Address' => 'email',
+            'Phone Number' => 'phone',
+            'Client ID' => 'cid',
+        ]);
+        $add(ManageOrders::class, OrderResource::class, 'Orders', [
+            'Order # / Client' => 'q',
+        ]);
+        $add(ManageInvoices::class, InvoiceResource::class, 'Invoices', [
+            'Invoice # / Client' => 'q',
+        ]);
+        $add(ProductsServices::class, ServiceResource::class, 'Products/Services', [
+            'Client Name/Email' => 'client',
+            'Product Name' => 'product',
+        ]);
+        $add(SupportTickets::class, TicketResource::class, 'Tickets', [
+            'Subject/Message' => 'q',
+            'Email Address' => 'email',
+            'Ticket #' => 'tid',
+        ]);
+
+        return $types;
     }
 
     /**

@@ -74,6 +74,9 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AutomationStatus;
+// Without this import, `CancellationRequests::class` in clients() names a class in *this*
+// namespace that does not exist, and the class_exists guard silently dropped the entry.
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\CancellationRequests;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\Catalogue;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageUsers;
