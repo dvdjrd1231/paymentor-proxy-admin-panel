@@ -64,6 +64,10 @@
             </form>
         @endif
 
+        </div>
+
+        {{-- Outside the panel: the reference's boxed band holds only the tab and the
+             expanded filter; the records line sits on the page below it (issue #12). --}}
         <div class="ao-mu-line">
             <span>
                 {{ number_format($invoices->total()) }} Records Found{{ $invoices->total() > 0 ? ', Showing ' . number_format($invoices->firstItem()) . ' to ' . number_format($invoices->lastItem()) : '' }}
@@ -76,7 +80,6 @@
                     @endforeach
                 </select>
             </label>
-        </div>
         </div>
 
         {{-- The reference's With Selected bar, above and below the grid. --}}

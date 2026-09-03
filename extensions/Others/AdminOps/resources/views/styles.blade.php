@@ -2257,7 +2257,47 @@
         margin-top: 0.5rem;
     }
 
-    .ao-mu-iconpair a { margin-inline: 0.2rem; border: 0; padding: 0.1rem; background: none; }
+    /* Issue #6's "disproportionate": the link and the button in an action pair must be
+       the same box — one picked up a stray border/padding and read as twice the size. */
+    .ao-mu-iconpair a,
+    .ao-mu-iconpair button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.6rem;
+        height: 1.6rem;
+        margin-inline: 0.15rem;
+        border: 0 !important;
+        border-radius: 4px;
+        padding: 0 !important;
+        background: none !important;
+        box-shadow: none !important;
+        vertical-align: middle;
+    }
+
+    .ao-mu-iconpair a:hover,
+    .ao-mu-iconpair button:hover { background: #f0f0f0 !important; }
+
+    /* The Record Withdrawal line under the ledger (issue #6). */
+    .ao-af-withdraw {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.8rem;
+    }
+
+    .ao-af-withdraw input {
+        height: 2.2rem;
+        padding: 0 0.6rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+
+    .ao-af-withdraw input[aria-label="Amount"] { width: 8rem; }
+    .ao-af-withdraw input[aria-label="Currency"] { width: 4.5rem; text-transform: uppercase; }
+    .ao-af-withdraw input[aria-label="Note"] { flex: 1 1 14rem; }
 
     .ao-mu-icon-red { color: #d9534f; }
 
@@ -2791,11 +2831,15 @@
     /* The reference's "» Region: …" annotation, indented under the line it belongs to. */
     /* Issue #10, twice over: "same font size as the general page" and "it is not
        legible" — this note read smaller and greyer than the line it belongs to. */
+    /* Issue #10 "it is illegible": the note was crammed against the line above by a
+       negative margin and inherited a small size — give it its own breathing room and
+       the content type size. */
     .ao-ano-note {
-        padding: 0 0.9rem 0.4rem 1.6rem;
-        margin-top: -0.55rem;
+        padding: 0.2rem 0.9rem 0.55rem 1.6rem;
         border-bottom: 1px solid var(--wa-panel-border, #ddd);
-        color: var(--wa-text, #2b2b2b);
+        color: var(--wa-ink, #2b2b2b);
+        font-size: 0.95rem;
+        line-height: 1.45;
     }
 
     /* A line's option fields — core's own ConfigOption tree plus a server's checkout
@@ -3450,6 +3494,11 @@
     }
 
     .ao-ont-submit { text-align: center; margin: 1rem 0; }
+
+    /* The related-service radio column (issue #20). */
+    .ao-ont-radio { width: 2rem; text-align: center; }
+
+    .ao-ont-radio input { accent-color: #337ab7; }
 
     .ao-ont-pick { display: flex; flex-direction: column; gap: 0.3rem; max-height: 40vh; overflow-y: auto; }
 
