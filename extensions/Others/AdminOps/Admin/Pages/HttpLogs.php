@@ -23,8 +23,18 @@ class HttpLogs extends Page
 
     public const PER_PAGE = 100;
 
+    /** The reference's Search/Filter panel: Date Range, Debug Data, Gateway, Result. */
+    #[Url]
+    public bool $filter = false;
+
     #[Url]
     public string $q = '';
+
+    #[Url]
+    public string $dates = '';
+
+    #[Url]
+    public string $gateway = '';
 
     #[Url]
     public int $page = 1;
@@ -38,7 +48,21 @@ class HttpLogs extends Page
 
     public function getTitle(): string
     {
-        return 'Gateway Log';
+        // The reference's own heading; the sidebar keeps calling it Gateway Log.
+        return 'Gateway Transaction Log';
+    }
+
+    public function mount(): void
+    {
+        // The reference arrives with the last three months pre-filled.
+        if ($this->dates === '') {
+            $this->dates = now()->subMonths(3)->format('m/d/Y') . ' - ' . now()->format('m/d/Y');
+        }
+    }
+
+    public function toggleFilter(): void
+    {
+        $this->filter = !$this->filter;
     }
 
     public function expand(int $id): void
@@ -53,13 +77,56 @@ class HttpLogs extends Page
 
     protected function getViewData(): array
     {
+        [$from, $to] = $this->range();
+
         return [
             'rows' => DebugLog::query()
                 ->when($this->q !== '', fn ($q) => $q->where(fn ($w) => $w
                     ->where('type', 'like', '%' . $this->q . '%')
                     ->orWhere('context', 'like', '%' . $this->q . '%')))
+                ->when($this->gateway !== '', fn ($q) => $q->where(fn ($w) => $w
+                    ->where('type', 'like', '%' . $this->gateway . '%')
+                    ->orWhere('context', 'like', '%' . $this->gateway . '%')))
+                ->when($from, fn ($q) => $q->whereDate('created_at', '>=', $from))
+                ->when($to, fn ($q) => $q->whereDate('created_at', '<=', $to))
                 ->latest('id')
                 ->paginate(self::PER_PAGE, page: $this->page),
+            'gateways' => \App\Models\Gateway::orderBy('name')->pluck('name')->all(),
         ];
+    }
+
+    /** Which gateway a row belongs to — its name, found in the type or the payload. */
+    public static function gatewayOf($row, array $gateways): string
+    {
+        $haystack = strtolower($row->type . ' ' . json_encode($row->context));
+
+        foreach ($gateways as $name) {
+            if (str_contains($haystack, strtolower($name))) {
+                return $name;
+            }
+        }
+
+        return '—';
+    }
+
+    /** @return array{?string, ?string} */
+    private function range(): array
+    {
+        $parse = function (string $piece): ?string {
+            foreach (['m/d/Y', 'Y-m-d'] as $format) {
+                try {
+                    return \Carbon\Carbon::createFromFormat($format, trim($piece))->format('Y-m-d');
+                } catch (\Throwable $e) {
+                }
+            }
+
+            return null;
+        };
+
+        $pieces = preg_split('/\s+[-–]\s+/', trim($this->dates), 2);
+        $from = $parse($pieces[0] ?? '');
+        $to = isset($pieces[1]) ? $parse($pieces[1]) : $from;
+
+        return [$from, $to];
     }
 }

@@ -27,20 +27,39 @@ class BillableItemsList extends Page
     #[Url(as: 'view')]
     public string $tab = 'all';
 
-    /** The reference's Search/Filter band — every list page carries one; this one did not. */
+    /** The reference's Search/Filter panel, field for field: Client, Description, Amount, Status. */
+    #[Url]
     public bool $filter = false;
 
     #[Url]
     public string $q = '';
 
+    #[Url]
+    public string $client = '';
+
+    #[Url]
+    public string $famount = '';
+
+    /** '' | uninvoiced | invoiced | recurring — states the columns themselves show. */
+    #[Url]
+    public string $status = '';
+
     public function toggleFilter(): void
     {
         $this->filter = !$this->filter;
+
+        if ($this->filter) {
+            $this->adding = false;
+        }
     }
 
+    #[Url]
     public bool $adding = false;
 
     public ?int $userId = null;
+
+    /** The reference's Product/Service: the charge can belong to one of the client's services. */
+    public ?int $serviceId = null;
 
     public string $description = '';
 
@@ -53,6 +72,12 @@ class BillableItemsList extends Page
     public string $recur = '';
 
     public string $dueDate = '';
+
+    /** Picking a client empties the service choice — the old client's services are not theirs. */
+    public function updatedUserId(): void
+    {
+        $this->serviceId = null;
+    }
 
     public static function canAccess(): bool
     {
@@ -84,6 +109,7 @@ class BillableItemsList extends Page
 
         BillableItem::create([
             'user_id' => $this->userId,
+            'service_id' => $this->serviceId,
             'description' => $this->description,
             'quantity' => (float) $this->quantity,
             'amount' => (float) $this->amount,
@@ -156,11 +182,28 @@ class BillableItemsList extends Page
                         ->orWhere('last_name', 'like', "%{$needle}%")
                         ->orWhere('email', 'like', "%{$needle}%")));
             })
+            ->when(trim($this->client) !== '', function ($query) {
+                $needle = trim($this->client);
+                $query->whereHas('user', fn ($u) => $u->where('first_name', 'like', "%{$needle}%")
+                    ->orWhere('last_name', 'like', "%{$needle}%")
+                    ->orWhere('email', 'like', "%{$needle}%"));
+            })
+            ->when(trim($this->famount) !== '' && is_numeric(trim($this->famount)),
+                fn ($query) => $query->where('amount', (float) trim($this->famount)))
+            ->when($this->status === 'uninvoiced', fn ($q) => $q->whereNull('invoiced_at'))
+            ->when($this->status === 'invoiced', fn ($q) => $q->whereNotNull('invoiced_at'))
+            ->when($this->status === 'recurring', fn ($q) => $q->whereNotNull('recur_every'))
             ->latest('id')->limit(200)->get();
 
         return [
             'items' => $items,
             'clients' => User::whereNull('role_id')->orderBy('first_name')->limit(500)->get(['id', 'first_name', 'last_name', 'email']),
+            // The picked client's services for the Product/Service select — the charge can
+            // name the proxy it belongs to, exactly as the reference relates them.
+            'clientServices' => $this->userId
+                ? \App\Models\Service::with('product')->where('user_id', $this->userId)
+                    ->whereIn('status', ['active', 'suspended', 'pending'])->latest('id')->limit(100)->get()
+                : collect(),
             'actions' => [
                 BillableItem::ACTION_NEXT_INVOICE => "Add to the customer's next invoice",
                 BillableItem::ACTION_IMMEDIATELY => 'Invoice on the next daily run',

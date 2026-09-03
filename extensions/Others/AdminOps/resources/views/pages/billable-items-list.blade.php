@@ -10,65 +10,128 @@
         </div>
 
         @if ($filter)
-            {{-- The reference's Search/Filter panel — the same striped rows as Manage Orders'. --}}
+            {{-- The reference's Search/Filter panel, field for field: Client, Description
+                 on the left; Amount, Status on the right. --}}
             <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="$refresh">
                 <div class="ao-of-rows">
                     <div class="ao-of-row">
-                        <label class="ao-of-label" for="ao-bi-q">Client or Description</label>
+                        <label class="ao-of-label" for="ao-bi-client">Client</label>
+                        <span><input @nofill id="ao-bi-client" class="ao-of-lg" type="text"
+                            wire:model.live.debounce.500ms="client" placeholder="Start Typing to Search Clients"></span>
+                        <label class="ao-of-label" for="ao-bi-amount">Amount</label>
+                        <span><input @nofill id="ao-bi-amount" class="ao-of-sm" type="text" inputmode="decimal"
+                            wire:model.live.debounce.500ms="famount" placeholder="0.00"></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-bi-q">Description</label>
                         <span><input @nofill id="ao-bi-q" class="ao-of-lg" type="text"
-                            wire:model.live.debounce.500ms="q" placeholder="Client name, email or description"></span>
+                            wire:model.live.debounce.500ms="q" placeholder="Words from the description"></span>
+                        <label class="ao-of-label" for="ao-bi-status">Status</label>
+                        <span><select @nofill id="ao-bi-status" class="ao-of-md" wire:model.live="status">
+                            <option value="">Any</option>
+                            <option value="uninvoiced">Uninvoiced</option>
+                            <option value="invoiced">Invoiced</option>
+                            <option value="recurring">Recurring</option>
+                        </select></span>
                     </div>
                 </div>
-                <button type="submit" class="ao-of-go">Search</button>
+                <button type="submit" class="ao-of-go">Search/Filter</button>
             </form>
         @endif
 
         @if ($adding)
-            <form class="ao-anc-card" wire:submit.prevent="create">
-                <label class="ao-anc-row">
-                    <span>Client</span>
-                    <select class="ao-w-45" wire:model="userId" required>
-                        <option value="">Start Typing to Search Clients</option>
-                        @foreach ($clients as $client)
-                            <option value="{{ $client->id }}">{{ trim($client->first_name . ' ' . $client->last_name) ?: $client->email }} - #{{ $client->id }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label class="ao-anc-row">
-                    <span>Description</span>
-                    <input type="text" class="ao-w-45" wire:model="description" placeholder="e.g. Setup assistance, 2 hours" required>
-                </label>
-                <label class="ao-anc-row">
-                    <span>Hours/Qty</span>
-                    <input type="number" step="0.01" min="0.01" class="ao-w-25" wire:model="quantity" required>
-                </label>
-                <label class="ao-anc-row">
-                    <span>Amount</span>
-                    <input type="text" inputmode="decimal" class="ao-w-25" wire:model="amount" placeholder="0.00" required>
-                </label>
-                <label class="ao-anc-row">
-                    <span>Invoice Action</span>
-                    <select class="ao-w-45" wire:model="action">
-                        @foreach ($actions as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label class="ao-anc-row">
-                    <span>Recur</span>
-                    <select class="ao-w-25" wire:model="recur">
-                        <option value="">Never</option>
-                        <option value="week">Every week</option>
-                        <option value="month">Every month</option>
-                        <option value="quarter">Every quarter</option>
-                        <option value="year">Every year</option>
-                    </select>
-                </label>
-                <label class="ao-anc-row">
-                    <span>Due Date</span>
-                    <input type="date" class="ao-w-25" wire:model="dueDate">
-                </label>
-                <div class="ao-pr-center"><button type="submit" class="ao-find-go">Save Changes</button></div>
+            {{-- The reference's Add Billable Item, row for row: Client, Product/Service,
+                 Description, Hours/Qty, Amount, the Invoice Action radios with the
+                 recurrence inline, the (Next) Due Date calendar, Invoice Count. The two
+                 controls this billing model cannot honour are dead with the reason on
+                 their titles. --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="create">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-bi-user">Client</label>
+                        <span><select id="ao-bi-user" class="ao-of-lg" wire:model.live="userId" required>
+                            <option value="">Start Typing to Search Clients</option>
+                            @foreach ($clients as $row)
+                                <option value="{{ $row->id }}">{{ trim($row->first_name . ' ' . $row->last_name) ?: $row->email }} - #{{ $row->id }}</option>
+                            @endforeach
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-bi-service">Product/Service</label>
+                        <span><select id="ao-bi-service" class="ao-of-lg" wire:model="serviceId"
+                            @disabled(!$userId)>
+                            <option value="">None</option>
+                            @foreach ($clientServices as $service)
+                                <option value="{{ $service->id }}">#{{ $service->id }} · {{ $service->product?->name }}</option>
+                            @endforeach
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-bi-desc">Description</label>
+                        <span><input id="ao-bi-desc" class="ao-of-lg" type="text" wire:model="description"
+                            placeholder="e.g. Setup assistance, 2 hours" required></span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-bi-qty">Hours/Qty</label>
+                        <span><input id="ao-bi-qty" class="ao-of-sm" type="number" step="0.01" min="0.01"
+                            wire:model="quantity" required></span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-bi-amt">Amount</label>
+                        <span><input id="ao-bi-amt" class="ao-of-sm" type="text" inputmode="decimal"
+                            wire:model="amount" placeholder="0.00" required></span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">Invoice Action</span>
+                        <span class="ao-of-stack">
+                            <label class="ao-of-check">
+                                <input type="radio" value="{{ \Paymenter\Extensions\Others\BillableItems\Models\BillableItem::ACTION_HOLD }}" wire:model="action">
+                                Don't Invoice for Now
+                            </label>
+                            <label class="ao-of-check">
+                                <input type="radio" value="{{ \Paymenter\Extensions\Others\BillableItems\Models\BillableItem::ACTION_IMMEDIATELY }}" wire:model="action">
+                                Invoice on Next Cron Run
+                            </label>
+                            <label class="ao-of-check">
+                                <input type="radio" value="{{ \Paymenter\Extensions\Others\BillableItems\Models\BillableItem::ACTION_NEXT_INVOICE }}" wire:model="action">
+                                Add to User's Next Invoice
+                            </label>
+                            <label class="ao-of-check" title="Paymenter invoices from the daily run or the next invoice — there is no per-item due-date invoicing to schedule">
+                                <input type="radio" disabled>
+                                <s>Invoice as Normal for Due Date</s>
+                            </label>
+                            <span class="ao-of-inline">
+                                Recur Every
+                                <select class="ao-of-sm" wire:model="recur">
+                                    <option value="">Never</option>
+                                    <option value="week">Week</option>
+                                    <option value="month">Month</option>
+                                    <option value="quarter">Quarter</option>
+                                    <option value="year">Year</option>
+                                </select>
+                                for
+                                <input class="ao-of-sm" type="text" disabled placeholder="∞"
+                                    title="A recurrence here runs until the item is removed — no times counter is stored">
+                                Times
+                            </span>
+                        </span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-bi-due">(Next) Due Date</label>
+                        @include('adminops::partials.datepicker', [
+                            'model' => 'dueDate', 'range' => false, 'id' => 'ao-bi-due',
+                            'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                        ])
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-bi-count">Invoice Count</label>
+                        <span><input id="ao-bi-count" class="ao-of-sm" type="text" disabled placeholder="0"
+                            title="Counted from the invoices actually raised — not an editable number"></span>
+                    </div>
+                </div>
+                <div class="ao-of-buttons">
+                    <button type="submit" class="ao-find-go">Save Changes</button>
+                </div>
             </form>
             @if ($errors->any())
                 <ul class="ao-anc-errors">

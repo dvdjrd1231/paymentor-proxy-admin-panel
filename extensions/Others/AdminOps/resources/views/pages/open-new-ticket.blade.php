@@ -140,7 +140,9 @@
                     {{-- The reference's Add More reopens the picker; the input is already
                          multiple, so every pick adds to the set. --}}
                     <button type="button" class="ao-cq-addline"
-                        onclick="this.closest('.ao-anc-field').querySelector('[data-ao-attach]').click()">Add More</button>
+                        onclick="this.closest('.ao-anc-field').querySelector('[data-ao-attach]').click()">
+                        <span class="ao-ont-plus">&#10133;</span> Add More
+                    </button>
                 </span>
             </div>
             @error('attachments.*') <p class="ao-anc-errors">{{ $message }}</p> @enderror

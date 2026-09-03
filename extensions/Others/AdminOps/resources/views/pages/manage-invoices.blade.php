@@ -27,14 +27,57 @@
         </div>
 
         @if ($this->filter)
-            {{-- The reference's Search/Filter panel — the same two-column striped rows as
-                 Manage Orders', which is the shape every list page's panel takes. --}}
+            {{-- The reference's Search/Filter panel, field for field: Client Name,
+                 Invoice #, Line Item Description, Payment Method, Status and Total Due
+                 From/To on the left; the five date fields on the right, each with the
+                 shared calendar. Last Capture Attempt is the one honest dead field —
+                 no capture scheduler exists to stamp it (its column reads N/A). --}}
             <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="search">
                 <div class="ao-of-rows">
                     <div class="ao-of-row">
-                        <label class="ao-of-label" for="ao-mi-q">Invoice # / Client</label>
-                        <span><input @nofill id="ao-mi-q" class="ao-of-lg" type="text"
-                            wire:model="q" placeholder="Client name, email or invoice ID"></span>
+                        <label class="ao-of-label" for="ao-mi-client">Client Name</label>
+                        <span><input @nofill id="ao-mi-client" class="ao-of-lg" type="text"
+                            wire:model="client" placeholder="Start Typing to Search Clients"></span>
+                        <label class="ao-of-label" for="ao-mi-dinvoice">Invoice Date</label>
+                        @include('adminops::partials.datepicker', [
+                            'model' => 'dInvoice', 'range' => false, 'id' => 'ao-mi-dinvoice',
+                            'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                        ])
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-mi-inum">Invoice #</label>
+                        <span><input @nofill id="ao-mi-inum" class="ao-of-md" type="text"
+                            wire:model="inum" placeholder="Number or ID"></span>
+                        <label class="ao-of-label" for="ao-mi-ddue">Due Date</label>
+                        @include('adminops::partials.datepicker', [
+                            'model' => 'dDue', 'range' => false, 'id' => 'ao-mi-ddue',
+                            'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                        ])
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-mi-item">Line Item Description</label>
+                        <span><input @nofill id="ao-mi-item" class="ao-of-lg" type="text"
+                            wire:model="item" placeholder="Words from any line item"></span>
+                        <label class="ao-of-label" for="ao-mi-dpaid">Date Paid</label>
+                        @include('adminops::partials.datepicker', [
+                            'model' => 'dPaid', 'range' => false, 'id' => 'ao-mi-dpaid',
+                            'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                        ])
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-mi-method">Payment Method</label>
+                        <span><select @nofill id="ao-mi-method" class="ao-of-md" wire:model="method">
+                            <option value="">Any</option>
+                            @foreach ($gateways as $gateway)
+                                <option value="{{ $gateway->name }}">{{ $gateway->name }}</option>
+                            @endforeach
+                        </select></span>
+                        <label class="ao-of-label" for="ao-mi-dcapture">Last Capture Attempt</label>
+                        <span><input id="ao-mi-dcapture" class="ao-of-md" type="text" disabled
+                            placeholder="N/A"
+                            title="No capture scheduler exists to stamp this — the column itself reads N/A"></span>
+                    </div>
+                    <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-mi-status">Status</label>
                         <span><select @nofill id="ao-mi-status" class="ao-of-md" wire:model="status">
                             <option value="">Any</option>
@@ -47,6 +90,25 @@
                             <option value="collections">Collections</option>
                             <option value="payment_pending">Payment Pending</option>
                         </select></span>
+                        <label class="ao-of-label" for="ao-mi-drefunded">Date Refunded</label>
+                        @include('adminops::partials.datepicker', [
+                            'model' => 'dRefunded', 'range' => false, 'id' => 'ao-mi-drefunded',
+                            'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                        ])
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-mi-tfrom">Total Due</label>
+                        <span class="ao-of-inline">
+                            From <input @nofill id="ao-mi-tfrom" class="ao-of-sm" type="text" inputmode="decimal"
+                                wire:model="totalFrom" placeholder="0.00">
+                            To <input @nofill id="ao-mi-tto" class="ao-of-sm" type="text" inputmode="decimal"
+                                wire:model="totalTo" placeholder="0.00">
+                        </span>
+                        <label class="ao-of-label" for="ao-mi-dcancelled">Date Cancelled</label>
+                        @include('adminops::partials.datepicker', [
+                            'model' => 'dCancelled', 'range' => false, 'id' => 'ao-mi-dcancelled',
+                            'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                        ])
                     </div>
                 </div>
                 <button type="submit" class="ao-of-go">Search</button>

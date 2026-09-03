@@ -40,95 +40,10 @@
                     </div>
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-of-dates">Date Range</label>
-                        <span class="ao-of-date" x-data x-on:click.outside="$wire.pickerOpen && $wire.set('pickerOpen', false)">
-                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"
-                                width="13" height="13" aria-hidden="true">
-                                <rect x="1.8" y="2.8" width="12.4" height="11.4" rx="1.5" />
-                                <path d="M1.8 6.2h12.4M5 1.2v3.2M11 1.2v3.2" />
-                            </svg>
-                            <input @nofill id="ao-of-dates" class="ao-of-lg" type="text"
-                                wire:model="dates" wire:click="openPicker" placeholder="MM/DD/YYYY - MM/DD/YYYY">
-
-                            @if ($pickerOpen)
-                                @php
-                                    $leftMonth = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders::pickerGrid($pickerMonth);
-                                    $rightMonth = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders::pickerGrid(\Carbon\Carbon::parse($pickerMonth)->addMonth()->format('Y-m-d'));
-                                    $inRange = fn (string $d): bool => $pickStart && $pickEnd && $d >= $pickStart && $d <= $pickEnd;
-                                    $isEdge = fn (string $d): bool => $d === $pickStart || $d === $pickEnd;
-                                @endphp
-                                {{-- The reference's picker: presets down the left, two months
-                                     side by side, the chosen range with Clear and Apply below. --}}
-                                <div class="ao-dr">
-                                    <ul class="ao-dr-presets">
-                                        @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders::PRESETS as $key => $label)
-                                            <li><button type="button" wire:click="pickerPreset('{{ $key }}')">{{ $label }}</button></li>
-                                        @endforeach
-                                    </ul>
-                                    <div class="ao-dr-main">
-                                        <div class="ao-dr-months">
-                                            @foreach ([$leftMonth, $rightMonth] as $side => $month)
-                                                <div class="ao-dr-month">
-                                                    <div class="ao-dr-head">
-                                                        @if ($side === 0)
-                                                            <button type="button" class="ao-dr-nav" wire:click="pickerNav(-1)" aria-label="Previous month">&lsaquo;</button>
-                                                        @endif
-                                                        @php $base = \Carbon\Carbon::createFromFormat('Y-m', $month['ym']); @endphp
-                                                        <select wire:change="pickerMonthTo($event.target.value)">
-                                                            @foreach (range(1, 12) as $m)
-                                                                @php $option = $base->copy()->month($m)->subMonths($side); @endphp
-                                                                <option value="{{ $option->format('Y-m') }}" @selected($m === $base->month)>
-                                                                    {{ \Carbon\Carbon::create(null, $m)->format('F') }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                        <select wire:change="pickerMonthTo($event.target.value)">
-                                                            @foreach (range(now()->year - 6, now()->year + 1) as $y)
-                                                                @php $option = $base->copy()->year($y)->subMonths($side); @endphp
-                                                                <option value="{{ $option->format('Y-m') }}" @selected($y === $base->year)>{{ $y }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                        @if ($side === 1)
-                                                            <button type="button" class="ao-dr-nav" wire:click="pickerNav(1)" aria-label="Next month">&rsaquo;</button>
-                                                        @endif
-                                                    </div>
-                                                    <table class="ao-dr-grid">
-                                                        <thead>
-                                                            <tr>
-                                                                @foreach (['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as $dow)
-                                                                    <th>{{ $dow }}</th>
-                                                                @endforeach
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @foreach ($month['weeks'] as $week)
-                                                                <tr>
-                                                                    @foreach ($week as $cell)
-                                                                        <td>
-                                                                            <button type="button"
-                                                                                class="{{ $cell['in'] ? '' : 'ao-dr-out' }} {{ $isEdge($cell['d']) ? 'ao-dr-edge' : ($inRange($cell['d']) ? 'ao-dr-in' : '') }}"
-                                                                                wire:click="pickDay('{{ $cell['d'] }}')">{{ $cell['day'] }}</button>
-                                                                        </td>
-                                                                    @endforeach
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                        <div class="ao-dr-foot">
-                                            <span class="ao-dr-chosen">
-                                                @if ($pickStart)
-                                                    {{ \Carbon\Carbon::parse($pickStart)->format('m/d/Y') }} - {{ \Carbon\Carbon::parse($pickEnd ?? $pickStart)->format('m/d/Y') }}
-                                                @endif
-                                            </span>
-                                            <button type="button" class="ao-dr-clear" wire:click="pickerClear">Clear</button>
-                                            <button type="button" class="ao-dr-apply" wire:click="pickerApply">Apply</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-                        </span>
+                        @include('adminops::partials.datepicker', [
+                            'model' => 'dates', 'range' => true, 'id' => 'ao-of-dates',
+                            'placeholder' => 'MM/DD/YYYY - MM/DD/YYYY', 'class' => 'ao-of-lg',
+                        ])
                         <label class="ao-of-label" for="ao-of-status">Status</label>
                         <span><select @nofill id="ao-of-status" class="ao-of-sm" wire:model="status">
                             <option value="">Any</option>

@@ -3773,6 +3773,9 @@
 
     .ao-ont-submit { text-align: center; margin: 1rem 0; }
 
+    /* The reference's green ⊕ on Add More. */
+    .ao-ont-plus { color: #5cb85c; font-size: 0.8rem; }
+
     /* The related-service radio column (issue #20). */
     .ao-ont-radio { width: 2rem; text-align: center; }
 
