@@ -235,10 +235,15 @@
             <h4>Order Summary</h4>
             <div class="ao-ano-card">
                 @forelse ($summary['lines'] as $line)
+                    {{-- The reference's wording: "1 x Category - Product", the cycle on its
+                         own muted line beneath, the price against the first line. --}}
                     <div class="ao-ano-line">
-                        <span>{{ $line['label'] }} &times; {{ $line['quantity'] }}{{ $line['domain'] !== '' ? ' — ' . $line['domain'] : '' }}</span>
+                        <span>{{ $line['quantity'] }} x {{ $line['label'] }}{{ $line['domain'] !== '' ? ' — ' . $line['domain'] : '' }}</span>
                         <span>${{ number_format($line['total'], 2) }} {{ $summary['currency'] }}</span>
                     </div>
+                    @if ($line['cycle'])
+                        <div class="ao-ano-note">{{ $line['cycle'] }}</div>
+                    @endif
                     {{-- The reference's "» Region: …" annotation under a line — one per
                          option that has a value worth showing. --}}
                     @foreach ($line['notes'] as $note)
