@@ -58,7 +58,9 @@
                     <tr>
                         @switch($tab)
                             @case('services')
-                                <td><a class="ao-link" href="{{ $urls['service']($row->id) }}">#{{ $row->id }}</a></td>
+                                {{-- The reference's hop: the ID opens this profile's own
+                                     Products/Services editor with the service selected. --}}
+                                <td><a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $row->user_id, 'tab' => 'services', 'service' => $row->id]) }}">#{{ $row->id }}</a></td>
                                 <td>{{ $row->product?->name ?? 'product gone' }}</td>
                                 <td><span class="ao-tag">{{ $row->status }}</span></td>
                                 <td class="ao-num">{{ number_format((float) $row->price, 2) }} {{ $row->currency_code }}</td>

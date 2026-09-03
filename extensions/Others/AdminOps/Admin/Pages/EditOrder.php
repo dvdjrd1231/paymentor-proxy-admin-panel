@@ -52,7 +52,22 @@ class EditOrder extends Page
 
     public function getTitle(): string
     {
-        return 'Edit Order #' . $this->order->id;
+        // The reference keeps the list's own heading on its order view.
+        return 'Manage Orders';
+    }
+
+    /**
+     * The header's Status select: picking a state runs the matching whole-order action —
+     * the same three the buttons below wire, reached the reference's way.
+     */
+    public function setStatus(string $to): void
+    {
+        match ($to) {
+            'active' => $this->acceptOrder(),
+            'pending' => $this->setOrderPending(),
+            'cancelled' => $this->cancelOrder(),
+            default => null,
+        };
     }
 
     public function mount(int|string $record): void
@@ -267,9 +282,61 @@ class EditOrder extends Page
 
     protected function getViewData(): array
     {
+        $this->order->loadMissing([
+            'services.product.category', 'services.plan', 'services.invoices.transactions.gateway',
+            'services.coupon', 'user.properties',
+        ]);
+
+        $properties = $this->order->user?->properties?->pluck('value', 'key') ?? collect();
+
+        // The reference's IP Address line, from the created audit — the same trail the
+        // list's IP filter searches.
+        $ip = DB::table('audits')
+            ->where('auditable_type', Order::class)
+            ->where('auditable_id', $this->order->id)
+            ->where('event', 'created')
+            ->value('ip_address');
+
+        $affiliate = null;
+
+        if (class_exists(\Paymenter\Extensions\Others\Affiliates\Models\AffiliateOrder::class)) {
+            $affiliate = \Paymenter\Extensions\Others\Affiliates\Models\AffiliateOrder::with('affiliate.user')
+                ->where('order_id', $this->order->id)->first()?->affiliate?->user?->name;
+        }
+
+        $invoice = $this->order->services->flatMap->invoices->unique('id')->sortBy('id')->first();
+
         return [
             'products' => Product::with('category')->orderBy('name')->get(['id', 'name', 'category_id']),
             'plansByItem' => collect($this->items)->map(fn ($item) => $this->plansFor($item['productId'])),
+            'payment' => ManageOrders::paymentOf($this->order),
+            'statusNow' => ManageOrders::statusOf($this->order),
+            'number' => ManageOrders::numberOf($this->order),
+            'invoice' => $invoice,
+            'ip' => $ip,
+            'coupon' => $this->order->services->pluck('coupon')->filter()->first()?->code,
+            'affiliateName' => $affiliate,
+            'addressLines' => array_values(array_filter([
+                trim((string) ($properties['address1'] ?? $properties['address'] ?? '')),
+                trim(implode(', ', array_filter([
+                    $properties['city'] ?? null, $properties['state'] ?? null, $properties['zip'] ?? $properties['postcode'] ?? null,
+                ]))),
+                trim((string) ($properties['country'] ?? '')),
+            ], fn (string $line): bool => $line !== '')),
         ];
+    }
+
+    /** The Payment Status cell per line — this service's own invoices, settled or not. */
+    public static function linePayment(Service $service): array
+    {
+        $invoices = $service->invoices->unique('id');
+
+        if ($invoices->isEmpty()) {
+            return ['—', ''];
+        }
+
+        return $invoices->every(fn ($invoice) => $invoice->status === 'paid')
+            ? ['Complete', 'ao-mo-complete']
+            : ['Incomplete', 'ao-mo-incomplete'];
     }
 }
