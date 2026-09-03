@@ -95,9 +95,11 @@
                     </div>
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-tx-desc">Description</label>
-                        <span><input id="ao-tx-desc" class="ao-of-lg" type="text" disabled
-                            placeholder="Derived from the invoice"
-                            title="Paymenter transactions carry no description column — the ledger derives it from the invoice the payment lands on"></span>
+                        {{-- The reference's own field: real, blank, editable. Core's
+                             transaction row has no column for it — kept on the side in
+                             this extension's own table (issue: Add Transaction). --}}
+                        <span><input @nofill id="ao-tx-desc" class="ao-of-lg" type="text"
+                            wire:model="txDescription"></span>
                         <label class="ao-of-label" for="ao-tx-fees">Fees</label>
                         <span><input @nofill id="ao-tx-fees" class="ao-of-sm" type="text" inputmode="decimal"
                             wire:model="txFees" placeholder="0.00"></span>
