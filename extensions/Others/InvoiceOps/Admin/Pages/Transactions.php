@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Paymenter\Extensions\Others\InvoiceOps\Models\InvoiceRefund;
+use Paymenter\Extensions\Others\InvoiceOps\Models\TransactionNote;
 
 /**
  * The reference's **Transactions** page: money in, fees, money out.
@@ -83,6 +84,9 @@ class Transactions extends Page
 
     public string $txId = '';
 
+    /** The reference's own free-text Description — see {@see TransactionNote}. */
+    public string $txDescription = '';
+
     public string $txInvoice = '';
 
     public string $txMethod = '';
@@ -147,7 +151,8 @@ class Transactions extends Page
             'txOut' => 'nullable|numeric|min:0',
             'txInvoice' => 'nullable|string|max:64',
             'txId' => 'nullable|string|max:255',
-        ], attributes: ['txIn' => 'amount in', 'txFees' => 'fees', 'txOut' => 'amount out', 'txInvoice' => 'invoice ID']);
+            'txDescription' => 'nullable|string|max:255',
+        ], attributes: ['txIn' => 'amount in', 'txFees' => 'fees', 'txOut' => 'amount out', 'txInvoice' => 'invoice ID', 'txDescription' => 'description']);
 
         $in = (float) ($this->txIn ?: 0);
         $out = (float) ($this->txOut ?: 0);
@@ -189,6 +194,15 @@ class Transactions extends Page
                     $transaction->created_at = $when;
                     $transaction->save();
                 }
+
+                // The reference's own free-text Description — core's transaction row has
+                // no column for it, so it lands in this extension's own table instead.
+                if ($transaction && trim($this->txDescription) !== '') {
+                    TransactionNote::create([
+                        'transaction_id' => $transaction->id,
+                        'note' => trim($this->txDescription),
+                    ]);
+                }
             } elseif ($in > 0 && !$this->txCredit) {
                 $this->addError('txInvoice', 'An Amount In needs an invoice — or tick Credit to top up the client\'s balance instead.');
 
@@ -222,7 +236,9 @@ class Transactions extends Page
                     'amount' => $out,
                     'currency_code' => $invoice->currency_code,
                     'method' => InvoiceRefund::METHOD_OFFLINE,
-                    'reason' => $this->txId ?: 'Recorded from Add Transaction',
+                    // The reference's own Description field — an offline refund has no
+                    // gateway transaction to note instead, so it goes here.
+                    'reason' => trim($this->txDescription) ?: ($this->txId ?: 'Recorded from Add Transaction'),
                     'admin_id' => Auth::id(),
                 ]);
             }
@@ -233,7 +249,7 @@ class Transactions extends Page
         }
 
         Notification::make()->title('Transaction recorded')->success()->send();
-        $this->reset(['txClient', 'txId', 'txInvoice', 'txIn', 'txFees', 'txOut', 'txCredit']);
+        $this->reset(['txClient', 'txId', 'txInvoice', 'txIn', 'txFees', 'txOut', 'txCredit', 'txDescription']);
         $this->adding = false;
     }
 
@@ -263,8 +279,12 @@ class Transactions extends Page
             ->limit(200)
             ->get();
 
+        // One query for every note the visible page of transactions might have, keyed by
+        // transaction id — merge() reads this rather than each row firing its own lookup.
+        $notes = TransactionNote::whereIn('transaction_id', $rows->pluck('id'))->pluck('note', 'transaction_id');
+
         return [
-            'rows' => $this->sift($this->merge($rows, $refunds)),
+            'rows' => $this->sift($this->merge($rows, $refunds, $notes)),
             'totals' => $this->totals(),
             'deltas' => $this->deltas(),
             'chart' => $this->chart(),
@@ -481,7 +501,7 @@ class Transactions extends Page
      *
      * @return array<int, array<string, mixed>>
      */
-    private function merge($transactions, $refunds): array
+    private function merge($transactions, $refunds, $notes = null): array
     {
         $rows = [];
 
@@ -492,9 +512,11 @@ class Transactions extends Page
                 'method' => $transaction->is_credit_transaction
                     ? 'Account credit'
                     : ($transaction->gateway?->name ?? 'Unknown'),
-                // Two lines, as the reference prints them: the payment, then the gateway's
-                // transaction id underneath.
-                'description' => 'Invoice Payment (#' . ($transaction->invoice?->number ?: $transaction->invoice_id) . ')',
+                // The reference's own Description, when this transaction was given one on
+                // the Add Transaction form; the synthesised line otherwise — every
+                // transaction the daily cron or a webhook creates never had the chance.
+                'description' => $notes?->get($transaction->id)
+                    ?? 'Invoice Payment (#' . ($transaction->invoice?->number ?: $transaction->invoice_id) . ')',
                 'trans' => $transaction->transaction_id ?: null,
                 'in' => (float) $transaction->amount,
                 'fee' => (float) ($transaction->fee ?? 0),
