@@ -32,8 +32,12 @@ class PredefinedReplies extends Page
     #[Url]
     public string $category = '';
 
+    /** The reference's Search/Filter pair: Reply Name and Message, each its own field. */
     #[Url]
     public string $q = '';
+
+    #[Url]
+    public string $qBody = '';
 
     public string $newCategory = '';
 
@@ -69,6 +73,12 @@ class PredefinedReplies extends Page
 
     public function addReply(): void
     {
+        // The reference's own rule, word for word in the blade: a reply lives in a
+        // category, never at the top level.
+        if ($this->category === '') {
+            return;
+        }
+
         $this->validate([
             'replyTitle' => 'required|string|max:255',
             'replyBody' => 'required|string',
@@ -103,18 +113,19 @@ class PredefinedReplies extends Page
 
     protected function getViewData(): array
     {
+        $searching = $this->q !== '' || $this->qBody !== '';
+
         $replies = CannedResponse::query()
-            ->when($this->q !== '', fn ($q) => $q->where(fn ($w) => $w
-                ->where('title', 'like', '%' . $this->q . '%')
-                ->orWhere('body', 'like', '%' . $this->q . '%')))
-            ->when($this->q === '', fn ($q) => $this->category === ''
+            ->when($this->q !== '', fn ($q) => $q->where('title', 'like', '%' . $this->q . '%'))
+            ->when($this->qBody !== '', fn ($q) => $q->where('body', 'like', '%' . $this->qBody . '%'))
+            ->when(!$searching, fn ($q) => $this->category === ''
                 ? $q->whereNull('department')
                 : $q->where('department', $this->category))
             ->orderBy('title')
             ->get();
 
         return [
-            'categories' => $this->category === '' && $this->q === ''
+            'categories' => $this->category === '' && !$searching
                 ? PredefinedReplyCategory::orderBy('name')->get()
                 : collect(),
             'replies' => $replies,

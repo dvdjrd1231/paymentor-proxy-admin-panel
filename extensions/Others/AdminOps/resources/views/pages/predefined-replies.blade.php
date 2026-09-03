@@ -12,36 +12,55 @@
         </div>
 
         @if ($tab === 'category')
-            <form class="ao-anc-card" wire:submit.prevent="addCategory">
-                <label class="ao-anc-row">
-                    <span>Category Name</span>
-                    <input type="text" wire:model="newCategory" placeholder="e.g. Billing answers" required>
-                </label>
-                <div class="ao-pr-center"><button type="submit" class="ao-find-go">Add Category</button></div>
-            </form>
-        @elseif ($tab === 'reply')
-            <form class="ao-anc-card" wire:submit.prevent="addReply">
-                <label class="ao-anc-row">
-                    <span>Reply Name</span>
-                    <input type="text" wire:model="replyTitle" placeholder="e.g. Password reset steps" required>
-                </label>
-                <label class="ao-anc-row">
-                    <span>Reply Text</span>
-                    <textarea rows="6" wire:model="replyBody" placeholder="The reply staff will insert into tickets" required></textarea>
-                </label>
-                <div class="ao-pr-center"><button type="submit" class="ao-find-go">Add Predefined Reply</button></div>
-            </form>
-        @elseif ($tab === 'search')
-            {{-- The reference's Search/Filter panel — the same striped rows as Manage Orders'. --}}
-            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="$refresh">
+            {{-- The reference's Add Category: one striped row, the blue button centred. --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="addCategory">
                 <div class="ao-of-rows">
-                    <div class="ao-of-row">
-                        <label class="ao-of-label" for="ao-pr-q">Search Term</label>
-                        <span><input @nofill id="ao-pr-q" class="ao-of-lg" type="text"
-                            wire:model="q" placeholder="Title or reply text"></span>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-pr-cat">Category Name</label>
+                        <span><input id="ao-pr-cat" class="ao-of-xl" type="text" wire:model="newCategory" required></span>
                     </div>
                 </div>
-                <button type="submit" class="ao-of-go">Search</button>
+                <div class="ao-of-buttons">
+                    <button type="submit" class="ao-find-go">Add Category</button>
+                </div>
+            </form>
+        @elseif ($tab === 'reply')
+            @if ($category === '')
+                {{-- The reference's own refusal, word for word. --}}
+                <div class="ao-pr-notice">You cannot add a reply to the top level category</div>
+            @else
+                <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="addReply">
+                    <div class="ao-of-rows">
+                        <div class="ao-of-row ao-of-row-single">
+                            <label class="ao-of-label" for="ao-pr-title">Reply Name</label>
+                            <span><input id="ao-pr-title" class="ao-of-xl" type="text" wire:model="replyTitle" required></span>
+                        </div>
+                        <div class="ao-of-row ao-of-row-single">
+                            <label class="ao-of-label" for="ao-pr-body">Message</label>
+                            <span><textarea id="ao-pr-body" rows="6" wire:model="replyBody" required></textarea></span>
+                        </div>
+                    </div>
+                    <div class="ao-of-buttons">
+                        <button type="submit" class="ao-find-go">Add Predefined Reply</button>
+                    </div>
+                </form>
+            @endif
+        @elseif ($tab === 'search')
+            {{-- The reference's Search/Filter: Reply Name and Message, its own two rows. --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="$refresh">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-pr-q">Reply Name</label>
+                        <span><input @nofill id="ao-pr-q" class="ao-of-xl" type="text" wire:model="q"></span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-pr-qbody">Message</label>
+                        <span><input @nofill id="ao-pr-qbody" class="ao-of-xl" type="text" wire:model="qBody"></span>
+                    </div>
+                </div>
+                <div class="ao-of-buttons">
+                    <button type="submit" class="ao-find-go">Search/Filter</button>
+                </div>
             </form>
         @endif
 

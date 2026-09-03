@@ -3975,6 +3975,15 @@
 
     .ao-cs-addons .ao-mu-none { text-align: left; padding-left: 0.6rem; }
 
+    /* The reference's plain notice band (Predefined Replies' top-level refusal). */
+    .ao-pr-notice {
+        padding: 0.7rem 0.9rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 0 0 var(--wa-radius, 6px) var(--wa-radius, 6px);
+        background: #fff;
+        margin-bottom: 0.9rem;
+    }
+
     /* The related-service radio column (issue #20). */
     .ao-ont-radio { width: 2rem; text-align: center; }
 
