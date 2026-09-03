@@ -4207,6 +4207,12 @@
 
     .ao-ps-detail-actions .ao-find-go { text-decoration: none; display: inline-flex; align-items: center; }
 
+    /* Issue #4: guarantee the detail-panel action buttons are white-on-blue. The generic
+       `.ao-mu-grid a` link colour sits in the same cascade, and the client caught a build
+       where it won — leaving a solid blue pill with invisible blue text. This rule
+       (0,3,1) outranks it unconditionally, so the text can never vanish again. */
+    .ao-mu-grid .ao-ps-detail-actions a.ao-find-go { color: #fff; }
+
     .ao-hl-pre {
         white-space: pre-wrap;
         word-break: break-all;
