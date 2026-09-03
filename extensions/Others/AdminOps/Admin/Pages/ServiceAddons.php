@@ -86,6 +86,9 @@ class ServiceAddons extends Page
 
     public ?string $confirmingCancel = null;
 
+    /** Which addon row's +/− detail band is unfolded (issue #7); null is all folded. */
+    public ?int $expanded = null;
+
     public static function canAccess(): bool
     {
         return ServiceResource::canViewAny();

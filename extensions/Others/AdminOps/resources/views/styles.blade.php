@@ -3507,6 +3507,9 @@
 
     .ao-pr-crumb { margin: 0.8rem 0 0.6rem; }
 
+    /* The reference paints the crumb's location in link blue (issues #21, #23, #24). */
+    .ao-pr-here { color: var(--wa-link, #337ab7); }
+
     .ao-pr-none { margin: 0.8rem 0; }
 
     .ao-pr-row {
@@ -4498,11 +4501,53 @@
 
     .ao-et-icon { width: 3rem; }
 
-    .ao-et-dot { font-weight: 700; }
+    /* The reference's status marks are circled badges, not bare glyphs (issue #48). */
+    .ao-et-dot {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.35rem;
+        height: 1.35rem;
+        border-radius: 50%;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #fff;
+    }
 
-    .ao-et-dot.ao-on { color: #5cb85c; }
+    .ao-et-dot.ao-on { background: #5cb85c; }
 
-    .ao-et-dot.ao-off { color: #d9534f; }
+    .ao-et-dot.ao-off { background: #d9534f; }
+
+    /* Service Addons (issue #7): the reference's +/− toggle and its unfolded band. */
+    .ao-sa-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.4rem;
+        height: 1.4rem;
+        margin-inline-end: 0.25rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--wa-ink, #2b2b2b);
+        cursor: pointer;
+        vertical-align: middle;
+    }
+
+    .ao-sa-toggle:hover { color: var(--wa-link, #337ab7); }
+
+    .ao-sa-detail td {
+        background: #f7f7f7;
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+    }
+
+    .ao-sa-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+        gap: 0.4rem 1.5rem;
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
 
     /* API Credentials (issue #50): the reference's Generate button is green. */
     .ao-api-generate { background: #5cb85c; border-color: #4cae4c; color: #fff; }

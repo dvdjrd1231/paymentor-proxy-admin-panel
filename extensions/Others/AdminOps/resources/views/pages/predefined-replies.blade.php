@@ -54,7 +54,7 @@
         <p class="ao-pr-crumb">
             You are here:
             @if ($category === '')
-                Top Level
+                <span class="ao-pr-here">Top Level</span>
             @else
                 <button type="button" class="ao-cp-link" wire:click="$set('category', '')">Top Level</button> &raquo; {{ $category }}
             @endif

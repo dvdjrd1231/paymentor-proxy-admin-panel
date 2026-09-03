@@ -8,6 +8,12 @@
         @if ($newUrl)
             <div class="ao-tx-tabs">
                 <a class="ao-mu-tab" href="{{ $newUrl }}">&#10010; Create New Email Template</a>
+                {{-- The reference's second button; Paymenter templates are single-language,
+                     so this is the accepted honestly-dead control (issue #48). --}}
+                <span class="ao-mu-tab ao-tx-tab-dead"
+                    title="Paymenter email templates are single-language — there are no per-language variants to manage">
+                    &#127760; Manage Languages
+                </span>
             </div>
         @endif
 
