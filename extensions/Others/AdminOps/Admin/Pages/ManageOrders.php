@@ -67,6 +67,14 @@ class ManageOrders extends Page
     #[Url]
     public string $pay = '';
 
+    /**
+     * The reference's IP Address field, real here through the audit trail: core audits
+     * every order, and the `created` audit carries the requester's IP. Orders that predate
+     * auditing simply never match, which is the truthful answer.
+     */
+    #[Url]
+    public string $ip = '';
+
     #[Url]
     public int $page = 1;
 
@@ -525,6 +533,14 @@ class ManageOrders extends Page
 
         if ($to) {
             $query->whereDate('created_at', '<=', $to);
+        }
+
+        if (trim($this->ip) !== '') {
+            $query->whereIn('id', DB::table('audits')
+                ->where('auditable_type', Order::class)
+                ->where('event', 'created')
+                ->where('ip_address', 'like', '%' . trim($this->ip) . '%')
+                ->pluck('auditable_id'));
         }
 
         return $query;

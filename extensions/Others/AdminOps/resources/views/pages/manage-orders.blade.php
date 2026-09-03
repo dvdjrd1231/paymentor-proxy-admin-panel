@@ -144,9 +144,9 @@
                         <span><input @nofill id="ao-of-amount" class="ao-of-sm" type="text" inputmode="decimal"
                             wire:model="amount" placeholder="0.00"></span>
                         <label class="ao-of-label" for="ao-of-ip">IP Address</label>
-                        <span><input id="ao-of-ip" class="ao-of-md" type="text" disabled
-                            placeholder="Not recorded"
-                            title="Paymenter does not record an IP address on orders, so this field cannot filter anything"></span>
+                        <span><input @nofill id="ao-of-ip" class="ao-of-md" type="text"
+                            wire:model="ip" placeholder="e.g. 203.0.113.7"
+                            title="Matches the IP the order's creation was audited from"></span>
                     </div>
                 </div>
                 <datalist id="ao-of-clients">
