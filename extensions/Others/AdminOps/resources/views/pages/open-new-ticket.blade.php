@@ -71,9 +71,17 @@
                 </tr>
             </thead>
             <tbody>
+                {{-- The reference's radio column: the ticket is opened about one of the
+                     client's services, or explicitly about None (issue #20). --}}
+                @if ($services->isNotEmpty())
+                    <tr>
+                        <td class="ao-ont-radio"><input type="radio" name="ont-service" value="" wire:model="service" aria-label="No related service"></td>
+                        <td class="ao-mu-left" colspan="6">None</td>
+                    </tr>
+                @endif
                 @forelse ($services as $service)
                     <tr>
-                        <td></td>
+                        <td class="ao-ont-radio"><input type="radio" name="ont-service" value="{{ $service->id }}" wire:model="service" aria-label="Relate to service #{{ $service->id }}"></td>
                         <td class="ao-mu-left">{{ $service->product?->name ?? '—' }}</td>
                         <td>${{ number_format((float) $service->price, 2) }} {{ $service->currency_code }}</td>
                         <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::cycle($service) }}</td>
