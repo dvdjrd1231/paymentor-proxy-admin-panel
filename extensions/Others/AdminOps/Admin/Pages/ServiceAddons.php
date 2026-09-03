@@ -36,6 +36,8 @@ class ServiceAddons extends Page
 
     public const CATEGORY = 'Service Addons';
 
+    /** URL-bound like every other panel toggle, so a filtered view can be linked. */
+    #[Url]
     public bool $filter = false;
 
     #[Url]
@@ -63,6 +65,17 @@ class ServiceAddons extends Page
      */
     #[Url]
     public string $paymentMethod = '';
+
+    /** Product Type — the parent product's category, as the reference filters it. */
+    #[Url]
+    public string $parentType = '';
+
+    /** A config option id on the parent service; the value text below narrows within it. */
+    #[Url]
+    public string $cfField = '';
+
+    #[Url]
+    public string $cfValue = '';
 
     #[Url]
     public bool $hideInactive = true;
@@ -213,6 +226,28 @@ class ServiceAddons extends Page
                 strtolower(($a->parent->user->first_name ?? '') . ' ' . ($a->parent->user->last_name ?? '') . ' ' . ($a->parent->user->email ?? '')),
                 strtolower($this->clientName),
             )))
+            ->when($this->parentType !== '' && ctype_digit($this->parentType), fn ($list) => $list->filter(
+                fn ($a) => ($a->parent->product?->category_id ?? null) === (int) $this->parentType,
+            ))
+            ->when($this->cfField !== '' && ctype_digit($this->cfField), function ($list) {
+                // One query for the parent-service ids whose configs carry the chosen
+                // option (and value text, if given) — via whereHas so Eloquent supplies
+                // the morph constraint — then the in-memory list keeps only addons whose
+                // parent is among them.
+                $serviceIds = Service::query()->whereHas('configs', function ($q): void {
+                    $q->where('config_option_id', (int) $this->cfField);
+
+                    if ($this->cfValue !== '') {
+                        $q->whereIn('config_value_id', \App\Models\ConfigOption::query()
+                            ->where('parent_id', (int) $this->cfField)
+                            ->where(fn ($w) => $w->where('name', 'like', '%' . $this->cfValue . '%')
+                                ->orWhere('env_variable', 'like', '%' . $this->cfValue . '%'))
+                            ->pluck('id'));
+                    }
+                })->pluck('id')->flip();
+
+                return $list->filter(fn ($a) => $serviceIds->has($a->parent->id));
+            })
             ->values();
 
         return [
@@ -222,6 +257,8 @@ class ServiceAddons extends Page
             'parentProducts' => Product::where('category_id', '!=', $category->id)->orderBy('name')->get(['id', 'name']),
             'servers' => Server::orderBy('name')->get(['id', 'name']),
             'gateways' => \App\Models\Gateway::orderBy('name')->get(['id', 'name']),
+            'parentTypes' => Category::where('id', '!=', $category->id)->orderBy('name')->get(['id', 'name']),
+            'customFields' => \App\Models\ConfigOption::whereNull('parent_id')->orderBy('name')->get(['id', 'name']),
             'parents' => Service::whereIn('status', ['active', 'suspended'])
                 ->where(fn ($q) => $q->whereNotIn('id', ServiceAddon::pluck('service_id')))
                 ->with(['product', 'user'])->latest('id')->limit(300)->get(),

@@ -20,70 +20,98 @@
         @endif
 
         @if ($filter)
-            {{-- The reference's two-column framed filter; every control is live. --}}
-            <div class="ao-stf ao-stf-two">
-                <label class="ao-stf-row">
-                    <span>Addon</span>
-                    <select class="ao-stf-small" wire:model.live="addon">
-                        <option value="">Any</option>
-                        @foreach ($catalogue as $product)
-                            <option value="{{ $product->id }}">{{ $product->name }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label class="ao-stf-row">
-                    <span>Server</span>
-                    <select class="ao-stf-small" wire:model.live="server">
-                        <option value="">Any</option>
-                        @foreach ($servers as $row)
-                            <option value="{{ $row->id }}">{{ $row->name }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label class="ao-stf-row">
-                    <span>Product/Service</span>
-                    <select class="ao-stf-small" wire:model.live="parentProduct">
-                        <option value="">Any</option>
-                        @foreach ($parentProducts as $product)
-                            <option value="{{ $product->id }}">{{ $product->name }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label class="ao-stf-row">
-                    <span>Billing Cycle</span>
-                    <select class="ao-stf-small" wire:model.live="cycle">
-                        <option value="">Any</option>
-                        <option>Monthly</option>
-                        <option>Quarterly</option>
-                        <option>Semi-Annually</option>
-                        <option>Annually</option>
-                        <option>One Time</option>
-                    </select>
-                </label>
-                <label class="ao-stf-row">
-                    <span>Status</span>
-                    <select class="ao-stf-small" wire:model.live="status">
-                        <option value="">Any</option>
-                        <option value="pending">Pending</option>
-                        <option value="active">Active</option>
-                        <option value="suspended">Suspended</option>
-                        <option value="cancelled">Terminated</option>
-                    </select>
-                </label>
-                <label class="ao-stf-row">
-                    <span>Client Name</span>
-                    <input type="text" class="ao-stf-mid" wire:model.live.debounce.500ms="clientName" placeholder="Name or email">
-                </label>
-                <label class="ao-stf-row">
-                    <span>Payment Method</span>
-                    <select class="ao-stf-small" wire:model.live="paymentMethod">
-                        <option value="">Any</option>
-                        @foreach ($gateways as $gateway)
-                            <option value="{{ $gateway->name }}">{{ $gateway->name }}</option>
-                        @endforeach
-                    </select>
-                </label>
-            </div>
+            {{-- The reference's Search/Filter panel, field for field and in its order:
+                 Addon, Product/Service, Payment Method, Status, Domain, Client Name on
+                 the left; Product Type, Server, Billing Cycle, Custom Field, Custom Field
+                 Value on the right. Every control is live; the Search button is the same
+                 submit the other panels carry. Domain is the one honestly-dead field —
+                 proxy services carry none — with the reason on its title. --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="$refresh">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-sa-addon">Addon</label>
+                        <span><select id="ao-sa-addon" class="ao-of-md" wire:model.live="addon">
+                            <option value="">Any</option>
+                            @foreach ($catalogue as $product)
+                                <option value="{{ $product->id }}">{{ $product->name }}</option>
+                            @endforeach
+                        </select></span>
+                        <label class="ao-of-label" for="ao-sa-ptype">Product Type</label>
+                        <span><select id="ao-sa-ptype" class="ao-of-md" wire:model.live="parentType">
+                            <option value="">Any</option>
+                            @foreach ($parentTypes as $row)
+                                <option value="{{ $row->id }}">{{ $row->name }}</option>
+                            @endforeach
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-sa-parent">Product/Service</label>
+                        <span><select id="ao-sa-parent" class="ao-of-md" wire:model.live="parentProduct">
+                            <option value="">Any</option>
+                            @foreach ($parentProducts as $product)
+                                <option value="{{ $product->id }}">{{ $product->name }}</option>
+                            @endforeach
+                        </select></span>
+                        <label class="ao-of-label" for="ao-sa-server">Server</label>
+                        <span><select id="ao-sa-server" class="ao-of-md" wire:model.live="server">
+                            <option value="">Any</option>
+                            @foreach ($servers as $row)
+                                <option value="{{ $row->id }}">{{ $row->name }}</option>
+                            @endforeach
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-sa-pay">Payment Method</label>
+                        <span><select id="ao-sa-pay" class="ao-of-md" wire:model.live="paymentMethod">
+                            <option value="">Any</option>
+                            @foreach ($gateways as $gateway)
+                                <option value="{{ $gateway->name }}">{{ $gateway->name }}</option>
+                            @endforeach
+                        </select></span>
+                        <label class="ao-of-label" for="ao-sa-cycle">Billing Cycle</label>
+                        <span><select id="ao-sa-cycle" class="ao-of-sm" wire:model.live="cycle">
+                            <option value="">Any</option>
+                            <option>Monthly</option>
+                            <option>Quarterly</option>
+                            <option>Semi-Annually</option>
+                            <option>Annually</option>
+                            <option>One Time</option>
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-sa-status">Status</label>
+                        <span><select id="ao-sa-status" class="ao-of-sm" wire:model.live="status">
+                            <option value="">Any</option>
+                            <option value="pending">Pending</option>
+                            <option value="active">Active</option>
+                            <option value="suspended">Suspended</option>
+                            <option value="cancelled">Terminated</option>
+                        </select></span>
+                        <label class="ao-of-label" for="ao-sa-cf">Custom Field</label>
+                        <span><select id="ao-sa-cf" class="ao-of-md" wire:model.live="cfField">
+                            <option value="">Any</option>
+                            @foreach ($customFields as $row)
+                                <option value="{{ $row->id }}">{{ $row->name }}</option>
+                            @endforeach
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-sa-domain">Domain</label>
+                        <span><input id="ao-sa-domain" class="ao-of-md" type="text" disabled
+                            placeholder="Not recorded"
+                            title="Proxy services carry no domain, so this field cannot filter anything"></span>
+                        <label class="ao-of-label" for="ao-sa-cfv">Custom Field Value</label>
+                        <span><input id="ao-sa-cfv" class="ao-of-lg" type="text"
+                            wire:model.live.debounce.500ms="cfValue" placeholder="Value within the chosen field"></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-sa-client">Client Name</label>
+                        <span><input id="ao-sa-client" class="ao-of-lg" type="text"
+                            wire:model.live.debounce.500ms="clientName" placeholder="Name or email"></span>
+                    </div>
+                </div>
+                <button type="submit" class="ao-of-go">Search</button>
+            </form>
         @endif
 
         @if ($adding)
@@ -134,10 +162,21 @@
         <div class="ao-mu-line">
             <span>{{ number_format($addons->count()) }} Records Found</span>
             <span class="ao-mu-line-right">
+                {{-- The reference's order and wording: Jump to Page, the pill, the select.
+                     This list shows every addon on one page, so the select honestly
+                     offers the one page there is. --}}
+                <label class="ao-mu-jump">
+                    Jump to Page:
+                </label>
                 <button type="button" class="ao-mu-toggle {{ $hideInactive ? 'ao-on' : '' }}" wire:click="toggleInactive">
                     <i>{{ $hideInactive ? 'ON' : 'OFF' }}</i>
-                    Hide Inactive ({{ number_format($hiddenCount) }})
+                    Hide Inactive Clients ({{ number_format($hiddenCount) }})
                 </button>
+                <label class="ao-mu-jump">
+                    <select>
+                        <option selected>1</option>
+                    </select>
+                </label>
             </span>
         </div>
 
