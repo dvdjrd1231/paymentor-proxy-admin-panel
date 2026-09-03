@@ -4598,7 +4598,9 @@
         margin: 0 0.25rem;
     }
 
-    .ao-ni-options .ao-ni-new { color: #5cb85c; font-weight: 600; }
+    .ao-ni-options .ao-ni-new { color: #5cb85c; font-weight: 600; align-items: center; gap: 0.25rem; }
+
+    .ao-ni-new-ic { width: 1.05em; height: 1.05em; color: #5cb85c; }
 
     /* The reference's dialling-code picker sits flush against its number field. */
     .ao-find-phone { display: flex; }
@@ -4619,24 +4621,27 @@
     }
 
     /* The rail's Filter Tickets form. */
+    /* Issue #25: the reference's Filter Tickets box is tighter than ours was — the
+       extra height here was what pushed the rail past the viewport and put a page
+       scrollbar on otherwise-short pages. */
     .ao-rail-filter {
         display: flex;
         flex-direction: column;
-        gap: 0.55rem;
-        padding: 0.7rem 0.9rem;
+        gap: 0.4rem;
+        padding: 0.55rem 0.9rem;
     }
 
     .ao-rail-filter label {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: 0.15rem;
         font-weight: 600;
-        font-size: 0.9rem;
+        font-size: 0.875rem;
     }
 
     .ao-rail-filter select,
     .ao-rail-filter input {
-        height: 1.9rem;
+        height: 1.7rem;
         padding: 0 0.45rem;
         border: 1px solid var(--wa-border, #ccc);
         border-radius: var(--wa-radius, 6px);
@@ -4647,8 +4652,8 @@
     }
 
     .ao-rail-filter button {
-        margin-top: 0.2rem;
-        height: 2.1rem;
+        margin-top: 0.1rem;
+        height: 1.9rem;
         border: 0;
         border-radius: var(--wa-radius, 6px);
         background: #337ab7;
@@ -4659,6 +4664,33 @@
     }
 
     .ao-rail-filter button:hover { background: #286090; }
+
+    /* Advanced Search (rail): the reference puts the term and its Search button — the
+       plain grey one, not Filter Tickets' blue — on one row. */
+    .ao-rail-search-row { display: flex; gap: 0.35rem; }
+
+    .ao-rail-search-row input { flex: 1; min-width: 0; }
+
+    .ao-rail-search-row button {
+        margin-top: 0;
+        height: 1.7rem;
+        padding: 0 0.7rem;
+        background: #fff;
+        border: 1px solid var(--wa-border, #ccc);
+        color: var(--wa-ink, #2b2b2b);
+    }
+
+    .ao-rail-search-row button:hover { background: #ededed; }
+
+    /* An honestly-dead rail entry (Domain Registrations): sits in the list where the
+       reference lists it, muted and un-underlined, its reason on the title. */
+    .ao-rail-list .ao-rail-dead {
+        display: flex;
+        padding: 2px 0;
+        color: var(--wa-muted, #6b6b6b);
+        line-height: 1.5;
+        cursor: help;
+    }
 
     /* The small "Are you sure?" variant of the modal, as the reference confirms resets. */
     .ao-mud-sm { width: 37rem; }
