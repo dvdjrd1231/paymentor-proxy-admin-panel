@@ -188,38 +188,33 @@
                     </tr>
                     @if ($expanded === $service->id)
                         @php
-                            // Issue #4: the reference's Server/Username pair, which for this
-                            // store's own proxy service is real, stored data — the ProxyPanel
-                            // module's own service properties — not something to invent.
+                            // The reference's own expand-row field set — Order #, Registration
+                            // Date, Server, Dedicated IP, Username, Payment Method, Promotion
+                            // Code — not the fuller Client Profile service editor's set this
+                            // panel borrowed from before. Server/Dedicated IP/Username are real,
+                            // stored data — the ProxyPanel module's own service properties, not
+                            // invented; Payment Method is the same gateway lookup Payment Method
+                            // filtering already uses on this page.
                             $props = $service->properties;
                             $username = $props->firstWhere('key', 'proxy_username')?->value;
+                            $dedicatedIp = $props->firstWhere('key', 'dedicated_ip')?->value;
+                            $method = $service->invoices->flatMap->transactions->first()?->gateway?->name;
                         @endphp
                         <tr class="ao-ps-detail">
                             <td colspan="10">
                                 <div class="ao-ps-detail-grid">
                                     <dl>
-                                        <dt>Registration Date</dt><dd>{{ $service->created_at?->format('m/d/Y H:i') }}</dd>
-                                        <dt>First Payment</dt><dd>${{ number_format((float) $service->price, 2) }} {{ $service->currency_code }}</dd>
-                                        <dt>Recurring Amount</dt><dd>${{ number_format((float) $service->price * (float) $service->quantity, 2) }} {{ $service->currency_code }}</dd>
-                                        <dt>Quantity</dt><dd>{{ (int) $service->quantity }}</dd>
-                                    </dl>
-                                    <dl>
-                                        <dt>Billing Cycle</dt><dd>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::cycle($service) }}</dd>
-                                        <dt>Next Due Date</dt><dd>{{ $service->expires_at?->format('m/d/Y') ?? '—' }}</dd>
-                                        <dt>Order</dt><dd>#{{ $service->order_id }}</dd>
-                                        <dt>Status</dt><dd>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel($service->status) }}</dd>
+                                        <dt>Order #</dt><dd>{{ $service->order_id }}</dd>
+                                        <dt>Registration Date</dt><dd>{{ $service->created_at?->format('m/d/Y') }}</dd>
                                     </dl>
                                     <dl>
                                         <dt>Server</dt><dd>{{ $service->product?->server?->name ?? '—' }}</dd>
-                                        <dt>Username</dt><dd>{{ $username ?? '—' }}</dd>
-                                        <dt>Configuration</dt>
-                                        <dd>
-                                            @forelse ($service->configs as $config)
-                                                {{ $config->configOption?->name ?? 'Option' }}: {{ $config->configValue?->name ?? $config->value ?? '—' }}<br>
-                                            @empty
-                                                No configurable options
-                                            @endforelse
-                                        </dd>
+                                        <dt>Dedicated IP</dt><dd>{{ $dedicatedIp ?: '-' }}</dd>
+                                    </dl>
+                                    <dl>
+                                        <dt>Username</dt><dd>{{ $username ?: '—' }}</dd>
+                                        <dt>Payment Method</dt><dd>{{ $method ?? '—' }}</dd>
+                                        <dt>Promotion Code</dt><dd>{{ $service->coupon?->code ?? 'None' }}</dd>
                                     </dl>
                                     <div class="ao-ps-detail-actions">
                                         <a class="ao-find-go" href="{{ $edit }}">Open Full Service</a>
