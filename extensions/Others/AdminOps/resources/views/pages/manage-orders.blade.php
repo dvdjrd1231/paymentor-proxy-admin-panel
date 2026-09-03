@@ -12,37 +12,69 @@
         </div>
 
         @if ($this->filter)
-            <form class="ao-find" autocomplete="off" wire:submit.prevent="search">
-                <span class="ao-find-glass" aria-hidden="true">
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" width="18" height="18">
-                        <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
-                    </svg>
-                </span>
-                <div class="ao-find-fields">
-                    <label class="ao-find-field ao-find-wide">
-                        <span class="ao-find-label">Client Name/Email or Order ID</span>
-                        <input @nofill type="search" wire:model="q" placeholder="Client name, email or order ID">
-                    </label>
-                    <label class="ao-find-field">
-                        <span class="ao-find-label">Status</span>
-                        <select @nofill wire:model="status">
+            {{-- The reference's Search/Filter panel: two columns of striped label/field rows —
+                 Order ID, Order #, Date Range, Amount | Client, Payment Status, Status,
+                 IP Address — with the Search button centred underneath. Every field filters
+                 for real except IP Address, which Paymenter does not record; that one is
+                 honestly dead with the reason on its title. --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="search">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-of-oid">Order ID</label>
+                        <span><input @nofill id="ao-of-oid" class="ao-of-sm" type="text" inputmode="numeric"
+                            wire:model="oid" placeholder="ID"></span>
+                        <label class="ao-of-label" for="ao-of-client">Client</label>
+                        <span><input @nofill id="ao-of-client" class="ao-of-lg" type="text" list="ao-of-clients"
+                            wire:model="client" placeholder="Start Typing to Search Clients"></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-of-onum">Order #</label>
+                        <span><input @nofill id="ao-of-onum" class="ao-of-md" type="text" inputmode="numeric"
+                            wire:model="onum" placeholder="Order number"></span>
+                        <label class="ao-of-label" for="ao-of-pay">Payment Status</label>
+                        <span><select @nofill id="ao-of-pay" class="ao-of-sm" wire:model="pay">
+                            <option value="">Any</option>
+                            <option value="complete">Complete</option>
+                            <option value="incomplete">Incomplete</option>
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-of-dates">Date Range</label>
+                        <span class="ao-of-date">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"
+                                width="13" height="13" aria-hidden="true">
+                                <rect x="1.8" y="2.8" width="12.4" height="11.4" rx="1.5" />
+                                <path d="M1.8 6.2h12.4M5 1.2v3.2M11 1.2v3.2" />
+                            </svg>
+                            <input @nofill id="ao-of-dates" class="ao-of-lg" type="text"
+                                wire:model="dates" placeholder="MM/DD/YYYY - MM/DD/YYYY">
+                        </span>
+                        <label class="ao-of-label" for="ao-of-status">Status</label>
+                        <span><select @nofill id="ao-of-status" class="ao-of-sm" wire:model="status">
                             <option value="">Any</option>
                             <option value="pending">Pending</option>
                             <option value="active">Active</option>
                             <option value="fraud">Fraud</option>
                             <option value="suspended">Suspended</option>
                             <option value="cancelled">Cancelled</option>
-                        </select>
-                    </label>
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-of-amount">Amount</label>
+                        <span><input @nofill id="ao-of-amount" class="ao-of-sm" type="text" inputmode="decimal"
+                            wire:model="amount" placeholder="0.00"></span>
+                        <label class="ao-of-label" for="ao-of-ip">IP Address</label>
+                        <span><input id="ao-of-ip" class="ao-of-md" type="text" disabled
+                            placeholder="Not recorded"
+                            title="Paymenter does not record an IP address on orders, so this field cannot filter anything"></span>
+                    </div>
                 </div>
-                <button type="submit" class="ao-find-go">
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" width="13" height="13" aria-hidden="true">
-                        <circle cx="9" cy="9" r="5.5" /><path d="M13.5 13.5 17 17" />
-                    </svg>
-                    Search
-                </button>
+                <datalist id="ao-of-clients">
+                    @foreach ($clientOptions as $option)
+                        <option value="{{ $option }}"></option>
+                    @endforeach
+                </datalist>
+                <button type="submit" class="ao-of-go">Search</button>
             </form>
         @endif
 
