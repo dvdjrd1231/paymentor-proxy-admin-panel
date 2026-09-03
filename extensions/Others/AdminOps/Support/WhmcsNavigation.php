@@ -400,7 +400,12 @@ class WhmcsNavigation
             ),
             static::pageLink(BillableItemsList::class, '- Uninvoiced Items', params: ['view' => 'uninvoiced']),
             static::pageLink(BillableItemsList::class, '- Recurring Items', params: ['view' => 'recurring']),
-            static::pageLink(BillableItemsList::class, 'Add New', params: ['adding' => 1]),
+            // Same level as Uninvoiced/Recurring Items — the dash groups it with its
+            // siblings under Billable Items rather than reading as a bare top-level
+            // entry beside Quotes/Offline CC Processing (a true nested flyout is not
+            // reachable here: Filament refuses a childItems() parent's icon when the
+            // enclosing group already has one, which every group here does).
+            static::pageLink(BillableItemsList::class, '- Add New', params: ['adding' => 1]),
             static::pageLink(
                 QuotesList::class,
                 'Quotes',
