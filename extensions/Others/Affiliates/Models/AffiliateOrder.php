@@ -44,11 +44,21 @@ class AffiliateOrder extends Model
                 $invoices = $this->order->invoices;
                 $extension = ExtensionHelper::getExtension('other', 'Affiliates');
                 $reward_percentage = $this->affiliate->reward ?: $extension->config('default_reward');
+                // The reference's "Pay One Time Only": {@see RewardAffiliate} credits only
+                // the first paid invoice for a one-time-only affiliate, so the earnings
+                // shown here must stop at that same one or the balance would claim more
+                // than was ever actually credited.
+                $oneTimeOnly = (bool) ($this->affiliate->one_time_only ?? false);
+                $counted = false;
 
-                $invoices->each(function ($invoice) use (&$earnings, $reward_percentage) {
+                $invoices->sortBy('id')->each(function ($invoice) use (&$earnings, &$counted, $reward_percentage, $oneTimeOnly) {
                     if ($invoice->status !== 'paid') {
                         return;
                     }
+                    if ($oneTimeOnly && $counted) {
+                        return;
+                    }
+                    $counted = true;
                     if (!isset($earnings[$invoice->currency->name])) {
                         $earnings[$invoice->currency->name] = 0;
                     }

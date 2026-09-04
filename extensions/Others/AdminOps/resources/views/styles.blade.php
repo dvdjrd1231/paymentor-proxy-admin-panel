@@ -5180,6 +5180,38 @@
 
     @media (max-width: 1000px) { .ao-af-cols { grid-template-columns: 1fr; } }
 
+    /* Commission Type radios and Pay One Time Only (issue #6's screenshot target).
+       Inline, as the reference lays them: "◉ Use Default ○ Percentage ○ Fixed Amount". */
+    .ao-af-radios { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 1.1rem; color: var(--wa-muted, #6b6b6b); }
+
+    .ao-af-radios label { display: flex; align-items: center; gap: 0.4rem; }
+
+    .ao-af-field input:disabled { background: #f3f3f3; color: var(--wa-muted, #999); }
+
+    .ao-af-onetime { display: inline-flex; align-items: center; gap: 0.35rem; margin-left: 0.75rem; white-space: nowrap; }
+
+    /* Add Manual Commission Entry, Commissions History tab. */
+    .ao-af-manual {
+        margin-top: 0.9rem;
+        padding: 0.9rem 1rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 6px);
+        background: #fafafa;
+    }
+
+    .ao-af-manual-fields { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-top: 0.5rem; }
+
+    .ao-af-manual-fields label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.85rem; color: var(--wa-muted, #6b6b6b); }
+
+    .ao-af-manual-fields input, .ao-af-manual-fields select {
+        padding: 0.35rem 0.5rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+    }
+
+    .ao-af-manual-fields input[aria-label="Amount"] { width: 7rem; }
+
     /* Automation Status (issue #33): the reference sets its month calendar beside the
        Daily Actions tiles, with "Today" floated at the band's right. */
     .ao-auto-daily-head { display: flex; align-items: baseline; justify-content: space-between; }

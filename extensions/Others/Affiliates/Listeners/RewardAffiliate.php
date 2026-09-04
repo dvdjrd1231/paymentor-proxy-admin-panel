@@ -46,6 +46,16 @@ class RewardAffiliate
          * @var Affiliate $affiliate
          */
         $affiliate = $referral->affiliate;
+
+        // The reference's "Pay One Time Only": once this order has already paid a first
+        // invoice, a later renewal earns nothing more. Checked here rather than at display
+        // time, because {@see AffiliateOrder::earnings()} sums every paid invoice for the
+        // credits page and must keep matching what was actually credited.
+        if ($affiliate->one_time_only && $order->invoices()
+            ->where('status', 'paid')->where('id', '!=', $invoice->id)->exists()) {
+            return;
+        }
+
         $extension = ExtensionHelper::getExtension('other', 'Affiliates');
         $reward_percentage = $affiliate->reward ?: $extension->config('default_reward');
         $reward_amount = $invoice->total * $reward_percentage / 100;

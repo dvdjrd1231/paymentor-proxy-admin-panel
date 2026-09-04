@@ -180,8 +180,8 @@
                         <td>{{ $lastTry?->gateway?->name ?? '—' }}</td>
                         <td><span class="{{ $statusClass }}">{{ $statusLabel }}</span></td>
                         <td class="ao-mu-actions ao-mu-iconpair">
-                            <a href="{{ $edit }}" title="Open invoice">
-                                <x-filament::icon icon="ri-file-list-2-line" class="ao-mu-cell-icon" />
+                            <a href="{{ $edit }}" title="Edit invoice">
+                                <x-filament::icon icon="ri-edit-box-line" class="ao-mu-cell-icon" />
                             </a>
                             <button type="button" class="ao-mo-delete" title="Delete invoice"
                                 wire:click="askDelete({{ $invoice->id }})">
