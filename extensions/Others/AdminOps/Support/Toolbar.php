@@ -128,7 +128,9 @@ class Toolbar
             class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\OauthClients::class)
                 ? static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\OauthClients::class, 'OpenID Connect', 'heroicon-o-finger-print')
                 : static::index(OauthClientResource::class, 'OpenID Connect', 'heroicon-o-finger-print'),
-            static::index(ExtensionResource::class, 'Extensions', 'heroicon-o-puzzle-piece'),
+            // Issue #52: the WHMCS-shaped list; core's resource keeps create/edit and is
+            // claimed below so the Addons sweep leaves it be.
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ExtensionsList::class, 'Extensions', 'heroicon-o-puzzle-piece'),
         ]));
     }
 

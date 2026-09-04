@@ -599,6 +599,8 @@ class WhmcsNavigation
         static::$placed[ApiResource::class] = true;
         // Issue #51: same for OAuth clients — the menu entry is the WHMCS-shaped page.
         static::$placed[OauthClientResource::class] = true;
+        // Issue #52: same for Extensions — the menu entry is the WHMCS-shaped page.
+        static::$placed[ExtensionResource::class] = true;
 
         return static::group('Setup', 'ri-settings-3-line', [
             // First, as it is on the reference: the catalogue as a whole, ordered by
@@ -623,7 +625,9 @@ class WhmcsNavigation
             class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\OauthClients::class)
                 ? static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\OauthClients::class, 'OpenID Connect')
                 : static::link(OauthClientResource::class, 'OpenID Connect'),
-            static::link(ExtensionResource::class, 'Extensions'),
+            // Issue #52: the WHMCS-shaped list; core's resource keeps create/edit and is
+            // claimed just below so the Addons sweep leaves it be.
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ExtensionsList::class, 'Extensions'),
             // Issue #39: the WHMCS-shaped tabbed settings page; core's raw form stays
             // reachable as System Settings' first tile.
             static::page(GeneralSettings::class, 'General Settings'),
