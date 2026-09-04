@@ -493,12 +493,20 @@
         color: var(--wa-ink);
     }
 
-    /* Issue #36: a highlighted row in the reference is a rounded rectangle inset from the
-       panel's own edges, not a hard-cornered bar flush with them. */
+    /* Issue #36 (re-raised 2026-09-04): a highlighted row in the reference is a rounded
+       navy pill inset from the panel's edges — blend's own hover colour
+       (`.navigation ul li ul li:not(.disabled) a:hover{background:#1b4d7f;color:#fff}`)
+       with the rounding Leandro's install draws it with. The old light-grey hover read
+       as no hover at all. */
     .fi-dropdown-list-item:hover {
-        background: #f5f5f5;
-        color: var(--wa-blue);
+        background: #1b4d7f;
+        color: #fff;
         border-radius: var(--wa-radius, 6px);
+    }
+
+    .fi-dropdown-list-item:hover .fi-dropdown-list-item-label,
+    .fi-dropdown-list-item:hover .fi-icon {
+        color: #fff;
     }
 
     /* The reference's flyout: the category entries open beside their parent on hover. The

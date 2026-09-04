@@ -138,17 +138,29 @@
                                 {{ $task['title'] }}
                                 <x-filament::icon :icon="$task['icon']" class="ao-auto-tile-ic" />
                             </div>
-                            <div class="ao-auto-tile-body">
-                                <span class="ao-auto-tile-figure">{{ number_format($task['today']) }}</span>
-                                <span class="ao-auto-tile-did">{{ $task['did'] }}</span>
-                            </div>
-                            {{-- Week total left, the reference's red failed count right. --}}
-                            <div class="ao-auto-tile-foot">
-                                <span>{{ number_format($task['week']) }} in the last 7 days</span>
-                                @if ($task['failed'] > 0)
-                                    <span class="ao-auto-tile-failed">{{ number_format($task['failed']) }} Failed</span>
-                                @endif
-                            </div>
+                            @if (!empty($task['disabled']))
+                                {{-- The reference's own disabled-tile treatment: a dash
+                                     and a grey Disabled, the reason on the hover. --}}
+                                <div class="ao-auto-tile-body" title="{{ $task['disabled'] }}">
+                                    <span class="ao-auto-tile-figure ao-auto-tile-dash">-</span>
+                                </div>
+                                <div class="ao-auto-tile-foot">
+                                    <span></span>
+                                    <span class="ao-auto-tile-off" title="{{ $task['disabled'] }}">Disabled</span>
+                                </div>
+                            @else
+                                <div class="ao-auto-tile-body">
+                                    <span class="ao-auto-tile-figure">{{ number_format($task['today']) }}</span>
+                                    <span class="ao-auto-tile-did">{{ $task['did'] }}</span>
+                                </div>
+                                {{-- Week total left, the reference's red failed count right. --}}
+                                <div class="ao-auto-tile-foot">
+                                    <span>{{ number_format($task['week']) }} in the last 7 days</span>
+                                    @if ($task['failed'] > 0)
+                                        <span class="ao-auto-tile-failed">{{ number_format($task['failed']) }} Failed</span>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                 </div>

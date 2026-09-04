@@ -82,19 +82,37 @@ class AutomationStatus extends Page
      *
      * @var array<string, array{0: string, 1: string, 2: string}>
      */
+    /**
+     * The reference's Daily Actions grid, tile for tile in its order (Leandro's
+     * screenshot, 2026-09-04). A real task carries its cron_stats key; a concept this
+     * store does not have carries a `disabled` reason instead and renders exactly the
+     * way the reference renders its own disabled tiles — a dash and a grey "Disabled".
+     * The reference-set tiles are `always` so a zero day still shows its zero, as the
+     * reference's do; this install's extra tasks follow after and keep the old
+     * only-if-ever-recorded rule.
+     */
     private const TASKS = [
-        'invoices_created' => ['Invoices', 'Generated', 'ri-file-text-line'],
+        'invoices_created' => ['Invoices', 'Generated', 'ri-file-text-line', 'always' => true],
+        'late_fees' => ['Late Fees', '', 'ri-auction-line', 'disabled' => 'This store adds no late fees — an unpaid invoice suspends the service instead'],
         // The reference's own name for this tile ("Credit Card Charges"), not ours.
-        'invoice_charged' => ['Credit Card Charges', 'Captured', 'ri-bank-card-line'],
-        'cancellations_processed' => ['Cancellation Requests', 'Processed', 'ri-close-circle-line'],
-        'services_suspended' => ['Overdue Suspensions', 'Suspended', 'ri-notification-3-line'],
-        'services_terminated' => ['Overdue Terminations', 'Terminated', 'ri-calendar-close-line'],
-        'fixed_term_terminations' => ['Fixed Term Terminations', 'Terminated', 'ri-plug-line'],
+        'invoice_charged' => ['Credit Card Charges', 'Captured', 'ri-bank-card-line', 'always' => true],
+        'invoice_reminders' => ['Invoice & Overdue Reminders', '', 'ri-mail-send-line', 'disabled' => 'Core mails an invoice once, when it is raised — there is no dunning reminder sequence'],
+        'cancellations_processed' => ['Cancellation Requests', 'Processed', 'ri-close-circle-line', 'always' => true],
+        'services_suspended' => ['Overdue Suspensions', 'Suspended', 'ri-notification-3-line', 'always' => true],
+        'services_terminated' => ['Overdue Terminations', 'Terminated', 'ri-calendar-close-line', 'always' => true],
+        'fixed_term_terminations' => ['Fixed Term Terminations', 'Terminated', 'ri-plug-line', 'always' => true],
+        'domain_renewal_notices' => ['Domain Renewal Notices', '', 'ri-global-line', 'disabled' => 'No domain registrar is connected to this store'],
+        'domain_transfer_sync' => ['Domain Transfer Status Synchronisation', '', 'ri-arrow-left-right-line', 'disabled' => 'No domain registrar is connected to this store'],
+        'domain_status_sync' => ['Domain Status Synchronisation', '', 'ri-history-line', 'disabled' => 'No domain registrar is connected to this store'],
+        'tickets_closed' => ['Inactive Tickets', 'Closed', 'ri-inbox-archive-line', 'always' => true],
+        'affiliate_commissions' => ['Delayed Affiliate Commissions', '', 'ri-money-dollar-box-line', 'disabled' => 'Commissions credit the moment the referred invoice is paid — nothing is delayed'],
+        'email_marketer_rules' => ['Email Marketer Rules', '', 'ri-mail-settings-line', 'disabled' => 'Campaigns send when an admin sends them — there is no rules engine'],
+        'client_status_update' => ['Client Status Update', '', 'ri-arrow-up-down-line', 'disabled' => 'Paymenter keeps no client active/inactive flag to sweep'],
+        // This install's own tasks, real and running, after the reference's set.
         'orders_cancelled' => ['Unpaid Orders', 'Cancelled', 'ri-shopping-cart-2-line'],
         'upgrade_invoices_updated' => ['Upgrade Invoices', 'Updated', 'ri-arrow-up-circle-line'],
         'billable_items_invoiced' => ['Billable Items', 'Invoiced', 'ri-money-dollar-circle-line'],
         'quotes_expired' => ['Quotes', 'Expired', 'ri-file-paper-2-line'],
-        'tickets_closed' => ['Inactive Tickets', 'Closed', 'ri-inbox-archive-line'],
         'email_logs_deleted' => ['Email Logs', 'Deleted', 'ri-mail-close-line'],
     ];
 
@@ -209,6 +227,24 @@ class AutomationStatus extends Page
             'icon' => 'ri-exchange-line',
             'ok' => class_exists(CurrencyRates::class),
             'note' => class_exists(CurrencyRates::class) ? 'Enabled — syncs hourly.' : 'Disabled',
+        ];
+
+        // The reference's last two system tiles (Leandro's screenshot, 2026-09-04).
+        // Product pricing IS the rates sync here — Paymenter stores a price per
+        // currency, so updating the rate rewrites the prices in the same pass.
+        $tasks[] = [
+            'label' => 'Product Pricing Updates',
+            'icon' => 'ri-price-tag-3-line',
+            'ok' => class_exists(CurrencyRates::class),
+            'note' => class_exists(CurrencyRates::class)
+                ? 'Secondary-currency prices rewrite with each rates sync.'
+                : 'Disabled',
+        ];
+        $tasks[] = [
+            'label' => 'Server Usage Stats',
+            'icon' => 'ri-server-line',
+            'ok' => false,
+            'note' => 'The proxy panel reports usage on its own dashboard, not here.',
         ];
 
         return $tasks;
@@ -355,13 +391,28 @@ class AutomationStatus extends Page
         $today = now()->toDateString();
         $tiles = [];
 
-        foreach (self::TASKS as $key => [$title, $did, $icon]) {
+        foreach (self::TASKS as $key => $task) {
+            [$title, $did, $icon] = $task;
+
+            // A concept this store does not have: the reference's own disabled-tile
+            // treatment — a dash, a grey "Disabled", the reason on the hover.
+            if (isset($task['disabled'])) {
+                $tiles[] = [
+                    'key' => $key, 'title' => $title, 'did' => '', 'icon' => $icon,
+                    'today' => null, 'week' => null, 'failed' => 0, 'lastSeen' => null,
+                    'disabled' => $task['disabled'],
+                ];
+
+                continue;
+            }
+
             $group = $rows->get($key);
 
-            // A task that has never recorded anything gets no tile. The reference does the
-            // same — its grid shows the tasks this install actually runs, so an uninstalled
-            // module leaves no permanent zero claiming to be watched.
-            if ($group === null) {
+            // The reference-set tiles always render (a zero day shows its zero, as the
+            // reference's do). This install's extra tasks keep the old rule: never
+            // recorded anything, no tile — an uninstalled module must not leave a
+            // permanent zero claiming to be watched.
+            if ($group === null && !isset($task['always'])) {
                 continue;
             }
 
@@ -377,11 +428,12 @@ class AutomationStatus extends Page
                 'title' => $title,
                 'did' => $did,
                 'icon' => $icon,
-                'today' => (int) $group->filter($isToday)->sum('value'),
-                'week' => (int) $group->sum('value'),
+                'today' => (int) $group?->filter($isToday)->sum('value'),
+                'week' => (int) $group?->sum('value'),
                 // The reference puts a failed count on every tile, in red, beside the figure.
                 'failed' => (int) ($rows->get($key . '_failed')?->filter($isToday)->sum('value') ?? 0),
-                'lastSeen' => $group->max('date'),
+                'lastSeen' => $group?->max('date'),
+                'disabled' => null,
             ];
         }
 
