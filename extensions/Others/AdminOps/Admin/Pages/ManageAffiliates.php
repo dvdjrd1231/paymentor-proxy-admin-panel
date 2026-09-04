@@ -69,8 +69,12 @@ class ManageAffiliates extends Page
     /** The detail form's editable fields — the extension's real columns. */
     public array $edit = ['reward' => '', 'discount' => '', 'visitors' => 0, 'commissionType' => 'default', 'oneTimeOnly' => false];
 
-    /** The Record Withdrawal form on the Withdrawals History tab (issue #6). */
-    public array $withdraw = ['amount' => '', 'currency' => 'USD', 'note' => ''];
+    /** The reference's Time Period strip on the Referrals tab: 30/60/90/180 days. */
+    #[Url]
+    public string $period = '30';
+
+    /** The Make Withdrawal Payout form on the Withdrawals History tab (issue #6). */
+    public array $withdraw = ['amount' => '', 'currency' => 'USD', 'type' => 'external', 'txid' => '', 'note' => ''];
 
     /** The reference's "Add Manual Commission Entry" form, Commissions History tab. */
     public array $manual = ['orderId' => '', 'description' => '', 'amount' => ''];
@@ -291,8 +295,10 @@ class ManageAffiliates extends Page
         $this->validate([
             'withdraw.amount' => 'required|numeric|min:0.01',
             'withdraw.currency' => 'required|string|size:3',
+            'withdraw.type' => 'required|in:external,credit',
+            'withdraw.txid' => 'nullable|string|max:255',
             'withdraw.note' => 'nullable|string|max:255',
-        ], attributes: ['withdraw.amount' => 'amount', 'withdraw.currency' => 'currency', 'withdraw.note' => 'note']);
+        ], attributes: ['withdraw.amount' => 'amount', 'withdraw.currency' => 'currency', 'withdraw.type' => 'payout type', 'withdraw.txid' => 'transaction ID', 'withdraw.note' => 'note']);
 
         $affiliate = Affiliate::findOrFail($this->affiliate);
 
@@ -313,17 +319,38 @@ class ManageAffiliates extends Page
             return;
         }
 
+        // The reference's Payout Type. "Add to client's credit balance" is this store's
+        // real equivalent of WHMCS's Create Transaction to Client — the affiliate IS a
+        // client, and credit is money they can spend here. External stays a record of a
+        // payout made outside the panel (bank, PIX).
+        if ($this->withdraw['type'] === 'credit') {
+            $credit = \App\Models\Credit::firstOrCreate(
+                ['user_id' => $affiliate->user_id, 'currency_code' => $currency],
+                ['amount' => 0],
+            );
+            $credit->increment('amount', $amount);
+        }
+
+        $noteParts = array_filter([
+            $this->withdraw['type'] === 'credit' ? 'Paid to client credit balance' : null,
+            $this->withdraw['txid'] !== '' ? 'Transaction: ' . $this->withdraw['txid'] : null,
+            $this->withdraw['note'] ?: null,
+        ]);
+
         \Paymenter\Extensions\Others\AdminOps\Models\AffiliateWithdrawal::create([
             'affiliate_id' => $affiliate->id,
             'amount' => $amount,
             'currency_code' => $currency,
-            'note' => $this->withdraw['note'] ?: null,
+            'note' => implode(' · ', $noteParts) ?: null,
             'admin_id' => auth()->id(),
         ]);
 
-        $this->withdraw = ['amount' => '', 'currency' => $currency, 'note' => ''];
+        $wasCredit = $this->withdraw['type'] === 'credit';
+        $this->withdraw = ['amount' => '', 'currency' => $currency, 'type' => 'external', 'txid' => '', 'note' => ''];
 
-        \Filament\Notifications\Notification::make()->title('Withdrawal recorded')->success()->send();
+        \Filament\Notifications\Notification::make()->title('Withdrawal recorded')
+            ->body($wasCredit ? 'The amount is on the client\'s credit balance.' : null)
+            ->success()->send();
     }
 
     /** Enabled-but-unmigrated installs fall back to the honest empty message. */

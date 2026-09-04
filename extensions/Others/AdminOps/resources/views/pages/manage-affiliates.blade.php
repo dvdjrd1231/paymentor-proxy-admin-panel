@@ -95,16 +95,55 @@
             </div>
 
             @if ($dtab === 'signups')
-                <p class="ao-gs-empty">
-                    {{ number_format($current->signups) }} {{ Str::plural('signup', $current->signups) }}
-                    referred by this affiliate's code. The extension keeps the count, not the
-                    individual accounts — the clients who went on to order appear under Referrals.
-                </p>
+                {{-- The reference's Referred Signups: the records strip, its exact columns,
+                     and the pager. Rows are the clients this affiliate's referrals brought
+                     in — one per referred order, which is the record this store keeps. --}}
+                <div class="ao-af-records">
+                    <span>{{ number_format($referred->count()) }} Records Found, Page 1 of 1</span>
+                    <span>Jump to Page: <select disabled title="All rows fit one page"><option>1</option></select></span>
+                </div>
+                <table class="ao-mu-grid">
+                    <thead>
+                        <tr><th>ID</th><th>Signup Date</th><th>Client Name</th><th>Product/Service</th><th>Commission</th><th>Last Paid</th><th>Product Status</th></tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($referred as $row)
+                            @php
+                                $sums = array_filter($row->earnings);
+                                $lastPaid = $row->order->invoices->where('status', 'paid')->sortByDesc('id')->first();
+                            @endphp
+                            <tr>
+                                <td>{{ $row->order_id }}</td>
+                                <td>{{ $row->order->created_at?->format('m/d/Y') }}</td>
+                                <td class="ao-mu-left">
+                                    {{ trim(($row->order->user->first_name ?? '') . ' ' . ($row->order->user->last_name ?? '')) ?: ($row->order->user->email ?? '—') }}
+                                </td>
+                                <td class="ao-mu-left">{{ $row->order->services->first()?->product?->name ?? '—' }}</td>
+                                <td>{{ $sums === [] ? '—' : implode(' · ', array_map(fn ($t, $c) => '$' . number_format((float) $t, 2) . ' ' . $c, $sums, array_keys($sums))) }}</td>
+                                <td>{{ $lastPaid?->updated_at?->format('m/d/Y') ?? '—' }}</td>
+                                <td>{{ ucfirst((string) ($row->order->services->first()?->status ?? '—')) }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="7" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <div class="ao-mu-pager">
+                    <button type="button" disabled>&laquo; Previous Page</button>
+                    <button type="button" disabled>Next Page &raquo;</button>
+                </div>
             @elseif ($dtab === 'pending')
-                <p class="ao-gs-empty" title="Earnings are computed from referred orders as they are paid; no separate pending ledger exists">
-                    No pending commissions — earnings are computed from referred orders as they
-                    are paid, and every earned amount is already in Commissions History.
-                </p>
+                {{-- The reference's columns; honestly empty — this store credits a
+                     commission the moment its invoice is paid, so nothing waits here. --}}
+                <table class="ao-mu-grid">
+                    <thead>
+                        <tr><th>Referral ID</th><th>Client Name</th><th>Product/Service</th><th>Product Status</th><th>Invoice #</th><th>Amount</th><th>Clearing Date</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="7" class="ao-mu-none ao-mu-left"
+                            title="Earnings are credited from referred orders as they are paid; no separate pending ledger exists">No Records Found</td></tr>
+                    </tbody>
+                </table>
             @elseif ($dtab === 'withdrawals')
                 @if (!\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::withdrawalsReady())
                     <p class="ao-gs-empty">
@@ -115,31 +154,54 @@
                         $ledger = \Paymenter\Extensions\Others\AdminOps\Models\AffiliateWithdrawal::query()
                             ->where('affiliate_id', $current->id)->latest()->get();
                     @endphp
+                    {{-- The reference's two columns exactly; the note travels on the
+                         Amount cell's title so it is still one hover away. --}}
                     <table class="ao-mu-grid">
                         <thead>
-                            <tr><th>Date</th><th>Amount</th><th>Note</th></tr>
+                            <tr><th>Date</th><th>Amount</th></tr>
                         </thead>
                         <tbody>
                             @forelse ($ledger as $row)
                                 <tr>
                                     <td>{{ $row->created_at?->format('m/d/Y') }}</td>
-                                    <td>${{ number_format((float) $row->amount, 2) }} {{ $row->currency_code }}</td>
-                                    <td class="ao-mu-left">{{ $row->note ?? '—' }}</td>
+                                    <td title="{{ $row->note }}">${{ number_format((float) $row->amount, 2) }} {{ $row->currency_code }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="3" class="ao-mu-none">No Records Found</td></tr>
+                                <tr><td colspan="2" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
                             @endforelse
                         </tbody>
                     </table>
 
-                    {{-- The payout itself happens outside the panel — bank, PIX, credit —
-                         and is recorded here, which is how the reference does it too. --}}
-                    <form class="ao-af-withdraw" wire:submit.prevent="recordWithdrawal">
-                        <b>Record Withdrawal</b>
-                        <input type="text" inputmode="decimal" placeholder="Amount" wire:model="withdraw.amount" aria-label="Amount">
-                        <input type="text" maxlength="3" placeholder="USD" wire:model="withdraw.currency" aria-label="Currency">
-                        <input type="text" placeholder="Note — how it was paid (optional)" wire:model="withdraw.note" aria-label="Note">
-                        <button type="submit" class="ao-find-go">Record</button>
+                    {{-- The reference's Make Withdrawal Payout, field for field. Payout
+                         Type's client-credit option is real money on their balance. --}}
+                    <h4 class="ao-ano-heading">Make Withdrawal Payout</h4>
+                    <form class="ao-anc-card" wire:submit.prevent="recordWithdrawal">
+                        <label class="ao-anc-row">
+                            <span>Amount:</span>
+                            <span class="ao-anc-field">
+                                <input type="text" class="ao-w-25" inputmode="decimal" placeholder="0.00" wire:model="withdraw.amount">
+                                <input type="text" class="ao-af-cur" maxlength="3" wire:model="withdraw.currency" aria-label="Currency">
+                            </span>
+                        </label>
+                        <label class="ao-anc-row">
+                            <span>Payout Type:</span>
+                            <select class="ao-w-40" wire:model="withdraw.type">
+                                <option value="external">Record External Payout (bank, PIX…)</option>
+                                <option value="credit">Add to Client's Credit Balance</option>
+                            </select>
+                        </label>
+                        <label class="ao-anc-row">
+                            <span>Transaction ID:</span>
+                            <span class="ao-anc-field">
+                                <input type="text" class="ao-w-40" wire:model="withdraw.txid">
+                                <i>(Optional — the bank or gateway reference)</i>
+                            </span>
+                        </label>
+                        <label class="ao-anc-row">
+                            <span>Note:</span>
+                            <input type="text" class="ao-w-40" wire:model="withdraw.note" placeholder="Optional">
+                        </label>
+                        <div class="ao-pr-center"><button type="submit" class="ao-find-go">Submit</button></div>
                     </form>
                 @endif
             @elseif ($dtab === 'commissions')
@@ -148,20 +210,25 @@
                     $manualRows = \Paymenter\Extensions\Others\AdminOps\Models\AffiliateManualCommission::query()
                         ->where('affiliate_id', $current->id)->latest()->get();
                 @endphp
+                {{-- The reference's columns: Date, Referral ID, Client Name,
+                     Product/Service, Product Status, Description, Invoice #, Amount. --}}
                 <table class="ao-mu-grid">
                     <thead>
-                        <tr><th>Date</th><th>Referral ID</th><th>Client Name</th><th>Product/Service</th><th>Description</th><th>Amount</th></tr>
+                        <tr><th>Date</th><th>Referral ID</th><th>Client Name</th><th>Product/Service</th><th>Product Status</th><th>Description</th><th>Invoice #</th><th>Amount</th></tr>
                     </thead>
                     <tbody>
                         @forelse ($earnedRows as $row)
+                            @php $paidInvoice = $row->order->invoices->where('status', 'paid')->sortByDesc('id')->first(); @endphp
                             <tr>
                                 <td>{{ $row->order->created_at?->format('m/d/Y') }}</td>
-                                <td>#{{ $row->order_id }}</td>
+                                <td>{{ $row->order_id }}</td>
                                 <td class="ao-mu-left">
                                     {{ trim(($row->order->user->first_name ?? '') . ' ' . ($row->order->user->last_name ?? '')) ?: ($row->order->user->email ?? '—') }}
                                 </td>
                                 <td class="ao-mu-left">{{ $row->order->services->first()?->product?->name ?? '—' }}</td>
-                                <td class="ao-mu-left">Referred order</td>
+                                <td>{{ ucfirst((string) ($row->order->services->first()?->status ?? '—')) }}</td>
+                                <td class="ao-mu-left">Commission on referred order</td>
+                                <td>{{ $paidInvoice?->number ?? $paidInvoice?->id ?? '—' }}</td>
                                 <td>
                                     @php $sums = array_filter($row->earnings); @endphp
                                     {{ implode(' · ', array_map(fn ($t, $c) => '$' . number_format((float) $t, 2) . ' ' . $c, $sums, array_keys($sums))) }}
@@ -172,65 +239,75 @@
                         @foreach ($manualRows as $row)
                             <tr>
                                 <td>{{ $row->created_at?->format('m/d/Y') }}</td>
-                                <td>{{ $row->order_id ? '#' . $row->order_id : '—' }}</td>
+                                <td>{{ $row->order_id ?: '—' }}</td>
                                 <td class="ao-mu-left">Manual entry</td>
                                 <td class="ao-mu-left">—</td>
+                                <td>—</td>
                                 <td class="ao-mu-left">{{ $row->description ?: '—' }}</td>
+                                <td>—</td>
                                 <td>${{ number_format((float) $row->amount, 2) }} {{ $row->currency_code }}</td>
                             </tr>
                         @endforeach
                         @if ($earnedRows->isEmpty() && $manualRows->isEmpty())
-                            <tr><td colspan="6" class="ao-mu-none">No Records Found</td></tr>
+                            <tr><td colspan="8" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
                         @endif
                     </tbody>
                 </table>
 
-                {{-- The reference's Add Manual Commission Entry — a real row in AdminOps's
-                     own ledger, counted into Available to Withdraw Balance above. --}}
-                <form class="ao-af-manual" wire:submit.prevent="addManualCommission">
-                    <b>Add Manual Commission Entry</b>
-                    <span class="ao-af-manual-fields">
-                        <label>Date
-                            <input type="text" value="{{ now()->format('m/d/Y') }}" disabled title="Recorded with today's date">
-                        </label>
-                        <label>Related Referral
-                            <select wire:model="manual.orderId">
-                                <option value="">None</option>
-                                @foreach ($referred as $row)
-                                    <option value="{{ $row->order_id }}">
-                                        #{{ $row->order_id }} — {{ trim(($row->order->user->first_name ?? '') . ' ' . ($row->order->user->last_name ?? '')) ?: ($row->order->user->email ?? '—') }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </label>
-                        <input type="text" placeholder="Description (optional)" wire:model="manual.description" aria-label="Description">
-                        <input type="text" inputmode="decimal" placeholder="Amount" wire:model="manual.amount" aria-label="Amount">
-                        <button type="submit" class="ao-find-go">Add</button>
-                    </span>
+                {{-- The reference's Add Manual Commission Entry, its own field layout —
+                     a real ledger row, counted into Available to Withdraw Balance. --}}
+                <h4 class="ao-ano-heading">Add Manual Commission Entry</h4>
+                <form class="ao-anc-card" wire:submit.prevent="addManualCommission">
+                    <div class="ao-anc-row">
+                        <span>Date:</span>
+                        <span class="ao-eo-fact">{{ now()->format('m/d/Y') }}</span>
+                    </div>
+                    <label class="ao-anc-row">
+                        <span>Related Referral:</span>
+                        <select class="ao-w-40" wire:model="manual.orderId">
+                            <option value="">None</option>
+                            @foreach ($referred as $row)
+                                <option value="{{ $row->order_id }}">
+                                    #{{ $row->order_id }} — {{ trim(($row->order->user->first_name ?? '') . ' ' . ($row->order->user->last_name ?? '')) ?: ($row->order->user->email ?? '—') }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label class="ao-anc-row">
+                        <span>Description:</span>
+                        <span class="ao-anc-field">
+                            <input type="text" class="ao-w-40" wire:model="manual.description">
+                            <i>(Optional)</i>
+                        </span>
+                    </label>
+                    <label class="ao-anc-row">
+                        <span>Amount:</span>
+                        <input type="text" class="ao-w-25" inputmode="decimal" placeholder="0.00" wire:model="manual.amount">
+                    </label>
                     @error('manual.amount') <p class="ao-anc-errors">{{ $message }}</p> @enderror
+                    <div class="ao-pr-center"><button type="submit" class="ao-find-go">Submit</button></div>
                 </form>
             @else
+                {{-- The reference's Referrals tab: the Time Period strip and the
+                     Referrer URL / Number of Hits table. This store counts visitors in
+                     total (the Visitors Referred field above) and keeps no per-URL,
+                     per-day hit log, so the table is honestly empty. --}}
+                <div class="ao-af-records ao-af-period">
+                    <span></span>
+                    <span>Time Period
+                        @foreach (['30', '60', '90', '180'] as $days)
+                            <button type="button" class="ao-mu-tab {{ $period === $days ? 'ao-on' : '' }}"
+                                wire:click="$set('period', '{{ $days }}')">{{ $days }} Days</button>
+                        @endforeach
+                    </span>
+                </div>
                 <table class="ao-mu-grid">
                     <thead>
-                        <tr><th>Order</th><th>Date</th><th>Client</th><th>Product/Service</th><th>Earned</th></tr>
+                        <tr><th>Referrer URL</th><th>Number of Hits</th></tr>
                     </thead>
                     <tbody>
-                        @forelse ($referred as $row)
-                            <tr>
-                                <td>#{{ $row->order_id }}</td>
-                                <td>{{ $row->order->created_at?->format('m/d/Y') }}</td>
-                                <td class="ao-mu-left">
-                                    {{ trim(($row->order->user->first_name ?? '') . ' ' . ($row->order->user->last_name ?? '')) ?: ($row->order->user->email ?? '—') }}
-                                </td>
-                                <td class="ao-mu-left">{{ $row->order->services->first()?->product?->name ?? '—' }}</td>
-                                <td>
-                                    @php $sums = array_filter($row->earnings); @endphp
-                                    {{ $sums === [] ? '—' : implode(' · ', array_map(fn ($t, $c) => '$' . number_format((float) $t, 2) . ' ' . $c, $sums, array_keys($sums))) }}
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="5" class="ao-mu-none">No Records Found</td></tr>
-                        @endforelse
+                        <tr><td colspan="2" class="ao-mu-none ao-mu-left"
+                            title="This store records total visitors, not per-URL hits — the count lives in Visitors Referred above">No Records Found</td></tr>
                     </tbody>
                 </table>
             @endif

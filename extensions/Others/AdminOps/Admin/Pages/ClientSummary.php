@@ -94,7 +94,13 @@ class ClientSummary extends Page
     public bool $addingAddon = false;
 
     /** @var array<string, mixed> */
-    public array $addon = ['productId' => '', 'name' => '', 'quantity' => 1, 'price' => '', 'status' => 'active', 'invoice' => true];
+    public array $addon = self::ADDON_DEFAULTS;
+
+    private const ADDON_DEFAULTS = [
+        'productId' => '', 'name' => '', 'quantity' => 1, 'price' => '', 'setupFee' => '',
+        'status' => 'active', 'subscriptionId' => '', 'notes' => '', 'terminationDate' => '',
+        'invoice' => true,
+    ];
 
     /** The reference's Admin Notes box — stored as a user property, so it is real. */
     public string $adminNotes = '';
@@ -258,6 +264,11 @@ class ClientSummary extends Page
             'username' => $prop('proxy_username'),
             'password' => $prop('proxy_password'),
             'svcNotes' => $prop('admin_notes'),
+            // The reference's Service ID and api-key rows — always present, empty until
+            // the panel provisions them (user feedback, 2026-09-04: they must not vanish
+            // on an unprovisioned service). The keys are ProxyPanel's own.
+            'serviceId' => $prop('proxypanel_service_id'),
+            'apiKey' => $prop('proxy_api_key'),
             // WHMCS's Termination Date: the day this service ends regardless of renewals.
             // Stored as a property; saving one writes/updates the real end-of-period
             // cancellation the Cancellations sweeper terminates on (see saveService).
@@ -274,7 +285,7 @@ class ClientSummary extends Page
             // reference's custom fields are. A list, not a key-map: property keys can
             // carry characters wire:model paths cannot.
             'props' => $service->properties
-                ->whereNotIn('key', ['domain', 'dedicated_ip', 'admin_notes', 'proxy_username', 'proxy_password', 'termination_date', 'no_suspend_until'])
+                ->whereNotIn('key', ['domain', 'dedicated_ip', 'admin_notes', 'proxy_username', 'proxy_password', 'termination_date', 'no_suspend_until', 'proxypanel_service_id', 'proxy_api_key'])
                 ->map(fn ($property): array => [
                     'key' => (string) $property->key,
                     'name' => (string) ($property->name ?: $property->key),
@@ -320,9 +331,12 @@ class ClientSummary extends Page
             'addon.productId' => 'required|exists:products,id',
             'addon.quantity' => 'required|integer|min:1',
             'addon.price' => 'required|numeric|min:0',
+            'addon.setupFee' => 'nullable|numeric|min:0',
             'addon.status' => 'required|in:pending,active',
             'addon.name' => 'nullable|string|max:255',
-        ], attributes: ['addon.productId' => 'predefined addon', 'addon.quantity' => 'quantity', 'addon.price' => 'recurring amount', 'addon.status' => 'status']);
+            'addon.subscriptionId' => 'nullable|string|max:255',
+            'addon.notes' => 'nullable|string|max:2000',
+        ], attributes: ['addon.productId' => 'predefined addon', 'addon.quantity' => 'quantity', 'addon.price' => 'recurring amount', 'addon.setupFee' => 'setup fee', 'addon.status' => 'status']);
 
         $parent = $this->customer->services()->findOrFail($this->service);
         $product = \App\Models\Product::findOrFail((int) $this->addon['productId']);
@@ -348,6 +362,7 @@ class ClientSummary extends Page
                 'user_id' => $parent->user_id,
                 'currency_code' => $parent->currency_code,
                 'expires_at' => $parent->expires_at,
+                'subscription_id' => trim((string) $this->addon['subscriptionId']) ?: null,
             ]);
 
             // The reference's Custom Name. `label` is a real column with a product-name
@@ -357,14 +372,35 @@ class ClientSummary extends Page
                 $service->forceFill(['label' => trim((string) $this->addon['name'])])->save();
             }
 
+            if (trim((string) $this->addon['notes']) !== '') {
+                $service->properties()->updateOrCreate(['key' => 'admin_notes'], ['name' => 'Admin Notes', 'value' => trim((string) $this->addon['notes'])]);
+            }
+
+            // The reference's Termination Date on the addon — the same property the
+            // ServiceOverrides sweep enforces on any service.
+            $termDay = null;
+            foreach (['m/d/Y', 'Y-m-d'] as $format) {
+                try {
+                    $termDay = \Carbon\Carbon::createFromFormat($format, trim((string) $this->addon['terminationDate']));
+                    break;
+                } catch (\Throwable $e) {
+                }
+            }
+            if ($termDay) {
+                $service->properties()->updateOrCreate(['key' => 'termination_date'], ['name' => 'Termination Date', 'value' => $termDay->format('Y-m-d')]);
+            }
+
             \Paymenter\Extensions\Others\AdminOps\Models\ServiceAddon::create([
                 'service_id' => $service->id,
                 'parent_service_id' => $parent->id,
             ]);
 
             // The reference's "Generate Invoice after Adding" — the exact shape the
-            // daily cron's invoices_created pass writes.
-            if (($this->addon['invoice'] ?? false) && (float) $this->addon['price'] > 0) {
+            // daily cron's invoices_created pass writes, plus the reference's Setup Fee
+            // as its own one-time line on that first invoice.
+            $setupFee = (float) ($this->addon['setupFee'] ?: 0);
+
+            if (($this->addon['invoice'] ?? false) && ((float) $this->addon['price'] > 0 || $setupFee > 0)) {
                 $invoice = $service->invoices()->make([
                     'user_id' => $service->user_id,
                     'status' => 'pending',
@@ -372,19 +408,33 @@ class ClientSummary extends Page
                     'currency_code' => $service->currency_code,
                 ]);
                 $invoice->save();
-                $invoice->items()->create([
-                    'reference_id' => $service->id,
-                    'reference_type' => \App\Models\Service::class,
-                    'price' => $service->price,
-                    'quantity' => $service->quantity,
-                    'description' => $service->description,
-                ]);
+
+                if ((float) $this->addon['price'] > 0) {
+                    $invoice->items()->create([
+                        'reference_id' => $service->id,
+                        'reference_type' => \App\Models\Service::class,
+                        'price' => $service->price,
+                        'quantity' => $service->quantity,
+                        'description' => $service->description,
+                    ]);
+                }
+
+                if ($setupFee > 0) {
+                    $invoice->items()->create([
+                        'reference_id' => null,
+                        'reference_type' => null,
+                        'price' => $setupFee,
+                        'quantity' => 1,
+                        'description' => ($service->label ?: $product->name) . ' — Setup Fee',
+                    ]);
+                }
             }
         });
 
-        $invoiced = ($this->addon['invoice'] ?? false) && (float) $this->addon['price'] > 0;
+        $invoiced = ($this->addon['invoice'] ?? false)
+            && ((float) $this->addon['price'] > 0 || (float) ($this->addon['setupFee'] ?: 0) > 0);
         $this->addingAddon = false;
-        $this->addon = ['productId' => '', 'name' => '', 'quantity' => 1, 'price' => '', 'status' => 'active', 'invoice' => true];
+        $this->addon = self::ADDON_DEFAULTS;
         Notification::make()->title('Addon added')
             ->body('It renews with its parent service.' . ($invoiced ? ' An invoice for it is now pending.' : ''))->success()->send();
     }
@@ -458,6 +508,16 @@ class ClientSummary extends Page
                     $service->properties()->updateOrCreate(['key' => $key], ['name' => $name, 'value' => $value]);
                 } else {
                     $service->properties()->where('key', $key)->delete();
+                }
+            }
+
+            // Service ID and api-key — editable corrections, but an emptied box keeps
+            // its row: these are the module's provisioning references, and blanking one
+            // by accident must not sever the panel link (same rule as the props loop).
+            foreach (['proxypanel_service_id' => ['Service ID', trim((string) ($this->svc['serviceId'] ?? ''))],
+                'proxy_api_key' => ['api-key', trim((string) ($this->svc['apiKey'] ?? ''))]] as $key => [$name, $value]) {
+                if ($value !== '') {
+                    $service->properties()->updateOrCreate(['key' => $key], ['name' => $name, 'value' => $value]);
                 }
             }
 
@@ -950,7 +1010,7 @@ class ClientSummary extends Page
             'tickets' => UserResource::getUrl('tickets', ['record' => $user]),
             'credits' => UserResource::getUrl('credits', ['record' => $user]),
             'service' => fn ($id) => ServiceResource::getUrl('edit', ['record' => $id]),
-            'invoice' => fn ($id) => InvoiceResource::getUrl('edit', ['record' => $id]),
+            'invoice' => fn ($id) => EditInvoice::getUrl(['record' => $id]),
             'ticket' => fn ($id) => TicketResource::getUrl('edit', ['record' => $id]),
         ];
     }

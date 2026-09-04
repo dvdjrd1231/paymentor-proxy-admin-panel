@@ -346,7 +346,10 @@
     .ao-tag-info    { background-color: hsl(var(--color-info)); }
 
     .ao-link {
-        color: hsl(var(--color-primary));
+        /* The reference's exact link blue (blend theme `a{color:#337ab7}`) — the panel
+           primary this used to inherit renders red on this install, and every in-band
+           link read as an error state (user feedback on the order view, 2026-09-04). */
+        color: #337ab7;
         font-weight: 500;
     }
 
@@ -2069,6 +2072,20 @@
     .ao-mu-status.ao-mu-st-pending { background: #f0ad4e; }
     .ao-mu-status.ao-mu-st-suspended { background: #9ea6ad; }
     .ao-mu-status.ao-mu-st-cancelled { background: #d9534f; }
+    .ao-mu-status.ao-mu-st-unpaid { background: #d9534f; }
+
+    /* Edit Invoice (user request, 2026-09-04): editable line items in the navy grid. */
+    .ao-ei-desc { width: 100%; }
+    .ao-ei-qty, .ao-ei-qty-in { width: 6rem; }
+    .ao-ei-amount, .ao-ei-amount-in { width: 9rem; }
+
+    .ao-ei-desc, .ao-ei-qty-in, .ao-ei-amount-in {
+        padding: 0.3rem 0.5rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: var(--wa-radius, 4px);
+        background: #fff;
+        font: inherit;
+    }
 
     /* The reference's Search/Filter tab: a file-folder tab that sits on its strip's
        full-width rule — the -1px pull lets the tab's own border merge into the line. */
@@ -3969,13 +3986,19 @@
 
     .ao-eo-dead-btn { opacity: 0.55; cursor: help; }
 
-    /* The service editor's picker row: the reference's select + Go + New Addon strip. */
+    /* The service editor's picker row: the reference's select + Go left, New Addon at
+       the row's right end. */
     .ao-cs-pickrow {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         margin: 0.6rem 0;
     }
+
+    .ao-cs-pickrow-right { margin-left: auto; display: inline-flex; gap: 0.5rem; }
+
+    /* Generate Invoice after Adding sits centred over Save/Cancel, as the reference. */
+    .ao-cs-ad-geninv { justify-content: center; width: 100%; display: inline-flex; }
 
     /* One shared height keeps the select, Go and New Addon on one baseline — the strip
        read misaligned when each brought its own. */
@@ -5211,6 +5234,35 @@
     }
 
     .ao-af-manual-fields input[aria-label="Amount"] { width: 7rem; }
+
+    /* The tabs' records strip ("N Records Found, Page 1 of 1" left, pager right) and the
+       Referrals tab's Time Period strip. */
+    .ao-af-records {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 0.5rem 0 0.4rem;
+        color: var(--wa-muted, #6b6b6b);
+        font-size: 0.9rem;
+    }
+
+    .ao-af-records select { padding: 0.15rem 0.3rem; border: 1px solid var(--wa-panel-border, #ccc); border-radius: 4px; }
+
+    .ao-af-period .ao-mu-tab { margin-left: 0.35rem; }
+
+    .ao-mu-pager { display: flex; justify-content: space-between; margin-top: 0.6rem; }
+
+    .ao-mu-pager button {
+        padding: 0.35rem 0.8rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: var(--wa-radius, 4px);
+        background: #fff;
+        color: var(--wa-muted, #6b6b6b);
+    }
+
+    .ao-mu-pager button:disabled { opacity: 0.6; cursor: default; }
+
+    .ao-af-cur { width: 4.5rem; text-transform: uppercase; }
 
     /* Automation Status (issue #33): the reference sets its month calendar beside the
        Daily Actions tiles, with "Today" floated at the band's right. */

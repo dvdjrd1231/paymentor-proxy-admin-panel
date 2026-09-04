@@ -43,11 +43,21 @@
             const hit = this.options.find((o) => !o.group && String(o.value) === String(this.value));
             return hit ? hit.label : {{ \Illuminate\Support\Js::from($placeholder ?? '') }};
         },
+        pickedAt: 0,
         pick(o) {
             if (o.group || o.disabled) return;
             this.value = o.value;
             this.open = false;
+            // Stamp the pick: it runs on mousedown, and the browser's click event (at
+            // mouseup) then lands on the combobox button the closed list uncovered —
+            // without this guard that click toggled the list straight back open
+            // (user report, 2026-09-04: 'the dropdown closed and then reopened').
+            this.pickedAt = Date.now();
             this.$refs.btn.focus();
+        },
+        toggle() {
+            if (Date.now() - this.pickedAt < 350) return;
+            this.open = !this.open;
         },
         move(step) {
             const pickable = this.options.filter((o) => !o.group && !o.disabled);
@@ -58,7 +68,7 @@
     }"
     @click.outside="open = false"
 >
-    <button type="button" class="ao-xsel-btn" x-ref="btn" @click="open = !open"
+    <button type="button" class="ao-xsel-btn" x-ref="btn" @click="toggle()"
         @keydown.escape="open = false" @keydown.down.prevent="open ? move(1) : (open = true)"
         @keydown.up.prevent="open ? move(-1) : null" @keydown.enter.prevent="open = false"
         role="combobox" aria-haspopup="listbox" :aria-expanded="open ? 'true' : 'false'"
