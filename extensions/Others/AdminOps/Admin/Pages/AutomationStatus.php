@@ -10,8 +10,11 @@ use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Url;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\UpdatePaymenter;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\UtilitiesCalendar;
+use Paymenter\Extensions\Others\CurrencyRates\CurrencyRates;
 
 /**
  * WHMCS's Automation Status: is the automation running, and what did it do.
@@ -81,7 +84,8 @@ class AutomationStatus extends Page
      */
     private const TASKS = [
         'invoices_created' => ['Invoices', 'Generated', 'ri-file-text-line'],
-        'invoice_charged' => ['Payment Captures', 'Captured', 'ri-bank-card-line'],
+        // The reference's own name for this tile ("Credit Card Charges"), not ours.
+        'invoice_charged' => ['Credit Card Charges', 'Captured', 'ri-bank-card-line'],
         'cancellations_processed' => ['Cancellation Requests', 'Processed', 'ri-close-circle-line'],
         'services_suspended' => ['Overdue Suspensions', 'Suspended', 'ri-notification-3-line'],
         'services_terminated' => ['Overdue Terminations', 'Terminated', 'ri-calendar-close-line'],
@@ -151,7 +155,63 @@ class AutomationStatus extends Page
             'problems' => $this->problems($heartbeat, $daily),
             'chart' => $this->chart(),
             'calendar' => $this->calendar(),
+            'systemTasks' => $this->systemTasks(),
         ];
+    }
+
+    /**
+     * The reference's second tier under Daily Actions — Database Backup, WHMCS Updates,
+     * Currency Exchange Rates, Product Pricing Updates, Server Usage Stats — a status
+     * line each, not a count. Paymenter has real ground truth for two of the five:
+     *
+     * - **Database Backup** — real, but never admin-visible: {@see \Paymenter\Extensions\Others\AdminOps\Admin\Pages\DatabaseStatus}'s
+     *   own reasoning applies here too — backups run on the host via `scripts/backup` on
+     *   a schedule, not a PHP request this page could report on. Honestly dead.
+     * - **Platform Updates** — real: the same up-to-date check {@see UpdatePaymenter} makes.
+     * - **Currency Exchange Rates** — real: whether `Others/CurrencyRates` is installed,
+     *   which is the whole fact behind WHMCS's own green check — not a fabricated "last
+     *   synced" timestamp, since price rows are updated in place and carry no such stamp.
+     *
+     * Product Pricing Updates and Server Usage Stats have no Paymenter counterpart at
+     * all — omitted rather than shown as a permanent, meaningless "Disabled".
+     *
+     * @return array<int, array{label: string, icon: string, ok: bool, note: string}>
+     */
+    private function systemTasks(): array
+    {
+        $tasks = [];
+
+        $tasks[] = [
+            'label' => 'Database Backup',
+            'icon' => 'ri-database-2-line',
+            'ok' => false,
+            'note' => 'Runs on the host via a scheduled task, not tracked here',
+        ];
+
+        try {
+            $current = UpdatePaymenter::currentVersion();
+            // Cache::remember() (UpdatePaymenter::latest()) stores {version, checkedAt} —
+            // the version string alone is what's compared here.
+            $cached = Cache::get('adminops.latest-version');
+            $latest = is_array($cached) ? ($cached['version'] ?? null) : null;
+            $upToDate = $latest === null || version_compare($current, $latest, '>=');
+            $tasks[] = [
+                'label' => 'Platform Updates',
+                'icon' => 'ri-download-2-line',
+                'ok' => $upToDate,
+                'note' => $upToDate ? 'Paymenter is up to date.' : "Version {$latest} is available.",
+            ];
+        } catch (\Throwable) {
+        }
+
+        $tasks[] = [
+            'label' => 'Currency Exchange Rates',
+            'icon' => 'ri-exchange-line',
+            'ok' => class_exists(CurrencyRates::class),
+            'note' => class_exists(CurrencyRates::class) ? 'Enabled — syncs hourly.' : 'Disabled',
+        ];
+
+        return $tasks;
     }
 
     /** The verdict tile's "View cron status" link target, or null when unroutable. */
