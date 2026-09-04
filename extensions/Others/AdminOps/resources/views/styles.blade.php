@@ -1198,6 +1198,16 @@
         color: hsl(var(--color-error));
     }
 
+    /* A disabled tile, as the reference draws its own: a muted dash and a grey
+       "Disabled" at the bottom right. */
+    .ao-auto-tile-dash { color: var(--wa-muted, #9ea6ad); }
+
+    .ao-auto-tile-off {
+        font-size: 0.82rem;
+        color: var(--wa-muted, #9ea6ad);
+        cursor: help;
+    }
+
     /* The reference's second tier under Daily Actions: a status line each, not a count
        — set off from the tiles above by a rule, matching the reference's own divider. */
     .ao-auto-tiles-system {
