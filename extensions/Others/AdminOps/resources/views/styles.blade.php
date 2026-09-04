@@ -1139,11 +1139,14 @@
     /* Daily Actions. `auto-fit` rather than the reference's fixed three columns, so the grid
        reflows on a narrow window instead of overflowing — and still looks deliberate when
        an extension that owns two of the tiles is not installed. */
+    /* Three tile columns beside the calendar, as the reference lays the grid. */
     .ao-auto-tiles {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+        grid-template-columns: repeat(3, 1fr);
         gap: 0.75rem;
     }
+
+    @media (max-width: 1100px) { .ao-auto-tiles { grid-template-columns: repeat(2, 1fr); } }
 
     .ao-auto-tile {
         border: 1px solid var(--wa-panel-border, hsl(var(--color-gray-200)));
@@ -1183,7 +1186,9 @@
         font-weight: 700;
         line-height: 1;
         font-variant-numeric: tabular-nums;
-        color: hsl(var(--color-primary));
+        /* The reference's light blue, not the panel primary — its red is reserved for
+           the failed counts (Leandro's screenshot, 2026-09-04). */
+        color: #25a2c3;
     }
 
     .ao-auto-tile-did {

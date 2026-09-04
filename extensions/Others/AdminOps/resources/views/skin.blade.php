@@ -469,19 +469,23 @@
        reach, so the margin pulls the box back up against the bar the way the reference's
        menus sit. Topbar only — a form's select dropdown keeps its breathing room. */
     nav.fi-topbar .fi-dropdown-panel {
-        margin-top: -7px;
+        /* Just enough tuck to close the strip Leandro circled without swallowing the
+           panel's own top corners — at -7px the rounding vanished under the bar and the
+           menu read as square (re-raised 2026-09-04). */
+        margin-top: -3px;
     }
 
     .fi-dropdown-panel {
-        /* Issue #36: the reference's menu is compact — 4px corners, slimmer panel,
-           tight rows. The 6px radius stays for content; menus are chrome. */
-        border-radius: 4px;
+        /* Issue #36, re-raised: clearly rounded corners on the panel itself. */
+        border-radius: 8px;
         border: 1px solid #c3c3c3;
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
         padding: 0.25rem 0;
         min-width: 13rem;
         width: max-content;
     }
+
+    .ao-flyout-panel { border-radius: 8px; }
 
     .fi-dropdown-list-item {
         border-radius: 0;

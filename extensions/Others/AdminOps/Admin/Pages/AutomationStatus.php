@@ -95,12 +95,12 @@ class AutomationStatus extends Page
         'invoices_created' => ['Invoices', 'Generated', 'ri-file-text-line', 'always' => true],
         'late_fees' => ['Late Fees', '', 'ri-auction-line', 'disabled' => 'This store adds no late fees — an unpaid invoice suspends the service instead'],
         // The reference's own name for this tile ("Credit Card Charges"), not ours.
-        'invoice_charged' => ['Credit Card Charges', 'Captured', 'ri-bank-card-line', 'always' => true],
+        'invoice_charged' => ['Credit Card Charges', 'Captured', 'ri-bank-card-line', 'always' => true, 'failedLabel' => 'Declined'],
         'invoice_reminders' => ['Invoice & Overdue Reminders', '', 'ri-mail-send-line', 'disabled' => 'Core mails an invoice once, when it is raised — there is no dunning reminder sequence'],
-        'cancellations_processed' => ['Cancellation Requests', 'Processed', 'ri-close-circle-line', 'always' => true],
-        'services_suspended' => ['Overdue Suspensions', 'Suspended', 'ri-notification-3-line', 'always' => true],
-        'services_terminated' => ['Overdue Terminations', 'Terminated', 'ri-calendar-close-line', 'always' => true],
-        'fixed_term_terminations' => ['Fixed Term Terminations', 'Terminated', 'ri-plug-line', 'always' => true],
+        'cancellations_processed' => ['Cancellation Requests', 'Processed', 'ri-close-circle-line', 'always' => true, 'failedLabel' => 'Failed'],
+        'services_suspended' => ['Overdue Suspensions', 'Suspended', 'ri-notification-3-line', 'always' => true, 'failedLabel' => 'Failed'],
+        'services_terminated' => ['Overdue Terminations', 'Terminated', 'ri-calendar-close-line', 'always' => true, 'failedLabel' => 'Failed'],
+        'fixed_term_terminations' => ['Fixed Term Terminations', 'Terminated', 'ri-plug-line', 'always' => true, 'failedLabel' => 'Failed'],
         'domain_renewal_notices' => ['Domain Renewal Notices', '', 'ri-global-line', 'disabled' => 'No domain registrar is connected to this store'],
         'domain_transfer_sync' => ['Domain Transfer Status Synchronisation', '', 'ri-arrow-left-right-line', 'disabled' => 'No domain registrar is connected to this store'],
         'domain_status_sync' => ['Domain Status Synchronisation', '', 'ri-history-line', 'disabled' => 'No domain registrar is connected to this store'],
@@ -432,6 +432,9 @@ class AutomationStatus extends Page
                 'week' => (int) $group?->sum('value'),
                 // The reference puts a failed count on every tile, in red, beside the figure.
                 'failed' => (int) ($rows->get($key . '_failed')?->filter($isToday)->sum('value') ?? 0),
+                // The reference shows the red count permanently on the tasks that track
+                // one ("0 Failed", "68 Declined"), not only when it is non-zero.
+                'failedLabel' => $task['failedLabel'] ?? null,
                 'lastSeen' => $group?->max('date'),
                 'disabled' => null,
             ];
