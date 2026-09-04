@@ -135,6 +135,13 @@ class SupportTickets extends Page
     public function toggleFilter(): void
     {
         $this->filter = !$this->filter;
+
+        // One band at a time, like the reference's tabs: opening Search/Filter folds
+        // Auto Refresh — the missing half of toggleAutoTab's own rule, which is how
+        // both ended up open together (user report, 2026-09-04).
+        if ($this->filter) {
+            $this->autoTab = false;
+        }
     }
 
     /** The Status field's own "+ Add status" select — one chip per pick, no duplicates. */

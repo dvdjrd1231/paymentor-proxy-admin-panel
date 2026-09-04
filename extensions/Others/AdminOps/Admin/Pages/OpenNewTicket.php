@@ -52,6 +52,14 @@ class OpenNewTicket extends Page
 
     public bool $sendEmail = true;
 
+    /**
+     * The reference's CC Recipients (user request, 2026-09-04): comma-separated
+     * addresses that each get an emailed copy of the opening message. Core tickets
+     * carry no CC column, so the copy is the feature — sent through the same
+     * system-mail path everything else uses, and logged in Email Logs like any mail.
+     */
+    public string $ccRecipients = '';
+
     public string $message = '';
 
     /** @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile> */
@@ -91,6 +99,9 @@ class OpenNewTicket extends Page
 
         $departments = (array) config('settings.ticket_departments');
 
+        // Split before validating, so the rule reads addresses, not one long string.
+        $ccList = array_values(array_filter(array_map('trim', explode(',', $this->ccRecipients))));
+
         $this->validate([
             'client' => 'required|exists:users,id',
             'subject' => 'required|string|max:255',
@@ -105,6 +116,14 @@ class OpenNewTicket extends Page
                 \Illuminate\Validation\Rule::exists('services', 'id')->where('user_id', $this->client),
             ],
         ], attributes: ['client' => 'client', 'service' => 'related service']);
+
+        foreach ($ccList as $address) {
+            if (!filter_var($address, FILTER_VALIDATE_EMAIL)) {
+                $this->addError('ccRecipients', '"' . $address . '" is not a valid email address.');
+
+                return;
+            }
+        }
 
         $ticket = DB::transaction(function (): Ticket {
             $ticket = Ticket::create([
@@ -146,6 +165,20 @@ class OpenNewTicket extends Page
                 \App\Helpers\NotificationHelper::sendNotification('ticket_created', ['ticket' => $ticket], $ticket->user);
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::warning('OpenNewTicket: email failed', ['error' => $e->getMessage()]);
+            }
+        }
+
+        // Each CC gets a copy of the opening message — logged in Email Logs like any
+        // other mail. One bad mailbox must not stop the rest, hence per-address catch.
+        foreach ($ccList as $address) {
+            try {
+                \App\Helpers\NotificationHelper::sendSystemEmailNotification(
+                    '[Ticket #' . $ticket->id . '] ' . $this->subject,
+                    nl2br(e($this->message)),
+                    email: $address,
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('OpenNewTicket: CC email failed', ['to' => $address, 'error' => $e->getMessage()]);
             }
         }
 

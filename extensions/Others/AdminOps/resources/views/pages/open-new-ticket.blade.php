@@ -31,9 +31,13 @@
             </div>
             <label class="ao-anc-row">
                 <span>CC Recipients</span>
-                <input type="text" class="ao-w-40" placeholder="Start Typing to Add or Select Recipient" disabled
-                    title="Paymenter tickets have no CC list — the client and staff are notified">
+                {{-- Real (user request, 2026-09-04): each address gets an emailed copy of
+                     the opening message, logged under Email Logs. --}}
+                <input type="text" class="ao-w-40" wire:model="ccRecipients"
+                    placeholder="Comma-separated — e.g. billing@example.com, manager@example.com"
+                    title="Each address receives a copy of the opening message by email">
             </label>
+            @error('ccRecipients') <p class="ao-anc-errors">{{ $message }}</p> @enderror
             <label class="ao-anc-row">
                 <span>Subject</span>
                 <input type="text" wire:model="subject" placeholder="What is this ticket about?" required>
