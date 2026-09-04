@@ -20,15 +20,24 @@
 
 <li class="ao-cat" data-ao-id="{{ $category->id }}" wire:key="ao-cat-{{ $category->id }}">
     <div class="ao-ct-band">
-        @if ($canReorderCategories)
-            <span class="ao-grip" data-ao-grip role="button" tabindex="0"
-                aria-label="Reorder the group {{ $category->name }}. Drag, or use the arrow keys."
-                title="Drag to reorder">&#10021;</span>
+        {{-- The reference leads the band with a boxed ⊕ that starts a product in this
+             group (Leandro's screenshot, 2026-09-04); the drag handle moves to the icon
+             cluster at the right, keeping reorder. --}}
+        @if ($urls['newProduct'] ?? null)
+            <a class="ao-ct-addto" href="{{ $urls['newProduct'] }}"
+                title="Add a product to {{ $category->name }} — pick this group on the form">
+                <x-filament::icon icon="ri-add-box-line" class="ao-mu-cell-icon" />
+            </a>
         @endif
 
         <span class="ao-ct-band-name"><b>Group Name:</b> {{ $category->name }}</span>
 
         <span class="ao-ct-icons">
+            @if ($canReorderCategories)
+                <span class="ao-grip" data-ao-grip role="button" tabindex="0"
+                    aria-label="Reorder the group {{ $category->name }}. Drag, or use the arrow keys."
+                    title="Drag to reorder">&#10021;</span>
+            @endif
             @if ($categoryUrl)
                 <a href="{{ $categoryUrl }}" title="Edit group">
                     <x-filament::icon icon="ri-edit-box-line" class="ao-mu-cell-icon" />

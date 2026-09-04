@@ -541,10 +541,11 @@ class WhmcsNavigation
             static::pageLink(PhpInfo::class, '- PHP Info'),
             static::pageLink(PhpCompatibility::class, '- PHP Version Compatibility'),
             static::link(UserResource::class, '- Administrators'),
-            // Issue #33: "I want it displayed similarly to WHMCS" — the WHMCS display of
-            // cron activity IS the Automation Status page, so the entry opens it. Core's
-            // raw CronStats chart page stays claimed so the Addons sweep leaves it be.
-            static::cronStatisticsEntry(),
+            // "- Cron Statistics" is gone (user request, 2026-09-04): it opened the same
+            // Automation Status the menu already lists two entries up, so it was a
+            // duplicate line. Core's raw CronStats chart page stays claimed below so the
+            // Addons sweep leaves it be; Automation Status's own header still links it.
+            static::markCronStatsPlaced(),
             static::link(FailedJobResource::class, '- Failed Jobs'),
             static::link(AuditResource::class, '- Audit Log'),
             static::link(ErrorLogResource::class, '- Error Log'),
@@ -942,21 +943,16 @@ class WhmcsNavigation
         return static::page(Updates::class, 'Update Paymenter');
     }
 
-    private static function cronStatisticsEntry(): ?NavigationItem
+    /**
+     * No menu line, just the claim: the old "- Cron Statistics" entry opened the same
+     * Automation Status listed two lines above it (user request, 2026-09-04). Returns
+     * null so the group builder's filter drops it.
+     */
+    private static function markCronStatsPlaced(): ?NavigationItem
     {
         static::$placed[CronStats::class] = true;
 
-        if (class_exists(AutomationStatus::class) && AutomationStatus::canAccess()) {
-            $url = static::resolveUrl(fn (): string => AutomationStatus::getUrl());
-
-            if ($url !== null) {
-                return NavigationItem::make('- Cron Statistics')
-                    ->url($url)
-                    ->isActiveWhen(fn (): bool => request()->url() === $url);
-            }
-        }
-
-        return static::page(CronStats::class, '- Cron Statistics');
+        return null;
     }
 
     /** {@see page()}, plus the badge treatment {@see link()} gives a resource entry. */

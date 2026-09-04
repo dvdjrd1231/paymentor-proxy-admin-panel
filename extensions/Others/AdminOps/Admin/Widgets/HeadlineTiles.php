@@ -92,12 +92,18 @@ class HeadlineTiles extends Widget
                 'label' => 'Pending Cancellations',
                 'icon' => 'heroicon-o-no-symbol',
                 'tone' => 'warning',
-                // Same fallback WhmcsNavigation's own Cancellation Requests entry uses:
-                // ours when the extension providing it is installed, core's otherwise, so
-                // the tile is never a dead link on an install that lacks the extension.
-                'url' => class_exists(CancellationRequestResource::class)
-                    ? (CancellationRequestResource::canViewAny() ? CancellationRequestResource::getUrl('index') : null)
-                    : (ServiceCancellationResource::canViewAny() ? ServiceCancellationResource::getUrl('index') : null),
+                // The WHMCS-shaped Cancellation Requests page, never a raw resource list
+                // — this tile was the one door that still opened the un-styled copy
+                // (user report, 2026-09-04). Core's list stays the last-resort fallback
+                // for an install without either extension page.
+                'url' => match (true) {
+                    class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\CancellationRequests::class)
+                        && \Paymenter\Extensions\Others\AdminOps\Admin\Pages\CancellationRequests::canAccess()
+                        => \Paymenter\Extensions\Others\AdminOps\Admin\Pages\CancellationRequests::getUrl(),
+                    class_exists(CancellationRequestResource::class)
+                        => CancellationRequestResource::canViewAny() ? CancellationRequestResource::getUrl('index') : null,
+                    default => ServiceCancellationResource::canViewAny() ? ServiceCancellationResource::getUrl('index') : null,
+                },
             ],
         ];
 

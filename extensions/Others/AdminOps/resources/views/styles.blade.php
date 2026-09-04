@@ -5091,6 +5091,16 @@
 
     .ao-ct-band-name b { font-weight: 700; }
 
+    /* The band's leading ⊕ (Leandro's screenshot, 2026-09-04): starts a product in this
+       group, drawn as the reference's small boxed plus. */
+    .ao-ct-addto { display: inline-flex; color: #337ab7; }
+
+    /* Product names read as the reference's ink text, not bright link-blue; the row's
+       edit icon is the affordance, the name just also happens to click through. */
+    .ao-ct-name a { color: var(--wa-ink, #333); }
+
+    .ao-ct-name a:hover { color: #337ab7; text-decoration: underline; }
+
     .ao-ct-band .ao-ct-icons { margin-left: auto; }
 
     .ao-ct-icons {
@@ -5106,7 +5116,11 @@
 
     .ao-ct-product:nth-child(even) { background: #f7f9fc; }
 
-    .ao-ct-product a { color: var(--wa-link, #337ab7); }
+    /* Names read as the reference's ink text (see .ao-ct-name above); only the row's
+       icons keep the link blue. */
+    .ao-ct-product .ao-ct-name a { color: var(--wa-ink, #333); }
+
+    .ao-ct-product .ao-ct-name a:hover { color: #337ab7; text-decoration: underline; }
 
     .ao-ct .ao-cat-empty {
         margin: 0;
