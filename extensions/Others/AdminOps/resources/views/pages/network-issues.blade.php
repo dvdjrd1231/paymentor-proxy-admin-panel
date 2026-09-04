@@ -80,9 +80,26 @@
         @else
             <p class="ao-ni-options">
                 Options:
-                <button type="button" class="ao-cp-link" wire:click="$set('tab', 'open')">Open</button> |
-                <button type="button" class="ao-cp-link" wire:click="$set('tab', 'scheduled')">Scheduled</button> |
-                <button type="button" class="ao-cp-link" wire:click="$set('tab', 'resolved')">Resolved</button> |
+                {{-- The reference's own convention: the view you are already on is plain
+                     text, not a link back to itself — only the other two stay clickable. --}}
+                @if ($tab === 'open')
+                    Open
+                @else
+                    <button type="button" class="ao-cp-link" wire:click="$set('tab', 'open')">Open</button>
+                @endif
+                |
+                @if ($tab === 'scheduled')
+                    Scheduled
+                @else
+                    <button type="button" class="ao-cp-link" wire:click="$set('tab', 'scheduled')">Scheduled</button>
+                @endif
+                |
+                @if ($tab === 'resolved')
+                    Resolved
+                @else
+                    <button type="button" class="ao-cp-link" wire:click="$set('tab', 'resolved')">Resolved</button>
+                @endif
+                |
                 {{-- The reference's green circled-plus icon, not a bare plus (issue #25). --}}
                 <button type="button" class="ao-cp-link ao-ni-new" wire:click="openForm">
                     <x-filament::icon icon="ri-add-circle-fill" class="ao-ni-new-ic" /> Create New
