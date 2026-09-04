@@ -5390,6 +5390,44 @@
        the small circled plus — not a bolder, larger control. */
     .ao-ni-options .ao-ni-new { color: #5cb85c; font-weight: 400; gap: 0.25rem; }
 
+    /* Email template editor (issue #48): the source view is a full-width monospace
+       sheet; Preview renders the Markdown with placeholders as chips. */
+    .ao-ete-modes { margin-top: 1rem; }
+
+    .ao-ete-source {
+        width: 100%;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: 0 var(--wa-radius, 4px) var(--wa-radius, 4px) var(--wa-radius, 4px);
+        background: #fff;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .ao-ete-preview {
+        padding: 1rem 1.2rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: 0 var(--wa-radius, 4px) var(--wa-radius, 4px) var(--wa-radius, 4px);
+        background: #fff;
+    }
+
+    .ao-ete-preview h1 { font-size: 1.4rem; font-weight: 700; margin: 0.6rem 0; }
+    .ao-ete-preview h2 { font-size: 1.15rem; font-weight: 700; margin: 0.5rem 0; }
+    .ao-ete-preview p, .ao-ete-preview ul { margin: 0.5rem 0; }
+    .ao-ete-preview ul { padding-left: 1.4rem; list-style: disc; }
+
+    .ao-ete-token {
+        padding: 0.05rem 0.35rem;
+        border-radius: 4px;
+        background: #eef4fb;
+        color: #337ab7;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.85em;
+    }
+
+    .ao-ete-hint { margin-top: 0.5rem; color: var(--wa-muted, #6b6b6b); font-size: 0.85rem; }
+
     /* Downloads' Upload File (user feedback, 2026-09-04): the file control is the
        browser's own small button + filename text, as the reference shows it — the shared
        input chrome boxed it into what read as a broken text field. */

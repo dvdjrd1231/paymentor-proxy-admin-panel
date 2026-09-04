@@ -126,9 +126,13 @@ class AddNewOrder extends Page
         }
 
         $index = (int) explode('.', $key)[0];
-        $this->items[$index]['planId'] = $this->plansFor($value)->first()?->id;
-        $this->items[$index]['configOptions'] = ProductConfig::defaultConfigOptions(ProductConfig::configOptions($value), []);
-        $this->items[$index]['checkoutConfig'] = ProductConfig::defaultCheckoutConfig(ProductConfig::checkoutConfig($value), []);
+        // The custom select entangles strings ('' for None, '5' for a product) and
+        // ProductConfig's signatures are typed ?int — passing the raw value 500'd every
+        // product pick as an "Error while loading page" toast (Leandro's log, 2026-09-04).
+        $productId = ctype_digit((string) $value) ? (int) $value : null;
+        $this->items[$index]['planId'] = $this->plansFor($productId)->first()?->id;
+        $this->items[$index]['configOptions'] = ProductConfig::defaultConfigOptions(ProductConfig::configOptions($productId), []);
+        $this->items[$index]['checkoutConfig'] = ProductConfig::defaultCheckoutConfig(ProductConfig::checkoutConfig($productId), []);
     }
 
     public function plansFor($productId)
