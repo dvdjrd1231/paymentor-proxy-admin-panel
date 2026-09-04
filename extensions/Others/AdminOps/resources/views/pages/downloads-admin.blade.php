@@ -76,10 +76,10 @@
                                 <input type="radio" value="upload" wire:model.live="source">
                                 Upload File
                             </label>
-                            <span class="ao-of-inline">
-                                Choose File:
-                                <input type="file" wire:model="upload" @disabled($source !== 'upload')>
-                            </span>
+                            {{-- The reference stacks these: "Choose File:" on its own
+                                 line, the browser's button under it. --}}
+                            <span>Choose File:</span>
+                            <input type="file" wire:model="upload" @disabled($source !== 'upload')>
                             <span class="ao-of-note">
                                 Server Max File Upload Size: <b>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin::uploadLimit() }}</b>
                                 - To increase this limit you need to modify your servers php.ini file

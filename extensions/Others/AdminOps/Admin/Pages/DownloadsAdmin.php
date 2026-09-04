@@ -28,7 +28,9 @@ class DownloadsAdmin extends Page
     /** Navigation is built by {@see WhmcsNavigation}. */
     protected static bool $shouldRegisterNavigation = false;
 
-    /** category | download | null — which tab's form is open. */
+    /** category | download | null — which tab's form is open. URL-bound so the Add
+     *  Download form is linkable, like every other panel toggle. */
+    #[Url]
     public ?string $tab = null;
 
     #[Url]
