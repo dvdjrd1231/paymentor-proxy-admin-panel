@@ -26,16 +26,36 @@
             @endif
         </p>
 
+        {{-- The reference's seven tabs, in its order. --}}
         <div class="ao-tx-tabs">
-            @foreach (['reply' => 'Add Reply', 'note' => 'Add Note', 'other' => 'Other Tickets', 'options' => 'Options', 'log' => 'Log'] as $key => $label)
+            @foreach (['reply' => 'Add Reply', 'note' => 'Add Note', 'custom' => 'Custom Fields', 'other' => 'Other Tickets', 'clientlog' => 'Client Log', 'options' => 'Options', 'log' => 'Log'] as $key => $label)
                 <button type="button" class="ao-mu-tab {{ $tab === $key ? 'ao-on' : '' }}" wire:click="$set('tab', '{{ $key }}')">{{ $label }}</button>
             @endforeach
         </div>
 
         @if ($tab === 'reply')
             <form wire:submit.prevent="sendReply">
-                <textarea class="ao-et-editor" rows="10" wire:model="reply"
-                    placeholder="Write the reply — markdown works here"></textarea>
+                {{-- The reference's toolbar and blue Preview — the buttons write
+                     markdown, Preview renders it server-side (same as Open New Ticket). --}}
+                <div class="ao-ont-editor">
+                    <div class="ao-ont-toolbar">
+                        <button type="button" data-md="**" title="Bold"><b>B</b></button>
+                        <button type="button" data-md="*" title="Italic"><i>I</i></button>
+                        <button type="button" data-md-line="# " title="Heading"><b>H</b></button>
+                        <button type="button" data-md-line="[Link](https://)" title="Link">&#128279;</button>
+                        <button type="button" data-md-line="- " title="Bullet list">&#8226;&#8226;</button>
+                        <button type="button" data-md-line="1. " title="Numbered list">1.</button>
+                        <button type="button" data-md-line="> " title="Quote">&#10078;</button>
+                        <button type="button" class="ao-ont-preview {{ $preview ? 'ao-on' : '' }}"
+                            wire:click="$toggle('preview')" title="Preview">&#128269; Preview</button>
+                    </div>
+                    @if ($preview)
+                        <div class="ao-ont-rendered">{!! $rendered !!}</div>
+                    @else
+                        <textarea class="ao-et-editor" rows="10" wire:model="reply" data-ao-message
+                            placeholder="Write the reply — markdown works here"></textarea>
+                    @endif
+                </div>
 
                 <div class="ao-et-setrow">
                     <select wire:model="department" title="Set Department">
@@ -112,6 +132,32 @@
                     <p>{{ $row->body }}</p>
                 </div>
             @endforeach
+        @elseif ($tab === 'custom')
+            {{-- The reference's tab, honestly empty: Paymenter tickets carry no custom
+                 field definitions, so there is nothing to fill in. --}}
+            <p class="ao-gs-empty" title="Paymenter tickets have no custom-field system — the reference shows this same empty state on an install with none configured">
+                No Custom Fields Found
+            </p>
+        @elseif ($tab === 'clientlog')
+            {{-- The reference's Client Log: what this ticket's client has been doing,
+                 from the same audit trail the Client Profile's Log tab reads. --}}
+            <table class="ao-mu-grid">
+                <thead>
+                    <tr><th>Date</th><th>Event</th><th>Record</th><th>Changes</th></tr>
+                </thead>
+                <tbody>
+                    @forelse ($clientLogRows as $row)
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($row->created_at)->format('m/d/Y H:i') }}</td>
+                            <td>{{ ucfirst($row->event) }}</td>
+                            <td class="ao-mu-left">{{ class_basename($row->auditable_type) }} #{{ $row->auditable_id }}</td>
+                            <td class="ao-mu-left"><code>{{ str($row->new_values)->limit(100) }}</code></td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="4" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         @elseif ($tab === 'other')
             <table class="ao-mu-grid">
                 <thead>
@@ -215,13 +261,26 @@
                     @if ($isStaff)
                         <span class="ao-et-operator">OPERATOR</span>
                     @endif
-                    <button type="button" class="ao-eo-delete ao-et-msg-delete"
-                        wire:click="deleteMessage({{ $message->id }})"
-                        wire:confirm="Delete this message?">Delete</button>
+                    {{-- The reference's Edit + Delete pair under the poster. --}}
+                    <span class="ao-et-msg-btns">
+                        <button type="button" class="ao-of-go ao-et-msg-edit"
+                            wire:click="startEditMessage({{ $message->id }})">Edit</button>
+                        <button type="button" class="ao-eo-delete ao-et-msg-delete"
+                            wire:click="deleteMessage({{ $message->id }})"
+                            wire:confirm="Delete this message?">Delete</button>
+                    </span>
                 </div>
                 <div class="ao-et-msg-body">
                     <div class="ao-et-msg-posted">Posted on {{ $message->created_at?->format('l jS F Y \a\t H:i') }}</div>
-                    <div class="ao-et-msg-text">{!! \Illuminate\Support\Str::markdown(e($message->message)) !!}</div>
+                    @if ($editingMessage === $message->id)
+                        <textarea class="ao-et-editor" rows="5" wire:model="editingText"></textarea>
+                        <div class="ao-et-msg-editrow">
+                            <button type="button" class="ao-find-go" wire:click="saveMessage">Save</button>
+                            <button type="button" class="ao-of-go" wire:click="$set('editingMessage', null)">Cancel</button>
+                        </div>
+                    @else
+                        <div class="ao-et-msg-text">{!! \Illuminate\Support\Str::markdown(e($message->message)) !!}</div>
+                    @endif
                     @foreach ($message->attachments as $attachment)
                         <p class="ao-et-msg-file">&#128206; {{ $attachment->filename }}</p>
                     @endforeach
@@ -250,4 +309,29 @@
             </div>
         @endif
     </div>
+
+    {{-- The toolbar's markdown insertion — the same handler Open New Ticket carries. --}}
+    <script>
+        (() => {
+            const root = document.currentScript.closest('.fi-page') ?? document;
+            root.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-md], [data-md-line]');
+                if (!button) return;
+                const box = root.querySelector('[data-ao-message]');
+                if (!box) return;
+                const [start, end] = [box.selectionStart, box.selectionEnd];
+                const picked = box.value.slice(start, end);
+                let text;
+                if (button.dataset.md !== undefined) {
+                    const wrap = button.dataset.md;
+                    text = box.value.slice(0, start) + wrap + (picked || 'text') + wrap + box.value.slice(end);
+                } else {
+                    text = box.value.slice(0, start) + '\n' + button.dataset.mdLine + picked + box.value.slice(end);
+                }
+                box.value = text;
+                box.dispatchEvent(new Event('input', { bubbles: true }));
+                box.focus();
+            });
+        })();
+    </script>
 </x-filament-panels::page>

@@ -48,6 +48,14 @@ class EditTicket extends Page
 
     public string $reply = '';
 
+    /** The reference's Preview toggle: renders the reply's markdown server-side. */
+    public bool $preview = false;
+
+    /** In-place message editing — the reference's Edit button on each thread entry. */
+    public ?int $editingMessage = null;
+
+    public string $editingText = '';
+
     /** The status the ticket takes when the reply sends — the reference's fourth select. */
     public string $replyStatus = 'replied';
 
@@ -203,6 +211,26 @@ class EditTicket extends Page
         Notification::make()->title('Ticket updated')->success()->send();
     }
 
+    /** The thread's Edit button: the message text, corrected in place. */
+    public function startEditMessage(int $id): void
+    {
+        $message = $this->ticket->messages()->find($id);
+
+        if ($message) {
+            $this->editingMessage = $id;
+            $this->editingText = (string) $message->message;
+        }
+    }
+
+    public function saveMessage(): void
+    {
+        $this->validate(['editingText' => 'required|string'], attributes: ['editingText' => 'message']);
+
+        $this->ticket->messages()->where('id', $this->editingMessage)->update(['message' => $this->editingText]);
+        $this->reset(['editingMessage', 'editingText']);
+        Notification::make()->title('Message updated')->success()->send();
+    }
+
     public function deleteMessage(int $id): void
     {
         $message = $this->ticket->messages()->find($id);
@@ -256,6 +284,15 @@ class EditTicket extends Page
                 ? DB::table('audits')->where('auditable_type', Ticket::class)
                     ->where('auditable_id', $this->ticket->id)->orderByDesc('id')->limit(50)->get()
                 : collect(),
+            // The reference's Client Log tab: what this ticket's client has been doing —
+            // the same audit rows the Client Profile's Log tab reads, scoped to them.
+            'clientLogRows' => Schema::hasTable('audits')
+                ? DB::table('audits')->where('user_id', $this->ticket->user_id)
+                    ->orderByDesc('id')->limit(50)->get()
+                : collect(),
+            'rendered' => $this->preview
+                ? Str::markdown(e($this->reply ?: '*Nothing to preview yet.*'))
+                : null,
             'lastReplyAgo' => $lastReply?->created_at?->diffForHumans(),
             'listUrl' => SupportTickets::getUrl(),
         ];
