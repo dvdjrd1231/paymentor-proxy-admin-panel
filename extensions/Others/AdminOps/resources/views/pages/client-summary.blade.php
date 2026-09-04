@@ -503,11 +503,70 @@
                 @endforeach
             </select>
             <button type="button" class="ao-of-go" wire:click="$refresh">Go</button>
-            <a class="ao-find-go"
-                href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServiceAddons::getUrl(['adding' => 1, 'service' => $svcModel->id]) }}">
+            {{-- Inline, as the reference's Add New Addon is — not a redirect to the
+                 Service Addons page (user feedback, 2026-09-04). --}}
+            <button type="button" class="ao-find-go {{ $addingAddon ? 'ao-on' : '' }}" wire:click="toggleAddingAddon">
                 &#10010; New Addon
-            </a>
+            </button>
         </div>
+
+        @if ($addingAddon)
+            <h4 class="ao-ano-heading">Add New Addon</h4>
+            <form class="ao-anc-card" wire:submit.prevent="saveAddon">
+                <div class="ao-anc-row">
+                    <span>Parent Product/Service</span>
+                    <span class="ao-eo-fact">#{{ $svcModel->id }} · {{ $svcModel->product?->name }}</span>
+                </div>
+                <label class="ao-anc-row">
+                    <span>Predefined Addon</span>
+                    <span class="ao-anc-field">
+                        <select class="ao-w-40" wire:model.live="addon.productId">
+                            <option value="">None</option>
+                            @foreach ($addonCatalogue as $addonProduct)
+                                <option value="{{ $addonProduct->id }}">{{ $addonProduct->name }}</option>
+                            @endforeach
+                        </select>
+                        @if ($addonCatalogue->isEmpty())
+                            <i>The Service Addons catalogue category has no products yet.</i>
+                        @endif
+                    </span>
+                </label>
+                <label class="ao-anc-row">
+                    <span>Custom Name</span>
+                    <input type="text" class="ao-w-40" wire:model="addon.name" placeholder="Optional — shown instead of the product name">
+                </label>
+                <label class="ao-anc-row">
+                    <span>Status</span>
+                    <select class="ao-w-25" wire:model="addon.status">
+                        <option value="pending">Pending</option>
+                        <option value="active">Active</option>
+                    </select>
+                </label>
+                <label class="ao-anc-row">
+                    <span>Quantity</span>
+                    <input type="number" min="1" class="ao-w-25" wire:model="addon.quantity">
+                </label>
+                <label class="ao-anc-row">
+                    <span>Recurring</span>
+                    <span class="ao-anc-field">
+                        <input type="text" inputmode="decimal" class="ao-w-25" wire:model="addon.price">
+                        <i>{{ $svcModel->currency_code }} — prefilled from the addon's own plan; renews with the parent</i>
+                    </span>
+                </label>
+                <div class="ao-anc-row">
+                    <span>Next Due Date</span>
+                    <span class="ao-eo-fact">{{ $svcModel->expires_at?->format('m/d/Y') ?? 'N/A' }}</span>
+                </div>
+                <label class="ao-anc-row">
+                    <span></span>
+                    <span class="ao-of-check"><input type="checkbox" wire:model="addon.invoice"> Generate Invoice after Adding</span>
+                </label>
+                <div class="ao-gs-actions">
+                    <button type="submit" class="ao-find-go">Save Changes</button>
+                    <button type="button" class="ao-gs-cancel" wire:click="toggleAddingAddon">Cancel</button>
+                </div>
+            </form>
+        @endif
 
         <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="saveService">
             <div class="ao-of-rows">
@@ -557,9 +616,11 @@
                 <div class="ao-of-row">
                     <label class="ao-of-label" for="ao-cs-user">Username</label>
                     <span><input id="ao-cs-user" class="ao-of-md" type="text" wire:model="svc.username"></span>
-                    <span class="ao-of-label">Termination Date</span>
-                    <span><input class="ao-of-md" type="text" disabled placeholder=""
-                        title="Paymenter records no termination date; a cancelled service simply stops renewing"></span>
+                    <label class="ao-of-label" for="ao-cs-term">Termination Date</label>
+                    @include('adminops::partials.datepicker', [
+                        'model' => 'svc.terminationDate', 'range' => false, 'id' => 'ao-cs-term',
+                        'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                    ])
                 </div>
                 <div class="ao-of-row">
                     <label class="ao-of-label" for="ao-cs-pass">Password</label>
@@ -614,15 +675,12 @@
                             wire:confirm="Unsuspend this service on its panel?">Unsuspend</button>
                         <button type="button" class="ao-of-go" wire:click="runModule('terminate')"
                             wire:confirm="Terminate this service on its panel? This deprovisions it.">Terminate</button>
-                        <button type="button" class="ao-of-go ao-eo-dead-btn" disabled
-                            title="Changing package is Save Changes with a different Product/Service picked — no separate module call exists">Change Package</button>
-                        <button type="button" class="ao-of-go ao-eo-dead-btn" disabled
-                            title="Panel credentials are managed on the proxy panel itself">Change Password</button>
+                        <button type="button" class="ao-of-go" wire:click="runModule('change_package')"
+                            title="Pushes the saved Product/Service and Billing Cycle to the panel — pick them above and Save Changes first"
+                            wire:confirm="Push the saved product and plan to the panel now? (Save Changes first if you just picked a different one.)">Change Package</button>
+                        <button type="button" class="ao-of-go" wire:click="runModule('change_password')"
+                            wire:confirm="Generate a new proxy password on the panel? The current one stops working immediately.">Change Password</button>
                     </span>
-                </div>
-                <div class="ao-of-row ao-of-row-single">
-                    <label class="ao-of-label" for="ao-cs-sub">Subscription ID</label>
-                    <span><input id="ao-cs-sub" class="ao-of-md" type="text" wire:model="svc.subscriptionId"></span>
                 </div>
                 <div class="ao-of-row ao-of-row-single">
                     <span class="ao-of-label">Addons</span>
@@ -661,18 +719,28 @@
                         </span>
                     </div>
                 @endforeach
+                {{-- After the module's custom fields, as the reference's circled screenshot
+                     orders it: Proxies, Service ID, api-key, then Subscription ID. --}}
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cs-sub">Subscription ID</label>
+                    <span><input id="ao-cs-sub" class="ao-of-md" type="text" wire:model="svc.subscriptionId"></span>
+                </div>
                 <div class="ao-of-row ao-of-row-single">
                     <span class="ao-of-label">Override Auto-Suspend</span>
-                    <span class="ao-of-check" title="Paymenter's daily run has no per-service suspension override to honour">
-                        <input type="checkbox" disabled> Do not suspend until
-                        <input class="ao-of-sm" type="text" disabled>
+                    <span class="ao-of-check" title="While the date is ahead, the overdue ladder's suspension is undone by the hourly overrides sweep">
+                        <input type="checkbox" wire:model.live="svc.noSuspend"> Do not suspend until
+                        @include('adminops::partials.datepicker', [
+                            'model' => 'svc.noSuspendUntil', 'range' => false, 'id' => 'ao-cs-nosus',
+                            'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                        ])
                     </span>
                 </div>
                 <div class="ao-of-row ao-of-row-single">
                     <span class="ao-of-label">Auto-Terminate End of Cycle</span>
-                    <span class="ao-of-check" title="Paymenter has no end-of-cycle auto-termination flag; cancellation requests carry that intent">
-                        <input type="checkbox" disabled> Reason
-                        <input class="ao-of-md" type="text" disabled>
+                    <span class="ao-of-check" title="Saved as a real end-of-period cancellation: the next invoice is skipped and the service terminates when its period ends">
+                        <input type="checkbox" wire:model.live="svc.autoTerminate"> Reason
+                        <input class="ao-of-lg" type="text" wire:model="svc.autoTerminateReason"
+                            placeholder="Why this service ends with its period">
                     </span>
                 </div>
                 <div class="ao-of-row ao-of-row-single">

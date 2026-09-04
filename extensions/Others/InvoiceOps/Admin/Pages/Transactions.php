@@ -236,6 +236,25 @@ class Transactions extends Page
                     ['amount' => 0],
                 );
                 $credit->increment('amount', $in);
+
+                // The ledger row. Incrementing the balance alone left the top-up invisible
+                // on this page and on the client's Transactions tab — money that moved with
+                // no record of when, by whom, or through what. Same table as an unapplied
+                // payment: the columns are exactly a payment's, and the description says
+                // what happened to it.
+                UnappliedTransaction::create([
+                    'user_id' => $this->txClient,
+                    'gateway_id' => $this->gatewayIdFor($this->txMethod),
+                    'admin_id' => Auth::id(),
+                    'amount' => $in,
+                    'fee' => $this->txFees !== '' ? (float) $this->txFees : 0,
+                    'currency_code' => strtoupper($this->txCurrency ?: config('settings.default_currency', 'USD')),
+                    'transaction_id' => $this->txId ?: null,
+                    'description' => trim($this->txDescription) !== ''
+                        ? trim($this->txDescription) . ' (credit top-up)'
+                        : 'Credit top-up',
+                    'created_at' => $this->pickedDate() ?? now(),
+                ]);
             }
 
             if ($out > 0) {

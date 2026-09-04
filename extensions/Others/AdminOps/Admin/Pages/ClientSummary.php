@@ -90,6 +90,12 @@ class ClientSummary extends Page
     /** The service editor's form state. */
     public array $svc = [];
 
+    /** The reference's inline Add New Addon form (user request, 2026-09-04). */
+    public bool $addingAddon = false;
+
+    /** @var array<string, mixed> */
+    public array $addon = ['productId' => '', 'name' => '', 'quantity' => 1, 'price' => '', 'status' => 'active', 'invoice' => true];
+
     /** The reference's Admin Notes box — stored as a user property, so it is real. */
     public string $adminNotes = '';
 
@@ -252,11 +258,23 @@ class ClientSummary extends Page
             'username' => $prop('proxy_username'),
             'password' => $prop('proxy_password'),
             'svcNotes' => $prop('admin_notes'),
+            // WHMCS's Termination Date: the day this service ends regardless of renewals.
+            // Stored as a property; saving one writes/updates the real end-of-period
+            // cancellation the Cancellations sweeper terminates on (see saveService).
+            'terminationDate' => $prop('termination_date'),
+            // WHMCS's Override Auto-Suspend: the overdue ladder leaves this service alone
+            // until the date passes. Enforced by AdminOps::boot()'s post-cron restore.
+            'noSuspend' => $prop('no_suspend_until') !== '',
+            'noSuspendUntil' => $prop('no_suspend_until'),
+            // WHMCS's Auto-Terminate End of Cycle: an end-of-period cancellation with a
+            // reason, written as the real ServiceCancellation row core already honours.
+            'autoTerminate' => (bool) $service->cancellation,
+            'autoTerminateReason' => (string) ($service->cancellation?->reason ?? ''),
             // The remaining properties (Proxies, Service ID, api-key…), editable as the
             // reference's custom fields are. A list, not a key-map: property keys can
             // carry characters wire:model paths cannot.
             'props' => $service->properties
-                ->whereNotIn('key', ['domain', 'dedicated_ip', 'admin_notes', 'proxy_username', 'proxy_password'])
+                ->whereNotIn('key', ['domain', 'dedicated_ip', 'admin_notes', 'proxy_username', 'proxy_password', 'termination_date', 'no_suspend_until'])
                 ->map(fn ($property): array => [
                     'key' => (string) $property->key,
                     'name' => (string) ($property->name ?: $property->key),
@@ -268,6 +286,107 @@ class ClientSummary extends Page
                 ->mapWithKeys(fn ($config) => [(string) $config->config_option_id => (string) $config->config_value_id])
                 ->all(),
         ];
+    }
+
+    public function toggleAddingAddon(): void
+    {
+        $this->addingAddon = !$this->addingAddon;
+    }
+
+    /** Prefill the recurring amount from the picked addon product's own plan. */
+    public function updatedAddonProductId(): void
+    {
+        if (!$this->addon['productId']) {
+            return;
+        }
+
+        $plan = \App\Models\Plan::where('priceable_type', \App\Models\Product::class)
+            ->where('priceable_id', (int) $this->addon['productId'])->first();
+        $currency = config('settings.default_currency', 'USD');
+        $this->addon['price'] = number_format((float) ($plan?->price($currency)->price ?? 0), 2, '.', '');
+    }
+
+    /**
+     * The reference's Add New Addon, inline on the Products/Services tab (it used to
+     * be a redirect to the Service Addons page — user feedback, 2026-09-04). Identical
+     * mechanics to ServiceAddons::attach(): the addon is a real service row sharing the
+     * parent's order and due date, linked in ext_service_addons; plus the reference's
+     * Custom Name (the service's label column), Status, and Generate Invoice after
+     * Adding (an invoice made exactly the way the daily cron makes one).
+     */
+    public function saveAddon(): void
+    {
+        $this->validate([
+            'addon.productId' => 'required|exists:products,id',
+            'addon.quantity' => 'required|integer|min:1',
+            'addon.price' => 'required|numeric|min:0',
+            'addon.status' => 'required|in:pending,active',
+            'addon.name' => 'nullable|string|max:255',
+        ], attributes: ['addon.productId' => 'predefined addon', 'addon.quantity' => 'quantity', 'addon.price' => 'recurring amount', 'addon.status' => 'status']);
+
+        $parent = $this->customer->services()->findOrFail($this->service);
+        $product = \App\Models\Product::findOrFail((int) $this->addon['productId']);
+        $plan = \App\Models\Plan::where('priceable_type', \App\Models\Product::class)
+            ->where('priceable_id', $product->id)->first();
+
+        // Same guard as ServiceAddons::attach() — a plan-less service 500s core's own
+        // pages wherever the plan is dereferenced (issue #4, seen live).
+        if (!$plan) {
+            $this->addError('addon.productId', 'This addon has no price plan yet. Open the addon product in the catalogue and add a monthly price first.');
+
+            return;
+        }
+
+        DB::transaction(function () use ($parent, $product, $plan): void {
+            $service = \App\Models\Service::create([
+                'order_id' => $parent->order_id,
+                'product_id' => $product->id,
+                'plan_id' => $plan->id,
+                'quantity' => max(1, (int) $this->addon['quantity']),
+                'price' => (float) $this->addon['price'],
+                'status' => $this->addon['status'],
+                'user_id' => $parent->user_id,
+                'currency_code' => $parent->currency_code,
+                'expires_at' => $parent->expires_at,
+            ]);
+
+            // The reference's Custom Name. `label` is a real column with a product-name
+            // fallback accessor, but core keeps it out of $fillable — forceFill, or the
+            // name silently vanishes (caught by the live test on first deploy).
+            if (trim((string) $this->addon['name']) !== '') {
+                $service->forceFill(['label' => trim((string) $this->addon['name'])])->save();
+            }
+
+            \Paymenter\Extensions\Others\AdminOps\Models\ServiceAddon::create([
+                'service_id' => $service->id,
+                'parent_service_id' => $parent->id,
+            ]);
+
+            // The reference's "Generate Invoice after Adding" — the exact shape the
+            // daily cron's invoices_created pass writes.
+            if (($this->addon['invoice'] ?? false) && (float) $this->addon['price'] > 0) {
+                $invoice = $service->invoices()->make([
+                    'user_id' => $service->user_id,
+                    'status' => 'pending',
+                    'due_at' => $service->expires_at ?? now()->addDays(7),
+                    'currency_code' => $service->currency_code,
+                ]);
+                $invoice->save();
+                $invoice->items()->create([
+                    'reference_id' => $service->id,
+                    'reference_type' => \App\Models\Service::class,
+                    'price' => $service->price,
+                    'quantity' => $service->quantity,
+                    'description' => $service->description,
+                ]);
+            }
+        });
+
+        $invoiced = ($this->addon['invoice'] ?? false) && (float) $this->addon['price'] > 0;
+        $this->addingAddon = false;
+        $this->addon = ['productId' => '', 'name' => '', 'quantity' => 1, 'price' => '', 'status' => 'active', 'invoice' => true];
+        Notification::make()->title('Addon added')
+            ->body('It renews with its parent service.' . ($invoiced ? ' An invoice for it is now pending.' : ''))->success()->send();
     }
 
     /** The editor's Save Changes — every field lands on the real column or property. */
@@ -300,8 +419,10 @@ class ClientSummary extends Page
 
         $nextDue = $parseDay((string) $this->svc['nextDue']);
         $regDate = $parseDay((string) ($this->svc['regDate'] ?? ''));
+        $termDate = $parseDay((string) ($this->svc['terminationDate'] ?? ''));
+        $noSuspendUntil = $parseDay((string) ($this->svc['noSuspendUntil'] ?? ''));
 
-        DB::transaction(function () use ($service, $nextDue, $regDate): void {
+        DB::transaction(function () use ($service, $nextDue, $regDate, $termDate, $noSuspendUntil): void {
             $service->update([
                 'product_id' => (int) $this->svc['productId'],
                 'plan_id' => (int) $this->svc['planId'],
@@ -324,6 +445,12 @@ class ClientSummary extends Page
                 'admin_notes' => ['Admin Notes', trim((string) $this->svc['svcNotes'])],
                 'proxy_username' => ['Username', trim((string) $this->svc['username'])],
                 'proxy_password' => ['Password', trim((string) $this->svc['password'])],
+                // The reference's Termination Date — enforced by ServiceOverrides' hourly
+                // sweep, which terminates the service once the date passes.
+                'termination_date' => ['Termination Date', $termDate?->format('Y-m-d') ?? ''],
+                // The reference's Override Auto-Suspend — the same sweep un-suspends a
+                // service the overdue ladder caught while this date is still ahead.
+                'no_suspend_until' => ['Do Not Suspend Until', ($this->svc['noSuspend'] ?? false) ? ($noSuspendUntil?->format('Y-m-d') ?? '') : ''],
             ];
 
             foreach ($namedProps as $key => [$name, $value]) {
@@ -339,6 +466,19 @@ class ClientSummary extends Page
             // should not delete the record of it having existed.
             foreach ($this->svc['props'] ?? [] as $row) {
                 $service->properties()->where('key', $row['key'])->update(['value' => (string) $row['value']]);
+            }
+
+            // The reference's Auto-Terminate End of Cycle: written as the real
+            // end-of-period ServiceCancellation core already reads (it stops the next
+            // invoice) and the Cancellations extension terminates when due. Unticking it
+            // deletes the row, which is core's own definition of un-cancelling.
+            if ($this->svc['autoTerminate'] ?? false) {
+                $service->cancellation()->updateOrCreate([], [
+                    'type' => 'end_of_period',
+                    'reason' => trim((string) ($this->svc['autoTerminateReason'] ?? '')) ?: null,
+                ]);
+            } else {
+                $service->cancellation()->delete();
             }
 
             // The reference's Region (and any other config option): the picked value must
@@ -382,7 +522,8 @@ class ClientSummary extends Page
             return;
         }
 
-        $ran = match (true) {
+        try {
+            $ran = match (true) {
             $command === 'create' && $service->status === 'pending' => (function () use ($service): string {
                 \App\Jobs\Server\CreateJob::dispatch($service);
                 $service->status = 'active';
@@ -409,12 +550,45 @@ class ClientSummary extends Page
 
                 return 'Terminate dispatched.';
             })(),
+            // WHMCS's ChangePackage module command: push the currently-saved product/plan
+            // to the panel — the same UpgradeJob checkout's paid upgrade path dispatches.
+            // Save Changes with a different Product/Service picked, then this.
+            $command === 'change_package' && $service->status === 'active' => (function () use ($service): string {
+                \App\Jobs\Server\UpgradeJob::dispatch($service);
+
+                return 'Change Package dispatched — the panel is updating to the saved product and plan.';
+            })(),
+            // WHMCS's ChangePassword module command, where the module supports it. The
+            // proxy panel does (ProxyPanel::changePassword(Service, string) — called via
+            // ExtensionHelper::call, not callService, whose settings/properties prelude
+            // would land in the password parameter). A module without the method throws
+            // "Function not found", which the catch turns into an honest refusal.
+            $command === 'change_password' && in_array($service->status, ['active', 'suspended'], true) => (function () use ($service): string {
+                $password = str()->random(12);
+
+                try {
+                    \App\Helpers\ExtensionHelper::call($service->product->server, 'changePassword', [$service, $password]);
+                } catch (\Throwable $e) {
+                    throw new \RuntimeException(str_contains($e->getMessage(), 'not found')
+                        ? 'This server module has no password command.'
+                        : 'The panel refused the password change: ' . $e->getMessage());
+                }
+
+                $service->properties()->updateOrCreate(['key' => 'proxy_password'], ['name' => 'Password', 'value' => $password]);
+
+                return 'Password changed on the panel. The new one is in the Password field.';
+            })(),
             default => null,
-        };
+            };
+        } catch (\Throwable $e) {
+            Notification::make()->title('Command failed')->body($e->getMessage())->danger()->send();
+
+            return;
+        }
 
         if ($ran === null) {
             Notification::make()->title('Nothing to do')
-                ->body(ucfirst($command) . ' does not apply to a ' . $service->status . ' service.')->warning()->send();
+                ->body(str_replace('_', ' ', ucfirst($command)) . ' does not apply to a ' . $service->status . ' service.')->warning()->send();
 
             return;
         }
@@ -448,6 +622,11 @@ class ClientSummary extends Page
                 ? \Paymenter\Extensions\Others\AdminOps\Models\ServiceAddon::with('service.product')
                     ->where('parent_service_id', $service->id)->get()
                 : collect(),
+            // The inline Add New Addon form's catalogue — the Service Addons category,
+            // the same source the Service Addons page attaches from.
+            'addonCatalogue' => \App\Models\Product::whereIn('category_id',
+                \App\Models\Category::where('name', ServiceAddons::CATEGORY)->pluck('id'))
+                ->orderBy('name')->get(['id', 'name']),
             'svcPayment' => $service->invoices->flatMap->transactions->first()?->gateway?->name ?? '—',
             // Each config option with its child values, for the editable Region-style selects.
             'svcConfigChoices' => $service->configs->mapWithKeys(fn ($config) => [
@@ -883,6 +1062,31 @@ class ClientSummary extends Page
                             . ($refund->reason ? ' · ' . str($refund->reason)->limit(50) : ''),
                         'in' => 0.0,
                         'out' => (float) $refund->amount,
+                    ])
+            );
+        }
+
+        // Add Transaction's client-attached rows — credit top-ups and unapplied payments.
+        // These have no invoice, so the InvoiceTransaction query above never sees them;
+        // without this branch a recorded top-up moved real money invisibly (user report,
+        // 2026-09-04).
+        if (Schema::hasTable('ext_unapplied_transactions')) {
+            $rows = $rows->concat(
+                DB::table('ext_unapplied_transactions')
+                    // Gateways live in core's `extensions` table (Gateway extends Extension).
+                    ->leftJoin('extensions', 'extensions.id', '=', 'ext_unapplied_transactions.gateway_id')
+                    ->where('ext_unapplied_transactions.user_id', $this->customer->id)
+                    ->orderByDesc('ext_unapplied_transactions.id')
+                    ->limit(self::TAB_ROWS)
+                    ->select('ext_unapplied_transactions.*', 'extensions.name as gateway_name')
+                    ->get()
+                    ->map(fn ($row): array => [
+                        'at' => Carbon::parse($row->created_at),
+                        'method' => $row->gateway_name ?? 'Manual',
+                        'description' => ($row->description ?: 'Unapplied Payment')
+                            . ($row->transaction_id ? ' · ' . $row->transaction_id : ''),
+                        'in' => (float) $row->amount,
+                        'out' => 0.0,
                     ])
             );
         }
