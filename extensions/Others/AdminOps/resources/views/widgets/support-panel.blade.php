@@ -15,7 +15,7 @@
         <ul class="ao-wg-tickets">
             @forelse ($recent as $ticket)
                 <li>
-                    <a href="{{ \App\Admin\Resources\TicketResource::getUrl('edit', ['record' => $ticket->id]) }}">
+                    <a href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditTicket::getUrl(['record' => $ticket->id]) }}">
                         #{{ $ticket->id }} - {{ str($ticket->subject)->limit(38) }}
                     </a>
                     <i>{{ $ticket->updated_at?->diffForHumans(short: true) }}</i>

@@ -202,7 +202,7 @@
                         <td>{{ $addon->service->id }}</td>
                         <td class="ao-mu-left">{{ $addon->service->product?->name ?? '—' }}</td>
                         <td class="ao-mu-left">
-                            <a href="{{ \App\Admin\Resources\ServiceResource::getUrl('edit', ['record' => $addon->parent->id]) }}">
+                            <a href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::serviceUrl($addon->parent) }}">
                                 #{{ $addon->parent->id }} · {{ $addon->parent->product?->name }}
                             </a>
                         </td>

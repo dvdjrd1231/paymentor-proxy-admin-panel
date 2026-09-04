@@ -183,7 +183,7 @@ class OpenNewTicket extends Page
         }
 
         Notification::make()->title('Ticket #' . $ticket->id . ' opened')->success()->send();
-        $this->redirect(TicketResource::getUrl('edit', ['record' => $ticket->id]));
+        $this->redirect(EditTicket::getUrl(['record' => $ticket->id]));
     }
 
     protected function getViewData(): array

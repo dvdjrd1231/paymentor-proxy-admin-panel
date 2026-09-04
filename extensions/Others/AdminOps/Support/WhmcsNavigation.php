@@ -156,6 +156,7 @@ class WhmcsNavigation
         // a persistent worker and silently empty the Addons menu.
         static::$placed = [];
         static::markSystemSettingsPlaced();
+        static::markJunkDrawerPlaced();
 
         $groups = array_values(array_filter([
             static::clients(),
@@ -552,19 +553,35 @@ class WhmcsNavigation
             // never what a click here reached. Same page here now; the raw resource
             // stays claimed so the Addons sweep leaves it be.
             static::httpLogEntry(),
-            // Paymenter screens the reference's menus have no slot for, kept reachable
-            // here — the reference's own System submenu is its junk drawer too.
-            static::fixedTermsEntry(),
-            static::link(TicketResource::class, '- All Tickets (Core)'),
-            static::link(TicketNoteResource::class, '- Internal Notes'),
-            static::link(KbCategoryResource::class, '- Knowledgebase Categories'),
-            static::link(RefundResource::class, '- Refunds'),
-            static::link(InvoiceOpsResource::class, '- Invoice Operations'),
-            static::link(CouponResource::class, '- Coupons'),
-            static::link(PaymentFeeRuleResource::class, '- Payment Fee Rules'),
-            static::link(GatewayRuleResource::class, '- Gateway Rules'),
-            static::link(TaxRateResource::class, '- Tax Rates'),
+            // The junk-drawer tail that used to follow here is gone (user request,
+            // 2026-09-04: "reduce the sidebar — remove duplicated items"): every one of
+            // those screens already has a home — Knowledgebase and tickets under
+            // Support; Coupons, Payment Fee Rules, Gateway Rules and Tax Rates as
+            // System Settings tiles; refunds and invoice operations on the invoice
+            // screens; fixed terms under Setup's Auto Terminate. They stay CLAIMED in
+            // markJunkDrawerPlaced() so the Addons sweep does not resurface them as a
+            // second, un-styled copy of each.
         ]);
+    }
+
+    /**
+     * Claims for everything the System sublist used to list twice. Removing a menu line
+     * without claiming its resource hands it straight to the Addons catch-all — the
+     * exact second-copy problem issue #11 was about — so the claims survive the lines.
+     */
+    private static function markJunkDrawerPlaced(): void
+    {
+        static::$placed[ServiceTermResource::class] = true;
+        static::$placed[\Paymenter\Extensions\Others\AdminOps\Admin\Pages\FixedTerms::class] = true;
+        static::$placed[TicketResource::class] = true;
+        static::$placed[TicketNoteResource::class] = true;
+        static::$placed[KbCategoryResource::class] = true;
+        static::$placed[RefundResource::class] = true;
+        static::$placed[InvoiceOpsResource::class] = true;
+        static::$placed[CouponResource::class] = true;
+        static::$placed[PaymentFeeRuleResource::class] = true;
+        static::$placed[GatewayRuleResource::class] = true;
+        static::$placed[TaxRateResource::class] = true;
     }
 
     /** WHMCS's Setup menu — the spanner in its top-right corner. */

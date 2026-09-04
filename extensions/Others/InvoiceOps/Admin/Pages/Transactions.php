@@ -181,6 +181,22 @@ class Transactions extends Page
             return;
         }
 
+        // Every refusal happens BEFORE anything is written. These two used to sit in
+        // the write path below, so an Amount In + Amount Out pair with no invoice
+        // recorded the In and then errored on the Out — a half-saved form showing both
+        // a new ledger row and a red banner (user report, 2026-09-04).
+        if ($out > 0 && !$invoice) {
+            $this->addError('txOut', 'An Amount Out needs the Invoice ID it refunds.');
+
+            return;
+        }
+
+        if ($in > 0 && $this->txCredit && !$this->txClient) {
+            $this->addError('txClient', 'Pick the client whose credit balance this tops up.');
+
+            return;
+        }
+
         try {
             if ($in > 0 && $invoice) {
                 $transaction = ExtensionHelper::addPayment(
@@ -225,12 +241,6 @@ class Transactions extends Page
             }
 
             if ($in > 0 && $this->txCredit) {
-                if (!$this->txClient) {
-                    $this->addError('txClient', 'Pick the client whose credit balance this tops up.');
-
-                    return;
-                }
-
                 $credit = \App\Models\Credit::firstOrCreate(
                     ['user_id' => $this->txClient, 'currency_code' => strtoupper($this->txCurrency ?: config('settings.default_currency', 'USD'))],
                     ['amount' => 0],
@@ -258,12 +268,6 @@ class Transactions extends Page
             }
 
             if ($out > 0) {
-                if (!$invoice) {
-                    $this->addError('txOut', 'An Amount Out needs the Invoice ID it refunds.');
-
-                    return;
-                }
-
                 InvoiceRefund::create([
                     'invoice_id' => $invoice->id,
                     'transaction_id' => null,

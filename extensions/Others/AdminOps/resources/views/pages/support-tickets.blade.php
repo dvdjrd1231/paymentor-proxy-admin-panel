@@ -163,7 +163,8 @@
             <tbody>
                 @forelse ($tickets as $ticket)
                     @php
-                        $open = \App\Admin\Resources\TicketResource::getUrl('edit', ['record' => $ticket->id]);
+                        // The WHMCS-shaped ticket screen (user request, 2026-09-04).
+                        $open = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditTicket::getUrl(['record' => $ticket->id]);
                         $last = $ticket->messages->first()?->created_at ?? $ticket->updated_at;
                         $statusWord = ['open' => 'Open', 'replied' => 'Answered', 'closed' => 'Closed'][$ticket->status] ?? ucfirst($ticket->status);
                         $statusClass = ['open' => 'ao-st-open', 'replied' => 'ao-st-answered', 'closed' => 'ao-st-closed'][$ticket->status] ?? '';

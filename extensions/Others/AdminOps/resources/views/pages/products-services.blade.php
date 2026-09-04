@@ -137,7 +137,8 @@
             <tbody>
                 @forelse ($services as $service)
                     @php
-                        $edit = \App\Admin\Resources\ServiceResource::getUrl('edit', ['record' => $service->id]);
+                        // The Client Profile's editor — the WHMCS screen — not core's raw form.
+                        $edit = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::serviceUrl($service);
                         $summary = $service->user_id
                             ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $service->user_id])
                             : null;
