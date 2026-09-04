@@ -49,8 +49,9 @@
                 <span class="ao-auto-head-figure">
                     {{ $nextRun->diffForHumans(syntax: \Carbon\CarbonInterface::DIFF_ABSOLUTE) }}
                 </span>
-                <span class="ao-auto-head-label">
-                    Next Daily Task Run · {{ $nextRun->format('H:i') }}
+                {{-- The reference's own label carries no time suffix. --}}
+                <span class="ao-auto-head-label" title="{{ $nextRun->format('H:i') }}">
+                    Next Daily Task Run
                 </span>
             </span>
         </div>
@@ -67,22 +68,8 @@
         </div>
     @endif
 
-    {{--
-        The daily pass gets a line of its own now that the middle tile carries the
-        reference's Last Cron Invocation (the heartbeat). The two clocks fail differently
-        — this is the one that says whether `app:cron-job` itself is completing.
-    --}}
-    <p class="ao-auto-heartbeat {{ $daily['healthy'] ? 'ao-auto-ok' : 'ao-auto-bad' }}">
-        <span class="ao-auto-dot"></span>
-        Daily automation pass:
-        <strong>{{ $daily['healthy'] ? 'completing' : 'not completing' }}</strong>
-        @if ($daily['at'])
-            · last completed {{ $daily['at']->diffForHumans() }}
-        @else
-            · never completed
-        @endif
-        <span class="ao-auto-exact">(stale after {{ $daily['threshold'] }})</span>
-    </p>
+    {{-- No standing status line here — the reference has none when things are healthy,
+         and problems() (above) already says so, more prominently, when they are not. --}}
 
     {{-- The reference's "Viewing X ▾ / This Week ▾" chart — a real trend line over each
          task's own CronStat rows, not a canned illustration. Only one range exists (the
@@ -161,6 +148,28 @@
                                 @if ($task['failed'] > 0)
                                     <span class="ao-auto-tile-failed">{{ number_format($task['failed']) }} Failed</span>
                                 @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
+            {{-- The reference's second tier under Daily Actions: a status line each,
+                 not a count — Database Backup, Platform Updates, Currency Exchange
+                 Rates. See AutomationStatus::systemTasks() for what each really checks. --}}
+            @if (!empty($systemTasks))
+                <div class="ao-auto-tiles ao-auto-tiles-system">
+                    @foreach ($systemTasks as $task)
+                        <div class="ao-auto-tile ao-auto-tile-system">
+                            <div class="ao-auto-tile-head">
+                                {{ $task['label'] }}
+                                <x-filament::icon :icon="$task['icon']" class="ao-auto-tile-ic" />
+                            </div>
+                            <div class="ao-auto-tile-body ao-auto-tile-body-system">
+                                <x-filament::icon
+                                    :icon="$task['ok'] ? 'ri-checkbox-circle-fill' : 'ri-close-circle-fill'"
+                                    class="{{ $task['ok'] ? 'ao-auto-sys-ok' : 'ao-auto-sys-off' }}" />
+                                <span>{{ $task['note'] }}</span>
                             </div>
                         </div>
                     @endforeach

@@ -1195,6 +1195,29 @@
         color: hsl(var(--color-error));
     }
 
+    /* The reference's second tier under Daily Actions: a status line each, not a count
+       — set off from the tiles above by a rule, matching the reference's own divider. */
+    .ao-auto-tiles-system {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--wa-rule, hsl(var(--color-gray-200)));
+    }
+
+    .ao-auto-tile-body-system {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.85rem;
+        color: var(--wa-muted, hsl(var(--color-base) / 0.7));
+    }
+
+    .ao-auto-tile-body-system svg { width: 1.1rem; height: 1.1rem; flex: none; }
+
+    .ao-auto-sys-ok { color: hsl(var(--color-success)); }
+
+    .ao-auto-sys-off { color: var(--wa-muted, #b0b0b0); }
+
     .ao-auto-tile-foot {
         display: flex;
         align-items: baseline;
