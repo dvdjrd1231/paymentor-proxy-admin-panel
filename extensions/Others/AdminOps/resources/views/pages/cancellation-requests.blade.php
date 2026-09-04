@@ -71,7 +71,7 @@
                     <tr>
                         <td>{{ $row->created_at?->format('m/d/Y') }}</td>
                         <td class="ao-mu-left">
-                            <a href="{{ \App\Admin\Resources\ServiceResource::getUrl('edit', ['record' => $row->service_id]) }}">
+                            <a href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::serviceUrl($row->service) }}">
                                 {{ $row->service->product?->name ?? '—' }}
                                 — {{ trim(($row->service->user->first_name ?? '') . ' ' . ($row->service->user->last_name ?? '')) ?: ($row->service->user->email ?? '') }}
                             </a>

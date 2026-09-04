@@ -193,7 +193,7 @@ class FixedTerms extends Page
         }
 
         try {
-            return ServiceResource::getUrl('edit', ['record' => $term->service_id]);
+            return ClientSummary::serviceUrl($term->service);
         } catch (\Throwable) {
             return null;
         }

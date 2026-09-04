@@ -55,9 +55,14 @@ class ServiceTermResource extends Resource
                 TextColumn::make('service_id')
                     ->label('Service')
                     ->formatStateUsing(fn (ServiceTerm $record): string => '#' . $record->service_id)
-                    ->url(fn (ServiceTerm $record): ?string => $record->service
-                        ? ServiceResource::getUrl('edit', ['record' => $record->service_id])
-                        : null)
+                    // The Client Profile's service editor when AdminOps is on (the WHMCS
+                    // screen); core's own edit page when it is not.
+                    ->url(fn (ServiceTerm $record): ?string => match (true) {
+                        !$record->service => null,
+                        class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::class)
+                            => \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::serviceUrl($record->service),
+                        default => ServiceResource::getUrl('edit', ['record' => $record->service_id]),
+                    })
                     ->searchable(),
 
                 TextColumn::make('service.user.email')

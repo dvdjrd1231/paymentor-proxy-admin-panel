@@ -757,6 +757,21 @@ class ClientSummary extends Page
     }
 
     /**
+     * The one URL a "edit this service" link should carry: the Client Profile's
+     * Products/Services editor with the service open (user request, 2026-09-04 — core's
+     * raw resource edit is not the WHMCS screen, and cannot be reskinned from an
+     * extension). Accepts the model when the caller has it; an id costs one lookup.
+     */
+    public static function serviceUrl(int|\App\Models\Service $service): string
+    {
+        if (!$service instanceof \App\Models\Service) {
+            $service = \App\Models\Service::findOrFail($service);
+        }
+
+        return static::getUrl(['record' => $service->user_id, 'tab' => 'services', 'service' => $service->id]);
+    }
+
+    /**
      * The reference's h1 is the page's name, not the client's — the client is named by the
      * picker under it and the "#id - name" heading. Repeating them in the header was
      * Leandro's circled duplicate.
@@ -825,10 +840,23 @@ class ClientSummary extends Page
                 ->with(['properties' => fn ($q) => $q->where('key', 'company_name')])
                 ->get(['id', 'first_name', 'last_name', 'email']),
             ...match (array_key_exists($this->tab, self::TABS) ? $this->tab : 'summary') {
-                'services' => [
-                    'rows' => $this->customer->services()->with('product')->latest()->limit(self::TAB_ROWS)->get(),
-                    ...($this->service ? $this->serviceEditorData() : ['svcModel' => null]),
-                ],
+                'services' => (function (): array {
+                    $rows = $this->customer->services()->with('product')->latest()->limit(self::TAB_ROWS)->get();
+
+                    // The tab always opens ON a service, as the reference does — landing
+                    // with none picked showed a bare list in a different shape from the
+                    // editor one click later (user feedback, 2026-09-04). First service
+                    // by default; a client with none keeps the honest empty list.
+                    if (!$this->service && $rows->isNotEmpty()) {
+                        $this->service = $rows->first()->id;
+                        $this->loadSvc();
+                    }
+
+                    return [
+                        'rows' => $rows,
+                        ...($this->service ? $this->serviceEditorData() : ['svcModel' => null]),
+                    ];
+                })(),
                 'billable' => ['rows' => $this->billableItems()],
                 'invoices' => ['rows' => $this->customer->invoices()->with(['items', 'transactions'])->latest()->limit(self::TAB_ROWS)->get()],
                 'transactions' => ['rows' => $this->transactionRows()],
@@ -1009,9 +1037,10 @@ class ClientSummary extends Page
             'invoices' => UserResource::getUrl('invoices', ['record' => $user]),
             'tickets' => UserResource::getUrl('tickets', ['record' => $user]),
             'credits' => UserResource::getUrl('credits', ['record' => $user]),
-            'service' => fn ($id) => ServiceResource::getUrl('edit', ['record' => $id]),
+            // This page's own editor — every service on these tabs is the customer's.
+            'service' => fn ($id) => static::getUrl(['record' => $user->id, 'tab' => 'services', 'service' => $id]),
             'invoice' => fn ($id) => EditInvoice::getUrl(['record' => $id]),
-            'ticket' => fn ($id) => TicketResource::getUrl('edit', ['record' => $id]),
+            'ticket' => fn ($id) => EditTicket::getUrl(['record' => $id]),
         ];
     }
 

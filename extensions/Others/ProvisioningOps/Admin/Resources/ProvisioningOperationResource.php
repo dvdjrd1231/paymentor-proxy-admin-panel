@@ -60,9 +60,14 @@ class ProvisioningOperationResource extends Resource
             ->columns([
                 TextColumn::make('service_id')
                     ->label('Service')
-                    ->url(fn (ProvisioningOperation $record) => $record->service
-                        ? \App\Admin\Resources\ServiceResource::getUrl('edit', ['record' => $record->service_id])
-                        : null)
+                    // The Client Profile's service editor when AdminOps is on (the WHMCS
+                    // screen); core's own edit page when it is not.
+                    ->url(fn (ProvisioningOperation $record) => match (true) {
+                        !$record->service => null,
+                        class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::class)
+                            => \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::serviceUrl($record->service),
+                        default => \App\Admin\Resources\ServiceResource::getUrl('edit', ['record' => $record->service_id]),
+                    })
                     ->sortable(),
                 TextColumn::make('service.user.email')
                     ->label('Customer')

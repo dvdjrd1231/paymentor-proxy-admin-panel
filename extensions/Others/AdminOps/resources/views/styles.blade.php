@@ -5390,6 +5390,110 @@
        the small circled plus — not a bolder, larger control. */
     .ao-ni-options .ao-ni-new { color: #5cb85c; font-weight: 400; gap: 0.25rem; }
 
+    /* Support-ticket screen (user request, 2026-09-04): the reference's header strip,
+       set-selects row, action row and thread. */
+    .ao-et-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+
+    .ao-et-title { font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+
+    .ao-et-status, .ao-et-setrow select, .ao-et-canned {
+        padding: 0.3rem 0.5rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: var(--wa-radius, 4px);
+        background: #fff;
+        font: inherit;
+        font-size: 0.9rem;
+    }
+
+    .ao-et-lastreply {
+        background: #24425e;
+        color: #fff;
+        padding: 0.35rem 0.8rem;
+        border-radius: var(--wa-radius, 4px);
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .ao-et-closeline { margin: 0.2rem 0 0.6rem; }
+
+    .ao-et-editor {
+        width: 100%;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: 0 var(--wa-radius, 4px) var(--wa-radius, 4px) var(--wa-radius, 4px);
+        background: #fff;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .ao-et-setrow {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.6rem;
+        margin-top: 0.6rem;
+    }
+
+    .ao-et-actionrow {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 0.6rem;
+        flex-wrap: wrap;
+    }
+
+    .ao-et-actions-left, .ao-et-actions-right { display: inline-flex; align-items: center; gap: 0.75rem; }
+
+    .ao-et-attach { position: relative; overflow: hidden; cursor: pointer; }
+
+    .ao-et-attach-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+    .ao-et-msg {
+        display: grid;
+        grid-template-columns: 14rem 1fr;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 4px);
+        margin-top: 1rem;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    /* The reference tints staff replies; client posts stay white. */
+    .ao-et-msg-staff { background: #fdf6ec; }
+
+    .ao-et-msg-side { padding: 0.9rem 1rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+
+    .ao-et-operator {
+        background: #5bc0de;
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.1rem 0.45rem;
+        border-radius: 3px;
+    }
+
+    .ao-et-msg-delete { padding: 0.2rem 0.6rem; font-size: 0.8rem; }
+
+    .ao-et-msg-body { padding: 0.9rem 1rem; border-left: 1px solid var(--wa-panel-border, #eee); }
+
+    .ao-et-msg-posted { color: var(--wa-muted, #6b6b6b); font-size: 0.85rem; margin-bottom: 0.4rem; }
+
+    .ao-et-msg-text p { margin: 0.35rem 0; }
+
+    .ao-et-msg-file { color: var(--wa-muted, #6b6b6b); font-size: 0.85rem; }
+
+    .ao-et-note {
+        border: 1px solid #faebcc;
+        background: #fcf8e3;
+        border-radius: var(--wa-radius, 4px);
+        padding: 0.7rem 1rem;
+        margin-top: 0.8rem;
+    }
+
+    .ao-et-msg-head { display: flex; justify-content: space-between; gap: 1rem; color: var(--wa-muted, #6b6b6b); }
+
     /* Email template editor (issue #48): the source view is a full-width monospace
        sheet; Preview renders the Markdown with placeholders as chips. */
     .ao-ete-modes { margin-top: 1rem; }
