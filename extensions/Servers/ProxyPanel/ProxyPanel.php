@@ -140,10 +140,13 @@ class ProxyPanel extends Server
                 'name' => 'region_flags',
                 'label' => 'Show country flags on regions',
                 'type' => 'checkbox',
+                // Leandro tested it live on Windows (issue #43): the flag renders. The
+                // vendored TwemojiCountryFlags webfont (AdminOps::boot(), this extension's
+                // routes.php) covers exactly the gap Windows has none for, admin side and
+                // client side both — the caveat this description used to carry was true of
+                // an unpatched browser, not of this install, and read as a bug report.
                 'description' => 'Prefix each Region at checkout with its country flag, e.g. '
-                    . '"🇺🇸  United States - Kansas City". Note: Windows has no flag glyphs, so '
-                    . 'browsers there show the two country letters instead ("US"). macOS, iOS, '
-                    . 'Android and most Linux desktops show the flag.',
+                    . '"🇺🇸  United States - Kansas City".',
                 'default' => true,
                 'required' => false,
             ],
