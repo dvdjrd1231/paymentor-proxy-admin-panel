@@ -2339,6 +2339,13 @@
         color: #a94442;
     }
 
+    /* In the Order Summary column the error list sits against Submit Order — smaller
+       type and clear air above the button (user feedback, 2026-09-04). */
+    .ao-ano-side .ao-anc-errors {
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+    }
+
     /* Issue #27: the amber warning colour core itself uses for a genuine risk, not the red
        reserved for a validation error — nothing has gone wrong here, the page just cannot
        be trusted to update this particular install correctly. */
@@ -3999,6 +4006,16 @@
 
     /* Generate Invoice after Adding sits centred over Save/Cancel, as the reference. */
     .ao-cs-ad-geninv { justify-content: center; width: 100%; display: inline-flex; }
+
+    /* Add New Addon: one width per column of controls, not a different width per field
+       (user feedback, 2026-09-04). Left column text/selects share one size; the right
+       column's numeric boxes share another, as the reference lays them out. */
+    .ao-cs-addon select:not([disabled]),
+    .ao-cs-addon input[type="text"]:not([inputmode="decimal"]) { width: 13rem; }
+
+    .ao-cs-addon input[inputmode="decimal"],
+    .ao-cs-addon input[type="number"],
+    .ao-cs-addon .ao-of-date input { width: 10rem; }
 
     /* One shared height keeps the select, Go and New Addon on one baseline — the strip
        read misaligned when each brought its own. */
