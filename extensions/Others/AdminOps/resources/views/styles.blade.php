@@ -5484,7 +5484,11 @@
         border-radius: 3px;
     }
 
-    .ao-et-msg-delete { padding: 0.2rem 0.6rem; font-size: 0.8rem; }
+    .ao-et-msg-btns { display: inline-flex; gap: 0.35rem; }
+
+    .ao-et-msg-edit, .ao-et-msg-delete { padding: 0.2rem 0.6rem; font-size: 0.8rem; }
+
+    .ao-et-msg-editrow { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
 
     .ao-et-msg-body { padding: 0.9rem 1rem; border-left: 1px solid var(--wa-panel-border, #eee); }
 
