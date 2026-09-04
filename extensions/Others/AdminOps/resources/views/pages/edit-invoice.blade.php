@@ -6,6 +6,10 @@
 --}}
 <x-filament-panels::page>
     <div class="ao-mu ao-eo">
+        <div class="ao-tx-tabs">
+            <a class="ao-mu-tab" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices::getUrl() }}">&laquo; Back to List</a>
+        </div>
+
         <div class="ao-find ao-of">
             <div class="ao-of-rows">
                 <div class="ao-of-row">

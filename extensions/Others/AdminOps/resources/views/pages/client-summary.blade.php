@@ -516,7 +516,7 @@
                  until Save or Cancel (user feedback, 2026-09-04). Two columns, the
                  reference's own field order. --}}
             <h4 class="ao-ano-heading">Add New Addon</h4>
-            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="saveAddon">
+            <form class="ao-find ao-of ao-cs-addon" autocomplete="off" wire:submit.prevent="saveAddon">
                 <div class="ao-of-rows">
                     <div class="ao-of-row">
                         <span class="ao-of-label">Parent Product/Service</span>
