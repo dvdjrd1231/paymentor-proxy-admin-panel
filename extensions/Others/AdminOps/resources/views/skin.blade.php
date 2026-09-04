@@ -498,14 +498,23 @@
        (`.navigation ul li ul li:not(.disabled) a:hover{background:#1b4d7f;color:#fff}`)
        with the rounding Leandro's install draws it with. The old light-grey hover read
        as no hover at all. */
-    .fi-dropdown-list-item:hover {
+    /* Both states, one look: the page you are ON and the row under the pointer wear the
+       same rounded pill — Leandro circled the active item rendering as a square
+       edge-to-edge bar (Filament's own active paint) while hover was already rounded. */
+    .fi-dropdown-list-item:hover,
+    .fi-dropdown-list-item.fi-active,
+    .fi-dropdown-list-item[aria-current] {
         background: #1b4d7f;
         color: #fff;
         border-radius: var(--wa-radius, 6px);
+        margin-inline: 0.25rem;
+        width: calc(100% - 0.5rem);
     }
 
     .fi-dropdown-list-item:hover .fi-dropdown-list-item-label,
-    .fi-dropdown-list-item:hover .fi-icon {
+    .fi-dropdown-list-item:hover .fi-icon,
+    .fi-dropdown-list-item.fi-active .fi-dropdown-list-item-label,
+    .fi-dropdown-list-item.fi-active .fi-icon {
         color: #fff;
     }
 
