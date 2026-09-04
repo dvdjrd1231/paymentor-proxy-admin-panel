@@ -503,70 +503,97 @@
                 @endforeach
             </select>
             <button type="button" class="ao-of-go" wire:click="$refresh">Go</button>
-            {{-- Inline, as the reference's Add New Addon is — not a redirect to the
-                 Service Addons page (user feedback, 2026-09-04). --}}
-            <button type="button" class="ao-find-go {{ $addingAddon ? 'ao-on' : '' }}" wire:click="toggleAddingAddon">
-                &#10010; New Addon
-            </button>
+            {{-- At the row's right, as the reference sets it (user feedback, 2026-09-04). --}}
+            <span class="ao-cs-pickrow-right">
+                <button type="button" class="ao-find-go {{ $addingAddon ? 'ao-on' : '' }}" wire:click="toggleAddingAddon">
+                    &#10010; New Addon
+                </button>
+            </span>
         </div>
 
         @if ($addingAddon)
+            {{-- The reference replaces the editor with this screen; everything else hides
+                 until Save or Cancel (user feedback, 2026-09-04). Two columns, the
+                 reference's own field order. --}}
             <h4 class="ao-ano-heading">Add New Addon</h4>
-            <form class="ao-anc-card" wire:submit.prevent="saveAddon">
-                <div class="ao-anc-row">
-                    <span>Parent Product/Service</span>
-                    <span class="ao-eo-fact">#{{ $svcModel->id }} · {{ $svcModel->product?->name }}</span>
-                </div>
-                <label class="ao-anc-row">
-                    <span>Predefined Addon</span>
-                    <span class="ao-anc-field">
-                        <select class="ao-w-40" wire:model.live="addon.productId">
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="saveAddon">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row">
+                        <span class="ao-of-label">Parent Product/Service</span>
+                        <span class="ao-eo-fact">#{{ $svcModel->id }} · {{ $svcModel->product?->name }}</span>
+                        <label class="ao-of-label" for="ao-cs-ad-qty">Quantity</label>
+                        <span><input id="ao-cs-ad-qty" class="ao-of-sm" type="number" min="1" wire:model="addon.quantity"></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <span class="ao-of-label">Registration Date</span>
+                        <span class="ao-eo-fact">{{ now()->format('m/d/Y') }}</span>
+                        <label class="ao-of-label" for="ao-cs-ad-fee">Setup Fee</label>
+                        <span><input id="ao-cs-ad-fee" class="ao-of-sm" type="text" inputmode="decimal" wire:model="addon.setupFee" placeholder="0.00"
+                            title="Charged once, as its own line on the generated invoice"></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-cs-ad-product">Predefined Addon</label>
+                        <span><select id="ao-cs-ad-product" class="ao-of-md" wire:model.live="addon.productId">
                             <option value="">None</option>
                             @foreach ($addonCatalogue as $addonProduct)
                                 <option value="{{ $addonProduct->id }}">{{ $addonProduct->name }}</option>
                             @endforeach
-                        </select>
-                        @if ($addonCatalogue->isEmpty())
-                            <i>The Service Addons catalogue category has no products yet.</i>
-                        @endif
-                    </span>
-                </label>
-                <label class="ao-anc-row">
-                    <span>Custom Name</span>
-                    <input type="text" class="ao-w-40" wire:model="addon.name" placeholder="Optional — shown instead of the product name">
-                </label>
-                <label class="ao-anc-row">
-                    <span>Status</span>
-                    <select class="ao-w-25" wire:model="addon.status">
-                        <option value="pending">Pending</option>
-                        <option value="active">Active</option>
-                    </select>
-                </label>
-                <label class="ao-anc-row">
-                    <span>Quantity</span>
-                    <input type="number" min="1" class="ao-w-25" wire:model="addon.quantity">
-                </label>
-                <label class="ao-anc-row">
-                    <span>Recurring</span>
-                    <span class="ao-anc-field">
-                        <input type="text" inputmode="decimal" class="ao-w-25" wire:model="addon.price">
-                        <i>{{ $svcModel->currency_code }} — prefilled from the addon's own plan; renews with the parent</i>
-                    </span>
-                </label>
-                <div class="ao-anc-row">
-                    <span>Next Due Date</span>
-                    <span class="ao-eo-fact">{{ $svcModel->expires_at?->format('m/d/Y') ?? 'N/A' }}</span>
+                        </select></span>
+                        <label class="ao-of-label" for="ao-cs-ad-price">Recurring</label>
+                        <span><input id="ao-cs-ad-price" class="ao-of-sm" type="text" inputmode="decimal" wire:model="addon.price"
+                            title="Prefilled from the addon's own plan; renews with the parent" placeholder="0.00"></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-cs-ad-name">Custom Name</label>
+                        <span><input id="ao-cs-ad-name" class="ao-of-md" type="text" wire:model="addon.name"></span>
+                        <span class="ao-of-label">Billing Cycle</span>
+                        <span class="ao-eo-fact">Renews with its parent service</span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-cs-ad-status">Status</label>
+                        <span><select id="ao-cs-ad-status" class="ao-of-sm" wire:model="addon.status">
+                            <option value="pending">Pending</option>
+                            <option value="active">Active</option>
+                        </select></span>
+                        <span class="ao-of-label">Next Due Date</span>
+                        <span class="ao-eo-fact">{{ $svcModel->expires_at?->format('m/d/Y') ?? 'N/A' }}</span>
+                    </div>
+                    <div class="ao-of-row">
+                        <span class="ao-of-label">Payment Method</span>
+                        <span class="ao-eo-fact">{{ $svcPayment }}</span>
+                        <label class="ao-of-label" for="ao-cs-ad-term">Termination Date</label>
+                        @include('adminops::partials.datepicker', [
+                            'model' => 'addon.terminationDate', 'range' => false, 'id' => 'ao-cs-ad-term',
+                            'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                        ])
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-cs-ad-sub">Subscription ID</label>
+                        <span><input id="ao-cs-ad-sub" class="ao-of-md" type="text" wire:model="addon.subscriptionId"></span>
+                        <span class="ao-of-label">Tax Addon</span>
+                        <span class="ao-of-check" title="This store computes no tax; totals are final">
+                            <input type="checkbox" disabled>
+                        </span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-cs-ad-notes">Admin Notes</label>
+                        <span><textarea id="ao-cs-ad-notes" rows="4" wire:model="addon.notes"></textarea></span>
+                    </div>
                 </div>
-                <label class="ao-anc-row">
-                    <span></span>
-                    <span class="ao-of-check"><input type="checkbox" wire:model="addon.invoice"> Generate Invoice after Adding</span>
-                </label>
-                <div class="ao-gs-actions">
+                @if ($addonCatalogue->isEmpty())
+                    <p class="ao-gs-empty">The Service Addons catalogue category has no products yet — add one there first.</p>
+                @endif
+                <div class="ao-of-buttons">
+                    <label class="ao-of-check ao-cs-ad-geninv">
+                        <input type="checkbox" wire:model="addon.invoice"> Generate Invoice after Adding
+                    </label>
+                </div>
+                <div class="ao-of-buttons">
                     <button type="submit" class="ao-find-go">Save Changes</button>
-                    <button type="button" class="ao-gs-cancel" wire:click="toggleAddingAddon">Cancel</button>
+                    <button type="button" class="ao-of-go" wire:click="toggleAddingAddon">Cancel</button>
                 </div>
             </form>
-        @endif
+        @else
 
         <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="saveService">
             <div class="ao-of-rows">
@@ -720,7 +747,19 @@
                     </div>
                 @endforeach
                 {{-- After the module's custom fields, as the reference's circled screenshot
-                     orders it: Proxies, Service ID, api-key, then Subscription ID. --}}
+                     orders it: Proxies, Service ID, api-key, then Subscription ID. Always
+                     rendered — on an unprovisioned service they are simply empty, not
+                     missing (user feedback, 2026-09-04). --}}
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cs-svcid">Service ID</label>
+                    <span><input id="ao-cs-svcid" class="ao-of-xl" type="text" wire:model="svc.serviceId"
+                        placeholder="Set by the panel when the service provisions"></span>
+                </div>
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cs-apikey">api-key</label>
+                    <span><input id="ao-cs-apikey" class="ao-of-xl" type="text" wire:model="svc.apiKey"
+                        placeholder="Set by the panel when the service provisions"></span>
+                </div>
                 <div class="ao-of-row ao-of-row-single">
                     <label class="ao-of-label" for="ao-cs-sub">Subscription ID</label>
                     <span><input id="ao-cs-sub" class="ao-of-md" type="text" wire:model="svc.subscriptionId"></span>
@@ -754,6 +793,7 @@
                 <button type="button" class="ao-of-go" wire:click="goService({{ $svcModel->id }})">Cancel Changes</button>
             </div>
         </form>
+        @endif
 
     @else
         {{-- Every other tab is one list of one thing. `adminops::pages.client-tab` renders

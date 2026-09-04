@@ -154,7 +154,9 @@
                 @forelse ($invoices as $invoice)
                     @php
                         [$statusLabel, $statusClass] = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices::statusOf($invoice);
-                        $edit = \App\Admin\Resources\InvoiceResource::getUrl('edit', ['record' => $invoice->id]);
+                        // The WHMCS-format invoice screen (user request, 2026-09-04),
+                        // not core's raw resource edit.
+                        $edit = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditInvoice::getUrl(['record' => $invoice->id]);
                         $summary = $invoice->user_id
                             ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $invoice->user_id])
                             : null;
