@@ -93,7 +93,8 @@
                 </div>
             @endforeach
         @elseif ($category === '' && $q === '' && $replies->isEmpty())
-            <p class="ao-pr-none"><b>No Categories Found</b></p>
+            {{-- Plain text, as the reference renders its own empty state. --}}
+            <p class="ao-pr-none">No Categories Found</p>
         @endif
 
         @foreach ($replies as $reply)

@@ -5364,18 +5364,42 @@
 
     .ao-sc-toggle button.ao-on { background: #e8e8e8; font-weight: 600; }
 
-    .ao-ni-options { margin-bottom: 0.6rem; }
+    /* One flex line with a shared baseline: the plain text ("Options:", the current
+       view's name), the pipes and the link-buttons all centre on the same axis — the
+       buttons' own padding used to sit them a few pixels low, which is the alignment
+       Leandro circled (2026-09-04). */
+    .ao-ni-options {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 0.6rem;
+    }
 
     /* Issue #25: .ao-cp-link is a full-width flex block by default, which stacked the
        reference's one-line "Options: Open | Scheduled | Resolved | Create New" row into
        a column — and its width overflow was the page's stray horizontal scrollbar. */
     .ao-ni-options .ao-cp-link {
         display: inline-flex;
+        align-items: center;
         width: auto;
-        margin: 0 0.25rem;
+        margin: 0;
+        padding: 0;
     }
 
-    .ao-ni-options .ao-ni-new { color: #5cb85c; font-weight: 600; align-items: center; gap: 0.25rem; }
+    /* The reference's Create New: same size and weight as its neighbours, green, with
+       the small circled plus — not a bolder, larger control. */
+    .ao-ni-options .ao-ni-new { color: #5cb85c; font-weight: 400; gap: 0.25rem; }
+
+    /* Downloads' Upload File (user feedback, 2026-09-04): the file control is the
+       browser's own small button + filename text, as the reference shows it — the shared
+       input chrome boxed it into what read as a broken text field. */
+    .ao-of input[type="file"] {
+        border: 0;
+        padding: 0;
+        background: none;
+        width: auto;
+        font: inherit;
+    }
 
     .ao-ni-new-ic { width: 1.05em; height: 1.05em; color: #5cb85c; }
 

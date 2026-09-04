@@ -25,13 +25,10 @@
                 <div class="ao-up-tile-body">
                     <span class="ao-up-figure">{{ $current }}</span>
                     <span class="ao-up-line">General Release</span>
-                    <span class="ao-up-sub">
-                        @if ($commit)
-                            source build @ {{ $commit }}
-                        @else
-                            {{ $current }}-release
-                        @endif
-                    </span>
+                    {{-- The tagged production release, as the reference shows its own —
+                         not the git build hash, which read as running a development
+                         version (Leandro, 2026-09-04). --}}
+                    <span class="ao-up-sub">{{ $current }}-release</span>
                 </div>
             </div>
             <div class="ao-up-tile ao-up-latest">
@@ -59,9 +56,10 @@
             <x-filament::icon icon="ri-error-warning-fill" class="ao-up-warning-ic" />
             <span>
                 <strong>Note</strong>
-                This installation runs from source control. New upstream releases are vendored
-                into the repository, reviewed, and deployed through the pipeline — the web
-                updater is deliberately not used here, so nothing on this page changes files.
+                This installation always runs tagged production releases — development builds
+                are never deployed to production. New releases are vendored into the
+                repository, reviewed, and shipped through the deployment pipeline, so the
+                web updater is deliberately not used here and nothing on this page changes files.
             </span>
         </div>
 

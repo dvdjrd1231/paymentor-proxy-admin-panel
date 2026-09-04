@@ -48,8 +48,9 @@ class DownloadsAdmin extends Page
 
     public string $fileDescription = '';
 
-    /** upload | manual — the reference's two Upload File radios; Upload File is its default. */
-    public string $source = 'upload';
+    /** upload | manual — the reference's two Upload File radios; Manual FTP is the one
+     *  it ships selected (Leandro's screenshot, 2026-09-04). */
+    public string $source = 'manual';
 
     /** Manual FTP upload: the name of a file already placed in `downloads/`. */
     public string $manualFilename = '';
