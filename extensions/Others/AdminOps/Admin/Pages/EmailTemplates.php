@@ -69,8 +69,9 @@ class EmailTemplates extends Page
 
         return [
             'sections' => $sections,
+            // Issue #48: the WHMCS-shaped editor, not core's raw resource form.
             'edit' => fn (NotificationTemplate $template) => NotificationTemplateResource::canEdit($template)
-                ? NotificationTemplateResource::getUrl('edit', ['record' => $template])
+                ? EditEmailTemplate::getUrl(['record' => $template->id])
                 : null,
             'newUrl' => NotificationTemplateResource::canCreate()
                 ? NotificationTemplateResource::getUrl('create')
