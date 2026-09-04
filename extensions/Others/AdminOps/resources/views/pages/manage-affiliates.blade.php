@@ -232,7 +232,8 @@
             <tbody>
                 @forelse ($affiliates as $affiliate)
                     @php
-                        $edit = \Paymenter\Extensions\Others\Affiliates\Admin\Resources\AffiliateResource::getUrl('edit', ['record' => $affiliate->id]);
+                        // No longer a raw AffiliateResource::getUrl('edit') link here — the
+                        // row's edit icon opens this page's own detail screen instead.
                         $name = trim(($affiliate->user->first_name ?? '') . ' ' . ($affiliate->user->last_name ?? '')) ?: ($affiliate->user->email ?? '—');
                     @endphp
                     <tr>
@@ -247,17 +248,16 @@
                         <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::balance($affiliate) }}</td>
                         <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::withdrawn($affiliate) }}</td>
                         <td class="ao-mu-actions ao-mu-iconpair">
-                            {{-- The reference's pair, in the panel's standard icons: the
-                                 blue open-record glyph every other list uses (Invoices'
-                                 own), then the blue edit-box glyph every other list's Edit
-                                 link uses — this one opens the raw record's edit screen,
-                                 not a delete, so it takes the edit icon, not the red one. --}}
-                            <button type="button" title="Open affiliate detail" wire:click="openAffiliate({{ $affiliate->id }})">
-                                <x-filament::icon icon="ri-file-list-2-line" class="ao-mu-cell-icon" />
-                            </button>
-                            <a href="{{ $edit }}" title="Edit affiliate record">
+                            {{-- The panel's standard pair: blue edit-box opens the reference's
+                                 own Commission Type/Amount/tabs screen (openAffiliate — the
+                                 same detail view {@see \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates}
+                                 already builds), red circle-minus deletes for real. --}}
+                            <button type="button" title="Edit affiliate" wire:click="openAffiliate({{ $affiliate->id }})">
                                 <x-filament::icon icon="ri-edit-box-line" class="ao-mu-cell-icon" />
-                            </a>
+                            </button>
+                            <button type="button" title="Delete affiliate" wire:click="confirmDelete({{ $affiliate->id }})">
+                                <x-filament::icon icon="ri-indeterminate-circle-fill" class="ao-mu-cell-icon ao-mu-icon-red" />
+                            </button>
                         </td>
                     </tr>
                 @empty
@@ -273,6 +273,27 @@
             <button type="button" wire:click="jump({{ $affiliates->currentPage() + 1 }})"
                 @disabled(!$affiliates->hasMorePages())>Next Page &raquo;</button>
         </nav>
+
+        @if ($confirmingDelete)
+            <div class="ao-mud-overlay" wire:click.self="$set('confirmingDelete', null)">
+                <div class="ao-mud ao-mud-sm" role="alertdialog" aria-modal="true">
+                    <div class="ao-mud-head">
+                        Are you sure?
+                        <button type="button" wire:click="$set('confirmingDelete', null)" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="ao-mud-text">
+                        <p>Are you sure you wish to delete this affiliate?</p>
+                        <p>An affiliate with referred orders is kept — deleting it would delete their earnings history too.</p>
+                    </div>
+                    <div class="ao-mud-foot ao-mud-foot-only-right">
+                        <span class="ao-mud-foot-right">
+                            <button type="button" class="ao-mud-close" wire:click="$set('confirmingDelete', null)">Cancel</button>
+                            <button type="button" class="ao-mud-delete" wire:click="runDelete">Delete</button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        @endif
         @endif
     </div>
 </x-filament-panels::page>

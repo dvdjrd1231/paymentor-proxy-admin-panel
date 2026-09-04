@@ -2,6 +2,7 @@
 
 namespace Paymenter\Extensions\Others\AdminOps\Admin\Pages;
 
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Livewire\Attributes\Url;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
@@ -76,6 +77,49 @@ class ManageAffiliates extends Page
         $this->affiliate = $id;
         $this->dtab = 'referrals';
         $this->loadEdit();
+    }
+
+    /** The row's delete icon — awaiting the "Are you sure?" modal, or null. */
+    public ?int $confirmingDelete = null;
+
+    public function confirmDelete(int $id): void
+    {
+        $this->confirmingDelete = $id;
+    }
+
+    /**
+     * Deleting an affiliate cascades onto `ext_affiliate_orders` — their whole referred-order
+     * and earnings history — so an affiliate that has actually referred something is refused,
+     * not silently wiped. A row with nothing recorded against it (never referred an order)
+     * deletes clean.
+     */
+    public function runDelete(): void
+    {
+        $id = $this->confirmingDelete;
+        $this->confirmingDelete = null;
+
+        $row = Affiliate::withCount('orders')->find($id);
+
+        if (!$row) {
+            return;
+        }
+
+        if ($row->orders_count > 0) {
+            Notification::make()
+                ->title('Cannot delete')
+                ->body('This affiliate has referred orders — deleting it would delete their earnings history too.')
+                ->danger()->send();
+
+            return;
+        }
+
+        $row->delete();
+
+        if ($this->affiliate === $id) {
+            $this->affiliate = null;
+        }
+
+        Notification::make()->title('Affiliate deleted')->success()->send();
     }
 
     public function mount(): void
