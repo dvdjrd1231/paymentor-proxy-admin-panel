@@ -73,10 +73,16 @@
         {{-- One loop, original order preserved — a group heading is just a row that
              can't be picked, not a second pass that would scatter headings to the top. --}}
         <template x-for="(o, i) in options" :key="i">
+            {{-- mousedown, not click: a click needs the same node under the cursor at
+                 press AND release, and a Livewire morph mid-flight (any pending .live
+                 update landing) swaps the node between the two — the pick silently dies
+                 and the list looks stuck open until the user clicks outside. mousedown
+                 fires on press alone, before a morph can eat it. .prevent keeps focus
+                 on the combobox button. --}}
             <li role="option" x-text="o.label"
                 :class="o.group ? 'ao-xsel-group' : ('ao-xsel-opt' + (String(o.value) === String(value) ? ' ao-on' : '') + (o.disabled ? ' ao-off' : ''))"
                 :aria-selected="!o.group && String(o.value) === String(value) ? 'true' : 'false'"
-                @click="pick(o)"></li>
+                @mousedown.prevent="pick(o)"></li>
         </template>
     </ul>
 </span>

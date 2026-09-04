@@ -77,6 +77,32 @@ class AdminOps extends Extension
         $this->keepTheDailyLogWritable();
         $this->registerQuotePdf();
         $this->registerUpdatesNotice();
+        $this->sweepServiceOverrides();
+    }
+
+    /**
+     * The Client Profile's Termination Date and Override Auto-Suspend fields, enforced —
+     * see {@see Support\ServiceOverrides}. Hourly, with the exact guard the Cancellations
+     * extension documents: a throw while *registering* scheduled work runs inside
+     * `booted()` on every request and would 500 the whole site, so it is caught and
+     * logged instead.
+     */
+    private function sweepServiceOverrides(): void
+    {
+        app()->booted(function (): void {
+            try {
+                app(\Illuminate\Console\Scheduling\Schedule::class)
+                    ->call(fn () => Support\ServiceOverrides::sweep())
+                    ->hourly()
+                    ->name('adminops-service-overrides')
+                    ->withoutOverlapping()
+                    ->onOneServer();
+            } catch (\Throwable $exception) {
+                \Illuminate\Support\Facades\Log::error('AdminOps: could not register the service-overrides sweep', [
+                    'exception' => $exception->getMessage(),
+                ]);
+            }
+        });
     }
 
     /**

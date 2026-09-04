@@ -137,12 +137,16 @@
                     </label>
                     <label class="ao-anc-row">
                         <span>Quantity</span>
-                        <input type="number" min="1" wire:model.live="items.{{ $index }}.quantity" class="ao-ano-qty">
+                        {{-- Debounced: plain .live fired a full server round-trip per
+                             keystroke, which is what made this page feel slow to type in
+                             (user feedback, 2026-09-04). Half a second after typing stops
+                             is soon enough for the summary. --}}
+                        <input type="number" min="1" wire:model.live.debounce.500ms="items.{{ $index }}.quantity" class="ao-ano-qty">
                     </label>
                     <label class="ao-anc-row">
                         <span>Price Override</span>
                         <span class="ao-anc-field">
-                            <input type="text" inputmode="decimal" wire:model.live="items.{{ $index }}.priceOverride" placeholder="0.00">
+                            <input type="text" inputmode="decimal" wire:model.live.debounce.500ms="items.{{ $index }}.priceOverride" placeholder="0.00">
                             <i>(Only enter to manually override default product pricing)</i>
                         </span>
                     </label>
@@ -279,13 +283,6 @@
                 </div>
             </div>
 
-            @if ($errors->any())
-                <ul class="ao-anc-errors">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            @endif
         </div>
 
         <aside class="ao-ano-side">
@@ -346,7 +343,20 @@
                 </div>
             @endif
 
-            <button type="submit" class="ao-find-go ao-ano-submit">Submit Order &raquo;</button>
+            {{-- Beside the button that raised them, not at the foot of the left column a
+                 screen away (user feedback, 2026-09-04). --}}
+            @if ($errors->any())
+                <ul class="ao-anc-errors">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            @endif
+
+            <button type="submit" class="ao-find-go ao-ano-submit" wire:loading.attr="disabled">
+                <span wire:loading.remove>Submit Order &raquo;</span>
+                <span wire:loading>Working&hellip;</span>
+            </button>
         </aside>
     </form>
 </x-filament-panels::page>
