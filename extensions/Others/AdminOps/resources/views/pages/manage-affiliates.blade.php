@@ -9,7 +9,6 @@
             @php
                 $name = trim(($current->user->first_name ?? '') . ' ' . ($current->user->last_name ?? '')) ?: ($current->user->email ?? '—');
                 $referred = $current->orders->filter(fn ($row) => $row->order !== null);
-                $earned = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::balance($current);
                 $conversion = (int) $edit['visitors'] > 0 ? round($referred->count() / max(1, (int) $edit['visitors']) * 100) : 0;
             @endphp
 
@@ -23,8 +22,25 @@
                         <div class="ao-af-row"><span>Affiliate ID</span><b>{{ $current->id }}</b></div>
                         <div class="ao-af-row"><span>Client Name</span><b>{{ $name }}</b></div>
                         <div class="ao-af-row">
-                            <span>Commission</span>
-                            <span class="ao-af-field"><input type="text" inputmode="decimal" wire:model="edit.reward"> % of each referred order</span>
+                            <span>Commission Type</span>
+                            <span class="ao-af-radios">
+                                <label><input type="radio" value="default" wire:model.live="edit.commissionType"> Use Default</label>
+                                <label><input type="radio" value="percentage" wire:model.live="edit.commissionType"> Percentage</label>
+                                <label class="ao-ano-off" title="This store only computes percentage-based commissions — nothing reads a fixed-amount rate">
+                                    <input type="radio" disabled> Fixed Amount
+                                </label>
+                            </span>
+                        </div>
+                        <div class="ao-af-row">
+                            <span>Commission Amount</span>
+                            <span class="ao-af-field">
+                                <input type="text" inputmode="decimal" wire:model="edit.reward"
+                                    @disabled($edit['commissionType'] !== 'percentage')
+                                    placeholder="{{ $edit['commissionType'] === 'default' ? 'store default' : '' }}"> %
+                                <label class="ao-af-onetime">
+                                    <input type="checkbox" wire:model="edit.oneTimeOnly"> Pay One Time Only
+                                </label>
+                            </span>
                         </div>
                         <div class="ao-af-row">
                             <span>Referral Discount</span>
@@ -38,12 +54,17 @@
                     </div>
                     <div>
                         <div class="ao-af-row"><span>Signup Date</span><b>{{ $current->created_at?->format('m/d/Y') }}</b></div>
-                        <div class="ao-af-row"><span>Total Earned</span><b>{{ $earned }}</b></div>
-                        <div class="ao-af-row"><span>Orders Referred</span><b>{{ number_format($referred->count()) }}</b></div>
-                        <div class="ao-af-row"><span>Conversion Rate</span><b>{{ $conversion }}%</b></div>
+                        <div class="ao-af-row" title="Paymenter credits a referral the moment its invoice is paid — there is no pending state to hold it in">
+                            <span>Pending Commissions</span><b>$0.00 USD</b>
+                        </div>
+                        <div class="ao-af-row">
+                            <span>Available to Withdraw Balance</span>
+                            <b>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::availableToWithdraw($current) }}</b>
+                        </div>
                         {{-- Fed by AdminOps's own payout ledger (issue #6) — recorded on
                              the Withdrawals History tab below. --}}
                         <div class="ao-af-row"><span>Withdrawn Amount</span><b>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::withdrawn($current) }}</b></div>
+                        <div class="ao-af-row"><span>Conversion Rate</span><b>{{ $conversion }}%</b></div>
                     </div>
                 </div>
 
@@ -121,18 +142,80 @@
                         <button type="submit" class="ao-find-go">Record</button>
                     </form>
                 @endif
+            @elseif ($dtab === 'commissions')
+                @php
+                    $earnedRows = $referred->filter(fn ($row) => array_filter($row->earnings) !== []);
+                    $manualRows = \Paymenter\Extensions\Others\AdminOps\Models\AffiliateManualCommission::query()
+                        ->where('affiliate_id', $current->id)->latest()->get();
+                @endphp
+                <table class="ao-mu-grid">
+                    <thead>
+                        <tr><th>Date</th><th>Referral ID</th><th>Client Name</th><th>Product/Service</th><th>Description</th><th>Amount</th></tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($earnedRows as $row)
+                            <tr>
+                                <td>{{ $row->order->created_at?->format('m/d/Y') }}</td>
+                                <td>#{{ $row->order_id }}</td>
+                                <td class="ao-mu-left">
+                                    {{ trim(($row->order->user->first_name ?? '') . ' ' . ($row->order->user->last_name ?? '')) ?: ($row->order->user->email ?? '—') }}
+                                </td>
+                                <td class="ao-mu-left">{{ $row->order->services->first()?->product?->name ?? '—' }}</td>
+                                <td class="ao-mu-left">Referred order</td>
+                                <td>
+                                    @php $sums = array_filter($row->earnings); @endphp
+                                    {{ implode(' · ', array_map(fn ($t, $c) => '$' . number_format((float) $t, 2) . ' ' . $c, $sums, array_keys($sums))) }}
+                                </td>
+                            </tr>
+                        @empty
+                        @endforelse
+                        @foreach ($manualRows as $row)
+                            <tr>
+                                <td>{{ $row->created_at?->format('m/d/Y') }}</td>
+                                <td>{{ $row->order_id ? '#' . $row->order_id : '—' }}</td>
+                                <td class="ao-mu-left">Manual entry</td>
+                                <td class="ao-mu-left">—</td>
+                                <td class="ao-mu-left">{{ $row->description ?: '—' }}</td>
+                                <td>${{ number_format((float) $row->amount, 2) }} {{ $row->currency_code }}</td>
+                            </tr>
+                        @endforeach
+                        @if ($earnedRows->isEmpty() && $manualRows->isEmpty())
+                            <tr><td colspan="6" class="ao-mu-none">No Records Found</td></tr>
+                        @endif
+                    </tbody>
+                </table>
+
+                {{-- The reference's Add Manual Commission Entry — a real row in AdminOps's
+                     own ledger, counted into Available to Withdraw Balance above. --}}
+                <form class="ao-af-manual" wire:submit.prevent="addManualCommission">
+                    <b>Add Manual Commission Entry</b>
+                    <span class="ao-af-manual-fields">
+                        <label>Date
+                            <input type="text" value="{{ now()->format('m/d/Y') }}" disabled title="Recorded with today's date">
+                        </label>
+                        <label>Related Referral
+                            <select wire:model="manual.orderId">
+                                <option value="">None</option>
+                                @foreach ($referred as $row)
+                                    <option value="{{ $row->order_id }}">
+                                        #{{ $row->order_id }} — {{ trim(($row->order->user->first_name ?? '') . ' ' . ($row->order->user->last_name ?? '')) ?: ($row->order->user->email ?? '—') }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <input type="text" placeholder="Description (optional)" wire:model="manual.description" aria-label="Description">
+                        <input type="text" inputmode="decimal" placeholder="Amount" wire:model="manual.amount" aria-label="Amount">
+                        <button type="submit" class="ao-find-go">Add</button>
+                    </span>
+                    @error('manual.amount') <p class="ao-anc-errors">{{ $message }}</p> @enderror
+                </form>
             @else
                 <table class="ao-mu-grid">
                     <thead>
                         <tr><th>Order</th><th>Date</th><th>Client</th><th>Product/Service</th><th>Earned</th></tr>
                     </thead>
                     <tbody>
-                        @php
-                            $rows = $dtab === 'commissions'
-                                ? $referred->filter(fn ($row) => array_filter($row->earnings) !== [])
-                                : $referred;
-                        @endphp
-                        @forelse ($rows as $row)
+                        @forelse ($referred as $row)
                             <tr>
                                 <td>#{{ $row->order_id }}</td>
                                 <td>{{ $row->order->created_at?->format('m/d/Y') }}</td>

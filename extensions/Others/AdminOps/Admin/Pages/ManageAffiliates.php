@@ -67,10 +67,13 @@ class ManageAffiliates extends Page
     public string $dtab = 'referrals';
 
     /** The detail form's editable fields — the extension's real columns. */
-    public array $edit = ['reward' => '', 'discount' => '', 'visitors' => 0];
+    public array $edit = ['reward' => '', 'discount' => '', 'visitors' => 0, 'commissionType' => 'default', 'oneTimeOnly' => false];
 
     /** The Record Withdrawal form on the Withdrawals History tab (issue #6). */
     public array $withdraw = ['amount' => '', 'currency' => 'USD', 'note' => ''];
+
+    /** The reference's "Add Manual Commission Entry" form, Commissions History tab. */
+    public array $manual = ['orderId' => '', 'description' => '', 'amount' => ''];
 
     public function openAffiliate(int $id): void
     {
@@ -136,6 +139,10 @@ class ManageAffiliates extends Page
                 'reward' => (string) $row->reward,
                 'discount' => (string) $row->discount,
                 'visitors' => (int) $row->visitors,
+                // 'default' whenever reward is unset — that IS the reference's "Use
+                // Default", not a third state to track separately.
+                'commissionType' => $row->commission_type === 'percentage' && $row->reward ? 'percentage' : 'default',
+                'oneTimeOnly' => (bool) $row->one_time_only,
             ];
         }
     }
@@ -148,15 +155,122 @@ class ManageAffiliates extends Page
             'edit.reward' => 'nullable|numeric|min:0|max:100',
             'edit.discount' => 'nullable|numeric|min:0|max:100',
             'edit.visitors' => 'required|integer|min:0',
-        ], attributes: ['edit.reward' => 'commission', 'edit.discount' => 'discount', 'edit.visitors' => 'visitors referred']);
+            'edit.commissionType' => 'required|in:default,percentage',
+        ], attributes: ['edit.reward' => 'commission', 'edit.discount' => 'discount', 'edit.visitors' => 'visitors referred', 'edit.commissionType' => 'commission type']);
 
-        Affiliate::findOrFail($this->affiliate)->update([
-            'reward' => $this->edit['reward'] === '' ? 0 : $this->edit['reward'],
+        // "Use Default" means the override is gone, not merely unread — RewardAffiliate
+        // and AffiliateOrder::earnings() both fall back to the extension's default_reward
+        // only when this column is empty.
+        $reward = $this->edit['commissionType'] === 'percentage'
+            ? ($this->edit['reward'] === '' ? 0 : $this->edit['reward'])
+            : null;
+
+        $affiliate = Affiliate::findOrFail($this->affiliate);
+        $affiliate->forceFill([
+            'reward' => $reward,
             'discount' => $this->edit['discount'] === '' ? 0 : $this->edit['discount'],
             'visitors' => $this->edit['visitors'],
-        ]);
+            'commission_type' => $this->edit['commissionType'],
+            'one_time_only' => (bool) $this->edit['oneTimeOnly'],
+        ])->save();
 
         \Filament\Notifications\Notification::make()->title('Affiliate saved')->success()->send();
+    }
+
+    /**
+     * The reference's Add Manual Commission Entry, Commissions History tab. Recorded in
+     * AdminOps's own ledger (issue #6's withdrawals table has the same shape) and counted
+     * into {@see totalEarned()} alongside real referred-order earnings, so it is real
+     * money the affiliate can withdraw rather than a decorative log line.
+     */
+    public function addManualCommission(): void
+    {
+        $this->validate([
+            'manual.amount' => 'required|numeric|min:0.01',
+            'manual.orderId' => 'nullable|integer',
+            'manual.description' => 'nullable|string|max:255',
+        ], attributes: ['manual.amount' => 'amount', 'manual.orderId' => 'related referral']);
+
+        $affiliate = Affiliate::findOrFail($this->affiliate);
+
+        // The dropdown only ever offers this affiliate's own referred orders — a stray id
+        // is dropped rather than trusted, the same guard the config-option save uses.
+        $orderId = $this->manual['orderId'] !== ''
+            && $affiliate->orders()->where('order_id', (int) $this->manual['orderId'])->exists()
+                ? (int) $this->manual['orderId']
+                : null;
+
+        \Paymenter\Extensions\Others\AdminOps\Models\AffiliateManualCommission::create([
+            'affiliate_id' => $affiliate->id,
+            'order_id' => $orderId,
+            'description' => $this->manual['description'] ?: null,
+            'amount' => (float) $this->manual['amount'],
+            'currency_code' => strtoupper(config('settings.default_currency', 'USD')),
+            'admin_id' => auth()->id(),
+        ]);
+
+        $this->manual = ['orderId' => '', 'description' => '', 'amount' => ''];
+
+        \Filament\Notifications\Notification::make()->title('Commission entry added')->success()->send();
+    }
+
+    /**
+     * Everything this affiliate has actually earned, by currency: real referred-order
+     * commissions plus manual entries. The one total {@see balance()} and the Available
+     * to Withdraw row both read, so a manual entry changes both consistently.
+     *
+     * @return array<string, float>
+     */
+    public static function totalEarned(Affiliate $affiliate): array
+    {
+        $earnings = array_filter($affiliate->earnings);
+
+        foreach (\Paymenter\Extensions\Others\AdminOps\Models\AffiliateManualCommission::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->selectRaw('currency_code, sum(amount) as total')
+            ->groupBy('currency_code')
+            ->pluck('total', 'currency_code') as $currency => $amount) {
+            $earnings[$currency] = ($earnings[$currency] ?? 0) + (float) $amount;
+        }
+
+        return $earnings;
+    }
+
+    /**
+     * "$18.90 USD" of earned-minus-already-withdrawn, or "$0.00 USD" — the reference's
+     * Available to Withdraw Balance row. Computed rather than a raw editable number
+     * (which is what the reference itself shows) because nothing here would make typing a
+     * bigger number actually payable — the real balance is what orders and manual
+     * entries actually earned, less what {@see recordWithdrawal()} already paid out.
+     */
+    public static function availableToWithdraw(Affiliate $affiliate): string
+    {
+        $earned = self::totalEarned($affiliate);
+        $paid = self::withdrawalsReady()
+            ? \Paymenter\Extensions\Others\AdminOps\Models\AffiliateWithdrawal::query()
+                ->where('affiliate_id', $affiliate->id)
+                ->selectRaw('currency_code, sum(amount) as total')
+                ->groupBy('currency_code')
+                ->pluck('total', 'currency_code')->all()
+            : [];
+
+        $net = [];
+        foreach ($earned as $currency => $amount) {
+            $left = $amount - (float) ($paid[$currency] ?? 0);
+            if (abs($left) > 0.004) {
+                $net[$currency] = $left;
+            }
+        }
+
+        if ($net === []) {
+            return '$0.00 USD';
+        }
+
+        return implode(' · ', array_map(
+            fn ($total, $currency): string => '$' . number_format(max(0, (float) $total), 2) . ' ' . $currency,
+            $net,
+            array_keys($net),
+        ));
     }
 
     /**
@@ -185,7 +299,7 @@ class ManageAffiliates extends Page
         // A payout can never exceed what the affiliate has actually earned in that
         // currency, minus what was already paid out — the ledger must not go negative.
         $currency = strtoupper($this->withdraw['currency']);
-        $earned = (float) (array_filter($affiliate->earnings)[$currency] ?? 0);
+        $earned = (float) (self::totalEarned($affiliate)[$currency] ?? 0);
         $paid = (float) \Paymenter\Extensions\Others\AdminOps\Models\AffiliateWithdrawal::query()
             ->where('affiliate_id', $affiliate->id)->where('currency_code', $currency)->sum('amount');
         $amount = (float) $this->withdraw['amount'];
@@ -310,7 +424,7 @@ class ManageAffiliates extends Page
 
         $all = $query->get()
             ->filter(fn (Affiliate $row): bool => !is_numeric($this->bval)
-                || $compare((float) array_sum(array_filter($row->earnings)), $this->bop, $this->bval))
+                || $compare((float) array_sum(self::totalEarned($row)), $this->bop, $this->bval))
             ->filter(fn (Affiliate $row): bool => !is_numeric($this->wval)
                 || $compare(self::withdrawnTotal($row), $this->wop, $this->wval))
             ->values();
@@ -340,7 +454,7 @@ class ManageAffiliates extends Page
     /** "$18.90 USD", or "$0.00 USD" for an affiliate whose referrals have paid nothing. */
     public static function balance(Affiliate $affiliate): string
     {
-        $earnings = array_filter($affiliate->earnings);
+        $earnings = self::totalEarned($affiliate);
 
         if ($earnings === []) {
             return '$0.00 USD';
