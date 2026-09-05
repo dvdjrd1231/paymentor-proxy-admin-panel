@@ -31,6 +31,10 @@ class ProvisioningOperationResource extends Resource
 
     protected static ?string $modelLabel = 'Provisioning operation';
 
+    /** The reference's own name for this queue — the menu already says it (issue #29);
+     *  the page heading saying something else read as landing on the wrong screen. */
+    protected static ?string $pluralModelLabel = 'Module Queue';
+
     /** Show the number of outstanding failures on the nav item. */
     public static function getNavigationBadge(): ?string
     {
