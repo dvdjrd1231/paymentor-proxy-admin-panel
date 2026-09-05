@@ -5019,11 +5019,22 @@
 
     .ao-gs-field { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
 
+    /* The reference's fields are white bordered boxes sitting on the grey stripes —
+       without the chrome ours read as plain text, not editable fields (Leandro's
+       clarity ask, 2026-09-05). */
     .ao-gs-field input[type="text"],
     .ao-gs-field input[type="password"],
     .ao-gs-field input[type="number"],
     .ao-gs-field input[type="time"],
-    .ao-gs-field select { min-width: 22rem; }
+    .ao-gs-field textarea,
+    .ao-gs-field select {
+        min-width: 22rem;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: var(--wa-radius, 4px);
+        background: #fff;
+        font: inherit;
+    }
 
     .ao-gs-field textarea { min-width: 30rem; }
 
