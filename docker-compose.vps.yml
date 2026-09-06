@@ -104,6 +104,9 @@ services:
       # PHP-FPM sizing. Replaces the image's own php-fpm.conf, which declares its pool
       # inline and includes nothing — see the file for why, and for the measurements.
       - ./docker/php-fpm.conf:/usr/local/etc/php-fpm.conf:ro
+      # Upload limits: the stock 2M cap silently ate attachments the UI promises 10MB
+      # for — see the file for the failure it caused.
+      - ./docker/uploads.ini:/usr/local/etc/php/conf.d/zz-uploads.ini:ro
     networks: [paymenter_nw]
 
 networks:

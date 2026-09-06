@@ -57,6 +57,9 @@
                     @endif
                 </div>
 
+                {{-- The reference boxes the selects and the action row into one grey
+                     strip under the editor (Leandro's side-by-side, 2026-09-05). --}}
+                <div class="ao-et-band">
                 <div class="ao-et-setrow">
                     <select wire:model="department" title="Set Department">
                         <option value="">- Set Department -</option>
@@ -106,6 +109,7 @@
                         </label>
                         <button type="submit" class="ao-find-go">&#8617; Reply</button>
                     </span>
+                </div>
                 </div>
 
                 @if ($errors->any())
