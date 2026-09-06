@@ -42,10 +42,13 @@
         </div>
 
         <div class="ao-up-actions">
-            <span class="ao-up-update ao-tx-tab-dead"
-                title="This install is deployed from source control — updates are vendored into the repository and shipped through the deployment pipeline, not applied by a web updater">
+            {{-- Real (Leandro, 2026-09-05): queues the release on the To-Do List and
+                 says so — see UpdatePaymenter::updateNow() for why it must not
+                 overwrite files itself. --}}
+            <button type="button" class="ao-up-update ao-find-go" wire:click="updateNow"
+                wire:loading.attr="disabled">
                 Update Now
-            </span>
+            </button>
             <div class="ao-up-links">
                 <a href="{{ $releaseNotesUrl }}" target="_blank" rel="noopener">Release Notes</a>
                 <a href="{{ $changelogUrl }}" target="_blank" rel="noopener">Changelog</a>

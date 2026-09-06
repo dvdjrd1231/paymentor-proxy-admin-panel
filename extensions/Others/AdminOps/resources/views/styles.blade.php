@@ -1708,10 +1708,13 @@
 
     .ao-of-row {
         display: grid;
-        grid-template-columns: 9rem minmax(0, 1fr) 9.5rem minmax(0, 1fr);
+        /* Wider label columns and taller rows: the reference's editor is "fluid and
+           highly readable" (Leandro, 2026-09-05) — labels never wrap mid-word and each
+           stripe breathes. */
+        grid-template-columns: 11rem minmax(0, 1fr) 11rem minmax(0, 1fr);
         align-items: center;
-        column-gap: 0.9rem;
-        padding: 0.45rem 0.7rem;
+        column-gap: 1rem;
+        padding: 0.55rem 0.8rem;
         border-radius: 3px;
     }
 
@@ -1734,9 +1737,11 @@
         font-size: 0.9rem;
     }
 
-    .ao-of-sm { width: 7.5rem; }
-    .ao-of-md { width: 11rem; }
-    .ao-of-lg { width: 100%; max-width: 22rem; }
+    /* The reference's inputs are roomier than these used to be — a date or an amount
+       never looks clipped. */
+    .ao-of-sm { width: 9rem; }
+    .ao-of-md { width: 13rem; }
+    .ao-of-lg { width: 100%; max-width: 24rem; }
 
     .ao-of-row input:focus,
     .ao-of-row select:focus {
@@ -5467,11 +5472,20 @@
         line-height: 1.5;
     }
 
+    /* The reference's grey strip: selects and the action row boxed together under the
+       editor (Leandro's side-by-side, 2026-09-05). */
+    .ao-et-band {
+        margin-top: 0.6rem;
+        padding: 0.6rem 0.75rem;
+        background: #f0f0f0;
+        border: 1px solid #d5d5d5;
+        border-radius: var(--wa-radius, 4px);
+    }
+
     .ao-et-setrow {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 0.6rem;
-        margin-top: 0.6rem;
     }
 
     .ao-et-actionrow {
@@ -5479,8 +5493,15 @@
         justify-content: space-between;
         align-items: center;
         gap: 0.75rem;
-        margin-top: 0.6rem;
+        margin-top: 0.55rem;
         flex-wrap: wrap;
+    }
+
+    /* The reference's Preview is the one solid-blue control on the toolbar. */
+    .ao-ont-preview {
+        background: #337ab7 !important;
+        border-color: #2e6da4 !important;
+        color: #fff !important;
     }
 
     .ao-et-actions-left, .ao-et-actions-right { display: inline-flex; align-items: center; gap: 0.75rem; }
