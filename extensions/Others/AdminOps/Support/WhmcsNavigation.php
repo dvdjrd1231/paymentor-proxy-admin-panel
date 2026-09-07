@@ -624,6 +624,12 @@ class WhmcsNavigation
         static::$placed[OauthClientResource::class] = true;
         // Issue #52: same for Extensions — the menu entry is the WHMCS-shaped page.
         static::$placed[ExtensionResource::class] = true;
+        // Core's Available Extensions page and the cluster that holds it, replaced by
+        // {@see \Paymenter\Extensions\Others\AdminOps\Admin\Pages\AvailableExtensions}
+        // (Leandro, 2026-09-07). Claimed so the Addons sweep stops listing core's, which
+        // now only redirects.
+        static::$placed[\App\Admin\Pages\Extension::class] = true;
+        static::$placed[\App\Admin\Clusters\Extensions::class] = true;
 
         return static::group('Setup', 'ri-settings-3-line', [
             // First, as it is on the reference: the catalogue as a whole, ordered by
@@ -651,6 +657,10 @@ class WhmcsNavigation
             // Issue #52: the WHMCS-shaped list; core's resource keeps create/edit and is
             // claimed just below so the Addons sweep leaves it be.
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ExtensionsList::class, 'Extensions'),
+            // Beside it, as core's cluster had the pair: what is installed, then what
+            // could be. The Addons sweep used to surface core's version of this under a
+            // borrowed label; it is a proper Setup entry now.
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\AvailableExtensions::class, 'Available Extensions'),
             // Issue #39: the WHMCS-shaped tabbed settings page; core's raw form stays
             // reachable as System Settings' first tile.
             static::page(GeneralSettings::class, 'General Settings'),
