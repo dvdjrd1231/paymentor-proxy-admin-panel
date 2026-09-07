@@ -5475,6 +5475,16 @@
         vertical-align: -1px;
     }
 
+    /* A setting the reference has and this platform does not: shown greyed with the
+       reason beside it, rather than dropped so the tab merely looks shorter. */
+    .ao-gs-row-off .ao-gs-label { color: #888; }
+    .ao-gs-row-off input[disabled] {
+        background: #f0f0f0;
+        color: #999;
+        font-style: italic;
+    }
+    .ao-gs-row-off .ao-gs-hint { color: #8a6d3b; }
+
     /* ── OpenID Connect credentials ──────────────────────────────────────────────
        The reference's boxed Client API Credentials block, and the repeatable
        Authorized Redirect URIs. */

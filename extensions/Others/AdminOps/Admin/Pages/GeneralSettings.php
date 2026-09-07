@@ -9,15 +9,29 @@ use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Url;
+use Paymenter\Extensions\Others\AdminOps\Support\SettingsReference;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
- * Issue #39 — WHMCS's General Settings: the file-folder tab bar (General, Localisation,
- * Ordering, …, Other) over label-left rows with an inline hint per field. Every field is
- * one of Paymenter's real settings, read from {@see CoreSettings::settings()} and saved
- * exactly the way core's own Settings page saves — same Setting rows, same cache flush —
- * so the two pages can never disagree. Tabs whose WHMCS content has no Paymenter
- * equivalent (Ordering, Domains, Affiliates) say so instead of inventing fields.
+ * Issue #39 - WHMCS's General Settings, to Leandro's screenshots of configgeneral.php
+ * (2026-09-07): the file-folder tab bar over label-left rows, each with the reference's
+ * own hint.
+ *
+ * ## How a field gets here
+ *
+ * {@see REFERENCE} lists the reference's fields, tab by tab, in its order. Each entry
+ * either names a real Paymenter setting - read from {@see CoreSettings::settings()} and
+ * saved exactly the way core's own Settings page saves, so the two can never disagree -
+ * or carries a `why`, in which case it renders disabled with that reason on it.
+ *
+ * The disabled entries are the point, not padding: WHMCS has settings for features this
+ * platform does not have, and a tab that quietly omits them looks complete while leaving
+ * an admin hunting for a switch that was never there.
+ *
+ * **Domains is deliberately absent.** Domains were removed from this store entirely
+ * (section 10 of the brief), so the whole tab would be disabled rows - agreed with
+ * Leandro, 2026-09-07, along with omitting MarketConnect, Apps & Integrations, Sign-In
+ * Integrations and Fraud Protection, which are WHMCS services rather than settings.
  */
 class GeneralSettings extends Page
 {
@@ -33,7 +47,6 @@ class GeneralSettings extends Page
         'general' => 'General',
         'localisation' => 'Localisation',
         'ordering' => 'Ordering',
-        'domains' => 'Domains',
         'mail' => 'Mail',
         'support' => 'Support',
         'invoices' => 'Invoices',
@@ -43,25 +56,6 @@ class GeneralSettings extends Page
         'social' => 'Social',
         'other' => 'Other',
     ];
-
-    /** Which of core's setting groups feed each tab. */
-    private const GROUPS = [
-        'general' => ['general', 'theme'],
-        'localisation' => [],           // three settings pulled out of 'general' below
-        'ordering' => [],
-        'domains' => [],
-        'mail' => ['mail'],
-        'support' => ['tickets'],
-        'invoices' => ['invoices', 'tax'],
-        'credit' => ['credits'],
-        'affiliates' => [],
-        'security' => ['security'],
-        'social' => ['social-login'],
-        'other' => ['other', 'cronjob'],
-    ];
-
-    /** WHMCS keeps language/timezone under Localisation; core keeps them in 'general'. */
-    private const LOCALISATION = ['timezone', 'app_language', 'allowed_languages'];
 
     #[Url(as: 'tab')]
     public string $tab = 'general';
@@ -90,36 +84,59 @@ class GeneralSettings extends Page
         }
     }
 
-    /** The current tab's settings, in core's own order. */
+    /**
+     * The current tab's rows, in the reference's order.
+     *
+     * A row either resolves to a real core setting — carrying its type, options and
+     * default — or is a disabled row with the reason it cannot be offered here. Naming a
+     * setting that does not exist degrades to a disabled row rather than throwing, so a
+     * core upgrade that renames one shows a gap instead of a 500.
+     *
+     * @return array<int, array<string, mixed>>
+     */
     public function fields(): array
     {
-        $all = CoreSettings::settings();
+        $definitions = collect(CoreSettings::settings())->flatten(1)->keyBy('name');
+        $rows = [];
 
-        if ($this->tab === 'localisation') {
-            return array_values(array_filter(
-                $all['general'] ?? [],
-                fn (array $s) => in_array($s['name'], self::LOCALISATION, true),
-            ));
-        }
+        foreach (SettingsReference::all()[$this->tab] ?? [] as $row) {
+            $name = $row['setting'] ?? null;
+            $definition = $name ? ($definitions[$name] ?? null) : null;
 
-        $fields = [];
-        foreach (self::GROUPS[$this->tab] ?? [] as $group) {
-            foreach ($all[$group] ?? [] as $setting) {
-                if ($this->tab === 'general' && in_array($setting['name'], self::LOCALISATION, true)) {
-                    continue;
-                }
+            if ($name && !$definition) {
+                $rows[] = [
+                    'label' => $row['label'],
+                    'why' => 'This setting is not present in the installed Paymenter version.',
+                ];
 
-                // Uploads (logos, favicon) stay on core's own form — a text box bound to
-                // a file setting would only corrupt it.
-                if (in_array($setting['type'] ?? 'text', ['file', 'placeholder'], true)) {
-                    continue;
-                }
-
-                $fields[] = $setting;
+                continue;
             }
+
+            if (!$definition) {
+                $rows[] = ['label' => $row['label'], 'why' => $row['why'] ?? ''];
+
+                continue;
+            }
+
+            // Uploads stay on core's own form: a text box bound to a file setting would
+            // only corrupt it.
+            if (in_array($definition['type'] ?? 'text', ['file', 'placeholder'], true)) {
+                $rows[] = [
+                    'label' => $row['label'],
+                    'why' => 'This is an uploaded file — set it under Setup → System Settings.',
+                ];
+
+                continue;
+            }
+
+            $rows[] = $definition + [
+                // The reference's wording wins where it differs from core's.
+                'label' => $row['label'],
+                'hint' => $row['hint'] ?? ($definition['description'] ?? null),
+            ];
         }
 
-        return $fields;
+        return $rows;
     }
 
     /** Saves core's way: same Setting rows, same change detection, same cache flush. */
