@@ -1,8 +1,12 @@
 {{--
-    General Settings, to issue #39's reference screenshots: the file-folder tab bar over a
+    General Settings, to the reference's screenshots: the file-folder tab bar over a
     framed form of label-left rows, each with its inline hint, then Save/Cancel centred
-    under the frame. Every field is one of Paymenter's real settings; the three tabs whose
-    WHMCS content has no Paymenter equivalent say so instead of inventing fields.
+    under the frame.
+
+    Rows come from Support\SettingsReference, which lists the reference's fields in its
+    order. A row either drives a real Paymenter setting or renders disabled with the
+    reason it cannot — see the page class for why the disabled ones are here rather than
+    quietly dropped.
 --}}
 <x-filament-panels::page>
     <div class="ao-mu ao-gs">
@@ -14,24 +18,23 @@
         </div>
 
         <div class="ao-gs-frame">
-            @if ($tab === 'ordering')
-                <p class="ao-gs-empty" title="WHMCS's Ordering tab configures its order form flows; Paymenter's checkout has no equivalent switches">
-                    Paymenter's checkout carries no configurable ordering options — WHMCS's
-                    Ordering settings have no equivalent here.
-                </p>
-            @elseif ($tab === 'domains')
-                <p class="ao-gs-empty" title="No domain registrar is connected to this store">
-                    No domain registrar is connected to this store, so there is nothing to
-                    configure here.
-                </p>
-            @elseif ($tab === 'affiliates')
-                <p class="ao-gs-empty">
-                    Affiliate settings live on the Affiliates extension —
-                    <a href="{{ url('/admin/extensions') }}">Admin → Extensions → Affiliates</a>.
-                </p>
-            @else
-                @foreach ($fields as $field)
-                    @php $name = $field['name']; $type = $field['type'] ?? 'text'; @endphp
+            @foreach ($fields as $field)
+                    @php $name = $field['name'] ?? null; $type = $field['type'] ?? 'text'; @endphp
+
+                    @if (empty($name))
+                        {{-- No Paymenter setting behind it. Shown, not hidden: an admin
+                             hunting for a WHMCS switch should find out here that it does
+                             not exist, rather than assume the page is incomplete. --}}
+                        <div class="ao-gs-row ao-gs-row-off">
+                            <span class="ao-gs-label">{{ $field['label'] }}</span>
+                            <div class="ao-gs-field">
+                                <input type="text" value="Not available" disabled>
+                                <span class="ao-gs-hint">{{ $field['why'] }}</span>
+                            </div>
+                        </div>
+                        @continue
+                    @endif
+
                     <div class="ao-gs-row">
                         <label class="ao-gs-label" for="gs-{{ $name }}">{{ $field['label'] ?? $name }}</label>
                         <div class="ao-gs-field">
@@ -74,20 +77,17 @@
                                     <input type="text" id="gs-{{ $name }}" wire:model="values.{{ $name }}">
                             @endswitch
 
-                            @if (!empty($field['description']))
-                                <span class="ao-gs-hint">{{ $field['description'] }}</span>
+                            @if (!empty($field['hint']))
+                                <span class="ao-gs-hint">{{ $field['hint'] }}</span>
                             @endif
                         </div>
                     </div>
                 @endforeach
-            @endif
         </div>
 
-        @if (!in_array($tab, ['ordering', 'domains', 'affiliates'], true))
-            <div class="ao-gs-actions">
-                <button type="button" class="ao-find-go" wire:click="save">Save Changes</button>
-                <a class="ao-gs-cancel" href="{{ static::getUrl(['tab' => $tab]) }}">Cancel Changes</a>
-            </div>
-        @endif
+        <div class="ao-gs-actions">
+            <button type="button" class="ao-find-go" wire:click="save">Save Changes</button>
+            <a class="ao-gs-cancel" href="{{ static::getUrl(['tab' => $tab]) }}">Cancel Changes</a>
+        </div>
     </div>
 </x-filament-panels::page>
