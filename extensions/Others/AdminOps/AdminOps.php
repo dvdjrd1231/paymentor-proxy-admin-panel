@@ -448,10 +448,10 @@ class AdminOps extends Extension
         return $out;
     }
 
-    /** The one URL, versioned by the two blades' own content so a deploy invalidates it. */
-    public static function styleUrl(): string
+    /** The two blades' own content, as a short hash. */
+    public static function styleVersion(): string
     {
-        $version = \Illuminate\Support\Facades\Cache::remember('adminops.style-version', 3600, function (): string {
+        return \Illuminate\Support\Facades\Cache::remember('adminops.style-version', 3600, function (): string {
             $stamp = '';
 
             foreach (['skin', 'styles'] as $part) {
@@ -461,8 +461,12 @@ class AdminOps extends Extension
 
             return substr(md5($stamp), 0, 10);
         });
+    }
 
-        return url('/admin/adminops-' . $version . '.css');
+    /** The one URL, versioned by the two blades' own content so a deploy invalidates it. */
+    public static function styleUrl(): string
+    {
+        return url('/admin/adminops-' . static::styleVersion() . '.css');
     }
 
     /**
@@ -475,7 +479,12 @@ class AdminOps extends Extension
     private function registerSkinStylesheet(): void
     {
         \Illuminate\Support\Facades\Route::get('/admin/adminops-{version}.css', function (string $version) {
-            $css = \Illuminate\Support\Facades\Cache::remember('adminops.style-css', 3600, function (): string {
+            // Keyed by the same content hash the URL carries, so new CSS gets a new key
+            // and the old entry is simply never read again. It used to be a bare
+            // 'adminops.style-css', which meant a deploy had to remember to forget two
+            // keys — miss the second and the new URL served the old stylesheet for an
+            // hour, which is exactly what happened on 2026-09-07.
+            $css = \Illuminate\Support\Facades\Cache::remember('adminops.style-css.' . static::styleVersion(), 3600, function (): string {
                 $out = '';
 
                 foreach (['skin', 'styles'] as $part) {
