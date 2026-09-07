@@ -6280,12 +6280,20 @@
 
     .ao-et-actions > button { margin: 0; }
 
-    /* The per-message pair is smaller than a form button, so it overrides the height it
-       inherits from the rule above rather than fighting it with !important. */
-    .ao-et-msg-edit,
-    .ao-et-msg-delete {
-        height: auto;
-        padding: 0.2rem 0.6rem;
+    /* The per-message pair is smaller than a form button. Both halves are sized here
+       together — Edit comes from .ao-of-go and Delete from .ao-eo-delete, two rules with
+       different padding, line-height and display, so matching them one at a time is how
+       they ended up different heights in the first place. */
+    .ao-et-msg-btns .ao-et-msg-edit,
+    .ao-et-msg-btns .ao-et-msg-delete {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        height: 1.6rem;
+        padding: 0 0.6rem;
+        border-radius: 4px;
         font-size: 0.8rem;
+        line-height: 1;
     }
 </style>
