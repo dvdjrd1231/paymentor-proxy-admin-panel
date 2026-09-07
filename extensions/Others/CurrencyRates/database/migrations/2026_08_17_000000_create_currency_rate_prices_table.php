@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('currency_rate_prices', function (Blueprint $table) {
+        Schema::hasTable('currency_rate_prices') || Schema::create('currency_rate_prices', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('plan_id');
             $table->string('currency_code', 8);

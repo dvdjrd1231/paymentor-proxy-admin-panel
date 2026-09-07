@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ext_kb_categories', function (Blueprint $table) {
+        Schema::hasTable('ext_kb_categories') || Schema::create('ext_kb_categories', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('ext_kb_articles', function (Blueprint $table) {
+        Schema::hasTable('ext_kb_articles') || Schema::create('ext_kb_articles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('category_id')->constrained('ext_kb_categories')->cascadeOnDelete();
             $table->string('title');

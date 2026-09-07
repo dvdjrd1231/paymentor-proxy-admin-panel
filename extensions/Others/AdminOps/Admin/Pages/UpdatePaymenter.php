@@ -123,6 +123,61 @@ class UpdatePaymenter extends Page
             ->body('Added to the To-Do List. The release is vendored, reviewed and shipped through the deployment pipeline — this page never overwrites files on its own.')
             ->persistent()
             ->success()->send();
+
+        $this->buildPlan();
+    }
+
+    /** The plan for the release, once built — see {@see Support\ReleasePlan}. */
+    public array $plan = [];
+
+    public bool $planning = false;
+
+    /**
+     * Download the newest release and work out exactly which core files it would change
+     * (Leandro, 2026-09-07: "update only possible and necessary files without changing
+     * functions and designs").
+     *
+     * This is the honest form of that request on this deployment. Core's own updater
+     * unpacks a release over the installation wholesale, which here would overwrite the
+     * fourteen modifications `docs/CORE-TOUCHPOINTS.md` records and leave the server's
+     * git tree diverged from the repository — the two outcomes his sentence rules out.
+     * So the download is real, and what comes back is the file-by-file answer to "what is
+     * actually necessary": how much is already identical, what may be taken safely, and
+     * the short list of files carrying our own changes that a person has to merge.
+     */
+    public function buildPlan(): void
+    {
+        $latest = $this->latest()['version'];
+
+        if (!$latest) {
+            Notification::make()->title('Upstream could not be reached')->danger()->send();
+
+            return;
+        }
+
+        $this->planning = true;
+        $this->plan = (new \Paymenter\Extensions\Others\AdminOps\Support\ReleasePlan($latest))->build();
+        $this->planning = false;
+
+        if ($this->plan['error'] ?? null) {
+            Notification::make()->title('Could not read the release')
+                ->body($this->plan['error'])->danger()->send();
+
+            return;
+        }
+
+        $counts = $this->plan['counts'];
+
+        Notification::make()->title('Release ' . $latest . ' examined')
+            ->body(sprintf(
+                '%d file(s) already identical, %d safe to take, %d new, %d carrying our own changes.',
+                $counts['same'] ?? 0, $counts['changed'] ?? 0, $counts['new'] ?? 0, $counts['touchpoint'] ?? 0,
+            ))->success()->send();
+    }
+
+    public function clearPlan(): void
+    {
+        $this->plan = [];
     }
 
     /** The reference's top-right button; a real re-check rather than a dead control. */

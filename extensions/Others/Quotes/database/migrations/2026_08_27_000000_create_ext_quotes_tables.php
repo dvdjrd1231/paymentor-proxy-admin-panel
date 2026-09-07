@@ -19,7 +19,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ext_quotes', function (Blueprint $table) {
+        Schema::hasTable('ext_quotes') || Schema::create('ext_quotes', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -54,7 +54,7 @@ return new class extends Migration
             $table->index(['status', 'valid_until']);
         });
 
-        Schema::create('ext_quote_items', function (Blueprint $table) {
+        Schema::hasTable('ext_quote_items') || Schema::create('ext_quote_items', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('quote_id')->constrained('ext_quotes')->cascadeOnDelete();

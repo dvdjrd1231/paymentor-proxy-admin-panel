@@ -5391,6 +5391,43 @@
         line-height: 1.6;
     }
 
+    /* ── The update plan ─────────────────────────────────────────────────────────
+       What a release would change, file by file, under the version tiles. */
+    .ao-up-plan {
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+        padding: 0.9rem 1rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+    }
+
+    .ao-up-plan-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .ao-up-plan-head h4 { margin: 0; font-size: 1rem; font-weight: 600; }
+
+    .ao-up-plan-counts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 1.4rem;
+        font-size: 0.9rem;
+    }
+
+    .ao-up-plan-counts b { font-size: 1.05rem; }
+    .ao-up-plan-warn { color: #b8860b; }
+
+    .ao-up-plan-note { margin: 0; color: #555; font-size: 0.88rem; line-height: 1.45; }
+
+    .ao-up-st-changed { background: #eef3f8; color: #1b4d7f; }
+    .ao-up-st-new { background: #eaf6ea; color: #2f6f2f; }
+    .ao-up-st-touchpoint { background: #fdf3e0; color: #8a5a00; }
+
     /* ── Available Extensions ────────────────────────────────────────────────────
        The marketplace grid. Cards rather than a table: each listing is a name, a
        type and a paragraph, which reads badly as a row and well as a card. */

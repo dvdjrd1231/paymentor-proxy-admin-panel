@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('gateway_rules', function (Blueprint $table) {
+        Schema::hasTable('gateway_rules') || Schema::create('gateway_rules', function (Blueprint $table) {
             $table->id();
             $table->string('name');
 

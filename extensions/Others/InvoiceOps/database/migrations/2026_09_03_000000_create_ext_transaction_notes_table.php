@@ -18,7 +18,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ext_transaction_notes', function (Blueprint $table) {
+        Schema::hasTable('ext_transaction_notes') || Schema::create('ext_transaction_notes', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('transaction_id')->unique()

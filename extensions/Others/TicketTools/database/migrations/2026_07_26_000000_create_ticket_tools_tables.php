@@ -15,7 +15,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('canned_responses', function (Blueprint $table) {
+        Schema::hasTable('canned_responses') || Schema::create('canned_responses', function (Blueprint $table) {
             $table->id();
             $table->string('title');
             $table->string('department')->nullable(); // optional scoping to a department
@@ -24,7 +24,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('ticket_notes', function (Blueprint $table) {
+        Schema::hasTable('ticket_notes') || Schema::create('ticket_notes', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('ticket_id');
             $table->unsignedBigInteger('user_id')->nullable(); // staff author

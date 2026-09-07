@@ -46,14 +46,68 @@
                  says so — see UpdatePaymenter::updateNow() for why it must not
                  overwrite files itself. --}}
             <button type="button" class="ao-up-update ao-find-go" wire:click="updateNow"
-                wire:loading.attr="disabled">
-                Update Now
+                wire:loading.attr="disabled" wire:target="updateNow,buildPlan">
+                <span wire:loading.remove wire:target="updateNow,buildPlan">Update Now</span>
+                <span wire:loading wire:target="updateNow,buildPlan">Downloading release…</span>
             </button>
             <div class="ao-up-links">
                 <a href="{{ $releaseNotesUrl }}" target="_blank" rel="noopener">Release Notes</a>
                 <a href="{{ $changelogUrl }}" target="_blank" rel="noopener">Changelog</a>
             </div>
         </div>
+
+        {{-- What the release would actually change, file by file. Update Now downloads it
+             and builds this; it is the honest form of "update only possible and necessary
+             files" on a deployment whose core is vendored and git-managed. --}}
+        @if (($plan['files'] ?? null) !== null && !($plan['error'] ?? null) && $plan['counts'] !== [])
+            @php $counts = $plan['counts']; @endphp
+            <div class="ao-up-plan">
+                <div class="ao-up-plan-head">
+                    <h4>What release {{ $plan['version'] }} would change</h4>
+                    <button type="button" class="ao-pg-btn" wire:click="clearPlan">Dismiss</button>
+                </div>
+
+                <div class="ao-up-plan-counts">
+                    <span><b>{{ $counts['same'] ?? 0 }}</b> already identical</span>
+                    <span><b>{{ $counts['changed'] ?? 0 }}</b> safe to take</span>
+                    <span><b>{{ $counts['new'] ?? 0 }}</b> new</span>
+                    <span class="ao-up-plan-warn"><b>{{ $counts['touchpoint'] ?? 0 }}</b> carry our own changes</span>
+                </div>
+
+                @if (($counts['touchpoint'] ?? 0) > 0)
+                    <p class="ao-up-plan-note">
+                        The files marked <b>ours</b> below are recorded in
+                        <code>docs/CORE-TOUCHPOINTS.md</code>. Taking upstream's copy of one of them
+                        would silently remove a customisation, so they are listed for a person to
+                        merge rather than applied.
+                    </p>
+                @endif
+
+                <table class="ao-mu-grid">
+                    <thead><tr><th>File</th><th>State</th></tr></thead>
+                    <tbody>
+                        @forelse (array_slice($plan['files'], 0, 300) as $file)
+                            <tr>
+                                <td class="ao-mu-left"><code>{{ $file['path'] }}</code></td>
+                                <td>
+                                    <span class="ao-mu-status ao-up-st-{{ $file['state'] }}">
+                                        {{ ['touchpoint' => 'ours', 'changed' => 'changed', 'new' => 'new'][$file['state']] ?? $file['state'] }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="2" class="ao-mu-none">Nothing differs — this install already matches the release.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+
+                @if (count($plan['files']) > 300)
+                    {{-- Said out loud rather than silently truncated: a cut-off list that
+                         looks complete is worse than no list. --}}
+                    <p class="ao-up-plan-note">Showing the first 300 of {{ count($plan['files']) }} differing files.</p>
+                @endif
+            </div>
+        @endif
 
         <div class="ao-up-warning">
             <x-filament::icon icon="ri-error-warning-fill" class="ao-up-warning-ic" />

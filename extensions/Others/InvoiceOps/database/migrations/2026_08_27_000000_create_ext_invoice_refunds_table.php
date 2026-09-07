@@ -20,7 +20,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ext_invoice_refunds', function (Blueprint $table) {
+        Schema::hasTable('ext_invoice_refunds') || Schema::create('ext_invoice_refunds', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('invoice_id')->constrained()->cascadeOnDelete();

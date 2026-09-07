@@ -23,7 +23,7 @@ return new class extends Migration
     {
         // Recreated exactly as the original migration had it, so a rollback restores the
         // schema this replaced rather than a half-shaped table.
-        Schema::create('ext_ct_downloads', function (Blueprint $table) {
+        Schema::hasTable('ext_ct_downloads') || Schema::create('ext_ct_downloads', function (Blueprint $table) {
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
