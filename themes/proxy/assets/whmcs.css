@@ -1167,12 +1167,25 @@
         padding: 2.5rem 1rem; overflow-y: auto;
         background: rgba(0, 0, 0, .5);
     }
+    /* The dialog is bounded by the window and scrolls its own body.
+       Measured on the live payment modal (2026-09-07): with a tall gateway form — Stripe
+       with the card fields open and five wallet rows — the dialog grew past the bottom of
+       the window and took the gateway's own Pay button with it. The overlay did scroll,
+       but an unbounded dialog gives no sign that it needs to, so the button read as
+       missing. Bounding the dialog keeps the header and the scroll edge visible, which is
+       what tells you there is more below. */
     .wf-modal-dialog {
         width: 100%; margin: auto;
+        max-height: calc(100vh - 5rem);
+        display: flex; flex-direction: column;
         background: var(--wf-bg); border: 1px solid var(--wf-border);
         border-radius: var(--wf-radius); box-shadow: 0 5px 15px rgba(0, 0, 0, .5);
         text-align: start;
     }
+
+    /* The head stays put; only the body moves. */
+    .wf-modal-dialog > .wf-modal-head { flex: 0 0 auto; }
+    .wf-modal-dialog > .wf-modal-body { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
     .wf-modal-head {
         display: flex; align-items: center; justify-content: space-between; gap: 1rem;
         padding: 12px 15px; border-bottom: 1px solid var(--wf-panel-border);
