@@ -25,6 +25,46 @@ namespace Paymenter\Extensions\Others\AdminOps\Support;
 class SettingsReference
 {
     /**
+     * Settings this extension owns, for fields Paymenter has no setting behind.
+     *
+     * Core's `Setting` rows all land in `config('settings.*')` whether or not core
+     * declares them, so a key added here is readable everywhere a core one is — which is
+     * what lets the client footer render these without a second storage mechanism.
+     *
+     * Only added where the value is actually used. The reference's Social tab also
+     * carries Announcements Tweet / Facebook Recommend / Facebook Comments; those need
+     * third-party embeds on the announcements page, so they are left out rather than
+     * stored and ignored.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function own(): array
+    {
+        $networks = [
+            'bitbucket' => 'BitBucket', 'discord' => 'Discord', 'facebook' => 'Facebook',
+            'flickr' => 'Flickr', 'github' => 'GitHub', 'gitter' => 'Gitter',
+            'instagram' => 'Instagram', 'linkedin' => 'LinkedIn', 'reddit' => 'Reddit',
+            'skype' => 'Skype', 'slack' => 'Slack', 'twitter' => 'Twitter',
+            'viber' => 'Viber', 'vimeo' => 'Vimeo', 'whatsapp' => 'WhatsApp',
+            'youtube' => 'YouTube',
+        ];
+
+        $own = [];
+
+        foreach ($networks as $key => $label) {
+            $own['social_' . $key] = [
+                'name' => 'social_' . $key,
+                'label' => $label,
+                'type' => 'text',
+                'database_type' => 'string',
+                'default' => null,
+            ];
+        }
+
+        return $own;
+    }
+
+    /**
      * @return array<string, array<int, array{label: string, setting?: string, hint?: string, why?: string}>>
      */
     public static function all(): array
@@ -109,9 +149,8 @@ class SettingsReference
                 ['setting' => 'captcha_secret', 'label' => 'Captcha Secret'],
                 ['setting' => 'session_validation', 'label' => 'Disable Session IP Check', 'hint' => 'How strictly a session is tied to the address that created it'],
                 ['setting' => 'trusted_proxies', 'label' => 'Trusted Proxies', 'hint' => 'Addresses of proxies that forward traffic to this install'],
-            ],
-
-            'social' => [
+                // WHMCS keeps these on its own Sign-In Integrations page, not on Social,
+                // whose fields are profile links. They sit here so they stay reachable.
                 ['setting' => 'oauth_google', 'label' => 'Google Sign-In'],
                 ['setting' => 'oauth_google_client_id', 'label' => 'Google Client ID'],
                 ['setting' => 'oauth_google_client_secret', 'label' => 'Google Client Secret'],
@@ -121,6 +160,25 @@ class SettingsReference
                 ['setting' => 'oauth_discord', 'label' => 'Discord Sign-In'],
                 ['setting' => 'oauth_discord_client_id', 'label' => 'Discord Client ID'],
                 ['setting' => 'oauth_discord_client_secret', 'label' => 'Discord Client Secret'],
+            ],
+
+            'social' => [
+                ['setting' => 'social_bitbucket', 'label' => 'BitBucket'],
+                ['setting' => 'social_discord', 'label' => 'Discord', 'hint' => 'Since Discord is invite based, you must generate a permanent invite URL and enter the part after https://discord.gg/ here'],
+                ['setting' => 'social_facebook', 'label' => 'Facebook'],
+                ['setting' => 'social_flickr', 'label' => 'Flickr'],
+                ['setting' => 'social_github', 'label' => 'GitHub'],
+                ['setting' => 'social_gitter', 'label' => 'Gitter'],
+                ['setting' => 'social_instagram', 'label' => 'Instagram'],
+                ['setting' => 'social_linkedin', 'label' => 'LinkedIn', 'hint' => 'Requires a named company page - does not support individuals'],
+                ['setting' => 'social_reddit', 'label' => 'Reddit'],
+                ['setting' => 'social_skype', 'label' => 'Skype'],
+                ['setting' => 'social_slack', 'label' => 'Slack', 'hint' => 'Enter Slack workspace ID'],
+                ['setting' => 'social_twitter', 'label' => 'Twitter'],
+                ['setting' => 'social_viber', 'label' => 'Viber'],
+                ['setting' => 'social_vimeo', 'label' => 'Vimeo'],
+                ['setting' => 'social_whatsapp', 'label' => 'WhatsApp', 'hint' => 'Enter phone number registered for WhatsApp including country prefix'],
+                ['setting' => 'social_youtube', 'label' => 'YouTube'],
             ],
 
             'other' => [
