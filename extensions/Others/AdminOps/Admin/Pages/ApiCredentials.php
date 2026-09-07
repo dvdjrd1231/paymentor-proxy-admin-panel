@@ -190,6 +190,67 @@ class ApiCredentials extends Page
         });
     }
 
+    /**
+     * The reference's Credential Management modal (Leandro, 2026-09-07: "edit function
+     * should be worked with the modal ... now the page is redirect to other page and
+     * working as complex").
+     *
+     * Editing used to send the admin to core's own API resource screen, which is a
+     * different design, a different route, and shows fields this page does not manage.
+     * Description and role assignment are what the reference edits here, so they are
+     * edited here.
+     */
+    public ?int $editing = null;
+
+    public string $editDescription = '';
+
+    /** @var array<int, int> */
+    public array $editRoles = [];
+
+    public function openEdit(int $id): void
+    {
+        $key = ApiKey::find($id);
+
+        if (!$key || !ApiResource::canEdit($key)) {
+            Notification::make()->title('Not allowed')->danger()->send();
+
+            return;
+        }
+
+        $this->editing = $id;
+        $this->editDescription = (string) $key->name;
+        $this->editRoles = DB::table('ext_api_key_roles')->where('api_key_id', $id)
+            ->pluck('api_role_id')->map(fn ($v) => (int) $v)->all();
+    }
+
+    public function closeEdit(): void
+    {
+        $this->reset(['editing', 'editDescription', 'editRoles']);
+    }
+
+    public function saveEdit(): void
+    {
+        $key = ApiKey::find($this->editing);
+
+        if (!$key || !ApiResource::canEdit($key)) {
+            Notification::make()->title('Not allowed')->danger()->send();
+
+            return;
+        }
+
+        $this->validate([
+            'editDescription' => 'required|string|max:255',
+            'editRoles' => 'array',
+            'editRoles.*' => 'exists:ext_api_roles,id',
+        ], attributes: ['editDescription' => 'description']);
+
+        $key->update(['name' => $this->editDescription]);
+        $this->assignRoles($key, $this->editRoles);
+
+        $this->closeEdit();
+        Notification::make()->title('Credential updated')->success()->send();
+    }
+
     public function runDelete(): void
     {
         $id = $this->confirming;
@@ -334,7 +395,7 @@ class ApiCredentials extends Page
                 'roles' => collect($assigned[$key->id] ?? [])
                     ->map(fn ($pivot) => $roles->firstWhere('id', $pivot->api_role_id)?->name)
                     ->filter()->values(),
-                'edit' => ApiResource::canEdit($key) ? $manage : null,
+                'edit' => ApiResource::canEdit($key),
             ]),
             'roles' => $roles,
             'holders' => DB::table('ext_api_key_roles')->get()->groupBy('api_role_id')
