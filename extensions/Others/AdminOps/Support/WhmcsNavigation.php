@@ -135,6 +135,16 @@ class WhmcsNavigation
      */
     private static ?array $groups = null;
 
+    /**
+     * The Setup group, kept aside rather than discarded.
+     *
+     * It is deliberately absent from the topbar — the reference puts setup behind the
+     * wrench — but the rail still has to know a setup page belongs to it, or those pages
+     * show no section at all (Leandro, 2026-09-07: the sidebar on a settings page looked
+     * nothing like the reference's).
+     */
+    private static ?NavigationGroup $setupGroup = null;
+
     public static function build(NavigationBuilder $builder): NavigationBuilder
     {
         return $builder->groups(static::groups());
@@ -177,6 +187,9 @@ class WhmcsNavigation
         // still *built* rather than simply deleted, because building it is what marks its
         // resources as placed; skip that and the Addons catch-all would sweep every setup
         // screen into one long dropdown.
+        static::$setupGroup = collect($groups)
+            ->first(fn (NavigationGroup $group): bool => $group->getLabel() === 'Setup');
+
         return static::$groups = array_values(array_filter(
             $groups,
             fn (NavigationGroup $group): bool => $group->getLabel() !== 'Setup',
@@ -194,7 +207,12 @@ class WhmcsNavigation
         $best = null;
         $bestLength = 0;
 
-        foreach (static::groups() as $group) {
+        // Setup is considered even though it is not in the topbar: a settings page still
+        // belongs to it, and the rail needs to know that to draw the reference's
+        // Configuration / Staff Management / Payments stack.
+        $candidates = array_merge(static::groups(), array_filter([static::setupGroup()]));
+
+        foreach ($candidates as $group) {
             foreach ($group->getItems() as $item) {
                 $itemPath = rtrim(parse_url((string) $item->getUrl(), PHP_URL_PATH) ?? '', '/');
 
@@ -210,6 +228,14 @@ class WhmcsNavigation
         }
 
         return $best;
+    }
+
+    /** The Setup group — built with the rest, kept out of the topbar. */
+    public static function setupGroup(): ?NavigationGroup
+    {
+        static::groups();
+
+        return static::$setupGroup;
     }
 
     private static function clients(): ?NavigationGroup
