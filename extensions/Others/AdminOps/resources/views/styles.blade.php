@@ -1763,6 +1763,7 @@
 
     .ao-of-even .ao-of-row input:not([type="checkbox"]):not([type="radio"]),
     .ao-of-even .ao-of-row select,
+    .ao-of-even .ao-of-row textarea,
     .ao-of-even .ao-of-row .ao-of-date {
         width: 100%;
         max-width: none;
