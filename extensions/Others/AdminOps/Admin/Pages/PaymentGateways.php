@@ -78,7 +78,8 @@ class PaymentGateways extends Page
         return [
             'gateways' => Gateway::orderBy('name')->get(),
             'canEdit' => fn (Gateway $gateway) => GatewayResource::canEdit($gateway)
-                ? GatewayResource::getUrl('edit', ['record' => $gateway])
+                // Straight to our own editor rather than through core's route.
+                ? EditGateway::getUrl(['record' => $gateway->id])
                 : null,
             'extensionsUrl' => $extensionsUrl,
         ];
