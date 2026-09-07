@@ -5252,19 +5252,23 @@
         padding: 1.2rem 1.4rem;
     }
 
+    /* Three columns — label, control, hint — as the reference lays this screen out.
+       It was two, with the hint inside the control cell, so any row with a wide control
+       pushed its hint onto a second line and the page read ragged (Leandro,
+       2026-09-07: "still much different with the WHMCS general setting page"). */
     .ao-gs-row {
         display: grid;
-        grid-template-columns: 16rem 1fr;
-        gap: 1.2rem;
-        align-items: start;
-        padding: 0.45rem 0;
+        grid-template-columns: 15rem minmax(0, 24rem) minmax(0, 1fr);
+        gap: 0 1rem;
+        align-items: center;
+        padding: 0.3rem 0.6rem;
     }
 
-    .ao-gs-row:nth-child(odd) { background: #f7f7f7; }
+    .ao-gs-row:nth-child(odd) { background: #f2f2f2; }
 
-    .ao-gs-label { text-align: end; font-weight: 600; padding-top: 0.35rem; }
+    .ao-gs-label { text-align: end; font-weight: 600; font-size: 0.9rem; }
 
-    .ao-gs-field { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+    .ao-gs-field { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
 
     /* The reference's fields are white bordered boxes sitting on the grey stripes —
        without the chrome ours read as plain text, not editable fields (Leandro's
@@ -5275,17 +5279,17 @@
     .ao-gs-field input[type="time"],
     .ao-gs-field textarea,
     .ao-gs-field select {
-        min-width: 22rem;
-        padding: 0.4rem 0.6rem;
+        width: 100%;
+        padding: 0.3rem 0.55rem;
         border: 1px solid var(--wa-panel-border, #ccc);
         border-radius: var(--wa-radius, 4px);
         background: #fff;
         font: inherit;
     }
 
-    .ao-gs-field textarea { min-width: 30rem; }
+    .ao-gs-field textarea { min-height: 5rem; }
 
-    .ao-gs-hint { color: var(--wa-muted, #6b6b6b); }
+    .ao-gs-hint { color: var(--wa-muted, #6b6b6b); font-size: 0.86rem; line-height: 1.35; }
 
     .ao-gs-empty { margin: 0.4rem 0; }
 
