@@ -81,7 +81,10 @@ class CurrenciesList extends Page
             'newName' => 'nullable|string|max:64',
             'newPrefix' => 'nullable|string|max:8',
             'newSuffix' => 'nullable|string|max:8',
-            'newFormat' => 'in:' . implode(',', self::FORMATS),
+            // Rule::in, not "in:" . implode(',') — every format contains a comma, so the
+            // string form split "1,000.00" into "1" and "000.00" and the rule could never
+            // match. Add Currency had been rejecting every submission on that alone.
+            'newFormat' => [\Illuminate\Validation\Rule::in(self::FORMATS)],
             'newRate' => 'nullable|numeric|gt:0',
         ], attributes: ['newCode' => 'currency code', 'newRate' => 'base conversion rate']);
 
