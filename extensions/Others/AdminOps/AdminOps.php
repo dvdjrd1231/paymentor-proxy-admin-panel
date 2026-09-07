@@ -78,6 +78,31 @@ class AdminOps extends Extension
         $this->registerQuotePdf();
         $this->registerUpdatesNotice();
         $this->sweepServiceOverrides();
+        $this->retireRawProductList();
+    }
+
+    /**
+     * Core's raw Products list is retired in favour of the catalogue (Leandro,
+     * 2026-09-06: "remove this page"). It has been out of the menus since issue #35 —
+     * he still reached it through the product editor's own "Products" breadcrumb, which
+     * this same redirect now lands on the catalogue instead, closing his second point
+     * in one move.
+     *
+     * A redirect rather than a 404: the URL is still what core's breadcrumb and any
+     * bookmark point at, and sending someone to the screen that replaced it beats a
+     * dead end. Registered before Filament's own panel routes so it wins the match;
+     * the guard keeps it from firing for a signed-out visitor, who should meet the
+     * login page as usual.
+     */
+    private function retireRawProductList(): void
+    {
+        \Illuminate\Support\Facades\Route::middleware(['web'])->get('/admin/products', function () {
+            if (!\Illuminate\Support\Facades\Auth::check()) {
+                return redirect()->guest('/admin/login');
+            }
+
+            return redirect()->to(Admin\Pages\Catalogue::getUrl());
+        });
     }
 
     /**
