@@ -39,27 +39,17 @@
                 @forelse ($roles as $entry)
                     @php $role = $entry['row']; @endphp
                     <tr>
-                        <td class="ao-mu-left">
-                            @if ($entry['edit'])
-                                <a href="{{ $entry['edit'] }}">{{ $role->name }}</a>
-                            @else
-                                {{ $role->name }}
-                            @endif
-                        </td>
+                        <td class="ao-mu-left"><a href="{{ $entry['edit'] }}">{{ $role->name }}</a></td>
                         <td class="ao-mu-left">{{ $entry['assigned']->isEmpty() ? 'None' : $entry['assigned']->implode(', ') }}</td>
                         <td class="ao-mu-actions">
-                            @if ($entry['edit'])
-                                <a href="{{ $entry['edit'] }}" title="Edit role group">
-                                    <x-filament::icon icon="ri-edit-box-line" class="ao-mu-cell-icon" />
-                                </a>
-                            @else
-                                {{-- Issue #49: an empty cell read as a missing button. Core
-                                     protects the full-administrator role (id 1) from edits;
-                                     the lock says so instead of looking broken. --}}
-                                <span title="This role group is protected — the platform does not allow editing the full administrator role">
-                                    <x-filament::icon icon="ri-lock-line" class="ao-mu-cell-icon" />
-                                </span>
-                            @endif
+                            {{-- Every group is editable now, including the full
+                                 administrator: core's own edit page 403'd on it (issue #49
+                                 met that with a lock icon), and the reference has no such
+                                 restriction. See {@see RoleGroup} for the guard that
+                                 replaced it. --}}
+                            <a href="{{ $entry['edit'] }}" title="Edit role group">
+                                <x-filament::icon icon="ri-edit-box-line" class="ao-mu-cell-icon" />
+                            </a>
                             <button type="button" class="ao-mo-delete" title="Delete role group"
                                 wire:click="$set('confirming', {{ $role->id }})">
                                 <x-filament::icon icon="ri-indeterminate-circle-fill" class="ao-mu-cell-icon ao-mu-icon-red" />
