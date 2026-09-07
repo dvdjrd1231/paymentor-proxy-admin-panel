@@ -42,18 +42,32 @@
         </div>
 
         <div class="ao-up-actions">
-            {{-- Real (Leandro, 2026-09-05): queues the release on the To-Do List and
-                 says so — see UpdatePaymenter::updateNow() for why it must not
-                 overwrite files itself. --}}
+            {{-- Labelled for what it does. It used to say "Update Now" and queue a To-Do
+                 row, which read as though an update had been scheduled when nothing had
+                 happened but a reminder (Leandro, 2026-09-07). See
+                 UpdatePaymenter::updateNow() for why applying cannot happen from here. --}}
             <button type="button" class="ao-up-update ao-find-go" wire:click="updateNow"
                 wire:loading.attr="disabled" wire:target="updateNow,buildPlan">
-                <span wire:loading.remove wire:target="updateNow,buildPlan">Update Now</span>
+                <span wire:loading.remove wire:target="updateNow,buildPlan">Check What {{ $latest ?? 'the update' }} Changes</span>
                 <span wire:loading wire:target="updateNow,buildPlan">Downloading release…</span>
             </button>
             <div class="ao-up-links">
                 <a href="{{ $releaseNotesUrl }}" target="_blank" rel="noopener">Release Notes</a>
                 <a href="{{ $changelogUrl }}" target="_blank" rel="noopener">Changelog</a>
             </div>
+        </div>
+
+        <div class="ao-up-warning">
+            <x-filament::icon icon="ri-error-warning-fill" class="ao-up-warning-ic" />
+            <span>
+                <strong>Why this page does not apply the update</strong>
+                The application directory is bind-mounted from the server's git checkout, so a
+                file written here would land in that checkout and the next deploy's
+                <code>git pull</code> would refuse to fast-forward. It would also bypass the review
+                that vendoring a release exists to provide, silently replacing the files listed
+                below as <b>ours</b>. Applying is a repository operation: vendor the release, merge
+                those files by hand, commit, deploy. This page tells you exactly what that involves.
+            </span>
         </div>
 
         {{-- What the release would actually change, file by file. Update Now downloads it
@@ -109,16 +123,6 @@
             </div>
         @endif
 
-        <div class="ao-up-warning">
-            <x-filament::icon icon="ri-error-warning-fill" class="ao-up-warning-ic" />
-            <span>
-                <strong>Note</strong>
-                This installation always runs tagged production releases — development builds
-                are never deployed to production. New releases are vendored into the
-                repository, reviewed, and shipped through the deployment pipeline, so the
-                web updater is deliberately not used here and nothing on this page changes files.
-            </span>
-        </div>
 
         @if ($checkedAt)
             <p class="ao-up-checked">Last Checked for Updates: {{ $checkedAt->diffForHumans() }}</p>
