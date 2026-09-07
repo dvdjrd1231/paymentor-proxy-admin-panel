@@ -652,6 +652,8 @@ class WhmcsNavigation
         // Claimed by hand for the same reason as RoleGroup: its record is optional, so its
         // URL resolves without one and the Addons sweep would otherwise list it.
         static::$placed[\Paymenter\Extensions\Others\AdminOps\Admin\Pages\OauthClient::class] = true;
+        // The gateway editor is reached from Payment Gateways' Edit button, never a menu.
+        static::$placed[\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditGateway::class] = true;
         // Issue #52: same for Extensions — the menu entry is the WHMCS-shaped page.
         static::$placed[ExtensionResource::class] = true;
         // Core's Available Extensions page and the cluster that holds it, replaced by

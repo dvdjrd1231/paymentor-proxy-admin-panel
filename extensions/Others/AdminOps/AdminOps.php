@@ -84,6 +84,7 @@ class AdminOps extends Extension
         $this->keepExtensionMigrationsApplied();
         $this->retireCoreExtensionBrowser();
         $this->retireCoreOauthScreens();
+        $this->retireCoreGatewayEditor();
         $this->registerErrorPages();
         $this->applyClientGroupDiscounts();
     }
@@ -140,6 +141,28 @@ class AdminOps extends Extension
     private function registerErrorPages(): void
     {
         View::getFinder()->prependLocation(__DIR__ . '/resources/error-views');
+    }
+
+    /**
+     * Core's gateway editor, replaced by the reference's own (Leandro, 2026-09-07: it
+     * "is working as correctly but page design and styles format should be the WHMCS
+     * page standard format").
+     *
+     * Named after the route it displaces, for the reason on {@see retireRawProductList} —
+     * and this one matters more than most: Payment Gateways' own Edit button and the
+     * gateway index breadcrumb both resolve that name, and losing it is what 500'd this
+     * page earlier today.
+     */
+    private function retireCoreGatewayEditor(): void
+    {
+        \Illuminate\Support\Facades\Route::middleware(['web'])
+            ->get('/admin/gateways/{record}/edit', function (string $record) {
+                if (!\Illuminate\Support\Facades\Auth::check()) {
+                    return redirect()->guest('/admin/login');
+                }
+
+                return redirect()->to(Admin\Pages\EditGateway::getUrl(['record' => $record]));
+            })->name('filament.admin.resources.gateways.edit');
     }
 
     /**
