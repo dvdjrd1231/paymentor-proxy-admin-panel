@@ -5411,6 +5411,17 @@
         line-height: 1.6;
     }
 
+    /* The reference's colour chip beside a client group's hex value. */
+    .ao-cg-swatch {
+        display: inline-block;
+        width: 0.9rem;
+        height: 0.9rem;
+        margin-right: 0.35rem;
+        border: 1px solid #bbb;
+        border-radius: 3px;
+        vertical-align: -1px;
+    }
+
     /* ── OpenID Connect credentials ──────────────────────────────────────────────
        The reference's boxed Client API Credentials block, and the repeatable
        Authorized Redirect URIs. */
