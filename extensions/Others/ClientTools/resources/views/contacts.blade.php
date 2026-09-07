@@ -29,7 +29,7 @@
                  asking. --}}
             <form class="wf-choose" wire:submit.prevent="choose">
                 <label for="ct_choose">{{ __('clienttools.choose_contact') }}</label>
-                <select id="ct_choose" class="wf-input" wire:model="chosen">
+                <select id="ct_choose" class="wf-select" wire:model="chosen">
                     <option value="">{{ __('clienttools.contact_new') }}</option>
                     @foreach ($contacts as $contact)
                         <option value="{{ $contact->id }}">{{ $contact->name }}</option>
@@ -41,7 +41,7 @@
             <form wire:submit.prevent="save">
                 <div class="wf-contact-grid">
                     <div class="wf-field">
-                        <label for="c_first">{{ __('general.input.first_name') }}</label>
+                        <label for="c_first">{{ __('clienttools.contact_first_name') }}</label>
                         <input id="c_first" type="text" class="wf-input" wire:model="form.first_name">
                         @error('form.first_name') <span class="wf-error">{{ $message }}</span> @enderror
                     </div>
@@ -51,7 +51,7 @@
                     </div>
 
                     <div class="wf-field">
-                        <label for="c_last">{{ __('general.input.last_name') }}</label>
+                        <label for="c_last">{{ __('clienttools.contact_last_name') }}</label>
                         <input id="c_last" type="text" class="wf-input" wire:model="form.last_name">
                         @error('form.last_name') <span class="wf-error">{{ $message }}</span> @enderror
                     </div>
@@ -61,40 +61,53 @@
                     </div>
 
                     <div class="wf-field">
-                        <label for="c_company">{{ __('theme.company_name') }}</label>
+                        <label for="c_company">{{ __('clienttools.contact_company_name') }}</label>
                         <input id="c_company" type="text" class="wf-input" wire:model="form.company_name">
                     </div>
                     <div class="wf-field">
-                        <label for="c_city">{{ __('theme.city') }}</label>
+                        <label for="c_city">{{ __('clienttools.contact_city') }}</label>
                         <input id="c_city" type="text" class="wf-input" wire:model="form.city">
                     </div>
 
                     <div class="wf-field">
-                        <label for="c_email">{{ __('general.input.email') }}</label>
+                        <label for="c_email">{{ __('clienttools.contact_email') }}</label>
                         <input id="c_email" type="email" class="wf-input" wire:model="form.email">
                         @error('form.email') <span class="wf-error">{{ $message }}</span> @enderror
                     </div>
                     <div class="wf-field">
-                        <label for="c_state">{{ __('theme.state_region') }}</label>
+                        <label for="c_state">{{ __('clienttools.contact_state') }}</label>
                         <input id="c_state" type="text" class="wf-input" wire:model="form.state">
                     </div>
 
                     <div class="wf-field">
-                        <label for="c_phone">{{ __('theme.phone_number') }}</label>
+                        <label for="c_phone">{{ __('clienttools.contact_phone') }}</label>
                         <input id="c_phone" type="text" class="wf-input" wire:model="form.phone"
                                placeholder="+1 201-555-0123">
                     </div>
                     <div class="wf-field">
-                        <label for="c_zip">{{ __('theme.postcode') }}</label>
+                        <label for="c_zip">{{ __('clienttools.contact_zip') }}</label>
                         <input id="c_zip" type="text" class="wf-input" wire:model="form.zip">
                     </div>
 
                     {{-- Country sits alone in the right column, as the reference has it:
                          the left column has one field fewer. --}}
                     <div class="wf-field wf-contact-spacer"></div>
+                    {{-- A real list rather than a free-text box, as the reference has it.
+                         The stored value is the country's name, which is what rows written
+                         before this screen existed already hold; an unrecognised legacy
+                         value is kept as its own option so editing a contact never
+                         silently blanks their country. --}}
                     <div class="wf-field">
-                        <label for="c_country">{{ __('theme.country') }}</label>
-                        <input id="c_country" type="text" class="wf-input" wire:model="form.country">
+                        <label for="c_country">{{ __('clienttools.contact_country') }}</label>
+                        <select id="c_country" class="wf-select" wire:model="form.country">
+                            <option value="">{{ __('clienttools.contact_country_none') }}</option>
+                            @if ($form['country'] !== '' && !in_array($form['country'], $countries, true))
+                                <option value="{{ $form['country'] }}">{{ $form['country'] }}</option>
+                            @endif
+                            @foreach ($countries as $country)
+                                <option value="{{ $country }}">{{ $country }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 

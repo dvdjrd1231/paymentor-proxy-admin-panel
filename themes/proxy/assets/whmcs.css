@@ -1041,15 +1041,24 @@
         align-items: center;
         justify-content: center;
         flex-wrap: wrap;
-        gap: .75rem;
-        padding: 1rem;
-        margin-bottom: 1.5rem;
+        gap: 1.25rem;
+        padding: 1.1rem 1rem;
+        margin-bottom: 1.75rem;
         border-radius: var(--wf-radius);
-        background: var(--wf-section, #fdf2f5);
+        /* The reference's band is a wash of the brand colour, not the grey section fill —
+           `--wf-section` was rendering it as a plain grey strip. */
+        background: #fdeef2;
     }
 
-    .wf-choose label { font-weight: 600; color: var(--wf-ink); }
-    .wf-choose select { min-width: 22rem; }
+    .wf-choose label { font-weight: 600; color: var(--brand); white-space: nowrap; }
+
+    /* `.wf-select` is 100% wide everywhere else on the site, which pushed the label and Go
+       onto their own lines here. The reference keeps all three on one row. */
+    .wf-choose select {
+        flex: 0 1 24rem;
+        width: auto;
+        min-width: 0;
+    }
 
     .wf-contact-grid {
         display: grid;
@@ -1067,7 +1076,10 @@
         color: var(--brand);
     }
 
-    .wf-contact-prefs { display: flex; flex-direction: column; gap: .5rem; }
+    /* The reference sets these in the link colour and packs them tightly — they read as a
+       list of choices rather than as five separate fields. */
+    .wf-contact-prefs { display: flex; flex-direction: column; gap: .2rem; }
+    .wf-contact-prefs .wf-check { color: var(--brand); }
 
     .wf-contact-actions {
         display: flex;
