@@ -33,8 +33,12 @@ the repo root; our work is layered on top **without editing core**.
 - **Events:** subscribe in `boot()` via `Event::listen(App\Events\...)`.
 
 ## Commands
-- Enable/disable: **Admin → Extensions** (this runs the extension's `installed()` hook,
-  which applies its migrations). There is **no** `app:extension:enable` command; the CLI only
+- Enable/disable: **Admin → Extensions**. Core only calls the `enabled()`/`disabled()` hooks
+  there — *not* `installed()`, so vendored core alone would enable an extension without ever
+  applying its migrations. AdminOps closes that gap by calling `installed()` when an extension
+  turns on (`keepExtensionMigrationsApplied()`); the migrator skips what has already run.
+  Disable stays non-destructive: `uninstalled()` rolls migrations back and only runs from the
+  explicit **Uninstall** action. There is **no** `app:extension:enable` command; the CLI only
   has `app:extension:install {type} {name}` (e.g. `gateway CoinPayments`), `app:extension:disable`,
   `app:extension:create`, `app:extension:upgrade`.
 - Routes: `php artisan route:list | grep extensions`.

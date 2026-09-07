@@ -81,6 +81,59 @@ class AdminOps extends Extension
         $this->retireRawProductList();
         $this->retireCoreCurrencyScreens();
         $this->retireCoreRoleScreens();
+        $this->keepExtensionMigrationsApplied();
+    }
+
+    /**
+     * Enabling an extension from the admin area applies its migrations (Leandro,
+     * 2026-09-07: "find the solution to fix - install / uninstall extensions").
+     *
+     * Core's enable path — `EditExtension::handleRecordUpdate`, and our own
+     * {@see Admin\Pages\ExtensionsList} which mirrors it — calls only the `enabled()`
+     * hook. Every one of this deployment's seventeen extensions puts its setup in
+     * `installed()` instead, which is the hook the CLI installer calls; exactly one
+     * extension in the tree implements `enabled()`, and it is vendored Stripe. So
+     * enabling an extension whose migrations had never run turned it on with its tables
+     * missing, and the first page that touched one 500'd. That is the install half of his
+     * report, and `docs/CORE-TOUCHPOINTS.md` had it recorded the other way round.
+     *
+     * `installed()` runs `ExtensionHelper::runMigrations`, which is Laravel's migrator: it
+     * skips what the `migrations` table already records, so calling it on every enable is
+     * a no-op for an extension that is already set up.
+     *
+     * **Disable stays non-destructive on purpose.** `uninstalled()` rolls the migrations
+     * *back* — it drops the extension's tables and everything in them — so it must stay
+     * where core put it, on the explicit Uninstall action whose own dialog warns that it
+     * removes all data. Turning an extension off for an afternoon must not cost its data.
+     */
+    private function keepExtensionMigrationsApplied(): void
+    {
+        $apply = function (\App\Models\Extension $extension): void {
+            try {
+                ExtensionHelper::call($extension, 'installed', mayFail: true);
+            } catch (\Throwable $exception) {
+                // A failed migration must not also break the save that triggered it: the
+                // admin has just turned something on and needs to be told, not 500'd.
+                \Illuminate\Support\Facades\Log::error('AdminOps: could not apply extension migrations', [
+                    'extension' => $extension->extension,
+                    'exception' => $exception->getMessage(),
+                ]);
+            }
+        };
+
+        \App\Models\Extension::created(function (\App\Models\Extension $extension) use ($apply): void {
+            if ($extension->enabled) {
+                $apply($extension);
+            }
+        });
+
+        \App\Models\Extension::updated(function (\App\Models\Extension $extension) use ($apply): void {
+            // Only the moment it turns on — not every settings save on an extension that
+            // was already enabled.
+            if ($extension->enabled && $extension->wasChanged('enabled')) {
+                $apply($extension);
+            }
+        });
     }
 
     /**
