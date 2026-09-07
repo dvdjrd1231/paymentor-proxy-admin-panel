@@ -29,6 +29,18 @@
                     <span><input id="ao-oc-desc" type="text" wire:model="description"></span>
                 </div>
 
+                @unless ($client)
+                    {{-- The reference shows this row on the create form too, so the pair
+                         is accounted for before it exists rather than appearing from
+                         nowhere on save. --}}
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">Client API Credentials</span>
+                        <span class="ao-oc-pending">
+                            &#9888; Client API Credentials will be generated upon first save.
+                        </span>
+                    </div>
+                @endunless
+
                 @if ($client)
                     <div class="ao-of-row ao-of-row-single">
                         <span class="ao-of-label">Client API Credentials</span>
@@ -75,19 +87,19 @@
                             <span class="ao-oc-uri" wire:key="uri-{{ $index }}">
                                 <input type="text" wire:model="redirects.{{ $index }}"
                                     placeholder="http://www.example.com/oauth2callback">
-                                <button type="button" class="ao-eo-delete" wire:click="removeRedirect({{ $index }})">&times; Remove</button>
+                                <button type="button" class="ao-oc-remove" wire:click="removeRedirect({{ $index }})">&times; Remove</button>
                             </span>
                         @endforeach
-                        <span>
-                            <button type="button" class="ao-pg-btn" wire:click="addRedirect">&#10010; Add Another</button>
-                        </span>
+                        <span><button type="button" class="ao-oc-add" wire:click="addRedirect">&#10010; Add Another</button></span>
                     </span>
                 </div>
             </div>
 
-            <div class="ao-et-actions">
-                <button type="submit" class="ao-find-go">Save Changes</button>
-                <a class="ao-of-go"
+            {{-- One centred pair, as the reference has it, and its wording: a form that
+                 has not saved yet says Generate Credentials, not Save Changes. --}}
+            <div class="ao-oc-actions">
+                <button type="submit" class="ao-find-go">{{ $client ? 'Save Changes' : 'Generate Credentials' }}</button>
+                <a class="ao-oc-cancel"
                     href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\OauthClients::getUrl() }}">Cancel Changes</a>
                 @if ($client)
                     <button type="button" class="ao-eo-delete" wire:click="$set('confirmingDelete', true)">Delete Credential Set</button>
