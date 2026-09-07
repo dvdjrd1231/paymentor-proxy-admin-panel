@@ -138,7 +138,8 @@
         <table class="ao-mu-grid">
             <thead>
                 <tr>
-                    <th class="ao-mu-check"><input type="checkbox" data-ao-check-all></th>
+                    <th class="ao-mu-check"><input type="checkbox" wire:click="toggleAll($event.target.checked)"
+                        aria-label="Select all invoices"></th>
                     <th>Invoice # &#9662;</th>
                     <th>Client Name</th>
                     <th>Invoice Date</th>
@@ -163,7 +164,13 @@
                         $lastTry = $invoice->transactions->sortByDesc('created_at')->first();
                     @endphp
                     <tr>
-                        <td class="ao-mu-check"><input type="checkbox" data-ao-check wire:model="selected" value="{{ $invoice->id }}"></td>
+                        {{-- Keyed binding, not wire:model="selected" with a value: the array form never
+                             reached the server when a bulk button fired, so With Selected did
+                             nothing at all (Leandro, 2026-09-07). This is the shape Support
+                             Tickets already uses and which works. --}}
+                        <td class="ao-mu-check"><input type="checkbox"
+                            wire:model.live="selected.{{ $invoice->id }}"
+                            aria-label="Select invoice {{ $invoice->id }}"></td>
                         {{-- Issue #12: the reference numbers its invoices by date —
                              "2026 08 29 4212". Same derivation, from the real created
                              date and id; the stored number still drives lookups. --}}
@@ -246,19 +253,4 @@
         @endif
     </div>
 
-    <script>
-        (() => {
-            const root = document.currentScript.closest('.fi-page') ?? document;
-            root.addEventListener('change', (event) => {
-                if (!event.target.matches('[data-ao-check-all]')) return;
-                for (const box of root.querySelectorAll('[data-ao-check]')) {
-                    if (box.checked !== event.target.checked) {
-                        box.checked = event.target.checked;
-                        // Livewire binds checkboxes on change, not input.
-                        box.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                }
-            });
-        })();
-    </script>
 </x-filament-panels::page>

@@ -183,6 +183,18 @@ class ClientSummary extends Page
         return array_map('intval', array_keys(array_filter($this->picked)));
     }
 
+    /**
+     * The Summary table's "+": open that service in the Products/Services tab without a
+     * page load, which is this screen's equivalent of the catalogue page expanding a row
+     * in place.
+     */
+    public function openService(int $id): void
+    {
+        $this->service = $id;
+        $this->tab = 'services';
+        $this->loadSvc();
+    }
+
     /** The header tick: all of this client's services, or none. */
     public function toggleAll(bool $on): void
     {

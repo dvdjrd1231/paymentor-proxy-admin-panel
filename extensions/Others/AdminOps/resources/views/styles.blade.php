@@ -3109,6 +3109,29 @@
         box-sizing: border-box;
     }
 
+    /* Leandro, 2026-09-07: "the button should be aligned at the middle of height. I think
+       it is better to remove border in edit button in this page." The icon links in an
+       actions cell are icons, not buttons — the box around them was chrome borrowed from
+       the wire-action buttons that share this cell elsewhere. Icon-only links lose it and
+       centre on the row. */
+    td.ao-mu-actions > a:has(svg) {
+        padding: 0 0.25rem;
+        border: 0;
+        background: none;
+    }
+
+    td.ao-mu-actions > a:has(svg):hover {
+        background: none;
+        color: var(--wa-link-hover, #23527c);
+    }
+
+    /* The cell itself centres its contents on the row rather than sitting them on the
+       text baseline, which is what made icon and button look a few pixels apart. */
+    td.ao-mu-actions {
+        vertical-align: middle;
+        line-height: 1;
+    }
+
     .ao-mu-actions a,
     /* Wire-action buttons in the same cell read as the same small button (issue #45's
        Enable/Disable beside Edit) — and the same class works standalone wherever a

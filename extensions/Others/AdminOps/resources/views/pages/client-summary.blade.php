@@ -334,7 +334,16 @@
                                     <td>{{ $service->created_at?->format('m/d/Y') }}</td>
                                     <td>{{ $service->expires_at?->format('m/d/Y') ?? '-' }}</td>
                                     <td><span class="ao-mu-status ao-mu-st-{{ $service->status }}">{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel($service->status) }}</span></td>
-                                    <td class="ao-mu-actions"><a href="{{ $urls['service']($service->id) }}" title="Open">+</a></td>
+                                    {{-- The same button the Products/Services page uses, and the
+                                         same kind of action: it opens the service here rather
+                                         than loading another screen (Leandro, 2026-09-07 — "+
+                                         button should ... work as same as the Products/Services
+                                         page"). --}}
+                                    <td class="ao-mu-actions">
+                                        <button type="button" class="ao-ps-plus"
+                                            title="Open this service"
+                                            wire:click="openService({{ $service->id }})">+</button>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr><td colspan="9" class="ao-mu-none">No records found</td></tr>

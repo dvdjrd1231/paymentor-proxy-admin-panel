@@ -114,7 +114,7 @@ class ManageInvoices extends Page
     /** The row awaiting the "Are you sure?" before deletion. */
     public ?int $confirmingDelete = null;
 
-    /** @var array<int, string> The ticked rows, for the reference's With Selected bar. */
+    /** @var array<int|string, bool> The ticked rows, for the reference's With Selected bar. */
     public array $selected = [];
 
     /**
@@ -126,9 +126,18 @@ class ManageInvoices extends Page
      */
     private function picked(): array
     {
+        // Keys, not values: the checkboxes bind as selected.<id> => bool.
         return Invoice::with(['items', 'transactions', 'user'])
-            ->whereIn('id', array_map('intval', array_filter($this->selected)))
+            ->whereIn('id', array_map('intval', array_keys(array_filter($this->selected))))
             ->get()->all();
+    }
+
+    /** The header tick: every invoice currently listed, or none. */
+    public function toggleAll(bool $on): void
+    {
+        $this->selected = $on
+            ? collect($this->paginated()->items())->mapWithKeys(fn ($invoice) => [$invoice->id => true])->all()
+            : [];
     }
 
     public function markSelected(string $status): void
