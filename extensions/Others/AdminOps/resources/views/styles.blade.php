@@ -5452,6 +5452,10 @@
 
     .ao-et-title { font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 
+    /* Wide enough for the longest status ("Customer-Reply") — it was clipping
+       "Answered" to "Answere" (Leandro's circle, 2026-09-06). */
+    .ao-et-status { min-width: 11rem; }
+
     .ao-et-status, .ao-et-setrow select, .ao-et-canned {
         padding: 0.3rem 0.5rem;
         border: 1px solid var(--wa-panel-border, #ccc);

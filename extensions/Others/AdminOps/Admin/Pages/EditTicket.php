@@ -99,6 +99,9 @@ class EditTicket extends Page
     /** Options: the reference's Status, CC Recipients, Prevent Client Closure, Merge. */
     public string $optStatus = 'open';
 
+    /** The reference's Client Name picker — the ticket's owner, reassignable. */
+    public string $clientId = '';
+
     public string $ccRecipients = '';
 
     public bool $preventClosure = false;
@@ -132,6 +135,7 @@ class EditTicket extends Page
         $this->priority = (string) ($this->ticket->priority ?: 'medium');
         $this->assignedTo = (string) ($this->ticket->assigned_to ?? '');
         $this->optStatus = $this->displayStatus();
+        $this->clientId = (string) ($this->ticket->user_id ?? '');
 
         if (Schema::hasTable('ext_ticket_meta')) {
             $meta = DB::table('ext_ticket_meta')->where('ticket_id', $this->ticket->id)->first();
@@ -307,7 +311,8 @@ class EditTicket extends Page
             'priority' => 'in:low,medium,high',
             'optStatus' => 'in:' . implode(',', array_keys(self::STATUSES)),
             'mergeId' => 'nullable|integer',
-        ], attributes: ['optStatus' => 'status', 'mergeId' => 'merge ticket']);
+            'clientId' => 'required|exists:users,id',
+        ], attributes: ['optStatus' => 'status', 'mergeId' => 'merge ticket', 'clientId' => 'client name']);
 
         // CC addresses validated the same way Open New Ticket validates its own.
         foreach (array_filter(array_map('trim', explode(',', $this->ccRecipients))) as $address) {
@@ -348,6 +353,7 @@ class EditTicket extends Page
             'priority' => $this->priority,
             'assigned_to' => $this->assignedTo !== '' ? (int) $this->assignedTo : null,
             'status' => $this->storableStatus($this->optStatus) ?? $this->ticket->status,
+            'user_id' => (int) $this->clientId,
         ]);
 
         if (Schema::hasTable('ext_ticket_meta')) {
@@ -424,7 +430,26 @@ class EditTicket extends Page
         return [
             'messages' => $this->ticket->messages()->with(['user', 'attachments'])->latest()->get(),
             'departments' => (array) config('settings.ticket_departments'),
-            'admins' => User::whereNotNull('role_id')->orderBy('first_name')->get(),
+            // Two staff accounts really can share a display name (this install has two
+            // "Admin You"), which made the Assigned To list read as a duplicate. The
+            // email disambiguates — but only for the names that actually collide, so
+            // the normal case stays clean (Leandro's circle, 2026-09-06).
+            'admins' => (function (): \Illuminate\Support\Collection {
+                $staff = User::whereNotNull('role_id')->orderBy('first_name')->orderBy('last_name')->get();
+                $names = $staff->countBy(fn ($u) => trim($u->first_name . ' ' . $u->last_name));
+
+                return $staff->map(function ($u) use ($names): array {
+                    $name = trim($u->first_name . ' ' . $u->last_name);
+
+                    return [
+                        'id' => $u->id,
+                        'label' => ($name ?: $u->email) . (($names[$name] ?? 0) > 1 ? ' (' . $u->email . ')' : ''),
+                    ];
+                });
+            })(),
+            // The reference's Client Name is a picker, not a label — the ticket's owner
+            // can be corrected from here.
+            'clients' => User::whereNull('role_id')->orderBy('first_name')->orderBy('last_name')->limit(200)->get(),
             'canned' => Schema::hasTable('canned_responses')
                 ? \Paymenter\Extensions\Others\TicketTools\Models\CannedResponse::where('active', true)->orderBy('title')->get()
                 : collect(),

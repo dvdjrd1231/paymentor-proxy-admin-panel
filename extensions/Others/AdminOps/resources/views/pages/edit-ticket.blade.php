@@ -76,7 +76,7 @@
                     <select wire:model="assignedTo" title="Set Assignment">
                         <option value="">- Set Assignment -</option>
                         @foreach ($admins as $admin)
-                            <option value="{{ $admin->id }}">{{ trim($admin->first_name . ' ' . $admin->last_name) ?: $admin->email }}</option>
+                            <option value="{{ $admin['id'] }}">{{ $admin['label'] }}</option>
                         @endforeach
                     </select>
                     <select wire:model="priority" title="Set Priority">
@@ -154,7 +154,7 @@
                         <select wire:model="assignedTo" title="Set Assignment">
                             <option value="">- Set Assignment -</option>
                             @foreach ($admins as $admin)
-                                <option value="{{ $admin->id }}">{{ trim($admin->first_name . ' ' . $admin->last_name) ?: $admin->email }}</option>
+                                <option value="{{ $admin['id'] }}">{{ $admin['label'] }}</option>
                             @endforeach
                         </select>
                         <select wire:model="priority" title="Set Priority">
@@ -253,12 +253,16 @@
                                 <option value="{{ $dept }}">{{ $dept }}</option>
                             @endforeach
                         </select></span>
-                        <span class="ao-of-label">Client Name</span>
-                        <span class="ao-eo-fact">
-                            <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $ticket->user_id]) }}">
-                                {{ trim(($ticket->user->first_name ?? '') . ' ' . ($ticket->user->last_name ?? '')) ?: ($ticket->user->email ?? '—') }}
-                            </a>
-                        </span>
+                        {{-- The reference's Client Name is a picker (its own is a
+                             type-to-search box) — the ticket's owner, correctable. --}}
+                        <label class="ao-of-label" for="ao-et-client">Client Name</label>
+                        <span><select id="ao-et-client" class="ao-of-md" wire:model="clientId">
+                            @foreach ($clients as $client)
+                                <option value="{{ $client->id }}">
+                                    {{ trim($client->first_name . ' ' . $client->last_name) ?: $client->email }} - #{{ $client->id }}
+                                </option>
+                            @endforeach
+                        </select></span>
                     </div>
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-et-subj">Subject</label>
@@ -267,7 +271,7 @@
                         <span><select id="ao-et-assign" class="ao-of-md" wire:model="assignedTo">
                             <option value="">None</option>
                             @foreach ($admins as $admin)
-                                <option value="{{ $admin->id }}">{{ trim($admin->first_name . ' ' . $admin->last_name) ?: $admin->email }}</option>
+                                <option value="{{ $admin['id'] }}">{{ $admin['label'] }}</option>
                             @endforeach
                         </select></span>
                     </div>
