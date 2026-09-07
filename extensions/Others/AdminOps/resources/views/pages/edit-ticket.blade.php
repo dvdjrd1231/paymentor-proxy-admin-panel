@@ -8,9 +8,13 @@
         <div class="ao-et-head">
             <h3 class="ao-et-title">
                 #{{ $ticket->id }} - {{ $ticket->subject }}
+                {{-- The reference's six statuses, with its own colouring on the
+                     attention-seeking two. Customer-Reply is derived (an open ticket
+                     whose last word was the customer's) — see displayStatus(). --}}
                 <select class="ao-et-status" wire:change="setStatus($event.target.value)">
-                    @foreach (['open' => 'Open', 'replied' => 'Answered', 'closed' => 'Closed'] as $value => $label)
-                        <option value="{{ $value }}" @selected($ticket->status === $value)>{{ $label }}</option>
+                    @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditTicket::STATUSES as $value => $label)
+                        <option value="{{ $value }}" @selected($this->displayStatus() === $value)
+                            @class(['ao-et-opt-orange' => $value === 'customer_reply', 'ao-et-opt-red' => $value === 'in_progress'])>{{ $label }}</option>
                     @endforeach
                 </select>
             </h3>
@@ -54,6 +58,8 @@
                     @else
                         <textarea class="ao-et-editor" rows="10" wire:model="reply" data-ao-message
                             placeholder="Write the reply — markdown works here"></textarea>
+                        {{-- The reference's editor footer: a live lines/words count. --}}
+                        <div class="ao-et-count" data-ao-count>lines: 0&nbsp;&nbsp;words: 0</div>
                     @endif
                 </div>
 
@@ -79,9 +85,9 @@
                         <option value="high">High</option>
                     </select>
                     <select wire:model="replyStatus" title="Status after this reply sends">
-                        <option value="replied">Answered</option>
-                        <option value="open">Open</option>
-                        <option value="closed">Closed</option>
+                        @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditTicket::STATUSES as $value => $label)
+                            <option value="{{ $value }}">{{ $label }}</option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -119,13 +125,65 @@
                 @endif
             </form>
         @elseif ($tab === 'note')
+            {{-- The reference's Add Note is the same editor and band as Add Reply, its
+                 fourth select reading "- Set Status -" and the button "Add Note". --}}
             <form wire:submit.prevent="addNote">
-                <textarea class="ao-et-editor" rows="6" wire:model="note"
-                    placeholder="Staff-only — the client never sees notes"></textarea>
-                <div class="ao-et-actionrow">
-                    <span></span>
-                    <button type="submit" class="ao-find-go">Add Note</button>
+                <div class="ao-ont-editor">
+                    <div class="ao-ont-toolbar">
+                        <button type="button" data-md="**" title="Bold"><b>B</b></button>
+                        <button type="button" data-md="*" title="Italic"><i>I</i></button>
+                        <button type="button" data-md-line="# " title="Heading"><b>H</b></button>
+                        <button type="button" data-md-line="[Link](https://)" title="Link">&#128279;</button>
+                        <button type="button" data-md-line="- " title="Bullet list">&#8226;&#8226;</button>
+                        <button type="button" data-md-line="1. " title="Numbered list">1.</button>
+                        <button type="button" data-md-line="> " title="Quote">&#10078;</button>
+                    </div>
+                    <textarea class="ao-et-editor" rows="10" wire:model="note" data-ao-message
+                        placeholder="Staff-only — the client never sees notes"></textarea>
+                    <div class="ao-et-count" data-ao-count>lines: 0&nbsp;&nbsp;words: 0</div>
                 </div>
+
+                <div class="ao-et-band">
+                    <div class="ao-et-setrow">
+                        <select wire:model="department" title="Set Department">
+                            <option value="">- Set Department -</option>
+                            @foreach ($departments as $dept)
+                                <option value="{{ $dept }}">{{ $dept }}</option>
+                            @endforeach
+                        </select>
+                        <select wire:model="assignedTo" title="Set Assignment">
+                            <option value="">- Set Assignment -</option>
+                            @foreach ($admins as $admin)
+                                <option value="{{ $admin->id }}">{{ trim($admin->first_name . ' ' . $admin->last_name) ?: $admin->email }}</option>
+                            @endforeach
+                        </select>
+                        <select wire:model="priority" title="Set Priority">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                        <select wire:model="noteStatus" title="Set Status — empty leaves it unchanged">
+                            <option value="">- Set Status -</option>
+                            @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditTicket::STATUSES as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="ao-et-actionrow">
+                        <span></span>
+                        <span class="ao-et-actions-right">
+                            <label class="ao-of-check">
+                                <input type="checkbox" wire:model="returnToList"> Return to Ticket List
+                            </label>
+                            <button type="submit" class="ao-find-go">&#8617; Add Note</button>
+                        </span>
+                    </div>
+                </div>
+                @if ($errors->any())
+                    <ul class="ao-anc-errors">
+                        @foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach
+                    </ul>
+                @endif
             </form>
             @foreach ($notes as $row)
                 <div class="ao-et-note">
@@ -139,8 +197,9 @@
         @elseif ($tab === 'custom')
             {{-- The reference's tab, honestly empty: Paymenter tickets carry no custom
                  field definitions, so there is nothing to fill in. --}}
+            {{-- The reference's own empty-state sentence, verbatim. --}}
             <p class="ao-gs-empty" title="Paymenter tickets have no custom-field system — the reference shows this same empty state on an install with none configured">
-                No Custom Fields Found
+                No Custom Fields Setup for this Department
             </p>
         @elseif ($tab === 'clientlog')
             {{-- The reference's Client Log: what this ticket's client has been doing,
@@ -181,18 +240,42 @@
                 </tbody>
             </table>
         @elseif ($tab === 'options')
+            {{-- The reference's two columns: Department / Subject / Status /
+                 CC Recipients / Prevent Client Closure on the left, Client Name /
+                 Assigned To / Priority / Merge Ticket on the right. --}}
             <form class="ao-find ao-of" wire:submit.prevent="saveOptions">
                 <div class="ao-of-rows">
-                    <div class="ao-of-row ao-of-row-single">
-                        <label class="ao-of-label" for="ao-et-subj">Subject</label>
-                        <span><input id="ao-et-subj" class="ao-of-xl" type="text" wire:model="subject"></span>
-                    </div>
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-et-dept">Department</label>
                         <span><select id="ao-et-dept" class="ao-of-md" wire:model="department">
                             <option value="">—</option>
                             @foreach ($departments as $dept)
                                 <option value="{{ $dept }}">{{ $dept }}</option>
+                            @endforeach
+                        </select></span>
+                        <span class="ao-of-label">Client Name</span>
+                        <span class="ao-eo-fact">
+                            <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $ticket->user_id]) }}">
+                                {{ trim(($ticket->user->first_name ?? '') . ' ' . ($ticket->user->last_name ?? '')) ?: ($ticket->user->email ?? '—') }}
+                            </a>
+                        </span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-et-subj">Subject</label>
+                        <span><input id="ao-et-subj" class="ao-of-xl" type="text" wire:model="subject"></span>
+                        <label class="ao-of-label" for="ao-et-assign">Assigned To</label>
+                        <span><select id="ao-et-assign" class="ao-of-md" wire:model="assignedTo">
+                            <option value="">None</option>
+                            @foreach ($admins as $admin)
+                                <option value="{{ $admin->id }}">{{ trim($admin->first_name . ' ' . $admin->last_name) ?: $admin->email }}</option>
+                            @endforeach
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row">
+                        <label class="ao-of-label" for="ao-et-optst">Status</label>
+                        <span><select id="ao-et-optst" class="ao-of-md" wire:model="optStatus">
+                            @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditTicket::STATUSES as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
                             @endforeach
                         </select></span>
                         <label class="ao-of-label" for="ao-et-prio">Priority</label>
@@ -203,13 +286,21 @@
                         </select></span>
                     </div>
                     <div class="ao-of-row">
-                        <label class="ao-of-label" for="ao-et-assign">Assigned To</label>
-                        <span><select id="ao-et-assign" class="ao-of-md" wire:model="assignedTo">
-                            <option value="">None</option>
-                            @foreach ($admins as $admin)
-                                <option value="{{ $admin->id }}">{{ trim($admin->first_name . ' ' . $admin->last_name) ?: $admin->email }}</option>
-                            @endforeach
-                        </select></span>
+                        <label class="ao-of-label" for="ao-et-cc">CC Recipients</label>
+                        <span><input id="ao-et-cc" class="ao-of-xl" type="text" wire:model="ccRecipients"
+                            placeholder="None" title="Comma-separated — each address gets a copy of every staff reply"></span>
+                        <label class="ao-of-label" for="ao-et-merge">Merge Ticket</label>
+                        <span class="ao-of-inline">
+                            <input id="ao-et-merge" class="ao-of-sm" type="text" inputmode="numeric" wire:model="mergeId">
+                            <i>(# to combine)</i>
+                        </span>
+                    </div>
+                    <div class="ao-of-row">
+                        <span class="ao-of-label">Prevent Client Closure</span>
+                        <label class="ao-of-check">
+                            <input type="checkbox" wire:model="preventClosure">
+                            Check to stop the client from closing this support ticket.
+                        </label>
                         <span class="ao-of-label">Related Service</span>
                         <span class="ao-eo-fact">
                             @if ($ticket->service)
@@ -221,39 +312,41 @@
                             @endif
                         </span>
                     </div>
-                    <div class="ao-of-row">
-                        <span class="ao-of-label">Requestor</span>
-                        <span class="ao-eo-fact">
-                            <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $ticket->user_id]) }}">
-                                {{ trim(($ticket->user->first_name ?? '') . ' ' . ($ticket->user->last_name ?? '')) ?: ($ticket->user->email ?? '—') }}
-                            </a>
-                        </span>
-                        <span class="ao-of-label"></span>
-                        <span></span>
-                    </div>
                 </div>
+                @if ($errors->any())
+                    <ul class="ao-anc-errors">
+                        @foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach
+                    </ul>
+                @endif
                 <div class="ao-of-buttons">
-                    <button type="submit" class="ao-find-go">Save Changes</button>
+                    <button type="submit" class="ao-find-go">&#128190; Save Changes</button>
+                    <button type="button" class="ao-of-go" wire:click="$set('tab', 'reply')">Cancel Changes</button>
                     <button type="button" class="ao-eo-delete" wire:click="$set('confirmingDelete', 'yes')">Delete Ticket</button>
                 </div>
             </form>
         @else
+            {{-- The reference's Log: a records strip, Date | Requested Action in plain
+                 sentences, and the pager. --}}
+            <p class="ao-et-showing">Showing 1 to {{ $logRows->count() }} of {{ $logRows->count() }} total</p>
             <table class="ao-mu-grid">
                 <thead>
-                    <tr><th>Date</th><th>Event</th><th>Changes</th></tr>
+                    <tr><th>Date</th><th>Requested Action</th></tr>
                 </thead>
                 <tbody>
                     @forelse ($logRows as $row)
                         <tr>
-                            <td>{{ \Carbon\Carbon::parse($row->created_at)->format('m/d/Y H:i') }}</td>
-                            <td>{{ ucfirst($row->event) }}</td>
-                            <td class="ao-mu-left"><code>{{ str($row->new_values)->limit(120) }}</code></td>
+                            <td>{{ \Carbon\Carbon::parse($row['at'])->format('m/d/Y H:i') }}</td>
+                            <td class="ao-mu-left">{{ $row['action'] }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="3" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
+                        <tr><td colspan="2" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
                     @endforelse
                 </tbody>
             </table>
+            <div class="ao-mu-pager">
+                <button type="button" disabled>&laquo; Previous</button>
+                <button type="button" disabled>Next &raquo;</button>
+            </div>
         @endif
 
         {{-- The thread, newest first, as the reference stacks it under the editor. --}}
@@ -335,6 +428,20 @@
                 box.value = text;
                 box.dispatchEvent(new Event('input', { bubbles: true }));
                 box.focus();
+            });
+
+            {{-- The reference's editor footer counter, kept live as the text changes. --}}
+            const recount = () => {
+                const box = root.querySelector('[data-ao-message]');
+                const out = root.querySelector('[data-ao-count]');
+                if (!box || !out) return;
+                const text = box.value;
+                const lines = text === '' ? 0 : text.split('\n').length;
+                const words = (text.match(/\S+/g) || []).length;
+                out.textContent = 'lines: ' + lines + '  words: ' + words;
+            };
+            root.addEventListener('input', (event) => {
+                if (event.target.matches('[data-ao-message]')) recount();
             });
         })();
     </script>

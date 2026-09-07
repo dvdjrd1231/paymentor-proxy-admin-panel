@@ -166,8 +166,8 @@
                         // The WHMCS-shaped ticket screen (user request, 2026-09-04).
                         $open = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditTicket::getUrl(['record' => $ticket->id]);
                         $last = $ticket->messages->first()?->created_at ?? $ticket->updated_at;
-                        $statusWord = ['open' => 'Open', 'replied' => 'Answered', 'closed' => 'Closed'][$ticket->status] ?? ucfirst($ticket->status);
-                        $statusClass = ['open' => 'ao-st-open', 'replied' => 'ao-st-answered', 'closed' => 'ao-st-closed'][$ticket->status] ?? '';
+                        $statusWord = ['open' => 'Open', 'replied' => 'Answered', 'closed' => 'Closed', 'on_hold' => 'On Hold', 'in_progress' => 'In Progress'][$ticket->status] ?? ucfirst($ticket->status);
+                        $statusClass = ['open' => 'ao-st-open', 'replied' => 'ao-st-answered', 'closed' => 'ao-st-closed', 'on_hold' => 'ao-st-hold', 'in_progress' => 'ao-st-progress'][$ticket->status] ?? '';
                     @endphp
                     <tr>
                         <td class="ao-mu-check"><input type="checkbox" wire:model="selected.{{ $ticket->id }}"></td>

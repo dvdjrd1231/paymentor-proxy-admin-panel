@@ -3844,6 +3844,8 @@
 
     .ao-st-open { color: #3c763d; }
     .ao-st-answered { color: #8a6d3b; }
+    .ao-st-hold { color: #6d7681; }
+    .ao-st-progress { color: #c0392b; }
     .ao-st-closed { color: #6b6b6b; }
 
     .ao-st-operator {
@@ -5540,6 +5542,20 @@
     .ao-et-msg-edit, .ao-et-msg-delete { padding: 0.2rem 0.6rem; font-size: 0.8rem; }
 
     .ao-et-msg-editrow { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+
+    /* The reference colours the attention statuses inside the select's own list. */
+    .ao-et-opt-orange { color: #f89406; }
+    .ao-et-opt-red { color: #c0392b; }
+
+    /* The reference's editor footer: the live lines/words count, bottom right. */
+    .ao-et-count {
+        text-align: right;
+        font-size: 0.78rem;
+        color: var(--wa-muted, #999);
+        padding: 0.15rem 0.35rem;
+    }
+
+    .ao-et-showing { margin: 0.4rem 0 0.5rem; color: var(--wa-muted, #6b6b6b); font-size: 0.9rem; }
 
     .ao-et-msg-body { padding: 0.9rem 1rem; border-left: 1px solid var(--wa-panel-border, #eee); }
 
