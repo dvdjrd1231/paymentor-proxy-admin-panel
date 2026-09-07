@@ -6400,6 +6400,11 @@
        they ended up different heights in the first place. */
     .ao-et-msg-btns .ao-et-msg-edit,
     .ao-et-msg-btns .ao-et-msg-delete {
+        /* Measured on the live page: Edit carried margin-top: 13.6px from .ao-of-go, the
+           form-button class it borrows, and Delete carried none — so the two sat 7px
+           apart no matter how the row was aligned. Zeroing the margin is the actual fix;
+           centring the row was not. */
+        margin: 0;
         display: inline-flex;
         align-items: center;
         justify-content: center;
