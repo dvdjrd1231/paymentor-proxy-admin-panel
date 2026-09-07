@@ -16,15 +16,28 @@
         @if ($this->tab === 'marketplace')
             @php $items = $this->marketplace(); @endphp
 
+            {{-- The band's structure is not decorative: .ao-find hides any direct child
+                 that is not one of its own four classes, which is how injected browser and
+                 password-manager furniture is kept out of the layout. A bare input here
+                 was hidden by that rule and the band rendered as a lone icon. --}}
             <form class="ao-find" autocomplete="off" wire:submit.prevent="$refresh">
                 <span class="ao-find-glass"><x-filament::icon icon="ri-search-line" /></span>
-                <input @nofill type="text" wire:model.live.debounce.400ms="q" placeholder="Search extensions">
-                <select wire:model.live="type" aria-label="Extension type">
-                    <option value="all">All types</option>
-                    <option value="gateway">Gateways</option>
-                    <option value="server">Servers</option>
-                    <option value="other">Other</option>
-                </select>
+                <span class="ao-find-fields">
+                    <label class="ao-find-field ao-find-wide">
+                        <span class="ao-find-label">Search</span>
+                        <input @nofill type="text" wire:model.live.debounce.400ms="q"
+                            placeholder="Extension name">
+                    </label>
+                    <label class="ao-find-field">
+                        <span class="ao-find-label">Type</span>
+                        <select wire:model.live="type">
+                            <option value="all">All types</option>
+                            <option value="gateway">Gateways</option>
+                            <option value="server">Servers</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </label>
+                </span>
             </form>
 
             @if ($error)
