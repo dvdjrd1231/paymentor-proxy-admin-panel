@@ -131,6 +131,42 @@ class ReleasePlan
     }
 
     /**
+     * A directory this process can actually write to.
+     *
+     * `storage/app` looks like the obvious home and usually is, but the same code runs
+     * from the web (as the FPM user) and from the CLI (often as root), and whichever goes
+     * first owns the parent directory. A root-owned `adminops-release/` is exactly what
+     * made Update Now answer "mkdir(): Permission denied" for Leandro on 2026-09-07 —
+     * my own earlier CLI run had created it.
+     *
+     * So: try storage, verify by actually writing, and fall back to the system temp
+     * directory, which every process can use. The contents are a throwaway copy of a
+     * public release, so temp is a perfectly good home for them.
+     */
+    private function workspace(): string
+    {
+        $unique = $this->version . '-' . bin2hex(random_bytes(4));
+
+        foreach ([storage_path('app/adminops-release'), sys_get_temp_dir() . '/adminops-release'] as $base) {
+            $path = $base . '/' . $unique;
+
+            try {
+                File::ensureDirectoryExists($path, 0777);
+
+                // ensureDirectoryExists succeeds when the directory already exists, even
+                // if it belongs to someone else, so writing is the only real test.
+                if (is_writable($path)) {
+                    return $path;
+                }
+            } catch (\Throwable $exception) {
+                // Try the next candidate.
+            }
+        }
+
+        throw new \RuntimeException('No writable directory available to unpack the release into.');
+    }
+
+    /**
      * Download and unpack the tagged release, returning the path its files sit under.
      *
      * @throws \RuntimeException
@@ -138,9 +174,7 @@ class ReleasePlan
     private function fetchRelease(): string
     {
         $url = 'https://github.com/Paymenter/Paymenter/archive/refs/tags/v' . $this->version . '.tar.gz';
-        $work = storage_path('app/adminops-release/' . $this->version . '-' . bin2hex(random_bytes(4)));
-
-        File::ensureDirectoryExists($work);
+        $work = $this->workspace();
         $archive = $work . '/release.tar.gz';
 
         $response = Http::timeout(120)->withOptions(['sink' => $archive])->get($url);
