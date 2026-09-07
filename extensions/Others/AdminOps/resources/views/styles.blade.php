@@ -3115,6 +3115,14 @@
        the wire-action buttons that share this cell elsewhere. Icon-only links lose it and
        centre on the row. */
     td.ao-mu-actions > a:has(svg) {
+        /* display must be forced: `.ao-mu-actions a` further down this file sets
+           inline-block at equal specificity and wins on source order, which left the
+           edit glyph sitting on the line box (measured 283 in a 280..309 cell) while
+           the delete button's flex centring put its glyph at 285. Neither was centred;
+           both are now. */
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
         padding: 0 0.25rem;
         border: 0;
         background: none;
