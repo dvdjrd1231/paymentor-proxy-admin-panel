@@ -119,17 +119,36 @@
 
                     $notifications = [];
 
+                    // Each notification carries where it is about (Leandro, 2026-09-07:
+                    // "if it is unpaid invoice notification, the site should be redirect to
+                    // invoices page"). A single overdue invoice goes straight to that
+                    // invoice; several go to the list, because there is no one page for
+                    // "these four".
                     if ($notifUnpaid > 0) {
-                        $notifications[] = ['type' => 'info', 'text' => trans_choice('theme.notif_unpaid', $notifUnpaid, ['count' => $notifUnpaid])];
+                        $notifications[] = [
+                            'type' => 'info',
+                            'text' => trans_choice('theme.notif_unpaid', $notifUnpaid, ['count' => $notifUnpaid]),
+                            'url' => route('invoices'),
+                        ];
                     }
                     if ($notifOverdue->isNotEmpty()) {
-                        $notifications[] = ['type' => 'warning', 'text' => trans_choice('theme.notif_overdue', $notifOverdue->count(), [
-                            'count' => $notifOverdue->count(),
-                            'amount' => $notifOverdue->first()->formattedTotal->format($notifOverdue->sum('remaining')),
-                        ])];
+                        $notifications[] = [
+                            'type' => 'warning',
+                            'text' => trans_choice('theme.notif_overdue', $notifOverdue->count(), [
+                                'count' => $notifOverdue->count(),
+                                'amount' => $notifOverdue->first()->formattedTotal->format($notifOverdue->sum('remaining')),
+                            ]),
+                            'url' => $notifOverdue->count() === 1
+                                ? route('invoices.show', ['invoice' => $notifOverdue->first()])
+                                : route('invoices'),
+                        ];
                     }
                     if ($notifCredit && $notifCredit->amount > 0) {
-                        $notifications[] = ['type' => 'success', 'text' => __('theme.notif_credit', ['amount' => $notifCredit->formatted_amount])];
+                        $notifications[] = [
+                            'type' => 'success',
+                            'text' => __('theme.notif_credit', ['amount' => $notifCredit->formatted_amount]),
+                            'url' => route('account.credits'),
+                        ];
                     }
                 @endphp
 
@@ -144,12 +163,14 @@
 
                     <div class="wf-notif-panel" x-show="open" x-transition x-cloak>
                         @forelse ($notifications as $n)
-                            <div class="wf-notif-row">
+                            {{-- A row is a link now: reading a notification and then having
+                                 to go find the page it is about is the complaint. --}}
+                            <a class="wf-notif-row" href="{{ $n['url'] }}">
                                 <span class="wf-notif-ico wf-notif-ico--{{ $n['type'] }}" aria-hidden="true">
                                     {{ ['info' => 'i', 'warning' => '!', 'success' => '✓'][$n['type']] }}
                                 </span>
                                 <span>{{ $n['text'] }}</span>
-                            </div>
+                            </a>
                         @empty
                             <div class="wf-notif-row"><span>{{ __('theme.notif_none') }}</span></div>
                         @endforelse
