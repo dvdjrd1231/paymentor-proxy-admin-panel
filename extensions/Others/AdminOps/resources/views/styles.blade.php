@@ -1743,6 +1743,31 @@
     .ao-of-md { width: 13rem; }
     .ao-of-lg { width: 100%; max-width: 24rem; }
 
+    /* ── Even field widths ──────────────────────────────────────────────────────
+       Leandro, 2026-09-07: "each elements group should have same width and space",
+       and of the service editor, "Look at the WHMCS window; it is fluid and highly
+       readable."
+
+       The panels he named were built picking a width per field from the three above,
+       so a row could hold a 9rem box beside a 24rem one and no two rows lined up —
+       the ragged edge he has flagged three times. Inside .ao-of-even the grid cell
+       decides instead: every field fills its own cell, so both columns are identical
+       the whole way down and the space between them is the row's own column-gap.
+       The panel is fluid because the cells are `minmax(0, 1fr)` — it uses the width
+       it is given rather than a fixed 24rem.
+
+       Opt-in per panel rather than global: elsewhere a narrow amount or date field
+       beside a wide one is the reference's own layout, not an oversight. */
+    .ao-of-even .ao-of-row > span,
+    .ao-of-even .ao-of-row > .ao-of-date { min-width: 0; }
+
+    .ao-of-even .ao-of-row input:not([type="checkbox"]):not([type="radio"]),
+    .ao-of-even .ao-of-row select,
+    .ao-of-even .ao-of-row .ao-of-date {
+        width: 100%;
+        max-width: none;
+    }
+
     .ao-of-row input:focus,
     .ao-of-row select:focus {
         outline: 2px solid var(--wa-link, #337ab7);
