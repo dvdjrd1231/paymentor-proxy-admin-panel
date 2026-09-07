@@ -68,14 +68,20 @@ class UpdatePaymenter extends Page
     }
 
     /**
-     * The blue Update Now button, real (Leandro, 2026-09-05: "why doesn't it work?").
+     * The blue button, which examines the release rather than applying it.
      *
-     * On this install an update is not a file overwrite — releases are vendored into
-     * the repository, reviewed, and shipped through the pipeline, and a web process
-     * overwriting its own source would bypass exactly that review. What the button CAN
-     * honestly do is start the process: re-check the version and, when one is behind,
-     * put "Update Paymenter to X" on the To-Do List (due today) so the deployment run
-     * is queued and visible — the same list the dashboard surfaces.
+     * On this install applying an update is not a file overwrite, and the reason is
+     * structural rather than a policy I chose: `/opt/paymenter-proxy-admin-panel/app` is
+     * bind-mounted straight into the container as `/app/app`, so a file this page wrote
+     * would land in the server's own git working tree. That tree is what `git pull`
+     * fast-forwards on every deploy, so the next deploy would refuse to run — and the
+     * write would have gone around the review that vendoring a release exists to provide,
+     * silently replacing the nine files `docs/CORE-TOUCHPOINTS.md` records as modified.
+     *
+     * So the button downloads the release and answers the only question it honestly can:
+     * exactly which files differ, and which of them carry our own changes. Applying is a
+     * repository operation — vendor the release, merge those nine by hand, commit, deploy
+     * — and the panel is not the place it happens.
      */
     public function updateNow(): void
     {
@@ -97,33 +103,11 @@ class UpdatePaymenter extends Page
             return;
         }
 
-        $title = "Update Paymenter to {$latest}";
-
-        if (!\Illuminate\Support\Facades\Schema::hasTable('ext_todos')) {
-            Notification::make()->title('The To-Do List is not migrated on this install')->danger()->send();
-
-            return;
-        }
-
-        // One queue entry per release, not one per click.
-        $exists = \Illuminate\Support\Facades\DB::table('ext_todos')
-            ->where('title', $title)->where('done', false)->exists();
-
-        if (!$exists) {
-            \Illuminate\Support\Facades\DB::table('ext_todos')->insert([
-                'title' => $title,
-                'due_date' => now()->toDateString(),
-                'admin_id' => Auth::id(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        Notification::make()->title("Update to {$latest} queued")
-            ->body('Added to the To-Do List. The release is vendored, reviewed and shipped through the deployment pipeline — this page never overwrites files on its own.')
-            ->persistent()
-            ->success()->send();
-
+        // No To-Do row any more. Queueing one was the wrong answer to "what does this
+        // button do": it made a button labelled Update look like it had scheduled an
+        // update, when all it had done was write a reminder (Leandro, 2026-09-07: "Why
+        // update function is queue into TO-DO list? it was downloaded but the version is
+        // not changed"). The plan is the deliverable; the button now says so.
         $this->buildPlan();
     }
 
