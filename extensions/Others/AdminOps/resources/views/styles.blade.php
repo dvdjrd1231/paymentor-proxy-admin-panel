@@ -5387,6 +5387,47 @@
         line-height: 1.6;
     }
 
+    /* ── The Client Profile's selection and Bulk Actions row ─────────────────────
+       The reference leads its summary tables with a tick column and closes them with
+       With Selected and Bulk Actions. */
+    .ao-cs-tick { width: 2.4rem; text-align: center; }
+
+    .ao-cs-tick input { accent-color: var(--wa-link, #337ab7); }
+
+    .ao-cs-bulk {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.6rem 0.8rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 6px);
+        background: #f5f5f5;
+        font-size: 0.9rem;
+    }
+
+    .ao-cs-bulk-label { font-weight: 600; }
+
+    .ao-cs-bulk select,
+    .ao-cs-bulk input[type="text"] {
+        height: 1.9rem;
+        padding: 0 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.9rem;
+    }
+
+    .ao-cs-bulk select:disabled { color: #888; background: #f0f0f0; }
+
+    .ao-cs-bulk-hold { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+    .ao-cs-bulk-hold input { accent-color: var(--wa-link, #337ab7); }
+
+    /* Apply sits at the far right of the row, as the reference has it. */
+    .ao-cs-bulk-right { margin-left: auto; }
+
     /* API Credentials (issue #50): the reference's Generate button is green. It used to
        be one of the tab strip's buttons and inherited its chrome; it stands on its own
        under the tabs now, as the reference has it, so it carries its own. */
