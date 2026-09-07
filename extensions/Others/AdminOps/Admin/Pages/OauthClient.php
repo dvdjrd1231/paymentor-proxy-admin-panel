@@ -122,8 +122,11 @@ class OauthClient extends Page
             // The reference's own rule, verbatim: "Must have a protocol. Cannot contain URL
             // fragments or relative paths. Cannot be a public IP address."
             'logoUrl' => 'nullable|string|max:255',
-            'redirects' => 'required|array|min:1',
-            'redirects.*' => 'url',
+            // Not required (Leandro, 2026-09-07). A credential set is often created
+            // before the application that will use it exists, and WHMCS lets you save
+            // one with no callback yet; the URI only has to be valid if given.
+            'redirects' => 'array',
+            'redirects.*' => 'nullable|url',
         ], attributes: [
             'logoUrl' => 'logo URL',
             'redirects' => 'authorized redirect URIs',
