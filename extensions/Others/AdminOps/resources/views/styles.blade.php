@@ -5411,6 +5411,73 @@
         line-height: 1.6;
     }
 
+    /* ── OpenID Connect credentials ──────────────────────────────────────────────
+       The reference's boxed Client API Credentials block, and the repeatable
+       Authorized Redirect URIs. */
+    .ao-oc-box {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 4px;
+        background: #fafafa;
+    }
+
+    .ao-oc-row {
+        display: grid;
+        grid-template-columns: 9rem minmax(0, 1fr);
+        align-items: center;
+        column-gap: 0.8rem;
+    }
+
+    .ao-oc-row > span:first-child { text-align: right; font-size: 0.9rem; }
+
+    .ao-oc-row input[readonly] { background: #eee; color: #444; }
+
+    .ao-oc-secret {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+    }
+
+    .ao-oc-secret input { flex: 1 1 auto; min-width: 0; }
+
+    .ao-oc-uri {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+    }
+
+    .ao-oc-uri input { flex: 1 1 auto; min-width: 0; }
+
+    .ao-oc-hint { color: #666; font-size: 0.85rem; font-style: normal; line-height: 1.45; }
+
+    /* Shown once, immediately after a create or a reset. Loud on purpose: there is no
+       second chance to copy it. */
+    .ao-oc-fresh {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 0.9rem;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid #d0e3c8;
+        border-radius: var(--wa-radius, 6px);
+        background: #eaf6ea;
+        color: #2f6f2f;
+        font-size: 0.9rem;
+    }
+
+    .ao-oc-fresh code {
+        padding: 0.15rem 0.4rem;
+        border-radius: 3px;
+        background: #fff;
+        color: #2b2b2b;
+        word-break: break-all;
+    }
+
     /* ── The update plan ─────────────────────────────────────────────────────────
        What a release would change, file by file, under the version tiles. */
     .ao-up-plan {

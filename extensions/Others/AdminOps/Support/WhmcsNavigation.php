@@ -622,6 +622,10 @@ class WhmcsNavigation
         static::$placed[\Paymenter\Extensions\Others\AdminOps\Admin\Pages\RoleGroup::class] = true;
         // Issue #51: same for OAuth clients — the menu entry is the WHMCS-shaped page.
         static::$placed[OauthClientResource::class] = true;
+        // The credential form is reached from the OpenID Connect list, never from a menu.
+        // Claimed by hand for the same reason as RoleGroup: its record is optional, so its
+        // URL resolves without one and the Addons sweep would otherwise list it.
+        static::$placed[\Paymenter\Extensions\Others\AdminOps\Admin\Pages\OauthClient::class] = true;
         // Issue #52: same for Extensions — the menu entry is the WHMCS-shaped page.
         static::$placed[ExtensionResource::class] = true;
         // Core's Available Extensions page and the cluster that holds it, replaced by
