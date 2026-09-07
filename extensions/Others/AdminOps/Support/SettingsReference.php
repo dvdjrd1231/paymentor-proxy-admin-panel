@@ -49,7 +49,19 @@ class SettingsReference
             'youtube' => 'YouTube',
         ];
 
-        $own = [];
+        $own = [
+            // How long a gateway attempt left in `processing` keeps an invoice locked.
+            // The client-area invoice screen reads this; without a field here the only way
+            // to change it would be a database row nobody knows about. See
+            // themes/proxy/views/invoices/show.blade.php for why the grace exists at all.
+            'invoice_processing_grace_minutes' => [
+                'name' => 'invoice_processing_grace_minutes',
+                'label' => 'Payment Attempt Grace Period',
+                'type' => 'number',
+                'database_type' => 'integer',
+                'default' => 60,
+            ],
+        ];
 
         foreach ($networks as $key => $label) {
             $own['social_' . $key] = [
@@ -131,6 +143,7 @@ class SettingsReference
                 ['setting' => 'tax_enabled', 'label' => 'Enable Tax', 'hint' => 'Apply tax rules to invoices'],
                 ['setting' => 'tax_type', 'label' => 'Tax Type', 'hint' => 'Whether prices are shown inclusive or exclusive of tax'],
                 ['setting' => 'cronjob_invoice_reminder', 'label' => 'Invoice Reminder Days', 'hint' => 'Send a reminder this many days before the due date'],
+                ['setting' => 'invoice_processing_grace_minutes', 'label' => 'Payment Attempt Grace Period', 'hint' => 'Minutes an unconfirmed gateway payment keeps an invoice locked before the client may try again. Crypto attempts that are abandoned are never confirmed or cancelled, so without this the invoice could never be paid'],
             ],
 
             'credit' => [
@@ -182,7 +195,12 @@ class SettingsReference
             ],
 
             'other' => [
-                ['setting' => 'gravatar_default', 'label' => 'Admin Client Display Format', 'hint' => 'The avatar shown where a client has none'],
+                // Labelled for what it does, not for what WHMCS calls the field in this
+                // position. WHMCS's "Admin Client Display Format" chooses how client names
+                // are written in admin lists; this setting chooses a fallback avatar. Same
+                // slot on the reference's Other tab, different job — borrowing the wording
+                // would have made a control lie about itself.
+                ['setting' => 'gravatar_default', 'label' => 'Default Avatar', 'hint' => 'The avatar shown where a client has none'],
                 ['setting' => 'debug', 'label' => 'Display Errors', 'hint' => 'Not recommended for production use'],
                 ['setting' => 'cronjob_time', 'label' => 'Cron Job Time', 'hint' => 'When the daily automation runs'],
                 ['setting' => 'cronjob_delete_email_logs', 'label' => 'Delete Email Logs After', 'hint' => 'Remove email logs older than this many days'],
