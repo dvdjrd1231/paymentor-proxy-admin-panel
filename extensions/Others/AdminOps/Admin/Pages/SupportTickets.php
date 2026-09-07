@@ -276,6 +276,8 @@ class SupportTickets extends Page
             'active' => (clone $base())->where('status', '!=', 'closed')->count(),
             'open' => (clone $base())->where('status', 'open')->count(),
             'answered' => (clone $base())->where('status', 'replied')->count(),
+            'on-hold' => (clone $base())->where('status', 'on_hold')->count(),
+            'in-progress' => (clone $base())->where('status', 'in_progress')->count(),
             'closed' => (clone $base())->where('status', 'closed')->count(),
         ];
     }
@@ -349,9 +351,11 @@ class SupportTickets extends Page
             'customer-reply' => $query->where('status', 'open')
                 ->whereHas('messages', fn ($q) => $q->whereColumn('ticket_messages.user_id', 'tickets.user_id')
                     ->whereRaw('ticket_messages.id = (select max(id) from ticket_messages tm where tm.ticket_id = tickets.id)')),
-            // No such state exists here; an empty list is the honest rendering.
-            'on-hold' => $query->whereRaw('1 = 0'),
-            'in-progress' => $query->whereNotNull('assigned_to')->where('status', '!=', 'closed'),
+            // Both are real stored statuses now (the ticket screen's status select
+            // writes them), so these views filter on the column instead of standing
+            // in for a state that used to not exist.
+            'on-hold' => $query->where('status', 'on_hold'),
+            'in-progress' => $query->where('status', 'in_progress'),
             'closed' => $query->where('status', 'closed'),
             default => $query->where('status', '!=', 'closed'),
         };
