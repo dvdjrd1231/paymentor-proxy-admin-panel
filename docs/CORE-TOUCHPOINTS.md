@@ -230,7 +230,7 @@ classes — one of them vendored — would have been four places to re-apply on 
 
 ---
 
-## 9. `app/Models/Plan.php` — a plan with no price in the visitor's currency was fatal
+## 9. `app/Models/Plan.php` — a plan with no price in the visitor's currency was fatal (**resolved upstream in 1.5.8 — no longer re-apply**)
 
 **What:** `Plan::price()` read `$price->setup_fee` and `$price->currency` straight off the
 result of a lookup that can legitimately return `null`.
@@ -254,8 +254,15 @@ your currency", which is the behaviour `Price` was already written to handle.
 **Verified:** priced currencies unchanged (`USD $70.00`, `BRL R$370,62`, both available);
 an unpriced currency returns `available=false` with no exception.
 
-**If not re-applied after an upgrade:** the 500 returns for any product/currency combination
-that lacks a price row.
+**Resolved upstream (2026-09-07, upgrading to 1.5.8).** 1.5.8 fixes the same crash
+independently, with an early return when no price row exists rather than our null-coalescing,
+and — the part that mattered — it also leaves `currency` null, so an unpriced plan still reads
+as unavailable rather than free. Its `setup_fee` is `null` where ours was `0`, which is
+equivalent here: `Price::__construct` casts it with `(float)`, and `(float) null` is `0.0`.
+
+Upstream's version was therefore taken and this modification dropped, which is one fewer file
+to merge on every future upgrade. **Nothing to re-apply.** If a future release regresses it,
+the symptom to watch for is `Attempt to read property "setup_fee" on null`.
 
 ---
 
