@@ -140,12 +140,34 @@ class Contacts extends Component
         return Contact::where('user_id', Auth::id())->findOrFail($id);
     }
 
+    /**
+     * The country names offered by the Country select.
+     *
+     * Core keys the list by ISO code and puts its own "Select a country" placeholder under
+     * the empty key; that entry is dropped here because the view supplies the reference's
+     * own placeholder.
+     *
+     * @return array<int, string>
+     */
+    private function countryNames(): array
+    {
+        $countries = config('app.countries', []);
+        unset($countries['']);
+
+        return array_values($countries);
+    }
+
     public function render()
     {
         return view('clienttools::contacts', [
             'contacts' => Contact::where('user_id', Auth::id())->orderBy('first_name')->get(),
             'permissionKeys' => Contact::PERMISSIONS,
             'emailPreferenceKeys' => Contact::EMAIL_PREFERENCES,
+            // Core's own country list, the same one the tax rates and checkout use. The
+            // names rather than the ISO keys: `country` is a free-text column whose
+            // existing rows hold names, and storing codes now would make old and new
+            // contacts disagree about what the column means.
+            'countries' => $this->countryNames(),
         ]);
     }
 }
