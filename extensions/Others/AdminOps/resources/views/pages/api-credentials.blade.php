@@ -42,7 +42,7 @@
                             </td>
                             <td class="ao-mu-left">
                                 @if ($entry['edit'])
-                                    <a href="{{ $entry['edit'] }}">{{ $key->name ?: '—' }}</a>
+                                    <a href="#" wire:click.prevent="openEdit({{ $key->id }})">{{ $key->name ?: '—' }}</a>
                                 @else
                                     {{ $key->name ?: '—' }}
                                 @endif
@@ -57,7 +57,9 @@
                             </td>
                             <td class="ao-mu-actions">
                                 @if ($entry['edit'])
-                                    <a href="{{ $entry['edit'] }}" title="Edit credential">
+                                    {{-- Opens the reference's Credential Management modal;
+                                         it used to leave for core's own API screen. --}}
+                                    <a href="#" title="Edit credential" wire:click.prevent="openEdit({{ $key->id }})">
                                         <x-filament::icon icon="ri-edit-box-line" class="ao-mu-cell-icon" />
                                     </a>
                                 @endif
@@ -105,6 +107,47 @@
                     @endforelse
                 </tbody>
             </table>
+        @endif
+
+        {{-- The reference's Credential Management modal: what editing a credential does. --}}
+        @if ($editing)
+            <div class="ao-mud-overlay" wire:click.self="closeEdit">
+                <form class="ao-mud" wire:submit.prevent="saveEdit">
+                    <div class="ao-mud-head">
+                        Credential Management
+                        <button type="button" wire:click="closeEdit" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="ao-mud-text ao-api-modal">
+                        <label class="ao-api-field">
+                            <span>Description</span>
+                            <input type="text" wire:model="editDescription" required>
+                        </label>
+                        <label class="ao-api-field">
+                            <span>API Role(s)</span>
+                            <select multiple size="4" wire:model="editRoles">
+                                @forelse ($roles as $role)
+                                    <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                @empty
+                                    <option disabled>No API roles yet — create one on the API Roles tab</option>
+                                @endforelse
+                            </select>
+                            <i>Select the API Role(s) this credential set is assigned to. You may select more
+                                than one using Ctrl + Click.</i>
+                        </label>
+                        @if ($errors->any())
+                            <ul class="ao-anc-errors">
+                                @foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach
+                            </ul>
+                        @endif
+                    </div>
+                    <div class="ao-mud-foot ao-mud-foot-only-right">
+                        <span class="ao-mud-foot-right">
+                            <button type="button" class="ao-mud-close" wire:click="closeEdit">Close</button>
+                            <button type="submit" class="ao-find-go">Save</button>
+                        </span>
+                    </div>
+                </form>
+            </div>
         @endif
 
         {{-- The reference's Generate New API Credential modal. --}}
