@@ -1,8 +1,8 @@
 {{--
     Currencies, to issue #46's reference: the navy grid, the update buttons, and the
-    Add Additional Currency inline form. Base Conv. Rate shows a dash on purpose —
-    Paymenter stores a price per currency, not a conversion rate; rates come from the
-    market through the Currency Rates sync.
+    Add Additional Currency inline form. Base Conv. Rate is a real stored column since
+    2026-09-07 — Update Exchange Rates fills it from the market, an admin can set it by
+    hand in the editor, and Update Product Prices reprices from whatever it holds.
 --}}
 <x-filament-panels::page>
     <div class="ao-mu">
@@ -13,7 +13,7 @@
                     <th>Prefix</th>
                     <th>Suffix</th>
                     <th>Format</th>
-                    <th title="Paymenter stores a price per currency rather than a conversion rate; rates come from the market via the sync below">Base Conv. Rate</th>
+                    <th title="How many units of this currency one unit of {{ $baseCode }} buys">Base Conv. Rate</th>
                     <th></th>
                 </tr>
             </thead>
@@ -25,7 +25,16 @@
                         <td>{{ $currency->prefix ?: '—' }}</td>
                         <td>{{ $currency->suffix ?: '—' }}</td>
                         <td>{{ $currency->format }}</td>
-                        <td>{{ $currency->code === config('settings.default_currency', 'USD') ? '1.00000' : '—' }}</td>
+                        <td>
+                            @if ($currency->code === $baseCode)
+                                1.00000
+                            @elseif ($currency->base_conv_rate !== null)
+                                {{ number_format((float) $currency->base_conv_rate, 5, '.', '') }}
+                            @else
+                                {{-- Honest blank: no rate has been fetched or entered yet. --}}
+                                <span title="No rate yet — set one in the editor, or use Update Exchange Rates">—</span>
+                            @endif
+                        </td>
                         <td class="ao-mu-actions">
                             @if ($entry['edit'])
                                 <a href="{{ $entry['edit'] }}" title="Edit currency">
@@ -41,11 +50,12 @@
         </table>
 
         <div class="ao-gs-actions">
-            <button type="button" class="ao-pg-btn" wire:click="updateRates"
-                wire:confirm="Pull the latest market rates and rewrite secondary-currency product prices now?">Update Exchange Rates</button>
-            <button type="button" class="ao-pg-btn" wire:click="updateRates"
-                title="The same sync — Paymenter stores prices per currency, so updating the rate is updating the prices"
-                wire:confirm="Pull the latest market rates and rewrite secondary-currency product prices now?">Update Product Prices</button>
+            <button type="button" class="ao-pg-btn" wire:click="updateRates(false)"
+                title="Fetch today's published rates and store them against each currency"
+                wire:confirm="Fetch the latest market rates now?">Update Exchange Rates</button>
+            <button type="button" class="ao-pg-btn" wire:click="updateRates(true)"
+                title="Rewrite secondary-currency product prices from the Base Conv. Rate stored above — including one you set by hand"
+                wire:confirm="Rewrite secondary-currency product prices from the rates stored above?">Update Product Prices</button>
         </div>
 
         <h4 class="ao-ano-heading">Add Additional Currency</h4>
@@ -76,6 +86,14 @@
                         <option value="{{ $format }}">{{ $format }}</option>
                     @endforeach
                 </select>
+            </label>
+            <label class="ao-anc-row">
+                <span>Base Conv. Rate</span>
+                <span class="ao-anc-field">
+                    <input type="text" class="ao-w-25" wire:model="newRate" placeholder="e.g. 5.42000">
+                    <i>How many of the new currency one {{ $baseCode }} buys. Leave blank to let
+                        Update Exchange Rates fill it in.</i>
+                </span>
             </label>
             <div class="ao-pr-center"><button type="submit" class="ao-find-go">Add Currency</button></div>
         </form>
