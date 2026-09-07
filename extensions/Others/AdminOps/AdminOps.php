@@ -84,6 +84,23 @@ class AdminOps extends Extension
         $this->keepExtensionMigrationsApplied();
         $this->retireCoreExtensionBrowser();
         $this->retireCoreOauthScreens();
+        $this->registerErrorPages();
+    }
+
+    /**
+     * One error page for the whole platform (Leandro, 2026-09-07: "Every Admin Error page
+     * should be updated as WHMCS page standard format. Also, every client error page
+     * should have correct alignment").
+     *
+     * Neither core nor the theme ships `resources/views/errors`, so Laravel fell through
+     * to its own bare views: the admin got an unstyled stack of text and the client got
+     * the same text jammed against the theme header with no container — the alignment he
+     * flagged. Prepending a location that contains *only* `errors/` puts ours first
+     * without shadowing anything else core resolves by plain name.
+     */
+    private function registerErrorPages(): void
+    {
+        View::getFinder()->prependLocation(__DIR__ . '/resources/error-views');
     }
 
     /**
