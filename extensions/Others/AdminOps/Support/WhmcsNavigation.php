@@ -615,6 +615,11 @@ class WhmcsNavigation
         // Issues #49/#50: same for Administrator Roles and API Credentials.
         static::$placed[RoleResource::class] = true;
         static::$placed[ApiResource::class] = true;
+        // The role editor is reached from the Administrator Roles grid, never from a menu.
+        // Claimed by hand because its record is *optional* — the same form serves create —
+        // so unlike every other detail page its URL resolves without one, and the Addons
+        // sweep took that as an invitation and listed it (screenshot, 2026-09-07).
+        static::$placed[\Paymenter\Extensions\Others\AdminOps\Admin\Pages\RoleGroup::class] = true;
         // Issue #51: same for OAuth clients — the menu entry is the WHMCS-shaped page.
         static::$placed[OauthClientResource::class] = true;
         // Issue #52: same for Extensions — the menu entry is the WHMCS-shaped page.
