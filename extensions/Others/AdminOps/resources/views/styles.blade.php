@@ -3482,27 +3482,28 @@
        The reference's headline bar: Paid green, Unpaid red, Overdue black-on-grey. */
     /* Issue #12: the reference's totals bar is a centred line in a teal-bordered white
        box, not a grey band. */
+    /* The reference's totals band: a flat grey strip with a hairline border and normal
+       body type — not the bright-bordered white card this used to be (Leandro's
+       side-by-side, 2026-09-06). */
     .ao-inv-bar {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
         gap: 0.4rem 2rem;
-        padding: 0.8rem 1.1rem;
-        border: 2px solid #7edfe6;
-        border-radius: var(--wa-radius, 6px);
-        background: #fff;
-        font-size: 1.05rem;
-        font-weight: 700;
-    }
-
-    /* Issue #12: the reference's tab + filter + records line share one bordered panel. */
-    .ao-inv-panel {
-        border: 1px solid #7edfe6;
-        border-radius: var(--wa-radius, 6px);
-        background: #fff;
-        padding: 0.7rem 1rem 0.4rem;
+        padding: 0.55rem 1rem;
+        border: 1px solid #e3e3e3;
+        border-radius: var(--wa-radius, 4px);
+        background: #f5f5f5;
+        font-size: 0.95rem;
+        font-weight: 400;
         margin-bottom: 0.6rem;
     }
+
+    .ao-inv-bar b { font-weight: 700; }
+
+    /* The reference leaves the Search/Filter tab bare on the page — the box that used
+       to wrap tab + filter + records line is gone with it. */
+    .ao-inv-panel { margin-bottom: 0.2rem; }
 
     .ao-inv-panel .ao-mu-line { margin-bottom: 0.2rem; }
 
@@ -3846,6 +3847,14 @@
     .ao-st-answered { color: #8a6d3b; }
     .ao-st-hold { color: #6d7681; }
     .ao-st-progress { color: #c0392b; }
+
+    /* Products/Services statuses read as coloured words, the same way the Invoices
+       list states Paid / Unpaid / Overdue. */
+    .ao-ps-status { font-weight: 600; }
+    .ao-ps-st-active { color: #3c763d; }
+    .ao-ps-st-pending { color: #b8860b; }
+    .ao-ps-st-suspended { color: #8a6d3b; }
+    .ao-ps-st-cancelled { color: #b52b27; }
     .ao-st-closed { color: #6b6b6b; }
 
     .ao-st-operator {

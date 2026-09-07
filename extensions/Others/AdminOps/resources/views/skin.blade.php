@@ -83,13 +83,13 @@
        of chasing sizes rule by rule. 17px base. */
     html {
         font-size: 106.25%;
-        /* Issue #2's "objects move after the page loads": with SPA navigation, moving
-           between a long page and a short one pops the scrollbar in and out, and every
-           control shifts sideways. A permanent scrollbar ends that — and unlike the
-           `scrollbar-gutter: stable` this replaces, it does not leave a blank strip down
-           the right of every short page: the reserved width is a visible (inactive)
-           scrollbar track, which is what the reference shows, not empty page. */
-        overflow-y: scroll;
+        /* The scrollbar follows the page: present on a long one, gone on a short one
+           (Leandro, 2026-09-06 — the permanently-drawn inactive track read as a dead
+           strip down every page). `scrollbar-gutter: stable` still reserves the width,
+           so issue #2's "objects move after the page loads" stays fixed: the layout
+           never shifts as the bar appears, it simply is not painted when unneeded. */
+        overflow-y: auto;
+        scrollbar-gutter: stable;
     }
 
     /* Issue #10: Windows renders flag emoji as bare letter pairs — it ships no flag
