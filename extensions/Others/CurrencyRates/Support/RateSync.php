@@ -111,7 +111,22 @@ class RateSync
                 return;
             }
 
-            DB::table('currencies')->where('code', $code)->update(['base_conv_rate' => round($rate, 8)]);
+            $currency = Currency::where('code', $code)->first();
+            $rate = round($rate, 8);
+
+            if (!$currency || (float) $currency->base_conv_rate === $rate) {
+                // Nothing moved. Worth checking, because saving flushes the whole cache
+                // (core's Currency does that on every save) and the rate usually holds
+                // between hourly passes.
+                return;
+            }
+
+            // Through the model, not DB::table: core caches currency reads and only
+            // invalidates on a model save, so a direct UPDATE writes the row and then
+            // hands every reader the old value — which is exactly what the first live
+            // test showed, the grid still reading 5.42 after a sync stored 5.22451.
+            // `base_conv_rate` is ours and not in core's $fillable, hence forceFill.
+            $currency->forceFill(['base_conv_rate' => $rate])->save();
         } catch (\Throwable $e) {
             Log::channel('stack')->warning('[CurrencyRates] could not record the rate', [
                 'currency' => $code, 'error' => $e->getMessage(),
