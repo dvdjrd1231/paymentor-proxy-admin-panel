@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#
+# Deploy the current main branch to a server and rebuild Laravel's compiled caches.
+#
+# The caches are the point of this script. Without them Laravel re-parses every config
+# file, re-registers every route and re-scans every event listener on each request, which
+# on this deployment costs about 15% of server-side page time. With them, a deploy that
+# forgets to rebuild serves the *previous* commit's configuration and routes — a failure
+# that looks like "my change did nothing" rather than like an error. So pulling and
+# rebuilding belong in one command, and this is it.
+#
+#   ssh <server> 'bash -s' < scripts/deploy.sh
+#   scripts/deploy.sh              # run on the server itself
+#
+# Views are deliberately only cleared, never cached: Blade compares source mtimes and
+# recompiles on demand, so a warm cache is an optimisation the first visitor pays for
+# rather than something correctness depends on.
+
+set -euo pipefail
+
+ROOT="${PAYMENTER_ROOT:-/opt/paymentor-proxy-admin-panel}"
+COMPOSE_FILE="${PAYMENTER_COMPOSE:-docker-compose.vps.yml}"
+
+cd "$ROOT"
+
+run() { docker compose -f "$COMPOSE_FILE" exec -T paymenter "$@"; }
+
+echo "==> Pulling"
+# --ff-only so a diverged server tree fails loudly here rather than producing a merge
+# commit nobody asked for. Divergence means someone edited files on the server; that is a
+# thing to look at, not to paper over.
+git pull --ff-only
+
+echo "==> Clearing compiled caches"
+# Cleared before rebuilding, so that a rebuild which fails half way leaves the site
+# running uncached and correct rather than cached and stale.
+run php artisan config:clear
+run php artisan route:clear
+run php artisan event:clear
+run php artisan view:clear
+
+echo "==> Rebuilding compiled caches"
+run php artisan config:cache
+run php artisan route:cache
+run php artisan event:cache
+
+echo "==> Applying any new migrations"
+run php artisan migrate --force
+
+echo "==> Deployed: $(git log --oneline -1)"
