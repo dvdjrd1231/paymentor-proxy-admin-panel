@@ -448,7 +448,17 @@ class AdminOps extends Extension
         return $out;
     }
 
-    /** The two blades' own content, as a short hash. */
+    /**
+     * The two blades' own content, as a short hash.
+     *
+     * Hashed from the bytes, not from mtime and size. The URL this feeds is served
+     * `immutable, max-age=1y` and sits behind Cloudflare, so the hash has one job: never
+     * name two different stylesheets the same. mtime+size did that job badly in both
+     * directions — a `git pull` that rewrote a blade byte-for-byte minted a pointless new
+     * URL, and any edit that happened to preserve the size would have reused an old one.
+     * It also meant a deploy had to remember to `touch` the blades, a ritual that is now
+     * gone.
+     */
     public static function styleVersion(): string
     {
         return \Illuminate\Support\Facades\Cache::remember('adminops.style-version', 3600, function (): string {
@@ -456,7 +466,7 @@ class AdminOps extends Extension
 
             foreach (['skin', 'styles'] as $part) {
                 $file = __DIR__ . '/resources/views/' . $part . '.blade.php';
-                $stamp .= is_file($file) ? filemtime($file) . ':' . filesize($file) . '|' : '';
+                $stamp .= is_file($file) ? md5_file($file) . '|' : '';
             }
 
             return substr(md5($stamp), 0, 10);
