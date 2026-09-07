@@ -94,6 +94,7 @@ class AdminOps extends Extension
      */
     private function retireCoreExtensionBrowser(): void
     {
+        // Named after the route it displaces — see the note on {@see retireRawProductList}.
         \Illuminate\Support\Facades\Route::middleware(['web'])->get('/admin/extensions/extension', function () {
             if (!\Illuminate\Support\Facades\Auth::check()) {
                 return redirect()->guest('/admin/login');
@@ -104,7 +105,7 @@ class AdminOps extends Extension
             return redirect()->to(Admin\Pages\AvailableExtensions::getUrl(
                 array_filter(['tab' => request()->query('tab')]),
             ));
-        });
+        })->name('filament.admin.extensions.pages.extension');
     }
 
     /**
@@ -183,16 +184,18 @@ class AdminOps extends Extension
         };
 
         \Illuminate\Support\Facades\Route::middleware(['web'])
-            ->get('/admin/roles', $guarded(fn () => Admin\Pages\AdminRoles::getUrl()));
+            ->get('/admin/roles', $guarded(fn () => Admin\Pages\AdminRoles::getUrl()))
+            ->name('filament.admin.resources.roles.index');
 
         // Registered before the `{record}` route so "create" is never read as an id.
         \Illuminate\Support\Facades\Route::middleware(['web'])
-            ->get('/admin/roles/create', $guarded(fn () => Admin\Pages\RoleGroup::getUrl()));
+            ->get('/admin/roles/create', $guarded(fn () => Admin\Pages\RoleGroup::getUrl()))
+            ->name('filament.admin.resources.roles.create');
 
         \Illuminate\Support\Facades\Route::middleware(['web'])
             ->get('/admin/roles/{record}/edit', $guarded(
                 fn (string $record) => Admin\Pages\RoleGroup::getUrl(['record' => $record]),
-            ));
+            ))->name('filament.admin.resources.roles.edit');
     }
 
     /**
@@ -213,7 +216,7 @@ class AdminOps extends Extension
             }
 
             return redirect()->to(Admin\Pages\CurrenciesList::getUrl());
-        });
+        })->name('filament.admin.resources.currencies.index');
 
         \Illuminate\Support\Facades\Route::middleware(['web'])->get('/admin/currencies/{record}/edit', function (string $record) {
             if (!\Illuminate\Support\Facades\Auth::check()) {
@@ -221,7 +224,7 @@ class AdminOps extends Extension
             }
 
             return redirect()->to(Admin\Pages\EditCurrency::getUrl(['record' => $record]));
-        });
+        })->name('filament.admin.resources.currencies.edit');
     }
 
     /**
@@ -237,6 +240,18 @@ class AdminOps extends Extension
      * the guard keeps it from firing for a signed-out visitor, who should meet the
      * login page as usual.
      */
+    /**
+     * **Every redirect below carries the route name it displaces.** Registering a route at
+     * a URI Filament also registers takes that URI's slot in the route collection, and the
+     * Filament route's *name* goes with it — `filament.admin.resources.gateways.index` and
+     * six others simply stopped existing. Nothing notices until a core page renders a link
+     * to one, and then it is a 500: Leandro hit exactly that on 2026-09-07, editing a
+     * gateway from Payment Gateways, whose breadcrumb links to the gateways index.
+     *
+     * Naming our redirect after the route it replaced puts the name back, pointing at the
+     * redirect — so every internal link resolves again and lands on the screen that
+     * replaced the old one, which is what the link meant in the first place.
+     */
     private function retireRawProductList(): void
     {
         \Illuminate\Support\Facades\Route::middleware(['web'])->get('/admin/products', function () {
@@ -245,7 +260,7 @@ class AdminOps extends Extension
             }
 
             return redirect()->to(Admin\Pages\Catalogue::getUrl());
-        });
+        })->name('filament.admin.resources.products.index');
 
         // Same story for core's raw Gateways list: Payment Gateways is the screen with
         // the reference's Enable/Disable/Edit rows, and two doors onto one feature is
@@ -257,7 +272,7 @@ class AdminOps extends Extension
             }
 
             return redirect()->to(Admin\Pages\PaymentGateways::getUrl());
-        });
+        })->name('filament.admin.resources.gateways.index');
     }
 
     /**

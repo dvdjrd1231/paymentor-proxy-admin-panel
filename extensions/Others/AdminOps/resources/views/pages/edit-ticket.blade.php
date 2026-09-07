@@ -322,7 +322,10 @@
                         @foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach
                     </ul>
                 @endif
-                <div class="ao-of-buttons">
+                {{-- ao-et-actions rather than ao-of-buttons: the three buttons come from
+                     three different button classes and only line up when the row sets one
+                     height and one baseline for all of them. --}}
+                <div class="ao-et-actions">
                     <button type="submit" class="ao-find-go">&#128190; Save Changes</button>
                     <button type="button" class="ao-of-go" wire:click="$set('tab', 'reply')">Cancel Changes</button>
                     <button type="button" class="ao-eo-delete" wire:click="$set('confirmingDelete', 'yes')">Delete Ticket</button>

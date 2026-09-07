@@ -83,13 +83,13 @@
        of chasing sizes rule by rule. 17px base. */
     html {
         font-size: 106.25%;
-        /* The scrollbar follows the page: present on a long one, gone on a short one
-           (Leandro, 2026-09-06 — the permanently-drawn inactive track read as a dead
-           strip down every page). `scrollbar-gutter: stable` still reserves the width,
-           so issue #2's "objects move after the page loads" stays fixed: the layout
-           never shifts as the bar appears, it simply is not painted when unneeded. */
+        /* The scrollbar follows the page: present on a long one, gone on a short one.
+           `scrollbar-gutter: stable` used to reserve its width even when absent, which
+           kept issue #2's "objects move after the page loads" fixed but left the empty
+           strip Leandro flagged on 2026-09-07 — "if there is no scrollbar, there should
+           be no space". The gutter goes; the layout shift it was guarding against is
+           handled below instead, by keeping the page's own furniture off the edge. */
         overflow-y: auto;
-        scrollbar-gutter: stable;
     }
 
     /* Issue #10: Windows renders flag emoji as bare letter pairs — it ships no flag
