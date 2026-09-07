@@ -85,6 +85,45 @@ class AdminOps extends Extension
         $this->retireCoreExtensionBrowser();
         $this->retireCoreOauthScreens();
         $this->registerErrorPages();
+        $this->applyClientGroupDiscounts();
+    }
+
+    /**
+     * Client-group discounts, applied for real (Leandro, 2026-09-07: "these group will
+     * this condition as common. this is client group").
+     *
+     * Hooked on the invoice *item*, not on `Invoice\Finalized`. Finalized looks like the
+     * natural place — it fires once, after the response, with every item present — but
+     * core's own mail listener is on that event too, so a discount added there races the
+     * "invoice created" email and can post a total that is already wrong. Recomputing per
+     * item is cheap and always ends correct, because {@see Support\ClientGroup::applyDiscount}
+     * rebuilds the line from scratch each time.
+     *
+     * The guard is not optional: adding the discount line creates an invoice item, which
+     * fires this same event again.
+     */
+    private function applyClientGroupDiscounts(): void
+    {
+        Event::listen(\App\Events\InvoiceItem\Created::class, function ($event): void {
+            $item = $event->invoiceItem;
+
+            if ($item->reference_type === Support\ClientGroup::MARKER) {
+                return;
+            }
+
+            try {
+                if ($invoice = $item->invoice) {
+                    Support\ClientGroup::applyDiscount($invoice);
+                }
+            } catch (\Throwable $exception) {
+                // Billing must not fail because a discount could not be worked out; the
+                // invoice stands at full price and the reason is in the log.
+                \Illuminate\Support\Facades\Log::error('AdminOps: could not apply the client group discount', [
+                    'invoice' => $item->invoice_id,
+                    'exception' => $exception->getMessage(),
+                ]);
+            }
+        });
     }
 
     /**

@@ -121,6 +121,12 @@ class ClientSummary extends Page
     /** @var array<string, bool> setting_* on the profile, editable */
     public array $pfSettings = [];
 
+    /**
+     * The Profile tab's Client Group. Stored as the user property `client_group_id`, the
+     * same way every other per-client value here is, so nothing on `users` changes.
+     */
+    public string $pfGroup = '';
+
     /** The property keys the Profile form edits besides the user's own columns. */
     private const PF_PROPS = ['company_name', 'address', 'address2', 'city', 'state', 'zip', 'country', 'phone', 'currency'];
 
@@ -405,6 +411,8 @@ class ClientSummary extends Page
             $held = $prop('setting_' . $key);
             $this->pfSettings[$key] = $held === '' ? ($settingDefaults[$key] ?? false) : $held === '1';
         }
+
+        $this->pfGroup = $prop('client_group_id');
 
         if ($this->service) {
             $this->loadSvc();
@@ -924,6 +932,16 @@ class ClientSummary extends Page
             foreach ($this->pfSettings as $key => $on) {
                 $this->customer->properties()->updateOrCreate(['key' => 'setting_' . $key], ['value' => $on ? '1' : '0']);
             }
+
+            // Ungrouped is the absence of the row, not a row saying "0" — the sweep and
+            // the discount both test for membership by the property existing.
+            if ($this->pfGroup === '') {
+                $this->customer->properties()->where('key', 'client_group_id')->delete();
+            } else {
+                $this->customer->properties()->updateOrCreate(
+                    ['key' => 'client_group_id'], ['value' => $this->pfGroup],
+                );
+            }
         });
 
         $this->customer->refresh()->load('properties.parent_property');
@@ -1023,6 +1041,10 @@ class ClientSummary extends Page
         return [
             'user' => $this->customer,
             'tabs' => $this->tabLabels(),
+            'clientGroup' => \Paymenter\Extensions\Others\AdminOps\Support\ClientGroup::forUser($this->customer->id),
+            'clientGroups' => Schema::hasTable('ext_client_groups')
+                ? DB::table('ext_client_groups')->orderBy('name')->get()
+                : collect(),
             'tab' => array_key_exists($this->tab, self::TABS) ? $this->tab : 'summary',
             'urls' => $this->urls(),
             'clientsList' => User::query()
