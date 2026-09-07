@@ -649,6 +649,8 @@ class WhmcsNavigation
             // Issue #45: the quick-buttons page; core's resource stays claimed below.
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\PaymentGateways::class, 'Payment Gateways'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\CurrenciesList::class, 'Currencies'),
+            // The reference lists Client Groups directly above Custom Client Fields.
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientGroups::class, 'Client Groups'),
             static::link(CustomPropertyResource::class, 'Custom Client Fields'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::class, 'Email Templates'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\AdminRoles::class, 'Administrator Roles'),
