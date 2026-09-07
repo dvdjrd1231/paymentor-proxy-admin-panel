@@ -721,6 +721,17 @@ class WhmcsNavigation
             $items[] = static::page($page, static::labelFor($page));
         }
 
+        // Leandro, 2026-09-07: "AddOn menu should be kept and there are extensions menu
+        // item." Filing Role Group and Available Extensions properly had emptied this
+        // group, and an empty group is dropped — so the menu the reference always shows
+        // disappeared. The two extension screens live here permanently now, which both
+        // keeps the menu and gives it the entries he named. They remain under Setup as
+        // well, exactly as the reference lists Addon Modules in both places.
+        $items = array_merge([
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ExtensionsList::class, 'Extensions'),
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\AvailableExtensions::class, 'Available Extensions'),
+        ], $items);
+
         return static::group('Addons', 'ri-puzzle-line', $items);
     }
 

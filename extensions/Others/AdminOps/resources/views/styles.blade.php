@@ -3076,6 +3076,26 @@
     }
 
     /* Actions as the reference's small buttons, not bare links. */
+    /* Leandro, 2026-09-07, of Administrator Roles: "Buttons alignment is incorrect."
+       The cell mixes two shapes — a bordered box for the edit link, a borderless icon
+       button for delete — and with nothing holding the row together they sat at
+       different heights against a header cell of no particular width. One flex row,
+       centred both ways, and a column that keeps its own width whatever is in it. */
+    td.ao-mu-actions {
+        width: 1%;
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    td.ao-mu-actions > * {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        vertical-align: middle;
+        height: 1.7rem;
+        box-sizing: border-box;
+    }
+
     .ao-mu-actions a,
     /* Wire-action buttons in the same cell read as the same small button (issue #45's
        Enable/Disable beside Edit) — and the same class works standalone wherever a
@@ -6222,11 +6242,50 @@
     .ao-eo-cancel:hover,
     .ao-eo-pending:hover { background: #f0f0f0; }
 
+    /* Leandro, 2026-09-07, of the ticket screen: "Buttons should have correct styles."
+       This rule only ever set three colours, on the assumption that whatever it was put
+       on already carried a button's chrome. On the ticket screen it is on a bare
+       <button>, so Delete Ticket and the per-message Delete rendered as unpadded red
+       blocks that sat on top of the Edit beside them. The chrome belongs here, matching
+       .ao-of-go so a red button lines up with the grey and blue ones in the same row. */
     .ao-eo-delete {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 2.1rem;
+        padding: 0 0.9rem;
+        border: 1px solid #d43f3a !important;
+        border-radius: 4px;
         background: #d9534f !important;
-        border-color: #d43f3a !important;
         color: #fff !important;
+        font: inherit;
+        font-size: 0.9rem;
+        line-height: 1;
+        white-space: nowrap;
+        cursor: pointer;
     }
 
     .ao-eo-delete:hover { background: #c9302c !important; }
+
+    /* The three-button row under the ticket's Options tab, and the Edit/Delete pair on
+       each message: one baseline, one height, real gaps. */
+    .ao-et-actions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.9rem;
+    }
+
+    .ao-et-actions > button { margin: 0; }
+
+    /* The per-message pair is smaller than a form button, so it overrides the height it
+       inherits from the rule above rather than fighting it with !important. */
+    .ao-et-msg-edit,
+    .ao-et-msg-delete {
+        height: auto;
+        padding: 0.2rem 0.6rem;
+        font-size: 0.8rem;
+    }
 </style>
