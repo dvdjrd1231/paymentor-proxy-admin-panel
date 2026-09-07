@@ -82,6 +82,17 @@ class OauthClient extends Page
         }
 
         $this->client = Client::findOrFail($record);
+
+        // The secret is minted in save() and then this page is *redirected* to, so the
+        // component that shows it is a new instance with a null $freshSecret — which is
+        // why the box read "not recoverable" for a set created seconds earlier
+        // (Leandro, 2026-09-07). save() flashes it; this is where it is picked up.
+        // Keyed by client id so a flash left over from creating one set can never be
+        // shown against another.
+        if (session('adminops.fresh-secret.' . $this->client->id)) {
+            $this->freshSecret = session('adminops.fresh-secret.' . $this->client->id);
+        }
+
         $this->name = (string) $this->client->name;
         $this->description = (string) ($this->client->description ?? '');
         $this->logoUrl = (string) ($this->client->logo_url ?? '');
@@ -157,7 +168,7 @@ class OauthClient extends Page
                 ->body('Copy the client secret now — it is shown once.')->persistent()->success()->send();
 
             return redirect()->to(static::getUrl(['record' => $this->client->id]))
-                ->with('adminops.fresh-secret', $secret);
+                ->with('adminops.fresh-secret.' . $this->client->id, $secret);
         }
 
         // description and logo_url are ours, added by migration; Passport's model does not
