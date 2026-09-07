@@ -178,7 +178,11 @@
                         <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::cycle($service) }}</td>
                         <td>{{ $service->expires_at?->format('m/d/Y') ?? '-' }}</td>
                         <td>
-                            <span class="ao-mu-status ao-mu-st-{{ $service->status }}">{{ $label }}</span>
+                            {{-- Colored text, as the reference lists a status and as our
+                                 own Invoices list already does — the filled pills were
+                                 the loudest thing on the page (Leandro: "fluid and
+                                 highly readable", 2026-09-06). --}}
+                            <span class="ao-ps-status ao-ps-st-{{ $service->status }}">{{ $label }}</span>
                         </td>
                         <td class="ao-mu-actions">
                             {{-- The reference's "+": the row opens in place; the edit screen
