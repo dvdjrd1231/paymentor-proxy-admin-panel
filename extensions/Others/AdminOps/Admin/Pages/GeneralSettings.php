@@ -74,7 +74,7 @@ class GeneralSettings extends Page
 
     public function mount(): void
     {
-        foreach (collect(CoreSettings::settings())->flatten(1) as $setting) {
+        foreach ($this->definitions() as $setting) {
             if (in_array($setting['type'] ?? 'text', ['file', 'placeholder'], true)) {
                 continue;
             }
@@ -95,7 +95,7 @@ class GeneralSettings extends Page
      */
     public function fields(): array
     {
-        $definitions = collect(CoreSettings::settings())->flatten(1)->keyBy('name');
+        $definitions = $this->definitions();
         $rows = [];
 
         foreach (SettingsReference::all()[$this->tab] ?? [] as $row) {
@@ -141,12 +141,27 @@ class GeneralSettings extends Page
         return $rows;
     }
 
+    /**
+     * Every setting this page can bind to: core's own, plus the handful this extension
+     * declares for fields Paymenter has no setting behind ({@see SettingsReference::own}).
+     *
+     * One place, because mount(), fields() and save() must agree about what exists — if
+     * save() did not know about a key, the control would accept input and quietly drop it.
+     *
+     * @return \Illuminate\Support\Collection<string, array<string, mixed>>
+     */
+    private function definitions(): \Illuminate\Support\Collection
+    {
+        return collect(CoreSettings::settings())->flatten(1)->keyBy('name')
+            ->merge(SettingsReference::own());
+    }
+
     /** Saves core's way: same Setting rows, same change detection, same cache flush. */
     public function save(): void
     {
         Gate::authorize('has-permission', 'admin.settings.update');
 
-        $definitions = collect(CoreSettings::settings())->flatten(1)->keyBy('name');
+        $definitions = $this->definitions();
         $stored = Setting::whereNull('settingable_type')
             ->whereIn('key', array_keys($this->values))
             ->get()

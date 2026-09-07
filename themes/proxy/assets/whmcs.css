@@ -1033,6 +1033,18 @@
     }
     .wf-footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
     .wf-footer-copy { margin: 0; font-size: 12.6px; color: var(--brand); }
+    /* The social links General Settings' Social tab fills in. Only the networks that
+       have a value are rendered, so this row is absent on a store that sets none. */
+    .wf-footer-social {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .35rem 1rem;
+        font-size: .85rem;
+    }
+
+    .wf-footer-social a { color: var(--wf-muted); text-decoration: none; }
+    .wf-footer-social a:hover { color: var(--brand); text-decoration: underline; }
+
     .wf-totop {
         background: var(--brand); color: var(--brand-contrast); border: 0;
         border-radius: 3px; width: 31px; height: 33px; cursor: pointer; font-size: 12.6px;
