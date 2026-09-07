@@ -132,6 +132,20 @@ class ManageInvoices extends Page
             ->get()->all();
     }
 
+    /**
+     * Whether anything is ticked.
+     *
+     * The With Selected buttons are disabled until something is, because the old
+     * behaviour was the complaint (Leandro, 2026-09-07: "are not working at now"): with
+     * nothing ticked, the button still raised its "Are you sure?", you confirmed it, and
+     * then nothing happened but a "0 invoice(s)" toast that is easy to miss. Verified in
+     * a real browser that the actions themselves work once a row is ticked.
+     */
+    public function hasSelection(): bool
+    {
+        return array_filter($this->selected) !== [];
+    }
+
     /** The header tick: every invoice currently listed, or none. */
     public function toggleAll(bool $on): void
     {
