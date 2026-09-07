@@ -103,6 +103,18 @@ class AdminOps extends Extension
 
             return redirect()->to(Admin\Pages\Catalogue::getUrl());
         });
+
+        // Same story for core's raw Gateways list: Payment Gateways is the screen with
+        // the reference's Enable/Disable/Edit rows, and two doors onto one feature is
+        // what Leandro flagged on 2026-09-07. The edit form behind it stays reachable —
+        // Payment Gateways' own Edit is what links to it.
+        \Illuminate\Support\Facades\Route::middleware(['web'])->get('/admin/gateways', function () {
+            if (!\Illuminate\Support\Facades\Auth::check()) {
+                return redirect()->guest('/admin/login');
+            }
+
+            return redirect()->to(Admin\Pages\PaymentGateways::getUrl());
+        });
     }
 
     /**
