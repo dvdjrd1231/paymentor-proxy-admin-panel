@@ -3085,7 +3085,20 @@
         width: 1%;
         white-space: nowrap;
         text-align: center;
+        vertical-align: middle;
     }
+
+    /* Icon-only actions carry no button chrome (Leandro, 2026-09-07: "better to remove
+       border in edit button in this page"). A text action in the same cell — Manage,
+       Install — still reads as a button, so the rule is scoped to links wrapping an icon. */
+    td.ao-mu-actions a:has(.ao-mu-cell-icon) {
+        border: 0;
+        background: none;
+        padding: 0.2rem;
+        margin-inline: 0.1rem;
+    }
+
+    td.ao-mu-actions a:has(.ao-mu-cell-icon):hover { background: #f0f0f0; }
 
     td.ao-mu-actions > * {
         display: inline-flex;
@@ -6055,7 +6068,7 @@
         border-radius: 3px;
     }
 
-    .ao-et-msg-btns { display: inline-flex; gap: 0.35rem; }
+    .ao-et-msg-btns { display: inline-flex; align-items: center; gap: 0.35rem; }
 
     .ao-et-msg-edit, .ao-et-msg-delete { padding: 0.2rem 0.6rem; font-size: 0.8rem; }
 

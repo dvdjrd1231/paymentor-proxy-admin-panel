@@ -32,14 +32,18 @@ use Illuminate\Support\Facades\Schema;
  * ## Separate Invoices for Services
  *
  * Paymenter already bills **one invoice per service**: the renewal cron loops over due
- * services and creates an invoice inside the loop. So a group with this ticked matches
- * what the platform does anyway, and the setting only has work to do when it is *off* —
- * that is the case this merges, folding a client's pending service invoices of the same
- * currency into the oldest one.
+ * services and creates an invoice inside the loop. Ticked, therefore, describes exactly
+ * what the platform does, and the setting needs no code to be true.
  *
- * Merging is deliberately conservative. An invoice that has any transaction against it is
- * never touched — money has been recorded against that number — and an emptied invoice is
- * cancelled rather than deleted, so its number still resolves for anyone holding it.
+ * Unticked is **not implemented, on purpose.** A first attempt folded a member's pending
+ * same-currency invoices into the oldest on the hourly sweep, and testing it on the dev
+ * server showed why that is the wrong shape: it does not distinguish invoices the cron
+ * has just raised from ones the customer has been holding for days, so it silently
+ * rewrote four existing invoices and cancelled three of them. WHMCS combines items *as it
+ * generates them*; it never retroactively merges issued invoices. Doing this properly
+ * means generating combined invoices in the first place, which is core's renewal loop —
+ * so the honest state is that the box says what it cannot do rather than doing something
+ * destructive that resembles it.
  */
 class ClientGroup
 {
@@ -109,75 +113,5 @@ class ClientGroup
         $invoice->refresh();
 
         return $discount;
-    }
-
-    /**
-     * Fold each affected client's pending service invoices into one.
-     *
-     * Only clients in a group with Separate Invoices **off** are considered — everyone
-     * else keeps Paymenter's own one-invoice-per-service behaviour, which is what the
-     * setting describes when it is on.
-     *
-     * @return array{merged: int, invoices: int}
-     */
-    public static function mergeInvoices(): array
-    {
-        if (!Schema::hasTable('ext_client_groups')) {
-            return ['merged' => 0, 'invoices' => 0];
-        }
-
-        $groups = DB::table('ext_client_groups')->where('separate_invoices', false)->pluck('id');
-
-        if ($groups->isEmpty()) {
-            return ['merged' => 0, 'invoices' => 0];
-        }
-
-        $userIds = DB::table('properties')
-            ->where('model_type', User::class)->where('key', 'client_group_id')
-            ->whereIn('value', $groups->map(fn ($id) => (string) $id))
-            ->pluck('model_id');
-
-        $merged = 0;
-        $folded = 0;
-
-        foreach ($userIds as $userId) {
-            $byCurrency = Invoice::where('user_id', $userId)->where('status', 'pending')
-                ->with(['items', 'transactions'])->orderBy('id')->get()
-                ->groupBy('currency_code');
-
-            foreach ($byCurrency as $invoices) {
-                // Never touch an invoice money has been recorded against.
-                $invoices = $invoices->filter(fn (Invoice $i) => $i->transactions->isEmpty())->values();
-
-                if ($invoices->count() < 2) {
-                    continue;
-                }
-
-                try {
-                    DB::transaction(function () use ($invoices, &$merged, &$folded): void {
-                        $target = $invoices->first();
-
-                        foreach ($invoices->skip(1) as $invoice) {
-                            $invoice->items()->update(['invoice_id' => $target->id]);
-                            // Cancelled, not deleted: the number may already be in
-                            // somebody's inbox, and it must still resolve.
-                            $invoice->update(['status' => 'cancelled']);
-                            $folded++;
-                        }
-
-                        // The discount is a percentage of the invoice it sits on, so it
-                        // has to be recomputed once the lines have moved.
-                        static::applyDiscount($target->refresh());
-                        $merged++;
-                    });
-                } catch (\Throwable $exception) {
-                    Log::error('AdminOps: could not merge client invoices', [
-                        'user' => $userId, 'error' => $exception->getMessage(),
-                    ]);
-                }
-            }
-        }
-
-        return ['merged' => $merged, 'invoices' => $folded];
     }
 }

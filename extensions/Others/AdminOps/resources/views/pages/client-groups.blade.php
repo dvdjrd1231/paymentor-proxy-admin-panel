@@ -76,9 +76,10 @@
                 <span>Separate Invoices for Services</span>
                 <span class="ao-anc-field">
                     <input type="checkbox" wire:model="separateInvoices">
-                    <i>Paymenter already raises one invoice per service, which is this ticked.
-                        Unticked, a member's pending invoices in the same currency are folded into
-                        one on the hourly sweep — never one money has been recorded against.</i>
+                    <i>Paymenter already raises one invoice per service, so ticked is exactly what
+                        it does. Unticked is not supported: combining has to happen as invoices are
+                        generated, and that is core's renewal loop — merging issued invoices
+                        afterwards would rewrite documents customers already hold.</i>
                 </span>
             </label>
             <div class="ao-pr-center">

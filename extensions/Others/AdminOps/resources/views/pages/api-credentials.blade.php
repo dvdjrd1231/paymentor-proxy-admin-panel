@@ -119,8 +119,13 @@
                         <label class="ao-api-field">
                             <span>Admin User</span>
                             <select wire:model="newUser">
+                                {{-- The email is part of the label, not decoration: this
+                                     deployment has two admins both called "Admin You", and
+                                     without it the select showed the same words twice
+                                     (Leandro, 2026-09-07). --}}
                                 @foreach ($admins as $admin)
-                                    <option value="{{ $admin->id }}">{{ trim($admin->first_name . ' ' . $admin->last_name) ?: $admin->email }}</option>
+                                    @php $who = trim($admin->first_name . ' ' . $admin->last_name); @endphp
+                                    <option value="{{ $admin->id }}">{{ $who ? $who . ' (' . $admin->email . ')' : $admin->email }}</option>
                                 @endforeach
                             </select>
                         </label>
