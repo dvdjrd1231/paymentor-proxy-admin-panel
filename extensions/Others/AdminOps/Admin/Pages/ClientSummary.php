@@ -8,6 +8,7 @@ use App\Admin\Resources\TicketResource;
 use App\Admin\Resources\UserResource;
 use App\Enums\InvoiceTransactionStatus;
 use App\Models\Invoice;
+use App\Models\Service;
 use App\Models\InvoiceTransaction;
 use App\Models\User;
 use Carbon\Carbon;
@@ -150,6 +151,199 @@ class ClientSummary extends Page
         'notes' => 'Notes',
         'log' => 'Log',
     ];
+
+    // ── The Summary tab's selection and Bulk Actions row ────────────────────────
+    //
+    // Leandro, 2026-09-07: "I want it to be 100% identical to the WHMCS one." The
+    // reference's tables lead with a tick column and close with a With Selected row and a
+    // Bulk Actions row; both were missing, and With Selected was a pair of dead buttons.
+
+    /** @var array<int|string, bool> Ticked services, keyed by service id. */
+    public array $picked = [];
+
+    /** pending | active | suspended | cancelled — the reference's "- Set Status -". */
+    public string $bulkStatus = '';
+
+    public bool $bulkHold = false;
+
+    public string $bulkHoldUntil = '';
+
+    /** Which bulk action is awaiting its "Are you sure?" — invoice | delete | apply. */
+    public ?string $confirmingBulk = null;
+
+    /** @return array<int> */
+    private function pickedIds(): array
+    {
+        return array_map('intval', array_keys(array_filter($this->picked)));
+    }
+
+    /** The header tick: all of this client's services, or none. */
+    public function toggleAll(bool $on): void
+    {
+        $this->picked = $on
+            ? Service::where('user_id', $this->customer->id)->pluck('id')->mapWithKeys(fn ($id) => [$id => true])->all()
+            : [];
+    }
+
+    public function askBulk(string $action): void
+    {
+        if ($this->pickedIds() === []) {
+            Notification::make()->title('Tick at least one item first.')->warning()->send();
+
+            return;
+        }
+
+        $this->confirmingBulk = $action;
+    }
+
+    public function runBulk(): void
+    {
+        $action = $this->confirmingBulk;
+        $this->confirmingBulk = null;
+
+        // Re-read from the database rather than trusting the ids: a tick is client-side,
+        // and only this customer's services may be touched from this customer's page.
+        $services = Service::whereIn('id', $this->pickedIds())
+            ->where('user_id', $this->customer->id)->get();
+
+        if ($services->isEmpty()) {
+            return;
+        }
+
+        match ($action) {
+            'invoice' => $this->invoiceSelected($services),
+            'delete' => $this->deleteSelected($services),
+            'apply' => $this->applyBulk($services),
+            default => null,
+        };
+
+        $this->picked = [];
+    }
+
+    /**
+     * The reference's "Invoice Selected Items": one invoice for the client carrying a line
+     * per ticked service, each line referencing the service it bills — the same shape
+     * core's own renewal invoices have, so payment flows through it unchanged.
+     */
+    private function invoiceSelected($services): void
+    {
+        if (!InvoiceResource::canCreate()) {
+            Notification::make()->title('Not allowed')->danger()->send();
+
+            return;
+        }
+
+        // One currency per invoice: an invoice has a single currency_code, so services
+        // priced in two currencies cannot share one. The reference never faces this
+        // because it converts everything to the client's currency.
+        $currencies = $services->pluck('currency_code')->unique();
+
+        if ($currencies->count() > 1) {
+            Notification::make()->title('Mixed currencies')
+                ->body('The ticked services are priced in ' . $currencies->implode(', ')
+                    . '. Invoice one currency at a time.')->danger()->send();
+
+            return;
+        }
+
+        $invoice = DB::transaction(function () use ($services, $currencies) {
+            $invoice = Invoice::create([
+                'user_id' => $this->customer->id,
+                'currency_code' => $currencies->first(),
+                'due_at' => now()->addDays(7),
+                'status' => 'pending',
+            ]);
+
+            foreach ($services as $service) {
+                $invoice->items()->create([
+                    'description' => ($service->product?->name ?? 'Service') . ' #' . $service->id,
+                    'price' => (float) $service->price,
+                    'quantity' => max(1, (int) $service->quantity),
+                    'reference_id' => $service->id,
+                    'reference_type' => Service::class,
+                ]);
+            }
+
+            return $invoice;
+        });
+
+        Notification::make()->title('Invoice #' . ($invoice->number ?: $invoice->id) . ' created')
+            ->body($services->count() . ' item(s), due in 7 days.')->success()->send();
+    }
+
+    /** The reference's "Delete Selected Items" — the record, not the provisioned service. */
+    private function deleteSelected($services): void
+    {
+        if (!ServiceResource::canViewAny()) {
+            Notification::make()->title('Not allowed')->danger()->send();
+
+            return;
+        }
+
+        $active = $services->whereIn('status', ['active', 'suspended']);
+
+        if ($active->isNotEmpty()) {
+            // Deleting the row leaves whatever the panel provisioned running and unbilled,
+            // which is the one outcome nobody wants from a bulk button.
+            Notification::make()->title('Terminate first')
+                ->body('Service(s) ' . $active->pluck('id')->implode(', ') . ' are still live. '
+                    . 'Terminate them before deleting the records.')->danger()->send();
+
+            return;
+        }
+
+        $count = $services->count();
+        Service::whereIn('id', $services->pluck('id'))->delete();
+
+        Notification::make()->title($count . ' service record(s) deleted')->success()->send();
+    }
+
+    /** The reference's Bulk Actions row: Set Status, and Do Not Suspend Until. */
+    private function applyBulk($services): void
+    {
+        if ($this->bulkStatus === '' && !$this->bulkHold) {
+            Notification::make()->title('Nothing to apply')
+                ->body('Choose a status, or set a "do not suspend until" date.')->warning()->send();
+
+            return;
+        }
+
+        $until = null;
+
+        if ($this->bulkHold) {
+            foreach (['m/d/Y', 'Y-m-d'] as $format) {
+                try {
+                    $until = \Carbon\Carbon::createFromFormat($format, trim($this->bulkHoldUntil));
+                    break;
+                } catch (\Throwable $e) {
+                }
+            }
+
+            if (!$until) {
+                Notification::make()->title('Enter a date as MM/DD/YYYY')->danger()->send();
+
+                return;
+            }
+        }
+
+        foreach ($services as $service) {
+            if ($this->bulkStatus !== '') {
+                $service->update(['status' => $this->bulkStatus]);
+            }
+
+            if ($until) {
+                // The same property the service editor writes, enforced by the same hourly
+                // ServiceOverrides sweep — not a second mechanism doing the same job.
+                $service->properties()->updateOrCreate(
+                    ['key' => 'no_suspend_until'],
+                    ['name' => 'Do Not Suspend Until', 'value' => $until->format('Y-m-d')],
+                );
+            }
+        }
+
+        Notification::make()->title($services->count() . ' service(s) updated')->success()->send();
+        $this->reset(['bulkStatus', 'bulkHold', 'bulkHoldUntil']);
+    }
 
     /**
      * The tab labels, with the reference's live "Notes (n)" count.

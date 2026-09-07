@@ -300,9 +300,19 @@
         @foreach ($bands as $band)
             <div class="ao-cs-band">
                 <h4>{{ $band['title'] }}</h4>
+                @php $tickable = $band['title'] === 'Products/Services'; @endphp
                 <table class="ao-mu-grid">
                     <thead>
                         <tr>
+                            {{-- The reference leads every one of these tables with a tick
+                                 column. Only Products/Services can act on it here — the
+                                 other three have no rows to act on. --}}
+                            <th class="ao-cs-tick">
+                                @if ($tickable)
+                                    <input type="checkbox" wire:click="toggleAll($event.target.checked)"
+                                        aria-label="Select all services">
+                                @endif
+                            </th>
                             @foreach ($band['head'] as $column)
                                 <th>{{ $column }}</th>
                             @endforeach
@@ -313,6 +323,10 @@
                         @if ($band['title'] === 'Products/Services')
                             @forelse ($band['rows'] as $service)
                                 <tr>
+                                    <td class="ao-cs-tick">
+                                        <input type="checkbox" wire:model.live="picked.{{ $service->id }}"
+                                            aria-label="Select service {{ $service->id }}">
+                                    </td>
                                     <td>{{ $service->id }}</td>
                                     <td class="ao-mu-left"><a href="{{ $urls['service']($service->id) }}">{{ $service->product?->name ?? '—' }} - (No Domain)</a></td>
                                     <td>${{ number_format((float) $service->price, 2) }} {{ $service->currency_code }}</td>
@@ -323,11 +337,12 @@
                                     <td class="ao-mu-actions"><a href="{{ $urls['service']($service->id) }}" title="Open">+</a></td>
                                 </tr>
                             @empty
-                                <tr><td colspan="8" class="ao-mu-none">No records found</td></tr>
+                                <tr><td colspan="9" class="ao-mu-none">No records found</td></tr>
                             @endforelse
                         @elseif ($band['title'] === 'Current Quotes')
                             @forelse ($band['rows'] as $quote)
                                 <tr>
+                                    <td class="ao-cs-tick"></td>
                                     <td>{{ $quote->id }}</td>
                                     <td class="ao-mu-left">{{ $quote->subject }}</td>
                                     <td>{{ \Carbon\Carbon::parse($quote->created_at)->format('m/d/Y') }}</td>
@@ -337,10 +352,10 @@
                                     <td></td>
                                 </tr>
                             @empty
-                                <tr><td colspan="7" class="ao-mu-none">No records found</td></tr>
+                                <tr><td colspan="8" class="ao-mu-none">No records found</td></tr>
                             @endforelse
                         @else
-                            <tr><td colspan="8" class="ao-mu-none">No records found</td></tr>
+                            <tr><td colspan="9" class="ao-mu-none">No records found</td></tr>
                         @endif
                     </tbody>
                 </table>
@@ -361,14 +376,72 @@
             </div>
         @endforeach
 
-        {{-- The reference's bulk row. Disabled: bulk invoicing and bulk deletion have no
-             backend here, and a live-looking button that destroys nothing (or worse,
-             something) would be the wrong kind of faithful. --}}
+        {{-- The reference's two closing rows, both live since 2026-09-07. They act on the
+             ticked services only, and every action re-reads them from the database scoped
+             to this customer — a tick is client-side and cannot be trusted with an id. --}}
         <div class="ao-cs-selected">
             With Selected:
-            <button type="button" disabled title="Not available">&#8635; Invoice Selected Items</button>
-            <button type="button" class="ao-cs-danger" disabled title="Not available">&#128465; Delete Selected Items</button>
+            <button type="button" wire:click="askBulk('invoice')"
+                title="Raise one invoice carrying a line per ticked service">&#8635; Invoice Selected Items</button>
+            <button type="button" class="ao-cs-danger" wire:click="askBulk('delete')"
+                title="Delete the ticked service records — live services must be terminated first">&#128465; Delete Selected Items</button>
         </div>
+
+        <div class="ao-cs-bulk">
+            <span class="ao-cs-bulk-label">Bulk Actions</span>
+            <select wire:model="bulkStatus" aria-label="Set status">
+                <option value="">- Set Status -</option>
+                <option value="pending">Pending</option>
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="cancelled">Terminated</option>
+            </select>
+            {{-- Dead with the reason on it: a service's payment method is not a column
+                 here, it is read back from the gateway of its last transaction, so there
+                 is nothing to set. --}}
+            <select disabled aria-label="Set payment method"
+                title="A service's payment method is derived from its last transaction's gateway — there is no field to set">
+                <option>- Set Payment Method -</option>
+            </select>
+            <label class="ao-cs-bulk-hold">
+                <input type="checkbox" wire:model.live="bulkHold"> Do not suspend until
+            </label>
+            @include('adminops::partials.datepicker', [
+                'model' => 'bulkHoldUntil', 'range' => false, 'id' => 'ao-cs-bulk-hold',
+                'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+            ])
+            <span class="ao-cs-bulk-right">
+                <button type="button" class="ao-find-go" wire:click="askBulk('apply')">Apply</button>
+            </span>
+        </div>
+
+        @if ($confirmingBulk)
+            <div class="ao-mud-overlay" wire:click.self="$set('confirmingBulk', null)">
+                <div class="ao-mud ao-mud-sm" role="alertdialog" aria-modal="true">
+                    <div class="ao-mud-head">
+                        Are you sure?
+                        <button type="button" wire:click="$set('confirmingBulk', null)" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="ao-mud-text">
+                        @if ($confirmingBulk === 'invoice')
+                            <p>Raise one invoice for the ticked service(s)?</p>
+                            <p>It is created unpaid and due in seven days.</p>
+                        @elseif ($confirmingBulk === 'delete')
+                            <p>Delete the ticked service record(s)?</p>
+                            <p>Anything still live must be terminated first — this removes the record, not the provisioned service.</p>
+                        @else
+                            <p>Apply these changes to the ticked service(s)?</p>
+                        @endif
+                    </div>
+                    <div class="ao-mud-foot ao-mud-foot-only-right">
+                        <span class="ao-mud-foot-right">
+                            <button type="button" class="ao-mud-close" wire:click="$set('confirmingBulk', null)">Cancel</button>
+                            <button type="button" class="{{ $confirmingBulk === 'delete' ? 'ao-mud-delete' : 'ao-find-go' }}" wire:click="runBulk">OK</button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        @endif
 
     @elseif ($tab === 'profile')
         {{-- The reference's Profile tab is the client's *edit form*, prefilled — the same
