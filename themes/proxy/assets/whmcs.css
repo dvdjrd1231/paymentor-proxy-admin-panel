@@ -1092,6 +1092,11 @@
         padding: 12px 14px; font-size: .82rem; color: var(--wf-ink);
     }
     .wf-notif-row + .wf-notif-row { border-top: 1px solid var(--wf-panel-border); }
+
+    /* The rows are links now, so they must read and behave as ones: no underline, the
+       panel's own ink, and a hover that shows the whole row is the target. */
+    a.wf-notif-row { text-decoration: none; cursor: pointer; }
+    a.wf-notif-row:hover { background: var(--wf-section, #f5f5f5); color: var(--wf-ink); }
     .wf-notif-ico {
         flex: 0 0 auto; width: 1.15rem; height: 1.15rem; border-radius: 50%;
         display: inline-flex; align-items: center; justify-content: center;
