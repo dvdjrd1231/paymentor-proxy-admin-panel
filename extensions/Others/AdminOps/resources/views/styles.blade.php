@@ -5387,10 +5387,130 @@
         line-height: 1.6;
     }
 
-    /* API Credentials (issue #50): the reference's Generate button is green. */
-    .ao-api-generate { background: #5cb85c; border-color: #4cae4c; color: #fff; }
+    /* API Credentials (issue #50): the reference's Generate button is green. It used to
+       be one of the tab strip's buttons and inherited its chrome; it stands on its own
+       under the tabs now, as the reference has it, so it carries its own. */
+    .ao-api-generate {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        height: 2.1rem;
+        padding: 0 0.9rem;
+        border: 1px solid #4cae4c;
+        border-radius: 4px;
+        background: #5cb85c;
+        color: #fff;
+        font: inherit;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
 
     .ao-api-generate:hover { background: #449d44; color: #fff; }
+
+    /* The button row sits left under the tabs, not centred like a form's actions. */
+    .ao-gs-actions-left { justify-content: flex-start; }
+
+    /* ── The two API modals ──────────────────────────────────────────────────────
+       Generate New API Credential, and Role Management with its Allowed API Actions
+       split pane — categories down the left, the open category's actions on the right. */
+    .ao-mud-lg { width: min(56rem, 94vw); }
+
+    .ao-api-modal {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        text-align: left;
+    }
+
+    .ao-api-field { display: flex; flex-direction: column; gap: 0.3rem; }
+
+    .ao-api-field > span { font-weight: 600; font-size: 0.9rem; }
+
+    .ao-api-field input,
+    .ao-api-field select,
+    .ao-api-field textarea {
+        width: 100%;
+        padding: 0.35rem 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.9rem;
+    }
+
+    .ao-api-field i { color: #666; font-size: 0.85rem; font-style: normal; line-height: 1.4; }
+
+    /* Role Name and Description sit label-left in the reference, unlike the stacked
+       fields of the Generate modal. */
+    .ao-api-field-row {
+        display: grid;
+        grid-template-columns: 8rem minmax(0, 1fr);
+        align-items: start;
+        column-gap: 1rem;
+    }
+
+    .ao-api-field-row > span { padding-top: 0.4rem; text-align: right; }
+
+    .ao-api-actions-head {
+        margin: 0.4rem 0 0;
+        padding: 0.5rem 0.7rem;
+        background: #f5f5f5;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-bottom: 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .ao-api-split {
+        display: grid;
+        grid-template-columns: 13rem minmax(0, 1fr);
+        border: 1px solid var(--wa-panel-border, #ddd);
+        background: #fff;
+    }
+
+    .ao-api-cats {
+        margin: 0;
+        padding: 0;
+        max-height: 17rem;
+        overflow-y: auto;
+        list-style: none;
+        border-right: 1px solid var(--wa-panel-border, #ddd);
+    }
+
+    .ao-api-cats button {
+        display: block;
+        width: 100%;
+        padding: 0.35rem 0.8rem;
+        border: 0;
+        background: none;
+        color: var(--wa-ink, #2b2b2b);
+        font: inherit;
+        font-size: 0.9rem;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .ao-api-cats button:hover { background: #f0f0f0; }
+    .ao-api-cats button.ao-on { background: #1b4d7f; color: #fff; }
+
+    .ao-api-acts {
+        max-height: 17rem;
+        overflow-y: auto;
+        padding: 0.6rem 0.9rem;
+    }
+
+    .ao-api-acts h6 {
+        margin: 0 0 0.4rem;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    @media (max-width: 700px) {
+        .ao-api-split { grid-template-columns: minmax(0, 1fr); }
+        .ao-api-cats { max-height: 9rem; border-right: 0; border-bottom: 1px solid var(--wa-panel-border, #ddd); }
+        .ao-api-field-row { grid-template-columns: minmax(0, 1fr); }
+        .ao-api-field-row > span { text-align: left; }
+    }
 
     /* Affiliates detail (issue #6): the reference's framed two-column summary with
        label-left rows, editable commission fields inline. */
