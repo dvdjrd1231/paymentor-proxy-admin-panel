@@ -29,8 +29,8 @@
                             <span class="ao-gs-label">{{ $field['label'] }}</span>
                             <div class="ao-gs-field">
                                 <input type="text" value="Not available" disabled>
-                                <span class="ao-gs-hint">{{ $field['why'] }}</span>
                             </div>
+                            <div class="ao-gs-hint">{{ $field['why'] }}</div>
                         </div>
                         @continue
                     @endif
@@ -77,10 +77,11 @@
                                     <input type="text" id="gs-{{ $name }}" wire:model="values.{{ $name }}">
                             @endswitch
 
-                            @if (!empty($field['hint']))
-                                <span class="ao-gs-hint">{{ $field['hint'] }}</span>
-                            @endif
                         </div>
+                        {{-- The hint is its own column, as the reference has it. Nested
+                             inside the field it wrapped underneath on any row whose
+                             control was wide, which is why the page read as ragged. --}}
+                        <div class="ao-gs-hint">{{ $field['hint'] ?? '' }}</div>
                     </div>
                 @endforeach
         </div>
