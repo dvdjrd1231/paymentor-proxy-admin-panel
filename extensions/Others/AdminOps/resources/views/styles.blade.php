@@ -4055,6 +4055,15 @@
 
     .ao-st-bulk button:hover { background: #f0f0f0; }
 
+    /* Disabled until a row is ticked, and visibly so — the previous behaviour raised an
+       "Are you sure?", took the confirmation, then did nothing, which reads as broken. */
+    .ao-st-bulk button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .ao-st-bulk button:disabled:hover { background: #fff; }
+
     .ao-st-bulk .ao-st-danger {
         background: #d9534f;
         border-color: #d43f3a;
