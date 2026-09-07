@@ -38,7 +38,13 @@
                         @php $key = $entry['row']; @endphp
                         <tr>
                             <td class="ao-mu-left">
-                                <code title="Truncated — the full token is the secret itself and is only shown once, when it is generated">{{ str($key->token)->limit(10) }}</code>
+                                {{-- The reference shows a 32-character identifier in full, so
+                                     this does too. It is the first half of the stored SHA-256
+                                     of the token, which identifies the credential uniquely and
+                                     is not itself a secret: the token cannot be derived from
+                                     its hash, let alone from half of one. The token is shown
+                                     once, at generation, and never again. --}}
+                                <code class="ao-api-ident" title="Identifier for this credential — not the token">{{ substr((string) $key->token, 0, 32) }}</code>
                             </td>
                             <td class="ao-mu-left">
                                 @if ($entry['edit'])

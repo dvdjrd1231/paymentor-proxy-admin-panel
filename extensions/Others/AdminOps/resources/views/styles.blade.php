@@ -5763,8 +5763,17 @@
 
     .ao-api-generate:hover { background: #449d44; color: #fff; }
 
-    /* The button row sits left under the tabs, not centred like a form's actions. */
-    .ao-gs-actions-left { justify-content: flex-start; }
+    /* The button row sits left under the tabs, not centred like a form's actions, and
+       clear of the grid beneath it (Leandro, 2026-09-07: "there should be space between
+       button and main table"). */
+    .ao-gs-actions-left { justify-content: flex-start; margin-bottom: 0.9rem; }
+
+    /* The reference prints its identifier in full; ours is long, so it gets the room. */
+    .ao-api-ident {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.82rem;
+        white-space: nowrap;
+    }
 
     /* ── The two API modals ──────────────────────────────────────────────────────
        Generate New API Credential, and Role Management with its Allowed API Actions

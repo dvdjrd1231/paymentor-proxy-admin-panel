@@ -5,7 +5,7 @@
 
     Rows come from Support\SettingsReference, which lists the reference's fields in its
     order. A row either drives a real Paymenter setting or renders disabled with the
-    reason it cannot — see the page class for why the disabled ones are here rather than
+    reason it cannot — see the page class for how a field gets here rather than
     quietly dropped.
 --}}
 <x-filament-panels::page>
@@ -21,19 +21,8 @@
             @foreach ($fields as $field)
                     @php $name = $field['name'] ?? null; $type = $field['type'] ?? 'text'; @endphp
 
-                    @if (empty($name))
-                        {{-- No Paymenter setting behind it. Shown, not hidden: an admin
-                             hunting for a WHMCS switch should find out here that it does
-                             not exist, rather than assume the page is incomplete. --}}
-                        <div class="ao-gs-row ao-gs-row-off">
-                            <span class="ao-gs-label">{{ $field['label'] }}</span>
-                            <div class="ao-gs-field">
-                                <input type="text" value="Not available" disabled>
-                            </div>
-                            <div class="ao-gs-hint">{{ $field['why'] }}</div>
-                        </div>
-                        @continue
-                    @endif
+                    {{-- Every row is a real setting now; the disabled branch that used to
+                         live here went with the fields it drew (Leandro, 2026-09-07). --}}
 
                     <div class="ao-gs-row">
                         <label class="ao-gs-label" for="gs-{{ $name }}">{{ $field['label'] ?? $name }}</label>
