@@ -43,6 +43,24 @@ class ReleasePlan
      */
     public function build(): array
     {
+        $touchpoints = static::touchpointFiles();
+
+        // Refuse rather than guess. With no touchpoint list every modified core file
+        // would be classified "safe to take", which is the most dangerous answer this
+        // class can give and the one that looks most reassuring. It happened for real:
+        // docs/ was not mounted into the container, so the list came back empty and forty
+        // changed files — ExtensionHelper and UserResource among them — read as safe.
+        if ($touchpoints === []) {
+            return [
+                'version' => $this->version,
+                'counts' => [],
+                'files' => [],
+                'error' => 'docs/CORE-TOUCHPOINTS.md could not be read, so the files carrying '
+                    . 'our own changes cannot be identified. Refusing to show a plan that would '
+                    . 'call every one of them safe to take.',
+            ];
+        }
+
         try {
             $root = $this->fetchRelease();
         } catch (\Throwable $exception) {
@@ -53,8 +71,6 @@ class ReleasePlan
                 'error' => $exception->getMessage(),
             ];
         }
-
-        $touchpoints = static::touchpointFiles();
         $files = [];
         $counts = ['same' => 0, 'changed' => 0, 'touchpoint' => 0, 'new' => 0];
 

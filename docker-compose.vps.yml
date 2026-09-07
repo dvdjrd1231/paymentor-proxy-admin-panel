@@ -92,6 +92,12 @@ services:
       # Verification and maintenance tooling. Without this the scripts have to be copied
       # in by hand after every pull, and a stale copy silently tests the wrong code.
       - "./scripts:/app/scripts"
+      # docs/ is read at runtime by the Update Paymenter screen: CORE-TOUCHPOINTS.md is
+      # the list of core files carrying our own modifications, and the release plan marks
+      # them so they are never taken from upstream unreviewed. Without this mount the file
+      # is simply absent and every touchpoint reads as "safe to take" — the exact wrong
+      # answer, which is why the plan now refuses to render rather than guess.
+      - "./docs:/app/docs:ro"
       #   config/            - same reason as app/ and lang/ above. Without it the image's
       #                        own copies win and a committed config change is silently
       #                        absent from the running site. That is not hypothetical:
