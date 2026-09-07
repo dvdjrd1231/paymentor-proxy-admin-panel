@@ -91,7 +91,9 @@ class EditCurrency extends Page
             'name' => 'required|string|max:255',
             'prefix' => 'nullable|string|max:10',
             'suffix' => 'nullable|string|max:10',
-            'format' => 'in:' . implode(',', CurrenciesList::FORMATS),
+            // Rule::in — see the note in {@see CurrenciesList::addCurrency}; the formats
+            // contain commas, which the "in:a,b" string form treats as separators.
+            'format' => [\Illuminate\Validation\Rule::in(CurrenciesList::FORMATS)],
             'rate' => $this->isBase() ? 'nullable' : 'nullable|numeric|gt:0',
         ], attributes: ['rate' => 'base conversion rate']);
 
