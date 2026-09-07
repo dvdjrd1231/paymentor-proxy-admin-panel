@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\Schema;
  */
 class ServiceOverrides
 {
-    /** @return array{terminated: int, unsuspended: int, exempt: int, merged: int} */
+    /** @return array{terminated: int, unsuspended: int, exempt: int} */
     public static function sweep(): array
     {
         $terminated = 0;
@@ -92,14 +92,10 @@ class ServiceOverrides
             ->where('value', '<=', now()->toDateString())
             ->delete();
 
-        // Client groups: Separate Invoices off - fold the client's pending invoices.
-        $merge = ClientGroup::mergeInvoices();
-
         return [
             'terminated' => $terminated,
             'unsuspended' => $unsuspended,
             'exempt' => $exempt,
-            'merged' => $merge['merged'],
         ];
     }
 
