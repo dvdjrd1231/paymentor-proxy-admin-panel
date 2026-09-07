@@ -2343,7 +2343,11 @@
     .ao-anc-field i {
         font-style: normal;
         color: var(--wa-muted, #6b6b6b);
-        white-space: nowrap;
+        /* Was nowrap, which suited the one-line "eg. USD, GBP" hints these rows were
+           built for and clipped anything longer at the panel edge — the Upload Extension
+           hint lost its last four words (screenshot, 2026-09-07). Long hints wrap now;
+           short ones still sit on one line because the row has the width for them. */
+        min-width: 0;
     }
 
     .ao-anc-generate {
