@@ -45,12 +45,14 @@ class UpdatePaymenter extends Page
     protected static bool $shouldRegisterNavigation = false;
 
     /**
-     * The upstream release the vendored core sits after. The vendor commit (c71388c,
-     * 2026-07-17) took upstream master between v1.5.6 (Jun 30) and v1.5.7 (Jul 25), so
-     * the release line this install carries is 1.5.6 plus master commits. Update this
-     * alongside any re-vendor of core.
+     * The upstream release the vendored core sits at.
+     *
+     * Raised to 1.5.8 on 2026-09-07: the release was vendored file by file — 31 changed
+     * files and one new one taken as-is, and the nine files `docs/CORE-TOUCHPOINTS.md`
+     * records as modified compared by hand, all nine of which turned out to already carry
+     * 1.5.8's content plus our changes. Update this alongside any re-vendor of core.
      */
-    public const VENDORED_BASE = '1.5.6';
+    public const VENDORED_BASE = '1.5.8';
 
     /** How long a fetched latest-version answer is trusted before asking again. */
     private const CACHE_HOURS = 6;

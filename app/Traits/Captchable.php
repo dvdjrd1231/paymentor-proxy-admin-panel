@@ -9,13 +9,17 @@ trait Captchable
 {
     public string $captcha = '';
 
-    // CAPTCHA is deliberately checked only by submit methods. Livewire updates happen while
-    // users type and must not turn a solved widget into a validation error mid-form.
+    private $is_valid = false;
+
+    public function updated()
+    {
+        $this->captcha();
+    }
+
+    // Captchable
     private function captcha()
     {
-        $provider = config('settings.captcha');
-
-        if (!$provider || $provider === 'disabled') {
+        if (!config('settings.captcha') || config('settings.captcha') == 'disabled' || $this->is_valid) {
             return;
         }
 
@@ -23,67 +27,80 @@ trait Captchable
             throw ValidationException::withMessages(['captcha' => 'The CAPTCHA is required.']);
         }
 
-        if ($provider === 'turnstile') {
+        if (config('settings.captcha') == 'turnstile') {
             $this->turnstile($this->captcha);
-        } elseif ($provider === 'hcaptcha') {
+        } elseif (config('settings.captcha') == 'hcaptcha') {
             $this->hcaptcha($this->captcha);
-        } elseif (in_array($provider, ['recaptcha-v2', 'recaptcha-v3'], true)) {
-            $this->recaptcha($this->captcha, $provider);
+        } elseif (config('settings.captcha') == 'recaptcha-v2' || config('settings.captcha') == 'recaptcha-v3') {
+            $this->recaptcha($this->captcha);
         }
     }
 
     // Turnstile
     private function turnstile($value)
     {
-        $response = Http::asForm()->acceptJson()->timeout(10)->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+        $itempotencyKey = uniqid();
+
+        $response = Http::asForm()->acceptJson()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
             'secret' => config('settings.captcha_secret'),
             'response' => $value,
             'remoteip' => request()->ip(),
+            'idempotency_key' => $itempotencyKey,
         ]);
 
-        if ($response->successful() && $response->json('success') === true) {
-            return;
+        if ($response->json()['success']) {
+            return $this->is_valid = true;
+        }
+
+        $subResponse = Http::asForm()->acceptJson()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+            'secret' => config('settings.captcha_secret'),
+            'response' => $value,
+            'remoteip' => request()->ip(),
+            'idempotency_key' => $itempotencyKey,
+        ]);
+
+        if ($subResponse->json()['success']) {
+            return $this->is_valid = true;
         }
 
         throw ValidationException::withMessages(['captcha' => 'The CAPTCHA was invalid.']);
+
+        return $this->is_valid = false;
     }
 
     // Google Recaptcha
-    private function recaptcha($value, string $provider)
+    private function recaptcha($value)
     {
-        $response = Http::asForm()->acceptJson()->timeout(10)->post('https://www.google.com/recaptcha/api/siteverify', [
+        $response = Http::asForm()->acceptJson()->post('https://www.google.com/recaptcha/api/siteverify', [
             'secret' => config('settings.captcha_secret'),
             'response' => $value,
             'remoteip' => request()->ip(),
         ]);
 
-        if ($response->successful() && $response->json('success') === true) {
-            if ($provider !== 'recaptcha-v3' || $this->recaptchaActionMatches($response->json('action'))) {
-                return;
-            }
+        if ($response->json()['success']) {
+            return $this->is_valid = true;
         }
 
         throw ValidationException::withMessages(['captcha' => 'The CAPTCHA was invalid.']);
+
+        return $this->is_valid = false;
     }
 
     // hCaptcha
     private function hcaptcha($value)
     {
-        $response = Http::asForm()->acceptJson()->timeout(10)->post('https://api.hcaptcha.com/siteverify', [
+        $response = Http::asForm()->acceptJson()->post('https://api.hcaptcha.com/siteverify', [
             'secret' => config('settings.captcha_secret'),
             'response' => $value,
             'remoteip' => request()->ip(),
         ]);
 
-        if ($response->successful() && $response->json('success') === true) {
-            return;
+        if ($response->json()['success']) {
+            return $this->is_valid = true;
         }
 
         throw ValidationException::withMessages(['captcha' => 'The CAPTCHA was invalid.']);
-    }
 
-    private function recaptchaActionMatches(?string $action): bool
-    {
-        return $action === (class_basename(static::class) === 'Register' ? 'register' : 'login');
+        return $this->is_valid = false;
     }
 }

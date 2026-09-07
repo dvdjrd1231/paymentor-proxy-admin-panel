@@ -222,17 +222,23 @@ class ReleasePlan
             return [];
         }
 
-        // Lines read "**File:** `app/...php`, method ..." or "**Files:** `a`, `b`".
-        preg_match_all('/\*\*Files?:\*\*(.+)/', (string) file_get_contents($doc), $lines);
+        // Every backticked path anywhere in the document, not only the ones on a
+        // "**File:**" line. Touchpoint 9 named its file in the *heading* instead, so a
+        // parser that trusted that convention missed it — and on 2026-09-07 that let the
+        // 1.5.8 upgrade overwrite app/Models/Plan.php as though it were an ordinary file.
+        // Over-matching is the safe direction here: a path mentioned in passing is
+        // reported as ours and a human looks at it, which costs a glance. Missing one
+        // silently deletes a customisation.
+        preg_match_all(
+            '/`([^`]+\.(?:php|blade\.php|js|css|json))`/',
+            (string) file_get_contents($doc),
+            $paths,
+        );
 
         $files = [];
 
-        foreach ($lines[1] ?? [] as $line) {
-            preg_match_all('/`([^`]+\.(?:php|blade\.php|js|css|json))`/', $line, $paths);
-
-            foreach ($paths[1] ?? [] as $path) {
-                $files[ltrim(trim($path), '/')] = true;
-            }
+        foreach ($paths[1] ?? [] as $path) {
+            $files[ltrim(trim($path), '/')] = true;
         }
 
         return $files;
