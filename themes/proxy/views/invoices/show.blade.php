@@ -1,7 +1,33 @@
 {{-- Invoice detail — WHMCS "Six" style. Same Livewire bindings as the default theme
      (pay modal, payment polling, PDF download); only the chrome is restyled. --}}
 <div class="wf-page">
-    <div @if ($checkPayment) wire:poll.5s="checkPaymentStatus" @endif>
+    @php
+        /**
+         * Is a payment attempt genuinely still in flight?
+         *
+         * Core answers "yes" for as long as *any* transaction sits in `processing`, and
+         * nothing ever clears one: a customer who opens a crypto gateway and does not pay
+         * leaves that row behind for good. From then on the invoice shows PAYMENT
+         * PROCESSING, core hides Pay Now, and the invoice can never be paid again — which
+         * also breaks Add Funds, because it sends the customer to the existing unpaid
+         * deposit invoice rather than making a new one. Leandro hit exactly this on
+         * INV-252 (2026-09-07: "the payment progress should work as perfectly. Add fun
+         * process is not working as well"); the row behind it was 11 hours old.
+         *
+         * So an attempt counts as live only while it is recent. Past the grace period it
+         * is treated as abandoned and the invoice becomes payable again — the transaction
+         * is left alone, so a late confirmation still lands normally.
+         */
+        $processingGrace = (int) config('settings.invoice_processing_grace_minutes', 60);
+        $liveAttempt = $invoice->transactions
+            ->where('status', \App\Enums\InvoiceTransactionStatus::Processing)
+            ->filter(fn ($t) => $t->created_at && $t->created_at->gt(now()->subMinutes($processingGrace)))
+            ->isNotEmpty();
+    @endphp
+
+    {{-- Polling follows the live attempt, not core's flag: a stale one would have this
+         page calling back every five seconds forever. --}}
+    <div @if ($checkPayment && $liveAttempt) wire:poll.5s="checkPaymentStatus" @endif>
         @if ($this->pay || $showPayModal)
             @include('invoices.partials.payment-modal')
         @endif
@@ -20,8 +46,9 @@
                 @php
                     $isPaid = $invoice->status === 'paid';
                     $isCancelled = $invoice->status === 'cancelled';
-                    $processing = $invoice->transactions
-                        ->where('status', \App\Enums\InvoiceTransactionStatus::Processing)->count() > 0;
+                    // Only a live attempt earns the PAYMENT PROCESSING word. An abandoned
+                    // one reads UNPAID, which is what the invoice actually is.
+                    $processing = $liveAttempt;
                 @endphp
 
                 <div @class([
@@ -48,7 +75,7 @@
                 @endif
 
                 <div class="wf-actions wf-actions--center" style="margin-top:.6rem">
-                    @if ($invoice->status === 'pending' && !$checkPayment)
+                    @if ($invoice->status === 'pending' && !$liveAttempt)
                         {{-- Green, as on the reference, where the brand colour is reserved for
                              navigation and the pay action is the one green control.
 
@@ -76,9 +103,13 @@
 
         <hr class="wf-title-rule">
 
-        {{-- The duplicate-payment warning is the only thing from the old status bar that is
-             not carried by the new header, so it stays as a standalone notice. --}}
-        @if ($invoice->transactions->where('status', \App\Enums\InvoiceTransactionStatus::Processing)->count() > 0 && !$checkPayment)
+        {{-- An abandoned attempt is worth saying out loud. Pay Now is back, so without this
+             the customer has no idea an earlier attempt is still on record — and if it does
+             confirm late, they would be surprised by the second charge. Core's own
+             duplicate-payment string says exactly this, so it is reused rather than
+             reworded. The live case says nothing here: the header already reads PAYMENT
+             PROCESSING and the page is polling. --}}
+        @if (!$liveAttempt && $invoice->transactions->where('status', \App\Enums\InvoiceTransactionStatus::Processing)->isNotEmpty())
             <div class="wf-alert wf-alert--notice">{{ __('invoices.duplicate_payment') }}</div>
         @endif
 
