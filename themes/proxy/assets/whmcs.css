@@ -1033,6 +1033,55 @@
     }
     .wf-footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
     .wf-footer-copy { margin: 0; font-size: 12.6px; color: var(--brand); }
+    /* ---- Contacts, to the reference portal --------------------------------
+       A tinted Choose Contact band over a two-column form, the columns filled
+       left-to-right in the reference's order rather than one column at a time. */
+    .wf-choose {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: .75rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: var(--wf-radius);
+        background: var(--wf-section, #fdf2f5);
+    }
+
+    .wf-choose label { font-weight: 600; color: var(--wf-ink); }
+    .wf-choose select { min-width: 22rem; }
+
+    .wf-contact-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem 2.5rem;
+    }
+
+    /* Keeps Country alone on the right, as the reference lays it out. */
+    .wf-contact-spacer { visibility: hidden; }
+
+    .wf-contact-heading {
+        margin: 2rem 0 1rem;
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: var(--brand);
+    }
+
+    .wf-contact-prefs { display: flex; flex-direction: column; gap: .5rem; }
+
+    .wf-contact-actions {
+        display: flex;
+        justify-content: center;
+        gap: .6rem;
+        margin-top: 1.75rem;
+    }
+
+    @media (max-width: 720px) {
+        .wf-contact-grid { grid-template-columns: minmax(0, 1fr); }
+        .wf-contact-spacer { display: none; }
+        .wf-choose select { min-width: 0; width: 100%; }
+    }
+
     /* The social links General Settings' Social tab fills in. Only the networks that
        have a value are rendered, so this row is absent on a store that sets none. */
     .wf-footer-social {

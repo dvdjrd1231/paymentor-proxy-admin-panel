@@ -19,12 +19,14 @@ class Contact extends Model
 
     protected $fillable = [
         'user_id', 'first_name', 'last_name', 'email', 'phone', 'company_name',
-        'address', 'city', 'state', 'zip', 'country', 'is_sub_account', 'permissions',
+        'address', 'address2', 'city', 'state', 'zip', 'country', 'is_sub_account',
+        'permissions', 'email_preferences',
     ];
 
     protected $casts = [
         'is_sub_account' => 'boolean',
         'permissions' => 'array',
+        'email_preferences' => 'array',
     ];
 
     /**
@@ -32,6 +34,12 @@ class Contact extends Model
      * Labels live in the language file so the wording can change without a code edit.
      */
     public const PERMISSIONS = ['invoices', 'services', 'tickets', 'account', 'affiliates'];
+
+    /**
+     * The reference's Email Preferences, in its order. A list of ticked keys rather than
+     * five columns, so a sixth category is a label rather than a migration.
+     */
+    public const EMAIL_PREFERENCES = ['general', 'invoice', 'support', 'product', 'domain'];
 
     public function user(): BelongsTo
     {

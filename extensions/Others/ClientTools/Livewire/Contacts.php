@@ -18,12 +18,16 @@ class Contacts extends Component
     /** Id being edited, or null while adding a new contact. */
     public ?int $editing = null;
 
-    public bool $showForm = false;
+    /** The Choose Contact select - '' is the reference's "Add New Contact". */
+    public string $chosen = '';
 
-    public array $form = [
+    public array $form = self::BLANK;
+
+    private const BLANK = [
         'first_name' => '', 'last_name' => '', 'email' => '', 'phone' => '',
-        'company_name' => '', 'address' => '', 'city' => '', 'state' => '',
+        'company_name' => '', 'address' => '', 'address2' => '', 'city' => '', 'state' => '',
         'zip' => '', 'country' => '', 'is_sub_account' => false, 'permissions' => [],
+        'email_preferences' => [],
     ];
 
     protected function rules(): array
@@ -35,6 +39,7 @@ class Contacts extends Component
             'form.phone' => 'nullable|string|max:255',
             'form.company_name' => 'nullable|string|max:255',
             'form.address' => 'nullable|string|max:255',
+            'form.address2' => 'nullable|string|max:255',
             'form.city' => 'nullable|string|max:255',
             'form.state' => 'nullable|string|max:255',
             'form.zip' => 'nullable|string|max:255',
@@ -42,14 +47,24 @@ class Contacts extends Component
             'form.is_sub_account' => 'boolean',
             'form.permissions' => 'array',
             'form.permissions.*' => 'in:' . implode(',', Contact::PERMISSIONS),
+            'form.email_preferences' => 'array',
+            'form.email_preferences.*' => 'in:' . implode(',', Contact::EMAIL_PREFERENCES),
         ];
     }
 
-    public function newContact(): void
+    /** The reference's Go button: load whatever the selector is on. */
+    public function choose(): void
     {
-        $this->reset('form', 'editing');
         $this->resetValidation();
-        $this->showForm = true;
+
+        if ($this->chosen === '') {
+            $this->editing = null;
+            $this->form = self::BLANK;
+
+            return;
+        }
+
+        $this->edit((int) $this->chosen);
     }
 
     public function edit(int $id): void
@@ -64,16 +79,18 @@ class Contacts extends Component
             'phone' => $contact->phone ?? '',
             'company_name' => $contact->company_name ?? '',
             'address' => $contact->address ?? '',
+            'address2' => $contact->address2 ?? '',
             'city' => $contact->city ?? '',
             'state' => $contact->state ?? '',
             'zip' => $contact->zip ?? '',
             'country' => $contact->country ?? '',
             'is_sub_account' => $contact->is_sub_account,
             'permissions' => $contact->permissions ?? [],
+            'email_preferences' => $contact->email_preferences ?? [],
         ];
 
+        $this->chosen = (string) $contact->id;
         $this->resetValidation();
-        $this->showForm = true;
     }
 
     public function save()
@@ -85,11 +102,12 @@ class Contacts extends Component
         if ($this->editing) {
             $this->ownedContact($this->editing)->update($data);
         } else {
-            Contact::create($data);
+            // Stay on the contact just created, as the reference does - the selector
+            // moves to it rather than snapping back to Add New Contact.
+            $contact = Contact::create($data);
+            $this->editing = $contact->id;
+            $this->chosen = (string) $contact->id;
         }
-
-        $this->showForm = false;
-        $this->reset('form', 'editing');
 
         return $this->notify(__('clienttools.contact_saved'));
     }
@@ -98,13 +116,16 @@ class Contacts extends Component
     {
         $this->ownedContact($id)->delete();
 
+        $this->cancel();
+
         return $this->notify(__('clienttools.contact_deleted'));
     }
 
     public function cancel(): void
     {
-        $this->showForm = false;
-        $this->reset('form', 'editing');
+        $this->editing = null;
+        $this->chosen = '';
+        $this->form = self::BLANK;
         $this->resetValidation();
     }
 
@@ -124,6 +145,7 @@ class Contacts extends Component
         return view('clienttools::contacts', [
             'contacts' => Contact::where('user_id', Auth::id())->orderBy('first_name')->get(),
             'permissionKeys' => Contact::PERMISSIONS,
+            'emailPreferenceKeys' => Contact::EMAIL_PREFERENCES,
         ]);
     }
 }

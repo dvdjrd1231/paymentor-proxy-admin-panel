@@ -1,149 +1,147 @@
-{{-- Contacts — the people listed on this account, and the form to add or edit one. --}}
+{{--
+    Contacts, to the reference portal (Leandro, 2026-09-07, screenshot of
+    my.noxproxy.com/account/contacts): a Choose Contact band over one always-visible
+    two-column form, then Email Preferences, closed by Save Changes / Cancel.
+
+    It used to be a list of contact cards with a form that appeared on demand. That is a
+    different interaction — the reference never shows a list, it shows one contact at a
+    time and switches with the selector.
+--}}
 <div class="wf-page">
     <div class="wf-title">
         <h1>{{ __('clienttools.contacts') }}</h1>
-        <span>{{ __('clienttools.contacts_subtitle') }}</span>
     </div>
     <hr class="wf-title-rule">
 
     <div class="wf-crumb">
         <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a>
         <span>/</span><a href="{{ route('dashboard') }}" wire:navigate>{{ __('theme.client_area') }}</a>
+        <span>/</span><a href="{{ route('account') }}" wire:navigate>{{ __('theme.account_details') }}</a>
         <span>/</span>{{ __('clienttools.contacts') }}
     </div>
 
-{{-- The Account rail beside the content, as on every account page of the reference. --}}
-<div class="wf-layout">
-    <x-account-rail active="contacts" />
-    <div>
+    <div class="wf-layout">
+        <x-account-rail active="contacts" />
+        <div>
+            {{-- The reference's tinted Choose Contact band. Go is a real submit rather
+                 than a live select: the reference has the button, and loading a contact
+                 the moment the select changes would discard anything half-typed without
+                 asking. --}}
+            <form class="wf-choose" wire:submit.prevent="choose">
+                <label for="ct_choose">{{ __('clienttools.choose_contact') }}</label>
+                <select id="ct_choose" class="wf-input" wire:model="chosen">
+                    <option value="">{{ __('clienttools.contact_new') }}</option>
+                    @foreach ($contacts as $contact)
+                        <option value="{{ $contact->id }}">{{ $contact->name }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="wf-btn">{{ __('clienttools.go') }}</button>
+            </form>
 
-    @if ($showForm)
-        <div class="wf-panel">
-            <div class="wf-panel-heading">
-                <span>{{ $editing ? __('clienttools.contact_edit') : __('clienttools.contact_new') }}</span>
-            </div>
-            <div class="wf-panel-body">
-                <form wire:submit.prevent="save">
-                    <div class="wf-section">{{ __('theme.personal_information') }}</div>
-                    <div class="wf-grid">
-                        <div class="wf-field">
-                            <label for="c_first">{{ __('general.input.first_name') }}<span class="wf-req">*</span></label>
-                            <input id="c_first" type="text" class="wf-input" wire:model="form.first_name">
-                            @error('form.first_name') <span class="wf-error">{{ $message }}</span> @enderror
-                        </div>
-                        <div class="wf-field">
-                            <label for="c_last">{{ __('general.input.last_name') }}<span class="wf-req">*</span></label>
-                            <input id="c_last" type="text" class="wf-input" wire:model="form.last_name">
-                            @error('form.last_name') <span class="wf-error">{{ $message }}</span> @enderror
-                        </div>
-                        <div class="wf-field">
-                            <label for="c_email">{{ __('general.input.email') }}<span class="wf-req">*</span></label>
-                            <input id="c_email" type="email" class="wf-input" wire:model="form.email">
-                            @error('form.email') <span class="wf-error">{{ $message }}</span> @enderror
-                        </div>
-                        <div class="wf-field">
-                            <label for="c_phone">{{ __('theme.phone_number') }}</label>
-                            <input id="c_phone" type="text" class="wf-input" wire:model="form.phone">
-                            @error('form.phone') <span class="wf-error">{{ $message }}</span> @enderror
-                        </div>
+            <form wire:submit.prevent="save">
+                <div class="wf-contact-grid">
+                    <div class="wf-field">
+                        <label for="c_first">{{ __('general.input.first_name') }}</label>
+                        <input id="c_first" type="text" class="wf-input" wire:model="form.first_name">
+                        @error('form.first_name') <span class="wf-error">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="wf-field">
+                        <label for="c_addr1">{{ __('clienttools.address_1') }}</label>
+                        <input id="c_addr1" type="text" class="wf-input" wire:model="form.address">
                     </div>
 
-                    <div class="wf-section">{{ __('theme.billing_address') }}</div>
-                    <div class="wf-grid">
-                        <div class="wf-field wf-col-2">
-                            <label for="c_company">{{ __('theme.company_name') }}</label>
-                            <input id="c_company" type="text" class="wf-input" wire:model="form.company_name">
-                        </div>
-                        <div class="wf-field wf-col-2">
-                            <label for="c_address">{{ __('theme.street_address') }}</label>
-                            <input id="c_address" type="text" class="wf-input" wire:model="form.address">
-                        </div>
-                        <div class="wf-field">
-                            <label for="c_city">{{ __('theme.city') }}</label>
-                            <input id="c_city" type="text" class="wf-input" wire:model="form.city">
-                        </div>
-                        <div class="wf-field">
-                            <label for="c_state">{{ __('theme.state_region') }}</label>
-                            <input id="c_state" type="text" class="wf-input" wire:model="form.state">
-                        </div>
-                        <div class="wf-field">
-                            <label for="c_zip">{{ __('theme.postcode') }}</label>
-                            <input id="c_zip" type="text" class="wf-input" wire:model="form.zip">
-                        </div>
-                        <div class="wf-field">
-                            <label for="c_country">{{ __('theme.country') }}</label>
-                            <input id="c_country" type="text" class="wf-input" wire:model="form.country">
-                        </div>
+                    <div class="wf-field">
+                        <label for="c_last">{{ __('general.input.last_name') }}</label>
+                        <input id="c_last" type="text" class="wf-input" wire:model="form.last_name">
+                        @error('form.last_name') <span class="wf-error">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="wf-field">
+                        <label for="c_addr2">{{ __('clienttools.address_2') }}</label>
+                        <input id="c_addr2" type="text" class="wf-input" wire:model="form.address2">
                     </div>
 
-                    {{-- Promoting a contact to a sub-account is what puts them on the User
-                         Management page, so the permission list is revealed with the toggle. --}}
-                    <div class="wf-section">{{ __('clienttools.contact_access') }}</div>
-                    <div class="wf-panel-body" style="padding-left:0">
+                    <div class="wf-field">
+                        <label for="c_company">{{ __('theme.company_name') }}</label>
+                        <input id="c_company" type="text" class="wf-input" wire:model="form.company_name">
+                    </div>
+                    <div class="wf-field">
+                        <label for="c_city">{{ __('theme.city') }}</label>
+                        <input id="c_city" type="text" class="wf-input" wire:model="form.city">
+                    </div>
+
+                    <div class="wf-field">
+                        <label for="c_email">{{ __('general.input.email') }}</label>
+                        <input id="c_email" type="email" class="wf-input" wire:model="form.email">
+                        @error('form.email') <span class="wf-error">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="wf-field">
+                        <label for="c_state">{{ __('theme.state_region') }}</label>
+                        <input id="c_state" type="text" class="wf-input" wire:model="form.state">
+                    </div>
+
+                    <div class="wf-field">
+                        <label for="c_phone">{{ __('theme.phone_number') }}</label>
+                        <input id="c_phone" type="text" class="wf-input" wire:model="form.phone"
+                               placeholder="+1 201-555-0123">
+                    </div>
+                    <div class="wf-field">
+                        <label for="c_zip">{{ __('theme.postcode') }}</label>
+                        <input id="c_zip" type="text" class="wf-input" wire:model="form.zip">
+                    </div>
+
+                    {{-- Country sits alone in the right column, as the reference has it:
+                         the left column has one field fewer. --}}
+                    <div class="wf-field wf-contact-spacer"></div>
+                    <div class="wf-field">
+                        <label for="c_country">{{ __('theme.country') }}</label>
+                        <input id="c_country" type="text" class="wf-input" wire:model="form.country">
+                    </div>
+                </div>
+
+                <h2 class="wf-contact-heading">{{ __('clienttools.email_preferences') }}</h2>
+                <div class="wf-contact-prefs">
+                    @foreach ($emailPreferenceKeys as $key)
                         <label class="wf-check">
-                            <input type="checkbox" wire:model.live="form.is_sub_account">
-                            <span>{{ __('clienttools.contact_is_sub_account') }}</span>
+                            <input type="checkbox" value="{{ $key }}" wire:model="form.email_preferences">
+                            <span>{{ __('clienttools.email_pref_' . $key) }}</span>
                         </label>
+                    @endforeach
+                </div>
 
-                        @if ($form['is_sub_account'])
-                            <div style="margin-top:.75rem">
-                                @foreach ($permissionKeys as $key)
-                                    <label class="wf-check" style="display:block">
-                                        <input type="checkbox" value="{{ $key }}" wire:model="form.permissions">
-                                        <span>{{ __('clienttools.perm_' . $key) }}</span>
-                                    </label>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
+                {{-- Sub-account access is ours, not the reference's — it is what puts a
+                     contact on the User Management page, so it stays, below the fold of
+                     the fields the reference does show. --}}
+                <h2 class="wf-contact-heading">{{ __('clienttools.contact_access') }}</h2>
+                <div class="wf-contact-prefs">
+                    <label class="wf-check">
+                        <input type="checkbox" wire:model.live="form.is_sub_account">
+                        <span>{{ __('clienttools.contact_is_sub_account') }}</span>
+                    </label>
 
-                    <div class="wf-actions">
-                        <button type="submit" class="wf-btn">{{ __('clienttools.contact_save') }}</button>
-                        <button type="button" class="wf-btn wf-btn--ghost" wire:click="cancel">
-                            {{ __('clienttools.cancel') }}
+                    @if ($form['is_sub_account'])
+                        @foreach ($permissionKeys as $key)
+                            <label class="wf-check">
+                                <input type="checkbox" value="{{ $key }}" wire:model="form.permissions">
+                                <span>{{ __('clienttools.perm_' . $key) }}</span>
+                            </label>
+                        @endforeach
+                    @endif
+                </div>
+
+                <div class="wf-contact-actions">
+                    <button type="submit" class="wf-btn">{{ __('clienttools.contact_save') }}</button>
+                    <button type="button" class="wf-btn wf-btn--ghost" wire:click="cancel">
+                        {{ __('clienttools.cancel') }}
+                    </button>
+                    @if ($editing)
+                        <button type="button" class="wf-btn wf-btn--danger"
+                                wire:click="delete({{ $editing }})"
+                                wire:confirm="{{ __('clienttools.contact_delete_confirm') }}">
+                            {{ __('clienttools.delete') }}
                         </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    @endif
-
-    <div class="wf-panel">
-        <div class="wf-panel-heading">
-            <span><span class="wf-head-icon"><x-ri-contacts-book-2-fill /></span>{{ __('clienttools.contacts') }}</span>
-            <button type="button" class="wf-btn wf-btn--sm" wire:click="newContact">
-                + {{ __('clienttools.contact_new') }}
-            </button>
-        </div>
-
-        @forelse ($contacts as $contact)
-            <div class="wf-list-row">
-                <div class="wf-row-main">
-                    <div class="wf-list-title">
-                        {{ $contact->name }}
-                        @if ($contact->is_sub_account)
-                            <span class="wf-label wf-label--success">{{ __('clienttools.contact_sub_account') }}</span>
-                        @endif
-                    </div>
-                    <span class="wf-list-sub">
-                        {{ $contact->email }}@if ($contact->phone) &middot; {{ $contact->phone }}@endif
-                    </span>
+                    @endif
                 </div>
-                <div class="wf-actions">
-                    <button type="button" class="wf-btn wf-btn--sm" wire:click="edit({{ $contact->id }})">
-                        {{ __('clienttools.edit') }}
-                    </button>
-                    <button type="button" class="wf-btn wf-btn--sm wf-btn--danger"
-                            wire:click="delete({{ $contact->id }})"
-                            wire:confirm="{{ __('clienttools.contact_delete_confirm') }}">
-                        {{ __('clienttools.delete') }}
-                    </button>
-                </div>
-            </div>
-        @empty
-            <div class="wf-empty">{{ __('clienttools.contacts_empty') }}</div>
-        @endforelse
+            </form>
+        </div>
     </div>
-    </div>
-</div>
 </div>
