@@ -5387,6 +5387,57 @@
         line-height: 1.6;
     }
 
+    /* ── Available Extensions ────────────────────────────────────────────────────
+       The marketplace grid. Cards rather than a table: each listing is a name, a
+       type and a paragraph, which reads badly as a row and well as a card. */
+    .ao-ax-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+        gap: 0.8rem;
+    }
+
+    .ao-ax-card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        padding: 0.8rem 0.9rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+    }
+
+    .ao-ax-card h5 { margin: 0; font-size: 1rem; font-weight: 600; }
+
+    .ao-ax-type {
+        align-self: flex-start;
+        padding: 0.05rem 0.45rem;
+        border-radius: 10px;
+        background: #eef3f8;
+        color: #1b4d7f;
+        font-size: 0.78rem;
+    }
+
+    .ao-ax-card p {
+        flex: 1 1 auto;
+        margin: 0;
+        color: #555;
+        font-size: 0.88rem;
+        line-height: 1.45;
+    }
+
+    .ao-ax-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        color: #777;
+        font-size: 0.82rem;
+    }
+
+    .ao-ax-note { margin: 0; color: #555; font-size: 0.9rem; }
+
+    .ao-ax-author { color: #777; font-style: normal; }
+
     /* ── The Client Profile's selection and Bulk Actions row ─────────────────────
        The reference leads its summary tables with a tick column and closes them with
        With Selected and Bulk Actions. */

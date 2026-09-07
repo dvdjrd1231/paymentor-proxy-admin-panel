@@ -82,6 +82,29 @@ class AdminOps extends Extension
         $this->retireCoreCurrencyScreens();
         $this->retireCoreRoleScreens();
         $this->keepExtensionMigrationsApplied();
+        $this->retireCoreExtensionBrowser();
+    }
+
+    /**
+     * Core's Available Extensions screen could not be brought to the house standard with
+     * CSS: its heading is the raw class name — "Extension" — and it draws a second sidebar
+     * inside the content, repeating what the left rail already carries. Both are markup.
+     * {@see Admin\Pages\AvailableExtensions} is that screen rebuilt, and core's URL, with
+     * its `?tab=` intact, lands there.
+     */
+    private function retireCoreExtensionBrowser(): void
+    {
+        \Illuminate\Support\Facades\Route::middleware(['web'])->get('/admin/extensions/extension', function () {
+            if (!\Illuminate\Support\Facades\Auth::check()) {
+                return redirect()->guest('/admin/login');
+            }
+
+            // core's ?tab=installable is this page's own tab name too, so the query
+            // string carries over untouched and a bookmarked tab still opens.
+            return redirect()->to(Admin\Pages\AvailableExtensions::getUrl(
+                array_filter(['tab' => request()->query('tab')]),
+            ));
+        });
     }
 
     /**
