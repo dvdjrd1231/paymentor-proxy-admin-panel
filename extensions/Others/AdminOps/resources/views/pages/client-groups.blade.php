@@ -61,8 +61,8 @@
                 <span>Group Discount %</span>
                 <span class="ao-anc-field">
                     <input type="text" class="ao-w-25" wire:model="discount" inputmode="decimal" placeholder="0">
-                    <i>Stored, but not applied yet — pricing has no hook for it here. It will
-                        show on the group and change nothing until that exists.</i>
+                    <i>Applied as its own line on every invoice raised for a member, so the
+                        reduction is visible rather than hidden inside a product's price.</i>
                 </span>
             </label>
             <label class="ao-anc-row">
@@ -76,7 +76,9 @@
                 <span>Separate Invoices for Services</span>
                 <span class="ao-anc-field">
                     <input type="checkbox" wire:model="separateInvoices">
-                    <i>Stored, but not applied yet — invoice generation has no hook for it here.</i>
+                    <i>Paymenter already raises one invoice per service, which is this ticked.
+                        Unticked, a member's pending invoices in the same currency are folded into
+                        one on the hourly sweep — never one money has been recorded against.</i>
                 </span>
             </label>
             <div class="ao-pr-center">

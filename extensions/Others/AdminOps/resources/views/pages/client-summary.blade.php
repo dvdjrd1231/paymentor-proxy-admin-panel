@@ -159,7 +159,7 @@
                     <div class="ao-cp-body">
                         <table class="ao-cp-kv">
                             <tr><td>Status</td><td>{{ $isActive ? 'Active' : 'Inactive' }}</td></tr>
-                            <tr><td>Client Group</td><td>None</td></tr>
+                            <tr><td>Client Group</td><td>{{ $clientGroup?->name ?? 'None' }}</td></tr>
                             <tr><td>Signup Date</td><td>{{ $user->created_at?->format('m/d/Y') }}</td></tr>
                             <tr><td>Client For</td><td>{{ $user->created_at?->diffForHumans(null, true) }}</td></tr>
                             <tr>
@@ -460,7 +460,17 @@
                         <label class="ao-anc-row"><span>Email Address</span><input type="email" wire:model="pf.email" placeholder="user@example.com" required></label>
                         <label class="ao-anc-row"><span>Language</span><select><option>Default</option></select></label>
                         <label class="ao-anc-row"><span>Status</span><select><option>{{ $user->services()->whereIn('status', ['pending', 'active', 'suspended'])->exists() ? 'Active' : 'Inactive' }}</option></select></label>
-                        <label class="ao-anc-row"><span>Client Group</span><select><option>None</option></select></label>
+                        {{-- Real since 2026-09-07: the group carries a discount, a
+                             suspend exemption and the separate-invoice rule. --}}
+                        <label class="ao-anc-row">
+                            <span>Client Group</span>
+                            <select class="ao-w-40" wire:model="pfGroup">
+                                <option value="">None</option>
+                                @foreach ($clientGroups as $group)
+                                    <option value="{{ $group->id }}">{{ $group->name }}</option>
+                                @endforeach
+                            </select>
+                        </label>
                     </div>
                     <div class="ao-anc-col">
                         <label class="ao-anc-row"><span>Address 1</span><input type="text" wire:model="pf.address" placeholder="123 Market Street"></label>
