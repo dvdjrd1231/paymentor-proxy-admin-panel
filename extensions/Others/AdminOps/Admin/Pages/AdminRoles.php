@@ -102,12 +102,15 @@ class AdminRoles extends Page
     protected function getViewData(): array
     {
         return [
+            // Both links go to {@see RoleGroup} — core's resource screens are retired
+            // (Leandro, 2026-09-07: "there should be only one page"), and its edit page
+            // refused role 1 outright, which is the 403 he was seeing.
             'roles' => Role::orderBy('id')->get()->map(fn (Role $role) => [
                 'row' => $role,
                 'assigned' => User::where('role_id', $role->id)->orderBy('email')->pluck('email'),
-                'edit' => RoleResource::canEdit($role) ? RoleResource::getUrl('edit', ['record' => $role]) : null,
+                'edit' => RoleGroup::getUrl(['record' => $role->id]),
             ]),
-            'newUrl' => RoleResource::canCreate() ? RoleResource::getUrl('create') : null,
+            'newUrl' => RoleResource::canCreate() ? RoleGroup::getUrl() : null,
         ];
     }
 }

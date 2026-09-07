@@ -80,6 +80,43 @@ class AdminOps extends Extension
         $this->sweepServiceOverrides();
         $this->retireRawProductList();
         $this->retireCoreCurrencyScreens();
+        $this->retireCoreRoleScreens();
+    }
+
+    /**
+     * Leandro, 2026-09-07: "Why there are two pages and there should be only one page".
+     * Core's Roles resource and our Administrator Roles screen were both reachable, and
+     * only ours carries the reference's design — so `/admin/roles` and its create and
+     * edit URLs all land on ours now. One screen, reachable from either address.
+     *
+     * `/admin/roles/1/edit` was the "error" in his second point: it answers 403 because
+     * {@see \App\Admin\Resources\RoleResource::canEdit} refuses the full-administrator
+     * group outright. {@see Admin\Pages\RoleGroup} allows it, with a guard on the one
+     * edit that cannot be undone — see that class.
+     */
+    private function retireCoreRoleScreens(): void
+    {
+        $guarded = function (callable $to) {
+            return function (...$arguments) use ($to) {
+                if (!\Illuminate\Support\Facades\Auth::check()) {
+                    return redirect()->guest('/admin/login');
+                }
+
+                return redirect()->to($to(...$arguments));
+            };
+        };
+
+        \Illuminate\Support\Facades\Route::middleware(['web'])
+            ->get('/admin/roles', $guarded(fn () => Admin\Pages\AdminRoles::getUrl()));
+
+        // Registered before the `{record}` route so "create" is never read as an id.
+        \Illuminate\Support\Facades\Route::middleware(['web'])
+            ->get('/admin/roles/create', $guarded(fn () => Admin\Pages\RoleGroup::getUrl()));
+
+        \Illuminate\Support\Facades\Route::middleware(['web'])
+            ->get('/admin/roles/{record}/edit', $guarded(
+                fn (string $record) => Admin\Pages\RoleGroup::getUrl(['record' => $record]),
+            ));
     }
 
     /**

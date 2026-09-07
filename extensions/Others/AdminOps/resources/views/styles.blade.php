@@ -1769,6 +1769,134 @@
         max-width: none;
     }
 
+    /* ── The role editor ────────────────────────────────────────────────────────
+       The reference's Administrator Roles form: Name over a three-column matrix of
+       every permission, grouped by subject so a column break never splits a group. */
+    .ao-rg {
+        padding: 1rem 1.2rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+    }
+
+    .ao-tx-tabs + .ao-rg { border-top-left-radius: 0; }
+
+    .ao-rg-name {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 0.9rem;
+    }
+
+    .ao-rg-name input {
+        flex: 1 1 auto;
+        max-width: 32rem;
+        height: 1.9rem;
+        padding: 0 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        font: inherit;
+        font-size: 0.9rem;
+    }
+
+    .ao-rg-all {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 4px;
+        background: #f5f5f5;
+        font-size: 0.9rem;
+    }
+
+    .ao-rg-all i { color: #666; font-style: normal; }
+
+    .ao-rg-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0 1.5rem;
+        padding-top: 0.9rem;
+    }
+
+    /* The whole matrix is inert while All Permissions is on — the checkboxes are
+       already disabled, this is what makes that visible at a glance. */
+    .ao-rg-grid[aria-disabled="true"] { opacity: 0.5; }
+
+    .ao-rg-col { min-width: 0; }
+
+    .ao-rg-group {
+        margin: 0.7rem 0 0.2rem;
+        color: var(--wa-ink, #2b2b2b);
+        font-size: 0.82rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .ao-rg-col > .ao-rg-group:first-child { margin-top: 0; }
+
+    .ao-rg-perm {
+        display: flex;
+        align-items: baseline;
+        gap: 0.4rem;
+        padding: 0.1rem 0;
+        font-size: 0.9rem;
+        line-height: 1.35;
+    }
+
+    .ao-rg-perm input { accent-color: var(--wa-link, #337ab7); }
+
+    .ao-rg-bulk {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.4rem;
+        padding-top: 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .ao-rg-bulk button {
+        color: var(--wa-link, #337ab7);
+        background: none;
+        border: 0;
+        cursor: pointer;
+    }
+
+    .ao-rg-bulk button:hover { text-decoration: underline; }
+    .ao-rg-bulk button:disabled { color: #999; cursor: default; text-decoration: none; }
+
+    .ao-rg-tail {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 0.9rem;
+        border-top: 1px solid var(--wa-panel-border, #ddd);
+    }
+
+    .ao-rg-tail-row {
+        display: grid;
+        grid-template-columns: 12rem minmax(0, 1fr);
+        align-items: start;
+        column-gap: 1rem;
+    }
+
+    .ao-rg-tail-fields {
+        display: flex;
+        gap: 1.2rem;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .ao-rg-tail-stack { flex-direction: column; gap: 0.25rem; }
+
+    .ao-rg-tail-fields label { display: flex; align-items: baseline; gap: 0.4rem; }
+
+    @media (max-width: 900px) {
+        .ao-rg-grid { grid-template-columns: minmax(0, 1fr); }
+        .ao-rg-tail-row { grid-template-columns: minmax(0, 1fr); }
+    }
+
     .ao-of-row input:focus,
     .ao-of-row select:focus {
         outline: 2px solid var(--wa-link, #337ab7);
