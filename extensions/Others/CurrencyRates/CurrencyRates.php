@@ -122,8 +122,15 @@ class CurrencyRates extends Extension
         });
     }
 
-    /** Run one synchronisation. Safe to call from the scheduler or by hand. */
-    public function sync(bool $dryRun = false): array
+    /**
+     * Run one synchronisation. Safe to call from the scheduler or by hand.
+     *
+     * @param  bool  $useStoredRates  Rewrite prices from the Base Conv. Rate already stored
+     *                                against each currency instead of asking the provider —
+     *                                the Currencies screen's "Update Product Prices", which
+     *                                is how a rate an admin typed in becomes real money.
+     */
+    public function sync(bool $dryRun = false, bool $useStoredRates = false): array
     {
         $targets = array_filter(array_map('trim', explode(',', (string) $this->config('target_currencies'))));
 
@@ -140,7 +147,7 @@ class CurrencyRates extends Extension
         );
 
         try {
-            $result = $sync->run($dryRun);
+            $result = $sync->run($dryRun, $useStoredRates ? $this->storedRates($targets) : null);
 
             Log::channel('stack')->info('[CurrencyRates] sync complete', $result);
 
@@ -152,5 +159,28 @@ class CurrencyRates extends Extension
 
             return ['rates' => [], 'updated' => 0, 'unchanged' => 0, 'skipped' => 0, 'created' => [], 'error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * The rates already stored against each currency. A currency with no rate yet is left
+     * out rather than defaulted to 1, which would silently price it as though it were the
+     * base — the sync then skips it and says so in its log line.
+     *
+     * @param  array<int,string>  $targets
+     * @return array<string,float>
+     */
+    private function storedRates(array $targets): array
+    {
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('currencies', 'base_conv_rate')) {
+            return [];
+        }
+
+        return \Illuminate\Support\Facades\DB::table('currencies')
+            ->whereIn('code', array_map(fn ($code) => strtoupper(trim($code)), $targets))
+            ->whereNotNull('base_conv_rate')
+            ->where('base_conv_rate', '>', 0)
+            ->pluck('base_conv_rate', 'code')
+            ->map(fn ($rate) => (float) $rate)
+            ->all();
     }
 }

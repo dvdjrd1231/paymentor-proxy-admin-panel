@@ -6,6 +6,7 @@ use App\Models\Currency;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Keeps secondary-currency prices in step with a published exchange rate.
@@ -41,10 +42,18 @@ class RateSync
         'USD' => ['name' => 'US Dollar', 'prefix' => '$', 'format' => '1,000.00'],
     ];
 
-    /** @return array{rates: array<string,float>, updated: int, unchanged: int, skipped: int, created: array<string>} */
-    public function run(bool $dryRun = false): array
+    /**
+     * @param  array<string,float>|null  $overrideRates  Use these rates instead of asking the
+     *                                                   provider — the Currencies screen's
+     *                                                   "Update Product Prices", which rewrites
+     *                                                   prices from the Base Conv. Rate an admin
+     *                                                   set by hand. Already-effective values, so
+     *                                                   the FX buffer is not applied a second time.
+     * @return array{rates: array<string,float>, updated: int, unchanged: int, skipped: int, created: array<string>}
+     */
+    public function run(bool $dryRun = false, ?array $overrideRates = null): array
     {
-        $rates = $this->fetchRates();
+        $rates = $overrideRates ?? $this->fetchRates();
         $summary = ['rates' => [], 'updated' => 0, 'unchanged' => 0, 'skipped' => 0, 'created' => []];
 
         foreach ($this->targets as $code) {
@@ -55,14 +64,21 @@ class RateSync
             }
 
             if (!isset($rates[$code])) {
-                Log::channel('stack')->warning('[CurrencyRates] provider did not return a rate', ['currency' => $code]);
+                Log::channel('stack')->warning('[CurrencyRates] no rate available', ['currency' => $code]);
                 continue;
             }
 
-            $rate = (float) $rates[$code] * (1 + $this->markupPercent / 100);
+            $rate = $overrideRates === null
+                ? (float) $rates[$code] * (1 + $this->markupPercent / 100)
+                : (float) $rates[$code];
             $summary['rates'][$code] = round($rate, 6);
 
             $result = $this->syncCurrency($code, $rate, $dryRun);
+
+            if (!$dryRun) {
+                $this->recordRate($code, $rate);
+            }
+
             $summary['updated'] += $result['updated'];
             $summary['unchanged'] += $result['unchanged'];
             $summary['skipped'] += $result['skipped'];
@@ -72,7 +88,35 @@ class RateSync
             }
         }
 
+        if (!$dryRun) {
+            // The base converts to itself at 1, which is what the reference's grid shows
+            // against it. Written here rather than left to the migration so it stays true
+            // after someone changes which currency is the base.
+            $this->recordRate($this->base, 1.0);
+        }
+
         return $summary;
+    }
+
+    /**
+     * Keep the rate that was actually used in `currencies.base_conv_rate`, so the
+     * Currencies screen shows a real number instead of a dash and prices can later be
+     * rewritten from it. Skipped silently when the column is absent — AdminOps owns the
+     * migration that adds it, and this module has to keep working without it.
+     */
+    private function recordRate(string $code, float $rate): void
+    {
+        try {
+            if (!Schema::hasColumn('currencies', 'base_conv_rate')) {
+                return;
+            }
+
+            DB::table('currencies')->where('code', $code)->update(['base_conv_rate' => round($rate, 8)]);
+        } catch (\Throwable $e) {
+            Log::channel('stack')->warning('[CurrencyRates] could not record the rate', [
+                'currency' => $code, 'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /** @return array<string,float> */

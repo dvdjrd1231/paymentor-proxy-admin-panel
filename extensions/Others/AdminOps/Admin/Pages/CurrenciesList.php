@@ -10,10 +10,16 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
  * Issue #46 — WHMCS's Currencies screen: the intro, the navy grid, the update buttons,
- * and the Add Additional Currency inline form. WHMCS's two buttons (Update Exchange
- * Rates / Update Product Prices) are one real operation here: the CurrencyRates
- * extension pulls the published rate and rewrites the secondary-currency prices in one
- * sync, because Paymenter stores a price per currency rather than a conversion rate.
+ * and the Add Additional Currency inline form.
+ *
+ * Base Conv. Rate is a real stored column since 2026-09-07 (Leandro: "these pages don't
+ * have 'Base Conv, Rate' Field. it is basic foundation to update these pages") — see the
+ * `add_base_conv_rate_to_currencies` migration. That also splits WHMCS's two buttons into
+ * the two different operations they name, which until now were one:
+ *
+ *  - **Update Exchange Rates** asks the provider for today's rates and stores them.
+ *  - **Update Product Prices** rewrites secondary-currency prices from the rates already
+ *    stored — including one an admin typed in here by hand.
  */
 class CurrenciesList extends Page
 {
@@ -37,6 +43,8 @@ class CurrenciesList extends Page
     public string $newSuffix = '';
 
     public string $newFormat = '1,000.00';
+
+    public string $newRate = '';
 
     public static function canAccess(): bool
     {
@@ -74,9 +82,10 @@ class CurrenciesList extends Page
             'newPrefix' => 'nullable|string|max:8',
             'newSuffix' => 'nullable|string|max:8',
             'newFormat' => 'in:' . implode(',', self::FORMATS),
-        ], attributes: ['newCode' => 'currency code']);
+            'newRate' => 'nullable|numeric|gt:0',
+        ], attributes: ['newCode' => 'currency code', 'newRate' => 'base conversion rate']);
 
-        Currency::create([
+        $currency = Currency::create([
             'code' => strtoupper($this->newCode),
             'name' => $this->newName ?: strtoupper($this->newCode),
             'prefix' => $this->newPrefix,
@@ -84,14 +93,27 @@ class CurrenciesList extends Page
             'format' => $this->newFormat,
         ]);
 
-        $this->reset(['adding', 'newCode', 'newName', 'newPrefix', 'newSuffix']);
+        // `base_conv_rate` is ours, so core's Currency model does not list it as fillable
+        // and create() would drop it silently — the same trap the service `label` sprang.
+        if ($this->newRate !== '') {
+            $currency->forceFill(['base_conv_rate' => (float) $this->newRate])->save();
+        }
+
+        $this->reset(['adding', 'newCode', 'newName', 'newPrefix', 'newSuffix', 'newRate']);
         Notification::make()->title('Currency added')
             ->body('Give products a price in it, or let Currency Rates fill prices on its next sync.')
             ->success()->send();
     }
 
-    /** WHMCS's two update buttons as the one real operation both describe. */
-    public function updateRates(): void
+    /**
+     * WHMCS's two update buttons.
+     *
+     * @param  bool  $fromStoredRates  false — Update Exchange Rates: ask the provider for
+     *                                 today's rates. true — Update Product Prices: rewrite
+     *                                 prices from the Base Conv. Rate already stored, which
+     *                                 is what makes a hand-typed rate take effect.
+     */
+    public function updateRates(bool $fromStoredRates = false): void
     {
         $enabled = \App\Models\Extension::where('extension', 'CurrencyRates')->where('enabled', true)->exists();
 
@@ -105,8 +127,19 @@ class CurrenciesList extends Page
 
         try {
             $result = \App\Helpers\ExtensionHelper::getExtension('other', 'CurrencyRates',
-                \App\Models\Extension::where('extension', 'CurrencyRates')->first()->settings ?? [])->sync();
-            Notification::make()->title('Rates and prices updated')
+                \App\Models\Extension::where('extension', 'CurrencyRates')->first()->settings ?? [])
+                ->sync(false, $fromStoredRates);
+
+            if ($fromStoredRates && ($result['rates'] ?? []) === []) {
+                Notification::make()->title('No stored rates to price from')
+                    ->body('Give each additional currency a Base Conv. Rate, or use Update Exchange Rates to fetch them.')
+                    ->warning()->send();
+
+                return;
+            }
+
+            Notification::make()
+                ->title($fromStoredRates ? 'Product prices updated' : 'Exchange rates updated')
                 ->body(collect($result)->map(fn ($v, $k) => "$k: " . (is_scalar($v) ? $v : json_encode($v)))->implode(' · ') ?: 'Sync completed.')
                 ->success()->send();
         } catch (\Throwable $e) {
@@ -117,10 +150,11 @@ class CurrenciesList extends Page
     protected function getViewData(): array
     {
         return [
+            'baseCode' => (string) config('settings.default_currency'),
             'currencies' => Currency::orderBy('code')->get()->map(fn (Currency $currency) => [
                 'row' => $currency,
                 'edit' => CurrencyResource::canEdit($currency)
-                    ? CurrencyResource::getUrl('edit', ['record' => $currency])
+                    ? EditCurrency::getUrl(['record' => $currency->code])
                     : null,
             ]),
         ];

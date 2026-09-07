@@ -79,6 +79,36 @@ class AdminOps extends Extension
         $this->registerUpdatesNotice();
         $this->sweepServiceOverrides();
         $this->retireRawProductList();
+        $this->retireCoreCurrencyScreens();
+    }
+
+    /**
+     * Core's Currencies list and its edit form are the third pair of duplicate doors, and
+     * the edit form is the one that matters: it has no Base Conv. Rate, so a currency
+     * saved through it silently keeps whatever rate it had (Leandro, 2026-09-07:
+     * "these pages don't have 'Base Conv, Rate' Field. it is basic foundation").
+     *
+     * {@see Admin\Pages\EditCurrency} carries every field core's form had plus the rate,
+     * so nothing is lost by sending both URLs there. Same shape as the Products and
+     * Gateways redirects above, including the signed-out guard.
+     */
+    private function retireCoreCurrencyScreens(): void
+    {
+        \Illuminate\Support\Facades\Route::middleware(['web'])->get('/admin/currencies', function () {
+            if (!\Illuminate\Support\Facades\Auth::check()) {
+                return redirect()->guest('/admin/login');
+            }
+
+            return redirect()->to(Admin\Pages\CurrenciesList::getUrl());
+        });
+
+        \Illuminate\Support\Facades\Route::middleware(['web'])->get('/admin/currencies/{record}/edit', function (string $record) {
+            if (!\Illuminate\Support\Facades\Auth::check()) {
+                return redirect()->guest('/admin/login');
+            }
+
+            return redirect()->to(Admin\Pages\EditCurrency::getUrl(['record' => $record]));
+        });
     }
 
     /**
