@@ -19,7 +19,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ext_adminops_dashboard_layouts', function (Blueprint $table) {
+        Schema::hasTable('ext_adminops_dashboard_layouts') || Schema::create('ext_adminops_dashboard_layouts', function (Blueprint $table) {
             $table->id();
 
             // Cascades: a deleted administrator's dashboard preferences are of no interest

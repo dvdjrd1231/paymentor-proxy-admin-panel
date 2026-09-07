@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('payment_fee_rules', function (Blueprint $table) {
+        Schema::hasTable('payment_fee_rules') || Schema::create('payment_fee_rules', function (Blueprint $table) {
             $table->id();
             $table->string('name');
 

@@ -17,7 +17,7 @@ return new class extends Migration
     {
         // Contacts on an account, as the reference portal has them: extra people the
         // account holder can list, optionally promoted to a sub-account that may sign in.
-        Schema::create('ext_ct_contacts', function (Blueprint $table) {
+        Schema::hasTable('ext_ct_contacts') || Schema::create('ext_ct_contacts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('first_name');
@@ -45,7 +45,7 @@ return new class extends Migration
         });
 
         // Downloads the operator publishes (setup guides, proxy config files, tooling).
-        Schema::create('ext_ct_downloads', function (Blueprint $table) {
+        Schema::hasTable('ext_ct_downloads') || Schema::create('ext_ct_downloads', function (Blueprint $table) {
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();

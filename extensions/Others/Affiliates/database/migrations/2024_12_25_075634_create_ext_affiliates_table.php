@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ext_affiliates', function (Blueprint $table) {
+        Schema::hasTable('ext_affiliates') || Schema::create('ext_affiliates', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(User::class)->constrained()->cascadeOnDelete();
             $table->string('code')->unique();

@@ -27,7 +27,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ext_term_limit_products', function (Blueprint $table) {
+        Schema::hasTable('ext_term_limit_products') || Schema::create('ext_term_limit_products', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('product_id')->unique()->constrained()->cascadeOnDelete();

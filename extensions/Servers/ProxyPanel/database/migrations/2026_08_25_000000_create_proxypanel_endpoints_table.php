@@ -23,7 +23,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('proxypanel_endpoints', function (Blueprint $table) {
+        Schema::hasTable('proxypanel_endpoints') || Schema::create('proxypanel_endpoints', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('service_id');
             // 45 covers the longest IPv6 form, including an IPv4-mapped tail.

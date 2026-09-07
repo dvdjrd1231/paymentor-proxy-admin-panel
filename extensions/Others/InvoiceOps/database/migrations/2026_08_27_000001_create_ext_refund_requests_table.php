@@ -22,7 +22,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ext_refund_requests', function (Blueprint $table) {
+        Schema::hasTable('ext_refund_requests') || Schema::create('ext_refund_requests', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('invoice_id')->constrained()->cascadeOnDelete();

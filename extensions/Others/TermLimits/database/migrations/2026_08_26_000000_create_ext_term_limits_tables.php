@@ -17,7 +17,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ext_term_limits', function (Blueprint $table) {
+        Schema::hasTable('ext_term_limits') || Schema::create('ext_term_limits', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('service_id')->unique()->constrained()->cascadeOnDelete();
@@ -41,7 +41,7 @@ return new class extends Migration
             $table->index(['ended_at', 'ends_at']);
         });
 
-        Schema::create('ext_term_limit_extensions', function (Blueprint $table) {
+        Schema::hasTable('ext_term_limit_extensions') || Schema::create('ext_term_limit_extensions', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('term_id')->constrained('ext_term_limits')->cascadeOnDelete();

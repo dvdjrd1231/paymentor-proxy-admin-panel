@@ -17,7 +17,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ext_billable_items', function (Blueprint $table) {
+        Schema::hasTable('ext_billable_items') || Schema::create('ext_billable_items', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();

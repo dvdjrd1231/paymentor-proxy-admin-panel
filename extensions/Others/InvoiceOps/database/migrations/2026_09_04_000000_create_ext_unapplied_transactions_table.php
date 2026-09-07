@@ -26,7 +26,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ext_unapplied_transactions', function (Blueprint $table) {
+        Schema::hasTable('ext_unapplied_transactions') || Schema::create('ext_unapplied_transactions', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
