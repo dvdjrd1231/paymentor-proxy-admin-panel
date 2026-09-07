@@ -10,9 +10,14 @@
          * leaves that row behind for good. From then on the invoice shows PAYMENT
          * PROCESSING, core hides Pay Now, and the invoice can never be paid again — which
          * also breaks Add Funds, because it sends the customer to the existing unpaid
-         * deposit invoice rather than making a new one. Leandro hit exactly this on
+         * deposit invoice rather than making a new one. Leandro reported both halves on
          * INV-252 (2026-09-07: "the payment progress should work as perfectly. Add fun
-         * process is not working as well"); the row behind it was 11 hours old.
+         * process is not working as well").
+         *
+         * Reproduced by opening a Cryptomus attempt on that invoice and abandoning it, as
+         * a customer who changes their mind would: the invoice locked immediately and Add
+         * Funds then dead-ended on it. Crypto is where this bites hardest — an unpaid
+         * attempt is never confirmed and never cancelled, so the row stays forever.
          *
          * So an attempt counts as live only while it is recent. Past the grace period it
          * is treated as abandoned and the invoice becomes payable again — the transaction
