@@ -129,11 +129,14 @@ class GeneralSettings extends Page
                 continue;
             }
 
-            $rows[] = $definition + [
-                // The reference's wording wins where it differs from core's.
+            // array_merge, not `+`: the union operator keeps the LEFT operand's keys, so
+            // `$definition + [...]` silently kept core's own label and the screen read
+            // "System Email" and "App URL" where the reference says Email Address and
+            // Domain. The reference's wording is the whole point of this page.
+            $rows[] = array_merge($definition, [
                 'label' => $row['label'],
                 'hint' => $row['hint'] ?? ($definition['description'] ?? null),
-            ];
+            ]);
         }
 
         return $rows;
