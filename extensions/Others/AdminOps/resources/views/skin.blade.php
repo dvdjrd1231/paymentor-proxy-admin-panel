@@ -469,10 +469,12 @@
        reach, so the margin pulls the box back up against the bar the way the reference's
        menus sit. Topbar only — a form's select dropdown keeps its breathing room. */
     nav.fi-topbar .fi-dropdown-panel {
-        /* Just enough tuck to close the strip Leandro circled without swallowing the
-           panel's own top corners — at -7px the rounding vanished under the bar and the
-           menu read as square (re-raised 2026-09-04). */
-        margin-top: -3px;
+        /* Flush to the bar: no strip of page between the tabs and the menu that drops
+           from them (Leandro, 2026-09-07). The panel's own top corners stay square so
+           it reads as one piece with the bar, while the outer corners keep the radius. */
+        margin-top: -8px;
+        border-start-start-radius: 0;
+        border-start-end-radius: 0;
     }
 
     .fi-dropdown-panel {
@@ -489,30 +491,30 @@
 
     .fi-dropdown-list-item {
         border-radius: 0;
-        /* The reference's menu rows are tighter and a size down from the chrome. */
+        /* The reference's menu rows are tighter and a size down from the chrome, and
+           they run the full width of the panel — the inset gutter either side is gone
+           (Leandro, 2026-09-07), so a highlighted row reaches both edges as WHMCS's
+           does. */
         padding: 0.28rem 1rem;
-        margin-inline: 0.25rem;
-        width: calc(100% - 0.5rem);
+        margin-inline: 0;
+        width: 100%;
         font-size: 15px;
         color: var(--wa-ink);
     }
 
-    /* Issue #36 (re-raised 2026-09-04): a highlighted row in the reference is a rounded
-       navy pill inset from the panel's edges — blend's own hover colour
-       (`.navigation ul li ul li:not(.disabled) a:hover{background:#1b4d7f;color:#fff}`)
-       with the rounding Leandro's install draws it with. The old light-grey hover read
-       as no hover at all. */
-    /* Both states, one look: the page you are ON and the row under the pointer wear the
-       same rounded pill — Leandro circled the active item rendering as a square
-       edge-to-edge bar (Filament's own active paint) while hover was already rounded. */
+    /* Blend's own hover colour (`.navigation ul li ul li:not(.disabled) a:hover
+       {background:#1b4d7f;color:#fff}`), on both the row under the pointer and the page
+       you are on. Full-bleed, as the reference draws it: the inset pill was the earlier
+       reading of issue #36, and the gutter it needed is what Leandro asked to remove on
+       2026-09-07. */
     .fi-dropdown-list-item:hover,
     .fi-dropdown-list-item.fi-active,
     .fi-dropdown-list-item[aria-current] {
         background: #1b4d7f;
         color: #fff;
-        border-radius: var(--wa-radius, 6px);
-        margin-inline: 0.25rem;
-        width: calc(100% - 0.5rem);
+        border-radius: 0;
+        margin-inline: 0;
+        width: 100%;
     }
 
     .fi-dropdown-list-item:hover .fi-dropdown-list-item-label,
