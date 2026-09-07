@@ -128,7 +128,20 @@
 
                         <div class="wf-actions">
                             <button type="submit" class="wf-btn" wire:target="save">{{ __('ticket.reply') }}</button>
-                            @if (!config('settings.ticket_client_closing_disabled', false) && $ticket->status !== 'closed')
+                            @php
+                                // Per-ticket Prevent Client Closure, set from the admin
+                                // ticket screen's Options tab (ext_ticket_meta). Guarded:
+                                // an install without the AdminOps migration keeps the old
+                                // global-setting behaviour untouched.
+                                $aoClosureBlocked = false;
+                                try {
+                                    $aoClosureBlocked = \Illuminate\Support\Facades\Schema::hasTable('ext_ticket_meta')
+                                        && \Illuminate\Support\Facades\DB::table('ext_ticket_meta')
+                                            ->where('ticket_id', $ticket->id)->value('prevent_closure');
+                                } catch (\Throwable $e) {
+                                }
+                            @endphp
+                            @if (!config('settings.ticket_client_closing_disabled', false) && !$aoClosureBlocked && $ticket->status !== 'closed')
                                 <button type="button" class="wf-btn wf-btn--danger"
                                     x-on:click.prevent="$store.confirmation.confirm({
                                         title: '{{ __('ticket.close_ticket') }}',
