@@ -78,6 +78,15 @@ class Rail
             return [];
         }
 
+        // Leandro, 2026-09-07: "When the Paymenter site load pages that are related with
+        // settings - setup icon on top-right icon bar, the side bar should be similar
+        // with the WHMCS mode." The reference's Setup rail is not one list — it is
+        // Configuration, Staff Management, Payments, Products/Services, one under the
+        // other — so the Setup group's items are filed into those headings here.
+        if ($section['label'] === 'Setup') {
+            return static::setupSections($section);
+        }
+
         if ($section['label'] === 'Billing') {
             return static::billingSections($section);
         }
@@ -175,6 +184,56 @@ class Rail
      * @param  array{label: string, icon: string|\BackedEnum|null, items: array<int, array{label: string, url: string, badge: ?string}>}  $section
      * @return array<int, array{label: string, icon: string|\BackedEnum|null, items: array<int, array{label: string, url: string, badge: ?string}>}>
      */
+    /**
+     * The reference's Setup rail, in its own headings and its own order.
+     *
+     * Only what this deployment actually has appears: a heading whose every entry is
+     * missing is dropped rather than drawn empty, and anything in the Setup menu that no
+     * heading claims falls through to a final "Other" so a new page can never go missing
+     * from the rail entirely.
+     *
+     * @return array<int, array{label: string, icon: string|\BackedEnum|null, items: array}>
+     */
+    private static function setupSections(array $section): array
+    {
+        $headings = [
+            'Configuration' => ['General Settings', 'System Settings', 'Automation Status',
+                'Notifications', 'OpenID Connect', 'Email Templates', 'Client Groups',
+                'Custom Client Fields', 'Panel Locations'],
+            'Staff Management' => ['Administrator Users', 'Administrator Roles', 'API Credentials'],
+            'Payments' => ['Currencies', 'Payment Gateways', 'Tax Configuration', 'Promotions'],
+            'Products/Services' => ['Products/Services', 'Configurable Options', 'Auto Terminate', 'Servers'],
+            'Addons' => ['Extensions', 'Available Extensions'],
+        ];
+
+        $byLabel = collect($section['items'])->keyBy('label');
+        $claimed = [];
+        $sections = [];
+
+        foreach ($headings as $heading => $labels) {
+            $items = [];
+
+            foreach ($labels as $label) {
+                if ($found = $byLabel->get($label)) {
+                    $items[] = $found;
+                    $claimed[$label] = true;
+                }
+            }
+
+            if ($items !== []) {
+                $sections[] = ['label' => $heading, 'icon' => $section['icon'], 'items' => $items];
+            }
+        }
+
+        $rest = collect($section['items'])->reject(fn (array $i): bool => isset($claimed[$i['label']]))->values()->all();
+
+        if ($rest !== []) {
+            $sections[] = ['label' => 'Other', 'icon' => $section['icon'], 'items' => $rest];
+        }
+
+        return $sections;
+    }
+
     private static function billingSections(array $section): array
     {
         $items = collect($section['items']);
