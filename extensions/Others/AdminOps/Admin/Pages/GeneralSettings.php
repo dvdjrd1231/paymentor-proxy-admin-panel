@@ -51,7 +51,6 @@ class GeneralSettings extends Page
         'support' => 'Support',
         'invoices' => 'Invoices',
         'credit' => 'Credit',
-        'affiliates' => 'Affiliates',
         'security' => 'Security',
         'social' => 'Social',
         'other' => 'Other',
