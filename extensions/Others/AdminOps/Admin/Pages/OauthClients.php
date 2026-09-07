@@ -4,16 +4,19 @@ namespace Paymenter\Extensions\Others\AdminOps\Admin\Pages;
 
 use App\Admin\Resources\OauthClientResource;
 use App\Models\OauthClient;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\OauthClient as OauthClientPage;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
- * Issue #51 ("switch to the new window standard") — WHMCS's OpenID Connect screen as
- * the navy list: Name, Client ID, Redirect URIs, with Create leading to core's form
- * (which is where the secret is minted and shown once) and Delete confirmed in place.
- * The secret never renders here: a list page must not print credentials, and core's
- * own edit screen already masks it.
+ * Issue #51 — WHMCS's OpenID Connect screen, to its screenshots (Leandro, 2026-09-07):
+ * the intro, the green Generate button, the records line with Jump to Page, and the navy
+ * Name / Description / Last Updated grid with a Manage button on each row.
+ *
+ * Both Generate and Manage lead to {@see OauthClient}, which is the reference's own
+ * create-and-manage form. Core's resource screens are retired behind redirects — the
+ * secret is minted there and shown once, and this list never prints a credential.
  */
 class OauthClients extends Page
 {
@@ -36,12 +39,21 @@ class OauthClients extends Page
         return 'OpenID Connect';
     }
 
-    /** The reference's intro line for this screen, in Paymenter's words. */
+    /** The reference's intro line, verbatim. */
     public function getSubheading(): ?string
     {
-        return 'OpenID Connect clients allow external applications to authenticate your '
-            . 'users via OAuth. The client secret is shown once, when it is created or '
-            . 'regenerated on the client\'s own page.';
+        return "Create and manage credentials that are able to access and use the API's.";
+    }
+
+    /** The reference paginates this list; the page is part of the URL, as its is. */
+    #[\Livewire\Attributes\Url]
+    public int $page = 1;
+
+    public const PER_PAGE = 25;
+
+    public function jump(int $page): void
+    {
+        $this->page = max(1, $page);
     }
 
     public function runDelete(): void
@@ -72,12 +84,13 @@ class OauthClients extends Page
             }
         };
 
+        // Ordered by name, as the reference's own sorted-by-Name column shows it.
+        $clients = OauthClient::orderBy('name')->paginate(self::PER_PAGE, page: $this->page);
+
         return [
-            'clients' => OauthClient::orderBy('id')->get(),
-            'createUrl' => OauthClientResource::canCreate() ? $url('create') : null,
-            'editUrl' => fn (OauthClient $client) => OauthClientResource::canEdit($client)
-                ? $url('edit', ['record' => $client])
-                : null,
+            'clients' => $clients,
+            'createUrl' => OauthClientResource::canCreate() ? OauthClientPage::getUrl() : null,
+            'manageUrl' => fn (OauthClient $client) => OauthClientPage::getUrl(['record' => $client->id]),
         ];
     }
 }

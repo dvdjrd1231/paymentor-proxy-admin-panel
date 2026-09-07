@@ -83,6 +83,37 @@ class AdminOps extends Extension
         $this->retireCoreRoleScreens();
         $this->keepExtensionMigrationsApplied();
         $this->retireCoreExtensionBrowser();
+        $this->retireCoreOauthScreens();
+    }
+
+    /**
+     * Core's OAuth client resource, replaced by the reference's own OpenID Connect pair
+     * (Leandro, 2026-09-07: "The OpenId Connect page should be updated as same as ... and
+     * have create / edit page"). Named after the routes they displace, for the reason on
+     * {@see retireRawProductList}.
+     */
+    private function retireCoreOauthScreens(): void
+    {
+        $guard = fn (callable $to) => function (...$arguments) use ($to) {
+            if (!\Illuminate\Support\Facades\Auth::check()) {
+                return redirect()->guest('/admin/login');
+            }
+
+            return redirect()->to($to(...$arguments));
+        };
+
+        \Illuminate\Support\Facades\Route::middleware(['web'])
+            ->get('/admin/oauth-clients', $guard(fn () => Admin\Pages\OauthClients::getUrl()))
+            ->name('filament.admin.resources.oauth-clients.index');
+
+        \Illuminate\Support\Facades\Route::middleware(['web'])
+            ->get('/admin/oauth-clients/create', $guard(fn () => Admin\Pages\OauthClient::getUrl()))
+            ->name('filament.admin.resources.oauth-clients.create');
+
+        \Illuminate\Support\Facades\Route::middleware(['web'])
+            ->get('/admin/oauth-clients/{record}/edit', $guard(
+                fn (string $record) => Admin\Pages\OauthClient::getUrl(['record' => $record]),
+            ))->name('filament.admin.resources.oauth-clients.edit');
     }
 
     /**
