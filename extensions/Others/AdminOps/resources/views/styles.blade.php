@@ -5502,6 +5502,64 @@
 
     .ao-oc-hint { color: #666; font-size: 0.85rem; font-style: normal; line-height: 1.45; }
 
+    /* The reference's own notice on the create form, where the id and secret will be. */
+    .ao-oc-pending {
+        display: block;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid #f0dfb4;
+        border-radius: 4px;
+        background: #fcf8e3;
+        color: #8a6d3b;
+        font-size: 0.9rem;
+    }
+
+    /* One centred row, as the reference closes this form. The buttons came from three
+       different classes and drifted to opposite ends of the panel otherwise. */
+    .ao-oc-actions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-top: 1rem;
+    }
+
+    .ao-oc-actions > * { margin: 0 !important; }
+
+    .ao-oc-cancel {
+        display: inline-flex;
+        align-items: center;
+        height: 2.1rem;
+        padding: 0 1rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        color: var(--wa-ink, #2b2b2b);
+        font-size: 0.9rem;
+        text-decoration: none;
+    }
+
+    .ao-oc-cancel:hover { background: #f0f0f0; text-decoration: none; }
+
+    /* Small inline controls beside a redirect field, not form-sized buttons. */
+    .ao-oc-remove,
+    .ao-oc-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        height: 1.8rem;
+        padding: 0 0.65rem;
+        border-radius: 4px;
+        font-size: 0.82rem;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .ao-oc-remove { border: 1px solid #d43f3a; background: #d9534f; color: #fff; }
+    .ao-oc-remove:hover { background: #c9302c; }
+    .ao-oc-add { border: 1px solid var(--wa-border, #ccc); background: #fff; color: var(--wa-ink, #2b2b2b); }
+    .ao-oc-add:hover { background: #f0f0f0; }
+
     /* Shown once, immediately after a create or a reset. Loud on purpose: there is no
        second chance to copy it. */
     .ao-oc-fresh {
