@@ -377,7 +377,7 @@ class Catalogue extends Page
     public function categoryUrl(Category $category): ?string
     {
         return CategoryResource::canEdit($category)
-            ? CreateProductGroup::getUrl(['record' => $category->id])
+            ? CreateProductGroup::getUrl(['group' => $category->id])
             : null;
     }
 
