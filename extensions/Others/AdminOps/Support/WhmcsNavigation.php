@@ -763,6 +763,9 @@ class WhmcsNavigation
             static::link(CustomPropertyResource::class, 'Custom Client Fields'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::class, 'Email Templates'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\AdminRoles::class, 'Administrator Roles'),
+            // The reference's Staff Management group is Administrator Users, Administrator
+            // Roles, Two-Factor Authentication, Manage API Credentials — this was the gap.
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\TwoFactorAuth::class, 'Two-Factor Authentication'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ApiCredentials::class, 'API Credentials'),
             // Issue #51: the WHMCS-shaped list; core's resource keeps create/edit and
             // is claimed just below so the Addons sweep leaves it be.
