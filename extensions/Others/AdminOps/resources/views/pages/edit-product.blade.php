@@ -34,129 +34,138 @@
             </div>
         </div>
 
-        {{-- ── Details ─────────────────────────────────────────────────────────── --}}
+        {{-- ── Details ─────────────────────────────────────────────────────────
+             Three columns — label, field, help — the same .ao-gs-row grid General
+             Settings uses, because that is the shape the reference draws every one of
+             these screens in. This was a two-column form with the help tucked under the
+             label, which is why it did not read like the target. --}}
         @if ($tab === 'details')
-            <form class="ao-anc-card" wire:submit.prevent="saveDetails">
-                <label class="ao-anc-row">
-                    <span>Product Type</span>
-                    <select wire:model="extra.type">
-                        @foreach (\Paymenter\Extensions\Others\AdminOps\Models\Meta::PRODUCT_TYPES as $key => $label)
-                            <option value="{{ $key }}">{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </label>
+            <form wire:submit.prevent="saveDetails">
+                <div class="ao-gs-card">
+                    <div class="ao-gs-row">
+                        <label class="ao-gs-label" for="ep-type">Product Type</label>
+                        <div class="ao-gs-field">
+                            <select id="ep-type" wire:model="extra.type">
+                                @foreach (\Paymenter\Extensions\Others\AdminOps\Models\Meta::PRODUCT_TYPES as $key => $label)
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="ao-gs-hint">How the catalogue's Type column describes it.</div>
+                    </div>
 
-                <label class="ao-anc-row">
-                    <span>Product Group</span>
-                    <select wire:model="form.category_id">
-                        @foreach ($groups as $group)
-                            <option value="{{ $group->id }}">{{ $group->name }}</option>
-                        @endforeach
-                    </select>
-                </label>
+                    <div class="ao-gs-row">
+                        <label class="ao-gs-label" for="ep-group">Product Group</label>
+                        <div class="ao-gs-field">
+                            <select id="ep-group" wire:model="form.category_id">
+                                @foreach ($groups as $group)
+                                    <option value="{{ $group->id }}">{{ $group->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="ao-gs-hint">The group this product is ordered from.</div>
+                    </div>
 
-                <label class="ao-anc-row">
-                    <span>Product Name</span>
-                    <input type="text" wire:model="form.name" required>
-                </label>
-                @error('form.name') <p class="ao-anc-errors">{{ $message }}</p> @enderror
+                    <div class="ao-gs-row">
+                        <label class="ao-gs-label" for="ep-name">Product Name</label>
+                        <div class="ao-gs-field"><input id="ep-name" type="text" wire:model="form.name" required></div>
+                        <div class="ao-gs-hint">The default display name for this product.</div>
+                    </div>
+                    @error('form.name') <p class="ao-anc-errors">{{ $message }}</p> @enderror
 
-                <label class="ao-anc-row">
-                    <span>Product Tagline</span>
-                    <input type="text" wire:model="extra.tagline" placeholder="Shown under the name on the storefront">
-                </label>
+                    <div class="ao-gs-row">
+                        <label class="ao-gs-label" for="ep-tagline">Product Tagline</label>
+                        <div class="ao-gs-field"><input id="ep-tagline" type="text" wire:model="extra.tagline"></div>
+                        <div class="ao-gs-hint">Shown under the name on the storefront.</div>
+                    </div>
 
-                <label class="ao-anc-row">
-                    <span>URL</span>
-                    <input type="text" wire:model="form.slug">
-                </label>
-                @error('form.slug') <p class="ao-anc-errors">{{ $message }}</p> @enderror
+                    <div class="ao-gs-row">
+                        <label class="ao-gs-label" for="ep-slug">URL</label>
+                        <div class="ao-gs-field ao-ep-url">
+                            <i>{{ $urlPrefix }}</i>
+                            <input id="ep-slug" type="text" wire:model="form.slug">
+                        </div>
+                        <div class="ao-gs-hint">A friendly URL to use to link to this product.</div>
+                    </div>
+                    @error('form.slug') <p class="ao-anc-errors">{{ $message }}</p> @enderror
 
-                <label class="ao-anc-row ao-cpg-desc">
-                    <span>Product Short Description</span>
-                    <textarea rows="2" wire:model="extra.short_description"
-                        placeholder="Around 50 words. Used where a short summary is wanted."></textarea>
-                </label>
+                    <div class="ao-gs-row ao-gs-row--tall">
+                        <label class="ao-gs-label" for="ep-short">Product Short Description</label>
+                        <div class="ao-gs-field"><textarea id="ep-short" rows="2" wire:model="extra.short_description"></textarea></div>
+                        <div class="ao-gs-hint">We recommend limiting this description to 50 words.</div>
+                    </div>
 
-                <label class="ao-anc-row ao-cpg-desc">
-                    <span>Product Description</span>
-                    <textarea rows="6" wire:model="form.description"
-                        placeholder="HTML is allowed. Shown on the product's own page."></textarea>
-                </label>
+                    <div class="ao-gs-row ao-gs-row--tall">
+                        <label class="ao-gs-label" for="ep-desc">Product Description</label>
+                        <div class="ao-gs-field"><textarea id="ep-desc" rows="6" wire:model="form.description"></textarea></div>
+                        <div class="ao-gs-hint">
+                            You may use HTML in this field<br>
+                            <code>&lt;br /&gt;</code> New line<br>
+                            <code>&lt;strong&gt;Bold&lt;/strong&gt;</code> <b>Bold</b><br>
+                            <code>&lt;em&gt;Italics&lt;/em&gt;</code> <i>Italics</i>
+                        </div>
+                    </div>
 
-                <label class="ao-anc-row">
-                    <span>Product Colour</span>
-                    <span class="ao-anc-field">
-                        <input type="color" wire:model="extra.colour" class="ao-ep-colour">
-                        <i>Used where the storefront tints a product.</i>
-                    </span>
-                </label>
+                    <div class="ao-gs-row">
+                        <label class="ao-gs-label" for="ep-colour">Product Colour</label>
+                        <div class="ao-gs-field"><input id="ep-colour" type="color" wire:model="extra.colour" class="ao-ep-colour"></div>
+                        <div class="ao-gs-hint">Used where the storefront tints a product.</div>
+                    </div>
 
-                <label class="ao-anc-row">
-                    <span>Welcome Email</span>
-                    <input type="text" wire:model="form.email_template"
-                        placeholder="Notification template key, or blank for none">
-                </label>
+                    <div class="ao-gs-row">
+                        <label class="ao-gs-label" for="ep-welcome">Welcome Email</label>
+                        <div class="ao-gs-field">
+                            {{-- The templates that exist, not a free-text key: a mistyped key
+                                 sends nothing and says nothing about why. --}}
+                            <select id="ep-welcome" wire:model="form.email_template">
+                                <option value="">None</option>
+                                @foreach ($emailTemplates as $key => $label)
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="ao-gs-hint">Sent to the client when this product is set up.</div>
+                    </div>
 
-                <div class="ao-anc-row">
-                    <span>Stock Control</span>
-                    <span class="ao-anc-field">
-                        <input type="checkbox" wire:model.live="form.stock_enabled">
-                        <i>Enable — Quantity in Stock:</i>
-                        <input type="number" min="0" class="ao-w-25" wire:model="form.stock"
-                            @disabled(!$form['stock_enabled'])>
-                    </span>
-                </div>
-
-                {{-- Three radios, not a tick box: the column is an enum and the reference
-                     asks the same three-way question. --}}
-                <div class="ao-anc-row">
-                    <span>Allow Multiple Quantities</span>
-                    <span class="ao-ep-radios">
-                        @foreach ([
-                            'disabled' => 'No',
-                            'separated' => 'Yes - Multiple Services: each unit is its own service instance',
-                            'combined' => 'Yes - Scaling Service: one instance with a quantity',
-                        ] as $value => $label)
+                    <div class="ao-gs-row">
+                        <span class="ao-gs-label">Stock Control</span>
+                        <div class="ao-gs-field">
                             <label class="ao-check">
-                                <input type="radio" name="ep-qty" value="{{ $value }}" wire:model="form.allow_quantity">
-                                <span>{{ $label }}</span>
+                                <input type="checkbox" wire:model.live="form.stock_enabled">
+                                <span>Enable — Quantity in Stock:</span>
                             </label>
-                        @endforeach
-                    </span>
+                            <input type="number" min="0" class="ao-ep-num" wire:model="form.stock" @disabled(!$form['stock_enabled'])>
+                        </div>
+                        <div class="ao-gs-hint">Unticked, the product is unlimited.</div>
+                    </div>
+
+                    <div class="ao-gs-row">
+                        <span class="ao-gs-label">Featured</span>
+                        <div class="ao-gs-field">
+                            <label class="ao-check"><input type="checkbox" wire:model="extra.featured">
+                                <span>Display this product more prominently on supported order forms</span></label>
+                        </div>
+                        <div class="ao-gs-hint"></div>
+                    </div>
+
+                    <div class="ao-gs-row">
+                        <span class="ao-gs-label">Hidden</span>
+                        <div class="ao-gs-field">
+                            <label class="ao-check"><input type="checkbox" wire:model="form.hidden">
+                                <span>Check to hide from order form</span></label>
+                        </div>
+                        <div class="ao-gs-hint">It stays orderable on its direct link.</div>
+                    </div>
+
+                    <div class="ao-gs-row">
+                        <span class="ao-gs-label">Retired</span>
+                        <div class="ao-gs-field">
+                            <label class="ao-check"><input type="checkbox" wire:model="extra.retired">
+                                <span>Check to hide from admin area product dropdown menus</span></label>
+                        </div>
+                        <div class="ao-gs-hint">Does not apply to services already on this product.</div>
+                    </div>
                 </div>
-
-                <label class="ao-anc-row">
-                    <span>Limit Per Client</span>
-                    <span class="ao-anc-field">
-                        <input type="number" min="0" class="ao-w-25" wire:model="form.per_user_limit">
-                        <i>0 or blank for no limit</i>
-                    </span>
-                </label>
-
-                <label class="ao-anc-row">
-                    <span>Featured</span>
-                    <span class="ao-anc-field">
-                        <input type="checkbox" wire:model="extra.featured">
-                        <i>Display this product more prominently on the storefront</i>
-                    </span>
-                </label>
-
-                <label class="ao-anc-row">
-                    <span>Hidden</span>
-                    <span class="ao-anc-field">
-                        <input type="checkbox" wire:model="form.hidden">
-                        <i>Check to hide from the order form</i>
-                    </span>
-                </label>
-
-                <label class="ao-anc-row">
-                    <span>Retired</span>
-                    <span class="ao-anc-field">
-                        <input type="checkbox" wire:model="extra.retired">
-                        <i>Hidden from admin product menus. Existing services keep working.</i>
-                    </span>
-                </label>
 
                 <div class="ao-pr-center ao-cpg-actions">
                     <button type="submit" class="ao-find-go">Save Changes</button>
@@ -164,59 +173,97 @@
             </form>
         @endif
 
-        {{-- ── Pricing ─────────────────────────────────────────────────────────── --}}
+        {{-- ── Pricing ─────────────────────────────────────────────────────────
+             The reference's grid: cycles across the top, Setup Fee / Price / Enable down
+             the side, one block per currency. Each column is a Paymenter plan — ticking
+             Enable creates it, clearing it removes it and its prices. --}}
         @if ($tab === 'pricing')
             <form wire:submit.prevent="savePricing">
-                <div class="ao-ei-items-head">
-                    <h4 class="ao-ano-heading">Billing Cycles</h4>
-                    <button type="button" class="ao-pg-btn" wire:click="addPlan">Add a Cycle</button>
+                <div class="ao-gs-card">
+                    <div class="ao-gs-row">
+                        <span class="ao-gs-label">Payment Type</span>
+                        <div class="ao-gs-field ao-ep-paytype">
+                            @foreach (['free' => 'Free', 'one-time' => 'One Time', 'recurring' => 'Recurring'] as $value => $label)
+                                <label class="ao-check">
+                                    <input type="radio" name="ep-paytype" value="{{ $value }}" wire:model.live="paymentType">
+                                    <span>{{ $label }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                        <div class="ao-gs-hint">Which cycles this product is sold on.</div>
+                    </div>
                 </div>
 
-                {{-- A Paymenter plan is a billing cycle, so the reference's grid of cycles
-                     becomes one block per plan, priced per currency. --}}
-                @forelse ($plans as $i => $plan)
-                    <div class="ao-anc-card ao-ep-plan">
-                        <div class="ao-anc-row">
-                            <span>Cycle</span>
-                            <span class="ao-anc-field">
-                                <input type="text" class="ao-w-25" wire:model="plans.{{ $i }}.name" placeholder="Monthly">
-                                <select wire:model="plans.{{ $i }}.type" class="ao-w-25">
-                                    <option value="recurring">Recurring</option>
-                                    <option value="one-time">One Time</option>
-                                    <option value="free">Free</option>
-                                </select>
-                                <i>every</i>
-                                <input type="number" min="1" class="ao-ep-num" wire:model="plans.{{ $i }}.billing_period">
-                                <select wire:model="plans.{{ $i }}.billing_unit" class="ao-ep-unit">
-                                    <option value="day">day(s)</option>
-                                    <option value="week">week(s)</option>
-                                    <option value="month">month(s)</option>
-                                    <option value="year">year(s)</option>
-                                </select>
-                                <button type="button" class="ao-ei-remove" wire:click="removePlan({{ $i }})"
-                                    wire:confirm="Remove this billing cycle and its prices?"
-                                    title="Remove this cycle">&#9679;</button>
-                            </span>
-                        </div>
+                @php
+                    $cycles = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::CYCLES;
+                    // Free products have nothing to price; One Time hides the recurring
+                    // columns, as the reference does.
+                    $shown = collect($cycles)->filter(function ($c) use ($paymentType) {
+                        if ($paymentType === 'free') return false;
+                        return $paymentType === 'one-time' ? $c['type'] === 'one-time' : $c['type'] === 'recurring';
+                    });
+                @endphp
 
-                        <table class="ao-mu-grid ao-ep-prices">
-                            <thead><tr><th>Currency</th><th>Setup Fee</th><th>Price</th></tr></thead>
+                @if ($shown->isEmpty())
+                    <p class="ao-cat-empty">A free product carries no prices.</p>
+                @else
+                    @foreach ($currencies as $code)
+                        <table class="ao-mu-grid ao-ep-grid">
+                            <thead>
+                                <tr>
+                                    <th class="ao-ep-cur">{{ $code }}</th>
+                                    @foreach ($shown as $key => $cycle)
+                                        <th>{{ $cycle['label'] }}</th>
+                                    @endforeach
+                                </tr>
+                            </thead>
                             <tbody>
-                                @foreach ($currencies as $code)
-                                    <tr>
-                                        <td>{{ $code }}</td>
+                                <tr>
+                                    <td class="ao-ep-cur">Setup Fee</td>
+                                    @foreach ($shown as $key => $cycle)
                                         <td><input type="text" inputmode="decimal" class="ao-ei-amount-in"
-                                            wire:model="plans.{{ $i }}.prices.{{ $code }}.setup_fee" placeholder="0.00"></td>
+                                            wire:model="pricing.{{ $key }}.{{ $code }}.setup_fee" placeholder="0.00"></td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <td class="ao-ep-cur">Price</td>
+                                    @foreach ($shown as $key => $cycle)
                                         <td><input type="text" inputmode="decimal" class="ao-ei-amount-in"
-                                            wire:model="plans.{{ $i }}.prices.{{ $code }}.price" placeholder="0.00"></td>
-                                    </tr>
-                                @endforeach
+                                            wire:model="pricing.{{ $key }}.{{ $code }}.price" placeholder="0.00"></td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <td class="ao-ep-cur">Enable</td>
+                                    @foreach ($shown as $key => $cycle)
+                                        {{-- One tick box per cycle, shown on every currency block
+                                             because a cycle is enabled for the product, not per
+                                             currency. --}}
+                                        <td><input type="checkbox" wire:model="enabled.{{ $key }}"></td>
+                                    @endforeach
+                                </tr>
                             </tbody>
                         </table>
+                    @endforeach
+                @endif
+
+                <div class="ao-gs-card">
+                    <div class="ao-gs-row ao-gs-row--tall">
+                        <span class="ao-gs-label">Allow Multiple Quantities</span>
+                        <div class="ao-ep-radios">
+                            @foreach ([
+                                'disabled' => 'No',
+                                'separated' => 'Yes - Multiple Services: each unit represents its own individual service instance',
+                                'combined' => 'Yes - Scaling Service: each service instance allows a quantity to be defined',
+                            ] as $value => $label)
+                                <label class="ao-check">
+                                    <input type="radio" name="ep-qty" value="{{ $value }}" wire:model="form.allow_quantity">
+                                    <span>{{ $label }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                        <div class="ao-gs-hint"></div>
                     </div>
-                @empty
-                    <p class="ao-cat-empty">This product has no billing cycle yet, so it cannot be ordered. Add one.</p>
-                @endforelse
+                </div>
 
                 @if ($errors->any())
                     <ul class="ao-anc-errors">

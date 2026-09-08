@@ -2279,6 +2279,43 @@
     .ao-ep-prices { margin-top: 0.6rem; }
     .ao-ep-colour { width: 4rem; height: 2rem; padding: 0; border: 1px solid var(--wa-border, #ccc); }
     .ao-ep-radios { display: flex; flex-direction: column; gap: 0.3rem; }
+
+    /* Edit Product uses General Settings' three-column rows, so it needs the same card
+       the settings page draws them in. */
+    .ao-gs-card {
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+        overflow: hidden;
+        margin-top: 1rem;
+    }
+
+    /* Textareas and radio stacks need the row to align to the top, not the middle. */
+    .ao-gs-row--tall { align-items: start; padding-block: 0.6rem; }
+
+    .ao-gs-field textarea {
+        width: 100%;
+        padding: 0.4rem 0.55rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+        font: inherit;
+        resize: vertical;
+    }
+
+    .ao-gs-field .ao-check { display: flex; align-items: center; gap: 0.4rem; }
+
+    /* The URL row: fixed storefront prefix, then the slug. */
+    .ao-ep-url > i { font-style: normal; color: var(--wa-muted, #6b6b6b); white-space: nowrap; }
+    .ao-ep-url input { flex: 1 1 8rem; min-width: 0; }
+
+    .ao-ep-paytype { gap: 1.2rem; }
+
+    /* The pricing grid: cycles across, figures down, one block per currency. */
+    .ao-ep-grid { margin-top: 1rem; }
+    .ao-ep-grid .ao-ep-cur { font-weight: 700; text-align: end; white-space: nowrap; }
+    .ao-ep-grid td { text-align: center; }
+    .ao-ep-grid input[type="text"] { width: 6.5rem; }
     .ao-ep-explain p { margin: 0 0 0.5rem; }
     .ao-ep-explain p:last-child { margin-bottom: 0; }
     .ao-ep-explain code { font-size: 0.9em; }
