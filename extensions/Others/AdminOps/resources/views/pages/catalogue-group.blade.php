@@ -74,7 +74,7 @@
                         @endif
                     </span>
                     <span>{{ $this->typeLabel($product) }}</span>
-                    <span>{{ $this->payTypeLabel($product) }}</span>
+                    <span class="ao-ct-pay">{{ $this->payTypeLabel($product) }}</span>
                     <span>{{ $product->stock ?? '-' }}</span>
                     <span>{{ $this->autoSetupLabel($product) }}</span>
                     <span class="ao-ct-features">{{ $this->featuresLabel($product) }}</span>
