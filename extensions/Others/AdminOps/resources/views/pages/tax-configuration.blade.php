@@ -86,10 +86,13 @@
                     <div class="ao-gs-row">
                         <label class="ao-gs-label" for="tx-format">Custom Invoice Numbering Format</label>
                         <div class="ao-gs-field">
-                            <input id="tx-format" type="text" wire:model="numberFormat" placeholder="{NUMBER}"
+                            <input id="tx-format" type="text" wire:model="numberFormat" placeholder="{number}"
                                 @disabled(!$customNumbering)>
                         </div>
-                        <div class="ao-gs-hint">Available Tags: <code>&#123;YEAR&#125;</code> <code>&#123;MONTH&#125;</code> <code>&#123;DAY&#125;</code> <code>&#123;NUMBER&#125;</code></div>
+                        {{-- Lowercase, and deliberately so: the substitution is a plain
+                             str_replace on these exact tokens, so {NUMBER} would survive
+                             into the invoice number as literal text. --}}
+                        <div class="ao-gs-hint">Available Tags: <code>&#123;year&#125;</code> <code>&#123;month&#125;</code> <code>&#123;day&#125;</code> <code>&#123;number&#125;</code> — lowercase, exactly as written.</div>
                     </div>
 
                     <div class="ao-gs-row">

@@ -147,7 +147,9 @@ class SettingsReference
 
             'invoices' => [
                 ['setting' => 'invoice_number', 'label' => 'Invoice Starting #', 'hint' => 'The next invoice number that will be assigned'],
-                ['setting' => 'invoice_number_format', 'label' => 'Invoice Number Format', 'hint' => 'Available tags: {YEAR} {MONTH} {DAY} {NUMBER}'],
+                // Lowercase: InvoiceNumberListener str_replaces these exact tokens, so an
+                // uppercase tag survives into the invoice number as literal text.
+                ['setting' => 'invoice_number_format', 'label' => 'Invoice Number Format', 'hint' => 'Available tags: {year} {month} {day} {number} — lowercase, exactly as written'],
                 ['setting' => 'invoice_number_padding', 'label' => 'Invoice Number Padding', 'hint' => 'Pad the number to this many digits'],
                 ['setting' => 'invoice_proforma', 'label' => 'Enable Proforma Invoicing', 'hint' => 'Number invoices only once they are paid'],
                 ['setting' => 'invoice_snapshot', 'label' => 'Store Client Data Snapshot', 'hint' => 'Preserve client details on the invoice so later profile changes do not alter it'],
