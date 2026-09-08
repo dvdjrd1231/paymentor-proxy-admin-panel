@@ -5,6 +5,10 @@
     content; this replaces it and core's URL redirects here.
 --}}
 <x-filament-panels::page>
+    {{-- These tabs stay server-side on purpose, unlike the rest of the panel's. Browse
+         Marketplace calls out to the Paymenter registry, so rendering both panels at once
+         would fetch the marketplace every time somebody opened Ready to Install. Here the
+         round trip is the cheaper of the two. --}}
     <div class="ao-mu">
         <div class="ao-tx-tabs">
             <button type="button" class="ao-mu-tab {{ $this->tab === 'marketplace' ? 'ao-on' : '' }}"
