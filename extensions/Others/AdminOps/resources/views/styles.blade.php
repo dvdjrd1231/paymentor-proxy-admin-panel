@@ -2324,6 +2324,23 @@
         .ao-cp-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
+    /* The Type cell reads as the reference's plain text until you hover it — it is a
+       control, but a quiet one, because the column is mostly there to be read. */
+    .ao-ct-type-btn {
+        border: 0;
+        background: none;
+        font: inherit;
+        color: inherit;
+        padding: 0;
+        cursor: pointer;
+        border-bottom: 1px dashed transparent;
+    }
+
+    .ao-ct-type-btn:hover { border-bottom-color: var(--wa-grid, #1a4d80); }
+
+    .ao-ct-typetiles { margin-top: 0.8rem; }
+    .ao-ct-typetiles .ao-cp-tile { padding: 0.7rem 0.4rem; }
+
     /* The catalogue's Features column and the Refresh button's glyph. */
     .ao-ct-features { color: var(--wa-ink, #333); }
     .ao-ct-refresh { color: var(--wa-grid, #1a4d80); font-size: 1rem; }

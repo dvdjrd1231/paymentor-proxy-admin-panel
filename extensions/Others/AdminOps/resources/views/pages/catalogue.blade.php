@@ -65,6 +65,29 @@
             </p>
         </div>
 
+        @if ($typingId)
+            <div class="ao-mud-overlay" wire:click.self="$set('typingId', null)">
+                <div class="ao-mud ao-mud-sm" role="dialog" aria-modal="true">
+                    <div class="ao-mud-head">
+                        Product Type
+                        <button type="button" wire:click="$set('typingId', null)" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="ao-mud-text">
+                        <p>How the Type column describes this product. It is a label — nothing
+                            branches on it, and what the product actually does comes from its module.</p>
+                        <div class="ao-cp-tiles ao-ct-typetiles">
+                            @foreach (\Paymenter\Extensions\Others\AdminOps\Models\Meta::PRODUCT_TYPES as $key => $label)
+                                <button type="button" class="ao-cp-tile"
+                                    wire:click="setType({{ $typingId }}, '{{ $key }}')">
+                                    <span>{{ $label }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         @if ($confirmKind)
             <div class="ao-mud-overlay" wire:click.self="$set('confirmKind', null)">
                 <div class="ao-mud ao-mud-sm" role="alertdialog" aria-modal="true">

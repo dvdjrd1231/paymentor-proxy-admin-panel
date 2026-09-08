@@ -70,6 +70,8 @@
                 </span>
             </label>
 
+            @error('parentId') <p class="ao-anc-errors">{{ $message }}</p> @enderror
+
             <div class="ao-pr-center ao-cpg-actions">
                 <button type="submit" class="ao-find-go">Save Changes</button>
                 <a class="ao-pg-btn" href="{{ $cancelUrl }}">Cancel Changes</a>
