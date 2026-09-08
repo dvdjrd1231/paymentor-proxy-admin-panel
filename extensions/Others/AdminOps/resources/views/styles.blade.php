@@ -2282,6 +2282,52 @@
         resize: vertical;
     }
 
+    .ao-cpg-muted { color: var(--wa-muted, #6b6b6b); font-style: italic; }
+
+    /* The reference's Product Type tiles: four equal cards, the chosen one outlined in the
+       panel's blue with a tinted ground. */
+    .ao-cp-typerow { align-items: start; }
+
+    .ao-cp-tiles {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.6rem;
+    }
+
+    .ao-cp-tile {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.9rem 0.5rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+        font: inherit;
+        color: var(--wa-ink, #333);
+        cursor: pointer;
+        transition: border-color .12s, background .12s;
+    }
+
+    .ao-cp-tile:hover { border-color: var(--wa-grid, #1a4d80); }
+
+    .ao-cp-tile.ao-on {
+        border-color: var(--wa-grid, #1a4d80);
+        background: #eaf2fa;
+        box-shadow: inset 0 0 0 1px var(--wa-grid, #1a4d80);
+    }
+
+    .ao-cp-tile-ic { font-size: 1.6rem; line-height: 1; }
+    .ao-cp-tile-ic svg { width: 1.9rem; height: 1.9rem; }
+
+    @media (max-width: 900px) {
+        .ao-cp-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    /* The catalogue's Features column and the Refresh button's glyph. */
+    .ao-ct-features { color: var(--wa-ink, #333); }
+    .ao-ct-refresh { color: var(--wa-grid, #1a4d80); font-size: 1rem; }
+
     .ao-cp-note {
         margin-top: 1rem;
         padding-top: 0.8rem;
@@ -5535,7 +5581,9 @@
     /* Products/Services catalogue (issues #35, #41): the reference's one flat table —
        a single navy header, group bands with icons at the right, product rows sharing
        the same grid so every column lines up across groups. */
-    .ao-ct { --ao-ct-cols: minmax(0, 2.4fr) 1.3fr 0.9fr 0.55fr 1fr 7rem; }
+    /* Product Name, Type, Pay Type, Stock, Auto Setup, Features, icons — the reference's
+       seven columns (Leandro, 2026-09-07). */
+    .ao-ct { --ao-ct-cols: minmax(0, 2.2fr) 1.3fr 0.9fr 0.5fr 1fr 0.9fr 7rem; }
 
     .ao-ct-row {
         display: grid;

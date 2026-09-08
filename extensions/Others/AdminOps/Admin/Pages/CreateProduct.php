@@ -9,6 +9,7 @@ use App\Models\Server;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Str;
+use Paymenter\Extensions\Others\AdminOps\Models\Meta;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
@@ -20,14 +21,17 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * finished until it has a plan and a price, and those live on core's product editor. This
  * screen creates the row and hands over.
  *
- * ## The reference's Product Type tiles are not here
+ * ## Product Type
  *
- * WHMCS opens with four tiles — Shared Hosting, Reseller Hosting, Server/VPS, Other —
- * because the type decides which module fields and which billing behaviour it then shows.
- * Paymenter has no product type: what a product *is* comes entirely from the server module
- * it provisions through, which is the Module field below. Drawing the tiles would be four
- * radio buttons that change nothing, and every product on this install would be "Other"
- * anyway — which is exactly what the reference's own screenshots of this store show.
+ * The reference opens with four tiles — Shared Hosting, Reseller Hosting, Server/VPS,
+ * Other. Paymenter has no type column and no behaviour hanging off one: what a product
+ * *does* comes entirely from the server module it provisions through, which is the Module
+ * field. The type is what the catalogue's Type column *reads*, though — Leandro's own
+ * WHMCS prints "Other (ProxyPanel)" on every row of this store — so it is stored per
+ * product in `ext_ao_meta` and shown there.
+ *
+ * It is presentation, and only presentation. Nothing branches on it, which is why the
+ * tiles carry no promise of changing the fields below them the way the reference's do.
  */
 class CreateProduct extends Page
 {
@@ -37,6 +41,9 @@ class CreateProduct extends Page
 
     /** Navigation is built by {@see WhmcsNavigation}; this is reached from Products/Services. */
     protected static bool $shouldRegisterNavigation = false;
+
+    /** The reference's Product Type tiles — see the class docblock. */
+    public string $type = 'other';
 
     public ?int $categoryId = null;
 
@@ -88,11 +95,13 @@ class CreateProduct extends Page
             'name' => 'required|string|max:255',
             'slugValue' => 'nullable|string|max:255|unique:products,slug',
             'serverId' => 'nullable|exists:servers,id',
+            'type' => 'required|in:' . implode(',', array_keys(Meta::PRODUCT_TYPES)),
         ], attributes: [
             'categoryId' => 'product group',
             'name' => 'product name',
             'slugValue' => 'URL',
             'serverId' => 'module',
+            'type' => 'product type',
         ]);
 
         $product = Product::create([
@@ -102,6 +111,8 @@ class CreateProduct extends Page
             'server_id' => $this->serverId,
             'hidden' => $this->hidden,
         ]);
+
+        Meta::put($product, 'type', $this->type);
 
         Notification::make()->title('Product created')
             ->body('Add its plan and pricing here to finish it.')->success()->send();

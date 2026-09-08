@@ -7,6 +7,7 @@ use App\Models\Category;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Str;
+use Paymenter\Extensions\Others\AdminOps\Models\Meta;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
@@ -14,24 +15,24 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * `configproducts.php?action=creategroup`): the group's name, its storefront URL, and the
  * rest of what a group is, saved with Save Changes / Cancel Changes.
  *
- * ## What the reference asks for that this platform has no column for
+ * ## Where the reference's fields are stored
  *
- * `categories` carries id, slug, name, description, image, parent_id, full_slug and sort.
- * So of the reference's eight fields, four have nowhere to go and are left out rather than
- * drawn dead — the standing rule on this project after Leandro asked for the disabled
- * fields on General Settings to be sorted out:
+ * `categories` carries only id, slug, name, description, image, parent_id, full_slug and
+ * sort. Headline, Tagline and Hidden have no column there, and `Category` does not use core's
+ * `HasProperties` trait, so they are stored in this extension's own `ext_ao_meta` table —
+ * real storage, read back on edit, rather than controls that forget what you typed.
  *
- * - **Product Group Headline / Tagline** — marketing copy for WHMCS's order form. The
- *   storefront here renders `description`, which is offered instead and does the same job.
+ * Two of the reference's fields are still absent, because storing them would not make them
+ * do anything:
+ *
  * - **Order Form Template** — WHMCS ships eight cart layouts to choose between. This
- *   storefront has one, from the active theme.
+ *   storefront renders one, from the active theme. A stored choice would change nothing.
  * - **Available Payment Gateways** — gateway availability here is decided per gateway by
- *   `canUseGateway()` and by the GatewayRules extension, not per product group.
- * - **Hidden** — there is no `hidden` column on a category. Products have one, and the
- *   catalogue marks them; a group is hidden by not publishing its products.
+ *   `canUseGateway()` and by the GatewayRules extension, which is where a restriction has
+ *   to live to be enforced at checkout. Setting it per group would be ignored.
  *
  * **Group Features** is absent for the same reason it is greyed out on the reference until
- * you save: it belongs to a group that exists. Here there is no feature list at all.
+ * you save: it belongs to a group that already exists.
  *
  * Parent Group is ours rather than the reference's — `parent_id` is core's and the
  * storefront renders nested groups, so a create form that could not set it would make
@@ -53,6 +54,14 @@ class CreateProductGroup extends Page
     public ?int $parentId = null;
 
     public string $description = '';
+
+    /** The reference's order-form copy, stored against the group — see {@see Meta}. */
+    public string $headline = '';
+
+    public string $tagline = '';
+
+    /** The reference's "Check if this is a hidden group". */
+    public bool $hidden = false;
 
     public static function canAccess(): bool
     {
@@ -88,6 +97,8 @@ class CreateProductGroup extends Page
             'slugValue' => 'nullable|string|max:255|unique:categories,slug',
             'parentId' => 'nullable|exists:categories,id',
             'description' => 'nullable|string|max:65535',
+            'headline' => 'nullable|string|max:255',
+            'tagline' => 'nullable|string|max:255',
         ], attributes: [
             'name' => 'product group name',
             'slugValue' => 'URL',
@@ -100,6 +111,10 @@ class CreateProductGroup extends Page
             'parent_id' => $this->parentId,
             'description' => $this->description ?: null,
         ]);
+
+        Meta::put($category, 'headline', $this->headline);
+        Meta::put($category, 'tagline', $this->tagline);
+        Meta::put($category, 'hidden', $this->hidden);
 
         Notification::make()->title('Group "' . $category->name . '" created')->success()->send();
 
