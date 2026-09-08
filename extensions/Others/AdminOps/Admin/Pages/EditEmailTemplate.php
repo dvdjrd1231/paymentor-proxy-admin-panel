@@ -110,6 +110,47 @@ class EditEmailTemplate extends Page
     }
 
     /**
+     * The reference's Available Merge Fields panel, for *this* template.
+     *
+     * The placeholders are read out of the body core ships for this key plus whatever the
+     * body currently holds, so the list is what this template can actually resolve rather
+     * than a catalogue of everything the platform has ever sent. A field offered here that
+     * the event does not carry would render empty in a real email.
+     */
+    public function mergeFields(): array
+    {
+        $sources = [$this->body];
+
+        $shipped = \Database\Seeders\EmailTemplateSeeder::mapping[$this->template->key] ?? null;
+
+        if ($shipped) {
+            $sources[] = (string) ($shipped['body'] ?? '');
+            $sources[] = (string) ($shipped['subject'] ?? '');
+            $sources[] = (string) ($shipped['in_app_body'] ?? '');
+        }
+
+        preg_match_all('/\{\{\s*(.+?)\s*\}\}/s', implode("\n", $sources), $matches);
+
+        // `route(...)` calls are links rather than fields to paste, so they are listed
+        // apart — the reference does the same with its conditional and loop examples.
+        $fields = [];
+        $links = [];
+
+        foreach (array_unique($matches[1] ?? []) as $token) {
+            if (str_starts_with($token, 'route(')) {
+                $links[] = '{{ ' . $token . ' }}';
+            } else {
+                $fields[] = '{{ ' . $token . ' }}';
+            }
+        }
+
+        sort($fields);
+        sort($links);
+
+        return ['fields' => $fields, 'links' => $links];
+    }
+
+    /**
      * The Preview pane: Markdown rendered to HTML with every Blade placeholder shown as
      * a highlighted token instead of being executed. `{{ $ip }}` reads as a chip named
      * `$ip`; nothing typed into the body ever runs.
