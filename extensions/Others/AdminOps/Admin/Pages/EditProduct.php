@@ -132,7 +132,7 @@ class EditProduct extends Page
             'stock' => $p->stock,
             'stock_enabled' => $p->stock !== null,
             'per_user_limit' => $p->per_user_limit,
-            'allow_quantity' => (int) ($p->allow_quantity ?? 0),
+            'allow_quantity' => (string) ($p->allow_quantity ?: 'disabled'),
             'email_template' => (string) ($p->email_template ?? ''),
             'hidden' => (bool) $p->hidden,
             'server_id' => $p->server_id,
@@ -185,6 +185,10 @@ class EditProduct extends Page
             'form.stock' => 'nullable|integer|min:0',
             'form.per_user_limit' => 'nullable|integer|min:0',
             'form.sort' => 'nullable|integer|min:0',
+            // A database enum, not a flag. Casting it to int would have written 0 into a
+            // column that only accepts disabled|separated|combined, and collapsed the
+            // reference's three-way choice into a tick box on the way.
+            'form.allow_quantity' => 'required|in:disabled,separated,combined',
             'extra.tagline' => 'nullable|string|max:255',
             'extra.short_description' => 'nullable|string|max:1000',
             'extra.type' => 'required|in:' . implode(',', array_keys(Meta::PRODUCT_TYPES)),
@@ -202,7 +206,7 @@ class EditProduct extends Page
             // 0 would mean "none left" and stop the product being orderable at all.
             'stock' => $this->form['stock_enabled'] ? (int) $this->form['stock'] : null,
             'per_user_limit' => $this->form['per_user_limit'] !== '' ? (int) $this->form['per_user_limit'] : null,
-            'allow_quantity' => (int) $this->form['allow_quantity'],
+            'allow_quantity' => $this->form['allow_quantity'],
             'email_template' => $this->form['email_template'] ?: null,
             'hidden' => (bool) $this->form['hidden'],
             'sort' => $this->form['sort'] !== '' ? (int) $this->form['sort'] : null,
