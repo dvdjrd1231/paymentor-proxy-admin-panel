@@ -659,19 +659,30 @@ class AdminOps extends Extension
      * URL, and any edit that happened to preserve the size would have reused an old one.
      * It also meant a deploy had to remember to `touch` the blades, a ritual that is now
      * gone.
+     *
+     * Deliberately NOT cached. It used to be wrapped in a one-hour `Cache::remember`, which
+     * quietly broke the one guarantee this function exists to provide. For up to an hour
+     * after a deploy the URL still carried the *previous* hash while the route served the
+     * *new* body under it — one URL, two different stylesheets, exactly what the hash is
+     * supposed to make impossible. Cloudflare then pinned the stale copy under that
+     * `immutable, max-age=1y` URL, so a CSS fix could be live on the server and invisible
+     * in every browser. That is what happened on 2026-09-07 with the Open New Ticket
+     * attachment row: the rules were in the file, served correctly to a request that
+     * skipped the CDN, and absent from the page.
+     *
+     * Two md5_file calls per admin request is the price, and it is a fraction of a
+     * millisecond — far cheaper than a stylesheet that lies about its own identity.
      */
     public static function styleVersion(): string
     {
-        return \Illuminate\Support\Facades\Cache::remember('adminops.style-version', 3600, function (): string {
-            $stamp = '';
+        $stamp = '';
 
-            foreach (['skin', 'styles'] as $part) {
-                $file = __DIR__ . '/resources/views/' . $part . '.blade.php';
-                $stamp .= is_file($file) ? md5_file($file) . '|' : '';
-            }
+        foreach (['skin', 'styles'] as $part) {
+            $file = __DIR__ . '/resources/views/' . $part . '.blade.php';
+            $stamp .= is_file($file) ? md5_file($file) . '|' : '';
+        }
 
-            return substr(md5($stamp), 0, 10);
-        });
+        return substr(md5($stamp), 0, 10);
     }
 
     /** The one URL, versioned by the two blades' own content so a deploy invalidates it. */
