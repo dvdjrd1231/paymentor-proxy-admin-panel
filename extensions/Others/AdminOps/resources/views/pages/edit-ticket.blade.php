@@ -212,6 +212,32 @@
             </p>
         </div>
 
+        {{-- The reference's Log: what has happened to this ticket, as against the Client
+             Log beside it, which is what its owner has been doing everywhere. --}}
+        <div x-show="tab === 'log'" x-cloak>
+            <table class="ao-mu-grid">
+                <thead>
+                    <tr><th>Date</th><th>Log Entry</th><th>Changes</th></tr>
+                </thead>
+                <tbody>
+                    @forelse ($ticketLogRows as $row)
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($row->created_at)->format('d/m/Y H:i') }}</td>
+                            <td class="ao-mu-left">{{ ucfirst($row->event) }} ticket &mdash; ID: {{ $row->auditable_id }}</td>
+                            <td class="ao-mu-left"><code>{{ str($row->new_values)->limit(100) }}</code></td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="3" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+
+            <p class="ao-cp-note">
+                Replies are the thread above rather than log lines; this is the ticket record
+                itself changing — status, department, assignment and owner.
+            </p>
+        </div>
+
         <div x-show="tab === 'clientlog'" x-cloak>
             {{-- The reference's Client Log: what this ticket's client has been doing,
                  from the same audit trail the Client Profile's Log tab reads. --}}

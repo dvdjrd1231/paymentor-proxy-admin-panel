@@ -493,6 +493,16 @@ class EditTicket extends Page
                 ? DB::table('audits')->where('user_id', $this->ticket->user_id)
                     ->orderByDesc('id')->limit(50)->get()
                 : collect(),
+            // The reference's Log tab: what has happened to *this ticket*, as against the
+            // Client Log beside it, which is what its owner has been doing everywhere.
+            // The tab has been in the bar since this screen was built and never had a
+            // panel behind it — clicking it showed a blank page.
+            'ticketLogRows' => Schema::hasTable('audits')
+                ? DB::table('audits')
+                    ->where('auditable_type', Ticket::class)
+                    ->where('auditable_id', $this->ticket->id)
+                    ->orderByDesc('id')->limit(50)->get()
+                : collect(),
             'rendered' => $this->preview
                 ? Str::markdown(e($this->reply ?: '*Nothing to preview yet.*'))
                 : null,
