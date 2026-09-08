@@ -9,7 +9,6 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Panel;
 use Livewire\Attributes\Url;
-use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
  * WHMCS's Promotions, on Paymenter's coupons.
@@ -96,11 +95,6 @@ class Promotions extends Page
     public static function getRoutePath(Panel $panel): string
     {
         return '/' . static::getSlug($panel);
-    }
-
-    public static function registerNavigation(): void
-    {
-        WhmcsNavigation::place(CouponResource::class, static::class);
     }
 
     // ── The editor ──────────────────────────────────────────────────────────────
