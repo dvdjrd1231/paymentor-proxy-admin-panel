@@ -12,7 +12,9 @@
 --}}
 <x-filament-panels::page>
     <div class="ao-mu">
-        {{-- The reference's three buttons, in its order (issue #35). --}}
+        {{-- The reference's three buttons, in its order (issue #35). Each opens its own
+             screen, as the reference's do — Duplicate used to be an inline panel here that
+             always named the copy "(Copy)". --}}
         <div class="ao-tx-tabs">
             @if ($urls['newCategory'])
                 <a class="ao-mu-tab" href="{{ $urls['newCategory'] }}">&#10010; Create a New Group</a>
@@ -24,28 +26,10 @@
                     <span class="ao-ont-plus">&#10010;</span> Create a New Product
                 </a>
             @endif
-            <button type="button" class="ao-mu-tab {{ $duplicating ? 'ao-on' : '' }}" wire:click="toggleDuplicating">Duplicate a Product</button>
-        </div>
-
-        @if ($duplicating)
-            <form class="ao-anc-card" wire:submit.prevent="duplicate">
-                <label class="ao-anc-row">
-                    <span>Product to Duplicate</span>
-                    <select class="ao-w-40" wire:model="duplicateSource" required>
-                        <option value="">Choose a product</option>
-                        @foreach ($allProducts as $option)
-                            <option value="{{ $option->id }}">{{ $option->name }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <div class="ao-pr-center"><button type="submit" class="ao-find-go">Duplicate</button></div>
-            </form>
-            @if ($errors->any())
-                <ul class="ao-anc-errors">
-                    @foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach
-                </ul>
+            @if ($urls['duplicate'])
+                <a class="ao-mu-tab" href="{{ $urls['duplicate'] }}">&#9635; Duplicate a Product</a>
             @endif
-        @endif
+        </div>
 
     @if (empty($tree))
         <div class="ao-catalogue-empty">
