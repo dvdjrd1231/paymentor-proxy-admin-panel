@@ -150,7 +150,7 @@ class SystemSettings extends Page
             'Billing' => [
                 ['Payment Gateways', $url(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\PaymentGateways::class), 'ri-bank-card-line', 'Which gateways can take a payment, and their credentials'],
                 ['Currencies', $url(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\CurrenciesList::class), 'ri-money-dollar-circle-line', 'What this store charges in, and the exchange rates behind it'],
-                ['Tax Rates', $url(\App\Admin\Resources\TaxRateResource::class), 'ri-percent-line', 'Rates applied to invoices by country or region'],
+                ['Tax Configuration', $url(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\TaxConfiguration::class), 'ri-percent-line', 'Configure Taxes and VAT'],
                 ['Coupons', $url(\App\Admin\Resources\CouponResource::class), 'ri-coupon-3-line', 'Discount codes clients can redeem at checkout'],
                 ['Payment Fee Rules', $url(\Paymenter\Extensions\Others\PaymentFees\Admin\Resources\PaymentFeeRuleResource::class), 'ri-price-tag-3-line', 'Surcharges added for a given gateway or amount'],
                 ['Gateway Rules', $url(\Paymenter\Extensions\Others\GatewayRules\Admin\Resources\GatewayRuleResource::class), 'ri-git-branch-line', 'Which gateways are offered for a given country or currency'],
