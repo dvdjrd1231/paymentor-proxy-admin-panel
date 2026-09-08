@@ -100,13 +100,23 @@
                     </span>
                 </div>
 
-                <label class="ao-anc-row">
+                {{-- Three radios, not a tick box: the column is an enum and the reference
+                     asks the same three-way question. --}}
+                <div class="ao-anc-row">
                     <span>Allow Multiple Quantities</span>
-                    <span class="ao-anc-field">
-                        <input type="checkbox" wire:model="form.allow_quantity">
-                        <i>A customer may order more than one at a time</i>
+                    <span class="ao-ep-radios">
+                        @foreach ([
+                            'disabled' => 'No',
+                            'separated' => 'Yes - Multiple Services: each unit is its own service instance',
+                            'combined' => 'Yes - Scaling Service: one instance with a quantity',
+                        ] as $value => $label)
+                            <label class="ao-check">
+                                <input type="radio" name="ep-qty" value="{{ $value }}" wire:model="form.allow_quantity">
+                                <span>{{ $label }}</span>
+                            </label>
+                        @endforeach
                     </span>
-                </label>
+                </div>
 
                 <label class="ao-anc-row">
                     <span>Limit Per Client</span>
