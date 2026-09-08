@@ -87,6 +87,7 @@ class AdminOps extends Extension
         $this->retireCoreGatewayEditor();
         $this->registerErrorPages();
         $this->applyClientGroupDiscounts();
+        $this->creditCancelledServices();
     }
 
     /**
@@ -103,6 +104,21 @@ class AdminOps extends Extension
      * The guard is not optional: adding the discount line creates an invoice item, which
      * fires this same event again.
      */
+    /**
+     * Credit the unused period back when a service is cancelled (Leandro, 2026-09-08).
+     *
+     * The rules this applies — and the several cases where it deliberately pays nothing —
+     * are in {@see Support\CancellationCredit}, which is where anything about this
+     * behaviour should be read or changed.
+     */
+    private function creditCancelledServices(): void
+    {
+        Event::listen(
+            \App\Events\Service\Updated::class,
+            fn ($event) => Support\CancellationCredit::handle($event->service),
+        );
+    }
+
     private function applyClientGroupDiscounts(): void
     {
         Event::listen(\App\Events\InvoiceItem\Created::class, function ($event): void {

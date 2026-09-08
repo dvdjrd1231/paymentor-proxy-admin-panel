@@ -54,6 +54,17 @@ class SettingsReference
             // The client-area invoice screen reads this; without a field here the only way
             // to change it would be a database row nobody knows about. See
             // themes/proxy/views/invoices/show.blade.php for why the grace exists at all.
+            // Money leaves the store automatically when this is on, so it is a setting
+            // rather than a constant: a store that settles cancellations by hand needs to
+            // be able to stop it without a deploy.
+            'credits_on_cancellation' => [
+                'name' => 'credits_on_cancellation',
+                'label' => 'Credit On Cancellation',
+                'type' => 'checkbox',
+                'database_type' => 'boolean',
+                'default' => true,
+            ],
+
             'invoice_processing_grace_minutes' => [
                 'name' => 'invoice_processing_grace_minutes',
                 'label' => 'Payment Attempt Grace Period',
@@ -153,6 +164,7 @@ class SettingsReference
                 ['setting' => 'credits_maximum_credit', 'label' => 'Maximum Balance', 'hint' => 'Enter the maximum balance that a client can add in credit'],
                 ['setting' => 'credits_auto_use', 'label' => 'Automatic Credit Use', 'hint' => 'Check to automatically apply available credit from a users credit balance to recurring invoices upon creation'],
                 ['setting' => 'credits_on_downgrade', 'label' => 'Credit On Downgrade', 'hint' => 'Check to provide a prorata refund to clients when downgrading for unused time'],
+                ['setting' => 'credits_on_cancellation', 'label' => 'Credit On Cancellation', 'hint' => 'Check to credit the unused part of the paid period when a service is cancelled. Prorated from the service\'s own dates; setup fees are not returned, and a service with no paid invoice — one terminated for non-payment — is never credited'],
             ],
 
 
