@@ -145,7 +145,7 @@
                          multiple, so every pick adds to the set. --}}
                     <button type="button" class="ao-cq-addline"
                         onclick="this.closest('.ao-anc-field').querySelector('[data-ao-attach]').click()">
-                        <span class="ao-ont-plus">&#10133;</span> Add More
+                        <span class="ao-ont-plus">&#10010;</span> Add More
                     </button>
                 </span>
             </div>
