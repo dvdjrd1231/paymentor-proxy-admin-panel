@@ -23,7 +23,10 @@ COMPOSE_FILE="${PAYMENTER_COMPOSE:-docker-compose.vps.yml}"
 
 cd "$ROOT"
 
-run() { docker compose -f "$COMPOSE_FILE" exec -T paymenter "$@"; }
+# `< /dev/null` is not decoration. Piped in over ssh (`ssh host 'bash -s' < deploy.sh`)
+# the script *is* stdin, and `exec -T` inherits it — so the first artisan call swallowed
+# the rest of the script and the deploy stopped after config:clear, silently, exit 0.
+run() { docker compose -f "$COMPOSE_FILE" exec -T paymenter "$@" < /dev/null; }
 
 echo "==> Pulling"
 # --ff-only so a diverged server tree fails loudly here rather than producing a merge

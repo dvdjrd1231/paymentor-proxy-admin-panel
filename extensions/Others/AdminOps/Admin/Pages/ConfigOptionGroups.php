@@ -121,11 +121,13 @@ class ConfigOptionGroups extends Page
                 ->orderBy('sort')->orderBy('id')->get()
                 ->map(fn (ConfigOption $group) => [
                     'row' => $group,
+                    // The reference's own group screen, not core's Filament form: name,
+                    // description and the Assigned Products list box.
                     'edit' => ConfigOptionResource::canEdit($group)
-                        ? ConfigOptionResource::getUrl('edit', ['record' => $group])
+                        ? EditConfigOptionGroup::getUrl(['record' => $group->id])
                         : null,
                 ]),
-            'newUrl' => ConfigOptionResource::canCreate() ? ConfigOptionResource::getUrl('create') : null,
+            'newUrl' => ConfigOptionResource::canCreate() ? EditConfigOptionGroup::getUrl() : null,
         ];
     }
 }

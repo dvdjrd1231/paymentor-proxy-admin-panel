@@ -2345,6 +2345,11 @@
 
     .ao-ep-list option { padding: 0.2rem 0.35rem; }
 
+    /* The group screen's Assigned Products box is the tall one in the reference — it runs
+       the width of the card rather than sitting in a field-sized column. */
+    .ao-cog-products { align-items: start; }
+    .ao-cog-list { max-width: none; }
+
     /* Custom Fields lists what is already asked before the form that adds another. */
     .ao-ep-fields { margin: 0; }
     .ao-ep-fields td { vertical-align: middle; }
