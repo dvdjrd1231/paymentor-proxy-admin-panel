@@ -242,10 +242,35 @@ class WhmcsNavigation
                     return static::setupGroup();
                 }
             }
+
+            // The same gap, for detail screens belonging to the *other* groups: the menu
+            // links the list (`/admin/manage-orders`) while the page you land on is the
+            // record (`/admin/edit-order/45`), so no prefix matched and the rail fell back
+            // to Shortcuts — where the reference shows the section you are working in.
+            foreach (static::GROUP_PREFIXES as $prefix => $label) {
+                if ($path === $prefix || str_starts_with($path, $prefix . '/')) {
+                    foreach (static::groups() as $group) {
+                        if ($group->getLabel() === $label) {
+                            return $group;
+                        }
+                    }
+                }
+            }
         }
 
         return $best;
     }
+
+    /**
+     * Detail screens whose rail is their list's group, though no menu item links them.
+     * Same segment-boundary matching as {@see SETUP_PREFIXES}.
+     *
+     * @var array<string, string>
+     */
+    private const GROUP_PREFIXES = [
+        '/admin/edit-order' => 'Orders',
+        '/admin/client-summary' => 'Clients',
+    ];
 
     /**
      * Paths whose rail is Setup's, though no Setup menu item links them directly.
