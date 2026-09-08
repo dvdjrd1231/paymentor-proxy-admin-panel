@@ -2268,6 +2268,20 @@
 
     .ao-cpg-actions { display: flex; justify-content: center; gap: 0.5rem; margin-top: 1.2rem; }
 
+    /* Textareas are not in the .ao-anc-row input list, so they arrived unstyled and
+       shrink-wrapped to the browser's default cols. */
+    .ao-cpg-desc { align-items: start; }
+
+    .ao-cpg-desc textarea {
+        width: 100%;
+        padding: 0.4rem 0.55rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+        font: inherit;
+        resize: vertical;
+    }
+
     .ao-cp-note {
         margin-top: 1rem;
         padding-top: 0.8rem;

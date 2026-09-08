@@ -36,7 +36,9 @@
 
             {{-- The storefront renders this where WHMCS would render its headline and
                  tagline; there is one field here rather than two. --}}
-            <label class="ao-anc-row ao-anc-row-wide">
+            {{-- A normal two-column row: `.ao-anc-row-wide` collapses to a single column,
+                 which left the label above a thin strip of textarea. --}}
+            <label class="ao-anc-row ao-cpg-desc">
                 <span>Description</span>
                 <textarea rows="4" wire:model="description"
                     placeholder="Shown on the storefront under the group's name."></textarea>
