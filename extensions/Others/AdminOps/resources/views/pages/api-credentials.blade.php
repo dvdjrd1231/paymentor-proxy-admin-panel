@@ -6,15 +6,19 @@
 --}}
 @php $catalogue = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ApiCredentials::catalogue(); @endphp
 <x-filament-panels::page>
-    <div class="ao-mu">
+    {{-- Both lists are loaded on every render whichever tab shows, so switching never
+         needed the server. --}}
+    <div class="ao-mu" x-data="{ tab: @js($this->tab) }">
         <div class="ao-tx-tabs">
-            <button type="button" class="ao-mu-tab {{ $this->tab === 'credentials' ? 'ao-on' : '' }}"
-                wire:click="$set('tab', 'credentials')">&#8677; API Credentials</button>
-            <button type="button" class="ao-mu-tab {{ $this->tab === 'roles' ? 'ao-on' : '' }}"
-                wire:click="$set('tab', 'roles')">&#9881; API Roles</button>
+            <button type="button" class="ao-mu-tab"
+                :class="{ 'ao-on': tab === 'credentials' }"
+                @click="tab = 'credentials'">&#8677; API Credentials</button>
+            <button type="button" class="ao-mu-tab"
+                :class="{ 'ao-on': tab === 'roles' }"
+                @click="tab = 'roles'">&#9881; API Roles</button>
         </div>
 
-        @if ($this->tab === 'credentials')
+        <div x-show="tab === 'credentials'" x-cloak>
             <div class="ao-gs-actions ao-gs-actions-left">
                 <button type="button" class="ao-api-generate" wire:click="toggleGenerating">
                     &#10010; Generate New API Credential
@@ -80,7 +84,9 @@
                     @endforelse
                 </tbody>
             </table>
-        @else
+        </div>
+
+        <div x-show="tab === 'roles'" x-cloak>
             <div class="ao-gs-actions ao-gs-actions-left">
                 <button type="button" class="ao-api-generate" wire:click="openRole">&#10010; Create API Role</button>
             </div>
@@ -113,7 +119,7 @@
                     @endforelse
                 </tbody>
             </table>
-        @endif
+        </div>
 
         {{-- The reference's Credential Management modal: what editing a credential does. --}}
         @if ($editing)
