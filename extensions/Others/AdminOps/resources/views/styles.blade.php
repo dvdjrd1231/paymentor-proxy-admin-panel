@@ -2279,6 +2279,9 @@
     .ao-ep-prices { margin-top: 0.6rem; }
     .ao-ep-colour { width: 4rem; height: 2rem; padding: 0; border: 1px solid var(--wa-border, #ccc); }
     .ao-ep-radios { display: flex; flex-direction: column; gap: 0.3rem; }
+    .ao-ep-explain p { margin: 0 0 0.5rem; }
+    .ao-ep-explain p:last-child { margin-bottom: 0; }
+    .ao-ep-explain code { font-size: 0.9em; }
     .ao-ep-radios .ao-check { display: flex; align-items: center; gap: 0.45rem; }
 
     /* Textareas are not in the .ao-anc-row input list, so they arrived unstyled and

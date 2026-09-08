@@ -46,4 +46,35 @@
             </div>
         </div>
     </div>
+
+    {{-- Cross-sells: the products the admin has recommended alongside this one, set on
+         Edit Product → Cross-sells. Without this the tab would store a list nobody reads. --}}
+    @php
+        $crossSells = collect();
+
+        if (class_exists(\Paymenter\Extensions\Others\AdminOps\Models\Meta::class)) {
+            $ids = array_filter(array_map('intval', explode(',',
+                (string) (\Paymenter\Extensions\Others\AdminOps\Models\Meta::for($product)['cross_sells'] ?? ''))));
+
+            if ($ids !== []) {
+                $crossSells = \App\Models\Product::with('category')
+                    ->whereIn('id', $ids)->where('hidden', false)->get();
+            }
+        }
+    @endphp
+
+    @if ($crossSells->isNotEmpty())
+        <div class="wf-panel wf-crosssell">
+            <div class="wf-panel-heading">{{ __('theme.you_may_also_like') }}</div>
+            <div class="wf-panel-body wf-crosssell-list">
+                @foreach ($crossSells as $other)
+                    <a class="wf-crosssell-item" wire:navigate
+                        href="{{ route('products.show', ['category' => $other->category->slug, 'product' => $other->slug]) }}">
+                        <span class="wf-crosssell-name">{{ $other->name }}</span>
+                        <span class="wf-crosssell-price">{{ $other->price()->formatted->price ?? '' }}</span>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    @endif
 </div>
