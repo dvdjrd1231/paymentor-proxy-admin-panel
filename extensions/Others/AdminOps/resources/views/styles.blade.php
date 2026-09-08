@@ -2282,6 +2282,10 @@
 
     /* Edit Product uses General Settings' three-column rows, so it needs the same card
        the settings page draws them in. */
+    /* Alpine hides tab panels with x-show, but only once it has booted. Without this the
+       page paints every tab stacked on top of each other first. */
+    [x-cloak] { display: none !important; }
+
     .ao-gs-card {
         border: 1px solid var(--wa-panel-border, #ddd);
         border-radius: var(--wa-radius, 6px);

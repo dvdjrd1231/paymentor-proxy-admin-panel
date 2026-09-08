@@ -8,7 +8,9 @@
     arriving is what pays an invoice, and Add Payment is how money arrives.
 --}}
 <x-filament-panels::page>
-    <div class="ao-mu ao-eo ao-ei">
+    {{-- Tabs switch in the browser — see the note on edit-product for why they no longer
+         go to the server. --}}
+    <div class="ao-mu ao-eo ao-ei" x-data="{ tab: @js($tab) }">
         <div class="ao-ei-top">
             <div class="ao-tx-tabs ao-ei-tabs">
                 @foreach ([
@@ -19,8 +21,9 @@
                     'refund' => 'Refund',
                     'notes' => 'Notes',
                 ] as $key => $label)
-                    <button type="button" class="ao-mu-tab {{ $tab === $key ? 'ao-on' : '' }}"
-                        wire:click="$set('tab', '{{ $key }}')">{{ $label }}</button>
+                    <button type="button" class="ao-mu-tab"
+                        :class="{ 'ao-on': tab === '{{ $key }}' }"
+                        @click="tab = '{{ $key }}'">{{ $label }}</button>
                 @endforeach
             </div>
 
@@ -36,7 +39,7 @@
         </div>
 
         {{-- ── Summary ─────────────────────────────────────────────────────────── --}}
-        @if ($tab === 'summary')
+        <div x-show="tab === 'summary'" x-cloak>
             <div class="ao-ei-summary">
                 <div class="ao-anc-card ao-ei-facts">
                     <div class="ao-anc-row">
@@ -95,10 +98,10 @@
                     </div>
                 </div>
             </div>
-        @endif
+        </div>
 
         {{-- ── Add Payment ─────────────────────────────────────────────────────── --}}
-        @if ($tab === 'payment')
+        <div x-show="tab === 'payment'" x-cloak>
             <form class="ao-anc-card ao-ei-two" wire:submit.prevent="addPayment">
                 <div class="ao-anc-col">
                     <label class="ao-anc-row">
@@ -143,10 +146,10 @@
 
                 <div class="ao-pr-center ao-ei-wide"><button type="submit" class="ao-find-go">Add Payment</button></div>
             </form>
-        @endif
+        </div>
 
         {{-- ── Options ─────────────────────────────────────────────────────────── --}}
-        @if ($tab === 'options')
+        <div x-show="tab === 'options'" x-cloak>
             <form class="ao-anc-card ao-ei-two" wire:submit.prevent="saveOptions">
                 <div class="ao-anc-col">
                     <label class="ao-anc-row">
@@ -186,10 +189,10 @@
 
                 <div class="ao-pr-center ao-ei-wide"><button type="submit" class="ao-find-go">Save Changes</button></div>
             </form>
-        @endif
+        </div>
 
         {{-- ── Credit ──────────────────────────────────────────────────────────── --}}
-        @if ($tab === 'credit')
+        <div x-show="tab === 'credit'" x-cloak>
             <div class="ao-anc-card ao-ei-credit">
                 <div class="ao-ei-credit-side">
                     <h5>Add Credit to Invoice</h5>
@@ -217,10 +220,10 @@
                     </p>
                 </div>
             </div>
-        @endif
+        </div>
 
         {{-- ── Refund ──────────────────────────────────────────────────────────── --}}
-        @if ($tab === 'refund')
+        <div x-show="tab === 'refund'" x-cloak>
             <form class="ao-anc-card ao-ei-refund" wire:submit.prevent="issueRefund">
                 <div class="ao-anc-row">
                     <span>Refund Type</span>
@@ -296,16 +299,16 @@
                     </tbody>
                 </table>
             @endif
-        @endif
+        </div>
 
         {{-- ── Notes ───────────────────────────────────────────────────────────── --}}
-        @if ($tab === 'notes')
+        <div x-show="tab === 'notes'" x-cloak>
             <form class="ao-anc-card ao-ei-notes" wire:submit.prevent="saveNote">
                 <textarea rows="8" wire:model="note"
                     placeholder="Internal notes about this invoice. Staff only — the client never sees this."></textarea>
                 <div class="ao-pr-center"><button type="submit" class="ao-find-go">Save Note</button></div>
             </form>
-        @endif
+        </div>
 
         {{-- ── Invoice Items, shared under every tab, as the reference has it ──── --}}
         <div class="ao-ei-items-head">
