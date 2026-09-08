@@ -256,6 +256,10 @@ class WhmcsNavigation
     private const SETUP_PREFIXES = [
         '/admin/system-settings',
         '/admin/settings',
+        '/admin/catalogue',
+        '/admin/create-product',
+        '/admin/create-product-group',
+        '/admin/duplicate-product',
         '/admin/products',
         '/admin/categories',
         '/admin/config-options',
@@ -755,6 +759,13 @@ class WhmcsNavigation
         // page; core's raw form stays reachable as System Settings' first tile, and is
         // claimed here so the Addons sweep leaves it be.
         static::$placed[Settings::class] = true;
+
+        // The catalogue's own three buttons (Leandro, 2026-09-07). They are reached from
+        // Products/Services and belong nowhere in the menu, so without this the Addons
+        // catch-all lists all three — which is where they turned up the first time.
+        static::$placed[\Paymenter\Extensions\Others\AdminOps\Admin\Pages\CreateProduct::class] = true;
+        static::$placed[\Paymenter\Extensions\Others\AdminOps\Admin\Pages\CreateProductGroup::class] = true;
+        static::$placed[\Paymenter\Extensions\Others\AdminOps\Admin\Pages\DuplicateProduct::class] = true;
 
         // Core's "Available Extensions" page is deliberately NOT claimed: the reference's
         // top bar has an Addons menu, and with every other stray claimed (issue #11) this
