@@ -6,8 +6,8 @@ use App\Admin\Resources\CategoryResource;
 use App\Models\Category;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Panel;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Url;
 use Paymenter\Extensions\Others\AdminOps\Models\Meta;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
@@ -49,15 +49,19 @@ class CreateProductGroup extends Page
     protected string $view = 'adminops::pages.create-product-group';
 
     /**
-     * `/admin/create-product-group` creates; `/admin/create-product-group/{record}` edits.
+     * `/admin/create-product-group` creates; `?group=5` edits the same screen.
      *
-     * One screen for both, as the reference has it — and necessary rather than tidy: the
-     * headline, tagline and hidden flag live in this extension's table, so core's own
-     * category form cannot show them. Without an edit route they could be set once at
-     * creation and never seen or changed again, which is worse than not offering them.
+     * The group is a query parameter rather than a path segment because Filament matches a
+     * *required* page parameter (as EditInvoice's `/{record}` shows) but not an optional
+     * one — `/{record?}` registered fine and then 404'd on every id. `#[Url]` is the
+     * pattern already used here for exactly this, on Open New Ticket's `client`.
      */
     protected static ?string $slug = 'create-product-group';
 
+    #[Url(as: 'group')]
+    public ?int $groupId = null;
+
+    /** Resolved from {@see $groupId} in mount(); null while creating. */
     public ?Category $record = null;
 
     /** Navigation is built by {@see WhmcsNavigation}; this is reached from Products/Services. */
@@ -79,25 +83,20 @@ class CreateProductGroup extends Page
     /** The reference's "Check if this is a hidden group". */
     public bool $hidden = false;
 
-    public static function getRoutePath(Panel $panel): string
-    {
-        return '/' . static::getSlug($panel) . '/{record?}';
-    }
-
     public static function canAccess(): bool
     {
         return CategoryResource::canCreate() || CategoryResource::canViewAny();
     }
 
-    public function mount(int|string|null $record = null): void
+    public function mount(): void
     {
-        if ($record === null) {
+        if ($this->groupId === null) {
             abort_unless(CategoryResource::canCreate(), 403);
 
             return;
         }
 
-        $this->record = Category::findOrFail($record);
+        $this->record = Category::findOrFail($this->groupId);
         abort_unless(CategoryResource::canEdit($this->record), 403);
 
         $this->name = (string) $this->record->name;
