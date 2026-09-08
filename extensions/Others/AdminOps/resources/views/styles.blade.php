@@ -2350,6 +2350,63 @@
     .ao-cog-products { align-items: start; }
     .ao-cog-list { max-width: none; }
 
+    /* ── The client profile's tabs ────────────────────────────────────────────────
+       The reference heads each list tab with its own buttons, and Tickets and
+       Transactions with a band of four figures across the top. */
+    .ao-ct-head:not(:empty) { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+
+    .ao-ct-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .ao-ct-card {
+        padding: 1rem 1.15rem;
+        border: 1px solid var(--wa-border, #e2e2e2);
+        border-radius: 6px;
+        background: var(--wa-panel-bg, rgba(127, 127, 127, 0.05));
+    }
+
+    .ao-ct-card b { display: block; font-size: 1.6rem; font-weight: 400; line-height: 1.2; }
+    .ao-ct-card span { font-size: 0.72rem; letter-spacing: 0.05em; opacity: 0.7; }
+
+    /* The Filter Log band: two columns of label-and-field, as the reference draws it. */
+    .ao-ct-filter { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.5rem; margin-bottom: 1rem; }
+
+    /* Contacts: the picker over a two-column form. */
+    .ao-cc-pick { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; }
+    .ao-cc-pick select { min-width: 22rem; }
+    .ao-cc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.5rem; }
+    .ao-cc-all { margin-top: 0.4rem; background: none; border: 0; padding: 0; cursor: pointer; }
+
+    .ao-cc-delete {
+        margin-top: 0.6rem;
+        background: none;
+        border: 0;
+        color: var(--wa-danger, #c0392b);
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    /* Users: the owner badge, and Remove drawn as a word rather than an icon. */
+    .ao-cu-owner { font-size: 0.65rem; letter-spacing: 0.05em; }
+    .ao-cu-remove { color: var(--wa-danger, #c0392b); font-weight: 600; }
+
+    /* Notes: the box that adds one, with its controls to the right. */
+    .ao-cn-add { display: grid; grid-template-columns: 1fr auto; gap: 1rem; margin-top: 1rem; align-items: start; }
+    .ao-cn-editor textarea { width: 100%; }
+    .ao-cn-count { margin: 0.3rem 0 0; font-size: 0.78rem; opacity: 0.65; text-align: end; }
+    .ao-cn-side { display: flex; flex-direction: column; gap: 0.6rem; }
+    .ao-cn-sticky > td { background: var(--wa-warning-bg, rgba(240, 173, 78, 0.12)); }
+
+    @media (max-width: 60rem) {
+        .ao-ct-filter,
+        .ao-cc-grid { grid-template-columns: 1fr; }
+        .ao-cn-add { grid-template-columns: 1fr; }
+    }
+
     /* A labelled field inside a dialog — label over control, full width, the shape the
        reference's Create New Email Template box uses. */
     .ao-mud-field { display: block; margin-bottom: 0.9rem; }

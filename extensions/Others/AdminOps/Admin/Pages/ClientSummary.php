@@ -22,7 +22,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Attributes\Url;
+use Paymenter\Extensions\Others\AdminOps\Models\ClientNote;
 use Paymenter\Extensions\Others\AdminOps\Support\Money;
+use Paymenter\Extensions\Others\ClientTools\Models\Contact;
 
 /**
  * The reference's **Client Profile**: one customer, one screen, in tabs.
@@ -137,16 +139,22 @@ class ClientSummary extends Page
     /**
      * The reference's tabs, less the ones Paymenter has nothing behind.
      *
-     * Dropped deliberately rather than shown empty: **Domains** (removed from this store
-     * entirely, §10 of the brief), **Users** and **Contacts** (WHMCS's sub-account model,
-     * which Paymenter does not have), **Quotes** (nothing to list yet — the tab appears with
-     * the feature). A tab that always says "none" teaches people to stop opening tabs.
+     * **Users** and **Contacts** are the reference's sub-account model, and ClientTools
+     * turned out to have built exactly it: `ext_ct_contacts` carries a person on the
+     * account, and `is_sub_account` with `permissions` is the reference's Associate User.
+     * So both tabs are here and both write real records.
+     *
+     * Dropped deliberately rather than shown empty: **Domains** — removed from this store
+     * entirely (§10 of the brief), so the tab would never hold a row. A tab that always
+     * says "none" teaches people to stop opening tabs.
      *
      * @var array<string, string>
      */
     private const TABS = [
         'summary' => 'Summary',
         'profile' => 'Profile',
+        'users' => 'Users',
+        'contacts' => 'Contacts',
         'services' => 'Products/Services',
         'billable' => 'Billable Items',
         'invoices' => 'Invoices',
@@ -157,6 +165,45 @@ class ClientSummary extends Page
         'notes' => 'Notes',
         'log' => 'Log',
     ];
+
+    // ── Contacts ────────────────────────────────────────────────────────────────
+    //
+    // The reference picks a contact from a select whose last option is "Add New", then
+    // edits one form. `contact` is the picked id, or '' while adding.
+
+    public string $contact = '';
+
+    public array $contactForm = [
+        'first_name' => '', 'last_name' => '', 'email' => '', 'company_name' => '',
+        'address' => '', 'address2' => '', 'city' => '', 'state' => '', 'zip' => '',
+        'country' => '', 'phone' => '',
+    ];
+
+    /** The reference's Email Notifications ticks, as ClientTools stores them. */
+    public array $contactPrefs = [];
+
+    public bool $confirmingContactDelete = false;
+
+    // ── Users ───────────────────────────────────────────────────────────────────
+
+    public bool $associating = false;
+
+    public string $associateContact = '';
+
+    /** @var array<int, string> */
+    public array $associatePermissions = [];
+
+    // ── Notes ───────────────────────────────────────────────────────────────────
+
+    public string $newNote = '';
+
+    public bool $newNoteSticky = false;
+
+    public ?int $confirmingNote = null;
+
+    // ── Log filters ─────────────────────────────────────────────────────────────
+
+    public array $logFilter = ['date' => '', 'description' => '', 'user' => '', 'ip' => ''];
 
     // ── The Summary tab's selection and Bulk Actions row ────────────────────────
     //
@@ -1059,6 +1106,13 @@ class ClientSummary extends Page
                 : collect(),
             'tab' => array_key_exists($this->tab, self::TABS) ? $this->tab : 'summary',
             'urls' => $this->urls(),
+            'countries' => (function (): array {
+                $countries = config('app.countries');
+                unset($countries['']);
+
+                return $countries;
+            })(),
+            'hasContacts' => $this->hasContacts(),
             'clientsList' => User::query()
                 ->whereNull('role_id')
                 ->orderBy('first_name')
@@ -1087,15 +1141,57 @@ class ClientSummary extends Page
                 })(),
                 'billable' => ['rows' => $this->billableItems()],
                 'invoices' => ['rows' => $this->customer->invoices()->with(['items', 'transactions'])->latest()->limit(self::TAB_ROWS)->get()],
-                'transactions' => ['rows' => $this->transactionRows()],
-                'tickets' => ['rows' => $this->customer->tickets()->latest()->limit(self::TAB_ROWS)->get()],
+                // The reference heads both of these with a band of four figures.
+                'transactions' => (function (): array {
+                    $rows = $this->transactionRows();
+
+                    return [
+                        'rows' => $rows,
+                        'totals' => [
+                            'in' => $rows->sum(fn (array $row): float => (float) $row['in']),
+                            'out' => $rows->sum(fn (array $row): float => (float) $row['out']),
+                        ],
+                    ];
+                })(),
+                'tickets' => (function (): array {
+                    $opened = fn (Carbon $from, Carbon $to): int => $this->customer->tickets()
+                        ->whereBetween('created_at', [$from, $to])->count();
+
+                    return [
+                        'rows' => $this->customer->tickets()->latest()->limit(self::TAB_ROWS)->get(),
+                        'ticketStats' => [
+                            'Opened This Month' => $opened(now()->startOfMonth(), now()->endOfMonth()),
+                            'Opened Last Month' => $opened(now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()),
+                            'Opened This Year' => $opened(now()->startOfYear(), now()->endOfYear()),
+                            'Opened Last Year' => $opened(now()->subYear()->startOfYear(), now()->subYear()->endOfYear()),
+                        ],
+                    ];
+                })(),
                 'emails' => ['rows' => $this->emailRows()],
-                'log' => ['rows' => $this->logRows()],
+                'log' => (function (): array {
+                    $rows = $this->logRows();
+
+                    return [
+                        'rows' => $rows,
+                        // The Username select offers who has actually touched this account,
+                        // rather than every admin on the install.
+                        'logUsers' => User::whereIn(
+                            'id',
+                            DB::table('audits')->whereNotNull('user_id')
+                                ->where(fn ($q) => $q->where(fn ($s) => $s->where('auditable_type', User::class)
+                                    ->where('auditable_id', $this->customer->id))
+                                    ->orWhere('user_id', $this->customer->id))
+                                ->distinct()->pluck('user_id'),
+                        )->get(['id', 'first_name', 'last_name', 'email']),
+                    ];
+                })(),
+                'users' => ['rows' => $this->contactRows()],
+                'contacts' => ['rows' => $this->contactRows()],
                 // The reference's Profile tab is the client's stored details; ours reads the
                 // same properties the Summary panel does, in full.
                 'profile' => ['rows' => []],
                 'quotes' => ['rows' => $this->quoteRows()],
-                'notes' => ['rows' => []],
+                'notes' => ['rows' => $this->noteRows()],
                 default => $this->summaryData(),
             },
         ];
@@ -1234,6 +1330,213 @@ class ClientSummary extends Page
      *
      * @return Collection<int, object>
      */
+    // ── Contacts ────────────────────────────────────────────────────────────────
+
+    /** Whether the contacts feature is installed — ClientTools may be disabled. */
+    private function hasContacts(): bool
+    {
+        return class_exists(Contact::class) && Schema::hasTable('ext_ct_contacts');
+    }
+
+    /** @return \Illuminate\Support\Collection<int, Contact> */
+    private function contactRows()
+    {
+        if (!$this->hasContacts()) {
+            return collect();
+        }
+
+        return Contact::where('user_id', $this->customer->id)->orderBy('first_name')->get();
+    }
+
+    /** The reference's Contacts select: choosing one loads it into the form. */
+    public function updatedContact(): void
+    {
+        $this->resetValidation();
+        $this->confirmingContactDelete = false;
+
+        $row = $this->contact !== '' ? Contact::find((int) $this->contact) : null;
+
+        if (!$row || $row->user_id !== $this->customer->id) {
+            // "Add New", or a contact that has gone: an empty form either way.
+            $this->contact = $row ? '' : $this->contact;
+            $this->contactForm = array_fill_keys(array_keys($this->contactForm), '');
+            $this->contactPrefs = [];
+
+            return;
+        }
+
+        foreach (array_keys($this->contactForm) as $field) {
+            $this->contactForm[$field] = (string) ($row->{$field} ?? '');
+        }
+
+        $this->contactPrefs = array_values((array) ($row->email_preferences ?? []));
+    }
+
+    public function saveContact(): void
+    {
+        abort_unless($this->hasContacts(), 404);
+
+        $this->validate([
+            'contactForm.first_name' => 'required|string|max:255',
+            'contactForm.last_name' => 'required|string|max:255',
+            'contactForm.email' => 'required|email|max:255',
+            'contactForm.company_name' => 'nullable|string|max:255',
+            'contactForm.address' => 'nullable|string|max:255',
+            'contactForm.address2' => 'nullable|string|max:255',
+            'contactForm.city' => 'nullable|string|max:255',
+            'contactForm.state' => 'nullable|string|max:255',
+            'contactForm.zip' => 'nullable|string|max:32',
+            'contactForm.country' => 'nullable|string|max:2',
+            'contactForm.phone' => 'nullable|string|max:64',
+        ], attributes: [
+            'contactForm.first_name' => 'first name', 'contactForm.last_name' => 'last name',
+            'contactForm.email' => 'email address',
+        ]);
+
+        $prefs = array_values(array_intersect($this->contactPrefs, Contact::EMAIL_PREFERENCES));
+
+        $existing = $this->contact !== '' ? Contact::find((int) $this->contact) : null;
+
+        if ($existing && $existing->user_id !== $this->customer->id) {
+            abort(403);
+        }
+
+        if ($existing) {
+            $existing->update([...$this->contactForm, 'email_preferences' => $prefs]);
+        } else {
+            $existing = Contact::create([
+                ...$this->contactForm,
+                'user_id' => $this->customer->id,
+                'email_preferences' => $prefs,
+            ]);
+
+            // Land on the contact just made, as the reference does, rather than back on a
+            // blank Add New that would invite a duplicate.
+            $this->contact = (string) $existing->id;
+        }
+
+        Notification::make()->title('Contact saved')->success()->send();
+    }
+
+    public function deleteContact(): void
+    {
+        $this->confirmingContactDelete = false;
+
+        $row = $this->contact !== '' ? Contact::find((int) $this->contact) : null;
+
+        if (!$row || $row->user_id !== $this->customer->id) {
+            return;
+        }
+
+        $row->delete();
+
+        $this->contact = '';
+        $this->updatedContact();
+
+        Notification::make()->title('Contact deleted')->success()->send();
+    }
+
+    // ── Users ───────────────────────────────────────────────────────────────────
+
+    /**
+     * The reference's Associate User: promote a contact on this account to a sub-account
+     * with its own permissions.
+     *
+     * A person has to exist before they can be given access, which is why this picks from
+     * the account's contacts rather than offering a free-text email — the reference invites
+     * a stranger by email, and an invitation this platform has no way to send would be a
+     * button that quietly did nothing.
+     */
+    public function associate(): void
+    {
+        abort_unless($this->hasContacts(), 404);
+
+        $this->validate(
+            ['associateContact' => 'required|integer'],
+            attributes: ['associateContact' => 'contact'],
+        );
+
+        $row = Contact::find((int) $this->associateContact);
+
+        if (!$row || $row->user_id !== $this->customer->id) {
+            abort(403);
+        }
+
+        $row->update([
+            'is_sub_account' => true,
+            'permissions' => array_values(array_intersect($this->associatePermissions, Contact::PERMISSIONS)),
+        ]);
+
+        $this->reset(['associating', 'associateContact', 'associatePermissions']);
+
+        Notification::make()->title('User associated')
+            ->body($row->name . ' can now sign in to this account.')->success()->send();
+    }
+
+    /** The reference's Remove: the person stays a contact, the sign-in goes. */
+    public function removeUser(int $id): void
+    {
+        $row = Contact::find($id);
+
+        if (!$row || $row->user_id !== $this->customer->id) {
+            return;
+        }
+
+        $row->update(['is_sub_account' => false, 'permissions' => []]);
+
+        Notification::make()->title('Access removed')
+            ->body($row->name . ' is still a contact on the account.')->success()->send();
+    }
+
+    // ── Notes ───────────────────────────────────────────────────────────────────
+
+    /** @return \Illuminate\Support\Collection<int, ClientNote> */
+    private function noteRows()
+    {
+        if (!Schema::hasTable('ext_ao_client_notes')) {
+            return collect();
+        }
+
+        return ClientNote::where('user_id', $this->customer->id)
+            ->with('admin:id,first_name,last_name,email')
+            // Sticky first, then newest — the reference pins its Important notes.
+            ->orderByDesc('sticky')->orderByDesc('id')
+            ->limit(self::TAB_ROWS)
+            ->get();
+    }
+
+    public function addNote(): void
+    {
+        abort_unless(Schema::hasTable('ext_ao_client_notes'), 404);
+
+        $this->validate(['newNote' => 'required|string|max:65535'], attributes: ['newNote' => 'note']);
+
+        ClientNote::create([
+            'user_id' => $this->customer->id,
+            'admin_id' => auth()->id(),
+            'note' => $this->newNote,
+            'sticky' => $this->newNoteSticky,
+        ]);
+
+        $this->reset(['newNote', 'newNoteSticky']);
+
+        Notification::make()->title('Note added')->success()->send();
+    }
+
+    public function deleteNote(): void
+    {
+        $id = $this->confirmingNote;
+        $this->reset('confirmingNote');
+
+        $note = ClientNote::find($id);
+
+        if ($note && $note->user_id === $this->customer->id) {
+            $note->delete();
+
+            Notification::make()->title('Note deleted')->success()->send();
+        }
+    }
+
     private function quoteRows()
     {
         if (!Schema::hasTable('ext_quotes')) {
@@ -1269,6 +1572,17 @@ class ClientSummary extends Page
             'service' => fn ($id) => static::getUrl(['record' => $user->id, 'tab' => 'services', 'service' => $id]),
             'invoice' => fn ($id) => EditInvoice::getUrl(['record' => $id]),
             'ticket' => fn ($id) => EditTicket::getUrl(['record' => $id]),
+            'quote' => fn ($id) => class_exists(CreateQuote::class)
+                ? CreateQuote::getUrl(['record' => $id])
+                : static::getUrl(['record' => $user->id, 'tab' => 'quotes']),
+            // The reference's per-tab buttons. Each opens the screen that genuinely does
+            // the thing, with this client already chosen where the screen accepts one.
+            'edit' => UserResource::getUrl('edit', ['record' => $user]),
+            'newInvoice' => ManageInvoices::getUrl(),
+            'newQuote' => class_exists(CreateQuote::class) ? CreateQuote::getUrl() : ManageInvoices::getUrl(),
+            'newTransaction' => AddTransaction::getUrl(),
+            'newTicket' => OpenNewTicket::getUrl(),
+            'billable' => BillableItemsList::getUrl(),
         ];
     }
 
@@ -1445,16 +1759,37 @@ class ClientSummary extends Page
             return collect();
         }
 
-        return DB::table('audits')
+        $query = DB::table('audits')
             ->where(function ($query): void {
                 $query->where(function ($subject): void {
                     $subject->where('auditable_type', User::class)
                         ->where('auditable_id', $this->customer->id);
                 })->orWhere('user_id', $this->customer->id);
-            })
-            ->orderByDesc('id')
-            ->limit(self::TAB_ROWS)
-            ->get();
+            });
+
+        // The reference's Filter Log band. Each is applied only when filled, so an empty
+        // band is the unfiltered list rather than one that matches nothing.
+        if ($this->logFilter['date'] !== '') {
+            $query->whereDate('created_at', $this->logFilter['date']);
+        }
+
+        if ($this->logFilter['description'] !== '') {
+            $term = '%' . $this->logFilter['description'] . '%';
+
+            $query->where(fn ($q) => $q->where('event', 'like', $term)
+                ->orWhere('auditable_type', 'like', $term)
+                ->orWhere('new_values', 'like', $term));
+        }
+
+        if ($this->logFilter['user'] !== '') {
+            $query->where('user_id', (int) $this->logFilter['user']);
+        }
+
+        if ($this->logFilter['ip'] !== '') {
+            $query->where('ip_address', 'like', '%' . $this->logFilter['ip'] . '%');
+        }
+
+        return $query->orderByDesc('id')->limit(self::TAB_ROWS)->get();
     }
 
     public function formatMoney(float $amount, ?string $currency): string
