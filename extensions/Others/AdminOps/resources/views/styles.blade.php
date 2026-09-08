@@ -2248,6 +2248,35 @@
     .ao-mu-status.ao-mu-st-cancelled { background: #d9534f; }
     .ao-mu-status.ao-mu-st-unpaid { background: #d9534f; }
 
+    /* ── Create Group / Create a New Product / Duplicate a Product ───────────── */
+
+    /* The reference prints a small grey explanation under the field's label, inside the
+       same right-aligned cell. Normal weight so the label stays the emphasis. */
+    .ao-cp-create .ao-anc-row > span:first-child i,
+    .ao-cpg-url > i {
+        display: block;
+        font-style: normal;
+        font-weight: 400;
+        font-size: 0.82rem;
+        color: var(--wa-muted, #6b6b6b);
+    }
+
+    /* The URL row: fixed storefront prefix, then the editable slug, on one line. */
+    .ao-cpg-url { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+    .ao-cpg-url > i { display: inline; white-space: nowrap; }
+    .ao-cpg-url input { flex: 1 1 12rem; min-width: 0; }
+
+    .ao-cpg-actions { display: flex; justify-content: center; gap: 0.5rem; margin-top: 1.2rem; }
+
+    .ao-cp-note {
+        margin-top: 1rem;
+        padding-top: 0.8rem;
+        border-top: 1px solid var(--wa-panel-border, #ddd);
+        font-size: 0.9rem;
+        color: var(--wa-muted, #6b6b6b);
+        text-align: center;
+    }
+
     /* The explanatory note under a page title.
        On the reference this is small body text running the width of the content — one or
        two quiet lines above the controls. Filament sets it as a subtitle two sizes up

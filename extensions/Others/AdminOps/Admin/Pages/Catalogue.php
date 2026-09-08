@@ -83,74 +83,10 @@ class Catalogue extends Page
             . 'still be ordered using the Direct Order Link shown when editing the package.';
     }
 
-    /** The reference's Duplicate a Product panel (issue #35). */
-    public bool $duplicating = false;
-
-    public ?int $duplicateSource = null;
-
     /** ['product'|'category', id] awaiting the "Are you sure?" modal, or null. */
     public ?string $confirmKind = null;
 
     public ?int $confirmId = null;
-
-    public function toggleDuplicating(): void
-    {
-        $this->duplicating = !$this->duplicating;
-    }
-
-    /**
-     * WHMCS's Duplicate a Product: a full copy — the product row, its plans and their
-     * prices, its settings, and its configurable-option links — under "<name> (Copy)".
-     */
-    public function duplicate(): void
-    {
-        if (!ProductResource::canCreate()) {
-            $this->refuse('You do not have permission to create products.');
-
-            return;
-        }
-
-        $this->validate(['duplicateSource' => 'required|exists:products,id'], attributes: ['duplicateSource' => 'product']);
-
-        $source = Product::with(['plans.prices', 'settings'])->findOrFail($this->duplicateSource);
-
-        DB::transaction(function () use ($source): void {
-            $copy = $source->replicate(['sort']);
-            $copy->name = $source->name . ' (Copy)';
-            $copy->slug = ($source->slug ?: str($source->name)->slug()) . '-copy-' . dechex(crc32($source->id . microtime()));
-            $copy->save();
-
-            foreach ($source->plans as $plan) {
-                $planCopy = $plan->replicate();
-                $planCopy->priceable_id = $copy->id;
-                $planCopy->save();
-
-                foreach ($plan->prices as $price) {
-                    $priceCopy = $price->replicate();
-                    $priceCopy->plan_id = $planCopy->id;
-                    $priceCopy->save();
-                }
-            }
-
-            foreach ($source->settings as $setting) {
-                $settingCopy = $setting->replicate();
-                $settingCopy->settingable_id = $copy->id;
-                $settingCopy->save();
-            }
-
-            DB::table('config_option_products')
-                ->where('product_id', $source->id)
-                ->get()
-                ->each(fn ($link) => DB::table('config_option_products')->insert([
-                    'config_option_id' => $link->config_option_id,
-                    'product_id' => $copy->id,
-                ]));
-        });
-
-        $this->reset(['duplicating', 'duplicateSource']);
-        Notification::make()->title('Product duplicated')
-            ->body('The copy sits in the same group, named "(Copy)".')->success()->send();
-    }
 
     public function confirmDelete(string $kind, int $id): void
     {
@@ -220,9 +156,12 @@ class Catalogue extends Page
             'canReorderProducts' => $this->canReorderProducts(),
             'productCount' => $categories->sum(fn (Category $category): int => $category->products->count()),
             'allProducts' => Product::orderBy('name')->get(['id', 'name']),
+            // The reference's own three screens rather than core's resource forms, so the
+            // wording and shape match the screenshots (Leandro, 2026-09-07).
             'urls' => [
-                'newProduct' => ProductResource::canCreate() ? ProductResource::getUrl('create') : null,
-                'newCategory' => CategoryResource::canCreate() ? CategoryResource::getUrl('create') : null,
+                'newProduct' => ProductResource::canCreate() ? CreateProduct::getUrl() : null,
+                'newCategory' => CategoryResource::canCreate() ? CreateProductGroup::getUrl() : null,
+                'duplicate' => ProductResource::canCreate() ? DuplicateProduct::getUrl() : null,
             ],
         ];
     }
