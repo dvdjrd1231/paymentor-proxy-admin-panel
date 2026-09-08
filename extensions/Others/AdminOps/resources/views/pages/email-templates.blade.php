@@ -5,17 +5,12 @@
 --}}
 <x-filament-panels::page>
     <div class="ao-mu">
-        @if ($newUrl)
-            <div class="ao-tx-tabs">
-                <a class="ao-mu-tab" href="{{ $newUrl }}">&#10010; Create New Email Template</a>
-                {{-- The reference's second button; Paymenter templates are single-language,
-                     so this is the accepted honestly-dead control (issue #48). --}}
-                <span class="ao-mu-tab ao-tx-tab-dead"
-                    title="Paymenter email templates are single-language — there are no per-language variants to manage">
-                    &#127760; Manage Languages
-                </span>
-            </div>
-        @endif
+        <div class="ao-tx-tabs">
+            @if ($canCreate)
+                <button type="button" class="ao-mu-tab" wire:click="openModal('create')">&#10010; Create New Email Template</button>
+            @endif
+            <button type="button" class="ao-mu-tab" wire:click="openModal('languages')">&#127760; Manage Languages</button>
+        </div>
 
         <div class="ao-et-cols">
             @foreach ($sections as $title => $rows)
@@ -54,5 +49,80 @@
                 </section>
             @endforeach
         </div>
+
+        {{-- The reference's Create New Email Template dialog: a type and a unique name,
+             then straight into the editor. --}}
+        @if ($modal === 'create')
+            <div class="ao-mud-overlay" wire:click.self="$set('modal', null)">
+                <form class="ao-mud" wire:submit.prevent="createTemplate">
+                    <div class="ao-mud-head">
+                        Create New Email Template
+                        <button type="button" wire:click="$set('modal', null)" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="ao-mud-text">
+                        <label class="ao-mud-field">
+                            <span>Email Type</span>
+                            <select wire:model="newType">
+                                @foreach ($types as $type)
+                                    <option value="{{ $type }}">{{ $type }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label class="ao-mud-field">
+                            <span>Unique Name</span>
+                            <input type="text" wire:model="newName" maxlength="255" autofocus>
+                        </label>
+                        @error('newName') <p class="ao-anc-errors">{{ $message }}</p> @enderror
+                        <p class="ao-cp-note">
+                            The name becomes the key the system sends this template by, so it cannot
+                            match an existing one.
+                        </p>
+                    </div>
+                    <div class="ao-mud-foot ao-mud-foot-only-right">
+                        <span class="ao-mud-foot-right">
+                            <button type="button" class="ao-mud-close" wire:click="$set('modal', null)">Cancel</button>
+                            <button type="submit" class="ao-find-go">Create</button>
+                        </span>
+                    </div>
+                </form>
+            </div>
+        @endif
+
+        {{-- Manage Languages. The dialog is the reference's; what it reports is this
+             install's own answer, which is that a template has one version. --}}
+        @if ($modal === 'languages')
+            <div class="ao-mud-overlay" wire:click.self="$set('modal', null)">
+                <div class="ao-mud" role="dialog" aria-modal="true">
+                    <div class="ao-mud-head">
+                        Manage Languages
+                        <button type="button" wire:click="$set('modal', null)" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="ao-mud-text">
+                        <p>To localise email templates into other languages, activate the language here.</p>
+                        <p class="ao-gs-empty">
+                            The default version of an email template is used for any language for which no
+                            localised template is available.
+                        </p>
+                        <p><b>Currently Active Languages</b><br>None</p>
+                        <p>
+                            <b>Choose language to add</b><br>
+                            <select disabled title="A template on this platform has one version, sent to every client">
+                                <option>&mdash;</option>
+                            </select>
+                        </p>
+                        <p class="ao-cp-note">
+                            Not available: a template here has one body, sent to every client whatever
+                            language they browse in. Adding a language would create a second version
+                            nothing would ever choose between.
+                        </p>
+                    </div>
+                    <div class="ao-mud-foot ao-mud-foot-only-right">
+                        <span class="ao-mud-foot-right">
+                            <button type="button" class="ao-mud-close" wire:click="$set('modal', null)">Close</button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 </x-filament-panels::page>

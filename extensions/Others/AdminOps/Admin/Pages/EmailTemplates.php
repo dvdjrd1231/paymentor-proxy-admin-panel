@@ -32,9 +32,61 @@ class EmailTemplates extends Page
         'Support Messages' => ['new_ticket_message'],
     ];
 
+    /** null | 'create' | 'languages' — the reference opens both from the button strip. */
+    public ?string $modal = null;
+
+    public string $newType = 'General Messages';
+
+    public string $newName = '';
+
     public static function canAccess(): bool
     {
         return NotificationTemplateResource::canViewAny();
+    }
+
+    public function openModal(string $which): void
+    {
+        $this->resetValidation();
+        $this->modal = $which;
+    }
+
+    /**
+     * The reference's Create New Email Template dialog: a type and a unique name.
+     *
+     * The name becomes the template's key, because the key is what the system sends by.
+     * The type is only where the row files itself on this list — nothing about a template
+     * here is decided by its category — so it is kept beside the record rather than in a
+     * column core would have to grow.
+     */
+    public function createTemplate(): void
+    {
+        abort_unless(NotificationTemplateResource::canCreate(), 403);
+
+        $this->validate([
+            'newName' => 'required|string|max:255',
+            'newType' => 'required|in:' . implode(',', array_keys(self::SECTIONS)),
+        ], attributes: ['newName' => 'unique name', 'newType' => 'email type']);
+
+        $key = (string) str($this->newName)->snake();
+
+        if ($key === '' || NotificationTemplate::where('key', $key)->exists()) {
+            $this->addError('newName', 'A template named "' . $this->newName . '" already exists.');
+
+            return;
+        }
+
+        $template = NotificationTemplate::create([
+            'key' => $key,
+            'subject' => $this->newName,
+            'body' => '# ' . $this->newName . "\n\nWrite the message here.",
+            'enabled' => true,
+        ]);
+
+        \Paymenter\Extensions\Others\AdminOps\Models\Meta::put($template, 'section', $this->newType);
+
+        $this->reset(['modal', 'newName']);
+
+        $this->redirect(EditEmailTemplate::getUrl(['record' => $template->id]));
     }
 
     public function getTitle(): string
@@ -60,22 +112,25 @@ class EmailTemplates extends Page
                 ->values())
             ->filter(fn ($rows) => $rows->isNotEmpty());
 
-        // A template added by an update must appear rather than silently vanish.
+        // A template added by an update, or created from the dialog, must appear rather
+        // than silently vanish. One created here remembers which section it chose.
         $unfiled = $templates->reject(fn ($template) => $filed->contains($template->key))->values();
 
-        if ($unfiled->isNotEmpty()) {
-            $sections['Other Messages'] = $unfiled;
+        $meta = \Paymenter\Extensions\Others\AdminOps\Models\Meta::forMany(NotificationTemplate::class, $unfiled);
+
+        foreach ($unfiled as $template) {
+            $section = $meta[$template->id]['section'] ?? 'Other Messages';
+            $sections[$section] = ($sections[$section] ?? collect())->push($template);
         }
 
         return [
-            'sections' => $sections,
+            'sections' => $sections->filter(fn ($rows) => $rows->isNotEmpty()),
             // Issue #48: the WHMCS-shaped editor, not core's raw resource form.
             'edit' => fn (NotificationTemplate $template) => NotificationTemplateResource::canEdit($template)
                 ? EditEmailTemplate::getUrl(['record' => $template->id])
                 : null,
-            'newUrl' => NotificationTemplateResource::canCreate()
-                ? NotificationTemplateResource::getUrl('create')
-                : null,
+            'canCreate' => NotificationTemplateResource::canCreate(),
+            'types' => array_keys(self::SECTIONS),
         ];
     }
 

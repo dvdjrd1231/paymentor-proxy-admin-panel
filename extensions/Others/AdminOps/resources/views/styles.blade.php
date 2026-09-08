@@ -2350,6 +2350,41 @@
     .ao-cog-products { align-items: start; }
     .ao-cog-list { max-width: none; }
 
+    /* A labelled field inside a dialog — label over control, full width, the shape the
+       reference's Create New Email Template box uses. */
+    .ao-mud-field { display: block; margin-bottom: 0.9rem; }
+    .ao-mud-field > span { display: block; margin-bottom: 0.3rem; font-weight: 600; }
+
+    .ao-mud-field input[type="text"],
+    .ao-mud-field select {
+        width: 100%;
+        padding: 0.4rem 0.55rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: var(--wa-input-bg, #fff);
+        color: inherit;
+    }
+
+    /* The reference's merge-field panel: fields on the left, the Blade a body may use on
+       the right, side by side until the viewport is too narrow to hold both. */
+    .ao-ete-merge { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .ao-ete-merge p { margin: 0 0 0.35rem; }
+    .ao-ete-merge .ao-ano-heading:not(:first-child) { margin-top: 1rem; }
+
+    .ao-ete-snippet {
+        margin: 0 0 0.6rem;
+        padding: 0.6rem 0.75rem;
+        overflow-x: auto;
+        border-radius: 4px;
+        background: var(--wa-code-bg, rgba(127, 127, 127, 0.12));
+        font-size: 0.82rem;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 60rem) {
+        .ao-ete-merge { grid-template-columns: 1fr; }
+    }
+
     /* Custom Fields lists what is already asked before the form that adds another. */
     .ao-ep-fields { margin: 0; }
     .ao-ep-fields td { vertical-align: middle; }
