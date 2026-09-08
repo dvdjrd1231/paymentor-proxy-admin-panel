@@ -560,7 +560,7 @@ class EditInvoice extends Page
             $this->send('invoice_paid');
         }
 
-        $this->refresh();
+        $this->resetRefundForm();
 
         Notification::make()
             ->title('$' . number_format($given, 2) . ' returned to ' . $user->email . '\'s balance')
@@ -568,8 +568,14 @@ class EditInvoice extends Page
             ->success()->send();
     }
 
-    /** Reload after a refund; the invoice itself is unchanged but the credit figures are not. */
-    private function refresh(): void
+    /**
+     * Reload after a refund; the invoice itself is unchanged but the credit figures are not.
+     *
+     * Not named refresh(): Filament's BasePage already declares a public refresh(), and a
+     * private one here is a fatal "must be public" at class-load time — the whole panel
+     * white-screened on deploy until this was renamed.
+     */
+    private function resetRefundForm(): void
     {
         $this->refund = ['amount' => '', 'reason' => '', 'sendEmail' => false];
         $this->refreshInvoice();
