@@ -20,6 +20,7 @@ return [
     'select_payment_method' => 'Select a payment method',
     'credits' => 'Account Credit',
     'credit_line' => 'Credit',
+    'balance_due' => 'Balance Due',
     'payment_pending' => 'Payment Pending',
     'checking_payment' => 'Checking Payment',
     'invoice_date' => 'Invoice Date',

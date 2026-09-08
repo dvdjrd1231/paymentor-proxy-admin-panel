@@ -248,9 +248,20 @@
                         <span>{{ $invoice->formattedTotal->format($creditApplied) }}</span>
                     </div>
 
-                    <div class="wf-total-row wf-total-row--grand">
+                    <div class="wf-total-row">
                         <span>{{ __('invoices.total') }}</span>
                         <span>{{ $invoice->formattedTotal }}</span>
+                    </div>
+
+                    {{-- Balance Due, as the reference closes its ladder.
+                         Total is the invoice's own figure and stays that; what a customer
+                         needs from the bottom line is what they still owe. Without this the
+                         page read "Credit $1.00" and then "Total $200.00" while the pay
+                         modal said $199.00 due — three numbers, none of them the answer to
+                         "how much do I pay?" (Leandro, 2026-09-07). --}}
+                    <div class="wf-total-row wf-total-row--grand">
+                        <span>{{ __('invoices.balance_due') }}</span>
+                        <span>{{ $invoice->formattedRemaining }}</span>
                     </div>
                 </div>
             </div>
