@@ -138,7 +138,7 @@
 
         <div class="ao-anc-card ao-ont-attach">
             <div class="ao-anc-row">
-                <span>Attachments<br><i>Max file size: 10MB</i></span>
+                <span>Attachments<br><i>Max file size: 100MB</i></span>
                 <span class="ao-anc-field">
                     <input type="file" wire:model="attachments" multiple data-ao-attach>
                     {{-- The reference's Add More reopens the picker; the input is already

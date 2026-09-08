@@ -164,7 +164,7 @@ class SettingsReference
                 ['setting' => 'credits_maximum_credit', 'label' => 'Maximum Balance', 'hint' => 'Enter the maximum balance that a client can add in credit'],
                 ['setting' => 'credits_auto_use', 'label' => 'Automatic Credit Use', 'hint' => 'Check to automatically apply available credit from a users credit balance to recurring invoices upon creation'],
                 ['setting' => 'credits_on_downgrade', 'label' => 'Credit On Downgrade', 'hint' => 'Check to provide a prorata refund to clients when downgrading for unused time'],
-                ['setting' => 'credits_on_cancellation', 'label' => 'Credit On Cancellation', 'hint' => 'Check to credit the unused part of the paid period when a service is cancelled. Prorated from the service\'s own dates; setup fees are not returned, and a service with no paid invoice — one terminated for non-payment — is never credited'],
+                ['setting' => 'credits_on_cancellation', 'label' => 'Credit On Cancellation', 'hint' => 'Check to credit the unused part of the paid period when a service is cancelled immediately. End-of-period cancellations are not credited — the client keeps using the service until it expires, so nothing is left unused. Prorated by day from the service\'s own dates; setup fees are not returned, and a service with no paid invoice — one terminated for non-payment — is never credited'],
             ],
 
 

@@ -201,7 +201,7 @@ class EditTicket extends Page
         $this->validate([
             'reply' => 'required|string',
             'replyStatus' => 'in:' . implode(',', array_keys(self::STATUSES)),
-            'attachments.*' => 'file|max:10240',
+            'attachments.*' => 'file|max:102400',
         ], attributes: ['reply' => 'message']);
 
         $message = $this->ticket->messages()->create([
