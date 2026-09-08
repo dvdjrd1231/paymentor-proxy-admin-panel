@@ -107,15 +107,19 @@ class AdminOps extends Extension
     /**
      * Credit the unused period back when a service is cancelled (Leandro, 2026-09-08).
      *
-     * The rules this applies — and the several cases where it deliberately pays nothing —
+     * An Eloquent `updated` hook, not `App\Events\Service\Updated`: core defines that event
+     * and never dispatches it, so a listener for it fires exactly never — the same trap
+     * TermLimits documents at `startTheClockOnActivation()`. This was written against the
+     * domain event first and would have been silent dead code.
+     *
+     * The rules it applies — and the several cases where it deliberately pays nothing —
      * are in {@see Support\CancellationCredit}, which is where anything about this
      * behaviour should be read or changed.
      */
     private function creditCancelledServices(): void
     {
-        Event::listen(
-            \App\Events\Service\Updated::class,
-            fn ($event) => Support\CancellationCredit::handle($event->service),
+        \App\Models\Service::updated(
+            fn (\App\Models\Service $service) => Support\CancellationCredit::handle($service),
         );
     }
 
