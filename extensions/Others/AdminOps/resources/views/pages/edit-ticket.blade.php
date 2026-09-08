@@ -4,6 +4,9 @@
     Assignment / Set Priority / status selects, and the thread beneath, newest first.
 --}}
 <x-filament-panels::page>
+    {{-- `tab` lives in Alpine: every panel is below and a click only changes which
+         one shows, so switching costs nothing. --}}
+    <div x-data="{ tab: @js($tab) }">
     <div class="ao-mu ao-et">
         <div class="ao-et-head">
             <h3 class="ao-et-title">
@@ -33,11 +36,13 @@
         {{-- The reference's seven tabs, in its order. --}}
         <div class="ao-tx-tabs">
             @foreach (['reply' => 'Add Reply', 'note' => 'Add Note', 'custom' => 'Custom Fields', 'other' => 'Other Tickets', 'clientlog' => 'Client Log', 'options' => 'Options', 'log' => 'Log'] as $key => $label)
-                <button type="button" class="ao-mu-tab {{ $tab === $key ? 'ao-on' : '' }}" wire:click="$set('tab', '{{ $key }}')">{{ $label }}</button>
+                <button type="button" class="ao-mu-tab"
+                    :class="{ 'ao-on': tab === '{{ $key }}' }"
+                    @click="tab = '{{ $key }}'">{{ $label }}</button>
             @endforeach
         </div>
 
-        @if ($tab === 'reply')
+        <div x-show="tab === 'reply'" x-cloak>
             <form wire:submit.prevent="sendReply">
                 {{-- The reference's toolbar and blue Preview — the buttons write
                      markdown, Preview renders it server-side (same as Open New Ticket). --}}
@@ -124,7 +129,9 @@
                     </ul>
                 @endif
             </form>
-        @elseif ($tab === 'note')
+        </div>
+
+        <div x-show="tab === 'note'" x-cloak>
             {{-- The reference's Add Note is the same editor and band as Add Reply, its
                  fourth select reading "- Set Status -" and the button "Add Note". --}}
             <form wire:submit.prevent="addNote">
@@ -194,14 +201,18 @@
                     <p>{{ $row->body }}</p>
                 </div>
             @endforeach
-        @elseif ($tab === 'custom')
+        </div>
+
+        <div x-show="tab === 'custom'" x-cloak>
             {{-- The reference's tab, honestly empty: Paymenter tickets carry no custom
                  field definitions, so there is nothing to fill in. --}}
             {{-- The reference's own empty-state sentence, verbatim. --}}
             <p class="ao-gs-empty" title="Paymenter tickets have no custom-field system — the reference shows this same empty state on an install with none configured">
                 No Custom Fields Setup for this Department
             </p>
-        @elseif ($tab === 'clientlog')
+        </div>
+
+        <div x-show="tab === 'clientlog'" x-cloak>
             {{-- The reference's Client Log: what this ticket's client has been doing,
                  from the same audit trail the Client Profile's Log tab reads. --}}
             <table class="ao-mu-grid">
@@ -221,7 +232,9 @@
                     @endforelse
                 </tbody>
             </table>
-        @elseif ($tab === 'other')
+        </div>
+
+        <div x-show="tab === 'other'" x-cloak>
             <table class="ao-mu-grid">
                 <thead>
                     <tr><th>ID</th><th>Subject</th><th>Status</th><th>Last Updated</th></tr>
@@ -239,7 +252,9 @@
                     @endforelse
                 </tbody>
             </table>
-        @elseif ($tab === 'options')
+        </div>
+
+        <div x-show="tab === 'options'" x-cloak>
             {{-- The reference's two columns: Department / Subject / Status /
                  CC Recipients / Prevent Client Closure on the left, Client Name /
                  Assigned To / Priority / Merge Ticket on the right. --}}
@@ -327,7 +342,7 @@
                      height and one baseline for all of them. --}}
                 <div class="ao-et-actions">
                     <button type="submit" class="ao-find-go">&#128190; Save Changes</button>
-                    <button type="button" class="ao-of-go" wire:click="$set('tab', 'reply')">Cancel Changes</button>
+                    <button type="button" class="ao-of-go" @click="tab = 'reply'">Cancel Changes</button>
                     <button type="button" class="ao-eo-delete" wire:click="$set('confirmingDelete', 'yes')">Delete Ticket</button>
                 </div>
             </form>
@@ -354,7 +369,7 @@
                 <button type="button" disabled>&laquo; Previous</button>
                 <button type="button" disabled>Next &raquo;</button>
             </div>
-        @endif
+        </div>
 
         {{-- The thread, newest first, as the reference stacks it under the editor. --}}
         @foreach ($messages as $message)
@@ -452,4 +467,5 @@
             });
         })();
     </script>
+    </div>
 </x-filament-panels::page>
