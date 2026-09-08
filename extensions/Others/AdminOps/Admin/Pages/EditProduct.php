@@ -73,8 +73,31 @@ class EditProduct extends Page
         'colour' => '', 'featured' => false, 'retired' => false,
     ];
 
-    /** One row per plan: [id, name, type, billing_period, billing_unit, prices[currency => [price, setup_fee]]]. */
-    public array $plans = [];
+    /**
+     * The reference's billing cycles, as columns of the Pricing grid.
+     *
+     * Each is a Paymenter plan: a type, a period and a unit. Ticking Enable creates the
+     * plan; clearing it removes the plan and its prices. The names and the order are the
+     * reference's own, so the grid reads the same way.
+     */
+    public const CYCLES = [
+        'onetime' => ['label' => 'One Time', 'type' => 'one-time', 'period' => 1, 'unit' => 'month'],
+        'monthly' => ['label' => 'Monthly', 'type' => 'recurring', 'period' => 1, 'unit' => 'month'],
+        'quarterly' => ['label' => 'Quarterly', 'type' => 'recurring', 'period' => 3, 'unit' => 'month'],
+        'semiannually' => ['label' => 'Semi-Annually', 'type' => 'recurring', 'period' => 6, 'unit' => 'month'],
+        'annually' => ['label' => 'Annually', 'type' => 'recurring', 'period' => 1, 'unit' => 'year'],
+        'biennially' => ['label' => 'Biennially', 'type' => 'recurring', 'period' => 2, 'unit' => 'year'],
+        'triennially' => ['label' => 'Triennially', 'type' => 'recurring', 'period' => 3, 'unit' => 'year'],
+    ];
+
+    /** Which cycles this product is sold on: cycle key => bool. */
+    public array $enabled = [];
+
+    /** Figures per cycle and currency: [cycle][currency] => ['price' => …, 'setup_fee' => …]. */
+    public array $pricing = [];
+
+    /** The reference's Payment Type: free | one-time | recurring. */
+    public string $paymentType = 'recurring';
 
     /** Module fields declared by the server extension, as name => value. */
     public array $moduleSettings = [];
@@ -152,19 +175,32 @@ class EditProduct extends Page
             'retired' => ($meta['retired'] ?? null) === '1',
         ];
 
-        $this->plans = $p->plans->map(fn (Plan $plan): array => [
-            'id' => $plan->id,
-            'name' => (string) $plan->name,
-            'type' => (string) $plan->type,
-            'billing_period' => (int) $plan->billing_period,
-            'billing_unit' => (string) $plan->billing_unit,
-            'prices' => $plan->prices->mapWithKeys(fn (Price $price): array => [
-                $price->currency_code => [
-                    'price' => number_format((float) $price->price, 2, '.', ''),
-                    'setup_fee' => number_format((float) $price->setup_fee, 2, '.', ''),
-                ],
-            ])->all(),
-        ])->values()->all();
+        // The grid is the reference's: cycles across, figures down. Each cycle is matched
+        // to a plan by its type/period/unit rather than by name, because the name is free
+        // text and two installs will not have written it the same way.
+        $currencies = Currency::orderBy('code')->pluck('code')->all();
+
+        $this->enabled = [];
+        $this->pricing = [];
+
+        foreach (self::CYCLES as $key => $cycle) {
+            $plan = $this->planFor($cycle);
+            $this->enabled[$key] = $plan !== null;
+
+            foreach ($currencies as $code) {
+                $price = $plan?->prices->firstWhere('currency_code', $code);
+
+                $this->pricing[$key][$code] = [
+                    'price' => $price ? number_format((float) $price->price, 2, '.', '') : '',
+                    'setup_fee' => $price ? number_format((float) $price->setup_fee, 2, '.', '') : '',
+                ];
+            }
+        }
+
+        // Payment Type follows what the product actually sells on.
+        $types = $p->plans->pluck('type')->unique();
+        $this->paymentType = $types->contains('recurring') ? 'recurring'
+            : ($types->contains('one-time') ? 'one-time' : ($types->contains('free') ? 'free' : 'recurring'));
 
         // `settings` is keyed by `key`, not `name`. Reading the wrong column returned all
         // nulls, so every module field rendered blank on a product that is fully
@@ -229,68 +265,58 @@ class EditProduct extends Page
 
     // ── Pricing ─────────────────────────────────────────────────────────────────────
 
-    public function addPlan(): void
+    /** The plan matching one cycle, matched on shape rather than on its free-text name. */
+    private function planFor(array $cycle): ?Plan
     {
-        $this->plans[] = [
-            'id' => null, 'name' => 'Monthly', 'type' => 'recurring',
-            'billing_period' => 1, 'billing_unit' => 'month', 'prices' => [],
-        ];
+        return $this->product->plans->first(
+            fn (Plan $plan): bool => $plan->type === $cycle['type']
+                && (int) $plan->billing_period === $cycle['period']
+                && $plan->billing_unit === $cycle['unit'],
+        );
     }
 
-    public function removePlan(int $index): void
-    {
-        $plan = $this->plans[$index] ?? null;
-
-        if (!$plan) {
-            return;
-        }
-
-        if ($plan['id']) {
-            // Prices go with it; a price row whose plan is gone is unreachable and would
-            // still be counted by anything summing the table.
-            Price::where('plan_id', $plan['id'])->delete();
-            Plan::whereKey($plan['id'])->delete();
-        }
-
-        unset($this->plans[$index]);
-        $this->plans = array_values($this->plans);
-
-        $this->done('Billing cycle removed');
-    }
-
+    /**
+     * Write the grid back: a ticked cycle exists with its prices, an unticked one does not.
+     *
+     * Removing a cycle deletes its plan and prices. That is what unticking Enable means on
+     * the reference, and leaving an orphaned plan behind would keep the product orderable
+     * on a cycle the admin has just withdrawn.
+     */
     public function savePricing(): void
     {
         $this->validate([
-            'plans.*.name' => 'required|string|max:255',
-            'plans.*.type' => 'required|in:free,one-time,recurring',
-            'plans.*.billing_period' => 'required|integer|min:1',
-            'plans.*.billing_unit' => 'required|in:day,week,month,year',
-            'plans.*.prices.*.price' => 'nullable|numeric|min:0',
-            'plans.*.prices.*.setup_fee' => 'nullable|numeric|min:0',
-        ], attributes: ['plans.*.name' => 'cycle name', 'plans.*.billing_period' => 'billing period']);
+            'paymentType' => 'required|in:free,one-time,recurring',
+            'pricing.*.*.price' => 'nullable|numeric|min:0',
+            'pricing.*.*.setup_fee' => 'nullable|numeric|min:0',
+        ], attributes: ['paymentType' => 'payment type']);
 
         DB::transaction(function (): void {
-            foreach ($this->plans as $row) {
-                $plan = $row['id']
-                    ? Plan::find($row['id'])
-                    : new Plan(['priceable_type' => Product::class, 'priceable_id' => $this->product->id]);
+            foreach (self::CYCLES as $key => $cycle) {
+                $plan = $this->planFor($cycle);
+                $wanted = (bool) ($this->enabled[$key] ?? false);
 
-                if (!$plan) {
+                if (!$wanted) {
+                    if ($plan) {
+                        Price::where('plan_id', $plan->id)->delete();
+                        $plan->delete();
+                    }
+
                     continue;
                 }
 
-                $plan->fill([
-                    'name' => $row['name'],
-                    'type' => $row['type'],
-                    'billing_period' => (int) $row['billing_period'],
-                    'billing_unit' => $row['billing_unit'],
-                ]);
+                if (!$plan) {
+                    $plan = new Plan([
+                        'name' => $cycle['label'],
+                        'type' => $cycle['type'],
+                        'billing_period' => $cycle['period'],
+                        'billing_unit' => $cycle['unit'],
+                    ]);
+                    $plan->priceable_type = Product::class;
+                    $plan->priceable_id = $this->product->id;
+                    $plan->save();
+                }
 
-                $plan->priceable_type = Product::class;
-                $plan->priceable_id = $this->product->id;
-                $plan->save();
-
-                foreach ($row['prices'] as $currency => $figures) {
+                foreach (($this->pricing[$key] ?? []) as $currency => $figures) {
                     Price::updateOrCreate(
                         ['plan_id' => $plan->id, 'currency_code' => $currency],
                         [
@@ -300,6 +326,9 @@ class EditProduct extends Page
                     );
                 }
             }
+
+            // Allow Multiple Quantities lives on this tab in the reference, not on Details.
+            $this->product->update(['allow_quantity' => $this->form['allow_quantity']]);
         });
 
         $this->done('Pricing saved');
@@ -426,6 +455,12 @@ class EditProduct extends Page
             'optionGroups' => \App\Models\ConfigOption::whereNull('parent_id')->orderBy('name')->get(['id', 'name']),
             'otherProducts' => Product::whereKeyNot($this->product->id)->orderBy('name')->get(['id', 'name']),
             'moduleFields' => $moduleFields,
+            'urlPrefix' => rtrim((string) config('app.url'), '/') . '/products/'
+                . ($this->product->category?->slug ?? '') . '/',
+            // Real notification templates, so Welcome Email is a choice rather than a key
+            // to mistype. Keyed by the same `key` the column stores.
+            'emailTemplates' => \App\Models\NotificationTemplate::orderBy('key')
+                ->pluck('key', 'key')->all(),
             'links' => $links,
         ];
     }
