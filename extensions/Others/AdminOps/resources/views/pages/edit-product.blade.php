@@ -21,7 +21,11 @@
             </div>
 
             <div class="ao-ei-tools">
-                <a class="ao-pg-btn" href="{{ $links['product'] }}" target="_blank" rel="noopener">View on Store</a>
+                {{-- Only when there is one: a product with no group has no storefront
+                     address, and a button pointing at nothing is worse than no button. --}}
+                @if ($links['product'])
+                    <a class="ao-pg-btn" href="{{ $links['product'] }}" target="_blank" rel="noopener">View on Store</a>
+                @endif
                 <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\Catalogue::getUrl() }}">&laquo; Back to List</a>
             </div>
         </div>
