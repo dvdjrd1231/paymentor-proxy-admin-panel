@@ -58,7 +58,52 @@
             @endif
 
             {{-- Two cards per row, each laid out as feature list | buy column — the
-                 reference portal's product card. --}}
+                 reference portal's product card. The group's Order Form Template picks
+                 between this and a compact one-row-per-product list. --}}
+            @php $compact = ($groupMeta['order_form'] ?? 'cards') === 'compact'; @endphp
+
+            @if ($compact)
+                <table class="wf-table wf-prod-list">
+                    <thead>
+                        <tr>
+                            <th>{{ __('theme.product') }}</th>
+                            <th class="wf-prod-list-price">{{ __('theme.price') }}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($products as $product)
+                            @php
+                                $price = $product->price();
+                                $cheapest = $product->availablePlans()->first();
+                                $canOrder = $product->stock !== 0 && $price->available;
+                            @endphp
+                            <tr>
+                                <td>
+                                    <strong>{{ $product->name }}</strong>
+                                    @if ($product->description)
+                                        <div class="wf-prod-list-desc">{{ Str::limit(strip_tags($product->description), 140) }}</div>
+                                    @endif
+                                </td>
+                                <td class="wf-prod-list-price">
+                                    {{ $price->formatted->price }} {{ $price->currency->code ?? '' }}
+                                    <x-cycle :plan="$cheapest" class="wf-prod-cycle" />
+                                </td>
+                                <td class="wf-prod-list-buy">
+                                    @if ($canOrder)
+                                        <a class="wf-btn wf-btn--sm"
+                                            href="{{ route('products.checkout', ['category' => $product->category, 'product' => $product->slug]) }}" wire:navigate>
+                                            {{ __('theme.order_now') }}
+                                        </a>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="3">{{ __('theme.no_products') }}</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            @else
             <div class="wf-cards wf-cards--products">
                 @forelse ($products as $product)
                     @php
@@ -101,6 +146,7 @@
                     <div class="wf-empty">{{ __('theme.no_products') }}</div>
                 @endforelse
             </div>
+            @endif
         </div>
     </div>
 </div>

@@ -28,6 +28,18 @@ class Meta extends Model
     ];
 
     /**
+     * The reference's Order Form Template, as the layouts this theme actually renders.
+     *
+     * WHMCS offers eight cart templates. Listing eight names against one layout would be a
+     * menu that changes nothing, so this offers the two the storefront genuinely draws —
+     * see `themes/proxy/views/products/index.blade.php`, which branches on this.
+     */
+    public const ORDER_FORMS = [
+        'cards' => 'Standard Cards — description beside the price',
+        'compact' => 'Compact List — one row per product',
+    ];
+
+    /**
      * Every stored value for one record, keyed.
      *
      * @return array<string, string|null>
