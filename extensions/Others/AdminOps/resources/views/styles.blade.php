@@ -2350,6 +2350,14 @@
     .ao-cog-products { align-items: start; }
     .ao-cog-list { max-width: none; }
 
+    /* Add/Edit Server: the reference puts its mode switch above the form, right-aligned. */
+    .ao-es-mode { display: flex; justify-content: flex-end; margin-bottom: 0.75rem; }
+
+    /* The email editor's "Default Version" heading — the note sits under the title
+       rather than beside it, so a long sentence does not push the heading around. */
+    .ao-ete-version { display: flex; flex-direction: column; gap: 0.2rem; }
+    .ao-ete-version i { font-size: 0.82rem; font-style: normal; font-weight: 400; opacity: 0.7; }
+
     /* ── The client profile's tabs ────────────────────────────────────────────────
        The reference heads each list tab with its own buttons, and Tickets and
        Transactions with a band of four figures across the top. */

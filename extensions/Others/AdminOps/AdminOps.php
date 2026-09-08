@@ -86,6 +86,7 @@ class AdminOps extends Extension
         $this->retireCoreOauthScreens();
         $this->retireCoreGatewayEditor();
         $this->retireCoreProductEditor();
+        $this->retireCoreServerEditor();
         $this->registerErrorPages();
         $this->applyClientGroupDiscounts();
         $this->creditCancelledServices();
@@ -183,6 +184,36 @@ class AdminOps extends Extension
 
                 return redirect()->to(Admin\Pages\EditProduct::getUrl(['record' => $record]));
             })->name('filament.admin.resources.products.edit');
+    }
+
+    /**
+     * Core's server create/edit form, replaced by the reference's own (Leandro, 2026-09-08
+     * sent the WHMCS Add Server screens with "Servers — list and edit. This is where
+     * provisioning is configured.").
+     *
+     * Both routes are named after the ones they displace, for the reason on
+     * {@see retireCoreGatewayEditor} — the Servers list builds its Add and Edit links from
+     * ServerResource::getUrl(), so losing either name 500s the list itself.
+     */
+    private function retireCoreServerEditor(): void
+    {
+        \Illuminate\Support\Facades\Route::middleware(['web'])
+            ->get('/admin/servers/create', function () {
+                if (!\Illuminate\Support\Facades\Auth::check()) {
+                    return redirect()->guest('/admin/login');
+                }
+
+                return redirect()->to(Admin\Pages\EditServer::getUrl());
+            })->name('filament.admin.resources.servers.create');
+
+        \Illuminate\Support\Facades\Route::middleware(['web'])
+            ->get('/admin/servers/{record}/edit', function (string $record) {
+                if (!\Illuminate\Support\Facades\Auth::check()) {
+                    return redirect()->guest('/admin/login');
+                }
+
+                return redirect()->to(Admin\Pages\EditServer::getUrl(['record' => $record]));
+            })->name('filament.admin.resources.servers.edit');
     }
 
     /**
