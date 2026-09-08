@@ -50,7 +50,12 @@ use Paymenter\Extensions\Others\AdminOps\Models\Refund;
  */
 class CancellationCredit
 {
-    /** Handle an `App\Events\Service\Updated`. */
+    /**
+     * Called from Eloquent's `updated` hook on Service.
+     *
+     * Not from `App\Events\Service\Updated` — core declares that event and never fires it,
+     * so listening to it would be listening for something that does not happen.
+     */
     public static function handle(Service $service): void
     {
         try {
