@@ -4,12 +4,14 @@ namespace Paymenter\Extensions\Others\AdminOps\Admin\Pages;
 
 use App\Admin\Resources\CategoryResource;
 use App\Models\Category;
+use App\Models\Gateway;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
 use Paymenter\Extensions\Others\AdminOps\Models\Meta;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
+use Paymenter\Extensions\Others\GatewayRules\Models\GatewayRule;
 
 /**
  * The reference's Create Group screen (Leandro, 2026-09-07, screenshot of
@@ -28,14 +30,15 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * `HasProperties` trait, so they are stored in this extension's own `ext_ao_meta` table —
  * real storage, read back on edit, rather than controls that forget what you typed.
  *
- * Two of the reference's fields are still absent, because storing them would not make them
- * do anything:
+ * The reference's last two fields are here too, and both act rather than decorate:
  *
- * - **Order Form Template** — WHMCS ships eight cart layouts to choose between. This
- *   storefront renders one, from the active theme. A stored choice would change nothing.
- * - **Available Payment Gateways** — gateway availability here is decided per gateway by
- *   `canUseGateway()` and by the GatewayRules extension, which is where a restriction has
- *   to live to be enforced at checkout. Setting it per group would be ignored.
+ * - **Order Form Template** — WHMCS offers eight cart layouts. Eight names against one
+ *   layout would be a menu that changes nothing, so this offers the two the storefront
+ *   genuinely draws: standard cards, and a compact one-row-per-product list.
+ *   `themes/proxy/views/products/index.blade.php` branches on it.
+ * - **Available Payment Gateways** — written as `GatewayRule` rows scoped to this category,
+ *   so the choice is enforced by the same engine that already answers `canUseGateway()` at
+ *   checkout. It is a real restriction, not a preference nothing consults.
  *
  * **Group Features** is absent for the same reason it is greyed out on the reference until
  * you save: it belongs to a group that already exists.
@@ -83,6 +86,21 @@ class CreateProductGroup extends Page
     /** The reference's "Check if this is a hidden group". */
     public bool $hidden = false;
 
+    /** The reference's Order Form Template — the two layouts the storefront draws. */
+    public string $orderForm = 'cards';
+
+    /**
+     * The reference's Available Payment Gateways.
+     *
+     * Empty means every gateway, which is what a group with no restriction should mean.
+     * Saved as GatewayRule rows scoped to this category, so the choice is enforced by the
+     * same engine that already answers `canUseGateway()` at checkout rather than being a
+     * preference nothing consults.
+     *
+     * @var array<int, string>
+     */
+    public array $gateways = [];
+
     public static function canAccess(): bool
     {
         return CategoryResource::canCreate() || CategoryResource::canViewAny();
@@ -92,6 +110,9 @@ class CreateProductGroup extends Page
     {
         if ($this->groupId === null) {
             abort_unless(CategoryResource::canCreate(), 403);
+
+            // A new group offers every gateway until someone says otherwise.
+            $this->gateways = Gateway::orderBy('name')->pluck('extension')->all();
 
             return;
         }
@@ -108,6 +129,21 @@ class CreateProductGroup extends Page
         $this->headline = (string) ($meta['headline'] ?? '');
         $this->tagline = (string) ($meta['tagline'] ?? '');
         $this->hidden = (bool) ($meta['hidden'] ?? false);
+        $this->orderForm = array_key_exists((string) ($meta['order_form'] ?? ''), Meta::ORDER_FORMS)
+            ? (string) $meta['order_form']
+            : 'cards';
+
+        // The stored restriction is a set of denies, so what is *ticked* is everything not
+        // denied. Reading it back this way keeps the form showing what the customer sees.
+        $all = Gateway::orderBy('name')->pluck('extension')->all();
+
+        $denied = class_exists(GatewayRule::class)
+            ? GatewayRule::where('category_id', $this->record->id)
+                ->where('name', self::RULE_NAME_PREFIX . $this->record->id)
+                ->pluck('gateway')->all()
+            : [];
+
+        $this->gateways = $denied === [] ? $all : array_values(array_diff($all, $denied));
     }
 
     public function getTitle(): string
@@ -180,6 +216,9 @@ class CreateProductGroup extends Page
         Meta::put($category, 'headline', $this->headline);
         Meta::put($category, 'tagline', $this->tagline);
         Meta::put($category, 'hidden', $this->hidden);
+        Meta::put($category, 'order_form', $this->orderForm);
+
+        $this->saveGatewayRules($category);
 
         Notification::make()
             ->title('Group "' . $category->name . '" ' . ($this->record ? 'saved' : 'created'))
@@ -187,6 +226,55 @@ class CreateProductGroup extends Page
 
         $this->redirect(Catalogue::getUrl());
     }
+
+    /**
+     * Write the group's payment-gateway restriction as GatewayRule rows.
+     *
+     * Deny rules rather than allow: the engine takes the first matching rule, so a set of
+     * allows would also have to say what happens to everything unlisted. One deny per
+     * gateway that was *not* chosen says exactly what is meant — "not this one, for this
+     * group" — and leaves every other rule in the store untouched.
+     *
+     * Choosing none means no restriction, which is what an empty box should mean; the rows
+     * are cleared and the group falls back to whatever the store allows generally.
+     *
+     * Rules this screen owns carry a generated `name` and are replaced only by matching
+     * both that name and the category, so re-saving a group never disturbs a rule somebody
+     * wrote by hand on the Gateway Rules page. (`gateway_rules` has no `note` column —
+     * `name` is the field it gives you, and it is required.)
+     */
+    private function saveGatewayRules(Category $category): void
+    {
+        if (!class_exists(GatewayRule::class)) {
+            return;
+        }
+
+        $name = self::RULE_NAME_PREFIX . $category->id;
+
+        GatewayRule::where('category_id', $category->id)->where('name', $name)->delete();
+
+        // Every gateway chosen means "no restriction" just as much as none does.
+        $all = Gateway::orderBy('name')->pluck('extension')->all();
+        $chosen = array_values(array_intersect($all, $this->gateways));
+
+        if ($chosen === [] || count($chosen) === count($all)) {
+            return;
+        }
+
+        foreach (array_diff($all, $chosen) as $extension) {
+            GatewayRule::create([
+                'name' => $name,
+                'gateway' => $extension,
+                'category_id' => $category->id,
+                'mode' => 'deny',
+                'active' => true,
+                'priority' => 10,
+            ]);
+        }
+    }
+
+    /** Marks the rules this screen writes, so it only ever replaces its own. */
+    private const RULE_NAME_PREFIX = 'Payment methods for group #';
 
     /** Would making $parentId the parent of $category put the tree in a loop? */
     private function wouldLoop(Category $category, int $parentId): bool
@@ -211,6 +299,7 @@ class CreateProductGroup extends Page
             // A group is never offered itself as its own parent.
             'parents' => Category::when($this->record, fn ($q) => $q->whereKeyNot($this->record->id))
                 ->orderBy('name')->get(['id', 'name']),
+            'allGateways' => Gateway::orderBy('name')->get(['id', 'name', 'extension']),
             // The storefront prefix the slug is appended to, so the field reads as a URL
             // the way the reference's does.
             'urlPrefix' => rtrim((string) config('app.url'), '/') . '/store/',

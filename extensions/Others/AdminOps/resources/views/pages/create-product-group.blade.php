@@ -63,6 +63,35 @@
             </div>
 
             <label class="ao-anc-row">
+                <span>Order Form Template</span>
+                <select wire:model="orderForm">
+                    @foreach (\Paymenter\Extensions\Others\AdminOps\Models\Meta::ORDER_FORMS as $key => $label)
+                        <option value="{{ $key }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+            </label>
+
+            {{-- Saved as GatewayRule rows scoped to this group, so it is enforced at
+                 checkout rather than remembered and ignored. Everything ticked means no
+                 restriction. --}}
+            <div class="ao-anc-row">
+                <span>
+                    Available Payment Gateways
+                    <i>Untick one to stop it being offered for this group's products.</i>
+                </span>
+                <span class="ao-cpg-gateways">
+                    @forelse ($allGateways as $gateway)
+                        <label class="ao-check">
+                            <input type="checkbox" value="{{ $gateway->extension }}" wire:model="gateways">
+                            <span>{{ $gateway->name }}</span>
+                        </label>
+                    @empty
+                        <i>No payment gateways are set up yet.</i>
+                    @endforelse
+                </span>
+            </div>
+
+            <label class="ao-anc-row">
                 <span>Hidden</span>
                 <span class="ao-anc-field">
                     <input type="checkbox" wire:model="hidden">

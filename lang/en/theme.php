@@ -180,6 +180,9 @@ return [
     'each' => 'each',
     'coupon' => 'Coupon',
     'no_products' => 'No products in this category.',
+    // Column headings for the compact Order Form Template (per product group).
+    'product' => 'Product',
+    'price' => 'Price',
     // Notifications panel
     'notif_unpaid' => '{1} You have 1 unpaid invoice. Pay it early for peace of mind.|[2,*] You have :count unpaid invoices. Pay them early for peace of mind.',
     'notif_overdue' => '{1} You have 1 overdue invoice with a total balance due of :amount. Pay it now to avoid any interruptions in service.|[2,*] You have :count overdue invoices with a total balance due of :amount. Pay them now to avoid any interruptions in service.',

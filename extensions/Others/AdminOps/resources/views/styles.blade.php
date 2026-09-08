@@ -2284,6 +2284,10 @@
 
     .ao-cpg-muted { color: var(--wa-muted, #6b6b6b); font-style: italic; }
 
+    /* The group's Available Payment Gateways: one checkbox per gateway, wrapping. */
+    .ao-cpg-gateways { display: flex; flex-wrap: wrap; gap: 0.35rem 1.2rem; }
+    .ao-cpg-gateways .ao-check { display: flex; align-items: center; gap: 0.4rem; }
+
     /* The reference's Product Type tiles: four equal cards, the chosen one outlined in the
        panel's blue with a tinted ground. */
     .ao-cp-typerow { align-items: start; }

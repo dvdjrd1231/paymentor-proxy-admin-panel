@@ -351,6 +351,12 @@
     /* Page header: big thin title + grey subtitle, underlined */
     .wf-pagehead { margin: 0 0 1.25rem; }
 
+    /* The compact Order Form Template: one row per product instead of cards. */
+    .wf-prod-list { width: 100%; }
+    .wf-prod-list-price { text-align: end; white-space: nowrap; }
+    .wf-prod-list-buy { text-align: end; width: 9rem; }
+    .wf-prod-list-desc { margin-top: .2rem; font-size: .9rem; color: var(--wf-muted, #6b6b6b); }
+
     /* A product group's tagline, under its headline on the storefront — the reference's
        order-form subtitle. Set on the admin's Create/Edit Group screen. */
     .wf-tagline {
