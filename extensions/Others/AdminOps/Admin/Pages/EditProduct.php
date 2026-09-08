@@ -36,21 +36,26 @@ use Paymenter\Extensions\Others\TermLimits\Models\ProductTerm;
  *   reference's grid of cycles becomes one row per plan, priced per currency.
  * - **Module Settings** — `server_id`, plus the module's own fields from
  *   `getProductConfig()`, which is the same descriptor shape the gateway editor renders.
- * - **Configurable Options**, **Upgrades**, **Links** — `config_option_products`,
- *   `product_upgrades`, and the storefront URLs derived from the slug.
+ * - **Configurable Options**, **Upgrades**, **Cross-sells**, **Links** —
+ *   `config_option_products`, `product_upgrades`, a meta list, and the storefront URLs
+ *   derived from the slug.
+ * - **Custom Fields** — the reference's per-product field, asked on the order form and
+ *   carried onto the service, is a config option here: named, typed, optionally with a
+ *   list of choices, and attached to this product alone. Adding one from this tab creates
+ *   it and assigns it; removing one detaches it, and deletes it only when no other product
+ *   and no live service still hold it.
  *
  * ## The tabs that are not
  *
  * - **Free Domain** — this deployment sells proxies and domains are switched off; see
  *   `docs/10-disable-domains.md`. Every control on that tab would be inert.
- * - **Cross-sells** — nothing in Paymenter recommends one product while ordering another,
- *   so a saved list would be read by nobody.
- * - **Custom Fields** — the reference defines them per product. Paymenter's
- *   `custom_properties` are defined per *model* and are already managed on Custom Client
- *   Fields; per-product fields are a different feature, not a screen away.
  * - **Other** — its contents are affiliate payout overrides, subdomain options and overage
  *   billing, none of which exist here. The two parts that do — per-user limit and the
- *   product's sort position — are on Details, where they are easier to find.
+ *   product's sort position — are on it, beside a note naming the rest.
+ *
+ * Where a single control has nothing behind it — Server Group, three of the four auto-setup
+ * choices, Upgrade Email, Require Domain, Apply Tax — it is still drawn, disabled, with a
+ * title saying why. The tab then reads as the target does without pretending to act.
  */
 class EditProduct extends Page
 {
@@ -119,6 +124,38 @@ class EditProduct extends Page
 
     /** Product ids recommended alongside this one — the reference's Cross-sells. */
     public array $crossSellIds = [];
+
+    /**
+     * The reference's Upgrades tab has a "Configurable Options" tick beside the package
+     * list. Here that is `config_options.upgradable`, which core sets per option; this one
+     * box applies the same answer to every option the product carries.
+     */
+    public bool $upgradeConfigOptions = false;
+
+    /**
+     * The reference's Add New Custom Field form.
+     *
+     * A per-product field collected on the order form is a config option here: named,
+     * typed, optionally with a list of choices, and attached to this product alone. The
+     * reference's field types map onto core's own list.
+     */
+    public array $customField = [
+        'name' => '', 'type' => 'text', 'description' => '',
+        'env_variable' => '', 'allowed_values' => '', 'sort' => 0,
+        'hidden' => false,
+    ];
+
+    /** The reference's field types, against the types core's config options accept. */
+    public const FIELD_TYPES = [
+        'text' => 'Text Box',
+        'number' => 'Number',
+        'select' => 'Drop Down',
+        'radio' => 'Radio Buttons',
+        'checkbox' => 'Tick Box',
+    ];
+
+    /** Types whose choices come from a list the admin writes. */
+    public const FIELD_TYPES_WITH_CHOICES = ['select', 'radio'];
 
     public static function getRoutePath(Panel $panel): string
     {
@@ -221,6 +258,12 @@ class EditProduct extends Page
             ->pluck('upgrade_id')->map(fn ($id) => (string) $id)->all();
 
         $this->crossSellIds = array_values(array_filter(explode(',', (string) ($meta['cross_sells'] ?? ''))));
+
+        // Ticked when every option that *could* be upgradable already is, so the box
+        // reports the product's real state rather than a remembered intention.
+        $upgradable = $p->configOptions->whereIn('type', ['select', 'radio', 'slider']);
+        $this->upgradeConfigOptions = $upgradable->isNotEmpty()
+            && $upgradable->every(fn ($option): bool => (bool) $option->upgradable);
 
         // Auto Terminate lives in TermLimits, which may not be installed.
         $this->term = ['days' => 0, 'termination_email' => ''];
@@ -405,6 +448,13 @@ class EditProduct extends Page
 
     public function saveUpgrades(): void
     {
+        // The reference's "Configurable Options" tick, applied to the options this product
+        // actually carries. Only select/radio/slider can be upgraded — a text box has no
+        // second choice to move to — so the others are left alone.
+        \App\Models\ConfigOption::whereIn('id', $this->product->configOptions->pluck('id'))
+            ->whereIn('type', ['select', 'radio', 'slider'])
+            ->update(['upgradable' => $this->upgradeConfigOptions]);
+
         DB::table('product_upgrades')->where('product_id', $this->product->id)->delete();
 
         foreach (array_unique($this->upgradeIds) as $id) {
@@ -442,6 +492,117 @@ class EditProduct extends Page
         Meta::put($this->product, 'cross_sells', implode(',', $ids));
 
         $this->done('Cross-sells saved');
+    }
+
+    // ── Custom Fields ───────────────────────────────────────────────────────────────
+
+    /**
+     * Add one of the reference's custom fields to this product.
+     *
+     * It becomes a config option attached to this product alone: the same thing the
+     * reference means by a per-product field, asked on the order form and carried onto the
+     * service. A field with choices gets one child option per line.
+     */
+    public function saveCustomField(): void
+    {
+        $this->validate([
+            'customField.name' => 'required|string|max:255',
+            'customField.type' => 'required|in:' . implode(',', array_keys(self::FIELD_TYPES)),
+            'customField.description' => 'nullable|string|max:255',
+            'customField.env_variable' => 'nullable|string|max:255|regex:/^[A-Za-z_][A-Za-z0-9_]*$/',
+            'customField.sort' => 'nullable|integer|min:0|max:255',
+            'customField.allowed_values' => 'nullable|string|max:2000',
+        ], [
+            'customField.env_variable.regex' => 'The variable name may hold letters, numbers and underscores only.',
+        ], attributes: [
+            'customField.name' => 'field name', 'customField.type' => 'field type',
+            'customField.allowed_values' => 'select options',
+        ]);
+
+        $type = $this->customField['type'];
+        $choices = array_values(array_filter(array_map(
+            'trim',
+            preg_split('/\r\n|\r|\n|,/', (string) $this->customField['allowed_values']) ?: [],
+        ), fn (string $line): bool => $line !== ''));
+
+        if (in_array($type, self::FIELD_TYPES_WITH_CHOICES, true) && $choices === []) {
+            $this->addError('customField.allowed_values', 'A drop down or radio field needs at least one choice.');
+
+            return;
+        }
+
+        DB::transaction(function () use ($type, $choices): void {
+            // The variable name is what the module reads the answer back under, so it has
+            // to exist and be unique even when the admin leaves the box empty.
+            $variable = $this->customField['env_variable']
+                ?: Str::upper(Str::snake(Str::ascii($this->customField['name'])));
+
+            $option = \App\Models\ConfigOption::create([
+                'name' => $this->customField['name'],
+                'description' => $this->customField['description'] ?: null,
+                'env_variable' => $variable,
+                'type' => $type,
+                'sort' => (int) ($this->customField['sort'] ?: 0),
+                'hidden' => (bool) $this->customField['hidden'],
+            ]);
+
+            // A tick box is one child in core's shape; a drop down or radio is one per line.
+            $children = $type === 'checkbox' ? [$this->customField['name']] : $choices;
+
+            foreach ($children as $index => $label) {
+                \App\Models\ConfigOption::create([
+                    'name' => $label,
+                    'env_variable' => Str::upper(Str::snake(Str::ascii($label))) ?: 'OPTION_' . ($index + 1),
+                    'parent_id' => $option->id,
+                    'sort' => $index,
+                ]);
+            }
+
+            DB::table('config_option_products')->insert([
+                'config_option_id' => $option->id,
+                'product_id' => $this->product->id,
+            ]);
+        });
+
+        $this->customField = [
+            'name' => '', 'type' => 'text', 'description' => '',
+            'env_variable' => '', 'allowed_values' => '', 'sort' => 0, 'hidden' => false,
+        ];
+
+        $this->done('Custom field added');
+    }
+
+    /**
+     * Detach a custom field from this product.
+     *
+     * The option itself is only deleted when no other product uses it — another product
+     * sharing the field would lose it, and every service already answering it would lose
+     * the answer with it.
+     */
+    public function deleteCustomField(int $id): void
+    {
+        $option = \App\Models\ConfigOption::find($id);
+
+        if (!$option || !$this->product->configOptions->contains('id', $id)) {
+            return;
+        }
+
+        DB::transaction(function () use ($option): void {
+            DB::table('config_option_products')
+                ->where('config_option_id', $option->id)
+                ->where('product_id', $this->product->id)
+                ->delete();
+
+            $stillUsed = DB::table('config_option_products')
+                ->where('config_option_id', $option->id)->exists();
+
+            if (!$stillUsed && !$option->serviceConfigs()->exists()) {
+                $option->children()->delete();
+                $option->delete();
+            }
+        });
+
+        $this->done('Custom field removed');
     }
 
     private function done(string $message): void
@@ -492,6 +653,13 @@ class EditProduct extends Page
             'servers' => Server::orderBy('name')->get(['id', 'name', 'extension']),
             'currencies' => Currency::orderBy('code')->pluck('code')->all(),
             'optionGroups' => \App\Models\ConfigOption::whereNull('parent_id')->orderBy('name')->get(['id', 'name']),
+            // The fields already asked for this product, newest last, with their choices.
+            'customFields' => $this->product->configOptions()
+                ->with('children:id,parent_id,name')
+                ->orderBy('sort')->orderBy('config_options.name')
+                ->get(['config_options.id', 'config_options.name', 'config_options.description',
+                    'config_options.env_variable', 'config_options.type', 'config_options.sort',
+                    'config_options.hidden']),
             'otherProducts' => Product::whereKeyNot($this->product->id)->orderBy('name')->get(['id', 'name']),
             'moduleFields' => $moduleFields,
             'urlPrefix' => rtrim((string) config('app.url'), '/') . '/products/'
