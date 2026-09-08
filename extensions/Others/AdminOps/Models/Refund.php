@@ -18,7 +18,7 @@ class Refund extends Model
     protected $table = 'ext_ao_refunds';
 
     protected $fillable = [
-        'invoice_id', 'user_id', 'amount', 'currency_code', 'reason', 'admin_id',
+        'invoice_id', 'service_id', 'user_id', 'amount', 'currency_code', 'reason', 'admin_id',
     ];
 
     protected function casts(): array
@@ -45,5 +45,16 @@ class Refund extends Model
     public static function totalFor(int $invoiceId): float
     {
         return (float) static::where('invoice_id', $invoiceId)->sum('amount');
+    }
+
+    /**
+     * Has this service already been credited for its unused time?
+     *
+     * The cancellation credit is automatic, so this is the thing standing between a
+     * duplicated event and paying a customer twice.
+     */
+    public static function issuedForService(int $serviceId): bool
+    {
+        return static::where('service_id', $serviceId)->exists();
     }
 }
