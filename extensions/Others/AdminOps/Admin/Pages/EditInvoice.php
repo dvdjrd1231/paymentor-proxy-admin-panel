@@ -11,7 +11,9 @@ use App\Models\Invoice;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Panel;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Paymenter\Extensions\Others\AdminOps\Models\Refund;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
@@ -24,11 +26,9 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * Every tab on this page does something. The reference has two more that this platform
  * cannot honestly offer, and they are left out rather than drawn dead:
  *
- * - **Refund.** Nothing here can perform one. No gateway extension implements a refund
- *   hook, and `InvoiceTransactionStatus` has only processing/succeeded/failed — there is
- *   no state a refunded transaction could be put into, so even a book-keeping-only refund
- *   would leave the ledger lying about itself. This needs a decision about semantics
- *   before it can be built, not a form.
+ * - **Gateway refunds.** No gateway extension implements a refund hook, so no money can be
+ *   sent back through the card or crypto rail it arrived on. The Refund tab returns credit
+ *   instead — see below.
  * - **Tax Rate 1 / 2 and the per-line Taxed box.** `invoices` and `invoice_items` carry no
  *   tax columns; tax is computed from `tax_rates` against the client's country. A pair of
  *   boxes that looked like per-invoice overrides would silently do nothing.
@@ -36,6 +36,19 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * The Options tab loses the reference's Payment Method field for the same reason: an
  * invoice has no payment-method column. What paid it is a property of its transactions,
  * and the Summary tab reports it from there.
+ *
+ * ## What a refund does here
+ *
+ * Leandro, 2026-09-08: "If client close or finish server service, the credit would be
+ * return to client balance." So a refund is credit going back to the customer, not money
+ * going back down the gateway — which is also WHMCS's own Credit Only refund type, and the
+ * same thing `credits_on_downgrade` already does for downgrades.
+ *
+ * It deliberately does **not** touch `invoice_transactions`. `Invoice::remaining` is total
+ * minus succeeded transactions, so a negative row would reopen the balance on an invoice
+ * that was genuinely paid: the client would appear to owe money again and dunning would
+ * follow. The service *was* paid for; it ended early and the unused part is being returned
+ * as credit. The invoice stays settled, and {@see Refund} records why the balance moved.
  *
  * ## Where the numbers come from
  *
@@ -75,6 +88,9 @@ class EditInvoice extends Page
 
     /** The Credit tab's two boxes. */
     public array $credit = ['add' => '', 'remove' => ''];
+
+    /** The Refund tab. */
+    public array $refund = ['amount' => '', 'reason' => '', 'sendEmail' => false];
 
     /** The Notes tab, stored as a property on the invoice. */
     public string $note = '';
@@ -477,6 +493,88 @@ class EditInvoice extends Page
         Notification::make()->title('$' . number_format($returned, 2) . ' returned to the client\'s balance')->success()->send();
     }
 
+    // ── Refund tab ───────────────────────────────────────────────────────────────────
+
+    /**
+     * Return credit to the customer against this invoice.
+     *
+     * Capped at what the invoice actually took in, less anything already refunded: an
+     * invoice cannot give back more than it received, and without the cap a double-click
+     * or a stale form would hand out the amount twice.
+     */
+    public function issueRefund(): void
+    {
+        $this->validate([
+            'refund.amount' => 'required|numeric|min:0.01',
+            'refund.reason' => 'nullable|string|max:1000',
+        ], attributes: ['refund.amount' => 'amount', 'refund.reason' => 'reason']);
+
+        $user = $this->invoice->user;
+
+        if (!$user) {
+            Notification::make()->title('This invoice has no client to credit')->danger()->send();
+
+            return;
+        }
+
+        $given = 0.0;
+
+        DB::transaction(function () use ($user, &$given): void {
+            $paid = (float) Invoice::whereKey($this->invoice->id)->first()
+                ->transactions()->where('status', InvoiceTransactionStatus::Succeeded)->sum('amount');
+
+            $alreadyRefunded = Refund::totalFor($this->invoice->id);
+            $refundable = round($paid - $alreadyRefunded, 2);
+
+            $given = round(min((float) $this->refund['amount'], $refundable), 2);
+
+            if ($given <= 0) {
+                return;
+            }
+
+            $credit = \App\Models\Credit::firstOrCreate(
+                ['user_id' => $user->id, 'currency_code' => $this->invoice->currency_code],
+                ['amount' => 0],
+            );
+            $credit->increment('amount', $given);
+
+            Refund::create([
+                'invoice_id' => $this->invoice->id,
+                'user_id' => $user->id,
+                'amount' => $given,
+                'currency_code' => $this->invoice->currency_code,
+                'reason' => $this->refund['reason'] ?: null,
+                'admin_id' => Auth::id(),
+            ]);
+        });
+
+        if ($given <= 0) {
+            Notification::make()->title('Nothing refunded')
+                ->body('This invoice has already been refunded in full, or it never took a payment.')
+                ->warning()->send();
+
+            return;
+        }
+
+        if ($this->refund['sendEmail']) {
+            $this->send('invoice_paid');
+        }
+
+        $this->refresh();
+
+        Notification::make()
+            ->title('$' . number_format($given, 2) . ' returned to ' . $user->email . '\'s balance')
+            ->body('The invoice stays settled — this is credit for the unused part, not a reversal of its payment.')
+            ->success()->send();
+    }
+
+    /** Reload after a refund; the invoice itself is unchanged but the credit figures are not. */
+    private function refresh(): void
+    {
+        $this->refund = ['amount' => '', 'reason' => '', 'sendEmail' => false];
+        $this->refreshInvoice();
+    }
+
     // ── Notes tab ────────────────────────────────────────────────────────────────────
 
     public function saveNote(): void
@@ -584,6 +682,13 @@ class EditInvoice extends Page
             'availableCredit' => (float) ($this->invoice->user?->credits()
                 ->where('currency_code', $this->invoice->currency_code)->value('amount') ?? 0),
             'lastAttempt' => $lastAttempt,
+            'refunds' => Refund::with('admin')->where('invoice_id', $this->invoice->id)
+                ->orderByDesc('id')->get(),
+            'refunded' => Refund::totalFor($this->invoice->id),
+            'refundable' => round(
+                $succeeded->sum(fn ($t) => (float) $t->amount) - Refund::totalFor($this->invoice->id),
+                2,
+            ),
             'paymentMethod' => $succeeded->first()?->gateway?->name
                 ?? ($creditApplied > 0 ? 'Account credit' : null),
             'clientUrl' => ClientSummary::getUrl(['record' => $this->invoice->user_id]),

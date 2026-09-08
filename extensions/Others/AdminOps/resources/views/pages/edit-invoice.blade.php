@@ -16,6 +16,7 @@
                     'payment' => 'Add Payment',
                     'options' => 'Options',
                     'credit' => 'Credit',
+                    'refund' => 'Refund',
                     'notes' => 'Notes',
                 ] as $key => $label)
                     <button type="button" class="ao-mu-tab {{ $tab === $key ? 'ao-on' : '' }}"
@@ -216,6 +217,75 @@
                     </p>
                 </div>
             </div>
+        @endif
+
+        {{-- ── Refund ──────────────────────────────────────────────────────────── --}}
+        @if ($tab === 'refund')
+            <form class="ao-anc-card ao-ei-refund" wire:submit.prevent="issueRefund">
+                <div class="ao-anc-row">
+                    <span>Refund Type</span>
+                    <span class="ao-eo-fact">
+                        Credit to the client's balance
+                        <i class="ao-ei-refund-note">
+                            No gateway here implements a refund hook, so money cannot be sent
+                            back down the card or crypto rail it arrived on. Credit is what
+                            can genuinely be returned — and it is what the client spends here.
+                        </i>
+                    </span>
+                </div>
+
+                <label class="ao-anc-row">
+                    <span>Amount</span>
+                    <span class="ao-anc-field">
+                        <input type="text" inputmode="decimal" class="ao-w-25" wire:model="refund.amount"
+                            placeholder="{{ number_format(max(0, $refundable), 2) }}">
+                        <i>${{ number_format(max(0, $refundable), 2) }} {{ $invoice->currency_code }} refundable@if ($refunded > 0), ${{ number_format($refunded, 2) }} already returned@endif</i>
+                    </span>
+                </label>
+                @error('refund.amount') <p class="ao-anc-errors">{{ $message }}</p> @enderror
+
+                <label class="ao-anc-row">
+                    <span>Reason</span>
+                    <input type="text" wire:model="refund.reason"
+                        placeholder="eg. Service cancelled early — credit for the unused period">
+                </label>
+
+                <label class="ao-anc-row">
+                    <span>Send Email</span>
+                    <span class="ao-anc-field">
+                        <input type="checkbox" wire:model="refund.sendEmail">
+                        <i>Check to Send Confirmation Email</i>
+                    </span>
+                </label>
+
+                <div class="ao-pr-center">
+                    <button type="submit" class="ao-find-go" @disabled($refundable <= 0)
+                        wire:loading.attr="disabled" wire:target="issueRefund">Refund</button>
+                </div>
+
+                <p class="ao-cp-note">
+                    The invoice stays settled. This returns credit for a service that ended
+                    early; it is not a reversal of the payment, so nothing here makes the
+                    client appear to owe money again.
+                </p>
+            </form>
+
+            @if ($refunds->isNotEmpty())
+                <h4 class="ao-ano-heading">Refunds Issued</h4>
+                <table class="ao-mu-grid">
+                    <thead><tr><th>Date</th><th>Amount</th><th>Reason</th><th>By</th></tr></thead>
+                    <tbody>
+                        @foreach ($refunds as $entry)
+                            <tr>
+                                <td>{{ $entry->created_at?->format('m/d/Y H:i') }}</td>
+                                <td>${{ number_format((float) $entry->amount, 2) }} {{ $entry->currency_code }}</td>
+                                <td class="ao-mu-left">{{ $entry->reason ?: '—' }}</td>
+                                <td>{{ $entry->admin?->first_name ? trim($entry->admin->first_name . ' ' . $entry->admin->last_name) : '—' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
         @endif
 
         {{-- ── Notes ───────────────────────────────────────────────────────────── --}}
