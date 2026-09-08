@@ -105,6 +105,20 @@ class Promotions extends Page
 
     // ── The editor ──────────────────────────────────────────────────────────────
 
+    /**
+     * Land on a promotion when the URL names one.
+     *
+     * `updatedEditing()` fires on a Livewire update, not on the first render, so without
+     * this `?promo=5` would open the editor with an empty form over promotion 5 — and
+     * saving it would have overwritten that promotion with blanks.
+     */
+    public function mount(): void
+    {
+        if ($this->editing !== '') {
+            $this->updatedEditing();
+        }
+    }
+
     /** Opening a promotion loads it; 'new' clears the form to the reference's defaults. */
     public function updatedEditing(): void
     {
