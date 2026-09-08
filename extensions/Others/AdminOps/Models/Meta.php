@@ -87,6 +87,23 @@ class Meta extends Model
             ->all();
     }
 
+    /**
+     * The slugs of product groups marked hidden.
+     *
+     * The topbar's Store menu is built from core's navigation, which carries a URL and a
+     * name per entry but no id — so filtering it needs the slug rather than the key.
+     *
+     * @return array<int, string>
+     */
+    public static function hiddenCategorySlugs(): array
+    {
+        $ids = static::hiddenCategoryIds();
+
+        return $ids === []
+            ? []
+            : \App\Models\Category::whereIn('id', $ids)->pluck('slug')->all();
+    }
+
     /** Write one value, or delete it when blank so the table keeps only what is set. */
     public static function put(Model $record, string $key, mixed $value): void
     {
