@@ -182,6 +182,7 @@ return [
     'no_products' => 'No products in this category.',
     // Column headings for the compact Order Form Template (per product group).
     'product' => 'Product',
+    'you_may_also_like' => 'You May Also Like',
     'price' => 'Price',
     // Notifications panel
     'notif_unpaid' => '{1} You have 1 unpaid invoice. Pay it early for peace of mind.|[2,*] You have :count unpaid invoices. Pay them early for peace of mind.',

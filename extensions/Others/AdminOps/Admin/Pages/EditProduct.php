@@ -85,6 +85,9 @@ class EditProduct extends Page
     /** Product ids this one can be upgraded to. */
     public array $upgradeIds = [];
 
+    /** Product ids recommended alongside this one — the reference's Cross-sells. */
+    public array $crossSellIds = [];
+
     public static function getRoutePath(Panel $panel): string
     {
         return '/' . static::getSlug($panel) . '/{record}';
@@ -171,6 +174,8 @@ class EditProduct extends Page
         $this->optionIds = $p->configOptions->pluck('id')->map(fn ($id) => (string) $id)->all();
         $this->upgradeIds = DB::table('product_upgrades')->where('product_id', $p->id)
             ->pluck('upgrade_id')->map(fn ($id) => (string) $id)->all();
+
+        $this->crossSellIds = array_values(array_filter(explode(',', (string) ($meta['cross_sells'] ?? ''))));
     }
 
     // ── Details ─────────────────────────────────────────────────────────────────────
@@ -350,6 +355,25 @@ class EditProduct extends Page
         }
 
         $this->done('Upgrades saved');
+    }
+
+    /**
+     * The reference's Cross-sells: products recommended while ordering this one.
+     *
+     * Stored as a list of ids on the product, and read by the storefront's product page —
+     * so ticking a box here changes what a customer is shown, rather than being remembered
+     * and ignored.
+     */
+    public function saveCrossSells(): void
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', $this->crossSellIds),
+            fn (int $id): bool => $id > 0 && $id !== $this->product->id,
+        )));
+
+        Meta::put($this->product, 'cross_sells', implode(',', $ids));
+
+        $this->done('Cross-sells saved');
     }
 
     private function done(string $message): void

@@ -260,6 +260,11 @@ class WhmcsNavigation
         '/admin/create-product',
         '/admin/create-product-group',
         '/admin/duplicate-product',
+        // Singular: the reference's own product editor lives at /admin/product/{id}.
+        // '/admin/products' below does not cover it — matching is on a segment boundary,
+        // so "products" is not a prefix of "product/13" — which is why that page came up
+        // with no left column at all (Leandro, 2026-09-08).
+        '/admin/product',
         '/admin/products',
         '/admin/categories',
         '/admin/config-options',

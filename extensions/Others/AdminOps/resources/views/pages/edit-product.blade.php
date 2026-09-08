@@ -11,8 +11,12 @@
                     'details' => 'Details',
                     'pricing' => 'Pricing',
                     'module' => 'Module Settings',
+                    'custom' => 'Custom Fields',
                     'options' => 'Configurable Options',
                     'upgrades' => 'Upgrades',
+                    'domain' => 'Free Domain',
+                    'crosssells' => 'Cross-sells',
+                    'other' => 'Other',
                     'links' => 'Links',
                 ] as $key => $label)
                     <button type="button" class="ao-mu-tab {{ $tab === $key ? 'ao-on' : '' }}"
@@ -328,6 +332,107 @@
                         @empty
                             <i>There are no other products to upgrade to.</i>
                         @endforelse
+                    </span>
+                </div>
+
+                <div class="ao-pr-center ao-cpg-actions">
+                    <button type="submit" class="ao-find-go">Save Changes</button>
+                </div>
+            </form>
+        @endif
+
+        {{-- ── Custom Fields ───────────────────────────────────────────────────── --}}
+        @if ($tab === 'custom')
+            <div class="ao-anc-card">
+                <div class="ao-anc-row">
+                    <span>Custom Fields</span>
+                    <span class="ao-ep-explain">
+                        <p>The reference defines custom fields <b>per product</b>, collected on that
+                            product's order form. This platform defines them <b>per client</b> —
+                            every custom property on this install is attached to
+                            <code>App\Models\User</code> — so there is no per-product set to edit here.</p>
+                        <p>They are managed at
+                            <a class="ao-link" href="{{ url('/admin/custom-properties') }}">Configuration → Custom Client Fields</a>,
+                            and apply to every order rather than to one product.</p>
+                    </span>
+                </div>
+            </div>
+        @endif
+
+        {{-- ── Free Domain ─────────────────────────────────────────────────────── --}}
+        @if ($tab === 'domain')
+            <div class="ao-anc-card">
+                <div class="ao-anc-row">
+                    <span>Free Domain</span>
+                    <span class="ao-ep-explain">
+                        <p>Domains are switched off on this deployment — it sells proxies, and there
+                            is no registrar, no TLD pricing and no domain field at checkout. See
+                            <code>docs/10-disable-domains.md</code>.</p>
+                        <p>Every control the reference puts on this tab — the free-domain radios,
+                            payment terms and TLD list — would have nothing to act on, so they are
+                            not drawn.</p>
+                    </span>
+                </div>
+            </div>
+        @endif
+
+        {{-- ── Cross-sells ─────────────────────────────────────────────────────── --}}
+        @if ($tab === 'crosssells')
+            <form class="ao-anc-card" wire:submit.prevent="saveCrossSells">
+                <div class="ao-anc-row">
+                    <span>
+                        Product Cross-sells
+                        <i>Shown as recommendations on this product's own page.</i>
+                    </span>
+                    <span class="ao-cpg-gateways">
+                        @forelse ($otherProducts as $other)
+                            <label class="ao-check">
+                                <input type="checkbox" value="{{ $other->id }}" wire:model="crossSellIds">
+                                <span>{{ $other->name }}</span>
+                            </label>
+                        @empty
+                            <i>There are no other products to recommend.</i>
+                        @endforelse
+                    </span>
+                </div>
+
+                <div class="ao-pr-center ao-cpg-actions">
+                    <button type="submit" class="ao-find-go">Save Changes</button>
+                </div>
+            </form>
+        @endif
+
+        {{-- ── Other ───────────────────────────────────────────────────────────── --}}
+        @if ($tab === 'other')
+            <form class="ao-anc-card" wire:submit.prevent="saveDetails">
+                {{-- The two things on the reference's Other tab this platform genuinely
+                     has. They save through Details, which owns the same record. --}}
+                <label class="ao-anc-row">
+                    <span>
+                        Sort Order
+                        <i>Where this product sits within its group on the storefront.</i>
+                    </span>
+                    <input type="number" min="0" class="ao-w-25" wire:model="form.sort">
+                </label>
+
+                <label class="ao-anc-row">
+                    <span>
+                        Limit Per Client
+                        <i>0 or blank for no limit.</i>
+                    </span>
+                    <input type="number" min="0" class="ao-w-25" wire:model="form.per_user_limit">
+                </label>
+
+                <div class="ao-anc-row">
+                    <span>Not available here</span>
+                    <span class="ao-ep-explain">
+                        <p><b>Custom Affiliate Payout</b> — commission is set for the whole store on
+                            the Affiliates extension, not per product.</p>
+                        <p><b>Subdomain Options</b> and <b>Overages Billing</b> — both belong to
+                            shared hosting: a subdomain to offer on signup, and disk/bandwidth
+                            metering to charge above. Proxies have neither.</p>
+                        <p><b>Associated Downloads</b> — Downloads exist here, but nothing links a
+                            file to a product; they are published by category to everyone.</p>
                     </span>
                 </div>
 

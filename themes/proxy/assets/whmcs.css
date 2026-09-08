@@ -351,6 +351,18 @@
     /* Page header: big thin title + grey subtitle, underlined */
     .wf-pagehead { margin: 0 0 1.25rem; }
 
+    /* Cross-sells under a product: the admin's recommended products. */
+    .wf-crosssell { margin-top: 1.25rem; }
+    .wf-crosssell-list { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+    .wf-crosssell-item {
+        display: flex; flex-direction: column; gap: .15rem;
+        padding: .55rem .8rem; min-width: 12rem;
+        border: 1px solid var(--brand-soft); border-radius: var(--wf-radius);
+    }
+    .wf-crosssell-item:hover { border-color: var(--brand); }
+    .wf-crosssell-name { font-weight: 600; }
+    .wf-crosssell-price { color: var(--wf-muted, #6b6b6b); font-size: .9rem; }
+
     /* The compact Order Form Template: one row per product instead of cards. */
     .wf-prod-list { width: 100%; }
     .wf-prod-list-price { text-align: end; white-space: nowrap; }
