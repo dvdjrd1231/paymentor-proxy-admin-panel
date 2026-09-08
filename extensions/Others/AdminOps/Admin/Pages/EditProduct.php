@@ -376,7 +376,24 @@ class EditProduct extends Page
             }
         }
 
-        $base = rtrim((string) config('app.url'), '/');
+        // Built from the named routes rather than assembled by hand: the checkout link was
+        // written as `/checkout?product=slug`, which looked reasonable and 404'd. Asking
+        // the router means these cannot drift from what the storefront actually serves.
+        $categorySlug = $this->product->category?->slug;
+
+        $links = ['product' => null, 'group' => null, 'checkout' => null];
+
+        if ($categorySlug) {
+            try {
+                $links = [
+                    'product' => route('products.show', ['category' => $categorySlug, 'product' => $this->product->slug]),
+                    'group' => route('category.show', ['category' => $categorySlug]),
+                    'checkout' => route('products.checkout', ['category' => $categorySlug, 'product' => $this->product->slug]),
+                ];
+            } catch (\Throwable $exception) {
+                // A product with no category yet has no storefront URL to show.
+            }
+        }
 
         return [
             'groups' => Category::orderBy('name')->get(['id', 'name']),
@@ -385,11 +402,7 @@ class EditProduct extends Page
             'optionGroups' => \App\Models\ConfigOption::whereNull('parent_id')->orderBy('name')->get(['id', 'name']),
             'otherProducts' => Product::whereKeyNot($this->product->id)->orderBy('name')->get(['id', 'name']),
             'moduleFields' => $moduleFields,
-            'links' => [
-                'product' => $base . '/products/' . ($this->product->category?->slug ?? '') . '/' . $this->product->slug,
-                'group' => $base . '/products/' . ($this->product->category?->slug ?? ''),
-                'checkout' => $base . '/checkout?product=' . $this->product->slug,
-            ],
+            'links' => $links,
         ];
     }
 }
