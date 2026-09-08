@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Paymenter\Extensions\Others\AdminOps\Models\Meta;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
+use Paymenter\Extensions\Others\TermLimits\Models\ProductTerm;
 
 /**
  * The reference's Edit Product screen, to Leandro's screenshots of
@@ -98,6 +99,14 @@ class EditProduct extends Page
 
     /** The reference's Payment Type: free | one-time | recurring. */
     public string $paymentType = 'recurring';
+
+    /**
+     * The reference's Auto Terminate / Fixed Term and Termination Email.
+     *
+     * Both are real here: TermLimits' `ext_term_limit_products` was built for exactly
+     * these two fields — days after activation, and which email announces the end.
+     */
+    public array $term = ['days' => 0, 'termination_email' => ''];
 
     /** Module fields declared by the server extension, as name => value. */
     public array $moduleSettings = [];
@@ -212,6 +221,21 @@ class EditProduct extends Page
             ->pluck('upgrade_id')->map(fn ($id) => (string) $id)->all();
 
         $this->crossSellIds = array_values(array_filter(explode(',', (string) ($meta['cross_sells'] ?? ''))));
+
+        // Auto Terminate lives in TermLimits, which may not be installed.
+        $this->term = ['days' => 0, 'termination_email' => ''];
+
+        if (class_exists(ProductTerm::class)) {
+            try {
+                $row = ProductTerm::where('product_id', $p->id)->first();
+                $this->term = [
+                    'days' => (int) ($row->days ?? 0),
+                    'termination_email' => (string) ($row->termination_email ?? ''),
+                ];
+            } catch (\Throwable $exception) {
+                // Extension present but unmigrated: the row simply has no term yet.
+            }
+        }
     }
 
     // ── Details ─────────────────────────────────────────────────────────────────────
@@ -286,6 +310,8 @@ class EditProduct extends Page
     {
         $this->validate([
             'paymentType' => 'required|in:free,one-time,recurring',
+            'term.days' => 'nullable|integer|min:0|max:65535',
+            'term.termination_email' => 'nullable|string|max:255',
             'pricing.*.*.price' => 'nullable|numeric|min:0',
             'pricing.*.*.setup_fee' => 'nullable|numeric|min:0',
         ], attributes: ['paymentType' => 'payment type']);
@@ -329,6 +355,19 @@ class EditProduct extends Page
 
             // Allow Multiple Quantities lives on this tab in the reference, not on Details.
             $this->product->update(['allow_quantity' => $this->form['allow_quantity']]);
+
+            // Auto Terminate / Termination Email. 0 days is the reference's "off", and the
+            // row is kept rather than deleted so turning it off and on again does not lose
+            // the email template beside it.
+            if (class_exists(ProductTerm::class)) {
+                ProductTerm::updateOrCreate(
+                    ['product_id' => $this->product->id],
+                    [
+                        'days' => max(0, (int) $this->term['days']),
+                        'termination_email' => $this->term['termination_email'] ?: null,
+                    ],
+                );
+            }
         });
 
         $this->done('Pricing saved');
