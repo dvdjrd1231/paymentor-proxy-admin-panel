@@ -95,10 +95,39 @@ class GeneralSettings extends Page
      */
     public function fields(): array
     {
+        return $this->fieldsFor($this->tab);
+    }
+
+    /**
+     * Every tab's rows at once, so the page can switch tabs without asking the server.
+     *
+     * Leandro, 2026-09-08: the tabs were slow, "in every pages that have tab". Each click
+     * was a Livewire round trip that re-rendered the whole screen to change which rows
+     * showed. `mount()` already loads every tab's *values*; only the rendering was per-tab,
+     * and ninety rows is small enough to send once and hide with CSS.
+     *
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    public function fieldsByTab(): array
+    {
+        $byTab = [];
+
+        foreach (array_keys(self::TABS) as $tab) {
+            $byTab[$tab] = $this->fieldsFor($tab);
+        }
+
+        return $byTab;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function fieldsFor(string $tab): array
+    {
         $definitions = $this->definitions();
         $rows = [];
 
-        foreach (SettingsReference::all()[$this->tab] ?? [] as $row) {
+        foreach (SettingsReference::all()[$tab] ?? [] as $row) {
             $name = $row['setting'] ?? null;
             $definition = $name ? ($definitions[$name] ?? null) : null;
 
@@ -205,6 +234,6 @@ class GeneralSettings extends Page
 
     protected function getViewData(): array
     {
-        return ['fields' => $this->fields()];
+        return ['fieldsByTab' => $this->fieldsByTab()];
     }
 }

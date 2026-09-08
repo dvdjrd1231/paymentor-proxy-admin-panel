@@ -9,15 +9,19 @@
     quietly dropped.
 --}}
 <x-filament-panels::page>
-    <div class="ao-mu ao-gs">
+    {{-- `tab` lives in Alpine, so a click swaps which panel shows and never asks the
+         server. Every tab's rows are below and every value is already bound. --}}
+    <div class="ao-mu ao-gs" x-data="{ tab: @js($tab) }">
         <div class="ao-gs-tabs">
             @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\GeneralSettings::TABS as $key => $label)
-                <button type="button" class="ao-gs-tab {{ $tab === $key ? 'ao-on' : '' }}"
-                    wire:click="$set('tab', '{{ $key }}')">{{ $label }}</button>
+                <button type="button" class="ao-gs-tab"
+                    :class="{ 'ao-on': tab === '{{ $key }}' }"
+                    @click="tab = '{{ $key }}'">{{ $label }}</button>
             @endforeach
         </div>
 
-        <div class="ao-gs-frame">
+        @foreach ($fieldsByTab as $tabKey => $fields)
+        <div class="ao-gs-frame" x-show="tab === '{{ $tabKey }}'" x-cloak>
             @foreach ($fields as $field)
                     @php $name = $field['name'] ?? null; $type = $field['type'] ?? 'text'; @endphp
 
@@ -74,10 +78,13 @@
                     </div>
                 @endforeach
         </div>
+        @endforeach
 
+        {{-- Save writes every tab's values in one go, as it always did — the tabs are a
+             way of reading the form, not separate forms. --}}
         <div class="ao-gs-actions">
             <button type="button" class="ao-find-go" wire:click="save">Save Changes</button>
-            <a class="ao-gs-cancel" href="{{ static::getUrl(['tab' => $tab]) }}">Cancel Changes</a>
+            <a class="ao-gs-cancel" :href="'{{ static::getUrl() }}?tab=' + tab">Cancel Changes</a>
         </div>
     </div>
 </x-filament-panels::page>
