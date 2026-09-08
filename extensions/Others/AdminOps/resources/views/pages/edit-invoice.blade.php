@@ -239,7 +239,17 @@
                     <span class="ao-anc-field">
                         <input type="text" inputmode="decimal" class="ao-w-25" wire:model="refund.amount"
                             placeholder="{{ number_format(max(0, $refundable), 2) }}">
-                        <i>${{ number_format(max(0, $refundable), 2) }} {{ $invoice->currency_code }} refundable@if ($refunded > 0), ${{ number_format($refunded, 2) }} already returned@endif</i>
+                        {{-- Built in PHP rather than with an inline @if: Blade only treats
+                             `@if` as a directive at a non-word boundary, so `refundable@if`
+                             compiled to nothing and printed the directive to the page. --}}
+                        @php
+                            $hint = '$' . number_format(max(0, $refundable), 2) . ' ' . $invoice->currency_code . ' refundable';
+
+                            if ($refunded > 0) {
+                                $hint .= ', $' . number_format($refunded, 2) . ' already returned';
+                            }
+                        @endphp
+                        <i>{{ $hint }}</i>
                     </span>
                 </label>
                 @error('refund.amount') <p class="ao-anc-errors">{{ $message }}</p> @enderror
