@@ -138,6 +138,32 @@
                         <div class="ao-gs-hint">Sent to the client when this product is set up.</div>
                     </div>
 
+                    {{-- Both of the reference's remaining Details rows. Neither can act
+                         here, and each says so rather than looking live: domains are off
+                         on this deployment, and tax is decided by the client's country
+                         through tax_rates, not per product. --}}
+                    <div class="ao-gs-row">
+                        <span class="ao-gs-label">Require Domain</span>
+                        <div class="ao-gs-field">
+                            <label class="ao-check ao-gs-off">
+                                <input type="checkbox" disabled title="Domains are switched off on this deployment">
+                                <span>Check to show domain registration options</span>
+                            </label>
+                        </div>
+                        <div class="ao-gs-hint">Domains are switched off here — see <code>docs/10-disable-domains.md</code>.</div>
+                    </div>
+
+                    <div class="ao-gs-row">
+                        <span class="ao-gs-label">Apply Tax</span>
+                        <div class="ao-gs-field">
+                            <label class="ao-check ao-gs-off">
+                                <input type="checkbox" disabled title="Tax is decided by the client's country, not per product">
+                                <span>Check to charge tax for this product</span>
+                            </label>
+                        </div>
+                        <div class="ao-gs-hint">Tax comes from Tax Rates against the client's country, so it is not a per-product choice.</div>
+                    </div>
+
                     <div class="ao-gs-row">
                         <span class="ao-gs-label">Stock Control</span>
                         <div class="ao-gs-field">
@@ -180,6 +206,7 @@
 
                 <div class="ao-pr-center ao-cpg-actions">
                     <button type="submit" class="ao-find-go">Save Changes</button>
+                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::getUrl(['record' => $product->id]) }}">Cancel Changes</a>
                 </div>
             </form>
         </div>
@@ -274,6 +301,61 @@
                         </div>
                         <div class="ao-gs-hint"></div>
                     </div>
+
+                    {{-- Auto Terminate and its email are real: TermLimits' product term
+                         table holds exactly these two, days after activation and which
+                         email announces the end. --}}
+                    <div class="ao-gs-row">
+                        <label class="ao-gs-label" for="ep-term">Auto Terminate/Fixed Term</label>
+                        <div class="ao-gs-field">
+                            <input id="ep-term" type="number" min="0" class="ao-ep-num" wire:model="term.days">
+                        </div>
+                        <div class="ao-gs-hint">Enter the number of days after activation to automatically terminate (eg. free trials, time limited products). 0 is off.</div>
+                    </div>
+
+                    <div class="ao-gs-row">
+                        <label class="ao-gs-label" for="ep-termmail">Termination Email</label>
+                        <div class="ao-gs-field">
+                            <select id="ep-termmail" wire:model="term.termination_email">
+                                <option value="">Default (server terminated)</option>
+                                @foreach ($emailTemplates as $key => $label)
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="ao-gs-hint">Choose the email template to send when the fixed term comes to an end.</div>
+                    </div>
+
+                    {{-- The rest of the reference's pricing block. Each is shown so the tab
+                         reads as the target does, and each says why it cannot act rather
+                         than looking live. --}}
+                    <div class="ao-gs-row">
+                        <span class="ao-gs-label">Recurring Cycles Limit</span>
+                        <div class="ao-gs-field">
+                            <input type="number" class="ao-ep-num" value="0" disabled
+                                title="Paymenter invoices a service until it is cancelled; there is no cycle counter to stop it after N">
+                        </div>
+                        <div class="ao-gs-hint">Not available: billing runs until the service is cancelled, so there is no count to limit. Auto Terminate above ends a product after a fixed period.</div>
+                    </div>
+
+                    <div class="ao-gs-row">
+                        <span class="ao-gs-label">Prorata Billing</span>
+                        <div class="ao-gs-field">
+                            <label class="ao-check ao-gs-off">
+                                <input type="checkbox" disabled title="Renewals fall on the service's own date, not a shared day of the month">
+                                <span>Check to enable</span>
+                            </label>
+                        </div>
+                        <div class="ao-gs-hint">Not available: each service renews on its own anniversary rather than a shared billing day, so there is nothing to prorate onto. Prorata Date and Charge Next Month belong to that same model.</div>
+                    </div>
+
+                    <div class="ao-gs-row">
+                        <span class="ao-gs-label">On-Demand Renewals</span>
+                        <div class="ao-gs-field ao-gs-off">
+                            <span class="ao-cpg-muted">Clients may renew early from their service page at any time.</span>
+                        </div>
+                        <div class="ao-gs-hint">Always on here, with no per-cycle window to configure.</div>
+                    </div>
                 </div>
 
                 @if ($errors->any())
@@ -284,6 +366,7 @@
 
                 <div class="ao-pr-center ao-cpg-actions">
                     <button type="submit" class="ao-find-go">Save Changes</button>
+                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::getUrl(['record' => $product->id]) }}">Cancel Changes</a>
                 </div>
             </form>
         </div>
@@ -346,6 +429,7 @@
 
                 <div class="ao-pr-center ao-cpg-actions">
                     <button type="submit" class="ao-find-go">Save Changes</button>
+                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::getUrl(['record' => $product->id]) }}">Cancel Changes</a>
                 </div>
             </form>
         </div>
@@ -369,6 +453,7 @@
 
                 <div class="ao-pr-center ao-cpg-actions">
                     <button type="submit" class="ao-find-go">Save Changes</button>
+                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::getUrl(['record' => $product->id]) }}">Cancel Changes</a>
                 </div>
             </form>
         </div>
@@ -395,6 +480,7 @@
 
                 <div class="ao-pr-center ao-cpg-actions">
                     <button type="submit" class="ao-find-go">Save Changes</button>
+                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::getUrl(['record' => $product->id]) }}">Cancel Changes</a>
                 </div>
             </form>
         </div>
@@ -456,6 +542,7 @@
 
                 <div class="ao-pr-center ao-cpg-actions">
                     <button type="submit" class="ao-find-go">Save Changes</button>
+                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::getUrl(['record' => $product->id]) }}">Cancel Changes</a>
                 </div>
             </form>
         </div>
@@ -496,6 +583,7 @@
 
                 <div class="ao-pr-center ao-cpg-actions">
                     <button type="submit" class="ao-find-go">Save Changes</button>
+                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::getUrl(['record' => $product->id]) }}">Cancel Changes</a>
                 </div>
             </form>
         </div>

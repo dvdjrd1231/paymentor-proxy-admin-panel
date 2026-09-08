@@ -2286,6 +2286,10 @@
        page paints every tab stacked on top of each other first. */
     [x-cloak] { display: none !important; }
 
+    /* A control the reference has that cannot act here: visible, plainly inert, and
+       carrying a title that says why. */
+    .ao-gs-off, .ao-gs-off * { color: var(--wa-muted, #6b6b6b); cursor: not-allowed; }
+
     .ao-gs-card {
         border: 1px solid var(--wa-panel-border, #ddd);
         border-radius: var(--wa-radius, 6px);
