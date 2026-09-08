@@ -2328,6 +2328,34 @@
     .ao-ep-explain p:last-child { margin-bottom: 0; }
     .ao-ep-explain code { font-size: 0.9em; }
     .ao-ep-radios .ao-check { display: flex; align-items: center; gap: 0.45rem; }
+    .ao-ep-radios > i { margin-top: 0.3rem; }
+
+    /* The reference picks assignments from a scrolling list box, not a column of tick
+       boxes — Ctrl or Shift for more than one, which is what its help text tells you. */
+    .ao-ep-list {
+        width: 100%;
+        max-width: 34rem;
+        padding: 0.35rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: var(--wa-input-bg, #fff);
+        color: inherit;
+        font-size: 0.9rem;
+    }
+
+    .ao-ep-list option { padding: 0.2rem 0.35rem; }
+
+    /* Custom Fields lists what is already asked before the form that adds another. */
+    .ao-ep-fields { margin: 0; }
+    .ao-ep-fields td { vertical-align: middle; }
+
+    /* Used above a second card on a tab that has two — "Add New Custom Field",
+       "Product URLs" — the same weight the reference gives them. */
+    .ao-sub {
+        margin: 1.1rem 0 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+    }
 
     /* Textareas are not in the .ao-anc-row input list, so they arrived unstyled and
        shrink-wrapped to the browser's default cols. */

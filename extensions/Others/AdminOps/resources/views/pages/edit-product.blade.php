@@ -386,6 +386,20 @@
                     </select>
                 </label>
 
+                {{-- The reference picks a module, then a server *group* within it. A server
+                     here is already one configured module instance rather than a machine,
+                     so there is no group to rotate new orders around. --}}
+                <div class="ao-anc-row">
+                    <span>Server Group</span>
+                    <span class="ao-anc-field ao-gs-off">
+                        <select disabled title="A server here is one configured module, not a machine to fill">
+                            <option>None</option>
+                        </select>
+                        <i>Not available: a server on this platform is a configured module rather than a
+                            machine with a capacity, so there is nothing to rotate orders around or fill.</i>
+                    </span>
+                </div>
+
                 {{-- The module's own fields, from its getProductConfig() — the same
                      descriptor shape the gateway editor renders. --}}
                 @forelse ($moduleFields as $field)
@@ -416,14 +430,41 @@
                     </div>
                 @endforelse
 
+                {{-- The reference's four auto-setup choices. Provisioning here runs off the
+                     paid invoice, so the second is the one this platform does; the other
+                     three are drawn so the tab reads as the target does, and each says why
+                     it cannot be chosen rather than looking available. --}}
                 <div class="ao-anc-row">
                     <span>Auto Setup</span>
-                    {{-- Paymenter provisions when the first payment lands; there is no
-                         choice of four to offer, so this reports rather than asks. --}}
-                    <span class="ao-cpg-muted">
-                        {{ $form['server_id']
-                            ? 'Set up automatically as soon as the first payment is received.'
-                            : 'No module — nothing is provisioned automatically.' }}
+                    <span class="ao-ep-radios">
+                        <label class="ao-check ao-gs-off">
+                            <input type="radio" name="ep-autosetup" disabled
+                                title="Nothing is provisioned before the order is paid">
+                            <span>Automatically setup the product as soon as an order is placed</span>
+                        </label>
+                        <label class="ao-check">
+                            <input type="radio" name="ep-autosetup" checked
+                                @disabled(!$form['server_id'])>
+                            <span>Automatically setup the product as soon as the first payment is received</span>
+                        </label>
+                        <label class="ao-check ao-gs-off">
+                            <input type="radio" name="ep-autosetup" disabled
+                                title="Orders are not held for manual acceptance on this platform">
+                            <span>Automatically setup the product when you manually accept a pending order</span>
+                        </label>
+                        <label class="ao-check @if ($form['server_id']) ao-gs-off @endif">
+                            <input type="radio" name="ep-autosetup" @checked(!$form['server_id']) disabled
+                                title="Choose No Module above to stop this product provisioning">
+                            <span>Do not automatically setup this product</span>
+                        </label>
+                        <i>
+                            @if ($form['server_id'])
+                                Provisioning runs off the paid invoice, so payment is what starts it. Clearing
+                                Module Name above is how this product is set up by hand instead.
+                            @else
+                                No module is chosen, so nothing is provisioned automatically.
+                            @endif
+                        </i>
                     </span>
                 </div>
 
@@ -437,17 +478,24 @@
         {{-- ── Configurable Options ────────────────────────────────────────────── --}}
         <div x-show="tab === 'options'" x-cloak>
             <form class="ao-anc-card" wire:submit.prevent="saveOptions">
+                {{-- The reference's list box, not a column of tick boxes: hold Ctrl or
+                     Shift to pick more than one, the same as the target. --}}
                 <div class="ao-anc-row">
                     <span>Assigned Option Groups</span>
-                    <span class="ao-cpg-gateways">
-                        @forelse ($optionGroups as $group)
-                            <label class="ao-check">
-                                <input type="checkbox" value="{{ $group->id }}" wire:model="optionIds">
-                                <span>{{ $group->name }}</span>
-                            </label>
-                        @empty
-                            <i>No configurable option groups exist yet.</i>
-                        @endforelse
+                    <span class="ao-anc-field">
+                        <select class="ao-ep-list" multiple size="10" wire:model="optionIds">
+                            @foreach ($optionGroups as $group)
+                                <option value="{{ $group->id }}">{{ $group->name }}</option>
+                            @endforeach
+                        </select>
+                        <i>
+                            @if ($optionGroups->isEmpty())
+                                No configurable option groups exist yet —
+                            @else
+                                Ctrl-click or Shift-click to choose more than one. Groups are created on
+                            @endif
+                            <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ConfigOptionGroups::getUrl() }}">Configurable Options</a>.
+                        </i>
                     </span>
                 </div>
 
@@ -466,15 +514,47 @@
                         Package Upgrades
                         <i>The products a customer on this one may move to.</i>
                     </span>
-                    <span class="ao-cpg-gateways">
-                        @forelse ($otherProducts as $other)
-                            <label class="ao-check">
-                                <input type="checkbox" value="{{ $other->id }}" wire:model="upgradeIds">
-                                <span>{{ $other->name }}</span>
-                            </label>
-                        @empty
-                            <i>There are no other products to upgrade to.</i>
-                        @endforelse
+                    <span class="ao-anc-field">
+                        <select class="ao-ep-list" multiple size="10" wire:model="upgradeIds">
+                            @foreach ($otherProducts as $other)
+                                <option value="{{ $other->id }}">{{ $other->name }}</option>
+                            @endforeach
+                        </select>
+                        <i>{{ $otherProducts->isEmpty()
+                            ? 'There are no other products to upgrade to.'
+                            : 'Ctrl-click or Shift-click to choose more than one.' }}</i>
+                    </span>
+                </div>
+
+                {{-- The reference's second control on this tab. Here it is
+                     `config_options.upgradable`, which core reads when a client asks to
+                     change an option mid-term. --}}
+                <div class="ao-anc-row">
+                    <span>
+                        Configurable Options
+                        <i>Allow the options this product carries to be changed mid-term.</i>
+                    </span>
+                    <span class="ao-anc-field">
+                        <label class="ao-check">
+                            <input type="checkbox" wire:model="upgradeConfigOptions">
+                            <span>Check to allow configurable options to be upgraded/downgraded</span>
+                        </label>
+                        <i>Applies to drop-down, radio and slider options — a text box has no second
+                            choice to move to. This product carries
+                            {{ $product->configOptions->whereIn('type', ['select', 'radio', 'slider'])->count() }}
+                            such option(s).</i>
+                    </span>
+                </div>
+
+                <div class="ao-anc-row">
+                    <span>Upgrade Email</span>
+                    <span class="ao-anc-field ao-gs-off">
+                        <select disabled title="Upgrades here amend the existing service rather than announcing a new one">
+                            <option>None</option>
+                        </select>
+                        <i>Not available: an upgrade amends the running service and raises the difference
+                            as an invoice, so the client is told by that invoice rather than by a separate
+                            template.</i>
                     </span>
                 </div>
 
@@ -487,20 +567,143 @@
 
         {{-- ── Custom Fields ───────────────────────────────────────────────────── --}}
         <div x-show="tab === 'custom'" x-cloak>
+            {{-- The fields already asked for this product. The reference lists them above
+                 the add form, each with the delete cross on the right. --}}
             <div class="ao-anc-card">
+                <table class="ao-mu-grid ao-ep-fields">
+                    <thead>
+                        <tr>
+                            <th>Field Name</th>
+                            <th>Field Type</th>
+                            <th>Description</th>
+                            <th>Options</th>
+                            <th>Order</th>
+                            <th>Admin Only</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($customFields as $field)
+                            <tr>
+                                <td>{{ $field->name }}</td>
+                                <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::FIELD_TYPES[$field->type] ?? ucfirst((string) $field->type) }}</td>
+                                <td>{{ $field->description ?: '—' }}</td>
+                                <td>{{ $field->children->pluck('name')->implode(', ') ?: '—' }}</td>
+                                <td>{{ (int) $field->sort }}</td>
+                                <td>{{ $field->hidden ? 'Yes' : 'No' }}</td>
+                                <td class="ao-mu-actions">
+                                    <button type="button" class="ao-mo-delete" title="Remove this field from the product"
+                                        wire:click="deleteCustomField({{ $field->id }})"
+                                        wire:confirm="Remove this field from the product?">
+                                        <x-filament::icon icon="ri-indeterminate-circle-fill" class="ao-mu-cell-icon ao-mu-icon-red" />
+                                    </button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="7" class="ao-mu-none">No custom fields have been defined for this product.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="ao-sub">Add New Custom Field</h3>
+
+            <form class="ao-anc-card" wire:submit.prevent="saveCustomField">
+                <label class="ao-anc-row">
+                    <span>
+                        Field Name
+                        <i>Shown to the client on the order form.</i>
+                    </span>
+                    <input type="text" wire:model="customField.name" maxlength="255">
+                </label>
+
+                <label class="ao-anc-row">
+                    <span>Field Type</span>
+                    <select wire:model.live="customField.type">
+                        @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::FIELD_TYPES as $value => $label)
+                            <option value="{{ $value }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </label>
+
+                <label class="ao-anc-row">
+                    <span>
+                        Description
+                        <i>Optional help text beneath the field.</i>
+                    </span>
+                    <input type="text" wire:model="customField.description" maxlength="255">
+                </label>
+
+                @if (in_array($customField['type'], \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::FIELD_TYPES_WITH_CHOICES, true))
+                    <label class="ao-anc-row">
+                        <span>
+                            Select Options
+                            <i>One choice per line.</i>
+                        </span>
+                        <textarea rows="5" wire:model="customField.allowed_values"></textarea>
+                    </label>
+                @endif
+
+                <label class="ao-anc-row">
+                    <span>
+                        Variable Name
+                        <i>What the provisioning module reads the answer back under. Left blank, it is
+                            made from the field name.</i>
+                    </span>
+                    <input type="text" wire:model="customField.env_variable" maxlength="255" placeholder="PROXY_REGION">
+                </label>
+
+                <label class="ao-anc-row">
+                    <span>Display Order</span>
+                    <input type="number" min="0" max="255" class="ao-w-25" wire:model="customField.sort">
+                </label>
+
                 <div class="ao-anc-row">
-                    <span>Custom Fields</span>
-                    <span class="ao-ep-explain">
-                        <p>The reference defines custom fields <b>per product</b>, collected on that
-                            product's order form. This platform defines them <b>per client</b> —
-                            every custom property on this install is attached to
-                            <code>App\Models\User</code> — so there is no per-product set to edit here.</p>
-                        <p>They are managed at
-                            <a class="ao-link" href="{{ url('/admin/custom-properties') }}">Configuration → Custom Client Fields</a>,
-                            and apply to every order rather than to one product.</p>
+                    <span>Field Options</span>
+                    <span class="ao-ep-radios">
+                        <label class="ao-check">
+                            <input type="checkbox" wire:model="customField.hidden">
+                            <span>Admin Only — hide this field from the order form</span>
+                        </label>
+                        {{-- The reference's other three ticks. A config option has no column
+                             for any of them, and a box that saved nowhere would be worse
+                             than one that says so. --}}
+                        <label class="ao-check ao-gs-off">
+                            <input type="checkbox" disabled title="Every field asked on the order form is answered before the order is placed">
+                            <span>Required Field</span>
+                        </label>
+                        <label class="ao-check ao-gs-off">
+                            <input type="checkbox" checked disabled title="A field not marked Admin Only is always on the order form">
+                            <span>Show on Order Form</span>
+                        </label>
+                        <label class="ao-check ao-gs-off">
+                            <input type="checkbox" disabled title="Invoice lines name the product and its options, not each field">
+                            <span>Show on Invoice</span>
+                        </label>
                     </span>
                 </div>
-            </div>
+
+                @if ($errors->any())
+                    <div class="ao-anc-errors">
+                        @foreach ($errors->all() as $error)
+                            <p>{{ $error }}</p>
+                        @endforeach
+                    </div>
+                @endif
+
+                <div class="ao-pr-center ao-cpg-actions">
+                    <button type="submit" class="ao-find-go">Save Changes</button>
+                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::getUrl(['record' => $product->id]) }}">Cancel Changes</a>
+                </div>
+
+                <p class="ao-cp-note">
+                    A per-product field is a configurable option here, attached to this product alone —
+                    the same thing the reference asks on the order form and carries onto the service.
+                    Fields shared across products are better made once on
+                    <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ConfigOptionGroups::getUrl() }}">Configurable Options</a>
+                    and assigned from the tab beside this one.
+                </p>
+            </form>
         </div>
 
         {{-- ── Free Domain ─────────────────────────────────────────────────────── --}}
@@ -528,15 +731,15 @@
                         Product Cross-sells
                         <i>Shown as recommendations on this product's own page.</i>
                     </span>
-                    <span class="ao-cpg-gateways">
-                        @forelse ($otherProducts as $other)
-                            <label class="ao-check">
-                                <input type="checkbox" value="{{ $other->id }}" wire:model="crossSellIds">
-                                <span>{{ $other->name }}</span>
-                            </label>
-                        @empty
-                            <i>There are no other products to recommend.</i>
-                        @endforelse
+                    <span class="ao-anc-field">
+                        <select class="ao-ep-list" multiple size="10" wire:model="crossSellIds">
+                            @foreach ($otherProducts as $other)
+                                <option value="{{ $other->id }}">{{ $other->name }}</option>
+                            @endforeach
+                        </select>
+                        <i>{{ $otherProducts->isEmpty()
+                            ? 'There are no other products to recommend.'
+                            : 'Ctrl-click or Shift-click to choose more than one.' }}</i>
                     </span>
                 </div>
 
@@ -617,6 +820,38 @@
                 <p class="ao-cp-note">
                     A hidden product keeps working on its direct link — that is what the
                     Products/Services page means by ordering a hidden product by link.
+                </p>
+            </div>
+
+            {{-- The reference's Product URLs table. Its Visits column counts hits against a
+                 tracking row per URL; nothing here records that, so the count says so
+                 rather than showing a zero that would read as "nobody came". --}}
+            <h3 class="ao-sub">Product URLs</h3>
+
+            <div class="ao-anc-card">
+                <table class="ao-mu-grid">
+                    <thead>
+                        <tr>
+                            <th>URL</th>
+                            <th>Visits</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse (array_filter($links) as $url)
+                            <tr>
+                                <td><a class="ao-link" href="{{ $url }}" target="_blank" rel="noopener">{{ $url }}</a></td>
+                                <td class="ao-cpg-muted" title="Visits are not counted per URL on this platform">Not tracked</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="2" class="ao-mu-none">This product has no group yet, so it has no storefront address.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+
+                <p class="ao-cp-note">
+                    These are the product's real addresses rather than a list to add to. The reference
+                    lets an admin coin extra URLs and counts the hits on each; nothing here records a
+                    visit against a URL, so there is no figure to show and no row to delete.
                 </p>
             </div>
         </div>
