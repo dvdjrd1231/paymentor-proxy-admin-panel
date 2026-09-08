@@ -5582,8 +5582,13 @@
        a single navy header, group bands with icons at the right, product rows sharing
        the same grid so every column lines up across groups. */
     /* Product Name, Type, Pay Type, Stock, Auto Setup, Features, icons — the reference's
-       seven columns (Leandro, 2026-09-07). */
-    .ao-ct { --ao-ct-cols: minmax(0, 2.2fr) 1.3fr 0.9fr 0.5fr 1fr 0.9fr 7rem; }
+       seven columns (Leandro, 2026-09-07).
+
+       The six after the name are sized to their own content rather than shared out as
+       fractions: with fractions, adding Features squeezed "Other (proxyPanel)" and "After
+       First Payment" onto two lines each and the product names with them. The reference
+       keeps every row on one line, so the name column takes whatever is left. */
+    .ao-ct { --ao-ct-cols: minmax(0, 1fr) 11rem 6.5rem 4rem 10rem 6rem 6.5rem; }
 
     .ao-ct-row {
         display: grid;
@@ -5594,6 +5599,9 @@
     }
 
     .ao-ct-row > span { text-align: center; }
+
+    /* Only the name wraps; the sized columns hold their single line. */
+    .ao-ct-row > span:not(.ao-ct-name):not(.ao-ct-icons) { white-space: nowrap; }
 
     .ao-ct-row > .ao-ct-name { text-align: start; }
 
