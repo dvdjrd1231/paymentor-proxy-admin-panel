@@ -269,19 +269,71 @@
                 <span aria-hidden="true">&#10010;</span> Add Another Product
             </button>
 
-            {{-- The reference's Domain Registration block. No registrar is connected, so
-                 None is the one honest choice — the others say why they are off. --}}
+            {{-- The reference's Domain Registration block, field for field (Leandro,
+                 2026-09-08, with the target screenshots).
+
+                 Every control here is inert and says so on its title: this store sells
+                 proxy services and has no registrar connected, so there is nothing for a
+                 registration period or an EPP code to be sent to. The block is drawn in
+                 full because the reference draws it in full — the same honestly-dead
+                 convention the Collections and Fraud Orders entries already follow —
+                 and it will become live the day a registrar module is added. --}}
+            @php
+                $domainOff = 'This store sells proxy services and has no domain registrar connected, so nothing here can be submitted';
+            @endphp
             <h4 class="ao-ano-heading">Domain Registration</h4>
-            <div class="ao-anc-card">
+            <div class="ao-anc-card ao-ano-domain" title="{{ $domainOff }}">
                 <div class="ao-anc-row">
                     <span>Registration Type</span>
-                    <span class="ao-ano-checks" title="No domain registrar is connected to this store">
-                        <label><input type="radio" name="ao-regtype" checked> None</label>
+                    <span class="ao-ano-checks">
+                        <label><input type="radio" name="ao-regtype" checked disabled> None</label>
                         <label class="ao-ano-off"><input type="radio" name="ao-regtype" disabled> Registration</label>
                         <label class="ao-ano-off"><input type="radio" name="ao-regtype" disabled> Transfer</label>
                     </span>
                 </div>
+                <label class="ao-anc-row">
+                    <span>Domain</span>
+                    <input type="text" disabled placeholder="example.com">
+                </label>
+                <label class="ao-anc-row">
+                    <span>Registration Period</span>
+                    <select class="ao-w-25" disabled>
+                        @foreach ([1, 2, 3, 4, 5] as $years)
+                            <option>{{ $years }} Year{{ $years > 1 ? 's' : '' }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <label class="ao-anc-row">
+                    <span>EPP Code</span>
+                    <input type="text" class="ao-w-40" disabled>
+                </label>
+                <div class="ao-anc-row">
+                    <span>Domain Addons</span>
+                    <span class="ao-ano-checks">
+                        <label class="ao-ano-off"><input type="checkbox" disabled> DNS Management</label>
+                        <label class="ao-ano-off"><input type="checkbox" disabled> Email Forwarding</label>
+                        <label class="ao-ano-off"><input type="checkbox" disabled> ID Protection</label>
+                    </span>
+                </div>
+                <label class="ao-anc-row">
+                    <span>Registration Price Override</span>
+                    <span class="ao-anc-field">
+                        <input type="text" class="ao-w-25" disabled>
+                        <i>(Only enter to manually override default pricing)</i>
+                    </span>
+                </label>
+                <label class="ao-anc-row">
+                    <span>Renewal Price Override</span>
+                    <span class="ao-anc-field">
+                        <input type="text" class="ao-w-25" disabled>
+                        <i>(Only enter to manually override default pricing)</i>
+                    </span>
+                </label>
             </div>
+
+            <button type="button" class="ao-ano-add ao-ano-off" disabled title="{{ $domainOff }}">
+                <span aria-hidden="true">&#10133;</span> Add Another Domain
+            </button>
 
         </div>
 

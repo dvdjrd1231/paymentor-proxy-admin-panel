@@ -4123,6 +4123,19 @@
 
     .ao-ano-off { color: var(--wa-muted, #6b6b6b); cursor: not-allowed; }
 
+    /* The Domain Registration block: drawn in full like the reference, but inert to the
+       last field — this store has no registrar. Readable, unmistakably not fillable. */
+    .ao-ano-domain { cursor: help; }
+
+    .ao-ano-domain input:disabled,
+    .ao-ano-domain select:disabled {
+        background: #f4f4f4;
+        color: #9a9a9a;
+        cursor: help;
+    }
+
+    button.ao-ano-add:disabled { opacity: 0.55; cursor: help; }
+
     .ao-tx-trans { font-size: 0.85em; color: var(--wa-muted, #6b6b6b); }
 
     /* The reference's Refresh / Last Updated line over the balance tiles. */
