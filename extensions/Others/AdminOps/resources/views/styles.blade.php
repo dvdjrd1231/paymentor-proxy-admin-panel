@@ -2253,6 +2253,7 @@
     /* The reference prints a small grey explanation under the field's label, inside the
        same right-aligned cell. Normal weight so the label stays the emphasis. */
     .ao-cp-create .ao-anc-row > span:first-child i,
+    .ao-cpg-hint > i,
     .ao-cpg-url > i {
         display: block;
         font-style: normal;
