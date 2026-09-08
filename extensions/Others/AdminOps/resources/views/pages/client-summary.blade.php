@@ -549,37 +549,41 @@
         </form>
 
     @elseif ($tab === 'quotes')
+        <div class="ao-ct-head">
+            <a class="ao-mu-tab" href="{{ $urls['newQuote'] }}">&#10010; Create New Quote</a>
+        </div>
+
         <div class="ao-cs-band">
             <h4>Quotes</h4>
             <table class="ao-mu-grid">
                 <thead>
-                    <tr><th>ID</th><th>Subject</th><th>Date</th><th>Valid Until Date</th><th>Status</th></tr>
+                    <tr>
+                        <th>Quote #</th><th>Subject</th><th>Create Date</th>
+                        <th>Valid Until</th><th class="ao-num">Total</th><th>Stage</th>
+                    </tr>
                 </thead>
                 <tbody>
                     @forelse ($rows as $quote)
                         <tr>
-                            <td>{{ $quote->id }}</td>
+                            <td><a class="ao-link" href="{{ $urls['quote']($quote->id) }}">#{{ $quote->id }}</a></td>
                             <td class="ao-mu-left">{{ $quote->subject }}</td>
-                            <td>{{ \Carbon\Carbon::parse($quote->created_at)->format('m/d/Y') }}</td>
-                            <td>{{ $quote->valid_until ? \Carbon\Carbon::parse($quote->valid_until)->format('m/d/Y') : '-' }}</td>
-                            <td>{{ ucfirst($quote->status) }}</td>
+                            <td>{{ \Carbon\Carbon::parse($quote->created_at)->format('j M Y') }}</td>
+                            <td>{{ $quote->valid_until ? \Carbon\Carbon::parse($quote->valid_until)->format('j M Y') : '—' }}</td>
+                            <td class="ao-num">{{ number_format((float) ($quote->total ?? 0), 2) }}</td>
+                            <td><span class="ao-tag">{{ ucfirst($quote->status) }}</span></td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="ao-mu-none">No Records Found</td></tr>
+                        <tr><td colspan="6" class="ao-mu-none">No Records Found</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
 
     @elseif ($tab === 'notes')
-        {{-- The reference's Notes tab — same note the Summary panel edits, full width. --}}
-        <div class="ao-cp ao-cp-wide">
-            <h3>Admin Notes</h3>
-            <div class="ao-cp-body">
-                <textarea class="ao-cp-notes" rows="10" wire:model="adminNotes" placeholder="Notes for staff only — the client never sees these"></textarea>
-                <button type="button" class="ao-find-adv ao-cp-notes-save" wire:click="saveNotes">Submit</button>
-            </div>
-        </div>
+        {{-- The reference's Notes tab: a list of dated notes, each by a named admin. This
+             was one shared textarea, which the Summary panel still shows — see
+             client-notes for why a log needed rows. --}}
+        @include('adminops::pages.client-notes')
 
     @elseif ($tab === 'services' && ($svcModel ?? null))
         {{-- The reference's per-service editor inside the profile, reached from the order
@@ -887,10 +891,20 @@
         </form>
         @endif
 
+    @elseif ($tab === 'contacts')
+        @include('adminops::pages.client-contacts')
+
+    @elseif ($tab === 'users')
+        @include('adminops::pages.client-users')
+
     @else
         {{-- Every other tab is one list of one thing. `adminops::pages.client-tab` renders
              whichever it is, so a new tab is a case there rather than another block here. --}}
-        @include('adminops::pages.client-tab', ['tab' => $tab, 'rows' => $rows, 'urls' => $urls])
+        @include('adminops::pages.client-tab', [
+            'tab' => $tab, 'rows' => $rows, 'urls' => $urls,
+            'ticketStats' => $ticketStats ?? null, 'totals' => $totals ?? null,
+            'logUsers' => $logUsers ?? null,
+        ])
     @endif
 
     </div>
