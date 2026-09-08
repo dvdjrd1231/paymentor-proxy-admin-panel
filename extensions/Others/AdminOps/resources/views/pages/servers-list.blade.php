@@ -22,8 +22,12 @@
                 <tr>
                     <th>Server Name</th>
                     <th>Module</th>
-                    <th>Products / Services</th>
-                    <th>Panel Usage</th>
+                    {{-- The reference's IP Address: here, the host the module talks to. --}}
+                    <th>Address</th>
+                    {{-- The reference's two usage columns, named for what each actually is:
+                         what this install has recorded, and what the panel itself reports. --}}
+                    <th>Recorded Usage</th>
+                    <th>Remote Usage</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -34,6 +38,13 @@
                     <tr>
                         <td class="ao-mu-left"><b>{{ $server->name }}</b></td>
                         <td>{{ $server->extension }}</td>
+                        <td>
+                            @if ($entry['address'])
+                                {{ $entry['address'] }}
+                            @else
+                                <span class="ao-cpg-muted" title="This module has no address configured yet">&mdash;</span>
+                            @endif
+                        </td>
                         <td>{{ number_format($entry['products']) }} products &middot; {{ number_format($entry['services']) }} active services</td>
                         <td>{{ $entry['usage'] ?? '—' }}</td>
                         <td>
@@ -53,7 +64,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="ao-mu-none">No Records Found</td></tr>
+                    <tr><td colspan="7" class="ao-mu-none">No Records Found</td></tr>
                 @endforelse
             </tbody>
         </table>
