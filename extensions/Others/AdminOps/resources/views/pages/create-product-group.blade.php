@@ -75,7 +75,7 @@
                  checkout rather than remembered and ignored. Everything ticked means no
                  restriction. --}}
             <div class="ao-anc-row">
-                <span>
+                <span class="ao-cpg-hint">
                     Available Payment Gateways
                     <i>Untick one to stop it being offered for this group's products.</i>
                 </span>
