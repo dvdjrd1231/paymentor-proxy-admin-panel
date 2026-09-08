@@ -209,7 +209,16 @@
                                  the storefront landing page a visitor expects. --}}
                             <li><a href="{{ $link['url'] ?? $orderNewUrl }}" wire:navigate>{{ __('theme.browse_all') }}</a></li>
                             <li class="wf-dropdown-sep"></li>
+                            @php
+                                // Groups marked hidden in the admin are not advertised here
+                                // either. Core builds this menu, so there is no id to match
+                                // on — the slug is the last segment of each entry's URL.
+                                $hiddenSlugs = class_exists(\Paymenter\Extensions\Others\AdminOps\Models\Meta::class)
+                                    ? \Paymenter\Extensions\Others\AdminOps\Models\Meta::hiddenCategorySlugs()
+                                    : [];
+                            @endphp
                             @foreach ($link['children'] as $child)
+                                @continue(in_array(basename(parse_url($child['url'], PHP_URL_PATH) ?? ''), $hiddenSlugs, true))
                                 <li><a href="{{ $child['url'] }}" wire:navigate>{{ $child['name'] }}</a></li>
                             @endforeach
                         </ul>
