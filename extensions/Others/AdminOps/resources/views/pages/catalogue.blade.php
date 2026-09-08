@@ -19,7 +19,9 @@
             @endif
             @if ($urls['newProduct'])
                 <a class="ao-mu-tab" href="{{ $urls['newProduct'] }}">
-                    <span class="ao-ont-plus">&#10133;</span> Create a New Product
+                    {{-- U+271A, not U+2795: the latter is drawn as a colour emoji on
+                         Windows and ignores the green this span asks for. --}}
+                    <span class="ao-ont-plus">&#10010;</span> Create a New Product
                 </a>
             @endif
             <button type="button" class="ao-mu-tab {{ $duplicating ? 'ao-on' : '' }}" wire:click="toggleDuplicating">Duplicate a Product</button>

@@ -266,7 +266,7 @@
 
             {{-- The reference's green add link, doing the reference's thing. --}}
             <button type="button" class="ao-ano-add" wire:click="addItem">
-                <span aria-hidden="true">&#10133;</span> Add Another Product
+                <span aria-hidden="true">&#10010;</span> Add Another Product
             </button>
 
             {{-- The reference's Domain Registration block. No registrar is connected, so
