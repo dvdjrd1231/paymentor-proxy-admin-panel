@@ -32,7 +32,14 @@
                 title="Drag to reorder">&#10021;</span>
         @endif
 
-        <span class="ao-ct-band-name"><b>Group Name:</b> {{ $category->name }}</span>
+        <span class="ao-ct-band-name">
+            <b>Group Name:</b> {{ $category->name }}
+            {{-- Marked the same way a hidden product is, so the flag is visible from the
+                 catalogue rather than only inside the group's own form. --}}
+            @if (($meta['category'][$category->id]['hidden'] ?? null) === '1')
+                <i class="ao-cat-flag">(Hidden)</i>
+            @endif
+        </span>
 
         <span class="ao-ct-icons">
             {{-- The handle that used to sit here now leads the band, where the reference
