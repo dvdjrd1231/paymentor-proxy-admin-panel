@@ -96,7 +96,12 @@ class CancellationCredit
         // The invoice the credit is recorded against: the most recent one this service was
         // actually paid on. No paid invoice means nothing was taken and nothing is owed
         // back — rule 4 above, and the reason a non-payment termination credits nothing.
-        $invoiceId = $service->invoices()->where('status', 'paid')->latest('id')->value('id');
+        // Columns qualified: `invoices()` joins `invoice_items`, so a bare `id` is
+        // ambiguous and MariaDB refuses the query outright.
+        $invoiceId = $service->invoices()
+            ->where('invoices.status', 'paid')
+            ->orderByDesc('invoices.id')
+            ->value('invoices.id');
 
         if (!$invoiceId) {
             return;
