@@ -5588,7 +5588,7 @@
        fractions: with fractions, adding Features squeezed "Other (proxyPanel)" and "After
        First Payment" onto two lines each and the product names with them. The reference
        keeps every row on one line, so the name column takes whatever is left. */
-    .ao-ct { --ao-ct-cols: minmax(0, 1fr) 11rem 6.5rem 4rem 10rem 6rem 6.5rem; }
+    .ao-ct { --ao-ct-cols: minmax(0, 1fr) 9rem 7.5rem 3.5rem 9.5rem 5rem 6rem; }
 
     .ao-ct-row {
         display: grid;
@@ -5600,8 +5600,11 @@
 
     .ao-ct-row > span { text-align: center; }
 
-    /* Only the name wraps; the sized columns hold their single line. */
-    .ao-ct-row > span:not(.ao-ct-name):not(.ao-ct-icons) { white-space: nowrap; }
+    /* The sized columns hold their single line — except Pay Type, which is the one cell
+       that legitimately carries two values ("One Time · Recurring" for a product with both
+       a monthly and a one-off plan). Holding that on one line overflowed it straight across
+       the Stock column, so it wraps instead. */
+    .ao-ct-row > span:not(.ao-ct-name):not(.ao-ct-icons):not(.ao-ct-pay) { white-space: nowrap; }
 
     .ao-ct-row > .ao-ct-name { text-align: start; }
 
