@@ -39,6 +39,16 @@
                         </span>
                     </div>
 
+                    {{-- The reference heads the subject and body with which language version
+                         is being edited. There is one here — Manage Languages says the same —
+                         so this names it rather than implying a picker that is not there. --}}
+                    <h3 class="ao-sub ao-ete-version">
+                        Default Version
+                        <i>The only version: this template is sent to every customer, whatever
+                            language they read. See Manage Languages on the
+                            <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::getUrl() }}">templates list</a>.</i>
+                    </h3>
+
                     <div class="ao-of-row ao-of-row-single">
                         <label class="ao-of-label" for="ao-ete-subject">Subject</label>
                         <span><input id="ao-ete-subject" class="ao-of-xl" type="text" wire:model="subject"></span>
