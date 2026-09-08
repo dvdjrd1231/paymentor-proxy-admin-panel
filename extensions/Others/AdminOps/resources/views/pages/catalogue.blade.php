@@ -29,6 +29,10 @@
             @if ($urls['duplicate'])
                 <a class="ao-mu-tab" href="{{ $urls['duplicate'] }}">&#9635; Duplicate a Product</a>
             @endif
+            <button type="button" class="ao-mu-tab" wire:click="refreshFeatures"
+                wire:loading.attr="disabled" wire:target="refreshFeatures">
+                <span class="ao-ct-refresh">&#8635;</span> Refresh Feature Status
+            </button>
         </div>
 
     @if (empty($tree))
@@ -45,6 +49,7 @@
                 <span>Pay Type</span>
                 <span>Stock</span>
                 <span>Auto Setup</span>
+                <span>Features</span>
                 <span></span>
             </div>
 

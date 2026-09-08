@@ -20,23 +20,28 @@
 
 <li class="ao-cat" data-ao-id="{{ $category->id }}" wire:key="ao-cat-{{ $category->id }}">
     <div class="ao-ct-band">
-        {{-- The reference leads the band with a boxed ⊕ that starts a product in this
-             group (Leandro's screenshot, 2026-09-04); the drag handle moves to the icon
-             cluster at the right, keeping reorder. --}}
-        @if ($urls['newProduct'] ?? null)
-            <a class="ao-ct-addto" href="{{ $urls['newProduct'] }}"
-                title="Add a product to {{ $category->name }} — pick this group on the form">
-                <x-filament::icon icon="ri-add-box-line" class="ao-mu-cell-icon" />
-            </a>
+        {{-- The reference leads the band with the group's drag handle — the four-way move
+             cross immediately before "Group Name:" (Leandro, 2026-09-07, screenshots of
+             both his own catalogue and the demo). It used to lead with a boxed ⊕ that
+             started a product in the group; that moves to the icon cluster on the right,
+             where it is still one click and no longer occupies the reference's handle
+             position. --}}
+        @if ($canReorderCategories)
+            <span class="ao-grip ao-ct-band-grip" data-ao-grip role="button" tabindex="0"
+                aria-label="Reorder the group {{ $category->name }}. Drag, or use the arrow keys."
+                title="Drag to reorder">&#10021;</span>
         @endif
 
         <span class="ao-ct-band-name"><b>Group Name:</b> {{ $category->name }}</span>
 
         <span class="ao-ct-icons">
-            @if ($canReorderCategories)
-                <span class="ao-grip" data-ao-grip role="button" tabindex="0"
-                    aria-label="Reorder the group {{ $category->name }}. Drag, or use the arrow keys."
-                    title="Drag to reorder">&#10021;</span>
+            {{-- The handle that used to sit here now leads the band, where the reference
+                 puts it; this is where Add-a-product-to-this-group went. --}}
+            @if ($urls['newProduct'] ?? null)
+                <a class="ao-ct-addto" href="{{ $urls['newProduct'] }}"
+                    title="Add a product to {{ $category->name }} — pick this group on the form">
+                    <x-filament::icon icon="ri-add-box-line" class="ao-mu-cell-icon" />
+                </a>
             @endif
             @if ($categoryUrl)
                 <a href="{{ $categoryUrl }}" title="Edit group">
@@ -72,6 +77,7 @@
                     <span>{{ $this->payTypeLabel($product) }}</span>
                     <span>{{ $product->stock ?? '-' }}</span>
                     <span>{{ $this->autoSetupLabel($product) }}</span>
+                    <span class="ao-ct-features">{{ $this->featuresLabel($product) }}</span>
                     <span class="ao-ct-icons">
                         @if ($canReorderProducts)
                             <span class="ao-grip" data-ao-grip role="button" tabindex="0"

@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Paymenter\Extensions\Others\AdminOps\Models\Meta;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
@@ -83,6 +84,16 @@ class Catalogue extends Page
             . 'still be ordered using the Direct Order Link shown when editing the package.';
     }
 
+    /**
+     * The extra attributes the reference's columns need, loaded once per render.
+     *
+     * @var array{product: array<int, array<string, string|null>>, category: array<int, array<string, string|null>>}
+     */
+    public array $meta = ['product' => [], 'category' => []];
+
+    /** Configurable option names per product id, for the Features column. */
+    public array $features = [];
+
     /** ['product'|'category', id] awaiting the "Are you sure?" modal, or null. */
     public ?string $confirmKind = null;
 
@@ -141,13 +152,27 @@ class Catalogue extends Page
         // the NULLs; the first drag on a list removes them.
         $categories = Category::query()
             ->with(['products' => fn ($query) => $query
-                ->with(['server', 'plans'])
+                // configOptions eager-loaded for the Features column: without it this page
+                // runs one query per product, which on a store this size is a hundred.
+                ->with(['server', 'plans', 'configOptions'])
                 ->orderBy('sort')
                 ->orderBy('id'),
             ])
             ->orderBy('sort')
             ->orderBy('id')
             ->get();
+
+        $products = $categories->flatMap->products;
+
+        // Both meta bags in two queries rather than one per row.
+        $this->meta = [
+            'product' => Meta::forMany(Product::class, $products),
+            'category' => Meta::forMany(Category::class, $categories),
+        ];
+
+        $this->features = $products
+            ->mapWithKeys(fn (Product $p): array => [$p->id => $p->configOptions->pluck('name')->all()])
+            ->all();
 
         return [
             'tree' => $this->tree($categories),
@@ -194,24 +219,80 @@ class Catalogue extends Page
     // in two places.
 
     /**
-     * The reference's Type column. Paymenter's equivalent of a WHMCS module is the server
-     * this product provisions through — the server's own name, with the extension behind it
-     * where they differ, because "Main panel" alone does not say what it is.
+     * The reference's Type column: the product's type, then the module it provisions
+     * through in brackets — "Other (ProxyPanel)", exactly as Leandro's own WHMCS prints
+     * every row of this catalogue.
+     *
+     * The type is stored per product (see {@see Meta}); "Other" is the default and is what
+     * every product on this install genuinely is, which is why the reference screenshots of
+     * this store show "Other" throughout.
      */
     public function typeLabel(Product $product): string
     {
+        $type = Meta::PRODUCT_TYPES[$this->meta['product'][$product->id]['type'] ?? 'other']
+            ?? Meta::PRODUCT_TYPES['other'];
+
         $server = $product->server;
 
         if (!$server) {
-            return 'None';
+            return $type;
         }
 
         // Case-insensitively: a server named "proxyPanel" running the "ProxyPanel"
-        // extension is one thing, and printing "proxyPanel (ProxyPanel)" on every row of
-        // the catalogue was noise that said nothing twice.
-        return strcasecmp($server->name, $server->extension) === 0
+        // extension is one thing, and printing it twice said nothing twice.
+        $module = strcasecmp($server->name, $server->extension) === 0
             ? $server->name
-            : $server->name . ' (' . $server->extension . ')';
+            : $server->extension;
+
+        return $type . ' (' . $module . ')';
+    }
+
+    /**
+     * The reference's Features column.
+     *
+     * On WHMCS this reports MarketConnect service status. There is no MarketConnect here,
+     * and the honest reading of "what extra does this product carry" on Paymenter is its
+     * configurable options — the add-on capabilities a customer picks at checkout. A
+     * product with none reads "-", which is what the reference's own row shows.
+     */
+    public function featuresLabel(Product $product): string
+    {
+        $names = $this->features[$product->id] ?? [];
+
+        if ($names === []) {
+            return '-';
+        }
+
+        return count($names) === 1 ? $names[0] : count($names) . ' options';
+    }
+
+    /**
+     * The reference's Refresh Feature Status button.
+     *
+     * It re-reads what the column reports rather than pretending to reach a service this
+     * install does not have, and says what it found — including the products that would
+     * never provision because they carry no module, which is the thing on this screen most
+     * worth being told about.
+     */
+    public function refreshFeatures(): void
+    {
+        $products = Product::with(['configOptions', 'server'])->get();
+
+        $withFeatures = $products->filter(fn (Product $p): bool => $p->configOptions->isNotEmpty())->count();
+        $withoutModule = $products->filter(fn (Product $p): bool => $p->server === null)->count();
+
+        Notification::make()
+            ->title('Feature status refreshed')
+            ->body(sprintf(
+                '%d of %d product(s) carry configurable options. %s',
+                $withFeatures,
+                $products->count(),
+                $withoutModule === 0
+                    ? 'Every product has a provisioning module.'
+                    : $withoutModule . ' have no module and will not provision automatically.',
+            ))
+            ->success()
+            ->send();
     }
 
     /**

@@ -8,6 +8,31 @@
 <x-filament-panels::page>
     <div class="ao-mu">
         <form class="ao-anc-card ao-cp-create" wire:submit.prevent="create">
+            {{-- The reference's four tiles. Presentation only — see CreateProduct's
+                 docblock — so they promise nothing about the fields below. --}}
+            <div class="ao-anc-row ao-cp-typerow">
+                <span>
+                    Product Type
+                    <i>How the catalogue's Type column describes it.</i>
+                </span>
+                <span class="ao-cp-tiles">
+                    @foreach (\Paymenter\Extensions\Others\AdminOps\Models\Meta::PRODUCT_TYPES as $key => $label)
+                        <button type="button" @class(['ao-cp-tile', 'ao-on' => $type === $key])
+                            wire:click="$set('type', '{{ $key }}')" aria-pressed="{{ $type === $key ? 'true' : 'false' }}">
+                            <span class="ao-cp-tile-ic">
+                                <x-filament::icon :icon="[
+                                    'shared-hosting' => 'ri-server-line',
+                                    'reseller-hosting' => 'ri-cloud-line',
+                                    'server-vps' => 'ri-hard-drive-2-line',
+                                    'other' => 'ri-box-3-line',
+                                ][$key]" />
+                            </span>
+                            <span>{{ $label }}</span>
+                        </button>
+                    @endforeach
+                </span>
+            </div>
+
             <label class="ao-anc-row">
                 <span>
                     Product Group
