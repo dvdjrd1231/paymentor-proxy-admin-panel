@@ -4,7 +4,17 @@
     nothing behind (Free Domain, Cross-sells, Custom Fields, Other).
 --}}
 <x-filament-panels::page>
-    <div class="ao-mu ao-ep">
+    {{-- Tabs switch in the browser, not on the server.
+
+         Each one used to be `wire:click="$set('tab', …)"`, so every click was a round
+         trip that re-rendered the whole page before anything moved — which is what made
+         the strip feel slow (Leandro, 2026-09-08: "change tab is too slow ... in every
+         pages that have tab"). Every section is built from data this component has
+         already loaded, so none of them needed the server to begin with.
+
+         The state lives on this wrapper, which Livewire morphs rather than replaces, so
+         saving a tab leaves you on it. --}}
+    <div class="ao-mu ao-ep" x-data="{ tab: @js($tab) }">
         <div class="ao-ei-top">
             <div class="ao-tx-tabs ao-ei-tabs">
                 @foreach ([
@@ -19,8 +29,9 @@
                     'other' => 'Other',
                     'links' => 'Links',
                 ] as $key => $label)
-                    <button type="button" class="ao-mu-tab {{ $tab === $key ? 'ao-on' : '' }}"
-                        wire:click="$set('tab', '{{ $key }}')">{{ $label }}</button>
+                    <button type="button" class="ao-mu-tab"
+                        :class="{ 'ao-on': tab === '{{ $key }}' }"
+                        @click="tab = '{{ $key }}'">{{ $label }}</button>
                 @endforeach
             </div>
 
@@ -39,7 +50,7 @@
              Settings uses, because that is the shape the reference draws every one of
              these screens in. This was a two-column form with the help tucked under the
              label, which is why it did not read like the target. --}}
-        @if ($tab === 'details')
+        <div x-show="tab === 'details'" x-cloak>
             <form wire:submit.prevent="saveDetails">
                 <div class="ao-gs-card">
                     <div class="ao-gs-row">
@@ -171,13 +182,13 @@
                     <button type="submit" class="ao-find-go">Save Changes</button>
                 </div>
             </form>
-        @endif
+        </div>
 
         {{-- ── Pricing ─────────────────────────────────────────────────────────
              The reference's grid: cycles across the top, Setup Fee / Price / Enable down
              the side, one block per currency. Each column is a Paymenter plan — ticking
              Enable creates it, clearing it removes it and its prices. --}}
-        @if ($tab === 'pricing')
+        <div x-show="tab === 'pricing'" x-cloak>
             <form wire:submit.prevent="savePricing">
                 <div class="ao-gs-card">
                     <div class="ao-gs-row">
@@ -275,10 +286,10 @@
                     <button type="submit" class="ao-find-go">Save Changes</button>
                 </div>
             </form>
-        @endif
+        </div>
 
         {{-- ── Module Settings ─────────────────────────────────────────────────── --}}
-        @if ($tab === 'module')
+        <div x-show="tab === 'module'" x-cloak>
             <form class="ao-anc-card" wire:submit.prevent="saveModule">
                 <label class="ao-anc-row">
                     <span>Module Name</span>
@@ -337,10 +348,10 @@
                     <button type="submit" class="ao-find-go">Save Changes</button>
                 </div>
             </form>
-        @endif
+        </div>
 
         {{-- ── Configurable Options ────────────────────────────────────────────── --}}
-        @if ($tab === 'options')
+        <div x-show="tab === 'options'" x-cloak>
             <form class="ao-anc-card" wire:submit.prevent="saveOptions">
                 <div class="ao-anc-row">
                     <span>Assigned Option Groups</span>
@@ -360,10 +371,10 @@
                     <button type="submit" class="ao-find-go">Save Changes</button>
                 </div>
             </form>
-        @endif
+        </div>
 
         {{-- ── Upgrades ────────────────────────────────────────────────────────── --}}
-        @if ($tab === 'upgrades')
+        <div x-show="tab === 'upgrades'" x-cloak>
             <form class="ao-anc-card" wire:submit.prevent="saveUpgrades">
                 <div class="ao-anc-row">
                     <span>
@@ -386,10 +397,10 @@
                     <button type="submit" class="ao-find-go">Save Changes</button>
                 </div>
             </form>
-        @endif
+        </div>
 
         {{-- ── Custom Fields ───────────────────────────────────────────────────── --}}
-        @if ($tab === 'custom')
+        <div x-show="tab === 'custom'" x-cloak>
             <div class="ao-anc-card">
                 <div class="ao-anc-row">
                     <span>Custom Fields</span>
@@ -404,10 +415,10 @@
                     </span>
                 </div>
             </div>
-        @endif
+        </div>
 
         {{-- ── Free Domain ─────────────────────────────────────────────────────── --}}
-        @if ($tab === 'domain')
+        <div x-show="tab === 'domain'" x-cloak>
             <div class="ao-anc-card">
                 <div class="ao-anc-row">
                     <span>Free Domain</span>
@@ -421,10 +432,10 @@
                     </span>
                 </div>
             </div>
-        @endif
+        </div>
 
         {{-- ── Cross-sells ─────────────────────────────────────────────────────── --}}
-        @if ($tab === 'crosssells')
+        <div x-show="tab === 'crosssells'" x-cloak>
             <form class="ao-anc-card" wire:submit.prevent="saveCrossSells">
                 <div class="ao-anc-row">
                     <span>
@@ -447,10 +458,10 @@
                     <button type="submit" class="ao-find-go">Save Changes</button>
                 </div>
             </form>
-        @endif
+        </div>
 
         {{-- ── Other ───────────────────────────────────────────────────────────── --}}
-        @if ($tab === 'other')
+        <div x-show="tab === 'other'" x-cloak>
             <form class="ao-anc-card" wire:submit.prevent="saveDetails">
                 {{-- The two things on the reference's Other tab this platform genuinely
                      has. They save through Details, which owns the same record. --}}
@@ -487,10 +498,10 @@
                     <button type="submit" class="ao-find-go">Save Changes</button>
                 </div>
             </form>
-        @endif
+        </div>
 
         {{-- ── Links ───────────────────────────────────────────────────────────── --}}
-        @if ($tab === 'links')
+        <div x-show="tab === 'links'" x-cloak>
             <div class="ao-anc-card">
                 @foreach ([
                     'Direct Product Link' => $links['product'],
@@ -520,6 +531,6 @@
                     Products/Services page means by ordering a hidden product by link.
                 </p>
             </div>
-        @endif
+        </div>
     </div>
 </x-filament-panels::page>
