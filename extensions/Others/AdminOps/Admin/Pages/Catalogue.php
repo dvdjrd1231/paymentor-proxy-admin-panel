@@ -267,7 +267,10 @@ class Catalogue extends Page
             return 'None';
         }
 
-        return $server->name === $server->extension
+        // Case-insensitively: a server named "proxyPanel" running the "ProxyPanel"
+        // extension is one thing, and printing "proxyPanel (ProxyPanel)" on every row of
+        // the catalogue was noise that said nothing twice.
+        return strcasecmp($server->name, $server->extension) === 0
             ? $server->name
             : $server->name . ' (' . $server->extension . ')';
     }
