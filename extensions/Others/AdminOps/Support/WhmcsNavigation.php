@@ -752,6 +752,12 @@ class WhmcsNavigation
             // The reference's four-tab Tax Configuration; core's TaxRateResource keeps
             // create/edit for a single rate and is claimed in markJunkDrawerPlaced().
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\TaxConfiguration::class, 'Tax Configuration'),
+            // The reference's Payments group is Currencies, Payment Gateways, Tax
+            // Configuration, Promotions — and Promotions was the one still missing. Coupons
+            // were reachable only as a System Settings tile pointing at core's own resource,
+            // a different screen in a different shape; this is the reference's. Core's
+            // CouponResource stays claimed in markJunkDrawerPlaced().
+            static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\Promotions::class, 'Promotions'),
             // The reference lists Client Groups directly above Custom Client Fields.
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientGroups::class, 'Client Groups'),
             static::link(CustomPropertyResource::class, 'Custom Client Fields'),
