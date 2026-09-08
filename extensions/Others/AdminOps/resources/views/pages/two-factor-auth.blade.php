@@ -89,7 +89,7 @@
                 <div class="ao-mud-foot ao-mud-foot-only-right">
                     <span class="ao-mud-foot-right">
                         <button type="button" class="ao-mud-close" wire:click="$set('confirming', null)">Cancel</button>
-                        <button type="button" class="ao-mud-delete" wire:click="reset">OK</button>
+                        <button type="button" class="ao-mud-delete" wire:click="resetTfa">OK</button>
                     </span>
                 </div>
             </div>

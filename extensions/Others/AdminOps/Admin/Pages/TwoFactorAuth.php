@@ -64,11 +64,15 @@ class TwoFactorAuth extends Page
     /**
      * Turn off a staff member's 2FA so they can sign in and set it up again.
      *
+     * Named resetTfa, not reset: Livewire\Component::reset(...$properties) already exists, and
+     * a same-name override with a different signature is a fatal that takes the whole panel
+     * down at boot. Same trap as BasePage::refresh().
+     *
      * Deliberately not "disable for everyone": the reference has a global switch because it
      * can require 2FA, and this platform cannot, so a bulk action here would only ever be a
      * way to weaken every account at once.
      */
-    public function reset(): void
+    public function resetTfa(): void
     {
         $id = $this->confirming;
         $this->confirming = null;
