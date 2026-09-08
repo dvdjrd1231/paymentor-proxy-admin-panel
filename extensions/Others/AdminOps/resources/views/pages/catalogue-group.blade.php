@@ -73,7 +73,17 @@
                             <i class="ao-cat-flag">(Hidden)</i>
                         @endif
                     </span>
-                    <span>{{ $this->typeLabel($product) }}</span>
+                    {{-- Reads as the reference's plain text; click it to change the type,
+                         which core's product editor cannot show. --}}
+                    <span class="ao-ct-type">
+                        @if ($canReorderProducts)
+                            <button type="button" class="ao-ct-type-btn"
+                                wire:click="$set('typingId', {{ $product->id }})"
+                                title="Change this product's type">{{ $this->typeLabel($product) }}</button>
+                        @else
+                            {{ $this->typeLabel($product) }}
+                        @endif
+                    </span>
                     <span class="ao-ct-pay">{{ $this->payTypeLabel($product) }}</span>
                     <span>{{ $product->stock ?? '-' }}</span>
                     <span>{{ $this->autoSetupLabel($product) }}</span>

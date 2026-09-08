@@ -94,10 +94,43 @@ class Catalogue extends Page
     /** Configurable option names per product id, for the Features column. */
     public array $features = [];
 
+    /**
+     * The product whose type is being changed, or null.
+     *
+     * Type is set on Create a New Product and read in the Type column, and core's product
+     * editor cannot show it — it lives in this extension's table. Without this it would be
+     * write-once. It is edited here, where it is read, rather than on a screen of its own
+     * for one presentation field.
+     */
+    public ?int $typingId = null;
+
     /** ['product'|'category', id] awaiting the "Are you sure?" modal, or null. */
     public ?string $confirmKind = null;
 
     public ?int $confirmId = null;
+
+    /** Store the product's type from the Type column's picker. */
+    public function setType(int $productId, string $type): void
+    {
+        $this->typingId = null;
+
+        if (!array_key_exists($type, Meta::PRODUCT_TYPES)) {
+            return;
+        }
+
+        $product = Product::find($productId);
+
+        if (!$product || !ProductResource::canEdit($product)) {
+            $this->refuse('You do not have permission to edit this product.');
+
+            return;
+        }
+
+        Meta::put($product, 'type', $type);
+
+        Notification::make()->title($product->name . ' is now "' . Meta::PRODUCT_TYPES[$type] . '"')
+            ->success()->send();
+    }
 
     public function confirmDelete(string $kind, int $id): void
     {
@@ -334,10 +367,17 @@ class Catalogue extends Page
             : null;
     }
 
+    /**
+     * The group's own editor — ours, not core's.
+     *
+     * Core's category form cannot show the headline, tagline and hidden flag, because those
+     * live in this extension's own table. Sending the edit icon there would let someone set
+     * them once on creation and never see them again.
+     */
     public function categoryUrl(Category $category): ?string
     {
         return CategoryResource::canEdit($category)
-            ? CategoryResource::getUrl('edit', ['record' => $category])
+            ? CreateProductGroup::getUrl(['record' => $category->id])
             : null;
     }
 
