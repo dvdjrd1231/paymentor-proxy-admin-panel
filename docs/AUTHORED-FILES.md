@@ -37,6 +37,12 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 - `extensions/Others/AdminOps/Admin/Auth/Login.php` — the admin sign-in page, on Paymenter's auth stack, with the client login's CAPTCHA
 - `extensions/Others/AdminOps/resources/views/captcha.blade.php` — that CAPTCHA, for Filament's sign-in card
 - `extensions/Others/AdminOps/Admin/Pages/Catalogue.php` — Products/Services: groups and products ordered by dragging
+- `extensions/Others/AdminOps/Admin/Pages/CreateProductGroup.php` — the reference's Create/Edit Group screen
+- `extensions/Others/AdminOps/Admin/Pages/CreateProduct.php` — the reference's Create a New Product screen
+- `extensions/Others/AdminOps/Admin/Pages/DuplicateProduct.php` — the reference's Duplicate a Product screen
+- `extensions/Others/AdminOps/Admin/Pages/EditInvoice.php` — the reference's tabbed invoice screen (Summary, Add Payment, Options, Credit, Refund, Notes)
+- `extensions/Others/AdminOps/Models/Meta.php` + `database/migrations/…_create_ext_ao_meta_table.php` — presentation attributes core has no column for: a group's headline/tagline/hidden, a product's WHMCS-style type
+- `extensions/Others/AdminOps/Models/Refund.php` + `database/migrations/…_create_ext_ao_refunds_table.php` — credit returned to a client against an invoice, and why
 - `extensions/Others/AdminOps/Admin/Widgets/DashboardTools.php` — dashboard panels: drag, collapse, refresh, hide
 - `extensions/Others/AdminOps/Admin/Pages/AutomationStatus.php` — is the automation running, and what did it do
 - `extensions/Others/AdminOps/Models/DashboardLayout.php` — one admin's dashboard order and hidden panels
@@ -96,6 +102,7 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 
 ## Deployment / operations
 - `scripts/install-debian13.sh` — automated Debian 13 installer
+- `scripts/deploy.sh` — pull and rebuild the compiled config/route/event caches. **The way to deploy.** A plain `git pull` leaves those caches holding the previous commit's configuration and routes, which presents as "my change did nothing" rather than as an error.
 - `scripts/backup.sh` — DB + files backup
 - `scripts/restore.sh` — restore from backup
 
@@ -113,10 +120,32 @@ Everything **not** in this list is unmodified upstream Paymenter (vendored — s
 ## Config
 - `.gitignore` — tailored to commit custom themes/extensions
 
-## Planned (not yet authored — see `docs/00-project-plan.md`)
-- `extensions/Gateways/Binance/` — Binance Pay gateway
-- `extensions/Others/PaymentFees/` — payment method fees
-- `extensions/Others/GatewayRules/` — country/product/currency gateway availability
-- `extensions/Others/Notifications/` — Email + Telegram notifications
-- `themes/proxy/` — custom client-area theme
-- `docs/10-disable-domains.md`, `docs/CORE-TOUCHPOINTS.md`
+## Client-area theme
+- `themes/proxy/theme.php` — theme registration and its options
+- `themes/proxy/assets/whmcs.css` — the whole client-area design system
+- `themes/proxy/views/` — every client screen: `auth/`, `client/`, `components/`,
+  `invoices/`, `layouts/`, `products/`, `services/`, `tickets/`, plus `cart`, `dashboard`
+  and `home`. Blade overrides through `qirolab/laravel-themer`; core is not edited.
+
+## Payments (fees, availability, extra gateway)
+- `extensions/Gateways/Binance/Binance.php`, `routes.php`, `README.md` — Binance Pay gateway + webhook
+- `extensions/Others/PaymentFees/PaymentFees.php` — per-gateway fees
+- `extensions/Others/PaymentFees/Support/FeeCalculator.php`, `Models/PaymentFeeRule.php`
+- `extensions/Others/GatewayRules/GatewayRules.php` — country/product/currency gateway availability
+- `extensions/Others/GatewayRules/Support/GatewayRuleEngine.php`, `Models/GatewayRule.php`
+
+## Notifications
+- `extensions/Others/Notifications/Notifications.php` — email + Telegram notifications
+- `extensions/Others/Notifications/Jobs/SendTelegramMessage.php`
+
+> These seven components were listed as "planned" long after they shipped, so this index
+> claimed the entire client-area theme and three extensions were unwritten — the opposite
+> of what it exists to say.
+>
+> The automated updater is not at risk from this: `ReleasePlan::CORE_PATHS` covers only
+> `app`, `bootstrap`, `config`, `database`, `resources`, `routes` and `public`, so nothing
+> under `extensions/` or `themes/` is ever compared against a release, let alone
+> overwritten. The risk is to a person — anyone re-vendoring core, picking the work up, or
+> deciding what is safe to change, who reads "not yet authored" and believes it.
+>
+> Add to this list in the same commit that adds the code.
