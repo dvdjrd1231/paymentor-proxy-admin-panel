@@ -5,11 +5,17 @@
 --}}
 <x-filament-panels::page>
     <div class="ao-mu">
-        @if ($newUrl)
-            <div class="ao-tx-tabs">
+        <div class="ao-tx-tabs">
+            @if ($newUrl)
                 <a class="ao-mu-tab" href="{{ $newUrl }}">&#10010; Add New Server</a>
-            </div>
-        @endif
+            @endif
+            {{-- The reference's second button. It is drawn so the strip reads as the target
+                 does, and says why it cannot act rather than being left out. --}}
+            <button type="button" class="ao-mu-tab ao-gs-off" disabled
+                title="A product attaches to one module directly, so there is no group to rotate orders around">
+                &#10010; Create New Group
+            </button>
+        </div>
 
         <table class="ao-mu-grid">
             <thead>
@@ -53,10 +59,24 @@
         </table>
 
         <h4 class="ao-ano-heading">Groups</h4>
-        <p class="ao-gs-empty" title="WHMCS rotates orders across grouped servers; Paymenter attaches each product to one module directly">
-            Paymenter has no server groups — each product is attached to one server module
-            directly, on the product's own edit page.
+        <p class="ao-gs-empty">
+            Server groups let the reference put several servers behind one product and fill or
+            rotate between them. Here a product is attached to one module directly, on its own
+            edit page, so there is no group to build and the table below stays empty.
         </p>
+
+        <table class="ao-mu-grid">
+            <thead>
+                <tr>
+                    <th>Group Name</th>
+                    <th>Fill Type</th>
+                    <th>Servers</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="3" class="ao-mu-none">No Records Found</td></tr>
+            </tbody>
+        </table>
 
         @if ($confirming)
             <div class="ao-mud-overlay" wire:click.self="$set('confirming', null)">
