@@ -163,7 +163,11 @@ class EditProduct extends Page
             ])->all(),
         ])->values()->all();
 
-        $this->moduleSettings = $p->settings->pluck('value', 'name')->all();
+        // `settings` is keyed by `key`, not `name`. Reading the wrong column returned all
+        // nulls, so every module field rendered blank on a product that is fully
+        // configured — and writing it would have created a second, broken set of rows
+        // while the real provisioning settings sat untouched beside them.
+        $this->moduleSettings = $p->settings->pluck('value', 'key')->all();
         $this->optionIds = $p->configOptions->pluck('id')->map(fn ($id) => (string) $id)->all();
         $this->upgradeIds = DB::table('product_upgrades')->where('product_id', $p->id)
             ->pluck('upgrade_id')->map(fn ($id) => (string) $id)->all();
@@ -298,8 +302,11 @@ class EditProduct extends Page
     {
         $this->product->update(['server_id' => $this->form['server_id'] ?: null]);
 
-        foreach ($this->moduleSettings as $name => $value) {
-            $this->product->settings()->updateOrCreate(['name' => $name], ['value' => $value]);
+        foreach ($this->moduleSettings as $key => $value) {
+            $this->product->settings()->updateOrCreate(
+                ['key' => $key],
+                ['value' => $value, 'type' => 'string'],
+            );
         }
 
         $this->done('Module settings saved');

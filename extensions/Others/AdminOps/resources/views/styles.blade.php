@@ -2253,6 +2253,7 @@
     /* The reference prints a small grey explanation under the field's label, inside the
        same right-aligned cell. Normal weight so the label stays the emphasis. */
     .ao-cp-create .ao-anc-row > span:first-child i,
+    .ao-ep .ao-anc-row > span:first-child i,
     .ao-cpg-hint > i,
     .ao-cpg-url > i {
         display: block;
@@ -2268,6 +2269,15 @@
     .ao-cpg-url input { flex: 1 1 12rem; min-width: 0; }
 
     .ao-cpg-actions { display: flex; justify-content: center; gap: 0.5rem; margin-top: 1.2rem; }
+
+    /* Edit Product's pricing rows: the cycle name, its type and its period on one line.
+       "every" was being squeezed to "ev" — the label has to hold its width. */
+    .ao-ep-plan .ao-anc-field { flex-wrap: wrap; }
+    .ao-ep-plan .ao-anc-field > i { flex: none; white-space: nowrap; }
+    .ao-ep-num { width: 4.5rem; }
+    .ao-ep-unit { width: 8rem; }
+    .ao-ep-prices { margin-top: 0.6rem; }
+    .ao-ep-colour { width: 4rem; height: 2rem; padding: 0; border: 1px solid var(--wa-border, #ccc); }
 
     /* Textareas are not in the .ao-anc-row input list, so they arrived unstyled and
        shrink-wrapped to the browser's default cols. */
