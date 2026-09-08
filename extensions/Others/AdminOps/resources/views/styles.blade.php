@@ -2411,6 +2411,10 @@
     }
 
     .ao-ei-tabs { flex: 1 1 auto; }
+
+    /* Ten tabs have to sit on one line as the reference's do; without this the longer
+       labels wrapped inside their own tab and the strip grew to two rows. */
+    .ao-ei-tabs .ao-mu-tab { white-space: nowrap; padding-inline: 0.7rem; }
     .ao-ei-tools { display: flex; gap: 0.4rem; padding-bottom: 0.35rem; }
 
     /* Summary: the facts card beside the big status block, as the reference splits it. */
