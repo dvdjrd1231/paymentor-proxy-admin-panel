@@ -477,8 +477,15 @@
            the panel was pulled 8px up *under* the bar, so rounded top corners would have
            been hidden behind it and reading them as square was the only way it worked.
            Sitting the panel on the bar instead of under it keeps it flush and lets the
-           radius from .fi-dropdown-panel apply the whole way round. */
-        margin-top: 0;
+           radius from .fi-dropdown-panel apply the whole way round.
+
+           `margin-top: 0` was not enough on its own, which is the strip Leandro circled
+           again: Filament anchors the panel 8px *below* its trigger and applies that
+           offset through an inline transform, so a zero margin still left 8px of page
+           showing. -8px cancels exactly that offset, putting the panel's top edge on the
+           bar's bottom edge — flush, as the reference has it, with the corners sitting
+           below the bar rather than hidden behind it. */
+        margin-top: -8px;
     }
 
     .fi-dropdown-panel {
