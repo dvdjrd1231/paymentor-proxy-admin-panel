@@ -448,4 +448,29 @@ the CSS, the left rail, the footer — is registered afterwards from
 
 ---
 
+## 10. Ticket attachment size limit (client area)
+
+**Files:** `app/Livewire/Tickets/Create.php`, `app/Livewire/Tickets/Show.php`
+
+**Change:** `attachments.*` validation raised from `max:10240` (10MB) to `max:102400`
+(100MB), at Leandro's request on 2026-09-08.
+
+**Why it cannot be done from the extension:** the rule lives inside core's own Livewire
+components — a `rules()` array in `Create` and a `#[Validate]` attribute on `Show`. Neither
+reads a setting, and an extension cannot rewrite another component's validation. The two
+admin-side ticket screens are ours and carry the same limit without a core touch.
+
+**Also required, and not a core touch:** `docker/uploads.ini` sets
+`upload_max_filesize = 128M` and `post_max_size = 160M`. These must always stay *above* what
+the forms promise — when PHP's limit is the lower of the two, an oversized file is dropped
+before Laravel ever sees it and Livewire 500s trying to read a part that was never stored,
+which is the "Error while loading page" toast from the 2026-09-05 report rather than a
+validation message.
+
+**If not re-applied after an upgrade:** the client area silently returns to rejecting
+anything over 10MB, while the admin screens and the label still say 100MB. Staff would see a
+customer told their file was too large with no reason visible on this side.
+
+---
+
 _(Everything else is implemented via extensions, themes, events, or configuration.)_

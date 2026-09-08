@@ -108,7 +108,7 @@ class OpenNewTicket extends Page
             'message' => 'required|string',
             'department' => $departments !== [] ? 'required|in:' . implode(',', $departments) : 'nullable',
             'priority' => 'in:low,medium,high',
-            'attachments.*' => 'file|max:10240',
+            'attachments.*' => 'file|max:102400',
             // The ids come from the client side, so the picked service must really be
             // this client's — not just any service id (issue #20).
             'service' => [

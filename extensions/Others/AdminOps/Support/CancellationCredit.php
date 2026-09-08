@@ -19,7 +19,13 @@ use Paymenter\Extensions\Others\AdminOps\Models\Refund;
  * ## When it pays
  *
  * 1. The service's status has just become `cancelled`. Nothing else triggers it.
- * 2. `expires_at` is in the future — there is genuinely unused time. A service cancelled
+ * 2. The cancellation is **not** `end_of_period`. This is the reference's own logic, and it
+ *    is the rule this class was missing: an end-of-period cancellation lets the customer go
+ *    on using the service until it expires. They consume exactly what they paid for, so
+ *    crediting it as well would hand back the service *and* the money. Only an immediate
+ *    cancellation — or an admin ending a service outright, which has no request row —
+ *    leaves time paid for and not used.
+ * 3. `expires_at` is in the future — there is genuinely unused time. A service cancelled
  *    after its period ran out has nothing left to give back.
  * 3. The plan is recurring. `billingDuration` is 0 for free and one-time plans, and a
  *    one-time purchase has no period to prorate.
@@ -87,6 +93,12 @@ class CancellationCredit
             return;
         }
 
+        // End-of-period cancellations keep running until expiry, so there is nothing
+        // unused to give back — see rule 2 in the class docblock.
+        if (static::isEndOfPeriod($service)) {
+            return;
+        }
+
         $amount = static::unusedAmount($service);
 
         if ($amount <= 0) {
@@ -132,6 +144,23 @@ class CancellationCredit
                 'admin_id' => null,
             ]);
         });
+    }
+
+    /**
+     * Did the customer ask to cancel at the end of the period they had already paid for?
+     *
+     * `service_cancellations.type` is `immediate` or `end_of_period`. No request row at all
+     * means an administrator ended the service directly, which stops it now — so that is
+     * treated as immediate and does earn a credit.
+     */
+    private static function isEndOfPeriod(Service $service): bool
+    {
+        try {
+            return $service->cancellation()->where('type', 'end_of_period')->exists();
+        } catch (\Throwable) {
+            // No cancellation relation on this install: treat it as a direct cancellation.
+            return false;
+        }
     }
 
     /**
