@@ -5661,7 +5661,6 @@
 
     /* The band's leading ⊕ (Leandro's screenshot, 2026-09-04): starts a product in this
        group, drawn as the reference's small boxed plus. */
-    .ao-ct-addto { display: inline-flex; color: #337ab7; }
 
     /* Product names read as the reference's ink text, not bright link-blue; the row's
        edit icon is the affordance, the name just also happens to click through. */

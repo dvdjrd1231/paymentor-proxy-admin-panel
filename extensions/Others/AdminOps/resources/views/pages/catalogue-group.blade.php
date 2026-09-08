@@ -41,15 +41,11 @@
             @endif
         </span>
 
+        {{-- Two icons, as the reference's group row has: edit and delete. An
+             add-a-product-to-this-group link used to sit here as well; Leandro asked for it
+             gone (2026-09-08), and Create a New Product above the table already does the
+             job with the group pickable on the form. --}}
         <span class="ao-ct-icons">
-            {{-- The handle that used to sit here now leads the band, where the reference
-                 puts it; this is where Add-a-product-to-this-group went. --}}
-            @if ($urls['newProduct'] ?? null)
-                <a class="ao-ct-addto" href="{{ $urls['newProduct'] }}"
-                    title="Add a product to {{ $category->name }} — pick this group on the form">
-                    <x-filament::icon icon="ri-add-box-line" class="ao-mu-cell-icon" />
-                </a>
-            @endif
             @if ($categoryUrl)
                 <a href="{{ $categoryUrl }}" title="Edit group">
                     <x-filament::icon icon="ri-edit-box-line" class="ao-mu-cell-icon" />
