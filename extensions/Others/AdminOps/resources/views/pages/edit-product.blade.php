@@ -341,6 +341,7 @@
                     'Product Group Link' => $links['group'],
                     'Direct Shopping Cart Link' => $links['checkout'],
                 ] as $label => $url)
+                    @continue(!$url)
                     <div class="ao-anc-row">
                         <span>{{ $label }}</span>
                         <span class="ao-anc-field">
@@ -350,6 +351,13 @@
                         </span>
                     </div>
                 @endforeach
+
+                @unless ($links['product'])
+                    <div class="ao-anc-row">
+                        <span>Links</span>
+                        <span class="ao-cpg-muted">This product has no group yet, so it has no storefront address.</span>
+                    </div>
+                @endunless
 
                 <p class="ao-cp-note">
                     A hidden product keeps working on its direct link — that is what the
