@@ -14,7 +14,17 @@
 @php
     use App\Models\Category;
 
+    // Groups marked hidden on the admin's Products/Services screen are left out of the
+    // listings, exactly as the reference describes it: "a product which is in a hidden
+    // group can still be ordered using the Direct Order Link" — so the group's own URL
+    // still works, it simply is not advertised. class_exists so the theme keeps working
+    // if AdminOps is disabled.
+    $hiddenGroups = class_exists(\Paymenter\Extensions\Others\AdminOps\Models\Meta::class)
+        ? \Paymenter\Extensions\Others\AdminOps\Models\Meta::hiddenCategoryIds()
+        : [];
+
     $railCategories = Category::whereNull('parent_id')
+        ->when($hiddenGroups !== [], fn ($query) => $query->whereNotIn('id', $hiddenGroups))
         ->where(function ($query) {
             $query->whereHas('children')
                 ->orWhereHas('products', fn ($q) => $q->where('hidden', false));

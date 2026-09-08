@@ -1,8 +1,28 @@
 {{-- Product browsing — WHMCS "Six" style: category sidebar + compact product cards.
      Same routes, theme() options and Livewire navigation as the default theme. --}}
 <div class="wf-page">
+    @php
+        // The group's headline and tagline, set on the admin's Create/Edit Group screen.
+        // Without this they would be stored and never seen — a form that quietly forgets.
+        $groupMeta = class_exists(\Paymenter\Extensions\Others\AdminOps\Models\Meta::class)
+            ? \Paymenter\Extensions\Others\AdminOps\Models\Meta::for($category)
+            : [];
+
+        $hiddenChildren = class_exists(\Paymenter\Extensions\Others\AdminOps\Models\Meta::class)
+            ? \Paymenter\Extensions\Others\AdminOps\Models\Meta::hiddenCategoryIds()
+            : [];
+    @endphp
+
     <div class="wf-pagehead">
-        <h1>{{ $category->name }}</h1>
+        {{-- The headline replaces the group's name as the page's own title where one is
+             set, which is what it is for on the reference's order form; the name still
+             titles the browser tab and the rail. --}}
+        <h1>{{ $groupMeta['headline'] ?? $category->name }}</h1>
+
+        @if (!empty($groupMeta['tagline']))
+            <p class="wf-tagline">{{ $groupMeta['tagline'] }}</p>
+        @endif
+
         @if($category->description)
             <p>{{ strip_tags($category->description) }}</p>
         @endif
@@ -13,9 +33,10 @@
 
         {{-- ── Products ────────────────────────────────────────────────── --}}
         <div>
-            @if (count($childCategories) >= 1)
+            @php $shownChildren = $childCategories->whereNotIn('id', $hiddenChildren); @endphp
+            @if (count($shownChildren) >= 1)
                 <div class="wf-cards" style="margin-bottom:1.25rem">
-                    @foreach ($childCategories as $childCategory)
+                    @foreach ($shownChildren as $childCategory)
                         <div class="wf-card">
                             <div class="wf-card-head">{{ $childCategory->name }}</div>
                             <div class="wf-card-body">

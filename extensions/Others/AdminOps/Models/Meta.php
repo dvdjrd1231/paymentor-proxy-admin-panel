@@ -67,6 +67,26 @@ class Meta extends Model
         return $out;
     }
 
+    /**
+     * The ids of product groups marked hidden.
+     *
+     * The storefront reads this to leave them out of its listings. It is a whole-column
+     * read of a tiny table rather than a per-category lookup, because the caller is a rail
+     * that renders on every shop page.
+     *
+     * @return array<int, int>
+     */
+    public static function hiddenCategoryIds(): array
+    {
+        return static::query()
+            ->where('model_type', \App\Models\Category::class)
+            ->where('key', 'hidden')
+            ->where('value', '1')
+            ->pluck('model_id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+    }
+
     /** Write one value, or delete it when blank so the table keeps only what is set. */
     public static function put(Model $record, string $key, mixed $value): void
     {
