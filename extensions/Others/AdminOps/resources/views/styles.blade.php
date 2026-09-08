@@ -4219,6 +4219,35 @@
         margin: 0.8rem 0;
     }
 
+    /* `justify-content: center` above had nothing to centre: .ao-cp-link is a full-width
+       flex block by default (the same thing issue #25 hit on Network Issues), so each
+       link filled half the row and the two ended up pinned to opposite edges. The
+       reference keeps the pair together in the middle. */
+    .ao-ont-inserts .ao-cp-link {
+        display: inline-flex;
+        width: auto;
+        padding: 0;
+    }
+
+    /* The reference's attachments row: the picker is a bordered field like every other
+       input on the page, and Add More sits at the far right of the row. A bare file
+       input shrink-wraps its own text, which left the button stranded mid-row with the
+       rest of the line empty. */
+    .ao-ont-attach .ao-anc-field { gap: 0.9rem; }
+
+    .ao-ont-attach input[type="file"] {
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 2.1rem;
+        padding: 0.28rem 0.55rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: var(--wa-radius, 6px);
+        background: #fff;
+        font-size: 15px;
+    }
+
+    .ao-ont-attach .ao-cq-addline { flex: none; }
+
     .ao-ont-attach .ao-anc-row > span:first-child i {
         display: block;
         font-style: normal;
