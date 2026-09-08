@@ -469,12 +469,16 @@
        reach, so the margin pulls the box back up against the bar the way the reference's
        menus sit. Topbar only — a form's select dropdown keeps its breathing room. */
     nav.fi-topbar .fi-dropdown-panel {
-        /* Flush to the bar: no strip of page between the tabs and the menu that drops
-           from them (Leandro, 2026-09-07). The panel's own top corners stay square so
-           it reads as one piece with the bar, while the outer corners keep the radius. */
-        margin-top: -8px;
-        border-start-start-radius: 0;
-        border-start-end-radius: 0;
+        /* Flush to the bar — no strip of page between the tabs and the menu that drops
+           from them — but rounded on all four corners (Leandro, 2026-09-07: "top left
+           and top right should be rounded").
+
+           The square top corners were mine, from the earlier "flush to the bar" pass:
+           the panel was pulled 8px up *under* the bar, so rounded top corners would have
+           been hidden behind it and reading them as square was the only way it worked.
+           Sitting the panel on the bar instead of under it keeps it flush and lets the
+           radius from .fi-dropdown-panel apply the whole way round. */
+        margin-top: 0;
     }
 
     .fi-dropdown-panel {

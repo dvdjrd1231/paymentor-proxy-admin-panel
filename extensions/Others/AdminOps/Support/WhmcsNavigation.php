@@ -227,8 +227,46 @@ class WhmcsNavigation
             }
         }
 
+        // Nothing matched. That is the normal case for the *detail* screens behind a Setup
+        // entry: the menu links the list (`/admin/servers-list`), while the page you land
+        // on is core's own resource (`/admin/servers/create`) or one of ours
+        // (`/admin/gateway/10`) — no shared prefix, so the rail came out empty and the page
+        // lost its whole left column (Leandro, 2026-09-07, listing nine of them).
+        //
+        // These all belong to Setup, and Setup's rail is the Configuration / Staff
+        // Management / Payments / Products-Services stack the reference shows on every
+        // settings screen — which is exactly what he asked these pages to match.
+        if ($best === null) {
+            foreach (static::SETUP_PREFIXES as $prefix) {
+                if ($path === $prefix || str_starts_with($path, $prefix . '/')) {
+                    return static::setupGroup();
+                }
+            }
+        }
+
         return $best;
     }
+
+    /**
+     * Paths whose rail is Setup's, though no Setup menu item links them directly.
+     *
+     * Prefix-matched on a segment boundary, so `/admin/gateway` here cannot swallow
+     * `/admin/gateway-log`, which belongs to Utilities and matches its own item anyway.
+     */
+    private const SETUP_PREFIXES = [
+        '/admin/system-settings',
+        '/admin/settings',
+        '/admin/products',
+        '/admin/categories',
+        '/admin/config-options',
+        '/admin/servers',
+        '/admin/extensions',
+        '/admin/role-group',
+        '/admin/openid-client',
+        '/admin/gateway',
+        '/admin/currency',
+        '/admin/email-templates',
+    ];
 
     /** The Setup group — built with the rest, kept out of the topbar. */
     public static function setupGroup(): ?NavigationGroup
