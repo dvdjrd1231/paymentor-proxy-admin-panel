@@ -85,25 +85,12 @@ class AdminOps extends Extension
         $this->retireCoreExtensionBrowser();
         $this->retireCoreOauthScreens();
         $this->retireCoreGatewayEditor();
+        $this->retireCoreProductEditor();
         $this->registerErrorPages();
         $this->applyClientGroupDiscounts();
         $this->creditCancelledServices();
     }
 
-    /**
-     * Client-group discounts, applied for real (Leandro, 2026-09-07: "these group will
-     * this condition as common. this is client group").
-     *
-     * Hooked on the invoice *item*, not on `Invoice\Finalized`. Finalized looks like the
-     * natural place — it fires once, after the response, with every item present — but
-     * core's own mail listener is on that event too, so a discount added there races the
-     * "invoice created" email and can post a total that is already wrong. Recomputing per
-     * item is cheap and always ends correct, because {@see Support\ClientGroup::applyDiscount}
-     * rebuilds the line from scratch each time.
-     *
-     * The guard is not optional: adding the discount line creates an invoice item, which
-     * fires this same event again.
-     */
     /**
      * Credit the unused period back when a service is cancelled (Leandro, 2026-09-08).
      *
@@ -123,6 +110,20 @@ class AdminOps extends Extension
         );
     }
 
+    /**
+     * Client-group discounts, applied for real (Leandro, 2026-09-07: "these group will
+     * this condition as common. this is client group").
+     *
+     * Hooked on the invoice *item*, not on `Invoice\Finalized`. Finalized looks like the
+     * natural place — it fires once, after the response, with every item present — but
+     * core's own mail listener is on that event too, so a discount added there races the
+     * "invoice created" email and can post a total that is already wrong. Recomputing per
+     * item is cheap and always ends correct, because {@see Support\ClientGroup::applyDiscount}
+     * rebuilds the line from scratch each time.
+     *
+     * The guard is not optional: adding the discount line creates an invoice item, which
+     * fires this same event again.
+     */
     private function applyClientGroupDiscounts(): void
     {
         Event::listen(\App\Events\InvoiceItem\Created::class, function ($event): void {
@@ -161,6 +162,27 @@ class AdminOps extends Extension
     private function registerErrorPages(): void
     {
         View::getFinder()->prependLocation(__DIR__ . '/resources/error-views');
+    }
+
+    /**
+     * Core's product editor, replaced by the reference's tabbed Edit Product screen
+     * (Leandro, 2026-09-08, screenshots of `configproducts.php?action=edit`).
+     *
+     * Named after the route it displaces, for the reason on {@see retireRawProductList}:
+     * the catalogue's own edit icon, the Products list and every breadcrumb resolve
+     * `filament.admin.resources.products.edit`, and a redirect registered at that URI
+     * without the name destroys it.
+     */
+    private function retireCoreProductEditor(): void
+    {
+        \Illuminate\Support\Facades\Route::middleware(['web'])
+            ->get('/admin/products/{record}/edit', function (string $record) {
+                if (!\Illuminate\Support\Facades\Auth::check()) {
+                    return redirect()->guest('/admin/login');
+                }
+
+                return redirect()->to(Admin\Pages\EditProduct::getUrl(['record' => $record]));
+            })->name('filament.admin.resources.products.edit');
     }
 
     /**
