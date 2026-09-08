@@ -2261,6 +2261,142 @@
         font: inherit;
     }
 
+    /* ── Edit Invoice, to the reference's tabbed screen (2026-09-07) ─────────── */
+
+    /* Tab strip on the left, the document actions on the right of the same line. */
+    .ao-ei-top {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .ao-ei-tabs { flex: 1 1 auto; }
+    .ao-ei-tools { display: flex; gap: 0.4rem; padding-bottom: 0.35rem; }
+
+    /* Summary: the facts card beside the big status block, as the reference splits it. */
+    .ao-ei-summary {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+        gap: 1.5rem;
+        align-items: start;
+        margin-top: 1rem;
+    }
+
+    .ao-ei-facts { margin: 0; }
+    .ao-ei-sub { margin-inline-start: 0.4rem; font-size: 0.9em; }
+    .ao-ei-balance { color: #d9534f; font-weight: 700; }
+
+    .ao-ei-status-block { text-align: center; padding-top: 0.5rem; }
+
+    .ao-ei-status {
+        font-size: 1.7rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        margin-bottom: 0.4rem;
+    }
+
+    .ao-ei-status--pending { color: #d9534f; }
+    .ao-ei-status--paid { color: #5cb85c; }
+    .ao-ei-status--cancelled { color: var(--wa-muted, #6b6b6b); }
+
+    .ao-ei-status-line { font-size: 0.95rem; margin-bottom: 0.15rem; }
+
+    .ao-ei-send {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin: 0.9rem 0 0.5rem;
+    }
+
+    .ao-ei-marks { display: flex; justify-content: center; gap: 0.5rem; }
+
+    /* Add Payment and Options: the reference's two columns of labelled rows, with the
+       button centred beneath both. */
+    .ao-ei-two {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .ao-ei-wide { grid-column: 1 / -1; }
+
+    .ao-ei-credit {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+        padding: 1.2rem;
+        text-align: center;
+    }
+
+    .ao-ei-credit-side h5 { font-weight: 700; margin-bottom: 0.6rem; }
+
+    .ao-ei-credit-row { display: flex; justify-content: center; gap: 0.4rem; }
+
+    .ao-ei-credit-row input {
+        width: 8rem;
+        padding: 0.3rem 0.5rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: var(--wa-radius, 4px);
+        background: #fff;
+        font: inherit;
+        text-align: center;
+    }
+
+    .ao-ei-credit-note { margin-top: 0.5rem; font-size: 0.95rem; }
+    .ao-ei-credit-ok { color: #5cb85c; }
+    .ao-ei-credit-warn { color: #d9534f; }
+
+    .ao-ei-notes { margin-top: 1rem; padding: 1rem; }
+
+    .ao-ei-notes textarea {
+        width: 100%;
+        padding: 0.5rem 0.7rem;
+        margin-bottom: 0.8rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: var(--wa-radius, 4px);
+        background: #fff;
+        font: inherit;
+        resize: vertical;
+    }
+
+    /* Items: the reference's heading with Add Item pinned to its right. */
+    .ao-ei-items-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .ao-ei-items-head .ao-ano-heading { margin-bottom: 0; }
+
+    .ao-ei-check { width: 2.5rem; }
+    .ao-ei-del { width: 3rem; }
+
+    /* The reference's red ⊖ at the end of each line. */
+    .ao-ei-remove {
+        color: #d9534f;
+        background: none;
+        border: 0;
+        font-size: 1.1rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .ao-ei-remove:hover { color: #b52b27; }
+
+    .ao-ei-withrow > td { background: #f0f0f0; }
+    .ao-ei-with { padding: 0.25rem 0.4rem; font: inherit; }
+
+    .ao-ei-save { display: flex; justify-content: center; gap: 0.5rem; margin: 1rem 0; }
+
+    @media (max-width: 900px) {
+        .ao-ei-summary, .ao-ei-two, .ao-ei-credit { grid-template-columns: minmax(0, 1fr); }
+    }
+
     /* The reference's Search/Filter tab: a file-folder tab that sits on its strip's
        full-width rule — the -1px pull lets the tab's own border merge into the line. */
     .ao-mu-tab {
