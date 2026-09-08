@@ -18,7 +18,9 @@
                 <a class="ao-mu-tab" href="{{ $urls['newCategory'] }}">&#10010; Create a New Group</a>
             @endif
             @if ($urls['newProduct'])
-                <a class="ao-mu-tab" href="{{ $urls['newProduct'] }}">&#10010; Create a New Product</a>
+                <a class="ao-mu-tab" href="{{ $urls['newProduct'] }}">
+                    <span class="ao-ont-plus">&#10133;</span> Create a New Product
+                </a>
             @endif
             <button type="button" class="ao-mu-tab {{ $duplicating ? 'ao-on' : '' }}" wire:click="toggleDuplicating">Duplicate a Product</button>
         </div>

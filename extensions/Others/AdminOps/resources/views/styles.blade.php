@@ -2248,6 +2248,18 @@
     .ao-mu-status.ao-mu-st-cancelled { background: #d9534f; }
     .ao-mu-status.ao-mu-st-unpaid { background: #d9534f; }
 
+    /* The explanatory note under a page title.
+       On the reference this is small body text running the width of the content — one or
+       two quiet lines above the controls. Filament sets it as a subtitle two sizes up
+       (19px) in a 714px column, which turned the Products/Services paragraph into four
+       large lines that dominated the screen (Leandro, 2026-09-07). Panel-wide on purpose:
+       fourteen AdminOps pages carry one of these notes and they should read alike. */
+    .fi-header-subheading {
+        max-width: none;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
     /* Edit Invoice (user request, 2026-09-04): editable line items in the navy grid. */
     .ao-ei-desc { width: 100%; }
     .ao-ei-qty, .ao-ei-qty-in { width: 6rem; }
