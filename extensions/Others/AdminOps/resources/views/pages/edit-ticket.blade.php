@@ -335,27 +335,26 @@
         {{-- The reference's Log: what has happened to this ticket, as against the Client
              Log beside it, which is what its owner has been doing everywhere. --}}
         <div x-show="tab === 'log'" x-cloak>
+            <p class="ao-et-showing">Showing 1 to {{ $logRows->count() }} of {{ $logRows->count() }} total</p>
             <table class="ao-mu-grid">
                 <thead>
-                    <tr><th>Date</th><th>Log Entry</th><th>Changes</th></tr>
+                    <tr><th>Date</th><th>Requested Action</th></tr>
                 </thead>
                 <tbody>
-                    @forelse ($ticketLogRows as $row)
+                    @forelse ($logRows as $row)
                         <tr>
-                            <td>{{ \Carbon\Carbon::parse($row->created_at)->format('d/m/Y H:i') }}</td>
-                            <td class="ao-mu-left">{{ ucfirst($row->event) }} ticket &mdash; ID: {{ $row->auditable_id }}</td>
-                            <td class="ao-mu-left"><code>{{ str($row->new_values)->limit(100) }}</code></td>
+                            <td>{{ \Carbon\Carbon::parse($row['at'])->format('m/d/Y H:i') }}</td>
+                            <td class="ao-mu-left">{{ $row['action'] }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="3" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
+                        <tr><td colspan="2" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
                     @endforelse
                 </tbody>
             </table>
-
-            <p class="ao-cp-note">
-                Replies are the thread above rather than log lines; this is the ticket record
-                itself changing — status, department, assignment and owner.
-            </p>
+            <div class="ao-mu-pager">
+                <button type="button" disabled>&laquo; Previous</button>
+                <button type="button" disabled>Next &raquo;</button>
+            </div>
         </div>
 
         <div x-show="tab === 'clientlog'" x-cloak>
@@ -381,23 +380,38 @@
         </div>
 
         <div x-show="tab === 'other'" x-cloak>
+            <p class="ao-et-showing">Showing 1 to {{ $otherTickets->count() }} of {{ $otherTickets->count() }} total</p>
             <table class="ao-mu-grid">
                 <thead>
-                    <tr><th>ID</th><th>Subject</th><th>Status</th><th>Last Updated</th></tr>
+                    <tr><th class="ao-st-flag"></th><th>Date Submitted</th><th>Department</th><th>Subject</th><th>Status</th><th>Last Reply</th></tr>
                 </thead>
                 <tbody>
                     @forelse ($otherTickets as $other)
+                        @php
+                            $statusWord = ['open' => 'Open', 'replied' => 'Answered', 'closed' => 'Closed', 'on_hold' => 'On Hold', 'in_progress' => 'In Progress'][$other->status] ?? ucfirst($other->status);
+                            $statusClass = ['open' => 'ao-st-open', 'replied' => 'ao-st-answered', 'closed' => 'ao-st-closed', 'on_hold' => 'ao-st-hold', 'in_progress' => 'ao-st-progress'][$other->status] ?? '';
+                        @endphp
                         <tr>
-                            <td><a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditTicket::getUrl(['record' => $other->id]) }}">{{ $other->id }}</a></td>
-                            <td class="ao-mu-left"><a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditTicket::getUrl(['record' => $other->id]) }}">{{ $other->subject }}</a></td>
-                            <td>{{ ['open' => 'Open', 'replied' => 'Answered', 'closed' => 'Closed'][$other->status] ?? ucfirst($other->status) }}</td>
-                            <td>{{ $other->updated_at?->format('m/d/Y H:i') }}</td>
+                            <td class="ao-st-flag">
+                                @if ($other->assigned_to)
+                                    <span title="Assigned to {{ $other->assignedTo?->name }}">&#9873;</span>
+                                @endif
+                            </td>
+                            <td>{{ $other->created_at?->format('m/d/Y H:i') }}</td>
+                            <td>{{ $other->department ?: '—' }}</td>
+                            <td class="ao-mu-left"><a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditTicket::getUrl(['record' => $other->id]) }}">#{{ $other->id }} - {{ $other->subject }}</a></td>
+                            <td><span class="{{ $statusClass }}">{{ $statusWord }}</span></td>
+                            <td>{{ ($other->messages->first()?->created_at ?? $other->updated_at)?->diffForHumans(short: true) }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
+                        <tr><td colspan="6" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
                     @endforelse
                 </tbody>
             </table>
+            <div class="ao-mu-pager">
+                <button type="button" disabled>&laquo; Previous</button>
+                <button type="button" disabled>Next &raquo;</button>
+            </div>
         </div>
 
         <div x-show="tab === 'options'" x-cloak>
