@@ -419,16 +419,28 @@
         }
     }
 
-    /* Full-height cells, so hovering shades the bar from top to bottom as the reference
-       does rather than leaving a pale margin above and below the label. */
+    /* The wrapper keeps the bar's full height even though the cell inside it no longer
+       does. The open menu is positioned against the trigger, so a shorter trigger would
+       pull the panel up off the bar's bottom edge and reopen the strip closed above. */
+    nav.fi-topbar .fi-topbar-item,
+    nav.fi-topbar .fi-dropdown-trigger {
+        display: flex;
+        align-items: center;
+        height: var(--wa-topbar-h);
+    }
+
+    /* An inset cell, rounded on all four corners, with room around it (Leandro,
+       2026-09-09). This replaces the full-height block: that shaded the bar top to
+       bottom, which left only the two top corners anywhere they could be seen. */
     .fi-topbar-item-btn {
         color: #ffffff;
-        border-radius: 0;
-        height: var(--wa-topbar-h);
+        border-radius: 4px;
+        height: calc(var(--wa-topbar-h) - 14px);
+        margin-inline: 2px;
         padding: 0 0.9rem;
         font-size: 16px;
         font-weight: 400;
-        line-height: var(--wa-topbar-h);
+        line-height: calc(var(--wa-topbar-h) - 14px);
     }
 
     /* Hover only — deliberately not `.fi-active`. Leandro: the menu being *on* the page it
@@ -440,15 +452,10 @@
         background: transparent;
     }
 
-    /* Rounded at the top only (Leandro's circled screenshot, 2026-09-09). The reference
-       shades the cell as a tab: its two top corners are rounded and the bottom edge stays
-       square, because the dropdown panel attaches flush underneath it and a rounded
-       bottom would cut a notch out of that join. */
     .fi-topbar-item-btn:hover,
     .fi-topbar-item.fi-active .fi-topbar-item-btn:hover {
         background: var(--wa-blue-dark);
         color: #ffffff;
-        border-radius: 4px 4px 0 0;
     }
 
     /* Filament marks the active group with an underline; WHMCS shades the cell instead. */
