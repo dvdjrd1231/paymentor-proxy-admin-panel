@@ -458,7 +458,14 @@ class ClientSummary extends Page
     private function tabLabels(): array
     {
         $labels = self::TABS;
-        $labels['notes'] = 'Notes (' . (trim($this->adminNotes) !== '' ? 1 : 0) . ')';
+
+        // The reference's "Notes (n)" counts the notes on the account. It used to count the
+        // one free-text field, so it could only ever say 0 or 1 — the tab is a list now.
+        $labels['notes'] = 'Notes (' . number_format(
+            Schema::hasTable('ext_ao_client_notes')
+                ? ClientNote::where('user_id', $this->customer->id)->count()
+                : 0
+        ) . ')';
 
         return $labels;
     }
@@ -1153,6 +1160,8 @@ class ClientSummary extends Page
                 return $countries;
             })(),
             'hasContacts' => $this->hasContacts(),
+            // The Summary panel lists them; the Contacts tab edits them.
+            'summaryContacts' => $this->contactRows()->take(5),
             // Filled by paged()/pagedCollection() while the tab above loaded its rows.
             'rowTotal' => fn () => $this->rowTotal,
             'perPage' => self::TAB_ROWS,
