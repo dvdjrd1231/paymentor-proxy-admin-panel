@@ -4,20 +4,18 @@
     with its "Are you sure?" before anything happens.
 --}}
 <x-filament-panels::page>
-    <div class="ao-mu">
+    <div class="ao-mu" x-data="{ filter: @js($filter) }">
         <div class="ao-tx-tabs">
-            <button type="button" class="ao-mu-tab {{ $this->filter ? 'ao-on' : '' }}" wire:click="toggleFilter">
+            <button type="button" class="ao-mu-tab" :class="{ 'ao-on': filter }" @click="filter = !filter">
                 Search/Filter
             </button>
         </div>
-
-        @if ($this->filter)
             {{-- The reference's Search/Filter panel: two columns of striped label/field rows —
                  Order ID, Order #, Date Range, Amount | Client, Payment Status, Status,
                  IP Address — with the Search button centred underneath. Every field filters
                  for real except IP Address, which Paymenter does not record; that one is
                  honestly dead with the reason on its title. --}}
-            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="search">
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="search" x-show="filter" x-cloak>
                 <div class="ao-of-rows">
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-of-oid">Order ID</label>
@@ -71,7 +69,6 @@
                 </datalist>
                 <button type="submit" class="ao-of-go">Search</button>
             </form>
-        @endif
 
         <div class="ao-mu-line">
             <span>

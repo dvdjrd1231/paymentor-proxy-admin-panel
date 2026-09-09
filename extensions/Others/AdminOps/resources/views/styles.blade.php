@@ -2059,6 +2059,9 @@
 
     .ao-of-date svg { position: absolute; left: 0.5rem; color: #777; pointer-events: none; }
 
+    /* As a painted cell the wrapper carries padding, so the icon's anchor moves with it. */
+    .ao-of-row > .ao-of-date svg { left: 1.2rem; }
+
     .ao-of-date input { padding-left: 1.65rem; }
 
     /* The honestly-dead IP field: readable as a field, unmistakably inert. */
@@ -2433,6 +2436,59 @@
     /* The reference's badge is a chip beside the name; the rail's column stretched it to
        the full width, which read as a filled bar. */
     .ao-tv-block > .ao-tag { align-self: flex-start; }
+
+    /* The rail is one column of stacked panels — Ticket Info, then Ticket Watchers and CC
+       Recipients under it, as the reference stacks them. */
+    .ao-tv-rail { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+    .ao-tv-side2 .ao-tv-side-head:not(:first-child) { margin-top: 0.9rem; }
+
+    .ao-tv-select {
+        width: 100%;
+        height: 1.8rem;
+        padding: 0 0.4rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font-size: 0.82rem;
+    }
+
+    .ao-tv-tags { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0.15rem 0 0.35rem; }
+
+    .ao-tv-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.1rem 0.4rem;
+        border-radius: 3px;
+        background: #e2e7e9;
+        font-size: 0.75rem;
+    }
+
+    .ao-tv-tag button { color: var(--wa-muted, #6b6b6b); line-height: 1; }
+    .ao-tv-tag button:hover { color: #d9534f; }
+
+    .ao-tv-tagbox {
+        width: 100%;
+        height: 1.8rem;
+        padding: 0 0.4rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        font-size: 0.8rem;
+    }
+
+    /* The reference's teal Watch Ticket, full width under the panel's fields. */
+    .ao-tv-watch {
+        width: 100%;
+        margin-top: 0.9rem;
+        padding: 0.4rem 0.5rem;
+        border-radius: 3px;
+        background: #5bc0de;
+        color: #fff;
+        font-size: 0.85rem;
+    }
+
+    .ao-tv-watch:hover { background: #46b8da; }
+    .ao-tv-watch.ao-on { background: #6b6b6b; }
 
     /* Scoped to the ticket: the rail takes 15rem off the row, so Prevent Client Closure's
        caption no longer fits the reference's single line and was being clipped mid-word
@@ -5112,49 +5168,42 @@
 
     @media (max-width: 760px) { .ao-an-langs { columns: 1; } }
 
-    /* Support Tickets' Status multi-select: the reference's own chip box — a pill per
-       picked view, each with its own ×, then the "+ Add status" select at the end. */
+    /* Support Tickets' Status multi-select: the reference's chip box — an ordinary
+       input frame holding a blue tag per picked view, each with its own ×. */
     .ao-stf-chips {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 0.4rem;
+        gap: 0.3rem;
         width: 100%;
-        min-height: 2.2rem;
-        padding: 0.3rem 0.5rem;
-        border: 1px solid var(--wa-link, #337ab7);
-        border-radius: var(--wa-radius, 6px);
+        min-height: 1.9rem;
+        padding: 0.2rem 0.35rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
         background: #fff;
     }
 
     .ao-stf-chip {
         display: inline-flex;
         align-items: center;
-        gap: 0.35rem;
-        padding: 0.15rem 0.3rem 0.15rem 0.6rem;
-        border-radius: 999px;
+        gap: 0.4rem;
+        padding: 0.1rem 0.45rem;
+        border-radius: 3px;
         background: var(--wa-link, #337ab7);
         color: #fff;
-        font-size: 0.82rem;
-        font-weight: 600;
+        font-size: 0.85rem;
         white-space: nowrap;
     }
 
     .ao-stf-chip button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 1.1rem;
-        height: 1.1rem;
-        border-radius: 50%;
-        background: rgb(255 255 255 / 0.25);
         color: #fff;
-        font-size: 0.85rem;
+        opacity: 0.75;
+        font-size: 0.9rem;
         line-height: 1;
         cursor: pointer;
     }
 
-    .ao-stf-chip button:hover { background: rgb(255 255 255 / 0.4); }
+    .ao-stf-chip button:hover { opacity: 1; }
 
     .ao-stf-chip-add {
         flex: 1 1 8rem;
@@ -5165,13 +5214,6 @@
         font: inherit;
         font-size: 0.9rem;
         color: var(--wa-muted, #6b6b6b);
-    }
-
-    @media (max-width: 700px) {
-        .ao-stf-row { grid-template-columns: 1fr; gap: 0.25rem; }
-        .ao-stf-row > span { text-align: start; }
-        .ao-stf-row .ao-stf-mid, .ao-stf-row .ao-stf-small { width: 100%; min-width: 0; }
-        .ao-stf-row-top > span:first-child { padding-top: 0; }
     }
 
     /* The reference sizes its inputs to their meaning, not the page: width utilities the
