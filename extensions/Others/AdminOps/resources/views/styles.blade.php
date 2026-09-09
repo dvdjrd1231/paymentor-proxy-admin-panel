@@ -5919,7 +5919,12 @@
 
     .ao-ct-row > .ao-ct-name { text-align: start; }
 
-    .ao-ct-head {
+    /* Scoped to the catalogue (`.ao-ct`) on purpose: `.ao-ct-head` is also the Client
+       Profile's per-tab button row ({@see pages/client-tab.blade.php}), and unscoped this
+       painted that toolbar navy — the Invoices and Quotes tabs showed "+ Create Invoice"
+       and "Search" as white-on-navy inside a full-width blue bar (Leandro, 2026-09-09).
+       Only the catalogue's table header wants the grid colour. */
+    .ao-ct .ao-ct-head {
         background: var(--wa-grid, #1a4d80);
         color: #fff;
         font-weight: 700;
