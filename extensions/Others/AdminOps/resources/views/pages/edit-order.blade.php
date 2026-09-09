@@ -128,6 +128,33 @@
                         <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel((string) $service->status) }}</td>
                         <td><span class="{{ $payClass }}">{{ $payLabel }}</span></td>
                     </tr>
+
+                    {{-- The reference's provisioning row under each item: what happens when
+                         the order is accepted. Only the two that decide something are live —
+                         accepting currently always provisions, with no way to say "I set this
+                         one up by hand", which is what Run Module Create is for. --}}
+                    @if ($service->status === 'pending')
+                        <tr class="ao-eo-provision">
+                            <td colspan="6">
+                                <span class="ao-eo-prov-inert" title="Credentials are issued by the panel when it creates the account, not chosen here">
+                                    Username: <input type="text" disabled> Password: <input type="text" disabled>
+                                </span>
+                                <span class="ao-eo-prov-inert" title="A product names its server, so every service on it provisions there">
+                                    Server:
+                                    <input type="text" disabled value="{{ $service->product?->server?->name ?? 'None' }}">
+                                </span>
+                                <label class="ao-check">
+                                    <input type="checkbox" wire:model="runModuleCreate.{{ $service->id }}"
+                                        @disabled(!$service->product?->server)>
+                                    <span title="{{ $service->product?->server ? 'Unticking accepts this item without asking the panel to create anything' : 'This product has no server, so there is nothing to run' }}">Run Module Create</span>
+                                </label>
+                                <label class="ao-check">
+                                    <input type="checkbox" wire:model="sendWelcome.{{ $service->id }}">
+                                    <span title="When the module runs it sends this itself; unticking only takes effect when Run Module Create is off">Send Welcome Email</span>
+                                </label>
+                            </td>
+                        </tr>
+                    @endif
                 @empty
                     <tr><td colspan="6" class="ao-mu-none">No Records Found</td></tr>
                 @endforelse
