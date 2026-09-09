@@ -1757,6 +1757,7 @@
     .ao-of-sm { width: 9rem; }
     .ao-of-md { width: 13rem; }
     .ao-of-lg { width: 100%; max-width: 24rem; }
+    .ao-of-fill { width: 100%; }
 
     /* ── Even field widths ──────────────────────────────────────────────────────
        Leandro, 2026-09-07: "each elements group should have same width and space",
@@ -2844,8 +2845,13 @@
         cursor: pointer;
     }
 
-    .ao-mu-tab.ao-on,
     .ao-mu-tab:hover { background: #e2e2e2; }
+
+    .ao-mu-tab.ao-on,
+    .ao-mu-tab.ao-on:hover {
+        background: #fff;
+        border-bottom-color: #fff;
+    }
 
     .ao-mu-left { text-align: left !important; }
 
@@ -5106,50 +5112,8 @@
 
     @media (max-width: 760px) { .ao-an-langs { columns: 1; } }
 
-    /* The reference's framed ticket filter: label left, one control per row. */
-    .ao-stf {
-        border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: var(--wa-radius, 6px);
-        padding: 1rem 1.2rem 0.4rem;
-        margin-bottom: 0.9rem;
-    }
-
-    .ao-stf-row {
-        display: grid;
-        grid-template-columns: 9.5rem 1fr;
-        gap: 1rem;
-        align-items: center;
-        margin-bottom: 0.6rem;
-    }
-
-    .ao-stf-row > span { text-align: end; font-weight: 600; }
-
-    .ao-stf-row input,
-    .ao-stf-row select {
-        width: 100%;
-        height: 2.2rem;
-        padding: 0 0.6rem;
-        border: 1px solid var(--wa-border, #ccc);
-        border-radius: var(--wa-radius, 6px);
-        background: #fff;
-        font: inherit;
-        font-size: 0.9rem;
-    }
-
-    .ao-stf-row input:disabled { background: #f5f5f5; color: var(--wa-muted, #6b6b6b); }
-
-    .ao-stf-row .ao-stf-mid { width: 60%; min-width: 16rem; }
-
-    .ao-stf-row .ao-stf-small { width: 30%; min-width: 11rem; }
-
-    .ao-stf-submit { text-align: center; margin: 0.9rem 0 0.6rem; }
-
     /* Support Tickets' Status multi-select: the reference's own chip box — a pill per
        picked view, each with its own ×, then the "+ Add status" select at the end. */
-    .ao-stf-row-top { align-items: start; padding-top: 0.1rem; }
-
-    .ao-stf-row-top > span:first-child { padding-top: 0.35rem; }
-
     .ao-stf-chips {
         display: flex;
         flex-wrap: wrap;

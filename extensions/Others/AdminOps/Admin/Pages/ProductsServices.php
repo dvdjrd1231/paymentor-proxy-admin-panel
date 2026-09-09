@@ -19,8 +19,8 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * family: a resource's table cannot be reshaped from an extension, and these columns are
  * the reference's. Read-only; every row leads to core's service screen.
  *
- * Domain is always "(No Domain)": domains are removed from this store (brief §10), and the
- * reference renders exactly that for a domainless service, so the column reads the same.
+ * Domain reads the service's `domain` property when one exists (ProxyPanel writes one for
+ * some services) and "(No Domain)" otherwise, as the reference renders a domainless service.
  */
 class ProductsServices extends Page
 {
@@ -52,6 +52,9 @@ class ProductsServices extends Page
     #[Url]
     public string $status = '';
 
+    #[Url]
+    public string $domain = '';
+
     /**
      * Issue #4 — three of the reference's Search/Filter fields the band never exposed:
      * Product Type is the category filter the rail's own links already set via URL, given a
@@ -59,7 +62,7 @@ class ProductsServices extends Page
      * Method and the Custom Field pair are the reference's own but left out — a service
      * carries no gateway of its own to filter by (that lives on its invoices), and Paymenter
      * has no per-product custom fields to search, so both would be a control that always
-     * returns nothing. Domain is the same story and already documented above.
+     * returns nothing.
      */
     #[Url]
     public string $cycle = '';
@@ -176,7 +179,7 @@ class ProductsServices extends Page
     private function query()
     {
         return $this->filtered($this->hideInactive)
-            ->with(['product', 'user', 'plan'])
+            ->with(['product', 'user', 'plan', 'properties'])
             ->orderByDesc('id');
     }
 
@@ -221,6 +224,11 @@ class ProductsServices extends Page
             $query->where('status', $this->status);
         } elseif ($hideInactive) {
             $query->whereIn('status', self::OPEN);
+        }
+
+        if ($this->domain !== '') {
+            $query->whereHas('properties', fn ($q) => $q->where('key', 'domain')
+                ->where('value', 'like', '%' . $this->domain . '%'));
         }
 
         if ($this->server !== '' && ctype_digit($this->server)) {
