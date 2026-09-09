@@ -99,6 +99,10 @@
     </div>
 @endif
 
+@include('adminops::partials.records-band', [
+    'total' => $rowTotal(), 'page' => $page, 'perPage' => $perPage,
+])
+
 <x-filament::section :heading="ucfirst(str_replace('_', ' ', $tab))">
     @if ($count === 0)
         <p class="ao-empty">
@@ -216,10 +220,8 @@
             </tbody>
         </table>
 
-        {{-- Said rather than paginated: these tabs answer "what has been going on", and the
-             screen that answers "show me all of it" is the core list this links to. --}}
+        {{-- The reference's "see all" out to the full list, under the rows. --}}
         <p class="ao-catalogue-count">
-            The most recent {{ $count }}.
             @switch($tab)
                 @case('services') <a class="ao-link" href="{{ $urls['services'] }}">See all services</a> @break
                 @case('invoices') <a class="ao-link" href="{{ $urls['invoices'] }}">See all invoices</a> @break
@@ -228,3 +230,7 @@
         </p>
     @endif
 </x-filament::section>
+
+@include('adminops::partials.records-pager', [
+    'total' => $rowTotal(), 'page' => $page, 'perPage' => $perPage,
+])

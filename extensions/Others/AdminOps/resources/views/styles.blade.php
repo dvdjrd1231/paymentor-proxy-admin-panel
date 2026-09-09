@@ -2414,6 +2414,23 @@
     .ao-ete-version { display: flex; flex-direction: column; gap: 0.2rem; }
     .ao-ete-version i { font-size: 0.82rem; font-style: normal; font-weight: 400; opacity: 0.7; }
 
+    /* The reference's records band: the count on the left, Jump to Page on the right. */
+    .ao-rb {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.6rem;
+        font-size: 0.88rem;
+    }
+
+    .ao-rb-jump { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .ao-rb-jump select { min-width: 4.5rem; }
+
+    .ao-rb-pager { display: flex; justify-content: space-between; margin-top: 1rem; }
+    .ao-rb-pager button:disabled { opacity: 0.45; cursor: not-allowed; }
+
     /* ── The client profile's tabs ────────────────────────────────────────────────
        The reference heads each list tab with its own buttons, and Tickets and
        Transactions with a band of four figures across the top. */

@@ -87,6 +87,7 @@ class AdminOps extends Extension
         $this->retireCoreGatewayEditor();
         $this->retireCoreProductEditor();
         $this->retireCoreServerEditor();
+        $this->retireCoreUserSubPages();
         $this->registerErrorPages();
         $this->applyClientGroupDiscounts();
         $this->creditCancelledServices();
@@ -184,6 +185,40 @@ class AdminOps extends Extension
 
                 return redirect()->to(Admin\Pages\EditProduct::getUrl(['record' => $record]));
             })->name('filament.admin.resources.products.edit');
+    }
+
+    /**
+     * Core's per-client sub-pages, replaced by the client profile's own tabs (Leandro,
+     * 2026-09-09: "/admin/users/3/invoices should not be existed").
+     *
+     * Each is a second, differently-shaped screen for something the profile already shows —
+     * the reference has one client page with tabs, not five pages. Redirecting rather than
+     * removing keeps every existing link and bookmark working, and each route keeps the name
+     * it displaces because core's own UserResource::getUrl() calls resolve these names.
+     */
+    private function retireCoreUserSubPages(): void
+    {
+        $tabs = [
+            'services' => 'services',
+            'invoices' => 'invoices',
+            'tickets' => 'tickets',
+            // The reference reaches credits through the summary's Manage Credits, not a tab.
+            'credits' => 'summary',
+        ];
+
+        foreach ($tabs as $segment => $tab) {
+            \Illuminate\Support\Facades\Route::middleware(['web'])
+                ->get('/admin/users/{record}/' . $segment, function (string $record) use ($tab) {
+                    if (!\Illuminate\Support\Facades\Auth::check()) {
+                        return redirect()->guest('/admin/login');
+                    }
+
+                    return redirect()->to(Admin\Pages\ClientSummary::getUrl([
+                        'record' => $record,
+                        'tab' => $tab,
+                    ]));
+                })->name('filament.admin.resources.users.' . $segment);
+        }
     }
 
     /**
