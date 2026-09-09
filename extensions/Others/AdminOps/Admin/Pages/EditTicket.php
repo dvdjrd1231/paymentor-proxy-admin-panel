@@ -423,6 +423,21 @@ class EditTicket extends Page
         $this->redirect(SupportTickets::getUrl());
     }
 
+    /**
+     * The reference's "me" beside Assigned To: take the ticket in one click.
+     *
+     * Writes only `assigned_to`, not the whole Options form — picking a ticket up should not
+     * quietly save a half-filled subject or a department someone was mid-way through changing.
+     */
+    public function assignToMe(): void
+    {
+        $this->ticket->update(['assigned_to' => Auth::id()]);
+        $this->ticket->refresh();
+        $this->assignedTo = (string) $this->ticket->assigned_to;
+
+        Notification::make()->title('Assigned to you')->success()->send();
+    }
+
     protected function getViewData(): array
     {
         $lastReply = $this->ticket->messages()->latest()->first();
@@ -450,6 +465,16 @@ class EditTicket extends Page
             // The reference's Client Name is a picker, not a label — the ticket's owner
             // can be corrected from here.
             'clients' => User::whereNull('role_id')->orderBy('first_name')->orderBy('last_name')->limit(200)->get(),
+            // The reference's Ticket Info panel down the left: who this is for, and who
+            // has touched it, without opening a dropdown to find out.
+            'owner' => $this->ticket->user,
+            'staffParticipants' => $this->ticket->messages()
+                ->with('user:id,first_name,last_name,email,role_id')
+                ->get()
+                ->pluck('user')
+                ->filter(fn ($u) => $u && $u->role_id)
+                ->unique('id')
+                ->values(),
             'canned' => Schema::hasTable('canned_responses')
                 ? \Paymenter\Extensions\Others\TicketTools\Models\CannedResponse::where('active', true)->orderBy('title')->get()
                 : collect(),

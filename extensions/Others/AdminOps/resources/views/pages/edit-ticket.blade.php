@@ -6,8 +6,72 @@
 <x-filament-panels::page>
     {{-- `tab` lives in Alpine: every panel is below and a click only changes which
          one shows, so switching costs nothing. --}}
-    <div x-data="{ tab: @js($tab) }">
-    <div class="ao-mu ao-et">
+    <div x-data="{ tab: @js($tab) }" class="ao-tv">
+
+    {{-- The reference's Ticket Info panel down the left. Everything here is already on the
+         page inside an Options dropdown or a reply-bar select; the point of repeating it is
+         that you can see whose ticket this is, where it sits and who has touched it without
+         opening anything (Leandro, 2026-09-09: the differences "improve the readability and
+         usability of a particular page or section"). --}}
+    <aside class="ao-tv-side">
+        <h4 class="ao-tv-side-head">Ticket Info</h4>
+
+        <div class="ao-tv-block">
+            <span class="ao-tv-label">Owner</span>
+            @if ($owner)
+                <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $owner->id]) }}">
+                    {{ trim($owner->first_name . ' ' . $owner->last_name) ?: $owner->email }}
+                </a>
+                <span class="ao-tv-sub">{{ $owner->email }}</span>
+            @else
+                <span class="ao-tv-sub">The account this ticket belonged to has been removed.</span>
+            @endif
+        </div>
+
+        <div class="ao-tv-block">
+            <span class="ao-tv-label">Requestor</span>
+            {{-- One account opens a ticket here, so the requestor is the owner. The
+                 reference separates them because a contact can raise one for the account. --}}
+            <span>{{ $owner ? (trim($owner->first_name . ' ' . $owner->last_name) ?: $owner->email) : '—' }}</span>
+            <span class="ao-tag ao-cu-owner">CLIENT</span>
+        </div>
+
+        <div class="ao-tv-block">
+            <span class="ao-tv-label">Department</span>
+            <span>{{ $ticket->department ?: 'None' }}</span>
+        </div>
+
+        <div class="ao-tv-block">
+            <span class="ao-tv-label">
+                Assigned To
+                @if ((string) $ticket->assigned_to !== (string) auth()->id())
+                    <button type="button" class="ao-cp-link ao-tv-me" wire:click="assignToMe">me</button>
+                @endif
+            </span>
+            <span>{{ $ticket->assignedTo ? (trim($ticket->assignedTo->first_name . ' ' . $ticket->assignedTo->last_name) ?: $ticket->assignedTo->email) : 'None' }}</span>
+        </div>
+
+        <div class="ao-tv-block">
+            <span class="ao-tv-label">Priority</span>
+            <span>{{ ucfirst($ticket->priority ?: 'medium') }}</span>
+        </div>
+
+        <div class="ao-tv-block">
+            <span class="ao-tv-label">Staff Participants</span>
+            @forelse ($staffParticipants as $member)
+                <span>{{ trim($member->first_name . ' ' . $member->last_name) ?: $member->email }}</span>
+            @empty
+                <span class="ao-tv-sub">No Replies Yet</span>
+            @endforelse
+        </div>
+
+        {{-- The reference's Tag Cloud, Watch Ticket and Ticket Watchers sit here. None has
+             anything behind it: a ticket carries no tags, and nothing subscribes a member of
+             staff to another person's ticket, so all three would be controls that accept a
+             click and change nothing. --}}
+    </aside>
+
+    <div class="ao-mu ao-et ao-tv-main">
         <div class="ao-et-head">
             <h3 class="ao-et-title">
                 #{{ $ticket->id }} - {{ $ticket->subject }}
