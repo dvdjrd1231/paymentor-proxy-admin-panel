@@ -95,8 +95,12 @@
                         <td class="ao-mu-actions">
                             {{-- Only a failed lifecycle action can be re-run; a callback row is
                                  a record of something that already happened. --}}
+                            {{-- ao-pg-btn, not ao-cp-link: the link class is display:flex, so
+                                 it filled the cell on its own and pushed the delete control
+                                 out past the table's edge. This is the class the panel already
+                                 uses for a pair of wire actions sharing a cell. --}}
                             @if ($row->isFailed() && $row->retryMethod() !== null)
-                                <button type="button" class="ao-cp-link" wire:click="confirm({{ $row->id }})">Retry</button>
+                                <button type="button" class="ao-pg-btn" wire:click="confirm({{ $row->id }})">Retry</button>
                             @endif
                             {{-- Icon rather than a second word: the row already carries the
                                  error text, and two text actions push the cell past the
