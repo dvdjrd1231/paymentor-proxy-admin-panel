@@ -3474,25 +3474,36 @@
         margin-bottom: 1rem;
     }
 
+    /* The reference's file-folder tabs: evenly rounded top corners, a light face, and the
+       active one white and open into the panel below.
+
+       The radius was `6px 3px 0 0` — different on each corner, which is what made the
+       strip read lopsided (Leandro, 2026-09-09: "terrible styles"). The face was #ededed
+       too, dark enough that the active white tab looked like the odd one out rather than
+       the selected one. */
     .ao-tab {
         flex: none;
-        padding: 0.45rem 0.9rem;
+        padding: 0.4rem 0.85rem;
         margin-bottom: -1px;
         border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: var(--wa-radius, 6px) 3px 0 0;
-        background: #ededed;
-        color: var(--wa-text, #333);
+        border-radius: 4px 4px 0 0;
+        background: #f7f7f7;
+        color: var(--wa-link, #337ab7);
+        font-size: 0.9rem;
+        line-height: 1.45;
         cursor: pointer;
     }
 
-    .ao-tab:hover { background: #ececec; }
+    .ao-tab:hover { background: #efefef; }
 
     .ao-tab-active,
     .ao-tab-active:hover {
         background: #fff;
+        /* Open into the panel: the tab's own bottom edge is painted out against the
+           strip's rule, which is what makes it read as the selected folder. */
         border-bottom-color: #fff;
-        color: var(--wa-ink, #333);
-        font-weight: 600;
+        color: var(--wa-ink, #2b2b2b);
+        font-weight: 500;
     }
 
     /* The client switcher, as the reference draws it under the page title. */
