@@ -643,7 +643,8 @@ class EditTicket extends Page
                     ->where('ticket_id', $this->ticket->id)->latest()->get()
                 : collect(),
             'otherTickets' => Ticket::where('user_id', $this->ticket->user_id)
-                ->where('id', '!=', $this->ticket->id)->latest()->limit(50)->get(),
+                ->where('id', '!=', $this->ticket->id)->latest()->limit(50)
+                ->with(['messages' => fn ($q) => $q->latest(), 'assignedTo'])->get(),
             // The reference's Log tab speaks sentences ("New Support Ticket Opened
             // (by X)"), not raw JSON diffs — the audits humanised.
             'logRows' => Schema::hasTable('audits')
@@ -685,16 +686,6 @@ class EditTicket extends Page
                         'record' => class_basename((string) $row->auditable_type) . ' #' . $row->auditable_id,
                         'action' => self::describeAudit($row),
                     ])
-                : collect(),
-            // The reference's Log tab: what has happened to *this ticket*, as against the
-            // Client Log beside it, which is what its owner has been doing everywhere.
-            // The tab has been in the bar since this screen was built and never had a
-            // panel behind it — clicking it showed a blank page.
-            'ticketLogRows' => Schema::hasTable('audits')
-                ? DB::table('audits')
-                    ->where('auditable_type', Ticket::class)
-                    ->where('auditable_id', $this->ticket->id)
-                    ->orderByDesc('id')->limit(50)->get()
                 : collect(),
             'rendered' => $this->preview
                 ? Str::markdown(e($this->reply ?: '*Nothing to preview yet.*'))

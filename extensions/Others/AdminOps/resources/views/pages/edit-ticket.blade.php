@@ -506,29 +506,6 @@
                     <button type="button" class="ao-eo-delete" wire:click="$set('confirmingDelete', 'yes')">Delete Ticket</button>
                 </div>
             </form>
-        @else
-            {{-- The reference's Log: a records strip, Date | Requested Action in plain
-                 sentences, and the pager. --}}
-            <p class="ao-et-showing">Showing 1 to {{ $logRows->count() }} of {{ $logRows->count() }} total</p>
-            <table class="ao-mu-grid">
-                <thead>
-                    <tr><th>Date</th><th>Requested Action</th></tr>
-                </thead>
-                <tbody>
-                    @forelse ($logRows as $row)
-                        <tr>
-                            <td>{{ \Carbon\Carbon::parse($row['at'])->format('m/d/Y H:i') }}</td>
-                            <td class="ao-mu-left">{{ $row['action'] }}</td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="2" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-            <div class="ao-mu-pager">
-                <button type="button" disabled>&laquo; Previous</button>
-                <button type="button" disabled>Next &raquo;</button>
-            </div>
         </div>
 
         {{-- The thread, newest first, as the reference stacks it under the editor. --}}
