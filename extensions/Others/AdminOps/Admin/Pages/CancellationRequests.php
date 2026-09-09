@@ -43,6 +43,15 @@ class CancellationRequests extends Page
     #[Url]
     public string $client = '';
 
+    /**
+     * The reference's Domain. It was drawn dead on the grounds that proxy services carry
+     * none, which was wrong: Add New Order writes a `domain` property on the service it
+     * creates, and the Client Profile's service editor edits it, so services here really
+     * do have domains and this really can filter on them.
+     */
+    #[Url]
+    public string $domain = '';
+
     /** Service ID — the reference's field, over the id the request actually carries. */
     #[Url]
     public string $svc = '';
@@ -105,7 +114,7 @@ class CancellationRequests extends Page
 
     protected function getViewData(): array
     {
-        $rows = ServiceCancellation::with(['service.product', 'service.user'])
+        $rows = ServiceCancellation::with(['service.product', 'service.user', 'service.properties'])
             ->latest('id')->limit(300)->get()
             ->filter(fn (ServiceCancellation $row) => $row->service !== null)
             ->filter(fn (ServiceCancellation $row) => $this->tab === 'completed'
@@ -133,6 +142,14 @@ class CancellationRequests extends Page
                     . ($row->service->user->last_name ?? '') . ' '
                     . ($row->service->user->email ?? ''),
                 ), $needle));
+            })
+            ->when(trim($this->domain) !== '', function ($list) {
+                $needle = strtolower(trim($this->domain));
+
+                return $list->filter(fn (ServiceCancellation $row) => str_contains(
+                    strtolower((string) $row->service->properties->firstWhere('key', 'domain')?->value),
+                    $needle,
+                ));
             })
             ->when(ctype_digit(trim($this->svc)), fn ($list) => $list->filter(
                 fn (ServiceCancellation $row) => $row->service_id === (int) trim($this->svc),

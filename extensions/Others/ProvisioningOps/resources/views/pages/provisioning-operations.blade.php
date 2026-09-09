@@ -9,7 +9,8 @@
                 @click="filter = !filter">Search/Filter</button>
         </div>
 
-        <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="$refresh"
+        {{-- ao-of-even so every box in the panel is one width, as on Cancellation Requests. --}}
+        <form class="ao-find ao-of ao-of-even" autocomplete="off" wire:submit.prevent="$refresh"
             x-show="filter" x-cloak>
             <div class="ao-of-rows">
                 <div class="ao-of-row">
