@@ -431,16 +431,19 @@
 
     /* An inset cell, rounded on all four corners, with room around it (Leandro,
        2026-09-09). This replaces the full-height block: that shaded the bar top to
-       bottom, which left only the two top corners anywhere they could be seen. */
+       bottom, which left only the two top corners anywhere they could be seen.
+
+       5px above and below, down from 7px — the first pass left more air than the cell
+       needed and the bar read loose. */
     .fi-topbar-item-btn {
         color: #ffffff;
         border-radius: 4px;
-        height: calc(var(--wa-topbar-h) - 14px);
+        height: calc(var(--wa-topbar-h) - 10px);
         margin-inline: 2px;
         padding: 0 0.9rem;
         font-size: 16px;
         font-weight: 400;
-        line-height: calc(var(--wa-topbar-h) - 14px);
+        line-height: calc(var(--wa-topbar-h) - 10px);
     }
 
     /* Hover only — deliberately not `.fi-active`. Leandro: the menu being *on* the page it
