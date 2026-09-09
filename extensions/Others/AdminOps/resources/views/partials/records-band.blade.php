@@ -14,14 +14,15 @@
         Page {{ $page }} of {{ $pages }}
     </span>
 
-    @if ($pages > 1)
-        <span class="ao-rb-jump">
-            Jump to Page:
-            <select wire:model.live="page">
-                @for ($p = 1; $p <= $pages; $p++)
-                    <option value="{{ $p }}">{{ $p }}</option>
-                @endfor
-            </select>
-        </span>
-    @endif
+    {{-- Always drawn, as the reference draws it — its Emails tab shows "Jump to Page: 1"
+         over a single record. Hiding it on one page makes the band jump about as you
+         move between tabs. --}}
+    <span class="ao-rb-jump">
+        Jump to Page:
+        <select wire:model.live="page">
+            @for ($p = 1; $p <= $pages; $p++)
+                <option value="{{ $p }}">{{ $p }}</option>
+            @endfor
+        </select>
+    </span>
 </div>
