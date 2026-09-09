@@ -1733,6 +1733,10 @@
        opens on a gutter rather than butting against the first field. */
     .ao-of-row > .ao-of-label:nth-child(3) { margin-left: 1rem; }
 
+    /* The ticket Options form: the reference also alternates the field cells — grey on
+       the odd rows, white on the even — while the labels stay white throughout. */
+    .ao-of-alt .ao-of-row:nth-child(even) > * { background: #fff; }
+
     .ao-of-label {
         justify-content: flex-end;
         text-align: right;
