@@ -2290,6 +2290,22 @@
        carrying a title that says why. */
     .ao-gs-off, .ao-gs-off * { color: var(--wa-muted, #6b6b6b); cursor: not-allowed; }
 
+    /* A button carrying .ao-gs-off kept its full background and border, so an inert
+       Create New Group sat next to a live Add New Server looking identical — the reader
+       could only find out by clicking. Inert controls now look inert. */
+    button.ao-gs-off,
+    .ao-mu-tab.ao-gs-off,
+    .ao-mu-tab:disabled {
+        opacity: 0.45;
+        background: transparent;
+        border-style: dashed;
+        cursor: not-allowed;
+    }
+
+    button.ao-gs-off:hover,
+    .ao-mu-tab.ao-gs-off:hover,
+    .ao-mu-tab:disabled:hover { background: transparent; }
+
     .ao-gs-card {
         border: 1px solid var(--wa-panel-border, #ddd);
         border-radius: var(--wa-radius, 6px);
