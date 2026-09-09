@@ -294,6 +294,14 @@ class WhmcsNavigation
         '/admin/categories',
         '/admin/config-options',
         '/admin/servers',
+        // Singular, and for the same reason as '/admin/product' above: matching is on a
+        // segment boundary, so "servers" is not a prefix of "server/7". Without it the new
+        // server editor fell back to the Shortcuts rail.
+        '/admin/server',
+        '/admin/config-option-group',
+        '/admin/config-option-groups',
+        '/admin/promotions',
+        '/admin/two-factor-auth',
         '/admin/extensions',
         '/admin/role-group',
         '/admin/openid-client',
