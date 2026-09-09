@@ -1679,7 +1679,7 @@
     .ao-find-go:hover { background: #286090; }
 
     /* ── Manage Orders' Search/Filter panel ──────────────────────────────────
-       The reference's two-column form: label/field rows striped grey and white, labels
+       The reference's two-column form: white label cells beside grey field cells, labels
        right-aligned, the Search button centred underneath on the page background. The
        form itself is unpainted; the rows box carries the border, so the button can sit
        outside it the way the reference draws it. */
@@ -1694,40 +1694,51 @@
         display: flex;
         flex-direction: column;
         gap: 2px;
-        padding: 0.7rem 0.9rem;
-        border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: var(--wa-radius, 6px);
+        padding: 2px;
+        border: 3px solid #e2e7e9;
+        border-radius: 4px;
         background: #fff;
     }
 
     /* Attached under the Search/Filter tab strip, as the band it replaces was. */
     .ao-tx-tabs + .ao-of .ao-of-rows {
         border-top: 0;
-        border-radius: 0 0 var(--wa-radius, 6px) var(--wa-radius, 6px);
+        border-radius: 0 0 4px 4px;
     }
 
     .ao-of-row {
         display: grid;
-        /* Wider label columns and taller rows: the reference's editor is "fluid and
-           highly readable" (Leandro, 2026-09-05) — labels never wrap mid-word and each
-           stripe breathes. */
+        /* Wider label columns: labels never wrap mid-word. */
         grid-template-columns: 11rem minmax(0, 1fr) 11rem minmax(0, 1fr);
-        align-items: center;
-        column-gap: 1rem;
-        padding: 0.55rem 0.8rem;
-        border-radius: 3px;
+        align-items: stretch;
+        column-gap: 2px;
     }
 
-    /* Leandro, 2026-09-09: "where it is gray, it is white" — our stripe polarity was the
-       inverse of the reference's, so the panel opened on a grey band where WHMCS opens on
-       white. The first row is white now and the grey falls on the even rows, which is the
-       transition he reads faster. */
-    .ao-of-row:nth-child(even) { background: #ececec; }
+    /* The reference paints the cell, not the row: `table.form td.fieldlabel` is #fff and
+       `td.fieldarea` is #efefef, so white gives way to grey left to right on every row.
+       Striping alternate rows put label and field on one colour and made every other row
+       grey, which is the transition Leandro read as inverted. */
+    .ao-of-row > * {
+        padding: 0.5rem 0.7rem;
+        background: #efefef;
+    }
+
+    .ao-of-row > span,
+    .ao-of-label {
+        display: flex;
+        align-items: center;
+    }
+
+    /* The two label/field pairs are separate tables in the reference, so the second pair
+       opens on a gutter rather than butting against the first field. */
+    .ao-of-row > .ao-of-label:nth-child(3) { margin-left: 1rem; }
 
     .ao-of-label {
+        justify-content: flex-end;
         text-align: right;
         font-size: 0.9rem;
         color: var(--wa-ink, #2b2b2b);
+        background: #fff;
     }
 
     .ao-of-row input,
@@ -2113,7 +2124,8 @@
 
     /* The reference folds to one label/field pair per line on narrow screens. */
     @media (max-width: 900px) {
-        .ao-of-row { grid-template-columns: 7rem minmax(0, 1fr); row-gap: 0.4rem; }
+        .ao-of-row { grid-template-columns: 7rem minmax(0, 1fr); row-gap: 2px; }
+        .ao-of-row > .ao-of-label:nth-child(3) { margin-left: 0; }
         .ao-of-lg { max-width: none; }
         .ao-of-check { white-space: normal; }
     }
