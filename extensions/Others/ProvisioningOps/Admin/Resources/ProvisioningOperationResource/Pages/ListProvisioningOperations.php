@@ -42,6 +42,18 @@ class ListProvisioningOperations extends Page
     }
 
     /**
+     * A resource page draws the resource's breadcrumbs, which on a single-page resource
+     * read "Module Queue › Module Queue" above a heading that says it a third time. The
+     * standard windows elsewhere carry the title alone.
+     *
+     * @return array<string, string>
+     */
+    public function getBreadcrumbs(): array
+    {
+        return [];
+    }
+
+    /**
      * Retry is destructive in the sense that matters here — it calls a live panel API —
      * so it asks first, the way the rest of the admin does.
      */

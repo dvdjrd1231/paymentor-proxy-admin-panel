@@ -544,6 +544,8 @@
             </div>
         @endforeach
 
+        <p><button type="button" class="ao-of-go ao-et-print" onclick="window.print()">&#128424; View Printable Version</button></p>
+
         @if ($confirmingDelete)
             <div class="ao-mud-overlay" wire:click.self="$set('confirmingDelete', null)">
                 <div class="ao-mud ao-mud-sm" role="alertdialog" aria-modal="true">

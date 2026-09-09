@@ -6873,6 +6873,8 @@
 
     .ao-et-showing { margin: 0.4rem 0 0.5rem; color: var(--wa-muted, #6b6b6b); font-size: 0.9rem; }
 
+    .ao-et-print { display: inline-block; margin-top: 0.6rem; }
+
     .ao-et-msg-body { padding: 0.9rem 1rem; border-left: 1px solid var(--wa-panel-border, #eee); }
 
     .ao-et-msg-posted { color: var(--wa-muted, #6b6b6b); font-size: 0.85rem; margin-bottom: 0.4rem; }

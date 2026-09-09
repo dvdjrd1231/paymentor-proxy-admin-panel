@@ -31,6 +31,9 @@
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
                     </select></span>
+                    {{-- The row's second pair is unused; its label column still reads
+                         white and its field area grey, as the reference's does. --}}
+                    <span class="ao-of-label"></span>
                 </div>
             </div>
             <div class="ao-of-buttons">
@@ -84,7 +87,10 @@
                             </span>
                         </td>
                         <td>{{ $row->attempts }}</td>
-                        <td class="ao-mu-left" title="{{ $row->error }}">{{ str($row->error)->limit(90) ?: '—' }}</td>
+                        {{-- Short enough that the row's actions stay inside the table: at 90
+                             the error column pushed the last cell past the right edge and the
+                             delete control was cut off. The whole message is on the title. --}}
+                        <td class="ao-mu-left" title="{{ $row->error }}">{{ str($row->error)->limit(55) ?: '—' }}</td>
                         <td>{{ $row->last_attempt_at?->format('m/d/Y H:i') ?: '—' }}</td>
                         <td class="ao-mu-actions">
                             {{-- Only a failed lifecycle action can be re-run; a callback row is
@@ -92,7 +98,13 @@
                             @if ($row->isFailed() && $row->retryMethod() !== null)
                                 <button type="button" class="ao-cp-link" wire:click="confirm({{ $row->id }})">Retry</button>
                             @endif
-                            <button type="button" class="ao-cp-link" wire:click="deleteRow({{ $row->id }})">Delete</button>
+                            {{-- Icon rather than a second word: the row already carries the
+                                 error text, and two text actions push the cell past the
+                                 table's right edge. Same pair as Cancellation Requests. --}}
+                            <button type="button" class="ao-mo-delete" title="Remove this operation from the queue"
+                                wire:click="deleteRow({{ $row->id }})">
+                                <x-filament::icon icon="ri-delete-bin-line" class="ao-mu-cell-icon" />
+                            </button>
                         </td>
                     </tr>
                 @empty
