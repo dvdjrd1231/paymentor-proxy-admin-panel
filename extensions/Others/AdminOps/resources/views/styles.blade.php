@@ -1712,6 +1712,12 @@
         grid-template-columns: 11rem minmax(0, 1fr) 11rem minmax(0, 1fr);
         align-items: stretch;
         column-gap: 2px;
+        /* The row carries the field colour so a pair the panel does not use still reads
+           as field area. A row with one label/field pair left the other half of the grid
+           empty, and an empty grid cell paints nothing — so where the reference shows
+           grey (its Cancellation Requests panel, right of Service ID) ours showed white
+           (Leandro, 2026-09-09: "where it is gray, it is white"). */
+        background: #efefef;
     }
 
     /* The reference paints the cell, not the row: `table.form td.fieldlabel` is #fff and

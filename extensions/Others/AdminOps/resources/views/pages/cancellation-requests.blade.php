@@ -4,17 +4,23 @@
     and the navy grid — Date, Product/Service, Reason, Type, Cancellation By End.
 --}}
 <x-filament-panels::page>
-    <div class="ao-mu">
+    <div class="ao-mu" x-data="{ filter: @js($filter) }">
         <div class="ao-tx-tabs">
-            <button type="button" class="ao-mu-tab {{ $filter ? 'ao-on' : '' }}" wire:click="toggleFilter">Search/Filter</button>
+            <button type="button" class="ao-mu-tab" :class="{ 'ao-on': filter }"
+                @click="filter = !filter">Search/Filter</button>
         </div>
 
-        @if ($filter)
             {{-- The reference's Search/Filter panel, field for field: Reason, Domain,
                  Service ID on the left; Client and Type on the right; the Filter button
                  centred below. Domain is the one honestly-dead field — proxy services
-                 carry no domain — with the reason on its title. --}}
-            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="$refresh">
+                 carry no domain — with the reason on its title.
+
+                 The band ships rendered and Alpine shows it, as its siblings do: behind
+                 @if it cost a Livewire round trip each way, and closing felt the slower
+                 of the two because the reply had to rebuild the whole list to say the
+                 panel had gone. --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="$refresh"
+                x-show="filter" x-cloak>
                 <div class="ao-of-rows">
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-cr-reason">Reason</label>
@@ -42,9 +48,11 @@
                             wire:model.live.debounce.500ms="svc" placeholder="ID"></span>
                     </div>
                 </div>
-                <button type="submit" class="ao-of-go">Filter</button>
+                {{-- Centred under the panel, as the reference centres it. --}}
+                <div class="ao-of-buttons">
+                    <button type="submit" class="ao-of-go">Filter</button>
+                </div>
             </form>
-        @endif
 
         <div class="ao-sc-toggle">
             <button type="button" class="{{ $tab === 'open' ? 'ao-on' : '' }}" wire:click="$set('tab', 'open')">Show Open Requests</button>

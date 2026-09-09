@@ -114,7 +114,7 @@ class ProvisioningOperationResource extends Resource
                     // Only failed lifecycle actions can be retried (a callback cannot).
                     ->visible(fn (ProvisioningOperation $record) => $record->isFailed() && $record->retryMethod() !== null)
                     ->action(function (ProvisioningOperation $record) {
-                        static::retry($record);
+                        static::retryOperation($record);
                     }),
             ])
             ->toolbarActions([
@@ -132,7 +132,7 @@ class ProvisioningOperationResource extends Resource
      * success path; on failure the extension records a new attempt, so either way the
      * list stays accurate.
      */
-    protected static function retry(ProvisioningOperation $record): void
+    public static function retryOperation(ProvisioningOperation $record): void
     {
         $service = $record->service;
         $method = $record->retryMethod();

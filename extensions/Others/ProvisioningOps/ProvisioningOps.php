@@ -56,6 +56,16 @@ class ProvisioningOps extends Extension
         }
     }
 
+    /**
+     * The Module Queue screen is this extension's own blade, so the namespace has to be
+     * registered here — AdminOps supplies the skin those classes are styled by, but the
+     * page must still render (unstyled) when AdminOps is off.
+     */
+    public function boot()
+    {
+        \Illuminate\Support\Facades\View::addNamespace('provisioningops', __DIR__ . '/resources/views');
+    }
+
     public function installed()
     {
         ExtensionHelper::runMigrations('extensions/Others/ProvisioningOps/database/migrations');
