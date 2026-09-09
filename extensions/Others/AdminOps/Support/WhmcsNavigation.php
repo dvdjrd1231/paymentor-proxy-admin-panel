@@ -726,6 +726,11 @@ class WhmcsNavigation
         static::$placed[\Paymenter\Extensions\Others\AdminOps\Admin\Pages\OauthClient::class] = true;
         // The gateway editor is reached from Payment Gateways' Edit button, never a menu.
         static::$placed[\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditGateway::class] = true;
+        // Same for the server editor and the config-option-group editor: both are reached
+        // from their own list's Edit button. Unclaimed, they fell to the Addons sweep — so
+        // editing a server showed an Addons rail instead of Setup's.
+        static::$placed[\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditServer::class] = true;
+        static::$placed[\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditConfigOptionGroup::class] = true;
         // Issue #52: same for Extensions — the menu entry is the WHMCS-shaped page.
         static::$placed[ExtensionResource::class] = true;
         // Core's Available Extensions page and the cluster that holds it, replaced by
