@@ -200,7 +200,11 @@ class Rail
             'Configuration' => ['General Settings', 'System Settings', 'Automation Status',
                 'Notifications', 'OpenID Connect', 'Email Templates', 'Client Groups',
                 'Custom Client Fields', 'Panel Locations'],
-            'Staff Management' => ['Administrator Users', 'Administrator Roles', 'API Credentials'],
+            // The reference's order: Administrator Users, Administrator Roles, Two-Factor
+            // Authentication, Manage API Credentials. Two-Factor was reaching the Setup menu
+            // but not this rail, which is the list people actually navigate Setup by.
+            'Staff Management' => ['Administrator Users', 'Administrator Roles',
+                'Two-Factor Authentication', 'API Credentials'],
             'Payments' => ['Currencies', 'Payment Gateways', 'Tax Configuration', 'Promotions'],
             'Products/Services' => ['Products/Services', 'Configurable Options', 'Auto Terminate', 'Servers'],
             'Addons' => ['Extensions', 'Available Extensions'],
