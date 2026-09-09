@@ -2350,6 +2350,20 @@
     .ao-cog-products { align-items: start; }
     .ao-cog-list { max-width: none; }
 
+    /* The order page's provisioning row: the reference tucks it under its item as a
+       quieter band, so the item line above stays the thing you read first. */
+    .ao-eo-provision > td {
+        background: var(--wa-panel-bg, rgba(127, 127, 127, 0.06));
+        font-size: 0.85rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 1.25rem;
+        align-items: center;
+    }
+
+    .ao-eo-prov-inert { opacity: 0.55; display: inline-flex; align-items: center; gap: 0.35rem; }
+    .ao-eo-prov-inert input { width: 9rem; }
+
     /* The ticket view's Ticket Info rail. The reference runs it down the left of the
        ticket, narrow and quiet, so the ticket itself keeps the width. */
     .ao-tv { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 1.25rem; align-items: start; }

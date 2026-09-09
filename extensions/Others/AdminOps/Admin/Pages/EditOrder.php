@@ -3,6 +3,7 @@
 namespace Paymenter\Extensions\Others\AdminOps\Admin\Pages;
 
 use App\Admin\Resources\OrderResource;
+use App\Helpers\NotificationHelper;
 use App\Jobs\Server\CreateJob;
 use App\Models\Order;
 use App\Models\Plan;
@@ -34,6 +35,19 @@ class EditOrder extends Page
 
     /** Same reasoning as {@see ClientSummary::$customer} — not `$record`. */
     public Order $order;
+
+    /**
+     * The reference's per-item provisioning ticks, keyed by service id.
+     *
+     * Defaulted in mount() rather than left empty, because a box unticked by absence would
+     * silently stop provisioning for anyone who accepted an order without touching them.
+     *
+     * @var array<int, bool>
+     */
+    public array $runModuleCreate = [];
+
+    /** @var array<int, bool> */
+    public array $sendWelcome = [];
 
     /**
      * @var array<int, array{id: int|null, productId: int|string|null, planId: int|string|null, quantity: int|string, price: string, status: string}>
@@ -73,6 +87,13 @@ class EditOrder extends Page
     public function mount(int|string $record): void
     {
         $this->order = Order::with(['user', 'services.product'])->findOrFail($record);
+
+        // Both provisioning ticks start on, so an order accepted without touching them
+        // behaves exactly as it did before they existed.
+        foreach ($this->order->services as $service) {
+            $this->runModuleCreate[$service->id] = true;
+            $this->sendWelcome[$service->id] = true;
+        }
 
         $this->items = $this->order->services->map(fn (Service $service): array => [
             'id' => $service->id,
@@ -150,11 +171,32 @@ class EditOrder extends Page
     public function acceptOrder(): void
     {
         $count = 0;
+        $skipped = 0;
 
-        DB::transaction(function () use (&$count): void {
+        DB::transaction(function () use (&$count, &$skipped): void {
             foreach ($this->order->services->where('status', 'pending') as $service) {
-                if ($service->product?->server) {
+                // The reference's two per-item ticks. Accepting used to always provision,
+                // which left no way to accept an order you had already set up by hand.
+                $create = (bool) ($this->runModuleCreate[$service->id] ?? true);
+                $welcome = (bool) ($this->sendWelcome[$service->id] ?? true);
+
+                if ($create && $service->product?->server) {
+                    // CreateJob sends the welcome itself once the panel answers.
                     CreateJob::dispatch($service);
+                } else {
+                    if ($service->product?->server) {
+                        $skipped++;
+                    }
+
+                    // Nothing is going to run, so the welcome has to come from here or not
+                    // at all — which is exactly what the tick decides.
+                    if ($welcome) {
+                        try {
+                            NotificationHelper::serverCreatedNotification($service->user, $service);
+                        } catch (\Throwable $e) {
+                            report($e);
+                        }
+                    }
                 }
 
                 $service->status = 'active';
@@ -165,7 +207,9 @@ class EditOrder extends Page
         });
 
         $this->refreshOrder();
-        Notification::make()->title($count ? 'Accepted: ' . $count . ' service(s) activated' : 'Nothing pending on this order')
+        Notification::make()->title($count
+            ? 'Accepted: ' . $count . ' service(s) activated' . ($skipped ? ', ' . $skipped . ' not provisioned' : '')
+            : 'Nothing pending on this order')
             ->{$count ? 'success' : 'warning'}()->send();
     }
 
