@@ -553,6 +553,10 @@
             <a class="ao-mu-tab" href="{{ $urls['newQuote'] }}">&#10010; Create New Quote</a>
         </div>
 
+        @include('adminops::partials.records-band', [
+            'total' => $rowTotal(), 'page' => $page, 'perPage' => $perPage,
+        ])
+
         <div class="ao-cs-band">
             <h4>Quotes</h4>
             <table class="ao-mu-grid">
@@ -578,6 +582,10 @@
                 </tbody>
             </table>
         </div>
+
+        @include('adminops::partials.records-pager', [
+            'total' => $rowTotal(), 'page' => $page, 'perPage' => $perPage,
+        ])
 
     @elseif ($tab === 'notes')
         {{-- The reference's Notes tab: a list of dated notes, each by a named admin. This
@@ -890,6 +898,34 @@
             </div>
         </form>
         @endif
+
+    @elseif ($tab === 'domains')
+        {{-- The reference's Domains tab. Domains are switched off on this store, so it lists
+             nothing — but the reference shows the tab with an empty table, and a tab missing
+             altogether reads as a feature that was forgotten rather than one turned off. --}}
+        @include('adminops::partials.records-band', ['total' => 0, 'page' => 1, 'perPage' => $perPage])
+
+        <div class="ao-cs-band">
+            <h4>Domains</h4>
+            <table class="ao-mu-grid">
+                <thead>
+                    <tr>
+                        <th>ID</th><th>Domain</th><th>Registrar</th>
+                        <th>Registration Date</th><th>Next Due Date</th><th>Expiry Date</th><th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="7" class="ao-mu-none">No Records Found</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p class="ao-cp-note">
+            Domain registration is switched off on this deployment, so no domain is ever
+            recorded against an account — see <code>docs/10-disable-domains.md</code>.
+        </p>
+
+        @include('adminops::partials.records-pager', ['total' => 0, 'page' => 1, 'perPage' => $perPage])
 
     @elseif ($tab === 'contacts')
         @include('adminops::pages.client-contacts')

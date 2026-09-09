@@ -156,6 +156,7 @@ class ClientSummary extends Page
         'users' => 'Users',
         'contacts' => 'Contacts',
         'services' => 'Products/Services',
+        'domains' => 'Domains',
         'billable' => 'Billable Items',
         'invoices' => 'Invoices',
         'quotes' => 'Quotes',
@@ -165,6 +166,45 @@ class ClientSummary extends Page
         'notes' => 'Notes',
         'log' => 'Log',
     ];
+
+    /**
+     * Which page of the showing tab's list, for the reference's pagination band.
+     *
+     * Query-stringed alongside the tab so page two of someone's invoices is a URL, and reset
+     * whenever the tab changes — page 3 of Invoices means nothing on Emails.
+     */
+    #[Url]
+    public int $page = 1;
+
+    /** Rows in the showing tab's list before paging, set by {@see paged()}. */
+    private int $rowTotal = 0;
+
+    public function updatedTab(): void
+    {
+        $this->page = 1;
+    }
+
+    /**
+     * One page of a list, and the total behind it.
+     *
+     * Takes the query rather than a collection so the count is a COUNT and the page is a
+     * LIMIT — a client with four hundred invoices should not load four hundred rows to show
+     * twenty of them.
+     */
+    private function paged($query)
+    {
+        $this->rowTotal = (clone $query)->count();
+
+        return $query->forPage(max(1, $this->page), self::TAB_ROWS)->get();
+    }
+
+    /** The same, for the lists that are assembled in PHP rather than queried. */
+    private function pagedCollection(Collection $rows)
+    {
+        $this->rowTotal = $rows->count();
+
+        return $rows->forPage(max(1, $this->page), self::TAB_ROWS)->values();
+    }
 
     // ── Contacts ────────────────────────────────────────────────────────────────
     //
@@ -1113,6 +1153,10 @@ class ClientSummary extends Page
                 return $countries;
             })(),
             'hasContacts' => $this->hasContacts(),
+            // Filled by paged()/pagedCollection() while the tab above loaded its rows.
+            'rowTotal' => fn () => $this->rowTotal,
+            'perPage' => self::TAB_ROWS,
+            'page' => max(1, $this->page),
             'clientsList' => User::query()
                 ->whereNull('role_id')
                 ->orderBy('first_name')
@@ -1140,7 +1184,7 @@ class ClientSummary extends Page
                     ];
                 })(),
                 'billable' => ['rows' => $this->billableItems()],
-                'invoices' => ['rows' => $this->customer->invoices()->with(['items', 'transactions'])->latest()->limit(self::TAB_ROWS)->get()],
+                'invoices' => ['rows' => $this->paged($this->customer->invoices()->with(['items', 'transactions'])->latest())],
                 // The reference heads both of these with a band of four figures.
                 'transactions' => (function (): array {
                     $rows = $this->transactionRows();
@@ -1158,7 +1202,7 @@ class ClientSummary extends Page
                         ->whereBetween('created_at', [$from, $to])->count();
 
                     return [
-                        'rows' => $this->customer->tickets()->latest()->limit(self::TAB_ROWS)->get(),
+                        'rows' => $this->paged($this->customer->tickets()->latest()),
                         'ticketStats' => [
                             'Opened This Month' => $opened(now()->startOfMonth(), now()->endOfMonth()),
                             'Opened Last Month' => $opened(now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()),
@@ -1185,6 +1229,10 @@ class ClientSummary extends Page
                         )->get(['id', 'first_name', 'last_name', 'email']),
                     ];
                 })(),
+                // The reference's Domains tab. Domains are switched off on this store
+                // (§10 of the brief), so it lists nothing — but the reference shows the tab
+                // with an empty table, and a missing tab reads as a missing feature.
+                'domains' => ['rows' => collect()],
                 'users' => ['rows' => $this->contactRows()],
                 'contacts' => ['rows' => $this->contactRows()],
                 // The reference's Profile tab is the client's stored details; ours reads the
@@ -1543,12 +1591,12 @@ class ClientSummary extends Page
             return collect();
         }
 
-        return DB::table('ext_quotes')
-            ->where('user_id', $this->customer->id)
-            ->whereNotIn('status', ['draft'])
-            ->orderByDesc('id')
-            ->limit(10)
-            ->get();
+        return $this->paged(
+            DB::table('ext_quotes')
+                ->where('user_id', $this->customer->id)
+                ->whereNotIn('status', ['draft'])
+                ->orderByDesc('id')
+        );
     }
 
     /**
@@ -1564,10 +1612,13 @@ class ClientSummary extends Page
         $user = $this->customer;
 
         return [
-            'services' => UserResource::getUrl('services', ['record' => $user]),
-            'invoices' => UserResource::getUrl('invoices', ['record' => $user]),
-            'tickets' => UserResource::getUrl('tickets', ['record' => $user]),
-            'credits' => UserResource::getUrl('credits', ['record' => $user]),
+            // Core's per-client sub-pages now redirect back to these very tabs, so a
+            // "See all" pointing at them would bounce the reader in a circle. These go to
+            // the full lists instead, which is what "see all" should mean.
+            'services' => ProductsServices::getUrl(),
+            'invoices' => ManageInvoices::getUrl(),
+            'tickets' => SupportTickets::getUrl(),
+            'credits' => static::getUrl(['record' => $user->id, 'tab' => 'summary']),
             // This page's own editor — every service on these tabs is the customer's.
             'service' => fn ($id) => static::getUrl(['record' => $user->id, 'tab' => 'services', 'service' => $id]),
             'invoice' => fn ($id) => EditInvoice::getUrl(['record' => $id]),
@@ -1645,11 +1696,11 @@ class ClientSummary extends Page
             return collect();
         }
 
-        return DB::table('ext_billable_items')
-            ->where('user_id', $this->customer->id)
-            ->orderByDesc('id')
-            ->limit(self::TAB_ROWS)
-            ->get();
+        return $this->paged(
+            DB::table('ext_billable_items')
+                ->where('user_id', $this->customer->id)
+                ->orderByDesc('id')
+        );
     }
 
     /**
@@ -1722,7 +1773,7 @@ class ClientSummary extends Page
             );
         }
 
-        return $rows->sortByDesc('at')->values()->take(self::TAB_ROWS);
+        return $this->pagedCollection($rows->sortByDesc('at')->values());
     }
 
     /**
@@ -1738,11 +1789,11 @@ class ClientSummary extends Page
             return collect();
         }
 
-        return DB::table('notifications')
-            ->where('user_id', $this->customer->id)
-            ->orderByDesc('id')
-            ->limit(self::TAB_ROWS)
-            ->get();
+        return $this->paged(
+            DB::table('notifications')
+                ->where('user_id', $this->customer->id)
+                ->orderByDesc('id')
+        );
     }
 
     /**
@@ -1789,7 +1840,7 @@ class ClientSummary extends Page
             $query->where('ip_address', 'like', '%' . $this->logFilter['ip'] . '%');
         }
 
-        return $query->orderByDesc('id')->limit(self::TAB_ROWS)->get();
+        return $this->paged($query->orderByDesc('id'));
     }
 
     public function formatMoney(float $amount, ?string $currency): string
