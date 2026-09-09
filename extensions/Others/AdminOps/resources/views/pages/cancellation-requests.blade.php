@@ -46,6 +46,11 @@
                         <label class="ao-of-label" for="ao-cr-svc">Service ID</label>
                         <span><input @nofill id="ao-cr-svc" class="ao-of-sm" type="text" inputmode="numeric"
                             wire:model.live.debounce.500ms="svc" placeholder="ID"></span>
+                        {{-- The reference's last row has no second pair, but its label
+                             column stays white and its field area stays grey — so the
+                             empty label cell is drawn rather than left for the row's own
+                             colour to fill. --}}
+                        <span class="ao-of-label"></span>
                     </div>
                 </div>
                 {{-- Centred under the panel, as the reference centres it. --}}
