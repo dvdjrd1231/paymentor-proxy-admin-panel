@@ -2827,6 +2827,18 @@
         background: #f0f0f0;
     }
 
+    /* A field's explanation, under its control. Long module descriptions used to sit
+       inside the 9.5rem label column and wrap to a dozen lines, pushing the input they
+       described off the fold. */
+    .ao-anc-hint {
+        display: block;
+        margin-top: 0.3rem;
+        font-style: normal;
+        font-size: 0.82rem;
+        line-height: 1.45;
+        color: var(--wa-muted, #6b6b6b);
+    }
+
     .ao-anc-row > span:first-child {
         text-align: right;
         font-weight: 600;

@@ -206,7 +206,10 @@ class Rail
             'Staff Management' => ['Administrator Users', 'Administrator Roles',
                 'Two-Factor Authentication', 'API Credentials'],
             'Payments' => ['Currencies', 'Payment Gateways', 'Tax Configuration', 'Promotions'],
-            'Products/Services' => ['Products/Services', 'Configurable Options', 'Auto Terminate', 'Servers'],
+            // The editors belong with the list they were opened from — without them the rail
+            // fell through to Addons, so editing a server showed an Addons rail.
+            'Products/Services' => ['Products/Services', 'Configurable Options', 'Auto Terminate',
+                'Servers', 'Edit Server', 'Edit Config Option Group'],
             'Addons' => ['Extensions', 'Available Extensions'],
         ];
 
