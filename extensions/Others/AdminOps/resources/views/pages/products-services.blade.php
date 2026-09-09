@@ -17,7 +17,7 @@
                  left; Server, Payment Method, Status, Custom Field, Custom Field Value on
                  the right. Domain is the one honestly-dead field — proxy services carry
                  none — with the reason on its title. --}}
-            <form class="ao-find ao-of ao-of-even" autocomplete="off" wire:submit.prevent="search">
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="search">
                 <div class="ao-of-rows">
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-ps-category">Product Type</label>
