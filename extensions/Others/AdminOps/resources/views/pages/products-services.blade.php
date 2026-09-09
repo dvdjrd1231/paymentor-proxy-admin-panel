@@ -15,8 +15,7 @@
             {{-- The reference's Search/Filter panel, field for field and in its order:
                  Product Type, Product/Service, Billing Cycle, Domain, Client Name on the
                  left; Server, Payment Method, Status, Custom Field, Custom Field Value on
-                 the right. Domain is the one honestly-dead field — proxy services carry
-                 none — with the reason on its title. --}}
+                 the right. --}}
             <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="search">
                 <div class="ao-of-rows">
                     <div class="ao-of-row">
@@ -70,9 +69,8 @@
                     </div>
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-ps-domain">Domain</label>
-                        <span><input id="ao-ps-domain" class="ao-of-md" type="text" disabled
-                            placeholder="Not recorded"
-                            title="Proxy services carry no domain, so this field cannot filter anything"></span>
+                        <span><input @nofill id="ao-ps-domain" class="ao-of-md" type="text"
+                            wire:model="domain" placeholder="e.g. example.com"></span>
                         <label class="ao-of-label" for="ao-ps-cf">Custom Field</label>
                         <span><select @nofill id="ao-ps-cf" class="ao-of-md" wire:model="cfField">
                             <option value="">Any</option>
@@ -166,7 +164,13 @@
                                 <span class="ao-mu-dim">{{ __('theme.addon_of', ['service' => $addon->parent->product?->name ?? ('#' . $addon->parent->id)]) }}</span>
                             @endif
                         </td>
-                        <td><span class="ao-mu-dim">(No Domain)</span></td>
+                        <td>
+                            @if ($serviceDomain = $service->properties->firstWhere('key', 'domain')?->value)
+                                {{ $serviceDomain }}
+                            @else
+                                <span class="ao-mu-dim">(No Domain)</span>
+                            @endif
+                        </td>
                         <td>
                             @if ($summary)
                                 <a href="{{ $summary }}">{{ trim(($service->user->first_name ?? '') . ' ' . ($service->user->last_name ?? '')) ?: $service->user->email }}</a>

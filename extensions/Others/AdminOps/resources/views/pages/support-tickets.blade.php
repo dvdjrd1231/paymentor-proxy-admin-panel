@@ -37,90 +37,86 @@
         @endif
 
         @if ($this->filter)
-            {{-- The reference's framed filter: labels on the left, one control per row,
-                 the centred blue Search/Filter. Every row is a live filter. --}}
-            <form class="ao-stf" wire:submit.prevent="search">
-                <label class="ao-stf-row">
-                    <span>Client</span>
-                    <select wire:model="clientId">
-                        <option value="">Start Typing to Search Clients</option>
-                        @foreach ($clients as $row)
-                            <option value="{{ $row->id }}">
-                                {{ trim($row->first_name . ' ' . $row->last_name) ?: $row->email }} - #{{ $row->id }}
-                            </option>
-                        @endforeach
-                    </select>
-                </label>
-                <label class="ao-stf-row">
-                    <span>Department</span>
-                    <select wire:model="dept">
-                        <option value="">Any</option>
-                        @foreach ($departments as $department)
-                            <option value="{{ $department }}">{{ $department }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                {{-- The reference's Status is a real multi-select: a chip per picked view,
-                     each removable, several OR'd together — not the sidebar's single pick.
-                     See SupportTickets::$statusFilter / applyView(). --}}
-                <label class="ao-stf-row ao-stf-row-top">
-                    <span>Status</span>
-                    <span class="ao-stf-chips">
-                        @foreach ($statusFilter as $key)
-                            <span class="ao-stf-chip">
-                                {{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets::VIEWS[$key] ?? $key }}
-                                <button type="button" wire:click="removeStatus('{{ $key }}')" aria-label="Remove {{ $key }}">&times;</button>
-                            </span>
-                        @endforeach
-                        <select wire:change="addStatus($event.target.value)" class="ao-stf-chip-add">
-                            <option value="">{{ $statusFilter === [] ? 'Any' : '+ Add status…' }}</option>
-                            @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets::VIEWS as $key => $label)
-                                @unless (in_array($key, $statusFilter, true))
-                                    <option value="{{ $key }}">{{ $label }}</option>
-                                @endunless
+            <form class="ao-find ao-of" wire:submit.prevent="search">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-st-client">Client</label>
+                        <span><select @nofill id="ao-st-client" class="ao-of-fill" wire:model="clientId">
+                            <option value="">Start Typing to Search Clients</option>
+                            @foreach ($clients as $row)
+                                <option value="{{ $row->id }}">
+                                    {{ trim($row->first_name . ' ' . $row->last_name) ?: $row->email }} - #{{ $row->id }}
+                                </option>
                             @endforeach
-                        </select>
-                    </span>
-                </label>
-                <label class="ao-stf-row">
-                    <span>Tags</span>
-                    {{-- Real input, not disabled: Paymenter tickets carry no tag column,
-                         so a search here always matches none — honest, not fake, and the
-                         title says so; see SupportTickets::query(). --}}
-                    <input type="text" wire:model="tags" placeholder="Any"
-                        title="Paymenter tickets carry no tags — a search here will always match none">
-                </label>
-                <label class="ao-stf-row">
-                    <span>Priority</span>
-                    <select wire:model="prio">
-                        <option value="">Any</option>
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                    </select>
-                </label>
-                <label class="ao-stf-row">
-                    <span>Subject/Message</span>
-                    <input type="text" wire:model="q" placeholder="Words from the subject">
-                </label>
-                <label class="ao-stf-row">
-                    <span>Email Address</span>
-                    <input type="text" class="ao-stf-mid" wire:model="email" placeholder="user@example.com">
-                </label>
-                <label class="ao-stf-row">
-                    <span>Ticket ID</span>
-                    <input type="text" class="ao-stf-small" wire:model="tid" placeholder="e.g. 86">
-                </label>
-                <label class="ao-stf-row">
-                    <span>Assigned To</span>
-                    <select class="ao-stf-small" wire:model="assigned">
-                        <option value="">Any</option>
-                        @foreach ($admins as $admin)
-                            <option value="{{ $admin->id }}">{{ trim($admin->first_name . ' ' . $admin->last_name) ?: $admin->email }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <div class="ao-stf-submit">
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-st-dept">Department</label>
+                        <span><select @nofill id="ao-st-dept" class="ao-of-fill" wire:model="dept">
+                            <option value="">Any</option>
+                            @foreach ($departments as $department)
+                                <option value="{{ $department }}">{{ $department }}</option>
+                            @endforeach
+                        </select></span>
+                    </div>
+                    {{-- Status is a real multi-select: a chip per picked view, several OR'd
+                         together — see SupportTickets::$statusFilter / applyView(). --}}
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label">Status</label>
+                        <span><span class="ao-stf-chips">
+                            @foreach ($statusFilter as $key)
+                                <span class="ao-stf-chip">
+                                    {{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets::VIEWS[$key] ?? $key }}
+                                    <button type="button" wire:click="removeStatus('{{ $key }}')" aria-label="Remove {{ $key }}">&times;</button>
+                                </span>
+                            @endforeach
+                            <select wire:change="addStatus($event.target.value)" class="ao-stf-chip-add">
+                                <option value="">{{ $statusFilter === [] ? 'Any' : '+ Add status…' }}</option>
+                                @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\SupportTickets::VIEWS as $key => $label)
+                                    @unless (in_array($key, $statusFilter, true))
+                                        <option value="{{ $key }}">{{ $label }}</option>
+                                    @endunless
+                                @endforeach
+                            </select>
+                        </span></span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-st-tags">Tags</label>
+                        <span><input @nofill id="ao-st-tags" type="text" class="ao-of-fill" wire:model="tags" placeholder="Any"
+                            title="Paymenter tickets carry no tags — a search here will always match none"></span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-st-prio">Priority</label>
+                        <span><select @nofill id="ao-st-prio" class="ao-of-fill" wire:model="prio">
+                            <option value="">Any</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select></span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-st-q">Subject/Message</label>
+                        <span><input @nofill id="ao-st-q" type="text" class="ao-of-fill" wire:model="q"></span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-st-email">Email Address</label>
+                        <span><input @nofill id="ao-st-email" type="text" class="ao-of-xl" wire:model="email"></span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-st-tid">Ticket ID</label>
+                        <span><input @nofill id="ao-st-tid" type="text" class="ao-of-md" wire:model="tid"></span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <label class="ao-of-label" for="ao-st-assigned">Assigned To</label>
+                        <span><select @nofill id="ao-st-assigned" class="ao-of-md" wire:model="assigned">
+                            <option value="">Any</option>
+                            @foreach ($admins as $admin)
+                                <option value="{{ $admin->id }}">{{ trim($admin->first_name . ' ' . $admin->last_name) ?: $admin->email }}</option>
+                            @endforeach
+                        </select></span>
+                    </div>
+                </div>
+                <div class="ao-of-buttons">
                     <button type="submit" class="ao-find-go">Search/Filter</button>
                 </div>
             </form>
