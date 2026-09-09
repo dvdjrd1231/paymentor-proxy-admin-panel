@@ -108,6 +108,14 @@ class EditTicket extends Page
 
     public string $mergeId = '';
 
+    /** The reference's Tag Cloud: free-text tags on the ticket, and its "Add a Tag…" box. */
+    public array $tags = [];
+
+    public string $tagInput = '';
+
+    /** The reference's Watch Ticket / Ticket Watchers: staff ids copied on every reply. */
+    public array $watchers = [];
+
     public ?string $confirmingDelete = null;
 
     public static function getRoutePath(Panel $panel): string
@@ -141,7 +149,30 @@ class EditTicket extends Page
             $meta = DB::table('ext_ticket_meta')->where('ticket_id', $this->ticket->id)->first();
             $this->ccRecipients = (string) ($meta->cc ?? '');
             $this->preventClosure = (bool) ($meta->prevent_closure ?? false);
+            $this->tags = array_values(array_filter(array_map('trim', explode(',', (string) ($meta->tags ?? '')))));
+            $this->watchers = array_map('intval', json_decode((string) ($meta->watchers ?? '[]'), true) ?: []);
         }
+    }
+
+    /**
+     * Write a subset of the ticket's AdminOps-owned meta columns.
+     *
+     * The Options tab's Save rewrites `cc` and `prevent_closure` wholesale; the rail's
+     * controls each own one column, so they must not carry the others' values along with
+     * them — tagging a ticket should not save a CC list someone is mid-way through typing.
+     */
+    private function writeMeta(array $values): void
+    {
+        if (! Schema::hasTable('ext_ticket_meta')) {
+            Notification::make()->title('The ticket meta table is not migrated')->danger()->send();
+
+            return;
+        }
+
+        DB::table('ext_ticket_meta')->updateOrInsert(
+            ['ticket_id' => $this->ticket->id],
+            $values + ['updated_at' => now(), 'created_at' => now()],
+        );
     }
 
     /** The status as the reference names it — Customer-Reply when an open ticket's last
@@ -231,9 +262,10 @@ class EditTicket extends Page
         ]);
 
         // The Options tab's CC Recipients get a copy of every staff reply — that is
-        // what the reference's CC list is for. Per-address catch: one dead mailbox
-        // must not lose the reply for the rest.
-        foreach ($this->ccList() as $address) {
+        // what the reference's CC list is for, and the rail's watchers ride the same
+        // path, which is what makes Watch Ticket mean something. Per-address catch: one
+        // dead mailbox must not lose the reply for the rest.
+        foreach (array_unique([...$this->ccList(), ...$this->watcherEmails()]) as $address) {
             try {
                 \App\Helpers\NotificationHelper::sendSystemEmailNotification(
                     '[Ticket #' . $this->ticket->id . '] ' . $this->ticket->subject,
@@ -292,6 +324,22 @@ class EditTicket extends Page
         if ($this->returnToList) {
             $this->redirect(SupportTickets::getUrl());
         }
+    }
+
+    /**
+     * The watching staff's addresses, minus whoever is replying — a reply should not mail
+     * its own author a copy of itself. @return array<int, string>
+     */
+    private function watcherEmails(): array
+    {
+        if ($this->watchers === []) {
+            return [];
+        }
+
+        return User::whereIn('id', $this->watchers)
+            ->where('id', '!=', Auth::id())
+            ->pluck('email')
+            ->all();
     }
 
     /** The stored CC list, split and validated once. @return array<int, string> */
@@ -438,6 +486,103 @@ class EditTicket extends Page
         Notification::make()->title('Assigned to you')->success()->send();
     }
 
+    /**
+     * The rail's Department / Assigned To / Priority selects.
+     *
+     * The reference's sidebar sets these on change rather than behind a Save, and they are
+     * the same three fields the Options tab holds — so the two views share the properties
+     * and this writes only those three columns. Options' own Save still needs pressing for
+     * everything else it owns.
+     */
+    public function saveAssignment(): void
+    {
+        $this->validate(['priority' => 'in:low,medium,high']);
+
+        $this->ticket->update([
+            'department' => $this->department ?: null,
+            'priority' => $this->priority,
+            'assigned_to' => $this->assignedTo !== '' ? (int) $this->assignedTo : null,
+        ]);
+        $this->ticket->refresh();
+
+        Notification::make()->title('Ticket updated')->success()->send();
+    }
+
+    /** The reference's "Add a Tag…" box. Tags are per-ticket free text, deduplicated. */
+    public function addTag(): void
+    {
+        $tag = trim($this->tagInput);
+
+        if ($tag === '') {
+            return;
+        }
+
+        // Commas separate stored tags, so one inside a tag would split it in two on load.
+        $tag = str_replace(',', ' ', $tag);
+
+        if (! in_array($tag, $this->tags, true)) {
+            $this->tags[] = $tag;
+            $this->writeMeta(['tags' => implode(',', $this->tags)]);
+        }
+
+        $this->tagInput = '';
+    }
+
+    public function removeTag(string $tag): void
+    {
+        $this->tags = array_values(array_filter($this->tags, fn (string $t): bool => $t !== $tag));
+        $this->writeMeta(['tags' => implode(',', $this->tags) ?: null]);
+    }
+
+    /** The reference's Watch Ticket button — a watcher is copied on every reply. */
+    public function toggleWatch(): void
+    {
+        $id = (int) Auth::id();
+
+        $this->watchers = in_array($id, $this->watchers, true)
+            ? array_values(array_filter($this->watchers, fn (int $w): bool => $w !== $id))
+            : [...$this->watchers, $id];
+
+        $this->writeMeta(['watchers' => json_encode($this->watchers)]);
+
+        Notification::make()
+            ->title(in_array($id, $this->watchers, true) ? 'Watching this ticket' : 'No longer watching')
+            ->success()->send();
+    }
+
+    /**
+     * An audit row as a sentence a human reads, for the Client Log's mixed record types.
+     *
+     * Only scalars are shown and only the first few: an audit of a created Service carries
+     * two dozen columns, and printing them all is how the tab came to be a wall of JSON.
+     */
+    private static function describeAudit(object $row): string
+    {
+        if ($row->event === 'deleted') {
+            return 'Deleted';
+        }
+
+        $values = json_decode((string) ($row->new_values ?? '[]'), true) ?: [];
+        $parts = [];
+
+        foreach ($values as $key => $value) {
+            if (count($parts) === 4) {
+                $parts[] = '…';
+                break;
+            }
+
+            if ($value === null || is_array($value) || $key === 'id' || str_ends_with((string) $key, '_at')) {
+                continue;
+            }
+
+            $parts[] = Str::headline((string) $key) . ': ' . Str::limit((string) (is_bool($value) ? ($value ? 'yes' : 'no') : $value), 40);
+        }
+
+        return $parts === []
+            ? ($row->event === 'created' ? 'Created' : 'Updated')
+            : ($row->event === 'created' ? 'Created — ' : '') . implode(', ', $parts);
+    }
+
     protected function getViewData(): array
     {
         $lastReply = $this->ticket->messages()->latest()->first();
@@ -468,6 +613,12 @@ class EditTicket extends Page
             // The reference's Ticket Info panel down the left: who this is for, and who
             // has touched it, without opening a dropdown to find out.
             'owner' => $this->ticket->user,
+            // The rail's Ticket Watchers list, in the order the button added them.
+            'watcherUsers' => $this->watchers === []
+                ? collect()
+                : User::whereIn('id', $this->watchers)->get()
+                    ->sortBy(fn ($u) => array_search($u->id, $this->watchers, true))
+                    ->values(),
             'staffParticipants' => $this->ticket->messages()
                 ->with('user:id,first_name,last_name,email,role_id')
                 ->get()
@@ -512,11 +663,19 @@ class EditTicket extends Page
                         return ['at' => $row->created_at, 'action' => $action . $by];
                     })
                 : collect(),
-            // The reference's Client Log tab: what this ticket's client has been doing —
-            // the same audit rows the Client Profile's Log tab reads, scoped to them.
+            // The reference's Client Log tab: what this ticket's client has been doing.
+            // The rows were being printed as their raw `new_values` JSON, which overflowed
+            // the panel with `{"reference_id":98,"reference_type":"App\\Models\\Service"…}`
+            // and told the reader nothing. Same humanising as the Log tab beside it.
             'clientLogRows' => Schema::hasTable('audits')
                 ? DB::table('audits')->where('user_id', $this->ticket->user_id)
                     ->orderByDesc('id')->limit(50)->get()
+                    ->map(fn ($row): array => [
+                        'at' => $row->created_at,
+                        'event' => ucfirst((string) $row->event),
+                        'record' => class_basename((string) $row->auditable_type) . ' #' . $row->auditable_id,
+                        'action' => self::describeAudit($row),
+                    ])
                 : collect(),
             // The reference's Log tab: what has happened to *this ticket*, as against the
             // Client Log beside it, which is what its owner has been doing everywhere.
