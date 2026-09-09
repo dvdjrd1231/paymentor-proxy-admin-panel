@@ -100,37 +100,31 @@
                         </label>
 
                         <label class="ao-anc-row">
-                            <span>
-                                Value
-                                <i>{{ $form['type'] === 'percentage' ? 'A percentage off, 0 to 100.' : 'An amount off, in the order currency.' }}</i>
-                            </span>
+                            <span>Value</span>
                             <input type="number" step="0.01" min="0"
                                 @if ($form['type'] === 'percentage') max="100" @endif
                                 wire:model="form.value">
+                            <i class="ao-anc-hint">{{ $form['type'] === 'percentage' ? 'A percentage off, 0 to 100.' : 'An amount off, in the order currency.' }}</i>
                         </label>
 
                         <label class="ao-anc-row">
-                            <span>
-                                Applies To
-                                <i>Which part of the price the discount comes off.</i>
-                            </span>
+                            <span>Applies To</span>
                             <select wire:model="form.applies_to">
                                 @foreach ($appliesTo as $value => $label)
                                     <option value="{{ $value }}">{{ $label }}</option>
                                 @endforeach
                             </select>
+                            <i class="ao-anc-hint">Which part of the price the discount comes off.</i>
                         </label>
 
                         <label class="ao-anc-row">
-                            <span>
-                                Recurring
-                                <i>How long the discount lasts once the service is running.</i>
-                            </span>
+                            <span>Recurring</span>
                             <select wire:model.live="form.recurring">
                                 @foreach ($recurringOptions as $value => $label)
                                     <option value="{{ $value }}">{{ $label }}</option>
                                 @endforeach
                             </select>
+                            <i class="ao-anc-hint">How long the discount lasts once the service is running.</i>
                         </label>
 
                         @if ($form['recurring'] === 'n')
@@ -143,41 +137,33 @@
 
                     <div class="ao-cc-col">
                         <label class="ao-anc-row">
-                            <span>
-                                Start Date
-                                <i>Before this the checkout refuses the code. Leave empty to start now.</i>
-                            </span>
+                            <span>Start Date</span>
                             <input type="date" wire:model="form.starts_at">
+                            <i class="ao-anc-hint">Before this the checkout refuses the code. Leave empty to start now.</i>
                         </label>
 
                         <label class="ao-anc-row">
-                            <span>
-                                Expiry Date
-                                <i>After this the checkout refuses the code. Leave empty for never.</i>
-                            </span>
+                            <span>Expiry Date</span>
                             <input type="date" wire:model="form.expires_at">
+                            <i class="ao-anc-hint">After this the checkout refuses the code. Leave empty for never.</i>
                         </label>
 
                         <label class="ao-anc-row">
-                            <span>
-                                Maximum Uses
-                                <i>Across everyone. Leave empty for unlimited.</i>
-                            </span>
+                            <span>Maximum Uses</span>
                             <input type="number" min="1" wire:model="form.max_uses">
+                            <i class="ao-anc-hint">Across everyone. Leave empty for unlimited.</i>
                         </label>
 
                         <label class="ao-anc-row">
-                            <span>
-                                Maximum Uses Per Client
-                                <i>The reference's Once Per Client is this, set to 1.</i>
-                            </span>
+                            <span>Maximum Uses Per Client</span>
                             <input type="number" min="1" wire:model="form.max_uses_per_user">
+                            <i class="ao-anc-hint">The reference's Once Per Client is this, set to 1.</i>
                         </label>
 
                         <div class="ao-anc-row">
                             <span>
                                 Applies To Products
-                                <i>Ctrl-click or Shift-click to choose more than one. Choose none for every product.</i>
+                                <i class="ao-anc-hint">Ctrl-click or Shift-click to choose more than one. Choose none for every product.</i>
                             </span>
                             <span class="ao-anc-field">
                                 <select class="ao-ep-list" multiple size="8" wire:model="productIds">
@@ -199,7 +185,7 @@
                             <select disabled title="The checkout checks which products a code applies to, not which must also be in the basket">
                                 <option>None</option>
                             </select>
-                            <i>Not available: a code is checked against the products it applies to, and there is no
+                            <i class="ao-anc-hint">Not available: a code is checked against the products it applies to, and there is no
                                 second list of products the basket must also contain.</i>
                         </span>
                     </div>
@@ -211,7 +197,7 @@
                                 <input type="checkbox" disabled title="Recurring above already covers this">
                                 <span>Check to apply for the life of the service</span>
                             </label>
-                            <i>Set <b>Recurring</b> to "Every payment, for the life of the service" — that is this field.</i>
+                            <i class="ao-anc-hint">Set <b>Recurring</b> to "Every payment, for the life of the service" — that is this field.</i>
                         </span>
                     </div>
 
@@ -222,7 +208,7 @@
                                 <input type="checkbox" disabled title="The checkout does not look at how old the account is">
                                 <span>Restrict by how long the client has had an account</span>
                             </label>
-                            <i>Not available: the code is validated against the basket and the client's own use of it,
+                            <i class="ao-anc-hint">Not available: the code is validated against the basket and the client's own use of it,
                                 and nothing there reads the signup date. Maximum Uses Per Client is the restriction
                                 this platform does apply.</i>
                         </span>
@@ -234,7 +220,7 @@
                             <select disabled title="Codes are entered at checkout; an upgrade does not take one">
                                 <option>None</option>
                             </select>
-                            <i>Not available: a promotion is entered in the basket, and an upgrade is priced from the
+                            <i class="ao-anc-hint">Not available: a promotion is entered in the basket, and an upgrade is priced from the
                                 old and new plans rather than going through the basket.</i>
                         </span>
                     </div>

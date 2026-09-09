@@ -18,22 +18,20 @@
         <form wire:submit.prevent="save">
             <div class="ao-anc-card">
                 <label class="ao-anc-row">
-                    <span>
-                        Module
-                        <i>Which provisioning module this server talks through.</i>
-                    </span>
+                    <span>Module</span>
                     <span class="ao-anc-field">
                         @if ($server)
                             <input type="text" value="{{ $extension }}" disabled
                                 title="A server keeps the module it was created with — its saved settings belong to that module's shape">
-                            <i>Fixed after creation: the saved settings belong to this module. Add a
-                                new server to use a different one.</i>
+                            <i class="ao-anc-hint">Fixed after creation: the saved settings belong to this
+                                module. Add a new server to use a different one.</i>
                         @else
                             <select wire:model.live="extension">
                                 @foreach ($modules as $value => $label)
                                     <option value="{{ $value }}">{{ $label }}</option>
                                 @endforeach
                             </select>
+                            <i class="ao-anc-hint">Which provisioning module this server talks through.</i>
                         @endif
                     </span>
                 </label>
@@ -52,7 +50,7 @@
                             <input type="checkbox" wire:model="enabled">
                             <span>Check to allow this server to provision new services</span>
                         </label>
-                        <i>Turning it off leaves running services alone; only new provisioning stops.</i>
+                        <i class="ao-anc-hint">Turning it off leaves running services alone; only new provisioning stops.</i>
                     </span>
                 </div>
             </div>
@@ -68,10 +66,7 @@
                         $type = $option['type'] ?? 'text';
                     @endphp
                     <div class="ao-anc-row" wire:key="srv-{{ $extension }}-{{ $key }}">
-                        <span>
-                            {{ $option['label'] ?? $key }}
-                            @if (!empty($option['description'])) <i>{{ $option['description'] }}</i> @endif
-                        </span>
+                        <span>{{ $option['label'] ?? $key }}</span>
                         <span class="ao-anc-field">
                             @if ($type === 'checkbox')
                                 <label class="ao-check">
@@ -93,6 +88,13 @@
                                     wire:model="settings.{{ $key }}"
                                     autocomplete="off">
                             @endif
+
+                            {{-- Under the field, not inside the label: these run to several
+                                 sentences, and a 9.5rem label column turned one of them into
+                                 twelve ragged lines that pushed its own input off the fold. --}}
+                            @if (!empty($option['description']))
+                                <i class="ao-anc-hint">{{ $option['description'] }}</i>
+                            @endif
                         </span>
                     </div>
                 @empty
@@ -106,8 +108,8 @@
                             <button type="button" class="ao-find-adv" wire:click="test" wire:loading.attr="disabled">
                                 Test Connection &raquo;
                             </button>
-                            <i wire:loading wire:target="test">Asking the module…</i>
-                            <i wire:loading.remove wire:target="test">Tests what is on screen, before saving it.</i>
+                            <i class="ao-anc-hint" wire:loading wire:target="test">Asking the module…</i>
+                            <i class="ao-anc-hint" wire:loading.remove wire:target="test">Tests what is on screen, before saving it.</i>
                         </span>
                     </div>
                 @endif
@@ -133,7 +135,7 @@
                             <span>{{ $label }}</span>
                             <span class="ao-anc-field ao-gs-off">
                                 <input type="text" disabled title="{{ $why }}">
-                                <i>{{ $why }}</i>
+                                <i class="ao-anc-hint">{{ $why }}</i>
                             </span>
                         </div>
                     @endforeach
