@@ -4,19 +4,17 @@
     reference's page buttons.
 --}}
 <x-filament-panels::page>
-    <div class="ao-mu">
+    <div class="ao-mu" x-data="{ filter: @js($filter) }">
         <div class="ao-tx-tabs">
-            <button type="button" class="ao-mu-tab {{ $this->filter ? 'ao-on' : '' }}" wire:click="toggleFilter">
+            <button type="button" class="ao-mu-tab" :class="{ 'ao-on': filter }" @click="filter = !filter">
                 Search/Filter
             </button>
         </div>
-
-        @if ($this->filter)
             {{-- The reference's Search/Filter panel, field for field and in its order:
                  Product Type, Product/Service, Billing Cycle, Domain, Client Name on the
                  left; Server, Payment Method, Status, Custom Field, Custom Field Value on
                  the right. --}}
-            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="search">
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="search" x-show="filter" x-cloak>
                 <div class="ao-of-rows">
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-ps-category">Product Type</label>
@@ -90,7 +88,6 @@
                 </div>
                 <button type="submit" class="ao-of-go">Search</button>
             </form>
-        @endif
 
         <div class="ao-mu-line">
             <span>

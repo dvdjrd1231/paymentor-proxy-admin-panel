@@ -518,7 +518,9 @@ class EditTicket extends Page
         }
 
         // Commas separate stored tags, so one inside a tag would split it in two on load.
-        $tag = str_replace(',', ' ', $tag);
+        // Collapsing the run afterwards keeps "billing, urgent" from becoming a tag with a
+        // double space in it, which then fails to match when you click it off again.
+        $tag = trim(preg_replace('/\s+/', ' ', str_replace(',', ' ', $tag)));
 
         if (! in_array($tag, $this->tags, true)) {
             $this->tags[] = $tag;
@@ -575,7 +577,14 @@ class EditTicket extends Page
                 continue;
             }
 
-            $parts[] = Str::headline((string) $key) . ': ' . Str::limit((string) (is_bool($value) ? ($value ? 'yes' : 'no') : $value), 40);
+            $shown = is_bool($value) ? ($value ? 'yes' : 'no') : (string) $value;
+
+            // Audits store model references as FQCNs; the namespace is noise to a reader.
+            if (str_contains($shown, '\\') && str_ends_with((string) $key, '_type')) {
+                $shown = class_basename($shown);
+            }
+
+            $parts[] = Str::headline((string) $key) . ': ' . Str::limit($shown, 40);
         }
 
         return $parts === []

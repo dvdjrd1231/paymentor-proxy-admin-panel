@@ -13,6 +13,7 @@
          that you can see whose ticket this is, where it sits and who has touched it without
          opening anything (Leandro, 2026-09-09: the differences "improve the readability and
          usability of a particular page or section"). --}}
+    <div class="ao-tv-rail">
     <aside class="ao-tv-side">
         <h4 class="ao-tv-side-head">Ticket Info</h4>
 
@@ -36,9 +37,17 @@
             <span class="ao-tag ao-cu-owner">CLIENT</span>
         </div>
 
+        {{-- The reference sets these three from the rail rather than showing them: its
+             selects write on change. They are the Options tab's own three fields, so both
+             views share the property and saveAssignment writes only these columns. --}}
         <div class="ao-tv-block">
             <span class="ao-tv-label">Department</span>
-            <span>{{ $ticket->department ?: 'None' }}</span>
+            <select class="ao-tv-select" wire:model="department" wire:change="saveAssignment">
+                <option value="">None</option>
+                @foreach ($departments as $dept)
+                    <option value="{{ $dept }}">{{ $dept }}</option>
+                @endforeach
+            </select>
         </div>
 
         <div class="ao-tv-block">
@@ -48,12 +57,21 @@
                     <button type="button" class="ao-cp-link ao-tv-me" wire:click="assignToMe">me</button>
                 @endif
             </span>
-            <span>{{ $ticket->assignedTo ? (trim($ticket->assignedTo->first_name . ' ' . $ticket->assignedTo->last_name) ?: $ticket->assignedTo->email) : 'None' }}</span>
+            <select class="ao-tv-select" wire:model="assignedTo" wire:change="saveAssignment">
+                <option value="">None</option>
+                @foreach ($admins as $admin)
+                    <option value="{{ $admin['id'] }}">{{ $admin['label'] }}</option>
+                @endforeach
+            </select>
         </div>
 
         <div class="ao-tv-block">
             <span class="ao-tv-label">Priority</span>
-            <span>{{ ucfirst($ticket->priority ?: 'medium') }}</span>
+            <select class="ao-tv-select" wire:model="priority" wire:change="saveAssignment">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select>
         </div>
 
         <div class="ao-tv-block">
@@ -65,11 +83,49 @@
             @endforelse
         </div>
 
-        {{-- The reference's Tag Cloud, Watch Ticket and Ticket Watchers sit here. None has
-             anything behind it: a ticket carries no tags, and nothing subscribes a member of
-             staff to another person's ticket, so all three would be controls that accept a
-             click and change nothing. --}}
+        <div class="ao-tv-block">
+            <span class="ao-tv-label">Tag Cloud</span>
+            @if ($tags)
+                <span class="ao-tv-tags">
+                    @foreach ($tags as $tag)
+                        <span class="ao-tv-tag">{{ $tag }}<button type="button"
+                            wire:click="removeTag(@js($tag))" title="Remove this tag">&times;</button></span>
+                    @endforeach
+                </span>
+            @endif
+            <input type="text" class="ao-tv-tagbox" placeholder="Add a Tag..."
+                wire:model="tagInput" wire:keydown.enter.prevent="addTag" wire:blur="addTag">
+        </div>
+
+        {{-- The reference's Watch Ticket. A watcher is copied on every reply (see
+             watcherEmails), so this subscribes rather than only remembering the click. --}}
+        <button type="button" class="ao-tv-watch @if (in_array((int) auth()->id(), $watchers, true)) ao-on @endif"
+            wire:click="toggleWatch">
+            {{ in_array((int) auth()->id(), $watchers, true) ? 'Unwatch Ticket' : 'Watch Ticket' }}
+        </button>
     </aside>
+
+    <aside class="ao-tv-side ao-tv-side2">
+        <h4 class="ao-tv-side-head">Ticket Watchers</h4>
+        <div class="ao-tv-block">
+            @forelse ($watcherUsers as $i => $watcher)
+                <span>{{ $i + 1 }}. {{ trim($watcher->first_name . ' ' . $watcher->last_name) ?: $watcher->email }}</span>
+            @empty
+                <span class="ao-tv-sub">1. None</span>
+            @endforelse
+        </div>
+
+        <h4 class="ao-tv-side-head">CC Recipients</h4>
+        <div class="ao-tv-block">
+            {{-- The addresses the Options tab holds, shown where the reference shows them. --}}
+            @forelse (array_filter(array_map('trim', explode(',', $ccRecipients))) as $address)
+                <span class="ao-tv-sub">{{ $address }}</span>
+            @empty
+                <span class="ao-tv-sub">None</span>
+            @endforelse
+        </div>
+    </aside>
+    </div>
 
     <div class="ao-mu ao-et ao-tv-main">
         <div class="ao-et-head">
@@ -312,10 +368,10 @@
                 <tbody>
                     @forelse ($clientLogRows as $row)
                         <tr>
-                            <td>{{ \Carbon\Carbon::parse($row->created_at)->format('m/d/Y H:i') }}</td>
-                            <td>{{ ucfirst($row->event) }}</td>
-                            <td class="ao-mu-left">{{ class_basename($row->auditable_type) }} #{{ $row->auditable_id }}</td>
-                            <td class="ao-mu-left"><code>{{ str($row->new_values)->limit(100) }}</code></td>
+                            <td>{{ \Carbon\Carbon::parse($row['at'])->format('m/d/Y H:i') }}</td>
+                            <td>{{ $row['event'] }}</td>
+                            <td class="ao-mu-left">{{ $row['record'] }}</td>
+                            <td class="ao-mu-left">{{ $row['action'] }}</td>
                         </tr>
                     @empty
                         <tr><td colspan="4" class="ao-mu-none ao-mu-left">No Records Found</td></tr>

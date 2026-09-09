@@ -4,20 +4,22 @@
     below the navy grid, and the "Are you sure?" before anything destructive.
 --}}
 <x-filament-panels::page>
-    <div class="ao-mu" @if ($refreshEvery > 0) wire:poll.{{ $refreshEvery * 60 }}s @endif>
+    <div class="ao-mu" x-data="{ filter: @js($filter), auto: @js($autoTab) }"
+        @if ($refreshEvery > 0) wire:poll.{{ $refreshEvery * 60 }}s @endif>
         <div class="ao-tx-tabs">
-            <button type="button" class="ao-mu-tab {{ $this->filter ? 'ao-on' : '' }}" wire:click="toggleFilter">
+            <button type="button" class="ao-mu-tab" :class="{ 'ao-on': filter }"
+                @click="filter = !filter; if (filter) auto = false">
                 Search/Filter
             </button>
-            {{-- The reference's Auto Refresh tab: a real band now — the select drives the
+            {{-- The reference's Auto Refresh tab: a real band — the select drives the
                  page's own polling interval, and Never (the reference's default) stops it. --}}
-            <button type="button" class="ao-mu-tab {{ $autoTab ? 'ao-on' : '' }}" wire:click="toggleAutoTab">
+            <button type="button" class="ao-mu-tab" :class="{ 'ao-on': auto }"
+                @click="auto = !auto; if (auto) filter = false">
                 Auto Refresh
             </button>
         </div>
 
-        @if ($autoTab)
-            <form class="ao-find ao-of" wire:submit.prevent="setAutoRefresh">
+            <form class="ao-find ao-of" wire:submit.prevent="setAutoRefresh" x-show="auto" x-cloak>
                 <div class="ao-of-rows">
                     <div class="ao-of-row ao-of-row-single">
                         <label class="ao-of-label" for="ao-st-refresh">Auto Refresh Every</label>
@@ -29,15 +31,13 @@
                                 <option value="5">5 Minutes</option>
                                 <option value="10">10 Minutes</option>
                             </select>
-                            <button type="submit" class="ao-find-go">Set Auto Refresh</button>
+                            <button type="submit" class="ao-find-go" @click="auto = false">Set Auto Refresh</button>
                         </span>
                     </div>
                 </div>
             </form>
-        @endif
 
-        @if ($this->filter)
-            <form class="ao-find ao-of" wire:submit.prevent="search">
+            <form class="ao-find ao-of" wire:submit.prevent="search" x-show="filter" x-cloak>
                 <div class="ao-of-rows">
                     <div class="ao-of-row ao-of-row-single">
                         <label class="ao-of-label" for="ao-st-client">Client</label>
@@ -120,7 +120,6 @@
                     <button type="submit" class="ao-find-go">Search/Filter</button>
                 </div>
             </form>
-        @endif
 
         <div class="ao-mu-line">
             <span>
