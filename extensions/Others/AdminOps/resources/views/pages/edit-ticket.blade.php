@@ -348,7 +348,7 @@
             {{-- The reference's two columns: Department / Subject / Status /
                  CC Recipients / Prevent Client Closure on the left, Client Name /
                  Assigned To / Priority / Merge Ticket on the right. --}}
-            <form class="ao-find ao-of" wire:submit.prevent="saveOptions">
+            <form class="ao-find ao-of ao-of-alt" wire:submit.prevent="saveOptions">
                 <div class="ao-of-rows">
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-et-dept">Department</label>
