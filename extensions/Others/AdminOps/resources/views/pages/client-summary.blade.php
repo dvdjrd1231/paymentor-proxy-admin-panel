@@ -89,10 +89,20 @@
                 <div class="ao-cp">
                     <h3>Contacts</h3>
                     <div class="ao-cp-body">
-                        <div class="ao-cp-empty">No additional contacts setup</div>
-                        <span class="ao-cp-link ao-cp-dead" title="Contacts are not part of Paymenter">
+                        {{-- This panel used to say contacts were not part of Paymenter and
+                             drew a dead Add Contact. They are now — ClientTools backs the
+                             Contacts tab — so it shows the real ones and goes there. --}}
+                        @forelse ($summaryContacts as $contact)
+                            <div class="ao-cp-kv-line">
+                                <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $user->id, 'tab' => 'contacts', 'contact' => $contact->id]) }}">{{ $contact->name }}</a>
+                                <span class="ao-cpg-muted">{{ $contact->email }}</span>
+                            </div>
+                        @empty
+                            <div class="ao-cp-empty">No additional contacts setup</div>
+                        @endforelse
+                        <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $user->id, 'tab' => 'contacts']) }}">
                             <x-filament::icon icon="ri-user-add-line" class="ao-cp-ic" /> Add Contact
-                        </span>
+                        </a>
                     </div>
                 </div>
 
@@ -509,6 +519,12 @@
                         ] as $key => $label)
                             <label><input type="checkbox" wire:model="pfPrefs.{{ $key }}"> {{ $label }}</label>
                         @endforeach
+                        {{-- The reference's Check All, under the list. --}}
+                        <button type="button" class="ao-link ao-cc-all"
+                            x-data
+                            @click="$el.closest('.ao-anc-checks').querySelectorAll('input[type=checkbox]').forEach(c => { if (!c.checked) c.click(); })">
+                            Check All
+                        </button>
                     </div>
                 </div>
 
@@ -533,6 +549,17 @@
                         @endforeach
                     </div>
                 </div>
+
+                {{-- The reference closes Profile with Admin Notes, the same note the Summary
+                     panel edits — it was only on Summary, so someone working down this form
+                     had to leave it to add one. --}}
+                <div class="ao-anc-row ao-anc-row-wide">
+                    <span>Admin Notes</span>
+                    <div>
+                        <textarea class="ao-cp-notes" rows="6" wire:model="adminNotes"
+                            placeholder="Notes for staff only — the client never sees these"></textarea>
+                    </div>
+                </div>
             </div>
 
             @if ($errors->any())
@@ -545,6 +572,7 @@
 
             <div class="ao-anc-submit">
                 <button type="submit" class="ao-find-go">Save Changes</button>
+                <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $user->id, 'tab' => 'profile']) }}">Cancel Changes</a>
             </div>
         </form>
 

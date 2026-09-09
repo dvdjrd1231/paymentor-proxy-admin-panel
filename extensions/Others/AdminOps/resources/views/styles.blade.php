@@ -2418,6 +2418,9 @@
     .ao-ete-version { display: flex; flex-direction: column; gap: 0.2rem; }
     .ao-ete-version i { font-size: 0.82rem; font-style: normal; font-weight: 400; opacity: 0.7; }
 
+    /* A contact line in the Summary's Contacts panel: name over email. */
+    .ao-cp-kv-line { display: flex; flex-direction: column; padding: 0.25rem 0; font-size: 0.85rem; }
+
     /* The reference's records band: the count on the left, Jump to Page on the right. */
     .ao-rb {
         display: flex;
