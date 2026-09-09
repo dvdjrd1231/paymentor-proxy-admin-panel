@@ -1733,10 +1733,6 @@
        opens on a gutter rather than butting against the first field. */
     .ao-of-row > .ao-of-label:nth-child(3) { margin-left: 1rem; }
 
-    /* The ticket Options form: the reference also alternates the field cells — grey on
-       the odd rows, white on the even — while the labels stay white throughout. */
-    .ao-of-alt .ao-of-row:nth-child(even) > * { background: #fff; }
-
     .ao-of-label {
         justify-content: flex-end;
         text-align: right;
@@ -2425,6 +2421,9 @@
         gap: 0.5rem;
         font-weight: 600;
         font-size: 0.8rem;
+        /* Without this the caption is a shrinkable flex item and "Assigned To" breaks
+           after "Assigned", which the rail is wide enough to avoid. */
+        white-space: nowrap;
     }
 
     .ao-tv-sub { opacity: 0.7; font-size: 0.8rem; word-break: break-word; }
