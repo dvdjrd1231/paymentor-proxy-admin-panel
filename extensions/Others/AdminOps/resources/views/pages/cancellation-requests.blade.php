@@ -19,7 +19,10 @@
                  @if it cost a Livewire round trip each way, and closing felt the slower
                  of the two because the reply had to rebuild the whole list to say the
                  panel had gone. --}}
-            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="$refresh"
+            {{-- ao-of-even: every field fills its own cell, so the panel's boxes are all
+                 one width down both columns rather than each taking its own (Leandro,
+                 2026-09-09: "set same width for search fields"). --}}
+            <form class="ao-find ao-of ao-of-even" autocomplete="off" wire:submit.prevent="$refresh"
                 x-show="filter" x-cloak>
                 <div class="ao-of-rows">
                     <div class="ao-of-row">
@@ -32,9 +35,8 @@
                     </div>
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-cr-domain">Domain</label>
-                        <span><input id="ao-cr-domain" class="ao-of-md" type="text" disabled
-                            placeholder="Not recorded"
-                            title="Proxy services carry no domain, so this field cannot filter anything"></span>
+                        <span><input @nofill id="ao-cr-domain" class="ao-of-md" type="text"
+                            wire:model.live.debounce.500ms="domain" placeholder="Domain on the service"></span>
                         <label class="ao-of-label" for="ao-cr-type">Type</label>
                         <span><select @nofill id="ao-cr-type" class="ao-of-md" wire:model.live="type">
                             <option value="">Any</option>

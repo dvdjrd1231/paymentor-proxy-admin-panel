@@ -440,10 +440,15 @@
         background: transparent;
     }
 
+    /* Rounded at the top only (Leandro's circled screenshot, 2026-09-09). The reference
+       shades the cell as a tab: its two top corners are rounded and the bottom edge stays
+       square, because the dropdown panel attaches flush underneath it and a rounded
+       bottom would cut a notch out of that join. */
     .fi-topbar-item-btn:hover,
     .fi-topbar-item.fi-active .fi-topbar-item-btn:hover {
         background: var(--wa-blue-dark);
         color: #ffffff;
+        border-radius: 4px 4px 0 0;
     }
 
     /* Filament marks the active group with an underline; WHMCS shades the cell instead. */
