@@ -92,6 +92,7 @@ class SupportTickets extends Page
     #[Url]
     public int $page = 1;
 
+    #[Url]
     public bool $filter = false;
 
     /** The reference's Auto Refresh tab: its band, and the minutes the page then polls at. */
