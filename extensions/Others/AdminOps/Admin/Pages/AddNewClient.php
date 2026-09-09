@@ -89,6 +89,12 @@ class AddNewClient extends Page
 
     public string $currency = '';
 
+    /** Locale code, or '' for the store default. */
+    public string $language = '';
+
+    /** Gateway name to prefer for this client, or '' for no preference. */
+    public string $paymentMethod = '';
+
     /** @var array<string, string> property key => value, bound field by field in the view */
     public array $props = [];
 
@@ -178,6 +184,39 @@ class AddNewClient extends Page
             'brazilFields' => $this->brazilFields(),
             'isExempt' => $this->isExempt(),
             'currencies' => Currency::query()->pluck('code')->all(),
+            'languages' => self::languages(),
+            'gateways' => \App\Models\Gateway::query()->orderBy('name')->pluck('name')->all(),
+            'phoneFlag' => $this->phoneCountry()?->flag,
+            'phoneDial' => $this->phoneCountry()?->dial,
+        ];
+    }
+
+    /** Installed locales with readable names, from the lang/ directory itself. */
+    public static function languages(): array
+    {
+        $names = ['en' => 'English', 'pt' => 'Português', 'es' => 'Español', 'fr' => 'Français', 'de' => 'Deutsch', 'nl' => 'Nederlands', 'it' => 'Italiano'];
+        $languages = [];
+
+        foreach (glob(base_path('lang/*'), GLOB_ONLYDIR) ?: [] as $dir) {
+            $code = basename($dir);
+            $languages[$code] = $names[$code] ?? strtoupper($code);
+        }
+
+        return $languages;
+    }
+
+    /** The chosen country's flag and dial code, for the phone field's prefix. */
+    private function phoneCountry(): ?object
+    {
+        $iso2 = \Paymenter\Extensions\Servers\ProxyPanel\Support\CountryFlag::codeFor((string) ($this->props['country'] ?? ''));
+
+        if (!$iso2) {
+            return null;
+        }
+
+        return (object) [
+            'flag' => \Paymenter\Extensions\Servers\ProxyPanel\Support\CountryFlag::emoji($iso2),
+            'dial' => \Paymenter\Extensions\Others\AdminOps\Support\DialCodes::for($iso2),
         ];
     }
 
@@ -397,6 +436,14 @@ class AddNewClient extends Page
 
             if ($this->currency !== '') {
                 $values['currency'] = $this->currency;
+            }
+
+            if ($this->language !== '') {
+                $values['language'] = $this->language;
+            }
+
+            if ($this->paymentMethod !== '') {
+                $values['payment_method'] = $this->paymentMethod;
             }
 
             // The reference's blocks, as real stored preferences on the profile.

@@ -46,7 +46,12 @@
 
                 <label class="ao-anc-row">
                     <span>Language</span>
-                    <select><option>Default</option></select>
+                    <select wire:model="language">
+                        <option value="">Default</option>
+                        @foreach ($languages as $code => $label)
+                            <option value="{{ $code }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
                 </label>
                 <label class="ao-anc-row">
                     <span>Status</span>
@@ -93,13 +98,26 @@
                 @isset($fixed['phone'])
                     <label class="ao-anc-row">
                         <span>Phone Number</span>
-                        <input type="text" wire:model="props.phone" placeholder="+1 201-555-0123" required>
+                        {{-- The prefix follows the Country pick above — country is live,
+                             so choosing one redraws the flag and dial code here. --}}
+                        <span class="ao-anc-field ao-anc-phone">
+                            @if ($phoneFlag || $phoneDial)
+                                <i class="ao-anc-dial">{{ $phoneFlag }} {{ $phoneDial }} &#9662;</i>
+                            @endif
+                            <input type="text" wire:model="props.phone"
+                                placeholder="{{ $phoneDial ? '201-555-0123' : '+1 201-555-0123' }}" required>
+                        </span>
                     </label>
                 @endisset
 
                 <label class="ao-anc-row">
                     <span>Payment Method</span>
-                    <select><option>Select to Change Default</option></select>
+                    <select wire:model="paymentMethod">
+                        <option value="">Select to Change Default</option>
+                        @foreach ($gateways as $gateway)
+                            <option value="{{ $gateway }}">{{ $gateway }}</option>
+                        @endforeach
+                    </select>
                 </label>
                 <label class="ao-anc-row">
                     <span>Billing Contact</span>
