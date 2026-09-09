@@ -2350,6 +2350,32 @@
     .ao-cog-products { align-items: start; }
     .ao-cog-list { max-width: none; }
 
+    /* The ticket view's Ticket Info rail. The reference runs it down the left of the
+       ticket, narrow and quiet, so the ticket itself keeps the width. */
+    .ao-tv { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+    .ao-tv-main { min-width: 0; }
+
+    .ao-tv-side {
+        border: 1px solid var(--wa-border, #e2e2e2);
+        border-radius: 6px;
+        padding: 0.9rem 1rem;
+        background: var(--wa-panel-bg, rgba(127, 127, 127, 0.05));
+        font-size: 0.86rem;
+    }
+
+    .ao-tv-side-head { margin: 0 0 0.75rem; font-size: 0.95rem; font-weight: 600; }
+    .ao-tv-block { display: flex; flex-direction: column; gap: 0.15rem; margin-bottom: 0.85rem; }
+    .ao-tv-block:last-child { margin-bottom: 0; }
+    .ao-tv-label { font-weight: 600; font-size: 0.8rem; }
+    .ao-tv-sub { opacity: 0.7; font-size: 0.8rem; word-break: break-word; }
+    .ao-tv-me { font-size: 0.78rem; float: inline-end; }
+
+    /* Below the reference's own breakpoint the rail stacks above the ticket rather than
+       squeezing it — the ticket body is the thing you came to read. */
+    @media (max-width: 62rem) {
+        .ao-tv { grid-template-columns: 1fr; }
+    }
+
     /* Add/Edit Server: the reference puts its mode switch above the form, right-aligned. */
     .ao-es-mode { display: flex; justify-content: flex-end; margin-bottom: 0.75rem; }
 
