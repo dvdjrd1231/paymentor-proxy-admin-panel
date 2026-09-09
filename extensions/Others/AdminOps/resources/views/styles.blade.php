@@ -2412,9 +2412,28 @@
     .ao-tv-side-head { margin: 0 0 0.75rem; font-size: 0.95rem; font-weight: 600; }
     .ao-tv-block { display: flex; flex-direction: column; gap: 0.15rem; margin-bottom: 0.85rem; }
     .ao-tv-block:last-child { margin-bottom: 0; }
-    .ao-tv-label { font-weight: 600; font-size: 0.8rem; }
+    /* The reference sets "me" against the right edge of the label's own line. It was
+       floated, which a flex column ignores, so it dropped to a line of its own. */
+    .ao-tv-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 0.5rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
     .ao-tv-sub { opacity: 0.7; font-size: 0.8rem; word-break: break-word; }
-    .ao-tv-me { font-size: 0.78rem; float: inline-end; }
+    .ao-tv-me { font-size: 0.78rem; }
+
+    /* The reference's badge is a chip beside the name; the rail's column stretched it to
+       the full width, which read as a filled bar. */
+    .ao-tv-block > .ao-tag { align-self: flex-start; }
+
+    /* Scoped to the ticket: the rail takes 15rem off the row, so Prevent Client Closure's
+       caption no longer fits the reference's single line and was being clipped mid-word
+       ("...closing this support ti"). It wraps here and stays on one line elsewhere. */
+    .ao-tv .ao-of-check { white-space: normal; align-items: flex-start; }
 
     /* Below the reference's own breakpoint the rail stacks above the ticket rather than
        squeezing it — the ticket body is the thing you came to read. */
