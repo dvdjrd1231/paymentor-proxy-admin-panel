@@ -1718,7 +1718,11 @@
         border-radius: 3px;
     }
 
-    .ao-of-row:nth-child(odd) { background: #ececec; }
+    /* Leandro, 2026-09-09: "where it is gray, it is white" — our stripe polarity was the
+       inverse of the reference's, so the panel opened on a grey band where WHMCS opens on
+       white. The first row is white now and the grey falls on the even rows, which is the
+       transition he reads faster. */
+    .ao-of-row:nth-child(even) { background: #ececec; }
 
     .ao-of-label {
         text-align: right;
