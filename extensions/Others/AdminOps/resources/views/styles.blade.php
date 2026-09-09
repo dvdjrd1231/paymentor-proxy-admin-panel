@@ -2356,7 +2356,10 @@
     .ao-gs-field .ao-check { display: flex; align-items: center; gap: 0.4rem; }
 
     /* The URL row: fixed storefront prefix, then the slug. */
-    .ao-ep-url > i { font-style: normal; color: var(--wa-muted, #6b6b6b); white-space: nowrap; }
+    /* The store prefix is longer than the field column, so it wraps inside its cell
+       rather than running over the hint beside it. */
+    .ao-ep-url { flex-wrap: wrap; }
+    .ao-ep-url > i { font-style: normal; color: var(--wa-muted, #6b6b6b); min-width: 0; overflow-wrap: anywhere; }
     .ao-ep-url input { flex: 1 1 8rem; min-width: 0; }
 
     .ao-ep-paytype { gap: 1.2rem; }
@@ -2989,6 +2992,23 @@
         align-items: center;
         gap: 0.6rem;
     }
+
+    /* The phone field's country prefix: drawn as part of the input's own box. */
+    .ao-anc-phone { gap: 0; }
+    .ao-anc-phone .ao-anc-dial {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        height: 2rem;
+        padding: 0 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-right: 0;
+        border-radius: 4px 0 0 4px;
+        background: #f5f5f5;
+        white-space: nowrap;
+        font-size: 0.9rem;
+    }
+    .ao-anc-phone .ao-anc-dial + input { border-radius: 0 4px 4px 0; }
 
     .ao-anc-field i {
         font-style: normal;
@@ -5935,6 +5955,14 @@
     }
 
     .ao-gs-field textarea { min-height: 5rem; }
+
+    /* General Settings only: each field cell holds exactly one control, so anything else
+       is a password-manager badge stealing flex width — which left this page's inputs at
+       different lengths row to row. Hidden if standalone, dissolved if it wrapped the
+       control, and painted icons cleared; the control keeps the whole column. */
+    .ao-gs-page .ao-gs-field > :not(input):not(select):not(textarea) { display: none !important; }
+    .ao-gs-page .ao-gs-field > :not(input):not(select):not(textarea):has(input, select, textarea) { display: contents !important; }
+    .ao-gs-page .ao-gs-field input { background-image: none !important; }
 
     .ao-gs-hint { color: var(--wa-muted, #6b6b6b); font-size: 0.86rem; line-height: 1.35; }
 

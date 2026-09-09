@@ -11,7 +11,7 @@
 <x-filament-panels::page>
     {{-- `tab` lives in Alpine, so a click swaps which panel shows and never asks the
          server. Every tab's rows are below and every value is already bound. --}}
-    <div class="ao-mu ao-gs" x-data="{ tab: @js($tab) }">
+    <div class="ao-mu ao-gs ao-gs-page" x-data="{ tab: @js($tab) }">
         <div class="ao-gs-tabs">
             @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\GeneralSettings::TABS as $key => $label)
                 <button type="button" class="ao-gs-tab"
