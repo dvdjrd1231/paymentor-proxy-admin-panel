@@ -5,10 +5,11 @@
     Blade placeholders a WYSIWYG would corrupt (see the page class).
 --}}
 <x-filament-panels::page>
-    <div class="ao-mu ao-eo">
-        <div class="ao-tx-tabs">
-            <a class="ao-mu-tab" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::getUrl() }}">&laquo; Back to List</a>
-        </div>
+    {{-- Not .ao-eo: that class carries the order screen's own density, which squeezed
+         this band's rows well below the reference's. --}}
+    <div class="ao-mu ao-ete">
+        {{-- No Back-to-List strip: the reference has none, and the rail's Email
+             Templates entry is the way back it uses. --}}
 
         {{-- rich starts on: the reference opens with its toolbar showing. --}}
         <form wire:submit.prevent="save" x-data="{ rich: true }">
@@ -114,16 +115,10 @@
                 <input id="ao-ete-subject" type="text" wire:model="subject">
             </div>
 
-            <div class="ao-tx-tabs ao-ete-modes">
-                <button type="button" class="ao-mu-tab {{ $mode === 'source' ? 'ao-on' : '' }}"
-                    wire:click="$set('mode', 'source')">Source code</button>
-                <button type="button" class="ao-mu-tab {{ $mode === 'preview' ? 'ao-on' : '' }}"
-                    wire:click="$set('mode', 'preview')"
-                    title="The rendered Markdown; placeholders show as tokens and are filled with the client's real values when the email sends">Preview</button>
-            </div>
-
             {{-- One bordered box, as the reference frames its editor: toolbar, writing
-                 surface and the status strip inside a single frame. --}}
+                 surface and the status strip inside a single frame. The reference has no
+                 tab strip above it — its source and preview are toolbar buttons, so ours
+                 are too. --}}
             <div class="ao-ete-box">
                 @if ($mode === 'source')
                     {{-- The same Markdown toolbar the ticket editors use, so a formatting
@@ -136,7 +131,17 @@
                         <button type="button" data-md-line="- " title="Bullet list">&#8226;&#8226;</button>
                         <button type="button" data-md-line="1. " title="Numbered list">1.</button>
                         <button type="button" data-md-line="> " title="Quote">&#10078;</button>
+                        <button type="button" class="ao-ete-mode" wire:click="$set('mode', 'preview')"
+                            title="The rendered Markdown; placeholders show as tokens and are filled with the client's real values when the email sends">&#128065; Preview</button>
                     </div>
+                @else
+                    <div class="ao-ont-toolbar ao-ete-toolbar">
+                        <button type="button" class="ao-ete-mode ao-on" wire:click="$set('mode', 'source')"
+                            title="Back to the Markdown source">&#60;&#62; Source code</button>
+                    </div>
+                @endif
+
+                @if ($mode === 'source')
 
                     <textarea class="ao-ete-source" rows="18" wire:model="body" spellcheck="false"
                         data-ao-message
