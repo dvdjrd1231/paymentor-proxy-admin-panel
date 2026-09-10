@@ -2168,7 +2168,21 @@
     }
 
     /* The reference's button pair under a form panel: blue action, quiet cancel. */
-    .ao-of-buttons { display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.8rem; }
+    .ao-of-buttons { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.8rem; }
+
+    /* Save is a <button> and Cancel an <a>, which the sheet gives different heights and
+       display modes (36px flex against 34px block) — so the pair sat 2px out and the
+       anchor's label did not centre. In this row they are one control drawn twice. */
+    .ao-of-buttons > .ao-find-go,
+    .ao-of-buttons > .ao-of-go,
+    .ao-of-buttons > .ao-gs-cancel {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 2.25rem;
+        margin: 0;
+        line-height: 1;
+    }
 
     .ao-of-buttons .ao-of-go { display: inline-block; margin: 0; }
 
