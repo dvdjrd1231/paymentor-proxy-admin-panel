@@ -474,8 +474,7 @@
        CSS cannot read. What it can read is the inline `display` x-float always writes on
        the panel (the same fact the degraded-JS guard below relies on): none when closed,
        block when open. */
-    nav.fi-topbar .fi-dropdown:has(.fi-dropdown-panel[style*="display: block"]) .fi-topbar-item-btn,
-    nav.fi-topbar .fi-dropdown:has(.fi-dropdown-panel[style*="display:block"]) .fi-topbar-item-btn {
+    nav.fi-topbar .fi-dropdown.ao-menu-open .fi-topbar-item-btn {
         height: var(--wa-topbar-h);
         line-height: var(--wa-topbar-h);
         border-radius: 4px 4px 0 0;
@@ -1545,8 +1544,17 @@
              programmatic click() lands on nothing at all — found by reading the trigger's
              attributes after click() silently failed. --}}
         const toggle = (item) => {
+            {{-- Read the state before the dispatch, not after: this is the one moment the
+                 answer is knowable. x-float has not written the panel's inline `display`
+                 yet on the frame after opening, so asking then reports "closed" for a menu
+                 that is on its way up — which left the open cell short of the bar. --}}
+            const opening = !isOpen(item);
+
             item.querySelector('.fi-dropdown-trigger')
                 ?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+
+            {{-- Marks the open menu for CSS, so its cell can grow to meet the panel. --}}
+            item.classList.toggle('ao-menu-open', opening);
 
             {{-- Fold at open time, every time. The fold used to run only when the pointer
                  entered the panel — but on hover-open the pointer is still on the button,

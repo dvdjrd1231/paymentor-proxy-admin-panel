@@ -2655,6 +2655,13 @@
     }
 
     .ao-ete-box .ao-ete-toolbar { margin-top: 0; border: 0; border-bottom: 1px solid var(--wa-panel-border, #ddd); border-radius: 0; }
+
+    /* The reference keeps its source/preview switch in the toolbar, at the right. */
+    .ao-ete-mode { margin-left: auto; white-space: nowrap; }
+
+    /* The merge panel scrolls rather than running the page on for a screenful of tags,
+       as the reference's does. */
+    .ao-ete-merge { max-height: 26rem; overflow-y: auto; }
     .ao-ete-box .ao-ete-source { border: 0; border-radius: 0; }
     .ao-ete-box .ao-ete-preview { border: 0; border-radius: 0; }
 
@@ -3346,7 +3353,10 @@
        table to the bottom of its column instead of filling it. */
     .ao-eo-facts > .ao-find { display: flex; align-items: stretch; }
     .ao-eo-facts .ao-of-rows { flex: 1; }
-    .ao-eo-facts .ao-of-row { flex: 1 1 auto; }
+    /* Only the last row takes the slack — sharing it across all of them stretched every
+       row well past the reference's 29px rhythm. */
+    .ao-eo-facts .ao-of-row { flex: 0 0 auto; }
+    .ao-eo-facts .ao-of-row:last-child { flex: 1 1 auto; }
     .ao-eo-facts .ao-of-row-single { grid-template-columns: 9.5rem minmax(0, 1fr); }
 
     @media (max-width: 900px) { .ao-eo-facts { grid-template-columns: 1fr; } }
@@ -6297,6 +6307,21 @@
     .ao-gs-page .ao-gs-field > :not(input):not(select):not(textarea) { display: none !important; }
     .ao-gs-page .ao-gs-field > :not(input):not(select):not(textarea):has(input, select, textarea) { display: contents !important; }
     .ao-gs-page .ao-gs-field input { background-image: none !important; }
+
+    /* Measured clean, every control on a tab is already the same width. What changes it is
+       a password manager: the badge it puts inside the box is added as an inline
+       `padding-right` on the input, and with content-box that padding grows the outer
+       width — so one row ends up longer than the rest (Leandro, 2026-09-10, with the
+       extension's icon visible in his screenshot).
+
+       border-box means padding can no longer change the outer width, and pinning the
+       padding stops the text shifting under the badge as well. */
+    .ao-gs-page .ao-gs-field input,
+    .ao-gs-page .ao-gs-field select,
+    .ao-gs-page .ao-gs-field textarea {
+        box-sizing: border-box;
+        padding-right: 0.55rem !important;
+    }
 
     .ao-gs-hint { color: var(--wa-muted, #6b6b6b); font-size: 0.86rem; line-height: 1.35; }
 

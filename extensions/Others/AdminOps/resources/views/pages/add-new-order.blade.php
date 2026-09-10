@@ -152,15 +152,17 @@
                                     }
                                 }
                             @endphp
-                            {{-- Keyed by the product: picking a different one changes which
-                                 plans exist, and the key change is what tells Alpine's
-                                 morph to actually read the new list instead of keeping
-                                 the one it opened with. --}}
-                            @include('adminops::partials.select', [
-                                'model' => "items.{$index}.planId", 'live' => true, 'options' => $planOptions,
-                                'class' => 'ao-xw-sm',
-                                'key' => "plan-select-{$index}-{$item['productId']}",
-                            ])
+                            {{-- A real <select>, as the reference uses here: its list is
+                                 plain text, so there is nothing the custom dropdown buys
+                                 that the browser's own popup does not already draw — and
+                                 the browser's is what the target screenshot shows.
+                                 Keyed by the product so a changed plan list is re-read. --}}
+                            <select class="ao-xw-sm" wire:model.live="items.{{ $index }}.planId"
+                                wire:key="plan-select-{{ $index }}-{{ $item['productId'] }}">
+                                @foreach ($planOptions as $option)
+                                    <option value="{{ $option['value'] }}">{{ $option['label'] }}</option>
+                                @endforeach
+                            </select>
                             @if (str_starts_with((string) $item['planId'], 'x:'))
                                 <i class="ao-of-note">No {{ substr($item['planId'], 2) }} price is set for this
                                     product — give it one under Products/Services, or pick a cycle it prices.</i>
