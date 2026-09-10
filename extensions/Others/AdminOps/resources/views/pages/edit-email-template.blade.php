@@ -190,9 +190,18 @@
 
         <div class="ao-anc-card ao-ete-merge">
             <div class="ao-ete-merge-col">
+                {{-- The reference names each tag ("Client Name | {$client_name}"); the name
+                     is read out of the tag itself. --}}
+                @php
+                    $labelFor = function (string $token): string {
+                        preg_match('/([A-Za-z_]+)(?:\(\))?\s*\}\}/', $token, $m);
+
+                        return \Illuminate\Support\Str::of($m[1] ?? trim($token, '{}$ '))->snake()->replace('_', ' ')->title();
+                    };
+                @endphp
                 <h4 class="ao-ano-heading">Fields</h4>
                 @forelse ($merge['fields'] as $field)
-                    <p><code class="ao-ete-token">{{ $field }}</code></p>
+                    <p class="ao-ete-mrow"><span>{{ $labelFor($field) }}</span><code class="ao-ete-token">{{ $field }}</code></p>
                 @empty
                     <p class="ao-cpg-muted">This template takes no fields.</p>
                 @endforelse
@@ -200,7 +209,7 @@
                 @if ($merge['links'])
                     <h4 class="ao-ano-heading">Links</h4>
                     @foreach ($merge['links'] as $link)
-                        <p><code class="ao-ete-token">{{ $link }}</code></p>
+                        <p class="ao-ete-mrow"><span>{{ $labelFor($link) }}</span><code class="ao-ete-token">{{ $link }}</code></p>
                     @endforeach
                 @endif
             </div>

@@ -127,8 +127,12 @@
                             <select class="ao-xw-md" disabled><option>Select a product first</option></select>
                         @else
                             @php
+                                // The reference's dropdown speaks cycles (Monthly, One
+                                // Time…), not plan names — the same wording the grids use.
                                 $planOptions = $plansByItem[$index]->map(fn ($plan) => [
-                                    'value' => $plan->id, 'label' => $plan->name, 'group' => false,
+                                    'value' => $plan->id,
+                                    'label' => \Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::cycleLabel($plan) ?: $plan->name,
+                                    'group' => false,
                                 ])->all();
                             @endphp
                             {{-- Keyed by the product: picking a different one changes which
@@ -293,47 +297,50 @@
                             <label><input type="radio" value="transfer" wire:model.live="domains.{{ $i }}.type"> Transfer</label>
                         </span>
                     </div>
-                    <label class="ao-anc-row">
-                        <span>Domain</span>
-                        <input type="text" wire:model="domains.{{ $i }}.domain" placeholder="example.com" @disabled($off)>
-                    </label>
-                    <label class="ao-anc-row">
-                        <span>Registration Period</span>
-                        <select class="ao-w-25" wire:model="domains.{{ $i }}.period" @disabled($off)>
-                            @foreach ([1, 2, 3, 4, 5] as $years)
-                                <option value="{{ $years }}">{{ $years }} Year{{ $years > 1 ? 's' : '' }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-                    @if ($d['type'] === 'transfer')
+                    {{-- The reference folds the block to the one radio row while None. --}}
+                    @unless ($off)
                         <label class="ao-anc-row">
-                            <span>EPP Code</span>
-                            <input type="text" class="ao-w-40" wire:model="domains.{{ $i }}.epp"
-                                title="The transfer authorisation code the current registrar issues">
+                            <span>Domain</span>
+                            <input type="text" class="ao-ano-dom" wire:model="domains.{{ $i }}.domain" placeholder="example.com">
                         </label>
-                    @endif
-                    <div class="ao-anc-row">
-                        <span>Domain Addons</span>
-                        <span class="ao-ano-checks">
-                            <label><input type="checkbox" wire:model="domains.{{ $i }}.dns" @disabled($off)> DNS Management</label>
-                            <label><input type="checkbox" wire:model="domains.{{ $i }}.email_fwd" @disabled($off)> Email Forwarding</label>
-                            <label><input type="checkbox" wire:model="domains.{{ $i }}.id_protect" @disabled($off)> ID Protection</label>
-                        </span>
-                    </div>
-                    <label class="ao-anc-row">
-                        <span>Registration Price Override</span>
-                        <span class="ao-anc-field">
-                            <input type="text" class="ao-w-25" wire:model="domains.{{ $i }}.reg_price" @disabled($off)>
-                            <i>(Only enter to manually override default pricing)</i>
-                        </span>
-                    </label>
-                    <label class="ao-anc-row">
-                        <span>Renewal Price Override</span>
-                        <span class="ao-anc-field">
-                            <input type="text" class="ao-w-25" wire:model="domains.{{ $i }}.renew_price" @disabled($off)>
-                            <i>(Only enter to manually override default pricing)</i>
-                        </span>
-                    </label>
+                        <label class="ao-anc-row">
+                            <span>Registration Period</span>
+                            <select class="ao-xw-xs" wire:model="domains.{{ $i }}.period">
+                                @foreach ([1, 2, 3, 4, 5] as $years)
+                                    <option value="{{ $years }}">{{ $years }} Year{{ $years > 1 ? 's' : '' }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        @if ($d['type'] === 'transfer')
+                            <label class="ao-anc-row">
+                                <span>EPP Code</span>
+                                <input type="text" class="ao-xw-md" wire:model="domains.{{ $i }}.epp"
+                                    title="The transfer authorisation code the current registrar issues">
+                            </label>
+                        @endif
+                        <div class="ao-anc-row">
+                            <span>Domain Addons</span>
+                            <span class="ao-ano-checks">
+                                <label><input type="checkbox" wire:model="domains.{{ $i }}.dns"> DNS Management</label>
+                                <label><input type="checkbox" wire:model="domains.{{ $i }}.email_fwd"> Email Forwarding</label>
+                                <label><input type="checkbox" wire:model="domains.{{ $i }}.id_protect"> ID Protection</label>
+                            </span>
+                        </div>
+                        <label class="ao-anc-row">
+                            <span>Registration Price Override</span>
+                            <span class="ao-anc-field">
+                                <input type="text" class="ao-xw-xs" wire:model="domains.{{ $i }}.reg_price">
+                                <i>(Only enter to manually override default pricing)</i>
+                            </span>
+                        </label>
+                        <label class="ao-anc-row">
+                            <span>Renewal Price Override</span>
+                            <span class="ao-anc-field">
+                                <input type="text" class="ao-xw-xs" wire:model="domains.{{ $i }}.renew_price">
+                                <i>(Only enter to manually override default pricing)</i>
+                            </span>
+                        </label>
+                    @endunless
                 </div>
             @endforeach
 

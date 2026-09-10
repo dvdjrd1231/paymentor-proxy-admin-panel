@@ -161,13 +161,9 @@ class EmailTemplates extends Page
      */
     private function availableLocales(): array
     {
-        $active = TemplateLocale::active();
-        $default = (string) config('app.locale', 'en');
-
-        return array_diff_key(
-            $this->allLocales(),
-            array_flip([...$active, $default]),
-        );
+        // The reference lists English too — activating the store's own default is a
+        // harmless no-op for sending, and leaving it out read as a missing language.
+        return array_diff_key($this->allLocales(), array_flip(TemplateLocale::active()));
     }
 
     public function getTitle(): string
