@@ -158,7 +158,7 @@
                                  the one it opened with. --}}
                             @include('adminops::partials.select', [
                                 'model' => "items.{$index}.planId", 'live' => true, 'options' => $planOptions,
-                                'class' => 'ao-xw-md',
+                                'class' => 'ao-xw-sm',
                                 'key' => "plan-select-{$index}-{$item['productId']}",
                             ])
                             @if (str_starts_with((string) $item['planId'], 'x:'))

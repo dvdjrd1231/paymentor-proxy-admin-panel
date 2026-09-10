@@ -1738,6 +1738,11 @@
        is a phrase, not a field of one word. */
     .ao-tx-tabs + .ao-of .ao-of-md { width: 18.5rem; }
 
+    /* Air under the panel, so Filter and the list's own buttons are not read as one row
+       (Leandro, 2026-09-10: "there should be a big space between Search/Filter button and
+       Show Open Requests"). */
+    .ao-tx-tabs + .ao-of { margin-bottom: 1.5rem; }
+
     .ao-of-row {
         display: grid;
         /* Wider label columns: labels never wrap mid-word. */
@@ -3425,13 +3430,17 @@
         white-space: normal;
     }
 
-    .ao-xsel-opt:hover,
-    .ao-xsel-opt.ao-on {
-        background: #f5f5f5;
-        color: #262626;
+    .ao-xsel-opt:hover { background: #f5f5f5; color: #262626; }
+
+    /* The reference's list is a native popup, so its selected row is the OS highlight —
+       solid blue with white text, not the faint grey band this used to draw. */
+    .ao-xsel-opt.ao-on,
+    .ao-xsel-opt.ao-on:hover {
+        background: #1567c8;
+        color: #fff;
     }
 
-    .ao-xsel-opt.ao-on { font-weight: 600; }
+    .ao-xsel-opt.ao-on mark { background: transparent; color: inherit; }
 
     .ao-xsel-sub { display: block; color: #999; font-size: 0.85em; }
 
@@ -5287,6 +5296,9 @@
     .ao-eo-total .ao-eo-total-label { text-align: right; }
 
     .ao-eo-dead-btn { opacity: 0.55; cursor: help; }
+
+    /* A button this order's state leaves nothing to do, drawn as the reference greys it. */
+    .ao-eo-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* The service editor's picker row: the reference's select + Go left, New Addon at
        the row's right end. */
