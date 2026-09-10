@@ -7122,7 +7122,10 @@
     .ao-mud-text .ao-ml-head + p,
     .ao-mud-text .ao-ml-head + .ao-ml-row { margin-top: 0.2rem; }
 
-    .ao-ml-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+    /* The language and its Deactivate on one line. Deliberately inline rather than pushed
+       to opposite edges: the dialog's body shrinks each child to its content, so a
+       space-between here had no room to distribute and quietly did nothing. */
+    .ao-ml-row { display: flex; align-items: baseline; gap: 0.75rem; }
 
     .ao-mud-text select {
         width: 100%;
