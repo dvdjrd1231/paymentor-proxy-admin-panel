@@ -857,22 +857,36 @@
                         </select></span>
                     </div>
                 @endforeach
+                {{-- Each command applies to some states and not others, and a button that
+                     takes the click then answers "nothing to do" reads as broken (Leandro,
+                     issue #53). What cannot run is drawn inert with the reason on it. --}}
+                @php
+                    $svcState = (string) $svcModel->status;
+                    $hasServer = (bool) $svcModel->product?->server;
+                    $commands = [
+                        ['create', 'Create', ['pending'], 'Provision this service on its panel now?'],
+                        ['suspend', 'Suspend', ['active'], 'Suspend this service on its panel?'],
+                        ['unsuspend', 'Unsuspend', ['suspended'], 'Unsuspend this service on its panel?'],
+                        ['terminate', 'Terminate', ['active', 'suspended'], 'Terminate this service on its panel? This deprovisions it.'],
+                        ['change_package', 'Change Package', ['active'], 'Push the saved product and plan to the panel now? (Save Changes first if you just picked a different one.)'],
+                        ['change_password', 'Change Password', ['active', 'suspended'], 'Generate a new proxy password on the panel? The current one stops working immediately.'],
+                    ];
+                @endphp
                 <div class="ao-of-row ao-of-row-single">
                     <span class="ao-of-label">Module Commands</span>
                     <span class="ao-of-inline">
-                        <button type="button" class="ao-of-go" wire:click="runModule('create')"
-                            wire:confirm="Provision this service on its panel now?">Create</button>
-                        <button type="button" class="ao-of-go" wire:click="runModule('suspend')"
-                            wire:confirm="Suspend this service on its panel?">Suspend</button>
-                        <button type="button" class="ao-of-go" wire:click="runModule('unsuspend')"
-                            wire:confirm="Unsuspend this service on its panel?">Unsuspend</button>
-                        <button type="button" class="ao-of-go" wire:click="runModule('terminate')"
-                            wire:confirm="Terminate this service on its panel? This deprovisions it.">Terminate</button>
-                        <button type="button" class="ao-of-go" wire:click="runModule('change_package')"
-                            title="Pushes the saved Product/Service and Billing Cycle to the panel — pick them above and Save Changes first"
-                            wire:confirm="Push the saved product and plan to the panel now? (Save Changes first if you just picked a different one.)">Change Package</button>
-                        <button type="button" class="ao-of-go" wire:click="runModule('change_password')"
-                            wire:confirm="Generate a new proxy password on the panel? The current one stops working immediately.">Change Password</button>
+                        @foreach ($commands as [$cmd, $label, $states, $confirm])
+                            @php $can = $hasServer && in_array($svcState, $states, true); @endphp
+                            <button type="button" class="ao-of-go" @disabled(!$can)
+                                title="{{ $can
+                                    ? ($cmd === 'change_package'
+                                        ? 'Pushes the saved Product/Service and Billing Cycle to the panel — pick them above and Save Changes first'
+                                        : $label . ' this service on its panel')
+                                    : (!$hasServer
+                                        ? 'This product has no server module, so there is nothing to command'
+                                        : $label . ' applies to a ' . implode(' or ', $states) . ' service — this one is ' . $svcState) }}"
+                                @if ($can) wire:click="runModule('{{ $cmd }}')" wire:confirm="{{ $confirm }}" @endif>{{ $label }}</button>
+                        @endforeach
                     </span>
                 </div>
                 <div class="ao-of-row ao-of-row-single">

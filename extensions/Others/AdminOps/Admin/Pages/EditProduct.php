@@ -660,7 +660,12 @@ class EditProduct extends Page
                 ->get(['config_options.id', 'config_options.name', 'config_options.description',
                     'config_options.env_variable', 'config_options.type', 'config_options.sort',
                     'config_options.hidden']),
-            'otherProducts' => Product::whereKeyNot($this->product->id)->orderBy('name')->get(['id', 'name']),
+            // With the group, because the reference names each row "Group - Product" —
+            // "IPv6 Residential Amethyst - M" alone does not say which plan it belongs to.
+            'otherProducts' => Product::whereKeyNot($this->product->id)
+                ->with('category:id,name')
+                ->orderBy('category_id')->orderBy('name')
+                ->get(['id', 'name', 'category_id']),
             'moduleFields' => $moduleFields,
             'urlPrefix' => rtrim((string) config('app.url'), '/') . '/products/'
                 . ($this->product->category?->slug ?? '') . '/',
