@@ -1001,6 +1001,31 @@
         gap: 0.5rem;
     }
 
+    /* Core's own resource screens (Users, Failed Jobs, Audit Log, Error Log) are Filament
+       resources, not Page classes, so they arrive with two pieces of chrome the WHMCS
+       window standard does not have. Skinned rather than rebuilt: these are stock core
+       screens, and restyling the shell brings every one of them — and any core resource a
+       future update adds — to the standard without a core edit apiece.
+
+       The breadcrumb first. "Users › List" over a page already titled Users says nothing
+       twice, and no window built to the standard carries one. */
+    .fi-breadcrumbs {
+        display: none;
+    }
+
+    /* And the pager: the reference closes a list with a grey band, the same grey as the
+       toolbar above the grid, rather than Filament's white strip. */
+    .fi-pagination {
+        background: #f5f5f5;
+        border-top: 1px solid var(--wa-panel-border);
+        padding: 0.55rem 0.75rem;
+    }
+
+    .fi-pagination-overview {
+        font-size: 15px;
+        color: var(--wa-ink);
+    }
+
     /* Empty lists: the reference states the fact in one grey line, centred, with no
        illustration above it. */
     .fi-ta-empty-state-icon-bg {

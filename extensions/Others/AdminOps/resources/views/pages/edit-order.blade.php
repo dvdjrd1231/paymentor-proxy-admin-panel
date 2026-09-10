@@ -166,8 +166,8 @@
                             <td colspan="6">
                                 <div class="ao-eo-prov-line">
                                     <span class="ao-eo-prov-inert" title="{{ $panelUser ? 'The panel account this service runs as' : 'Credentials are issued by the panel when it creates the account, not chosen here' }}">
-                                        Username: <input type="text" disabled value="{{ $panelUser }}">
-                                        Password: <input type="text" disabled value="{{ $panelPass }}">
+                                        Username: <input type="text" readonly value="{{ $panelUser }}">
+                                        Password: <input type="text" readonly value="{{ $panelPass }}">
                                     </span>
                                     <span class="ao-eo-prov-inert" title="A product names its server, so every service on it provisions there">
                                         Server:

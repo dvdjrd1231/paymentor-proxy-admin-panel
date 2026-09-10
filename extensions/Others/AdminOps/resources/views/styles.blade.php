@@ -2433,8 +2433,30 @@
         align-items: center;
     }
 
-    .ao-eo-prov-inert { opacity: 0.55; display: inline-flex; align-items: center; gap: 0.35rem; }
-    .ao-eo-prov-inert input { width: 9rem; }
+    /* The reference draws these white in the band — full-strength boxes carrying real
+       values, with the titles explaining what can't change here. */
+    .ao-eo-prov-inert { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .ao-eo-prov-inert input {
+        width: 9rem;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        color: var(--wa-ink, #2b2b2b);
+        font: inherit;
+        font-size: 0.9rem;
+    }
+    .ao-eo-prov-inert select {
+        min-width: 14rem;
+        height: 1.9rem;
+        padding: 0 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        color: var(--wa-ink, #2b2b2b);
+        font: inherit;
+        font-size: 0.9rem;
+    }
 
     /* The ticket view's Ticket Info rail. The reference runs it down the left of the
        ticket, narrow and quiet, so the ticket itself keeps the width. */
@@ -3242,6 +3264,27 @@
         color: #888;
     }
 
+    /* The template editor's Attachments row, drawn at full strength like the
+       reference — the titles carry why the pair cannot submit anything. */
+    .ao-ete-attach input[type="file"] {
+        width: 100%;
+        max-width: 46rem;
+        height: 2.1rem;
+        padding: 0.28rem 0.55rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        font-size: 0.9rem;
+    }
+    .ao-ete-attach .ao-of-go { display: inline-block; margin: 0; align-self: flex-start; }
+
+    /* The reference sizes these controls to their meaning, not the row — Payment
+       Method and Order Status are compact where Client runs the width. */
+    .ao-xsel.ao-xw-xs, .ao-anc-row .ao-xw-xs { width: 8.5rem; }
+    .ao-xsel.ao-xw-sm, .ao-anc-row .ao-xw-sm { width: 11rem; }
+    .ao-xsel.ao-xw-md, .ao-anc-row .ao-xw-md { width: 15rem; }
+    .ao-anc-row input.ao-ano-dom { width: 20rem; }
+
     /* The type-to-search variant: the frame is the span, the input inside is bare. */
     .ao-xsel-editable:focus-within {
         border-color: var(--wa-link, #337ab7);
@@ -3762,6 +3805,13 @@
         flex-wrap: wrap;
         border-bottom: 1px solid var(--wa-panel-border, #ddd);
         margin-bottom: 1rem;
+        /* An earlier .ao-tabs rule sets `overflow-x: auto` for a strip that scrolls
+           sideways rather than wrapping. This one wraps, and the two together are what put
+           the scrollbar down the side of the Client Profile's tabs (Leandro, 2026-09-10:
+           "Remove scrollbar"): once either axis is not `visible`, the other computes to
+           `auto` instead of `visible`, so the horizontal rule quietly bought a vertical
+           scrollbar. A wrapped strip has nothing to scroll — it grows a second row. */
+        overflow: visible;
     }
 
     /* The reference's file-folder tabs: evenly rounded top corners, a light face, and the

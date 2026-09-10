@@ -10,7 +10,8 @@
             <a class="ao-mu-tab" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::getUrl() }}">&laquo; Back to List</a>
         </div>
 
-        <form wire:submit.prevent="save" x-data="{ rich: false }">
+        {{-- rich starts on: the reference opens with its toolbar showing. --}}
+        <form wire:submit.prevent="save" x-data="{ rich: true }">
             <div class="ao-find ao-of ao-ete-band">
                 {{-- The reference's band, row for row: From, Copy To, Blind Copy To,
                      Attachments, Plain-Text, Disable. The template's own name is the
@@ -23,10 +24,10 @@
                     <div class="ao-of-row ao-of-row-single">
                         <span class="ao-of-label">From</span>
                         <span class="ao-of-inline ao-ete-from">
-                            <input type="text" class="ao-of-lg" disabled
+                            <input type="text" class="ao-of-lg" readonly
                                 value="{{ config('settings.mail_from_name') ?: config('app.name') }}"
                                 title="Every email leaves under one name and address, set on General Settings → Mail — not per template">
-                            <input type="text" class="ao-of-lg" disabled
+                            <input type="text" class="ao-of-lg" readonly
                                 value="{{ config('settings.mail_from_address') }}"
                                 title="Every email leaves under one name and address, set on General Settings → Mail — not per template">
                         </span>
@@ -56,7 +57,7 @@
                              under them: the reference's rows are one line each, and a
                              paragraph of explanation per row was what made this band twice
                              the height of the one in the screenshots. --}}
-                        <span class="ao-of-stack ao-gs-off"
+                        <span class="ao-of-stack ao-ete-attach"
                             title="Not available: nothing is stored against a template to attach. An invoice reaches the client as a link to its own page, where the PDF is downloaded.">
                             <input type="file" disabled>
                             <button type="button" class="ao-of-go" disabled>&plus; Add More</button>
@@ -65,7 +66,7 @@
 
                     <div class="ao-of-row ao-of-row-single">
                         <span class="ao-of-label">Plain-Text</span>
-                        <span class="ao-of-check ao-gs-off"
+                        <span class="ao-of-check"
                             title="Not available: each email is sent as HTML with a plain-text part alongside, so a client whose reader refuses HTML already gets the text.">
                             <input type="checkbox" disabled>
                             Check to send this email in Plain-Text format only
