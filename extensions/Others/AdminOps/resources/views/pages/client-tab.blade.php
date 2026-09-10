@@ -52,22 +52,19 @@
 
 @if ($tab === 'transactions' && $totals)
     <div class="ao-ct-cards">
+        {{-- The reference's four figures, in its order. Balance is what reached the
+             merchant: what came in, less what the gateways took and anything refunded. --}}
         @foreach ([
             'TOTAL IN' => $totals['in'],
+            'TOTAL FEES' => $totals['fees'] ?? 0,
             'TOTAL OUT' => $totals['out'],
-            'BALANCE' => $totals['in'] - $totals['out'],
+            'BALANCE' => $totals['in'] - ($totals['fees'] ?? 0) - $totals['out'],
         ] as $label => $value)
             <div class="ao-ct-card">
                 <b>{{ number_format($value, 2) }}</b>
                 <span>{{ $label }}</span>
             </div>
         @endforeach
-        {{-- The reference's fourth figure. Gateway fees are charged to the merchant by the
-             gateway, and nothing here records what each one took. --}}
-        <div class="ao-ct-card ao-gs-off" title="Nothing records what each gateway took from a payment">
-            <b>&mdash;</b>
-            <span>TOTAL FEES</span>
-        </div>
     </div>
 @endif
 
@@ -130,7 +127,7 @@
                             @break
                         @case('transactions')
                             <th>Date</th><th>Method</th><th>Description</th>
-                            <th class="ao-num">In</th><th class="ao-num">Out</th>
+                            <th class="ao-num">In</th><th class="ao-num">Fees</th><th class="ao-num">Out</th>
                             @break
                         @case('tickets')
                             <th>ID</th><th>Subject</th><th>Status</th><th>Opened</th>
@@ -186,6 +183,7 @@
                                 <td>{{ $row['method'] }}</td>
                                 <td>{{ $row['description'] }}</td>
                                 <td class="ao-num">{{ $row['in'] > 0 ? number_format($row['in'], 2) : '—' }}</td>
+                                <td class="ao-num">{{ ($row['fee'] ?? 0) > 0 ? number_format($row['fee'], 2) : '—' }}</td>
                                 <td class="ao-num ao-tx-out">{{ $row['out'] > 0 ? number_format($row['out'], 2) : '—' }}</td>
                                 @break
 
