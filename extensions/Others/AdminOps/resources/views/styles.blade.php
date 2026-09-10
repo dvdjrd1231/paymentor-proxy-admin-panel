@@ -2607,9 +2607,26 @@
     .ao-ete-toolbar { margin-top: 0.9rem; border-radius: 4px 4px 0 0; }
     .ao-ete-toolbar + .ao-ete-source { border-radius: 0 0 4px 4px; }
 
+    /* The reference's editor is one bordered box — toolbar, writing surface and the
+       status strip share a frame rather than floating as three separate blocks. */
+    .ao-ete-box {
+        margin-top: 0.9rem;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: 4px;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .ao-ete-box .ao-ete-toolbar { margin-top: 0; border: 0; border-bottom: 1px solid var(--wa-panel-border, #ddd); border-radius: 0; }
+    .ao-ete-box .ao-ete-source { border: 0; border-radius: 0; }
+    .ao-ete-box .ao-ete-preview { border: 0; border-radius: 0; }
+
     /* The reference's word count, on the editor's bottom edge and right-aligned. */
     .ao-ete-count {
-        margin-top: 0.3rem;
+        margin: 0;
+        padding: 0.3rem 0.7rem;
+        border-top: 1px solid var(--wa-panel-border, #ddd);
+        background: #fbfbfb;
         text-align: right;
         font-size: 0.78rem;
         text-transform: uppercase;
@@ -3284,8 +3301,13 @@
     .ao-eo .ao-mu-grid td { padding: 0.5rem 0.6rem; }
     .ao-eo .ao-of-row select { height: 1.7rem; font-size: 0.82rem; }
 
-    /* The reference's two side-by-side fact tables, each with its own row count. */
-    .ao-eo-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; align-items: start; }
+    /* The reference's two side-by-side fact tables. They end level there because its
+       client cell carries four address lines; ours has fewer, so the shorter table's
+       rows share out the height rather than leaving a gap beneath the box. */
+    .ao-eo-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; align-items: stretch; }
+    .ao-eo-facts > .ao-find { display: flex; }
+    .ao-eo-facts .ao-of-rows { flex: 1; }
+    .ao-eo-facts .ao-of-row { flex: 1 1 auto; }
     .ao-eo-facts .ao-of-row-single { grid-template-columns: 9.5rem minmax(0, 1fr); }
 
     @media (max-width: 900px) { .ao-eo-facts { grid-template-columns: 1fr; } }
@@ -7349,7 +7371,9 @@
 
     .ao-ml-head { font-weight: 600; }
     .ao-mud-text .ao-ml-head + p,
-    .ao-mud-text .ao-ml-head + .ao-ml-row { margin-top: 0.2rem; }
+    /* Each row is a <p>, so the skin's paragraph margin has to be beaten inside the
+       list — left alone it hung a gap under the last language. */
+    .ao-mud-text .ao-ml-list p.ao-ml-row { margin: 0; }
 
     /* The active languages read as a real list — a bordered box, one striped row each,
        the name at the left and its Deactivate at the right. Loose text with a link

@@ -122,30 +122,34 @@
                     title="The rendered Markdown; placeholders show as tokens and are filled with the client's real values when the email sends">Preview</button>
             </div>
 
-            @if ($mode === 'source')
-                {{-- The same Markdown toolbar the ticket editors use, so a formatting button
-                     writes into the box instead of taking it over. --}}
-                <div class="ao-ont-toolbar ao-ete-toolbar" x-show="rich" x-cloak>
-                    <button type="button" data-md="**" title="Bold"><b>B</b></button>
-                    <button type="button" data-md="*" title="Italic"><i>I</i></button>
-                    <button type="button" data-md-line="# " title="Heading"><b>H</b></button>
-                    <button type="button" data-md-line="[Link](https://)" title="Link">&#128279;</button>
-                    <button type="button" data-md-line="- " title="Bullet list">&#8226;&#8226;</button>
-                    <button type="button" data-md-line="1. " title="Numbered list">1.</button>
-                    <button type="button" data-md-line="> " title="Quote">&#10078;</button>
-                </div>
+            {{-- One bordered box, as the reference frames its editor: toolbar, writing
+                 surface and the status strip inside a single frame. --}}
+            <div class="ao-ete-box">
+                @if ($mode === 'source')
+                    {{-- The same Markdown toolbar the ticket editors use, so a formatting
+                         button writes into the box instead of taking it over. --}}
+                    <div class="ao-ont-toolbar ao-ete-toolbar" x-show="rich" x-cloak>
+                        <button type="button" data-md="**" title="Bold"><b>B</b></button>
+                        <button type="button" data-md="*" title="Italic"><i>I</i></button>
+                        <button type="button" data-md-line="# " title="Heading"><b>H</b></button>
+                        <button type="button" data-md-line="[Link](https://)" title="Link">&#128279;</button>
+                        <button type="button" data-md-line="- " title="Bullet list">&#8226;&#8226;</button>
+                        <button type="button" data-md-line="1. " title="Numbered list">1.</button>
+                        <button type="button" data-md-line="> " title="Quote">&#10078;</button>
+                    </div>
 
-                <textarea class="ao-ete-source" rows="18" wire:model="body" spellcheck="false"
-                    data-ao-message
-                    title="Markdown with Blade placeholders — @{{ $ip }} and friends are filled in when the email sends. The toolbar writes Markdown into this box; a WYSIWYG surface is not offered because owning the HTML means rewriting those placeholders as plain text and breaking them."></textarea>
+                    <textarea class="ao-ete-source" rows="18" wire:model="body" spellcheck="false"
+                        data-ao-message
+                        title="Markdown with Blade placeholders — @{{ $ip }} and friends are filled in when the email sends. The toolbar writes Markdown into this box; a WYSIWYG surface is not offered because owning the HTML means rewriting those placeholders as plain text and breaking them."></textarea>
+                @else
+                    <div class="ao-ete-preview">{!! $this->previewHtml() !!}</div>
+                @endif
 
                 {{-- The reference closes the editor with a word count along its bottom edge.
                      Counted from the stored body, so it is the real length rather than a
                      number that only updates when the box is retyped. --}}
                 <p class="ao-ete-count">{{ str_word_count(strip_tags($body)) }} words</p>
-            @else
-                <div class="ao-ete-preview">{!! $this->previewHtml() !!}</div>
-            @endif
+            </div>
 
             {{-- One version per language Manage Languages has activated. Leaving a version
                  blank is how you say "no translation" — the default sends instead, which is
