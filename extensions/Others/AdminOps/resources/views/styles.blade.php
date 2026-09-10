@@ -2544,7 +2544,25 @@
 
     .ao-ete-subject label { font-size: 0.95rem; }
 
-    .ao-ete-subject input {
+    /* The reference hangs this button off the right of the version line, level with the
+       heading rather than with the sentence under it.
+       Scoped through .ao-mu on purpose: .ao-of-go carries `margin: 0.8rem auto 0` and is
+       declared much later in this sheet, so a single-class rule here lost on order and the
+       auto margins kept centring the button on its own line. */
+    .ao-mu .ao-ete-versionbar .ao-ete-rich {
+        margin: 0;
+        flex: none;
+        align-self: flex-start;
+        white-space: nowrap;
+    }
+
+    /* Sits on the source box rather than floating above it. */
+    .ao-ete-toolbar { margin-top: 0.9rem; border-radius: 4px 4px 0 0; }
+    .ao-ete-toolbar + .ao-ete-source { border-radius: 0 0 4px 4px; }
+
+    /* Same reason as the button above — scoped so it outranks the sheet's later, broader
+       input rules rather than depending on where it happens to sit in the file. */
+    .ao-mu .ao-ete-subject input {
         flex: 1;
         min-width: 0;
         max-width: 46rem;
@@ -2552,6 +2570,7 @@
         padding: 0 0.5rem;
         border: 1px solid var(--wa-border, #ccc);
         border-radius: 3px;
+        background: #fff;
         font-size: 0.9rem;
     }
 
@@ -5077,6 +5096,8 @@
     .ao-eo-notes-text { margin: 0 0 0.6rem; padding: 0.5rem 0.7rem; background: #fcf8e3; border: 1px solid #faebcc; border-radius: 4px; white-space: pre-wrap; }
 
     .ao-eo-total td { background: var(--wa-navy, #1a4d80); color: #fff; font-weight: 700; }
+
+    .ao-eo-total .ao-eo-total-value { white-space: nowrap; }
 
     .ao-eo-total .ao-eo-total-label { text-align: right; }
 
