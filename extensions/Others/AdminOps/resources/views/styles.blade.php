@@ -2102,6 +2102,13 @@
     /* Stacked lines inside one field cell — the reference's Upload File radios. */
     .ao-of-stack { display: flex; flex-direction: column; gap: 0.35rem; padding-block: 0.15rem; }
 
+    /* The reference's quiet hint under a field, inside the grey cell. */
+    .ao-of-note-dim { font-style: normal; color: var(--wa-muted, #6b6b6b); font-size: 0.85rem; }
+
+    /* Stacked cells hold a field over its hint; the row's centring must not centre the
+       pair horizontally once the direction flips to column. */
+    .ao-of-row > .ao-of-stack { flex-direction: column; align-items: flex-start; justify-content: flex-start; }
+
     .ao-of-check {
         display: inline-flex;
         align-items: center;

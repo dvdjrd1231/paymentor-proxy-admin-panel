@@ -60,6 +60,11 @@ if (class_exists(\Paymenter\Extensions\Others\GatewayRules\GatewayRules::class))
     ));
 }
 
+// The admin's drag order from the Payment Gateways screen (same touchpoint).
+if (class_exists(\Paymenter\Extensions\Others\AdminOps\Support\GatewayOrder::class)) {
+    $gateways = \Paymenter\Extensions\Others\AdminOps\Support\GatewayOrder::sort($gateways);
+}
+
 return $gateways;
 ```
 
