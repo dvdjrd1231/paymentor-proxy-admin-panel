@@ -119,27 +119,79 @@
                  surface and the status strip inside a single frame. The reference has no
                  tab strip above it — its source and preview are toolbar buttons, so ours
                  are too. --}}
-            <div class="ao-ete-box">
-                @if ($mode === 'source')
-                    {{-- The same Markdown toolbar the ticket editors use, so a formatting
-                         button writes into the box instead of taking it over. --}}
-                    <div class="ao-ont-toolbar ao-ete-toolbar" x-show="rich" x-cloak>
-                        <button type="button" data-md="**" title="Bold"><b>B</b></button>
-                        <button type="button" data-md="*" title="Italic"><i>I</i></button>
-                        <button type="button" data-md-line="# " title="Heading"><b>H</b></button>
-                        <button type="button" data-md-line="[Link](https://)" title="Link">&#128279;</button>
-                        <button type="button" data-md-line="- " title="Bullet list">&#8226;&#8226;</button>
-                        <button type="button" data-md-line="1. " title="Numbered list">1.</button>
-                        <button type="button" data-md-line="> " title="Quote">&#10078;</button>
+            <div class="ao-ete-box" x-data="{ menu: null }" @click.outside="menu = null">
+                {{-- The reference's menu bar and its two toolbar rows. Every control writes
+                     Markdown into the box below rather than taking the surface over: these
+                     bodies carry live Blade (@verbatim{{ $invoice->number }}@endverbatim,
+                     @verbatim@foreach@endverbatim) and an editor that owns the HTML rewrites
+                     those as plain text, which silently breaks the email. --}}
+                <div class="ao-ete-menubar" x-show="rich" x-cloak>
+                    @foreach ([
+                        'File' => [['Save', 'save', null], ['Print…', 'print', null]],
+                        'Edit' => [['Undo', 'undo', null], ['Redo', 'redo', null], ['Select all', 'selectall', null]],
+                        'View' => [['Source code', 'source', null], ['Preview', 'preview', null], ['Fullscreen', 'fullscreen', null]],
+                        'Insert' => [['Link', null, '[Link](https://)'], ['Image', null, '![alt](https://)'], ['Horizontal rule', null, '---'], ['Special character…', 'omega', null]],
+                        'Format' => [['Bold', null, '**'], ['Italic', null, '*'], ['Strikethrough', null, '~~'], ['Code', null, '`'], ['Clear formatting', 'clearfmt', null]],
+                        'Table' => [['Insert table', null, "| Column | Column |\n| --- | --- |\n| Cell | Cell |"]],
+                        'Help' => [['Markdown guide', 'help', null]],
+                    ] as $label => $entries)
+                        <div class="ao-ete-menu">
+                            <button type="button" @click.stop="menu = (menu === @js($label) ? null : @js($label))"
+                                :class="{ 'ao-on': menu === @js($label) }">{{ $label }}</button>
+                            <ul x-show="menu === @js($label)" x-cloak>
+                                @foreach ($entries as [$item, $act, $md])
+                                    <li><button type="button" @click="menu = null"
+                                        @if ($act) data-ao-act="{{ $act }}" @endif
+                                        @if ($md) data-md-line="{{ $md }}" @endif>{{ $item }}</button></li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="ao-ont-toolbar ao-ete-toolbar" x-show="rich" x-cloak>
+                    <select class="ao-ete-sel" data-ao-block title="Paragraph format">
+                        <option value="">Paragraph</option>
+                        <option value="# ">Heading 1</option>
+                        <option value="## ">Heading 2</option>
+                        <option value="### ">Heading 3</option>
+                    </select>
+                    <span class="ao-rte-sep"></span>
+                    <button type="button" data-md="**" title="Bold"><b>B</b></button>
+                    <button type="button" data-md="*" title="Italic"><i>I</i></button>
+                    <button type="button" data-md="~~" title="Strikethrough"><s>S</s></button>
+                    <button type="button" data-md="`" title="Inline code">&lt;/&gt;</button>
+                    <span class="ao-rte-sep"></span>
+                    <button type="button" data-md-line="[Link](https://)" title="Insert link">&#128279;</button>
+                    <button type="button" data-md-line="![alt](https://)" title="Insert image">&#128444;</button>
+                    <span class="ao-rte-sep"></span>
+                    <button type="button" data-md-line="- " title="Bullet list">&#8226;&#8226;</button>
+                    <button type="button" data-md-line="1. " title="Numbered list">1.</button>
+                    <button type="button" data-md-line="> " title="Quote">&#10078;</button>
+                </div>
+
+                <div class="ao-ont-toolbar ao-ete-toolbar ao-ete-toolbar2" x-show="rich" x-cloak>
+                    <button type="button" data-ao-act="undo" title="Undo">&#8630;</button>
+                    <button type="button" data-ao-act="redo" title="Redo">&#8631;</button>
+                    <span class="ao-rte-sep"></span>
+                    <button type="button" data-md-line="---" title="Horizontal rule">&#8213;</button>
+                    <button type="button" data-md-line="| Column | Column |&#10;| --- | --- |&#10;| Cell | Cell |" title="Insert table">&#9638;</button>
+                    <button type="button" data-ao-act="omega" title="Special character">&Omega;</button>
+                    <span class="ao-rte-sep"></span>
+                    <button type="button" data-ao-act="print" title="Print">&#128424;</button>
+                    <button type="button" data-ao-act="fullscreen" title="Fullscreen">&#9974;</button>
+                    <button type="button" data-ao-act="clearfmt" title="Clear formatting">&#10006;</button>
+                    <span class="ao-rte-sep"></span>
+                    <button type="button" data-ao-act="help" title="Markdown guide">?</button>
+                    {{-- The reference keeps source/preview here, as its <> button. --}}
+                    @if ($mode === 'source')
                         <button type="button" class="ao-ete-mode" wire:click="$set('mode', 'preview')"
                             title="The rendered Markdown; placeholders show as tokens and are filled with the client's real values when the email sends">&#128065; Preview</button>
-                    </div>
-                @else
-                    <div class="ao-ont-toolbar ao-ete-toolbar">
+                    @else
                         <button type="button" class="ao-ete-mode ao-on" wire:click="$set('mode', 'source')"
-                            title="Back to the Markdown source">&#60;&#62; Source code</button>
-                    </div>
-                @endif
+                            title="Back to the Markdown source">&lt;&gt; Source code</button>
+                    @endif
+                </div>
 
                 @if ($mode === 'source')
 
@@ -268,6 +320,68 @@
                 }
                 box.value = text;
                 box.dispatchEvent(new Event('input', { bubbles: true }));
+                box.focus();
+            });
+
+            {{-- The toolbar's non-inserting controls. undo/redo go through execCommand so
+                 the textarea's own history is used rather than a second one of ours. --}}
+            root.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-ao-act]');
+                if (!button) return;
+                const box = root.querySelector('[data-ao-message]');
+                const act = button.dataset.aoAct;
+
+                if (act === 'print') return window.print();
+                if (act === 'help') return window.open('https://www.markdownguide.org/basic-syntax/', '_blank', 'noopener');
+                if (act === 'fullscreen') {
+                    const frame = button.closest('.ao-ete-box');
+                    return frame.classList.toggle('ao-ete-full');
+                }
+                if (!box) return;
+                box.focus();
+
+                if (act === 'undo' || act === 'redo' || act === 'selectall') {
+                    if (act === 'selectall') return box.select();
+                    return document.execCommand(act);
+                }
+
+                if (act === 'omega') {
+                    const ch = window.prompt('Character to insert', '€');
+                    if (!ch) return;
+                    document.execCommand('insertText', false, ch);
+                    return box.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                if (act === 'clearfmt') {
+                    const [start, end] = [box.selectionStart, box.selectionEnd];
+                    if (start === end) return;
+                    // Strip the Markdown that wraps or opens the selection, nothing else —
+                    // a placeholder inside it must come through untouched.
+                    const plain = box.value.slice(start, end)
+                        .replace(/(\*\*|__|~~|`|\*|_)/g, '')
+                        .replace(/^\s*(#{1,6}\s+|>\s+|[-*+]\s+|\d+\.\s+)/gm, '');
+                    document.execCommand('insertText', false, plain);
+                    return box.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            });
+
+            {{-- The Paragraph/Heading select: sets the heading level of the caret's line. --}}
+            root.addEventListener('change', (event) => {
+                const select = event.target.closest('[data-ao-block]');
+                if (!select) return;
+                const box = root.querySelector('[data-ao-message]');
+                if (!box) return;
+
+                const at = box.selectionStart;
+                const from = box.value.lastIndexOf('\n', at - 1) + 1;
+                let to = box.value.indexOf('\n', at);
+                if (to === -1) to = box.value.length;
+
+                const line = box.value.slice(from, to).replace(/^#{1,6}\s+/, '');
+                box.setSelectionRange(from, to);
+                document.execCommand('insertText', false, select.value + line);
+                box.dispatchEvent(new Event('input', { bubbles: true }));
+                select.value = '';
                 box.focus();
             });
         })();

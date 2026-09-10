@@ -143,11 +143,13 @@
                         [$payLabel, $payClass] = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditOrder::linePayment($service);
                     @endphp
                     <tr>
-                        {{-- The reference's Item is the product group; the hop to the
-                             service editor rides on it. --}}
+                        {{-- The reference names the *kind* of line here — "Product/Service"
+                             for a service row — and leaves the product itself to the
+                             Description beside it (Leandro's own order 3770). The hop to
+                             the service editor rides on it. --}}
                         <td class="ao-eo-item">
                             <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $order->user_id, 'tab' => 'services', 'service' => $service->id]) }}">
-                                {{ $service->product?->category?->name ?? 'Product/Service' }}
+                                Product/Service
                             </a>
                         </td>
                         <td class="ao-mu-left">
