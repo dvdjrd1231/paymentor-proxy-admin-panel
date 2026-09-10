@@ -157,6 +157,17 @@
                     @endswitch
                 </tr>
             </thead>
+            {{-- The reference colours a status rather than printing it grey: green for
+                 settled, red for wanting money or attention, amber for in-between, grey
+                 for closed. Every tab's status cell reads its word through this. --}}
+            @php
+                $statusTone = fn (?string $state): string => match (strtolower((string) $state)) {
+                    'paid', 'active', 'completed', 'closed_won' => 'ao-tag-success',
+                    'unpaid', 'overdue', 'failed', 'suspended', 'open' => 'ao-tag-danger',
+                    'pending', 'draft', 'in_progress', 'on_hold', 'replied' => 'ao-tag-warning',
+                    default => '',
+                };
+            @endphp
             <tbody>
                 @foreach ($rows as $row)
                     <tr>
@@ -166,7 +177,7 @@
                                      Products/Services editor with the service selected. --}}
                                 <td><a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $row->user_id, 'tab' => 'services', 'service' => $row->id]) }}">#{{ $row->id }}</a></td>
                                 <td>{{ $row->product?->name ?? 'product gone' }}</td>
-                                <td><span class="ao-tag">{{ $row->status }}</span></td>
+                                <td><span class="ao-tag {{ $statusTone($row->status) }}">{{ $row->status }}</span></td>
                                 <td class="ao-num">{{ number_format((float) $row->price, 2) }} {{ $row->currency_code }}</td>
                                 <td>{{ $row->expires_at?->format('j M Y') ?? '—' }}</td>
                                 @break
@@ -189,7 +200,7 @@
 
                             @case('invoices')
                                 <td><a class="ao-link" href="{{ $urls['invoice']($row->id) }}">#{{ $row->number ?: $row->id }}</a></td>
-                                <td><span class="ao-tag">{{ $row->status }}</span></td>
+                                <td><span class="ao-tag {{ $statusTone($row->status) }}">{{ $row->status }}</span></td>
                                 <td class="ao-num">{{ number_format((float) $row->total, 2) }} {{ $row->currency_code }}</td>
                                 <td>{{ $row->due_at?->format('j M Y') ?? '—' }}</td>
                                 @break
@@ -206,7 +217,7 @@
                             @case('tickets')
                                 <td><a class="ao-link" href="{{ $urls['ticket']($row->id) }}">#{{ $row->id }}</a></td>
                                 <td>{{ $row->subject }}</td>
-                                <td><span class="ao-tag">{{ $row->status }}</span></td>
+                                <td><span class="ao-tag {{ $statusTone($row->status) }}">{{ $row->status }}</span></td>
                                 <td>{{ $row->created_at?->format('j M Y') ?? '—' }}</td>
                                 @break
 

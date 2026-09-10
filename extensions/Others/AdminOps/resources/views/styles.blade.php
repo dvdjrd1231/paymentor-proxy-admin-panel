@@ -2813,7 +2813,20 @@
     /* ── The client profile's tabs ────────────────────────────────────────────────
        The reference heads each list tab with its own buttons, and Tickets and
        Transactions with a band of four figures across the top. */
-    .ao-ct-head:not(:empty) { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+    /* The reference's tab toolbar: a grey band across the top of the panel with its
+       buttons pushed to the right, not bare links floating at the left. */
+    .ao-ct-head:not(:empty) {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-bottom: 0;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-bottom: 0;
+        border-radius: 4px 4px 0 0;
+        background: #f5f5f5;
+    }
 
     .ao-ct-cards {
         display: grid;
