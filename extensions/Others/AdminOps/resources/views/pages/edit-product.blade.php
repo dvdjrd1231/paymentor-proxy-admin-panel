@@ -755,21 +755,52 @@
                         Product Cross sells
                         <i>Shown as recommendations on this product's own page.</i>
                     </span>
-                    <span class="ao-anc-field">
-                        {{-- Grouped as the reference groups its own picker, so a plan name
-                             that repeats across groups is still tellable apart. --}}
-                        <select class="ao-ep-list" multiple size="10" wire:model="crossSellIds">
-                            @foreach ($otherProducts->groupBy(fn ($p) => $p->category?->name ?? 'Ungrouped') as $groupName => $groupProducts)
-                                <optgroup label="{{ $groupName }}">
-                                    @foreach ($groupProducts as $other)
-                                        <option value="{{ $other->id }}">{{ $other->name }}</option>
-                                    @endforeach
-                                </optgroup>
-                            @endforeach
-                        </select>
-                        <i>{{ $otherProducts->isEmpty()
-                            ? 'There are no other products to recommend.'
-                            : 'Use Ctrl+Click to select multiple products' }}</i>
+                    {{-- The reference's type-to-search picker: a search box that filters a
+                         grouped list, each pick becoming a removable tag. Livewire holds
+                         the ids; Alpine does the searching, so typing costs no round trip. --}}
+                    <span class="ao-anc-field ao-ep-cross"
+                        x-data="{
+                            open: false,
+                            q: '',
+                            all: @js($otherProducts->map(fn ($p) => [
+                                'id' => (string) $p->id,
+                                'name' => $p->name,
+                                'group' => $p->category?->name ?? 'Ungrouped',
+                            ])->values()->all()),
+                            get picked() { return this.all.filter((p) => this.$wire.crossSellIds.map(String).includes(p.id)) },
+                            get groups() {
+                                const q = this.q.trim().toLowerCase();
+                                const hits = this.all.filter((p) =>
+                                    !this.$wire.crossSellIds.map(String).includes(p.id)
+                                    && (q === '' || p.name.toLowerCase().includes(q) || p.group.toLowerCase().includes(q)));
+                                return hits.reduce((acc, p) => {
+                                    (acc[p.group] = acc[p.group] || []).push(p);
+                                    return acc;
+                                }, {});
+                            },
+                            add(id) { this.$wire.crossSellIds = [...this.$wire.crossSellIds, id]; this.q = ''; this.open = false },
+                            drop(id) { this.$wire.crossSellIds = this.$wire.crossSellIds.filter((v) => String(v) !== String(id)) },
+                        }"
+                        @click.outside="open = false">
+                        <span class="ao-ep-cross-box">
+                            <template x-for="p in picked" :key="p.id">
+                                <span class="ao-stf-chip" x-text="p.name">
+                                    <button type="button" @click="drop(p.id)" aria-label="Remove">&times;</button>
+                                </span>
+                            </template>
+                            <input type="text" class="ao-ep-cross-input" x-model="q" @focus="open = true"
+                                placeholder="Start typing to search for products.">
+                        </span>
+                        <span class="ao-xsel-list ao-ep-cross-list" x-show="open" x-cloak>
+                            <template x-for="(items, group) in groups" :key="group">
+                                <span>
+                                    <span class="ao-xsel-group" x-text="group"></span>
+                                    <template x-for="p in items" :key="p.id">
+                                        <span class="ao-xsel-opt" x-text="p.name" @mousedown.prevent="add(p.id)"></span>
+                                    </template>
+                                </span>
+                            </template>
+                        </span>
                     </span>
                 </div>
 
