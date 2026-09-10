@@ -156,13 +156,27 @@
                         <option value="## ">Heading 2</option>
                         <option value="### ">Heading 3</option>
                     </select>
+                    {{-- The reference's font and size pickers. Markdown carries no
+                         typeface, and the sent email takes its face from the mail
+                         template — so these show the face that will be used rather
+                         than offering a choice the message cannot keep. --}}
+                    <select class="ao-ete-sel" disabled title="The email's typeface comes from the mail template, not from this box">
+                        <option>Helvetica</option>
+                    </select>
+                    <select class="ao-ete-sel ao-ete-sel-sm" disabled title="The email's size comes from the mail template, not from this box">
+                        <option>11pt</option>
+                    </select>
                     <span class="ao-rte-sep"></span>
                     <button type="button" data-md="**" title="Bold"><b>B</b></button>
                     <button type="button" data-md="*" title="Italic"><i>I</i></button>
                     <button type="button" data-md="~~" title="Strikethrough"><s>S</s></button>
+                    {{-- Markdown has no underline, so this writes the HTML tag around the
+                         selection — Markdown passes raw HTML through untouched. --}}
+                    <button type="button" data-md-pair="&lt;u&gt;|&lt;/u&gt;" title="Underline"><u>U</u></button>
                     <button type="button" data-md="`" title="Inline code">&lt;/&gt;</button>
                     <span class="ao-rte-sep"></span>
                     <button type="button" data-md-line="[Link](https://)" title="Insert link">&#128279;</button>
+                    <button type="button" data-ao-act="unlink" title="Remove the link around the selection">&#9986;&#65038;</button>
                     <button type="button" data-md-line="![alt](https://)" title="Insert image">&#128444;</button>
                     <span class="ao-rte-sep"></span>
                     <button type="button" data-md-line="- " title="Bullet list">&#8226;&#8226;</button>
@@ -311,14 +325,18 @@
         (() => {
             const root = document.currentScript.closest('.fi-page') ?? document;
             root.addEventListener('click', (event) => {
-                const button = event.target.closest('[data-md], [data-md-line]');
+                const button = event.target.closest('[data-md], [data-md-line], [data-md-pair]');
                 if (!button) return;
                 const box = root.querySelector('[data-ao-message]');
                 if (!box) return;
                 const [start, end] = [box.selectionStart, box.selectionEnd];
                 const picked = box.value.slice(start, end);
                 let text;
-                if (button.dataset.md !== undefined) {
+                if (button.dataset.mdPair !== undefined) {
+                    {{-- An opener and a closer that differ, split on the pipe: <u>|</u>. --}}
+                    const [open, close] = button.dataset.mdPair.split('|');
+                    text = box.value.slice(0, start) + open + (picked || 'text') + close + box.value.slice(end);
+                } else if (button.dataset.md !== undefined) {
                     const wrap = button.dataset.md;
                     text = box.value.slice(0, start) + wrap + (picked || 'text') + wrap + box.value.slice(end);
                 } else {
@@ -360,6 +378,17 @@
                         box.dispatchEvent(new Event('input', { bubbles: true }));
                     }
                     return;
+                }
+
+                if (act === 'unlink') {
+                    const [start, end] = [box.selectionStart, box.selectionEnd];
+                    if (start === end) return;
+                    // [label](url) -> label, and <u>x</u> -> x. The label is kept.
+                    const plain = box.value.slice(start, end)
+                        .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+                        .replace(/<\/?u>/g, '');
+                    document.execCommand('insertText', false, plain);
+                    return box.dispatchEvent(new Event('input', { bubbles: true }));
                 }
 
                 if (act === 'outdent') {
