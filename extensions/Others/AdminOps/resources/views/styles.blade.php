@@ -5400,6 +5400,11 @@
     .ao-cs-service .ao-of-row > * { padding: 0.3rem 0.6rem; }
     .ao-cs-service .ao-of-label { white-space: nowrap; }
 
+    /* A full-width row keeps its span — the rule above is more specific than
+       .ao-of-row-single, so without this the module commands were squeezed into one
+       quarter of the form and wrapped onto three lines. */
+    .ao-cs-service .ao-of-row-single { grid-template-columns: 11rem minmax(0, 1fr); }
+
     /* The commands sit together as one group, not spread across the row. */
     .ao-cs-service .ao-of-inline { gap: 0.4rem; flex-wrap: wrap; }
     .ao-cs-recalc { display: inline-flex; align-items: center; gap: 0.3rem; white-space: nowrap; font-size: 0.85rem; }
