@@ -20,7 +20,9 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Livewire\Attributes\Url;
 use Paymenter\Extensions\Others\AdminOps\Models\ClientNote;
 use Paymenter\Extensions\Others\AdminOps\Support\Money;
@@ -275,6 +277,46 @@ class ClientSummary extends Page
      * page load, which is this screen's equivalent of the catalogue page expanding a row
      * in place.
      */
+    /**
+     * The reference's Export Client Data: everything held on this account, as a file.
+     *
+     * A subject-access request is the point of it, so it is the record rather than the
+     * screen — the profile's own fields, their services, invoices, transactions, tickets
+     * and staff notes. Streamed rather than built in memory: an account with a thousand
+     * invoices should not have to fit in one string first.
+     */
+    public function exportClientData(): StreamedResponse
+    {
+        Gate::authorize('has-permission', 'admin.users.viewAny');
+
+        $user = $this->customer;
+        $name = 'client-' . $user->id . '-data.json';
+
+        return response()->streamDownload(function () use ($user): void {
+            $payload = [
+                'exported_at' => now()->toIso8601String(),
+                'client' => $user->only(['id', 'first_name', 'last_name', 'email', 'created_at']),
+                'properties' => $user->properties->pluck('value', 'key'),
+                'services' => $user->services()->with('product')->get()
+                    ->map(fn ($s) => [
+                        'id' => $s->id,
+                        'product' => $s->product?->name,
+                        'status' => $s->status,
+                        'price' => $s->price,
+                        'expires_at' => $s->expires_at,
+                    ]),
+                'invoices' => $user->invoices()->get()
+                    ->map(fn ($i) => ['id' => $i->id, 'number' => $i->number, 'status' => $i->status, 'created_at' => $i->created_at]),
+                'transactions' => $this->transactionRows(),
+                'tickets' => $user->tickets()->get()
+                    ->map(fn ($t) => ['id' => $t->id, 'subject' => $t->subject, 'status' => $t->status, 'created_at' => $t->created_at]),
+                'notes' => ClientNote::where('user_id', $user->id)->get(['note', 'created_at']),
+            ];
+
+            echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        }, $name, ['Content-Type' => 'application/json']);
+    }
+
     public function openService(int $id): void
     {
         $this->service = $id;
