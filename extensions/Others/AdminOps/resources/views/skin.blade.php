@@ -36,6 +36,10 @@
            wide plus its 1px rule. Kept as variables so the two places that need each
            number cannot drift apart. */
         --wa-topbar-h: 45px;
+        /* How far the menu cell is inset from the bar, top and bottom. The dropdown hangs
+           off the *cell's* bottom edge rather than the bar's, so both read it: change this
+           and the two move together instead of leaving a strip between them. */
+        --wa-menu-inset: 5px;
         --wa-rail-w: 195px;
         --wa-footer-h: 38px; /* measured: the bar grew with the font bump */
 
@@ -438,12 +442,12 @@
     .fi-topbar-item-btn {
         color: #ffffff;
         border-radius: 4px;
-        height: calc(var(--wa-topbar-h) - 10px);
+        height: calc(var(--wa-topbar-h) - (2 * var(--wa-menu-inset)));
         margin-inline: 2px;
         padding: 0 0.9rem;
         font-size: 16px;
         font-weight: 400;
-        line-height: calc(var(--wa-topbar-h) - 10px);
+        line-height: calc(var(--wa-topbar-h) - (2 * var(--wa-menu-inset)));
     }
 
     /* Hover only — deliberately not `.fi-active`. Leandro: the menu being *on* the page it
@@ -467,15 +471,13 @@
        strip between the two. It keeps its rounded top corners and squares off at the
        bottom, which is the edge the panel joins.
 
-       The panel itself is already pinned to the bar's bottom edge; this closes the strip
-       between that edge and the cell above it.
+       The cell keeps its height — the panel comes up to meet *it*, not the other way
+       round — and only squares its bottom corners, which is the edge the menu joins.
 
        Keyed off a class our own hover script sets, not off the button: Filament's topbar
        trigger carries no `aria-expanded`, and the open state lives in Alpine's
        `filamentDropdown` data where CSS cannot reach it. */
     nav.fi-topbar .fi-dropdown.ao-menu-open .fi-topbar-item-btn {
-        height: var(--wa-topbar-h);
-        line-height: var(--wa-topbar-h);
         border-radius: 4px 4px 0 0;
         background: var(--wa-blue-dark);
         color: #ffffff;
@@ -522,7 +524,7 @@
            changed. An `!important` top beats the inline style outright: the panel starts
            exactly at the bar's bottom edge, whatever offset Filament asks for. Both are
            position: fixed, so this holds while the page scrolls too. */
-        top: var(--wa-topbar-h) !important;
+        top: calc(var(--wa-topbar-h) - var(--wa-menu-inset)) !important;
         margin-top: 0;
     }
 
