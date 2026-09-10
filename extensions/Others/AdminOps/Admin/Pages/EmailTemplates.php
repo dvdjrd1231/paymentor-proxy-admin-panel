@@ -51,6 +51,12 @@ class EmailTemplates extends Page
     {
         $this->resetValidation();
         $this->modal = $which;
+
+        // The reference opens with the first language already chosen rather than on a
+        // blank, so Activate is live the moment the dialog appears.
+        if ($which === 'languages') {
+            $this->newLocale = (string) array_key_first($this->availableLocales());
+        }
     }
 
     /**

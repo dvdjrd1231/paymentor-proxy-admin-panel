@@ -118,7 +118,6 @@
                         <p class="ao-ml-head">Choose language to add</p>
                         @if ($addableLocales)
                             <select wire:model="newLocale">
-                                <option value="">&mdash;</option>
                                 @foreach ($addableLocales as $code => $label)
                                     <option value="{{ $code }}">{{ $label }}</option>
                                 @endforeach

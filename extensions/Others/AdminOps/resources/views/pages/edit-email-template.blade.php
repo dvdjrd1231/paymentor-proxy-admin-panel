@@ -25,12 +25,10 @@
                         <span class="ao-of-inline ao-ete-from">
                             <input type="text" class="ao-of-lg" disabled
                                 value="{{ config('settings.mail_from_name') ?: config('app.name') }}"
-                                title="Set for the whole store, not per template">
+                                title="Every email leaves under one name and address, set on General Settings → Mail — not per template">
                             <input type="text" class="ao-of-lg" disabled
                                 value="{{ config('settings.mail_from_address') }}"
-                                title="Set for the whole store, not per template">
-                            <i>Set for every email on
-                                <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\GeneralSettings::getUrl() }}">General Settings → Mail</a>.</i>
+                                title="Every email leaves under one name and address, set on General Settings → Mail — not per template">
                         </span>
                     </div>
 
@@ -54,22 +52,23 @@
                          and each says why rather than looking live. --}}
                     <div class="ao-of-row ao-of-row-single">
                         <span class="ao-of-label">Attachments</span>
-                        <span class="ao-of-stack ao-gs-off">
-                            <input type="file" disabled title="Notification emails carry no attachments on this platform">
-                            <button type="button" class="ao-of-go" disabled
-                                title="Notification emails carry no attachments on this platform">&plus; Add More</button>
-                            <i>Not available: nothing is stored against a template to attach. An invoice
-                                reaches the client as a link to its own page, where the PDF is downloaded.</i>
+                        {{-- The reasons these two are inert live on their titles rather than
+                             under them: the reference's rows are one line each, and a
+                             paragraph of explanation per row was what made this band twice
+                             the height of the one in the screenshots. --}}
+                        <span class="ao-of-stack ao-gs-off"
+                            title="Not available: nothing is stored against a template to attach. An invoice reaches the client as a link to its own page, where the PDF is downloaded.">
+                            <input type="file" disabled>
+                            <button type="button" class="ao-of-go" disabled>&plus; Add More</button>
                         </span>
                     </div>
 
                     <div class="ao-of-row ao-of-row-single">
                         <span class="ao-of-label">Plain-Text</span>
-                        <span class="ao-of-check ao-gs-off">
-                            <input type="checkbox" disabled title="Every email already goes out with a plain-text part beside the HTML">
+                        <span class="ao-of-check ao-gs-off"
+                            title="Not available: each email is sent as HTML with a plain-text part alongside, so a client whose reader refuses HTML already gets the text.">
+                            <input type="checkbox" disabled>
                             Check to send this email in Plain-Text format only
-                            <i>Not available: each email is sent as HTML with a plain-text part alongside, so a
-                                client whose reader refuses HTML already gets the text.</i>
                         </span>
                     </div>
 
@@ -86,12 +85,14 @@
             {{-- The reference heads the subject and body with which language version is
                  being edited, and hangs the editor toggle off the same line. --}}
             <div class="ao-ete-versionbar">
-                <h3 class="ao-sub ao-ete-version">
-                    Default Version
-                    <i>Used for the {{ \Illuminate\Support\Str::upper(config('app.locale', 'en')) }} language
-                        and any languages where email template translations are not defined. Languages are
-                        activated under Manage Languages on the
-                        <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::getUrl() }}">templates list</a>.</i>
+                {{-- One line, as the reference writes it: the name in bold, then the rule
+                     after a dash. Languages are activated from the list page, which the
+                     title says rather than a second sentence on the page. --}}
+                <h3 class="ao-sub ao-ete-version"
+                    title="Activate languages under Manage Languages on the Email Templates list">
+                    <b>Default Version</b>
+                    <span>- Used for the {{ $localeNames[config('app.locale', 'en')] ?? 'English' }} language
+                        and any languages where email template translations are not defined</span>
                 </h3>
 
                 {{-- The reference's Enable/Disable Rich-Text Editor, in its place on this
@@ -134,13 +135,13 @@
                 </div>
 
                 <textarea class="ao-ete-source" rows="18" wire:model="body" spellcheck="false"
-                    data-ao-message></textarea>
-                <p class="ao-ete-hint">
-                    Markdown with Blade placeholders — <code>&#123;&#123; $ip &#125;&#125;</code> and friends are filled
-                    in when the email sends. The toolbar writes Markdown into this box; a WYSIWYG surface
-                    is deliberately not offered, because owning the HTML means rewriting those
-                    placeholders as ordinary text and breaking them.
-                </p>
+                    data-ao-message
+                    title="Markdown with Blade placeholders — @{{ $ip }} and friends are filled in when the email sends. The toolbar writes Markdown into this box; a WYSIWYG surface is not offered because owning the HTML means rewriting those placeholders as plain text and breaking them."></textarea>
+
+                {{-- The reference closes the editor with a word count along its bottom edge.
+                     Counted from the stored body, so it is the real length rather than a
+                     number that only updates when the box is retyped. --}}
+                <p class="ao-ete-count">{{ str_word_count(strip_tags($body)) }} words</p>
             @else
                 <div class="ao-ete-preview">{!! $this->previewHtml() !!}</div>
             @endif
@@ -149,11 +150,11 @@
                  blank is how you say "no translation" — the default sends instead, which is
                  what the heading above promises. --}}
             @foreach ($locales as $code => $version)
-                <h3 class="ao-sub ao-ete-version">
-                    {{ $localeNames[$code] ?? \Illuminate\Support\Str::upper($code) }} Version
-                    <i>Sent to clients whose profile language is
-                        {{ $localeNames[$code] ?? \Illuminate\Support\Str::upper($code) }}. Leave both boxes
-                        empty and they are sent the default version.</i>
+                <h3 class="ao-sub ao-ete-version"
+                    title="Leave both boxes empty and these clients are sent the default version">
+                    <b>{{ $localeNames[$code] ?? \Illuminate\Support\Str::upper($code) }} Version</b>
+                    <span>- Sent to clients whose profile language is
+                        {{ $localeNames[$code] ?? \Illuminate\Support\Str::upper($code) }}</span>
                 </h3>
 
                 <div class="ao-of-row ao-of-row-single">
