@@ -777,16 +777,61 @@
                     <input type="number" min="0" class="ao-w-25" wire:model="form.per_user_limit">
                 </label>
 
-                <div class="ao-anc-row">
-                    <span>Not available here</span>
-                    <span class="ao-ep-explain">
-                        <p><b>Custom Affiliate Payout</b> — commission is set for the whole store on
-                            the Affiliates extension, not per product.</p>
-                        <p><b>Subdomain Options</b> and <b>Overages Billing</b> — both belong to
-                            shared hosting: a subdomain to offer on signup, and disk/bandwidth
-                            metering to charge above. Proxies have neither.</p>
-                        <p><b>Associated Downloads</b> — Downloads exist here, but nothing links a
-                            file to a product; they are published by category to everyone.</p>
+                {{-- The reference's own rows, drawn rather than described (issue #35). Each
+                     is inert because this platform has nothing behind it, and each says so
+                     on itself instead of in a paragraph underneath. --}}
+                @php
+                    $affiliateOff = 'Commission is set for the whole store by the Affiliates extension, not per product';
+                    $hostingOff = 'Belongs to shared hosting — a proxy service has no disk or bandwidth to meter';
+                @endphp
+                <div class="ao-anc-row ao-gs-off">
+                    <span>Custom Affiliate Payout</span>
+                    <span class="ao-ano-checks" title="{{ $affiliateOff }}">
+                        <label><input type="radio" name="ao-ep-aff" checked disabled> Use Default</label>
+                        <label><input type="radio" name="ao-ep-aff" disabled> Percentage</label>
+                        <label><input type="radio" name="ao-ep-aff" disabled> Fixed Amount</label>
+                        <label><input type="radio" name="ao-ep-aff" disabled> No Commission</label>
+                    </span>
+                </div>
+                <div class="ao-anc-row ao-gs-off">
+                    <span>Affiliate Pay Amount</span>
+                    <span class="ao-anc-field" title="{{ $affiliateOff }}">
+                        <input type="text" class="ao-w-25" value="0.00" disabled>
+                        <label class="ao-check"><input type="checkbox" disabled>
+                            <span>One Time Payout (Default is Recurring)</span></label>
+                    </span>
+                </div>
+                <div class="ao-anc-row ao-gs-off">
+                    <span>Subdomain Options</span>
+                    <span class="ao-anc-field" title="Domains are switched off on this store — see docs/10-disable-domains.md">
+                        <input type="text" disabled placeholder="Enter in the format .example.com (comma separated list supported for multiple options)">
+                    </span>
+                </div>
+                <div class="ao-anc-row ao-gs-off">
+                    <span>Associated Downloads</span>
+                    <span class="ao-anc-field" title="Downloads exist here but are published by category to everyone; nothing ties a file to one product">
+                        <span class="ao-cpg-muted">Downloads are published by category rather than attached to a product.</span>
+                    </span>
+                </div>
+                <div class="ao-anc-row ao-gs-off">
+                    <span>Overages Billing</span>
+                    <span class="ao-of-check" title="{{ $hostingOff }}">
+                        <input type="checkbox" disabled> Check to Enable
+                    </span>
+                </div>
+                <div class="ao-anc-row ao-gs-off">
+                    <span>Soft Limits</span>
+                    <span class="ao-anc-field" title="{{ $hostingOff }}">
+                        <i>Disk Usage</i> <input type="text" class="ao-w-25" value="0" disabled>
+                        <i>Bandwidth</i> <input type="text" class="ao-w-25" value="0" disabled>
+                    </span>
+                </div>
+                <div class="ao-anc-row ao-gs-off">
+                    <span>Overage Costs</span>
+                    <span class="ao-anc-field" title="{{ $hostingOff }}">
+                        <i>Disk Usage</i> <input type="text" class="ao-w-25" value="0.0000" disabled>
+                        <i>Bandwidth</i> <input type="text" class="ao-w-25" value="0.0000" disabled>
+                        <i>(Price Per Unit Over Above)</i>
                     </span>
                 </div>
 
@@ -800,18 +845,22 @@
         {{-- ── Links ───────────────────────────────────────────────────────────── --}}
         <div x-show="tab === 'links'" x-cloak>
             <div class="ao-anc-card">
+                {{-- The reference's four rows, in its order and under its names. It has a
+                     fifth shape — "…Specifying Template" — for picking a cart template;
+                     this storefront draws one cart, so that link is the plain one. --}}
                 @foreach ([
-                    'Direct Product Link' => $links['product'],
-                    'Product Group Link' => $links['group'],
                     'Direct Shopping Cart Link' => $links['checkout'],
+                    'Direct Product Link' => $links['product'],
+                    'Direct Shopping Cart Link Including Domain' => $links['checkout'],
+                    'Product Group Cart Link' => $links['group'],
                 ] as $label => $url)
                     @continue(!$url)
                     <div class="ao-anc-row">
                         <span>{{ $label }}</span>
                         <span class="ao-anc-field">
                             <input type="text" value="{{ $url }}" readonly onclick="this.select()">
-                            <button type="button" class="ao-pg-btn"
-                                onclick="navigator.clipboard.writeText(this.previousElementSibling.value)">Copy</button>
+                            <button type="button" class="ao-pg-btn ao-ep-copy" title="Copy this link"
+                                onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.textContent = 'Copied';">&#128203;</button>
                         </span>
                     </div>
                 @endforeach
