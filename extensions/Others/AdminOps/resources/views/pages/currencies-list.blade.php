@@ -6,8 +6,6 @@
 --}}
 <x-filament-panels::page>
     <div class="ao-mu">
-        <p class="ao-cp-note">You can sell in different currencies concurrently by setting them up below. Customers who visit your site can then choose to shop in their local currency.</p>
-
         <table class="ao-mu-grid">
             <thead>
                 <tr>
