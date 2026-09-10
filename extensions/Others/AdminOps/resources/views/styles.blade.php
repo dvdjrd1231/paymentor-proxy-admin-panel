@@ -2404,9 +2404,24 @@
 
     /* The order page's provisioning row: the reference tucks it under its item as a
        quieter band, so the item line above stays the thing you read first. */
+    /* The reference's proportions: Item narrow, Description carries the width. */
+    .ao-eo .ao-mu-grid th:first-child { width: 16%; }
+    .ao-eo .ao-mu-grid th:nth-child(2) { width: 44%; }
+
+    /* The reference sets the item in bold ink; the hop to the service editor stays,
+       showing itself on hover. */
+    .ao-eo-item a { color: var(--wa-ink, #2b2b2b); font-weight: 700; }
+    .ao-eo-item a:hover { color: var(--wa-link, #337ab7); text-decoration: underline; }
+
+    /* The cell must stay a table-cell — flex on a td makes it shrink-wrap instead of
+       spanning its colspan, which cut the reference's light band off mid-table. The
+       flex layout lives on an inner wrapper instead. */
     .ao-eo-provision > td {
-        background: var(--wa-panel-bg, rgba(127, 127, 127, 0.06));
+        background: #f0f6fc;
         font-size: 0.85rem;
+    }
+
+    .ao-eo-provision .ao-eo-prov-line {
         display: flex;
         flex-wrap: wrap;
         gap: 0.4rem 1.25rem;
@@ -3228,16 +3243,24 @@
         box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
     }
 
-    .ao-xsel-input {
+    /* Outranks the form rows' own input chrome (.ao-anc-row input[type="text"] and kin):
+       the frame is the span around it, so the input inside draws nothing of its own. */
+    .ao-xsel-btn > input.ao-xsel-input {
         flex: 1;
+        width: auto;
         min-width: 0;
+        height: auto;
         border: 0;
+        border-radius: 0;
+        padding: 0;
         background: transparent;
+        box-shadow: none;
         font: inherit;
+        font-size: inherit;
         color: inherit;
     }
 
-    .ao-xsel-input:focus { outline: none; }
+    .ao-xsel-btn > input.ao-xsel-input:focus { outline: none; }
 
     .ao-xsel-list {
         position: absolute;

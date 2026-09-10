@@ -158,23 +158,25 @@
                         @endphp
                         <tr class="ao-eo-provision">
                             <td colspan="6">
-                                <span class="ao-eo-prov-inert" title="{{ $panelUser ? 'The panel account this service runs as' : 'Credentials are issued by the panel when it creates the account, not chosen here' }}">
-                                    Username: <input type="text" disabled value="{{ $panelUser }}">
-                                    Password: <input type="text" disabled value="{{ $panelPass }}">
-                                </span>
-                                <span class="ao-eo-prov-inert" title="A product names its server, so every service on it provisions there">
-                                    Server:
-                                    <select disabled><option>{{ $service->product?->server?->name ?? 'None' }}</option></select>
-                                </span>
-                                <label class="ao-check">
-                                    <input type="checkbox" wire:model="runModuleCreate.{{ $service->id }}"
-                                        @disabled(!$service->product?->server)>
-                                    <span title="{{ $service->product?->server ? 'Unticking accepts this item without asking the panel to create anything' : 'This product has no server, so there is nothing to run' }}">Run Module Create</span>
-                                </label>
-                                <label class="ao-check">
-                                    <input type="checkbox" wire:model="sendWelcome.{{ $service->id }}">
-                                    <span title="When the module runs it sends this itself; unticking only takes effect when Run Module Create is off">Send Welcome Email</span>
-                                </label>
+                                <div class="ao-eo-prov-line">
+                                    <span class="ao-eo-prov-inert" title="{{ $panelUser ? 'The panel account this service runs as' : 'Credentials are issued by the panel when it creates the account, not chosen here' }}">
+                                        Username: <input type="text" disabled value="{{ $panelUser }}">
+                                        Password: <input type="text" disabled value="{{ $panelPass }}">
+                                    </span>
+                                    <span class="ao-eo-prov-inert" title="A product names its server, so every service on it provisions there">
+                                        Server:
+                                        <select disabled><option>{{ $service->product?->server?->name ?? 'None' }}</option></select>
+                                    </span>
+                                    <label class="ao-check">
+                                        <input type="checkbox" wire:model="runModuleCreate.{{ $service->id }}"
+                                            @disabled(!$service->product?->server)>
+                                        <span title="{{ $service->product?->server ? 'Unticking accepts this item without asking the panel to create anything' : 'This product has no server, so there is nothing to run' }}">Run Module Create</span>
+                                    </label>
+                                    <label class="ao-check">
+                                        <input type="checkbox" wire:model="sendWelcome.{{ $service->id }}">
+                                        <span title="When the module runs it sends this itself; unticking only takes effect when Run Module Create is off">Send Welcome Email</span>
+                                    </label>
+                                </div>
                             </td>
                         </tr>
                     @endif
