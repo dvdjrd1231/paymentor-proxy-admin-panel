@@ -1026,6 +1026,71 @@
         color: var(--wa-ink);
     }
 
+    /* The sub-navigation, as the profile's tab strip rather than a rail down the left.
+       Core lays this page out as sidebar-then-content; stacking them puts the strip above
+       the form, which is where the profile keeps its tabs and what makes the two screens
+       read as the same kind of page. */
+    .fi-resource-users.fi-resource-edit-record-page .fi-page-main {
+        display: block;
+    }
+
+    .fi-resource-users.fi-resource-edit-record-page .fi-page-sub-navigation-sidebar-ctn {
+        width: 100%;
+        max-width: none;
+        margin-bottom: 1rem;
+    }
+
+    /* Through .fi-page-sub-navigation-sidebar on purpose: Filament's own rule for the
+       group's items is more specific than a single class here, so a bare
+       `.fi-sidebar-group-items` lost and the tabs stayed stacked full-width. */
+    .fi-resource-users.fi-resource-edit-record-page .fi-page-sub-navigation-sidebar,
+    .fi-resource-users.fi-resource-edit-record-page .fi-page-sub-navigation-sidebar .fi-sidebar-group-items {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.2rem;
+        width: 100%;
+    }
+
+    .fi-resource-users.fi-resource-edit-record-page .fi-page-sub-navigation-sidebar .fi-sidebar-group-items {
+        border-bottom: 1px solid var(--wa-panel-border, #ddd);
+    }
+
+    .fi-resource-users.fi-resource-edit-record-page .fi-page-sub-navigation-sidebar .fi-sidebar-group,
+    .fi-resource-users.fi-resource-edit-record-page .fi-page-sub-navigation-sidebar .fi-sidebar-item {
+        margin: 0;
+        width: auto;
+        flex: none;
+    }
+
+    .fi-resource-users.fi-resource-edit-record-page .fi-page-sub-navigation-sidebar .fi-sidebar-group {
+        flex: 1 1 100%;
+    }
+
+    /* The same folder tab the profile draws: light face, blue label, evenly rounded top
+       corners, and the one you are on white and open into the form below it. */
+    .fi-resource-users.fi-resource-edit-record-page .fi-sidebar-item > a {
+        padding: 0.4rem 0.85rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-bottom: 0;
+        border-radius: 4px 4px 0 0;
+        background: #f7f7f7;
+        color: var(--wa-link, #337ab7);
+        font-size: 0.9rem;
+    }
+
+    .fi-resource-users.fi-resource-edit-record-page .fi-sidebar-item.fi-active > a {
+        background: #ffffff;
+        color: var(--wa-ink, #2b2b2b);
+        margin-bottom: -1px;
+        padding-bottom: calc(0.4rem + 1px);
+    }
+
+    /* The profile's tabs are words. The rail's icons are what made this read as a rail. */
+    .fi-resource-users.fi-resource-edit-record-page .fi-sidebar-item > a .fi-icon {
+        display: none;
+    }
+
     /* The administrators' edit screen in the Client Profile's shape — its rows, not its
        page (Leandro, 2026-09-10: "similar with client profile page ... not same"). Core's
        resource form stacks a label over its input; the profile puts the label in a white

@@ -276,6 +276,12 @@
                         <a class="ao-cp-link ao-cp-danger" href="{{ \App\Admin\Resources\UserResource::getUrl('edit', ['record' => $user->id]) }}">
                             <x-filament::icon icon="ri-close-circle-line" class="ao-cp-ic" /> Delete Clients Account
                         </a>
+                        {{-- The reference's last action, and a real one: everything this
+                             account holds, as a file, for a subject-access request. --}}
+                        <button type="button" class="ao-cp-link" wire:click="exportClientData"
+                            title="Download everything held on this account as JSON">
+                            <x-filament::icon icon="ri-download-2-line" class="ao-cp-ic" /> Export Client Data
+                        </button>
                     </div>
                 </div>
 
