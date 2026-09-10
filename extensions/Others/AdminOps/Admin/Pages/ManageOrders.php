@@ -264,7 +264,14 @@ class ManageOrders extends Page
             return ['method' => '—', 'label' => '—', 'class' => '', 'number' => null];
         }
 
+        // The gateway that really took payment wins; before any transaction exists, the
+        // method picked on the Add New Order form (kept in ext_ao_meta) stands in.
         $gateway = $invoices->flatMap->transactions->first()?->gateway?->name;
+
+        if ($gateway === null && ($picked = \Paymenter\Extensions\Others\AdminOps\Models\Meta::for($order)['gateway'] ?? null)) {
+            $gateway = \App\Models\Gateway::find((int) $picked)?->name;
+        }
+
         $paid = $invoices->every(fn ($invoice) => $invoice->status === 'paid');
 
         return [

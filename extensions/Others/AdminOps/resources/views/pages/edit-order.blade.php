@@ -57,7 +57,7 @@
                     <span class="ao-eo-fact">
                         {{-- Picking a state runs the matching whole-order action, the
                              reference's own behaviour for this select. --}}
-                        <select class="ao-of-md" wire:change="setStatus($event.target.value)">
+                        <select class="ao-of-sm" wire:change="setStatus($event.target.value)">
                             @foreach (['pending' => 'Pending', 'active' => 'Active', 'suspended' => 'Suspended', 'cancelled' => 'Terminated'] as $value => $label)
                                 <option value="{{ $value }}" @selected($statusNow[0] === $label)>{{ $label }}</option>
                             @endforeach
@@ -131,9 +131,11 @@
                         [$payLabel, $payClass] = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditOrder::linePayment($service);
                     @endphp
                     <tr>
-                        <td>
+                        {{-- The reference's Item is the product group; the hop to the
+                             service editor rides on it. --}}
+                        <td class="ao-eo-item">
                             <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $order->user_id, 'tab' => 'services', 'service' => $service->id]) }}">
-                                Product/Service
+                                {{ $service->product?->category?->name ?? 'Product/Service' }}
                             </a>
                         </td>
                         <td class="ao-mu-left">
@@ -160,6 +162,10 @@
                                     Username: <input type="text" disabled value="{{ $panelUser }}">
                                     Password: <input type="text" disabled value="{{ $panelPass }}">
                                 </span>
+                                <span class="ao-eo-prov-inert" title="A product names its server, so every service on it provisions there">
+                                    Server:
+                                    <select disabled><option>{{ $service->product?->server?->name ?? 'None' }}</option></select>
+                                </span>
                                 <label class="ao-check">
                                     <input type="checkbox" wire:model="runModuleCreate.{{ $service->id }}"
                                         @disabled(!$service->product?->server)>
@@ -176,9 +182,10 @@
                     <tr><td colspan="6" class="ao-mu-none">No Records Found</td></tr>
                 @endforelse
                 <tr class="ao-eo-total">
-                    <td colspan="4"></td>
+                    <td colspan="2"></td>
                     <td class="ao-eo-total-label">Total Due:</td>
                     <td class="ao-eo-total-value">${{ number_format((float) $order->total, 2) }} {{ $order->currency_code }}</td>
+                    <td colspan="2"></td>
                 </tr>
             </tbody>
         </table>

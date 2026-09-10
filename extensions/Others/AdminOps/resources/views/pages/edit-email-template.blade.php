@@ -10,7 +10,7 @@
             <a class="ao-mu-tab" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::getUrl() }}">&laquo; Back to List</a>
         </div>
 
-        <form wire:submit.prevent="save">
+        <form wire:submit.prevent="save" x-data="{ rich: false }">
             <div class="ao-find ao-of ao-ete-band">
                 {{-- The reference's band, row for row: From, Copy To, Blind Copy To,
                      Attachments, Plain-Text, Disable. The template's own name is the
@@ -93,6 +93,18 @@
                         activated under Manage Languages on the
                         <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::getUrl() }}">templates list</a>.</i>
                 </h3>
+
+                {{-- The reference's Enable/Disable Rich-Text Editor, in its place on this
+                     line. It turns on a formatting toolbar that writes Markdown into the
+                     same box rather than a WYSIWYG surface: these bodies carry live Blade
+                     placeholders, and an editor that owns the HTML rewrites them as plain
+                     text, which breaks every email that uses one. --}}
+                <button type="button" class="ao-of-go ao-ete-rich" @click="rich = !rich"
+                    :title="rich
+                        ? 'Hide the formatting buttons'
+                        : 'Show formatting buttons. They write Markdown into the box, so placeholders survive.'">
+                    Enable/Disable Rich-Text Editor
+                </button>
             </div>
 
             <div class="ao-ete-subject">
@@ -109,11 +121,25 @@
             </div>
 
             @if ($mode === 'source')
-                <textarea class="ao-ete-source" rows="18" wire:model="body" spellcheck="false"></textarea>
+                {{-- The same Markdown toolbar the ticket editors use, so a formatting button
+                     writes into the box instead of taking it over. --}}
+                <div class="ao-ont-toolbar ao-ete-toolbar" x-show="rich" x-cloak>
+                    <button type="button" data-md="**" title="Bold"><b>B</b></button>
+                    <button type="button" data-md="*" title="Italic"><i>I</i></button>
+                    <button type="button" data-md-line="# " title="Heading"><b>H</b></button>
+                    <button type="button" data-md-line="[Link](https://)" title="Link">&#128279;</button>
+                    <button type="button" data-md-line="- " title="Bullet list">&#8226;&#8226;</button>
+                    <button type="button" data-md-line="1. " title="Numbered list">1.</button>
+                    <button type="button" data-md-line="> " title="Quote">&#10078;</button>
+                </div>
+
+                <textarea class="ao-ete-source" rows="18" wire:model="body" spellcheck="false"
+                    data-ao-message></textarea>
                 <p class="ao-ete-hint">
                     Markdown with Blade placeholders — <code>&#123;&#123; $ip &#125;&#125;</code> and friends are filled
-                    in when the email sends. A rich-text editor is deliberately not offered: it would
-                    rewrite the placeholders as ordinary text and break them.
+                    in when the email sends. The toolbar writes Markdown into this box; a WYSIWYG surface
+                    is deliberately not offered, because owning the HTML means rewriting those
+                    placeholders as ordinary text and breaking them.
                 </p>
             @else
                 <div class="ao-ete-preview">{!! $this->previewHtml() !!}</div>
@@ -200,4 +226,30 @@
             </div>
         </div>
     </div>
+
+    {{-- Same handler as the ticket editors: wrap or prefix the selection with Markdown and
+         tell Livewire the box changed. --}}
+    <script>
+        (() => {
+            const root = document.currentScript.closest('.fi-page') ?? document;
+            root.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-md], [data-md-line]');
+                if (!button) return;
+                const box = root.querySelector('[data-ao-message]');
+                if (!box) return;
+                const [start, end] = [box.selectionStart, box.selectionEnd];
+                const picked = box.value.slice(start, end);
+                let text;
+                if (button.dataset.md !== undefined) {
+                    const wrap = button.dataset.md;
+                    text = box.value.slice(0, start) + wrap + (picked || 'text') + wrap + box.value.slice(end);
+                } else {
+                    text = box.value.slice(0, start) + '\n' + button.dataset.mdLine + picked + box.value.slice(end);
+                }
+                box.value = text;
+                box.dispatchEvent(new Event('input', { bubbles: true }));
+                box.focus();
+            });
+        })();
+    </script>
 </x-filament-panels::page>
