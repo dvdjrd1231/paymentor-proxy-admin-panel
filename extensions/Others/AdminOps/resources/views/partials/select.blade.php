@@ -53,9 +53,11 @@
                 || String(o.sub ?? '').toLowerCase().includes(needle));
         },
         // The reference bolds the typed text inside each match. Escaped first, so a
-        // label can never smuggle markup into x-html.
+        // label can never smuggle markup into x-html. No double quote may appear in
+        // this block: x-data is a double-quoted HTML attribute, and one literal quote
+        // ends it mid-object, killing the whole component (found live, 2026-09-09).
         hi(text) {
-            const esc = String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const esc = String(text).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
             if (this.search === null || this.search === '') return esc;
             const needle = this.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             return needle === '' ? esc : esc.replace(new RegExp('(' + needle + ')', 'ig'), '<mark>$1</mark>');
