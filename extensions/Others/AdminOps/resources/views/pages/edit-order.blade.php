@@ -140,6 +140,12 @@
                         </td>
                         <td class="ao-mu-left">
                             {{ trim(($service->product?->category?->name ? $service->product->category->name . ' - ' : '') . ($service->product?->name ?? '—')) }}
+                            @if ($lineDomain = $service->properties->firstWhere('key', 'domain')?->value)
+                                <br>{{ $lineDomain }}
+                                <br>(<a class="ao-eo-dom" href="http://{{ $lineDomain }}" target="_blank" rel="noopener">{{ $lineDomain }}</a>
+                                <a class="ao-eo-tool" href="https://www.whois.com/whois/{{ $lineDomain }}" target="_blank" rel="noopener">whois</a>
+                                <a class="ao-eo-tool" href="https://intodns.com/{{ $lineDomain }}" target="_blank" rel="noopener">intoDNS</a>)
+                            @endif
                         </td>
                         <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::cycle($service) }}</td>
                         <td>${{ number_format((float) $service->price * max(1, (int) $service->quantity), 2) }} {{ $order->currency_code }}</td>

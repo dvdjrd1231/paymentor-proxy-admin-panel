@@ -275,69 +275,68 @@
                 <span aria-hidden="true">&#10010;</span> Add Another Product
             </button>
 
-            {{-- The reference's Domain Registration block, field for field (Leandro,
-                 2026-09-08, with the target screenshots).
-
-                 Every control here is inert and says so on its title: this store sells
-                 proxy services and has no registrar connected, so there is nothing for a
-                 registration period or an EPP code to be sent to. The block is drawn in
-                 full because the reference draws it in full — the same honestly-dead
-                 convention the Collections and Fraud Orders entries already follow —
-                 and it will become live the day a registrar module is added. --}}
-            @php
-                $domainOff = 'This store sells proxy services and has no domain registrar connected, so nothing here can be submitted';
-            @endphp
+            {{-- The reference's Domain Registration blocks, interactive (Leandro,
+                 2026-09-10): the radios drive the block, Transfer grows the EPP row,
+                 and Add Another Domain adds a block. No TLD is configured for sale on
+                 this store, so a requested domain is omitted at submit with the
+                 reference's own Order Summary note — its behaviour for exactly this. --}}
             <h4 class="ao-ano-heading">Domain Registration</h4>
-            <div class="ao-anc-card ao-ano-domain" title="{{ $domainOff }}">
-                <div class="ao-anc-row">
-                    <span>Registration Type</span>
-                    <span class="ao-ano-checks">
-                        <label><input type="radio" name="ao-regtype" checked disabled> None</label>
-                        <label class="ao-ano-off"><input type="radio" name="ao-regtype" disabled> Registration</label>
-                        <label class="ao-ano-off"><input type="radio" name="ao-regtype" disabled> Transfer</label>
-                    </span>
+            @foreach ($domains as $i => $d)
+                @php $off = $d['type'] === 'none'; @endphp
+                <div class="ao-anc-card ao-ano-domain" wire:key="dom-{{ $i }}">
+                    <div class="ao-anc-row">
+                        <span>Registration Type</span>
+                        <span class="ao-ano-checks">
+                            <label><input type="radio" value="none" wire:model.live="domains.{{ $i }}.type"> None</label>
+                            <label><input type="radio" value="register" wire:model.live="domains.{{ $i }}.type"> Registration</label>
+                            <label><input type="radio" value="transfer" wire:model.live="domains.{{ $i }}.type"> Transfer</label>
+                        </span>
+                    </div>
+                    <label class="ao-anc-row">
+                        <span>Domain</span>
+                        <input type="text" wire:model="domains.{{ $i }}.domain" placeholder="example.com" @disabled($off)>
+                    </label>
+                    <label class="ao-anc-row">
+                        <span>Registration Period</span>
+                        <select class="ao-w-25" wire:model="domains.{{ $i }}.period" @disabled($off)>
+                            @foreach ([1, 2, 3, 4, 5] as $years)
+                                <option value="{{ $years }}">{{ $years }} Year{{ $years > 1 ? 's' : '' }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    @if ($d['type'] === 'transfer')
+                        <label class="ao-anc-row">
+                            <span>EPP Code</span>
+                            <input type="text" class="ao-w-40" wire:model="domains.{{ $i }}.epp"
+                                title="The transfer authorisation code the current registrar issues">
+                        </label>
+                    @endif
+                    <div class="ao-anc-row">
+                        <span>Domain Addons</span>
+                        <span class="ao-ano-checks">
+                            <label><input type="checkbox" wire:model="domains.{{ $i }}.dns" @disabled($off)> DNS Management</label>
+                            <label><input type="checkbox" wire:model="domains.{{ $i }}.email_fwd" @disabled($off)> Email Forwarding</label>
+                            <label><input type="checkbox" wire:model="domains.{{ $i }}.id_protect" @disabled($off)> ID Protection</label>
+                        </span>
+                    </div>
+                    <label class="ao-anc-row">
+                        <span>Registration Price Override</span>
+                        <span class="ao-anc-field">
+                            <input type="text" class="ao-w-25" wire:model="domains.{{ $i }}.reg_price" @disabled($off)>
+                            <i>(Only enter to manually override default pricing)</i>
+                        </span>
+                    </label>
+                    <label class="ao-anc-row">
+                        <span>Renewal Price Override</span>
+                        <span class="ao-anc-field">
+                            <input type="text" class="ao-w-25" wire:model="domains.{{ $i }}.renew_price" @disabled($off)>
+                            <i>(Only enter to manually override default pricing)</i>
+                        </span>
+                    </label>
                 </div>
-                <label class="ao-anc-row">
-                    <span>Domain</span>
-                    <input type="text" disabled placeholder="example.com">
-                </label>
-                <label class="ao-anc-row">
-                    <span>Registration Period</span>
-                    <select class="ao-w-25" disabled>
-                        @foreach ([1, 2, 3, 4, 5] as $years)
-                            <option>{{ $years }} Year{{ $years > 1 ? 's' : '' }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label class="ao-anc-row">
-                    <span>EPP Code</span>
-                    <input type="text" class="ao-w-40" disabled>
-                </label>
-                <div class="ao-anc-row">
-                    <span>Domain Addons</span>
-                    <span class="ao-ano-checks">
-                        <label class="ao-ano-off"><input type="checkbox" disabled> DNS Management</label>
-                        <label class="ao-ano-off"><input type="checkbox" disabled> Email Forwarding</label>
-                        <label class="ao-ano-off"><input type="checkbox" disabled> ID Protection</label>
-                    </span>
-                </div>
-                <label class="ao-anc-row">
-                    <span>Registration Price Override</span>
-                    <span class="ao-anc-field">
-                        <input type="text" class="ao-w-25" disabled>
-                        <i>(Only enter to manually override default pricing)</i>
-                    </span>
-                </label>
-                <label class="ao-anc-row">
-                    <span>Renewal Price Override</span>
-                    <span class="ao-anc-field">
-                        <input type="text" class="ao-w-25" disabled>
-                        <i>(Only enter to manually override default pricing)</i>
-                    </span>
-                </label>
-            </div>
+            @endforeach
 
-            <button type="button" class="ao-ano-add ao-ano-off" disabled title="{{ $domainOff }}">
+            <button type="button" class="ao-ano-add" wire:click="addDomain">
                 <span aria-hidden="true">&#10133;</span> Add Another Domain
             </button>
 
@@ -345,6 +344,13 @@
 
         <aside class="ao-ano-side">
             <h4>Order Summary</h4>
+            {{-- The reference's own answer for a TLD it cannot sell, word for word. No TLD
+                 is configured on this store (no registrar), so it covers every request. --}}
+            @if (collect($domains)->contains(fn ($d) => ($d['type'] ?? 'none') !== 'none'))
+                <p class="ao-ml-info">This order contains one or more domain registrations with
+                    TLDs/extensions that are <b>not configured for sale</b> and have been
+                    omitted as a result.</p>
+            @endif
             <div class="ao-ano-card">
                 @forelse ($summary['lines'] as $line)
                     {{-- The reference's wording: "1 x Category - Product", the cycle on its

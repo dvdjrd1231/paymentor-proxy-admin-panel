@@ -90,9 +90,35 @@ class AddNewOrder extends Page
         return 'Add New Order';
     }
 
+    /**
+     * The reference's Domain Registration blocks, interactive (Leandro, 2026-09-10).
+     * No TLD is configured for sale on this store — there is no registrar — so at
+     * submit a requested domain is omitted, with the reference's own Order Summary
+     * note saying exactly that. The reference behaves the same way for a TLD it
+     * cannot sell.
+     *
+     * @var array<int, array<string, mixed>>
+     */
+    public array $domains = [];
+
+    private static function blankDomain(): array
+    {
+        return [
+            'type' => 'none', 'domain' => '', 'period' => '1', 'epp' => '',
+            'dns' => false, 'email_fwd' => false, 'id_protect' => false,
+            'reg_price' => '', 'renew_price' => '',
+        ];
+    }
+
+    public function addDomain(): void
+    {
+        $this->domains[] = self::blankDomain();
+    }
+
     public function mount(): void
     {
         $this->items = [self::blankItem()];
+        $this->domains = [self::blankDomain()];
 
         // No "Default" row — the reference preselects the first configured gateway.
         $this->gatewayId ??= collect(\Paymenter\Extensions\Others\AdminOps\Support\GatewayOrder::sort(
