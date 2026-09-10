@@ -2,20 +2,11 @@
 
 namespace Paymenter\Extensions\Servers\ProxyPanel\Admin\Pages;
 
-use Filament\Actions\Action;
-use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Section;
-use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Concerns\InteractsWithTable;
-use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Table;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\Url;
 use Paymenter\Extensions\Servers\ProxyPanel\Support\PanelApi;
 
 /**
@@ -27,17 +18,15 @@ use Paymenter\Extensions\Servers\ProxyPanel\Support\PanelApi;
  * own UI, while the consequences — a region quietly going out of stock mid-campaign — landed
  * here. This puts the catalogue, its capacity and its on/off switch in the admin panel.
  *
- * The table is backed by `Table::records()` rather than a query: the rows come from the panel
- * over HTTP, not from our database, and Filament's array data source gives search, sort,
- * filters and pagination over them with no local copy to go stale.
+ * Drawn on the WHMCS window standard (Leandro, 2026-09-09) rather than a Filament table:
+ * the navy grid, the Search/Filter band, quiet row-action icons and the "Are you sure?"
+ * modals every other converted screen uses. The rows still come from the panel over HTTP
+ * on every load — nothing is stored here.
  *
  * @link docs/modules/proxypanel.md
- * @link docs/client-brief/locations.md
  */
-class PanelLocations extends Page implements HasTable
+class PanelLocations extends Page
 {
-    use InteractsWithTable;
-
     protected string $view = 'servers.proxypanel::admin.panel-locations';
 
     /**
@@ -55,6 +44,8 @@ class PanelLocations extends Page implements HasTable
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-globe-alt';
 
     protected static ?int $navigationSort = 1;
+
+    public const PER_PAGE = 25;
 
     public static function getNavigationBadge(): ?string
     {
@@ -105,308 +96,53 @@ class PanelLocations extends Page implements HasTable
             . 'the moment of provisioning. ' . $sellable . ' currently sellable.';
     }
 
-    public function table(Table $table): Table
+    // ── Search/Filter band ───────────────────────────────────────────────────
+
+    #[Url]
+    public bool $filter = false;
+
+    #[Url]
+    public string $q = '';
+
+    #[Url]
+    public string $status = '';
+
+    #[Url]
+    public string $sellable = '';
+
+    #[Url]
+    public string $continent = '';
+
+    #[Url]
+    public int $page = 1;
+
+    public function search(): void
     {
-        return $table
-            ->records(fn (?string $search, array $sort, int $page, int $recordsPerPage): LengthAwarePaginator => $this->rows($search, $sort, $page, $recordsPerPage))
-            ->paginated([25, 50, 100])
-            ->defaultPaginationPageOption(25)
-            ->columns([
-                TextColumn::make('tag')
-                    ->label('Tag')
-                    ->weight('semibold')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('country_name')
-                    ->label('Country')
-                    ->description(fn (array $record): ?string => $record['state'] ?: null)
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('city')->label('City')->searchable()->sortable(),
-                TextColumn::make('continent')->label('Continent')->sortable()->toggleable(),
-                TextColumn::make('total')->label('Tunnels')->numeric()->sortable()->alignRight(),
-                TextColumn::make('used')->label('Used')->numeric()->sortable()->alignRight(),
-                TextColumn::make('free')
-                    ->label('Free')
-                    ->numeric()
-                    ->sortable()
-                    ->alignRight()
-                    // Free capacity is the number that decides whether a region can be sold,
-                    // so it is coloured rather than left as one more figure in a row.
-                    ->color(fn (array $record): string => match (true) {
-                        (int) ($record['free'] ?? 0) > 0 => 'success',
-                        (int) ($record['total'] ?? 0) > 0 => 'danger',
-                        default => 'gray',
-                    }),
-                TextColumn::make('status')
-                    ->label('Status')
-                    ->badge()
-                    ->formatStateUsing(fn (?string $state): string => ucfirst($state ?? 'enabled'))
-                    ->color(fn (?string $state): string => ($state ?? 'enabled') === 'enabled' ? 'success' : 'gray'),
-            ])
-            ->filters([
-                SelectFilter::make('status')
-                    ->options(['enabled' => 'Enabled', 'disabled' => 'Disabled']),
-                SelectFilter::make('sellable')
-                    ->label('Availability')
-                    ->options([
-                        'sellable' => 'Sellable now',
-                        'out' => 'Out of stock',
-                        'empty' => 'No tunnels',
-                    ]),
-                SelectFilter::make('continent')->options(fn (): array => $this->continents()),
-            ])
-            ->recordActions([
-                $this->viewAction(),
-                $this->toggleStatusAction(),
-                $this->editAction(),
-                $this->deleteAction(),
-            ])
-            ->defaultSort('tag')
-            ->emptyStateHeading('No locations')
-            ->emptyStateDescription('The panel returned no locations, or it could not be reached.');
+        $this->page = 1;
     }
 
-    /**
-     * Rows for the table: filtered, sorted and paginated in PHP.
-     *
-     * The panel's list endpoint takes only `page` — there is no server-side search, sort or
-     * filter to delegate to — so the whole catalogue (246 rows, 3 requests) is fetched and
-     * worked on here. `PanelApi` memoises the fetch for the request.
-     *
-     * A `LengthAwarePaginator` is returned rather than a plain collection because Filament
-     * renders exactly what the data source hands back: returning all 246 rows produced a
-     * 5.5 MB page. Slicing here keeps it to one screen's worth.
-     */
-    private function rows(?string $search, array $sort, int $page, int $perPage): LengthAwarePaginator
+    public function jump(int $page): void
     {
-        $api = $this->api();
-        $empty = fn (): LengthAwarePaginator => new LengthAwarePaginator([], 0, max(1, $perPage), $page);
-
-        if (!$api?->isConfigured()) {
-            return $empty();
-        }
-
-        try {
-            $rows = collect($api->locations());
-        } catch (\Throwable $e) {
-            // The banner in the view explains it; an exception here would blank the page.
-            return $empty();
-        }
-
-        $rows = $rows->map(function (array $row): array {
-            $row['status'] ??= 'enabled';
-            // Filament keys array records by `__key`; the tag is the panel's own identifier
-            // and the one every other endpoint addresses a location by.
-            $row['__key'] = (string) ($row['tag'] ?? $row['id'] ?? '');
-
-            return $row;
-        })->filter(fn (array $row): bool => $row['__key'] !== '');
-
-        if (filled($search)) {
-            $needle = mb_strtolower($search);
-            $rows = $rows->filter(function (array $row) use ($needle): bool {
-                foreach (['tag', 'country_name', 'city', 'state', 'continent', 'country'] as $field) {
-                    if (str_contains(mb_strtolower((string) ($row[$field] ?? '')), $needle)) {
-                        return true;
-                    }
-                }
-
-                return false;
-            });
-        }
-
-        $rows = $this->applyFilters($rows);
-
-        [$column, $direction] = [$sort[0] ?? 'tag', $sort[1] ?? 'asc'];
-        $numeric = in_array($column, ['total', 'used', 'free'], true);
-
-        $rows = $rows->sortBy(
-            fn (array $row) => $numeric ? (int) ($row[$column] ?? 0) : mb_strtolower((string) ($row[$column] ?? '')),
-            SORT_REGULAR,
-            $direction === 'desc',
-        )->values();
-
-        $perPage = max(1, $perPage);
-
-        return new LengthAwarePaginator(
-            $rows->forPage($page, $perPage)->all(),
-            $rows->count(),
-            $perPage,
-            $page,
-            ['path' => Paginator::resolveCurrentPath()],
-        );
+        $this->page = max(1, $page);
     }
 
-    private function applyFilters(Collection $rows): Collection
-    {
-        $status = $this->tableFilters['status']['value'] ?? null;
-        $sellable = $this->tableFilters['sellable']['value'] ?? null;
-        $continent = $this->tableFilters['continent']['value'] ?? null;
+    // ── Modal state ──────────────────────────────────────────────────────────
 
-        if (filled($status)) {
-            $rows = $rows->filter(fn (array $r): bool => ($r['status'] ?? 'enabled') === $status);
-        }
+    /** Tag whose full row (with provider priorities) is open in the view modal. */
+    public ?string $viewing = null;
 
-        if (filled($continent)) {
-            $rows = $rows->filter(fn (array $r): bool => ($r['continent'] ?? '') === $continent);
-        }
+    /** Tag being edited, or null. */
+    public ?string $editing = null;
 
-        if (filled($sellable)) {
-            $rows = $rows->filter(function (array $r) use ($sellable): bool {
-                $total = (int) ($r['total'] ?? 0);
-                $free = (int) ($r['free'] ?? 0);
-                $enabled = ($r['status'] ?? 'enabled') === 'enabled';
+    public bool $creating = false;
 
-                return match ($sellable) {
-                    'sellable' => $enabled && $free > 0,
-                    'out' => $total > 0 && (!$enabled || $free < 1),
-                    'empty' => $total < 1,
-                    default => true,
-                };
-            });
-        }
+    /** @var array<string, string> location fields plus provider_prioN, bound in the modal */
+    public array $form = [];
 
-        return $rows;
-    }
+    /** @var array{tag: string, enable: bool}|null */
+    public ?array $confirmToggle = null;
 
-    /** @return array<string, string> */
-    private function continents(): array
-    {
-        try {
-            return collect($this->api()?->locations() ?? [])
-                ->pluck('continent')
-                ->filter()
-                ->unique()
-                ->sort()
-                ->mapWithKeys(fn (string $c): array => [$c => $c])
-                ->all();
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
-
-    // ── Actions ──────────────────────────────────────────────────────────────
-
-    /**
-     * The full row, fetched per-location rather than taken from the list.
-     *
-     * `GET /locations/{tag}` is the only endpoint that returns the DigitalOcean / Linode /
-     * Vultr region priorities, which are what actually decide where a tunnel gets built.
-     */
-    private function viewAction(): Action
-    {
-        return Action::make('view')
-            ->label('View')
-            ->icon(Heroicon::Eye)
-            ->color('gray')
-            ->modalHeading(fn (array $record): string => 'Location ' . $record['tag'])
-            ->modalSubmitAction(false)
-            ->modalCancelActionLabel('Close')
-            ->modalContent(function (array $record) {
-                try {
-                    $detail = $this->api()->location($record['tag']);
-                } catch (\Throwable $e) {
-                    $detail = ['error' => $e->getMessage()];
-                }
-
-                return view('servers.proxypanel::admin.location-detail', ['detail' => $detail, 'row' => $record]);
-            });
-    }
-
-    private function toggleStatusAction(): Action
-    {
-        return Action::make('toggleStatus')
-            ->label(fn (array $record): string => ($record['status'] ?? 'enabled') === 'enabled' ? 'Disable' : 'Enable')
-            ->icon(fn (array $record): string => ($record['status'] ?? 'enabled') === 'enabled'
-                ? 'heroicon-m-pause-circle'
-                : 'heroicon-m-play-circle')
-            ->color(fn (array $record): string => ($record['status'] ?? 'enabled') === 'enabled' ? 'warning' : 'success')
-            ->requiresConfirmation()
-            ->modalDescription(fn (array $record): string => ($record['status'] ?? 'enabled') === 'enabled'
-                ? 'Disabling removes this location from checkout. Services already running there are not affected.'
-                : 'Enabling offers this location at checkout again, if it has free tunnels.')
-            ->action(function (array $record): void {
-                $enable = ($record['status'] ?? 'enabled') !== 'enabled';
-
-                $this->run(
-                    fn () => $this->api()->setLocationStatus($record['tag'], $enable),
-                    $record['tag'] . ' ' . ($enable ? 'enabled' : 'disabled'),
-                );
-            });
-    }
-
-    private function editAction(): Action
-    {
-        return Action::make('edit')
-            ->label('Edit')
-            ->icon(Heroicon::PencilSquare)
-            ->color('gray')
-            ->fillForm(function (array $record): array {
-                try {
-                    $detail = $this->api()->location($record['tag']);
-                } catch (\Throwable $e) {
-                    $detail = $record;
-                }
-
-                return $this->formStateFrom($detail);
-            })
-            ->schema(fn (): array => $this->locationForm())
-            ->modalHeading(fn (array $record): string => 'Edit ' . $record['tag'])
-            ->modalSubmitActionLabel('Save')
-            ->action(function (array $record, array $data): void {
-                $this->run(
-                    fn () => $this->api()->updateLocation($record['tag'], $this->payloadFrom($data)),
-                    $record['tag'] . ' updated',
-                );
-            });
-    }
-
-    private function deleteAction(): Action
-    {
-        return Action::make('delete')
-            ->label('Delete')
-            ->icon(Heroicon::Trash)
-            ->color('danger')
-            ->requiresConfirmation()
-            ->modalHeading(fn (array $record): string => 'Delete ' . $record['tag'] . '?')
-            ->modalDescription('This removes the location from the panel. It cannot be undone from here.')
-            // A location with tunnels in use is capacity someone has paid for; the panel may
-            // refuse anyway, but there is no reason to send the request and find out.
-            ->disabled(fn (array $record): bool => (int) ($record['used'] ?? 0) > 0)
-            ->tooltip(fn (array $record): ?string => (int) ($record['used'] ?? 0) > 0
-                ? 'In use by ' . $record['used'] . ' tunnel(s) — cannot be deleted'
-                : null)
-            ->action(function (array $record): void {
-                $this->run(
-                    fn () => $this->api()->deleteLocation($record['tag']),
-                    $record['tag'] . ' deleted',
-                );
-            });
-    }
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            Action::make('create')
-                ->label('New location')
-                ->icon(Heroicon::Plus)
-                ->schema(fn (): array => $this->locationForm())
-                ->modalHeading('New panel location')
-                ->modalSubmitActionLabel('Create')
-                ->action(function (array $data): void {
-                    $this->run(
-                        fn () => $this->api()->createLocation($this->payloadFrom($data)),
-                        'Location created',
-                    );
-                }),
-            Action::make('refresh')
-                ->label('Refresh')
-                ->icon(Heroicon::ArrowPath)
-                ->color('gray')
-                ->action(fn () => $this->resetTable()),
-        ];
-    }
+    public ?string $confirmDelete = null;
 
     /**
      * The providers this panel actually builds tunnels on, and the exact code length each
@@ -424,60 +160,225 @@ class PanelLocations extends Page implements HasTable
      *
      * @var array<string, array{label: string, length: int, example: string}>
      */
-    private const PROVIDERS = [
+    public const PROVIDERS = [
         'do' => ['label' => 'DigitalOcean', 'length' => 4, 'example' => 'nyc1'],
         'vultr' => ['label' => 'Vultr', 'length' => 3, 'example' => 'ewr'],
         'sevencloud' => ['label' => 'SevenCloud', 'length' => 6, 'example' => 'mci-00'],
     ];
 
-    /**
-     * Create/update share one form — the panel takes the same body for both.
-     *
-     * The provider blocks are the reason this is not a two-field dialog: each cloud has its
-     * own region codes, and the panel tries them in priority order when it builds a tunnel.
-     * The length rules are enforced here rather than left to the panel so a typo comes back
-     * as a field error instead of a rejected round trip.
-     */
-    private function locationForm(): array
+    private const LOCATION_FIELDS = ['continent', 'country', 'country_name', 'state', 'city', 'region_code', 'zip_code'];
+
+    public function openView(string $tag): void
     {
-        $blocks = [];
+        $this->viewing = $tag;
+    }
 
-        foreach (self::PROVIDERS as $key => $provider) {
-            $fields = [];
+    public function openCreate(): void
+    {
+        $this->form = $this->blankForm();
+        $this->creating = true;
+        $this->editing = null;
+        $this->resetValidation();
+    }
 
-            foreach ([1, 2, 3] as $n) {
-                $fields[] = TextInput::make($key . '_prio' . $n)
-                    ->label('Priority ' . $n)
-                    ->required()
-                    ->minLength($provider['length'])
-                    ->maxLength($provider['length'])
-                    ->placeholder($provider['example'])
-                    ->helperText($n === 1 ? 'Exactly ' . $provider['length'] . ' characters' : null);
-            }
-
-            $blocks[] = Section::make($provider['label'] . ' regions')
-                ->description('Tried in order when a tunnel is built here. All three are required by the panel.')
-                ->columns(3)
-                ->schema($fields);
+    public function openEdit(string $tag): void
+    {
+        try {
+            $detail = $this->api()->location($tag);
+        } catch (\Throwable $e) {
+            $detail = collect($this->allRows())->firstWhere('tag', $tag) ?? [];
         }
 
-        return [
-            Section::make('Location')
-                ->columns(2)
-                ->schema([
-                    TextInput::make('continent')->required()->placeholder('Europe'),
-                    TextInput::make('country')->label('Country code')->required()->maxLength(2)->placeholder('DE'),
-                    TextInput::make('country_name')->label('Country name')->required()->placeholder('Germany'),
-                    TextInput::make('state')->placeholder('North Rhine-Westphalia'),
-                    // The panel derives the tag from country and city (Antarctica + "Paymenter
-                    // Roundtrip" became `aq-pay-1`), so neither can be edited afterwards
-                    // without the tag and the row disagreeing.
-                    TextInput::make('city')->required()->placeholder('Bonn'),
-                    TextInput::make('region_code')->required()->placeholder('DE-NW'),
-                    TextInput::make('zip_code')->label('ZIP code'),
-                ]),
-            ...$blocks,
+        $this->form = [...$this->blankForm(), ...array_filter($this->formStateFrom($detail), fn ($v) => $v !== null)];
+        $this->editing = $tag;
+        $this->creating = false;
+        $this->resetValidation();
+    }
+
+    public function closeModals(): void
+    {
+        $this->reset(['viewing', 'editing', 'creating', 'confirmToggle', 'confirmDelete']);
+    }
+
+    public function saveLocation(): void
+    {
+        $rules = [
+            'form.continent' => 'required|string',
+            'form.country' => 'required|string|size:2',
+            'form.country_name' => 'required|string',
+            'form.state' => 'nullable|string',
+            'form.city' => 'required|string',
+            'form.region_code' => 'required|string',
+            'form.zip_code' => 'nullable|string',
         ];
+        $names = ['form.country' => 'country code', 'form.country_name' => 'country name', 'form.region_code' => 'region code'];
+
+        // Every priority is mandatory and length-checked to the exact width the panel
+        // demands — a typo comes back as a field error instead of a rejected round trip.
+        foreach (self::PROVIDERS as $key => $provider) {
+            foreach ([1, 2, 3] as $n) {
+                $rules['form.' . $key . '_prio' . $n] = 'required|string|size:' . $provider['length'];
+                $names['form.' . $key . '_prio' . $n] = $provider['label'] . ' priority ' . $n;
+            }
+        }
+
+        $this->validate($rules, attributes: $names);
+
+        $editing = $this->editing;
+
+        $this->run(
+            fn () => $editing
+                ? $this->api()->updateLocation($editing, $this->payloadFrom($this->form))
+                : $this->api()->createLocation($this->payloadFrom($this->form)),
+            $editing ? $editing . ' updated' : 'Location created',
+        );
+    }
+
+    public function askToggle(string $tag): void
+    {
+        $row = collect($this->allRows())->firstWhere('tag', $tag);
+
+        if ($row) {
+            $this->confirmToggle = ['tag' => $tag, 'enable' => ($row['status'] ?? 'enabled') !== 'enabled'];
+        }
+    }
+
+    public function runToggle(): void
+    {
+        [$tag, $enable] = [$this->confirmToggle['tag'] ?? '', (bool) ($this->confirmToggle['enable'] ?? false)];
+        $this->confirmToggle = null;
+
+        if ($tag !== '') {
+            $this->run(
+                fn () => $this->api()->setLocationStatus($tag, $enable),
+                $tag . ' ' . ($enable ? 'enabled' : 'disabled'),
+            );
+        }
+    }
+
+    public function askDelete(string $tag): void
+    {
+        $this->confirmDelete = $tag;
+    }
+
+    public function runDelete(): void
+    {
+        $tag = $this->confirmDelete;
+        $this->confirmDelete = null;
+
+        // A location with tunnels in use is capacity someone has paid for; the panel may
+        // refuse anyway, but there is no reason to send the request and find out.
+        $row = collect($this->allRows())->firstWhere('tag', $tag);
+
+        if (!$row || (int) ($row['used'] ?? 0) > 0) {
+            Notification::make()->title('Cannot delete')
+                ->body('This location has tunnels in use — capacity someone has paid for.')
+                ->danger()->send();
+
+            return;
+        }
+
+        $this->run(fn () => $this->api()->deleteLocation($tag), $tag . ' deleted');
+    }
+
+    // ── Rows ─────────────────────────────────────────────────────────────────
+
+    /** @return array<int, array<string, mixed>> every location, unfiltered */
+    private function allRows(): array
+    {
+        $api = $this->api();
+
+        if (!$api?->isConfigured()) {
+            return [];
+        }
+
+        try {
+            return array_values(array_map(function (array $row): array {
+                $row['status'] ??= 'enabled';
+
+                return $row;
+            }, $api->locations()));
+        } catch (\Throwable $e) {
+            // The banner in the view explains it; an exception here would blank the page.
+            return [];
+        }
+    }
+
+    /**
+     * The page of rows the grid draws: filtered and paginated in PHP — the panel's list
+     * endpoint takes only `page`, so the whole catalogue (~246 rows, memoised per request
+     * by PanelApi) is fetched and worked on here.
+     */
+    private function paginated(): LengthAwarePaginator
+    {
+        $rows = collect($this->allRows());
+
+        if ($this->q !== '') {
+            $needle = mb_strtolower($this->q);
+            $rows = $rows->filter(function (array $row) use ($needle): bool {
+                foreach (['tag', 'country_name', 'city', 'state', 'continent', 'country'] as $field) {
+                    if (str_contains(mb_strtolower((string) ($row[$field] ?? '')), $needle)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            });
+        }
+
+        if ($this->status !== '') {
+            $rows = $rows->filter(fn (array $r): bool => ($r['status'] ?? 'enabled') === $this->status);
+        }
+
+        if ($this->continent !== '') {
+            $rows = $rows->filter(fn (array $r): bool => ($r['continent'] ?? '') === $this->continent);
+        }
+
+        if ($this->sellable !== '') {
+            $rows = $rows->filter(function (array $r): bool {
+                $total = (int) ($r['total'] ?? 0);
+                $free = (int) ($r['free'] ?? 0);
+                $enabled = ($r['status'] ?? 'enabled') === 'enabled';
+
+                return match ($this->sellable) {
+                    'sellable' => $enabled && $free > 0,
+                    'out' => $total > 0 && (!$enabled || $free < 1),
+                    'empty' => $total < 1,
+                    default => true,
+                };
+            });
+        }
+
+        $rows = $rows->sortBy(fn (array $row) => mb_strtolower((string) ($row['tag'] ?? '')))->values();
+
+        return new LengthAwarePaginator(
+            $rows->forPage($this->page, self::PER_PAGE)->values()->all(),
+            $rows->count(),
+            self::PER_PAGE,
+            $this->page,
+        );
+    }
+
+    /** @return array<int, string> */
+    private function continents(): array
+    {
+        return collect($this->allRows())->pluck('continent')->filter()->unique()->sort()->values()->all();
+    }
+
+    // ── Panel plumbing ───────────────────────────────────────────────────────
+
+    /** @return array<string, string> */
+    private function blankForm(): array
+    {
+        $form = array_fill_keys(self::LOCATION_FIELDS, '');
+
+        foreach (array_keys(self::PROVIDERS) as $provider) {
+            foreach ([1, 2, 3] as $n) {
+                $form[$provider . '_prio' . $n] = '';
+            }
+        }
+
+        return $form;
     }
 
     /** Panel row → flat form state. */
@@ -485,7 +386,7 @@ class PanelLocations extends Page implements HasTable
     {
         $state = [];
 
-        foreach (['continent', 'country', 'country_name', 'state', 'city', 'region_code', 'zip_code'] as $field) {
+        foreach (self::LOCATION_FIELDS as $field) {
             $state[$field] = $detail[$field] ?? null;
         }
 
@@ -503,7 +404,7 @@ class PanelLocations extends Page implements HasTable
     {
         $payload = [];
 
-        foreach (['continent', 'country', 'country_name', 'state', 'city', 'region_code', 'zip_code'] as $field) {
+        foreach (self::LOCATION_FIELDS as $field) {
             $payload[$field] = (string) ($data[$field] ?? '');
         }
 
@@ -535,7 +436,7 @@ class PanelLocations extends Page implements HasTable
             Notification::make()->title($success)->success()->send();
 
             $this->api = null;
-            $this->resetTable();
+            $this->closeModals();
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('The panel refused that')
@@ -570,6 +471,28 @@ class PanelLocations extends Page implements HasTable
             }
         }
 
-        return ['error' => $error];
+        $viewDetail = null;
+
+        if ($this->viewing !== null) {
+            try {
+                $viewDetail = $this->api()->location($this->viewing);
+            } catch (\Throwable $e) {
+                $viewDetail = ['error' => $e->getMessage()];
+            }
+        }
+
+        $locations = $this->paginated();
+
+        if ($this->page > 1 && $locations->isEmpty()) {
+            $this->page = max(1, $locations->lastPage());
+            $locations = $this->paginated();
+        }
+
+        return [
+            'error' => $error,
+            'locations' => $locations,
+            'continents' => $this->continents(),
+            'viewDetail' => $viewDetail,
+        ];
     }
 }
