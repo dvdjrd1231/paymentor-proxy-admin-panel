@@ -48,7 +48,17 @@
         shown() {
             if (this.search === null || this.search === '') return this.options;
             const needle = this.search.toLowerCase();
-            return this.options.filter((o) => o.group || String(o.label).toLowerCase().includes(needle));
+            return this.options.filter((o) => o.group
+                || String(o.label).toLowerCase().includes(needle)
+                || String(o.sub ?? '').toLowerCase().includes(needle));
+        },
+        // The reference bolds the typed text inside each match. Escaped first, so a
+        // label can never smuggle markup into x-html.
+        hi(text) {
+            const esc = String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            if (this.search === null || this.search === '') return esc;
+            const needle = this.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return needle === '' ? esc : esc.replace(new RegExp('(' + needle + ')', 'ig'), '<mark>$1</mark>');
         },
         pickedAt: 0,
         pick(o) {
@@ -112,17 +122,20 @@
     <ul class="ao-xsel-list" x-show="open" x-cloak x-transition.opacity.duration.100ms role="listbox">
         {{-- One loop, original order preserved — a group heading is just a row that
              can't be picked, not a second pass that would scatter headings to the top. --}}
-        <template x-for="(o, i) in options" :key="i">
+        <template x-for="(o, i) in shown()" :key="i">
             {{-- mousedown, not click: a click needs the same node under the cursor at
                  press AND release, and a Livewire morph mid-flight (any pending .live
                  update landing) swaps the node between the two — the pick silently dies
                  and the list looks stuck open until the user clicks outside. mousedown
                  fires on press alone, before a morph can eat it. .prevent keeps focus
                  on the combobox button. --}}
-            <li role="option" x-text="o.label"
+            <li role="option"
                 :class="o.group ? 'ao-xsel-group' : ('ao-xsel-opt' + (String(o.value) === String(value) ? ' ao-on' : '') + (o.disabled ? ' ao-off' : ''))"
                 :aria-selected="!o.group && String(o.value) === String(value) ? 'true' : 'false'"
-                @mousedown.prevent="pick(o)"></li>
+                @mousedown.prevent="pick(o)">
+                <span x-html="hi(o.label)"></span>
+                <small class="ao-xsel-sub" x-show="o.sub" x-html="o.sub ? hi(o.sub) : ''"></small>
+            </li>
         </template>
     </ul>
 </span>

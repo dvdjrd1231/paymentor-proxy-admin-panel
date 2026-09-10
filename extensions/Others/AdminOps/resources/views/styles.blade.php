@@ -3238,6 +3238,10 @@
 
     .ao-xsel-opt.ao-on { font-weight: 600; }
 
+    .ao-xsel-sub { display: block; color: #999; font-size: 0.85em; }
+
+    .ao-xsel-opt mark { background: #fff3cd; font-weight: 700; padding: 0; color: inherit; }
+
     .ao-xsel-opt.ao-off {
         color: #999;
         cursor: not-allowed;
@@ -5048,7 +5052,16 @@
         margin: 0.9rem 0 0.4rem;
     }
 
-    .ao-eo-items-head h4 { margin: 0; font-weight: 600; }
+    .ao-eo-items-head h4 { margin: 0; font-weight: 600; white-space: nowrap; }
+
+    /* .ao-cp-link is a full-width flex block by default (the Network Issues trap) — left
+       alone it ate the row and squeezed "Order Items" into a wrap. */
+    .ao-eo-items-head .ao-cp-link { display: inline-flex; width: auto; padding: 0; }
+
+    /* The facts are multi-line (the client's address block, the placed-by email) — the
+       search-panel cell rule lays cells out as flex, which flattened them into one run
+       and swallowed the spaces around the IP links. */
+    .ao-of-row > .ao-eo-fact { display: block; }
 
     .ao-eo-notes { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.6rem; }
     .ao-eo-notes textarea {

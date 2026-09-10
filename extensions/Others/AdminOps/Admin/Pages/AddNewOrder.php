@@ -298,6 +298,12 @@ class AddNewOrder extends Page
             $order->send_create_email = $this->sendEmail;
             $order->save();
 
+            // The Payment Method picked here — ManageOrders::paymentOf() reads it back
+            // until a transaction names the gateway that really paid.
+            if ($this->gatewayId) {
+                \Paymenter\Extensions\Others\AdminOps\Models\Meta::put($order, 'gateway', $this->gatewayId);
+            }
+
             if ($this->generateInvoice && $summary['total'] > 0) {
                 $invoice = new Invoice([
                     'user_id' => $user->id,
@@ -400,7 +406,8 @@ class AddNewOrder extends Page
     protected function getViewData(): array
     {
         return [
-            'clients' => User::whereNull('role_id')->orderBy('first_name')->limit(500)->get(['id', 'first_name', 'last_name', 'email']),
+            'clients' => User::whereNull('role_id')->orderBy('first_name')->limit(500)
+                ->with('properties')->get(['id', 'first_name', 'last_name', 'email']),
             'gateways' => \Paymenter\Extensions\Others\AdminOps\Support\GatewayOrder::sort(Gateway::where('enabled', true)->get(['id', 'name'])),
             'coupons' => Coupon::query()->orderBy('code')->limit(100)->get(['id', 'code']),
             'products' => Product::with('category')->orderBy('name')->get(['id', 'name', 'category_id']),

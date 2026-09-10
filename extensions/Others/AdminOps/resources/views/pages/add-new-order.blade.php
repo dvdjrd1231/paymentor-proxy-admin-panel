@@ -12,11 +12,17 @@
                     {{-- .live: the Order Summary's credit-balance offer is this client's own
                          balance, and has to refresh the moment a different one is picked. --}}
                     @php
-                        $clientOptions = [['value' => '', 'label' => 'Start Typing to Search Clients', 'group' => false]];
+                        // The reference's list: an Active group heading, each client with
+                        // their email on a muted second line. Every account here is live —
+                        // Paymenter has no disabled user state to make a second group of.
+                        $clientOptions = [['value' => '', 'label' => 'Active', 'group' => true]];
                         foreach ($clients as $client) {
+                            $company = trim((string) ($client->properties?->firstWhere('key', 'company_name')?->value ?? ''));
                             $clientOptions[] = [
                                 'value' => $client->id,
-                                'label' => (trim($client->first_name . ' ' . $client->last_name) ?: $client->email) . ' - #' . $client->id,
+                                'label' => (trim($client->first_name . ' ' . $client->last_name) ?: $client->email)
+                                    . ($company !== '' ? ' (' . $company . ')' : '') . ' - #' . $client->id,
+                                'sub' => $client->email,
                                 'group' => false,
                             ];
                         }

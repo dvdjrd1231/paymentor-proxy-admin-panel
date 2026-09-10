@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Paymenter\Extensions\Others\AdminOps\Support\Languages;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
@@ -191,18 +192,18 @@ class AddNewClient extends Page
         ];
     }
 
-    /** Installed locales with readable names, from the lang/ directory itself. */
+    /**
+     * The languages a client can be recorded as reading — the reference's list.
+     *
+     * This was the `lang/` directories, which is a different question: that says what the
+     * *interface* is translated into (two languages here), while this is a note about the
+     * client. Reading it off the filesystem meant Manage Languages had almost nothing to
+     * offer and an email could not be translated into a language no client could be set
+     * to. See {@see Languages} for why nothing about the interface changes.
+     */
     public static function languages(): array
     {
-        $names = ['en' => 'English', 'pt' => 'Português', 'es' => 'Español', 'fr' => 'Français', 'de' => 'Deutsch', 'nl' => 'Nederlands', 'it' => 'Italiano'];
-        $languages = [];
-
-        foreach (glob(base_path('lang/*'), GLOB_ONLYDIR) ?: [] as $dir) {
-            $code = basename($dir);
-            $languages[$code] = $names[$code] ?? strtoupper($code);
-        }
-
-        return $languages;
+        return Languages::all();
     }
 
     /** The chosen country's flag and dial code, for the phone field's prefix. */
