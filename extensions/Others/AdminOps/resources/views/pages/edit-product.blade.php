@@ -933,27 +933,39 @@
                 </p>
             </div>
 
-            {{-- The reference's Product URLs table. Its Visits column counts hits against a
-                 tracking row per URL; nothing here records that, so the count says so
-                 rather than showing a zero that would read as "nobody came". --}}
-            <h3 class="ao-sub">Product URLs</h3>
-
-            <div class="ao-anc-card">
+            {{-- The reference's Product URLs table, inside the card under its own grey
+                 band. Its Visits column counts hits against a tracking row per URL and
+                 its last column removes one; nothing here records or stores either, so
+                 both say so rather than showing a zero and a button that does nothing. --}}
+            <div class="ao-anc-card ao-ep-urls">
+                <div class="ao-ep-urls-head">Product URLs</div>
                 <table class="ao-mu-grid">
                     <thead>
                         <tr>
                             <th>URL</th>
-                            <th>Visits</th>
+                            <th class="ao-ep-urls-visits">Visits</th>
+                            <th class="ao-ep-urls-act"></th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse (array_filter($links) as $url)
                             <tr>
-                                <td><a class="ao-link" href="{{ $url }}" target="_blank" rel="noopener">{{ $url }}</a></td>
+                                <td class="ao-mu-left">
+                                    <span class="ao-anc-field">
+                                        <input type="text" value="{{ $url }}" readonly onclick="this.select()">
+                                        <button type="button" class="ao-pg-btn ao-ep-copy" title="Copy this link"
+                                            onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.textContent = 'Copied';">&#128203;</button>
+                                    </span>
+                                </td>
                                 <td class="ao-cpg-muted" title="Visits are not counted per URL on this platform">Not tracked</td>
+                                <td class="ao-mu-actions">
+                                    <span title="These addresses are derived from the product's group and slug — change those to change the link; there is no stored list to delete from">
+                                        <x-filament::icon icon="ri-indeterminate-circle-fill" class="ao-mu-cell-icon ao-pl-dead" />
+                                    </span>
+                                </td>
                             </tr>
                         @empty
-                            <tr><td colspan="2" class="ao-mu-none">This product has no group yet, so it has no storefront address.</td></tr>
+                            <tr><td colspan="3" class="ao-mu-none">This product has no group yet, so it has no storefront address.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

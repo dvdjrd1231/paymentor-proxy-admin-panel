@@ -2732,6 +2732,24 @@
 
     .ao-ete-menu ul button:hover { background: #f0f4f8; }
 
+    /* The reference's Product URLs block: its own grey band above the grid, a narrow
+       Visits column and a narrower action column at the end. */
+    .ao-ep-urls { padding: 0; overflow: hidden; }
+
+    .ao-ep-urls-head {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--wa-panel-border, #ddd);
+        background: #f5f5f5;
+        font-size: 0.9rem;
+    }
+
+    .ao-ep-urls .ao-mu-grid { margin: 0; }
+    .ao-ep-urls-visits { width: 12%; }
+    .ao-ep-urls-act { width: 5%; }
+    .ao-ep-urls .ao-anc-field { gap: 0.4rem; }
+    .ao-ep-urls .ao-anc-field input { flex: 1; }
+    .ao-ep-copy { white-space: nowrap; }
+
     /* The product editor's cross-sell picker: the reference's search box with the picks
        sitting inside it as tags, over a grouped result list. */
     .ao-ep-cross { position: relative; display: block; width: 100%; max-width: 34rem; }
@@ -2794,6 +2812,8 @@
     .ao-ete-toolbar .ao-ete-mode.ao-on { background: #e7f0f8; border-color: #bcd6ea; }
 
     .ao-ete-toolbar .ao-rte-sep { width: 1px; height: 1.1rem; margin: 0 0.25rem; background: #e0e0e0; align-self: center; }
+
+    .ao-ete-sel-sm { width: 5rem; }
 
     .ao-ete-sel {
         height: 1.8rem;
