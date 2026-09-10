@@ -7362,15 +7362,18 @@
        sheet; Preview renders the Markdown with placeholders as chips. */
     .ao-ete-modes { margin-top: 1rem; }
 
+    /* The reference's writing surface is prose on white in the page's own face, not a
+       code box — so this is set to match it rather than to a monospace editor. */
     .ao-ete-source {
         width: 100%;
-        padding: 0.8rem 1rem;
+        padding: 1.1rem 1.4rem;
         border: 1px solid var(--wa-panel-border, #ccc);
         border-radius: 0 var(--wa-radius, 4px) var(--wa-radius, 4px) var(--wa-radius, 4px);
         background: #fff;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        font-size: 0.9rem;
-        line-height: 1.5;
+        font-family: inherit;
+        font-size: 0.95rem;
+        line-height: 1.9;
+        color: var(--wa-ink, #2b2b2b);
     }
 
     .ao-ete-preview {
