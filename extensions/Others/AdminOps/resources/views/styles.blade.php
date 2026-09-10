@@ -2525,6 +2525,60 @@
     .ao-ete-version { display: flex; flex-direction: column; gap: 0.2rem; }
     .ao-ete-version i { font-size: 0.82rem; font-style: normal; font-weight: 400; opacity: 0.7; }
 
+    /* The reference puts the version heading and the subject outside the settings band,
+       between it and the editor, rather than as two more striped rows. */
+    .ao-ete-versionbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 1.1rem;
+    }
+
+    .ao-ete-subject {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-top: 0.9rem;
+    }
+
+    .ao-ete-subject label { font-size: 0.95rem; }
+
+    .ao-ete-subject input {
+        flex: 1;
+        min-width: 0;
+        max-width: 46rem;
+        height: 2rem;
+        padding: 0 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        font-size: 0.9rem;
+    }
+
+    /* From is two boxes on one line, as the reference has it: the name then the address. */
+    .ao-ete-from { flex-wrap: wrap; }
+    .ao-ete-from input { flex: 1 1 12rem; }
+
+    /* The reference states the comma rule beside the field rather than inside it — a
+       placeholder disappears the moment someone types, which is when it still matters. */
+    .ao-ete-aside { font-style: normal; white-space: nowrap; }
+
+    /* .ao-of-check is nowrap everywhere else, which suits a short "Tick to…" caption. The
+       inert rows here carry a sentence of reason after the caption, and on one line it ran
+       off the panel's right edge instead of wrapping under it. */
+    .ao-ete-band .ao-of-check { white-space: normal; align-items: flex-start; flex-wrap: wrap; }
+
+    /* The reason takes a line of its own under the control rather than sharing one: full
+       width against a wrapping flex line is what breaks it onto the next row. */
+    .ao-ete-band .ao-of-check i,
+    .ao-ete-band .ao-of-stack i { display: block; width: 100%; }
+
+    /* The stack is a column, so its children stretch by default. `align-items` alone was
+       not enough: .ao-of-go carries `margin: … auto`, and an auto margin beats the
+       container's alignment in flexbox, which is what kept Add More centred in the cell. */
+    .ao-ete-band .ao-of-stack { align-items: flex-start; }
+    .ao-ete-band .ao-of-stack .ao-of-go { margin: 0.35rem 0 0; }
+
     /* A contact line in the Summary's Contacts panel: name over email. */
     .ao-cp-kv-line { display: flex; flex-direction: column; padding: 0.25rem 0; font-size: 0.85rem; }
 

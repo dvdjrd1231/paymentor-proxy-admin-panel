@@ -11,68 +11,53 @@
         </div>
 
         <form wire:submit.prevent="save">
-            <div class="ao-find ao-of">
+            <div class="ao-find ao-of ao-ete-band">
+                {{-- The reference's band, row for row: From, Copy To, Blind Copy To,
+                     Attachments, Plain-Text, Disable. The template's own name is the
+                     page's subheading here, as it is on the reference. --}}
                 <div class="ao-of-rows">
-                    <div class="ao-of-row">
-                        <span class="ao-of-label">Template Name</span>
-                        <span class="ao-eo-fact"
-                            title="Derived from the template's key — the key is what the system sends by, so the name follows it">
-                            {{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::label($template) }}
-                        </span>
-                        <span class="ao-of-label">Disable</span>
-                        <span class="ao-of-check">
-                            <input type="checkbox" wire:model="disabled">
-                            Tick to prevent this email being sent
-                        </span>
-                    </div>
-                    {{-- The reference sets From per template. Here every system email
-                         leaves under one name and address, set once on General Settings,
-                         so this shows what will be used rather than offering an override
-                         that would be ignored. --}}
+                    {{-- The reference sets From per template. Every system email here leaves
+                         under one name and address, set once on General Settings, so these
+                         show what will be used rather than offering an override that the
+                         mailer would ignore. --}}
                     <div class="ao-of-row ao-of-row-single">
                         <span class="ao-of-label">From</span>
-                        <span class="ao-eo-fact">
-                            {{ config('settings.mail_from_name') ?: config('app.name') }}
-                            &lt;{{ config('settings.mail_from_address') ?: '—' }}&gt;
-                            <i>Set for the whole store on
+                        <span class="ao-of-inline ao-ete-from">
+                            <input type="text" class="ao-of-lg" disabled
+                                value="{{ config('settings.mail_from_name') ?: config('app.name') }}"
+                                title="Set for the whole store, not per template">
+                            <input type="text" class="ao-of-lg" disabled
+                                value="{{ config('settings.mail_from_address') }}"
+                                title="Set for the whole store, not per template">
+                            <i>Set for every email on
                                 <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\GeneralSettings::getUrl() }}">General Settings → Mail</a>.</i>
                         </span>
                     </div>
 
-                    {{-- The reference heads the subject and body with which language version
-                         is being edited. There is one here — Manage Languages says the same —
-                         so this names it rather than implying a picker that is not there. --}}
-                    <h3 class="ao-sub ao-ete-version">
-                        Default Version
-                        <i>Used for the {{ \Illuminate\Support\Str::upper(config('app.locale', 'en')) }} language
-                            and any languages where email template translations are not defined. Languages are
-                            activated under Manage Languages on the
-                            <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::getUrl() }}">templates list</a>.</i>
-                    </h3>
-
-                    <div class="ao-of-row ao-of-row-single">
-                        <label class="ao-of-label" for="ao-ete-subject">Subject</label>
-                        <span><input id="ao-ete-subject" class="ao-of-xl" type="text" wire:model="subject"></span>
-                    </div>
                     <div class="ao-of-row ao-of-row-single">
                         <label class="ao-of-label" for="ao-ete-cc">Copy To</label>
                         <span class="ao-of-inline">
-                            <input id="ao-ete-cc" class="ao-of-xl" type="text" wire:model="cc"
-                                placeholder="Enter email addresses separated by a comma">
+                            <input id="ao-ete-cc" class="ao-of-lg" type="text" wire:model="cc">
+                            <i class="ao-ete-aside">Enter email addresses separated by a comma</i>
                         </span>
                     </div>
+
                     <div class="ao-of-row ao-of-row-single">
                         <label class="ao-of-label" for="ao-ete-bcc">Blind Copy To</label>
-                        <span><input id="ao-ete-bcc" class="ao-of-xl" type="text" wire:model="bcc"
-                            placeholder="Enter email addresses separated by a comma"></span>
+                        <span class="ao-of-inline">
+                            <input id="ao-ete-bcc" class="ao-of-lg" type="text" wire:model="bcc">
+                            <i class="ao-ete-aside">Enter email addresses separated by a comma</i>
+                        </span>
                     </div>
 
-                    {{-- The reference's last two rows on this band. Neither has a column
-                         behind it, and each says why rather than looking live. --}}
+                    {{-- The reference's next two rows. Neither has anything behind it here,
+                         and each says why rather than looking live. --}}
                     <div class="ao-of-row ao-of-row-single">
                         <span class="ao-of-label">Attachments</span>
-                        <span class="ao-of-inline ao-gs-off">
+                        <span class="ao-of-stack ao-gs-off">
                             <input type="file" disabled title="Notification emails carry no attachments on this platform">
+                            <button type="button" class="ao-of-go" disabled
+                                title="Notification emails carry no attachments on this platform">&plus; Add More</button>
                             <i>Not available: nothing is stored against a template to attach. An invoice
                                 reaches the client as a link to its own page, where the PDF is downloaded.</i>
                         </span>
@@ -87,7 +72,32 @@
                                 client whose reader refuses HTML already gets the text.</i>
                         </span>
                     </div>
+
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">Disable</span>
+                        <span class="ao-of-check">
+                            <input type="checkbox" wire:model="disabled">
+                            Check to disable this email from being sent
+                        </span>
+                    </div>
                 </div>
+            </div>
+
+            {{-- The reference heads the subject and body with which language version is
+                 being edited, and hangs the editor toggle off the same line. --}}
+            <div class="ao-ete-versionbar">
+                <h3 class="ao-sub ao-ete-version">
+                    Default Version
+                    <i>Used for the {{ \Illuminate\Support\Str::upper(config('app.locale', 'en')) }} language
+                        and any languages where email template translations are not defined. Languages are
+                        activated under Manage Languages on the
+                        <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::getUrl() }}">templates list</a>.</i>
+                </h3>
+            </div>
+
+            <div class="ao-ete-subject">
+                <label for="ao-ete-subject">Subject:</label>
+                <input id="ao-ete-subject" type="text" wire:model="subject">
             </div>
 
             <div class="ao-tx-tabs ao-ete-modes">
