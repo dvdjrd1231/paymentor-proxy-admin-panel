@@ -27,7 +27,6 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\Catalogue;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewOrder;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\OpenNewTicket;
 use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SystemSettings;
-use Paymenter\Extensions\Servers\ProxyPanel\Admin\Pages\PanelLocations;
 
 /**
  * The icon clusters at each end of WHMCS's menu bar: the `+` at the start, and search, cogs,
@@ -116,7 +115,6 @@ class Toolbar
             static::page(Catalogue::class, 'Products/Services', 'heroicon-o-cube'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ConfigOptionGroups::class, 'Configurable Options', 'heroicon-o-adjustments-vertical'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServersList::class, 'Servers', 'heroicon-o-server-stack'),
-            static::page(PanelLocations::class, 'Panel Locations', 'heroicon-o-globe-alt'),
             // Issue #45: the AdminOps page with the Enable/Disable/Edit quick buttons.
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\PaymentGateways::class, 'Payment Gateways', 'heroicon-o-credit-card'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\CurrenciesList::class, 'Currencies', 'heroicon-o-banknotes'),

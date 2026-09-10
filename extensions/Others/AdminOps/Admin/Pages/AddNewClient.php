@@ -189,6 +189,8 @@ class AddNewClient extends Page
             'gateways' => \App\Models\Gateway::query()->orderBy('name')->pluck('name')->all(),
             'phoneFlag' => $this->phoneCountry()?->flag,
             'phoneDial' => $this->phoneCountry()?->dial,
+            // Empty for a country with no list of ours — the field stays free text there.
+            'regions' => \Paymenter\Extensions\Others\AdminOps\Support\Regions::for($this->props['country'] ?? null),
         ];
     }
 
@@ -254,6 +256,18 @@ class AddNewClient extends Page
      */
     public function updatedProps(mixed $value, ?string $key = null): void
     {
+        // A region belongs to the country it was picked under; leaving it behind would
+        // file the client in a state the new country has never heard of.
+        if ($key === 'country') {
+            $regions = \Paymenter\Extensions\Others\AdminOps\Support\Regions::for((string) $value);
+
+            if ($regions !== [] && !in_array($this->props['state'] ?? '', $regions, true)) {
+                $this->props['state'] = '';
+            }
+
+            return;
+        }
+
         // Livewire passes no $key when the whole array is replaced (entangled selects do
         // this) — seen live as issue #38's "Error while loading page" toasts.
         if ($key !== 'state_registration_exempt') {

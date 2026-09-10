@@ -73,8 +73,8 @@
 
         <p class="ao-gs-empty">
             The Region choice on proxy products is not a configurable option — it is the
-            ProxyPanel module's own checkout field, fed live from the panel's locations, so
-            it is managed under Panel Locations rather than here.
+            ProxyPanel module's own checkout field, fed live from the panel's own locations,
+            which are managed in adminProxies rather than here.
         </p>
 
         @if ($confirming)
