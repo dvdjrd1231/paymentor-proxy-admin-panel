@@ -171,8 +171,14 @@
                 </div>
 
                 <div class="ao-ont-toolbar ao-ete-toolbar ao-ete-toolbar2" x-show="rich" x-cloak>
+                    <button type="button" data-md-line="    " title="Indent">&#8677;</button>
+                    <button type="button" data-ao-act="outdent" title="Outdent">&#8676;</button>
+                    <span class="ao-rte-sep"></span>
                     <button type="button" data-ao-act="undo" title="Undo">&#8630;</button>
                     <button type="button" data-ao-act="redo" title="Redo">&#8631;</button>
+                    <span class="ao-rte-sep"></span>
+                    <button type="button" data-ao-act="cut" title="Cut">&#9986;</button>
+                    <button type="button" data-ao-act="copy" title="Copy">&#128203;</button>
                     <span class="ao-rte-sep"></span>
                     <button type="button" data-md-line="---" title="Horizontal rule">&#8213;</button>
                     <button type="button" data-md-line="| Column | Column |&#10;| --- | --- |&#10;| Cell | Cell |" title="Insert table">&#9638;</button>
@@ -260,7 +266,7 @@
                         return \Illuminate\Support\Str::of($m[1] ?? trim($token, '{}$ '))->snake()->replace('_', ' ')->title();
                     };
                 @endphp
-                <h4 class="ao-ano-heading">Fields</h4>
+                <h4 class="ao-ano-heading">{{ $merge['heading'] }}</h4>
                 @forelse ($merge['fields'] as $field)
                     <p class="ao-ete-mrow"><span>{{ $labelFor($field) }}</span><code class="ao-ete-token">{{ $field }}</code></p>
                 @empty
@@ -343,6 +349,28 @@
                 if (act === 'undo' || act === 'redo' || act === 'selectall') {
                     if (act === 'selectall') return box.select();
                     return document.execCommand(act);
+                }
+
+                if (act === 'cut' || act === 'copy') {
+                    const picked = box.value.slice(box.selectionStart, box.selectionEnd);
+                    if (!picked) return;
+                    navigator.clipboard?.writeText(picked);
+                    if (act === 'cut') {
+                        document.execCommand('insertText', false, '');
+                        box.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                    return;
+                }
+
+                if (act === 'outdent') {
+                    const at = box.selectionStart;
+                    const from = box.value.lastIndexOf('\n', at - 1) + 1;
+                    let to = box.value.indexOf('\n', at);
+                    if (to === -1) to = box.value.length;
+                    const line = box.value.slice(from, to).replace(/^ {1,4}/, '');
+                    box.setSelectionRange(from, to);
+                    document.execCommand('insertText', false, line);
+                    return box.dispatchEvent(new Event('input', { bubbles: true }));
                 }
 
                 if (act === 'omega') {

@@ -183,10 +183,10 @@
                                         Username: <input type="text" readonly value="{{ $panelUser }}">
                                         Password: <input type="text" readonly value="{{ $panelPass }}">
                                     </span>
-                                    <span class="ao-eo-prov-inert" title="A product names its server, so every service on it provisions there">
-                                        Server:
-                                        <select disabled><option>{{ $service->product?->server?->name ?? 'None' }}</option></select>
-                                    </span>
+                                    {{-- No Server box: the reference's own order carries none
+                                         (Leandro's 3770), and a product names its server, so
+                                         there was never a choice to make here. The server is
+                                         on the service editor for anyone who needs it. --}}
                                     <label class="ao-check">
                                         <input type="checkbox" wire:model="runModuleCreate.{{ $service->id }}"
                                             @disabled(!$service->product?->server)>

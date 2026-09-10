@@ -190,7 +190,33 @@ class EditEmailTemplate extends Page
         sort($fields);
         sort($links);
 
-        return ['fields' => $fields, 'links' => $links];
+        return ['fields' => $fields, 'links' => $links, 'heading' => $this->mergeHeading($fields)];
+    }
+
+    /**
+     * What the left column is called — the reference heads it with the subject the tags
+     * belong to ("Client Related"), so this reads the tags rather than guessing from the
+     * template's name: whichever object most of them hang off names the group.
+     *
+     * @param  array<int, string>  $fields
+     */
+    private function mergeHeading(array $fields): string
+    {
+        $counts = [];
+
+        foreach ($fields as $token) {
+            if (preg_match('/\{\{\s*\$([a-zA-Z_]+)/', $token, $m)) {
+                $counts[$m[1]] = ($counts[$m[1]] ?? 0) + 1;
+            }
+        }
+
+        if ($counts === []) {
+            return 'Related Fields';
+        }
+
+        arsort($counts);
+
+        return Str::of(array_key_first($counts))->snake()->replace('_', ' ')->title() . ' Related';
     }
 
     protected function getViewData(): array
