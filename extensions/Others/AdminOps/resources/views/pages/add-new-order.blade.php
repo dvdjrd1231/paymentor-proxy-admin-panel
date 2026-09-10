@@ -127,13 +127,28 @@
                             <select class="ao-xw-md" disabled><option>Select a product first</option></select>
                         @else
                             @php
-                                // The reference's dropdown speaks cycles (Monthly, One
-                                // Time…), not plan names — the same wording the grids use.
-                                $planOptions = $plansByItem[$index]->map(fn ($plan) => [
-                                    'value' => $plan->id,
-                                    'label' => \Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::cycleLabel($plan) ?: $plan->name,
-                                    'group' => false,
-                                ])->all();
+                                // The reference lists every cycle it knows, in its order,
+                                // and greys the ones this product carries no price for —
+                                // so the list reads the same whichever product is picked.
+                                $byCycle = $plansByItem[$index]->keyBy(
+                                    fn ($plan) => \Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::cycleLabel($plan),
+                                );
+                                $planOptions = [];
+                                foreach (\Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::CYCLES as $cycle) {
+                                    $planOptions[] = [
+                                        'value' => $byCycle[$cycle]->id ?? '',
+                                        'label' => $cycle,
+                                        'disabled' => !isset($byCycle[$cycle]),
+                                        'group' => false,
+                                    ];
+                                }
+                                // Anything this product prices that the reference's list
+                                // does not name (Daily, 2 Weeks) still belongs here.
+                                foreach ($byCycle as $cycle => $plan) {
+                                    if (!in_array($cycle, \Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::CYCLES, true)) {
+                                        $planOptions[] = ['value' => $plan->id, 'label' => $cycle, 'group' => false];
+                                    }
+                                }
                             @endphp
                             {{-- Keyed by the product: picking a different one changes which
                                  plans exist, and the key change is what tells Alpine's

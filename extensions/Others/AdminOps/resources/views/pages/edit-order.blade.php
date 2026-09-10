@@ -8,91 +8,103 @@
 --}}
 <x-filament-panels::page>
     <div class="ao-mu ao-eo">
-        <div class="ao-find ao-of">
-            <div class="ao-of-rows">
-                <div class="ao-of-row">
-                    <span class="ao-of-label">Date</span>
-                    <span class="ao-eo-fact">{{ $order->created_at?->format('m/d/Y H:i') }}</span>
-                    <span class="ao-of-label">Payment Method</span>
-                    <span class="ao-eo-fact">{{ $payment['method'] }}</span>
-                </div>
-                <div class="ao-of-row">
-                    <span class="ao-of-label">Order #</span>
-                    <span class="ao-eo-fact">{{ $number }} (ID: {{ $order->id }})</span>
-                    <span class="ao-of-label">Amount</span>
-                    <span class="ao-eo-fact">${{ number_format((float) $order->total, 2) }} {{ $order->currency_code }}</span>
-                </div>
-                <div class="ao-of-row">
-                    <span class="ao-of-label">Client</span>
-                    <span class="ao-eo-fact">
-                        <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $order->user_id]) }}">
-                            {{ trim(($order->user->first_name ?? '') . ' ' . ($order->user->last_name ?? '')) ?: $order->user->email }}
-                        </a>
-                        @foreach ($addressLines as $line)
-                            <br>{{ $line }}
-                        @endforeach
-                    </span>
-                    <span class="ao-of-label">Invoice #</span>
-                    <span class="ao-eo-fact">
-                        @if ($invoice)
-                            <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices::getUrl(['q' => $invoice->number ?: $invoice->id]) }}">
-                                {{ $invoice->number ?: $invoice->id }}
+        {{-- Two independent columns, as the reference builds them — its own two tables
+             side by side. Sharing one row grid meant the shorter left column had to pad
+             itself with empty striped cells to reach the right column's seven rows. --}}
+        <div class="ao-eo-facts">
+            <div class="ao-find ao-of">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">Date</span>
+                        <span class="ao-eo-fact">{{ $order->created_at?->format('m/d/Y H:i') }}</span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">Order #</span>
+                        <span class="ao-eo-fact">{{ $number }} (ID: {{ $order->id }})</span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">Client</span>
+                        <span class="ao-eo-fact">
+                            <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $order->user_id]) }}">
+                                {{ trim(($order->user->first_name ?? '') . ' ' . ($order->user->last_name ?? '')) ?: $order->user->email }}
                             </a>
-                        @else
-                            —
-                        @endif
-                    </span>
-                </div>
-                <div class="ao-of-row">
-                    <span class="ao-of-label">Order Placed By</span>
-                    <span class="ao-eo-fact">
-                        @if ($placedBy)
-                            {{ $placedBy['role'] }}: {{ $placedBy['name'] }} (ID: {{ $placedBy['id'] }})
-                            <br><i>{{ $placedBy['email'] }}</i>
-                        @else
-                            —
-                        @endif
-                    </span>
-                    <span class="ao-of-label">Status</span>
-                    <span class="ao-eo-fact">
-                        {{-- Picking a state runs the matching whole-order action, the
-                             reference's own behaviour for this select. --}}
-                        <select class="ao-of-sm" wire:change="setStatus($event.target.value)">
-                            @foreach (['pending' => 'Pending', 'active' => 'Active', 'suspended' => 'Suspended', 'cancelled' => 'Terminated'] as $value => $label)
-                                <option value="{{ $value }}" @selected($statusNow[0] === $label)>{{ $label }}</option>
+                            @foreach ($addressLines as $line)
+                                <br>{{ $line }}
                             @endforeach
-                        </select>
-                    </span>
+                        </span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">Order Placed By</span>
+                        <span class="ao-eo-fact">
+                            @if ($placedBy)
+                                {{ $placedBy['role'] }}: {{ $placedBy['name'] }} (ID: {{ $placedBy['id'] }})
+                                <br><i>{{ $placedBy['email'] }}</i>
+                            @else
+                                —
+                            @endif
+                        </span>
+                    </div>
                 </div>
-                <div class="ao-of-row">
-                    <span class="ao-of-label"></span>
-                    <span class="ao-eo-fact"></span>
-                    <span class="ao-of-label">IP Address</span>
-                    <span class="ao-eo-fact">
-                        @if ($ip)
-                            {{ $ip }} -
-                            <a class="ao-link" href="https://ipinfo.io/{{ $ip }}" target="_blank" rel="noopener">Lookup</a> |
-                            <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders::getUrl(['ip' => $ip]) }}">Filter</a> |
-                            <span class="ao-eo-dead" title="Paymenter keeps no IP ban list, so there is nothing for this to write to">Ban</span>
-                        @else
-                            <span title="This order predates the audit trail, so no IP was recorded">Not recorded</span>
-                        @endif
-                    </span>
-                </div>
-                <div class="ao-of-row">
-                    <span class="ao-of-label"></span>
-                    <span class="ao-eo-fact"></span>
-                    <span class="ao-of-label">Promotion Code</span>
-                    <span class="ao-eo-fact">{{ $coupon ?? '—' }}</span>
-                </div>
-                <div class="ao-of-row">
-                    <span class="ao-of-label"></span>
-                    <span class="ao-eo-fact"></span>
-                    <span class="ao-of-label">Affiliate</span>
-                    <span class="ao-eo-fact">
-                        {{ $affiliateName ?? 'None' }} -
-                        <span class="ao-eo-dead" title="Affiliate attribution is written at order time by the referral link; there is no manual reassignment to run">Manual Assign</span>
-                    </span>
+            </div>
+
+            <div class="ao-find ao-of">
+                <div class="ao-of-rows">
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">Payment Method</span>
+                        <span class="ao-eo-fact">{{ $payment['method'] }}</span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">Amount</span>
+                        <span class="ao-eo-fact">${{ number_format((float) $order->total, 2) }} {{ $order->currency_code }}</span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">Invoice #</span>
+                        <span class="ao-eo-fact">
+                            @if ($invoice)
+                                <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices::getUrl(['q' => $invoice->number ?: $invoice->id]) }}">
+                                    {{ $invoice->number ?: $invoice->id }}
+                                </a>
+                            @else
+                                —
+                            @endif
+                        </span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">Status</span>
+                        <span class="ao-eo-fact">
+                            {{-- Picking a state runs the matching whole-order action, the
+                                 reference's own behaviour for this select. --}}
+                            <select class="ao-of-sm" wire:change="setStatus($event.target.value)">
+                                @foreach (['pending' => 'Pending', 'active' => 'Active', 'suspended' => 'Suspended', 'cancelled' => 'Terminated'] as $value => $label)
+                                    <option value="{{ $value }}" @selected($statusNow[0] === $label)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">IP Address</span>
+                        <span class="ao-eo-fact">
+                            @if ($ip)
+                                {{ $ip }} -
+                                <a class="ao-link" href="https://ipinfo.io/{{ $ip }}" target="_blank" rel="noopener">Lookup</a> |
+                                <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders::getUrl(['ip' => $ip]) }}">Filter</a> |
+                                <span class="ao-eo-dead" title="Paymenter keeps no IP ban list, so there is nothing for this to write to">Ban</span>
+                            @else
+                                <span title="This order predates the audit trail, so no IP was recorded">Not recorded</span>
+                            @endif
+                        </span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">Promotion Code</span>
+                        <span class="ao-eo-fact">{{ $coupon ?? '—' }}</span>
+                    </div>
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">Affiliate</span>
+                        <span class="ao-eo-fact">
+                            {{ $affiliateName ?? 'None' }} -
+                            <span class="ao-eo-dead" title="Affiliate attribution is written at order time by the referral link; there is no manual reassignment to run">Manual Assign</span>
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
