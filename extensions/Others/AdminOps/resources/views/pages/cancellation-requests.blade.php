@@ -19,15 +19,17 @@
                  @if it cost a Livewire round trip each way, and closing felt the slower
                  of the two because the reply had to rebuild the whole list to say the
                  panel had gone. --}}
-            {{-- ao-of-even: every field fills its own cell, so the panel's boxes are all
-                 one width down both columns rather than each taking its own (Leandro,
-                 2026-09-09: "set same width for search fields"). --}}
-            <form class="ao-find ao-of ao-of-even" autocomplete="off" wire:submit.prevent="$refresh"
+            {{-- Not ao-of-even. Stretching every box to its cell made the three on the left
+                 a third of the screen each; the reference sizes them to what goes in them —
+                 Reason and Domain the same medium box, Service ID short, Client wide
+                 because a client's name is (Leandro, 2026-09-10: "take a look at the WHMCS
+                 search area"). --}}
+            <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="$refresh"
                 x-show="filter" x-cloak>
                 <div class="ao-of-rows">
                     <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-cr-reason">Reason</label>
-                        <span><input @nofill id="ao-cr-reason" class="ao-of-lg" type="text"
+                        <span><input @nofill id="ao-cr-reason" class="ao-of-md" type="text"
                             wire:model.live.debounce.500ms="reason" placeholder="Words from the reason"></span>
                         <label class="ao-of-label" for="ao-cr-client">Client</label>
                         <span><input @nofill id="ao-cr-client" class="ao-of-lg" type="text"
@@ -38,7 +40,9 @@
                         <span><input @nofill id="ao-cr-domain" class="ao-of-md" type="text"
                             wire:model.live.debounce.500ms="domain" placeholder="Domain on the service"></span>
                         <label class="ao-of-label" for="ao-cr-type">Type</label>
-                        <span><select @nofill id="ao-cr-type" class="ao-of-md" wire:model.live="type">
+                        {{-- Narrower than the text boxes, as the reference draws it: its
+                             longest option is "End of Billing Period", not a phrase. --}}
+                        <span><select @nofill id="ao-cr-type" class="ao-of-sm" wire:model.live="type">
                             <option value="">Any</option>
                             <option value="immediate">Immediate</option>
                             <option value="end_of_period">End of Billing Period</option>

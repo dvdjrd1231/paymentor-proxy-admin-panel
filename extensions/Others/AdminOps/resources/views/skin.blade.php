@@ -469,8 +469,13 @@
 
        The panel itself is already flush: it is anchored to `.fi-dropdown-trigger`, which
        is pinned to the bar's full height, and margin-top: -8px cancels Filament's offset. */
-    nav.fi-topbar .fi-dropdown-trigger button[aria-expanded="true"],
-    nav.fi-topbar .fi-topbar-item-btn[aria-expanded="true"] {
+       Keyed off the panel, not the button: Filament's topbar trigger carries no
+       `aria-expanded` — the open state lives in Alpine's `filamentDropdown` data, which
+       CSS cannot read. What it can read is the inline `display` x-float always writes on
+       the panel (the same fact the degraded-JS guard below relies on): none when closed,
+       block when open. */
+    nav.fi-topbar .fi-dropdown:has(.fi-dropdown-panel[style*="display: block"]) .fi-topbar-item-btn,
+    nav.fi-topbar .fi-dropdown:has(.fi-dropdown-panel[style*="display:block"]) .fi-topbar-item-btn {
         height: var(--wa-topbar-h);
         line-height: var(--wa-topbar-h);
         border-radius: 4px 4px 0 0;

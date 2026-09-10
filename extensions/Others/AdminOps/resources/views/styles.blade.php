@@ -1716,11 +1716,27 @@
 
     .ao-tx-tabs + .ao-of .ao-of-buttons { margin-top: 0.55rem; }
 
-    /* Attached under the Search/Filter tab strip, as the band it replaces was. */
-    .ao-tx-tabs + .ao-of .ao-of-rows {
-        border-top: 0;
-        border-radius: 0 0 4px 4px;
+    /* The reference's Search/Filter is two boxes, not one: an outer card attached under
+       the tab, and the rows in their own bordered box inset within it — with the Filter
+       button inside that outer card, under the rows. Ours put the border on the rows and
+       left Filter outside on the page, which is the difference Leandro kept pointing at
+       (2026-09-10, "take a look at the WHMCS search area"). */
+    .ao-tx-tabs + .ao-of {
+        padding: 0.75rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 0 4px 4px 4px;
+        background: #fff;
     }
+
+    .ao-tx-tabs + .ao-of .ao-of-rows {
+        padding: 0;
+        border-width: 1px;
+        border-radius: 4px;
+    }
+
+    /* The reference's search boxes are wider than an editor's — a reason or a client name
+       is a phrase, not a field of one word. */
+    .ao-tx-tabs + .ao-of .ao-of-md { width: 18.5rem; }
 
     .ao-of-row {
         display: grid;

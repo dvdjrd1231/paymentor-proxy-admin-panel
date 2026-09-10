@@ -101,7 +101,6 @@ use Paymenter\Extensions\Others\TermLimits\Admin\Resources\ProductTermResource;
 use Paymenter\Extensions\Others\TermLimits\Admin\Resources\ServiceTermResource;
 use Paymenter\Extensions\Others\TicketTools\Admin\Resources\CannedResponseResource;
 use Paymenter\Extensions\Others\TicketTools\Admin\Resources\TicketNoteResource;
-use Paymenter\Extensions\Servers\ProxyPanel\Admin\Pages\PanelLocations;
 
 /**
  * The WHMCS menu bar, rebuilt over Paymenter's resources: grouped by what you are *doing*
@@ -758,7 +757,6 @@ class WhmcsNavigation
             static::link(ProductTermResource::class, 'Auto Terminate'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ConfigOptionGroups::class, 'Configurable Options'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServersList::class, 'Servers'),
-            static::page(PanelLocations::class, 'Panel Locations'),
             // Issue #45: the quick-buttons page; core's resource stays claimed below.
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\PaymentGateways::class, 'Payment Gateways'),
             static::page(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\CurrenciesList::class, 'Currencies'),

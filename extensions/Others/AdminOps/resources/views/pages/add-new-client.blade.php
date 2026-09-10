@@ -69,10 +69,23 @@
                         <label class="ao-anc-row">
                             <span>{{ $label }}</span>
                             <span class="ao-anc-field">
-                                {{-- The reference defaults State/Region to "—"; the store's
-                                     property is free text, so the dash is the placeholder. --}}
-                                <input type="text" wire:model="props.{{ $key }}" placeholder="{{ $hint }}"
-                                    @if ($fixed[$key]->required) required @endif>
+                                {{-- State/Region is picked from the chosen country's own
+                                     subdivisions, as the reference does. Countries we hold
+                                     no list for keep the free-text box: a half-remembered
+                                     list would put wrong names in front of the typist.
+                                     Keyed by country so the morph re-reads the options. --}}
+                                @if ($key === 'state' && $regions)
+                                    <select wire:model="props.state" wire:key="state-{{ $props['country'] ?? '' }}"
+                                        @if ($fixed[$key]->required) required @endif>
+                                        <option value="">—</option>
+                                        @foreach ($regions as $region)
+                                            <option value="{{ $region }}">{{ $region }}</option>
+                                        @endforeach
+                                    </select>
+                                @else
+                                    <input type="text" wire:model="props.{{ $key }}" placeholder="{{ $hint }}"
+                                        @if ($fixed[$key]->required) required @endif>
+                                @endif
                                 @unless ($fixed[$key]->required)
                                     <i>(Optional)</i>
                                 @endunless
