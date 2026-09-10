@@ -634,6 +634,18 @@
                     <input type="text" wire:model="customField.description" maxlength="255">
                 </label>
 
+                {{-- The reference's Validation row, in its place. `config_options` carries
+                     no pattern column, so there is nowhere to keep one — the field types
+                     above are what constrain input here (Number takes only numbers, Drop
+                     Down only its own choices). --}}
+                <label class="ao-anc-row ao-gs-off">
+                    <span>Validation</span>
+                    <span class="ao-anc-field"
+                        title="Not available: a config option stores no validation pattern — pick a Field Type that constrains the answer instead">
+                        <input type="text" disabled placeholder="Regular Expression Validation String">
+                    </span>
+                </label>
+
                 @if (in_array($customField['type'], \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::FIELD_TYPES_WITH_CHOICES, true))
                     <label class="ao-anc-row">
                         <span>
