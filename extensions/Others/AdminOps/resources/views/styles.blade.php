@@ -3264,8 +3264,23 @@
         color: #888;
     }
 
+    /* The reference's density on the two order screens: a narrower label column and
+       tighter rows than the generic forms. */
+    .ao-ano .ao-anc-row { grid-template-columns: 8.5rem 1fr; gap: 0.6rem; padding: 0.35rem 0.6rem; }
+    .ao-eo .ao-of-row { grid-template-columns: 9.5rem minmax(0, 1fr) 9.5rem minmax(0, 1fr); }
+    .ao-eo .ao-of-row > * { padding: 0.4rem 0.6rem; }
+    .ao-eo .ao-mu-grid td { padding: 0.5rem 0.6rem; }
+
+    /* The reference's From pair: a short name box, a longer address box. */
+    .ao-ete-from input:first-child { max-width: 13rem; }
+
+    /* The reference names each merge tag beside it. */
+    .ao-ete-mrow { display: grid; grid-template-columns: 10.5rem auto; gap: 0.6rem; align-items: baseline; margin: 0.2rem 0; }
+    .ao-ete-mrow > span { color: var(--wa-link, #337ab7); font-size: 0.9rem; }
+
     /* The template editor's Attachments row, drawn at full strength like the
        reference — the titles carry why the pair cannot submit anything. */
+    .ao-of-row .ao-ete-attach input[type="file"],
     .ao-ete-attach input[type="file"] {
         width: 100%;
         max-width: 46rem;
