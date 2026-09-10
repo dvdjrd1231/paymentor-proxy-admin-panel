@@ -39,15 +39,23 @@
         open: false,
         value: $wire.entangle('{{ $model }}'){{ !empty($live) ? '.live' : '' }},
         options: @js(collect($options)->values()->all()),
+        // null = not typing; a string = the filter being typed (searchable mode only).
+        search: null,
         label() {
             const hit = this.options.find((o) => !o.group && String(o.value) === String(this.value));
             return hit ? hit.label : {{ \Illuminate\Support\Js::from($placeholder ?? '') }};
+        },
+        shown() {
+            if (this.search === null || this.search === '') return this.options;
+            const needle = this.search.toLowerCase();
+            return this.options.filter((o) => o.group || String(o.label).toLowerCase().includes(needle));
         },
         pickedAt: 0,
         pick(o) {
             if (o.group || o.disabled) return;
             this.value = o.value;
             this.open = false;
+            this.search = null;
             // Stamp the pick: it runs on mousedown, and the browser's click event (at
             // mouseup) then lands on the combobox button the closed list uncovered —
             // without this guard that click toggled the list straight back open
@@ -60,14 +68,35 @@
             this.open = !this.open;
         },
         move(step) {
-            const pickable = this.options.filter((o) => !o.group && !o.disabled);
+            const pickable = this.shown().filter((o) => !o.group && !o.disabled);
             const at = pickable.findIndex((o) => String(o.value) === String(this.value));
             const next = pickable[Math.min(pickable.length - 1, Math.max(0, at + step))];
             if (next) this.value = next.value;
         },
     }"
-    @click.outside="open = false"
+    @click.outside="open = false; search = null"
 >
+    @if (!empty($searchable))
+        {{-- The reference's type-to-search combobox: the closed state shows the pick,
+             focusing clears it for typing, and the list filters as the filter grows. --}}
+        <span class="ao-xsel-btn ao-xsel-editable" :aria-expanded="open ? 'true' : 'false'">
+            <input type="text" class="ao-xsel-input" x-ref="btn" autocomplete="off"
+                role="combobox" aria-haspopup="listbox"
+                :value="search === null ? label() : search"
+                placeholder="{{ $placeholder ?? '' }}"
+                @input="search = $event.target.value; open = true"
+                @focus="if (Date.now() - pickedAt > 350) { search = ''; open = true }"
+                @keydown.escape="open = false; search = null"
+                @keydown.down.prevent="open ? move(1) : (open = true)"
+                @keydown.up.prevent="open ? move(-1) : null"
+                @keydown.enter.prevent="open = false; search = null"
+                @if (isset($id)) id="{{ $id }}" @endif>
+            <svg class="ao-xsel-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true">
+                <path d="M5 7.5 10 12.5 15 7.5" />
+            </svg>
+        </span>
+    @else
     <button type="button" class="ao-xsel-btn" x-ref="btn" @click="toggle()"
         @keydown.escape="open = false" @keydown.down.prevent="open ? move(1) : (open = true)"
         @keydown.up.prevent="open ? move(-1) : null" @keydown.enter.prevent="open = false"
@@ -79,6 +108,7 @@
             <path d="M5 7.5 10 12.5 15 7.5" />
         </svg>
     </button>
+    @endif
     <ul class="ao-xsel-list" x-show="open" x-cloak x-transition.opacity.duration.100ms role="listbox">
         {{-- One loop, original order preserved — a group heading is just a row that
              can't be picked, not a second pass that would scatter headings to the top. --}}

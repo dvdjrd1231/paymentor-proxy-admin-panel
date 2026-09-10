@@ -21,17 +21,17 @@
                             ];
                         }
                     @endphp
-                    @include('adminops::partials.select', ['model' => 'userId', 'live' => true, 'options' => $clientOptions, 'placeholder' => 'Start Typing to Search Clients'])
+                    @include('adminops::partials.select', ['model' => 'userId', 'live' => true, 'searchable' => true, 'options' => $clientOptions, 'placeholder' => 'Start Typing to Search Clients'])
                 </label>
                 <label class="ao-anc-row">
                     <span>Payment Method</span>
                     @php
-                        $gatewayOptions = [['value' => '', 'label' => 'Default', 'group' => false]];
+                        $gatewayOptions = [];
                         foreach ($gateways as $gateway) {
                             $gatewayOptions[] = ['value' => $gateway->id, 'label' => $gateway->name, 'group' => false];
                         }
                     @endphp
-                    @include('adminops::partials.select', ['model' => 'gatewayId', 'live' => false, 'options' => $gatewayOptions, 'placeholder' => 'Default'])
+                    @include('adminops::partials.select', ['model' => 'gatewayId', 'live' => false, 'options' => $gatewayOptions, 'placeholder' => 'Select payment method'])
                 </label>
                 <div class="ao-anc-row">
                     <span>Promotion Code</span>

@@ -46,8 +46,12 @@
                 <div class="ao-of-row">
                     <span class="ao-of-label">Order Placed By</span>
                     <span class="ao-eo-fact">
-                        User: {{ trim(($order->user->first_name ?? '') . ' ' . ($order->user->last_name ?? '')) ?: '—' }} (ID: {{ $order->user_id }})
-                        <br><i>{{ $order->user->email ?? '' }}</i>
+                        @if ($placedBy)
+                            {{ $placedBy['role'] }}: {{ $placedBy['name'] }} (ID: {{ $placedBy['id'] }})
+                            <br><i>{{ $placedBy['email'] }}</i>
+                        @else
+                            —
+                        @endif
                     </span>
                     <span class="ao-of-label">Status</span>
                     <span class="ao-eo-fact">
@@ -95,8 +99,20 @@
 
         <div class="ao-eo-items-head">
             <h4>Order Items</h4>
-            <span class="ao-eo-dead ao-link" title="Paymenter orders carry no notes column — service and client notes live on their own screens">Add Notes</span>
+            <button type="button" class="ao-cp-link" wire:click="$toggle('notesOpen')">Add Notes</button>
         </div>
+
+        @if ($notesOpen)
+            <div class="ao-eo-notes">
+                <textarea rows="3" wire:model="orderNotes" placeholder="Notes about this order — visible to staff only"></textarea>
+                <span>
+                    <button type="button" class="ao-find-go" wire:click="saveNotes">Save Notes</button>
+                    <button type="button" class="ao-of-go" wire:click="$set('notesOpen', false)">Cancel</button>
+                </span>
+            </div>
+        @elseif (trim($orderNotes) !== '')
+            <p class="ao-eo-notes-text">{{ $orderNotes }}</p>
+        @endif
 
         <table class="ao-mu-grid">
             <thead>
@@ -134,14 +150,15 @@
                          accepting currently always provisions, with no way to say "I set this
                          one up by hand", which is what Run Module Create is for. --}}
                     @if ($service->status === 'pending')
+                        @php
+                            $panelUser = $service->properties->firstWhere('key', 'proxy_username')?->value;
+                            $panelPass = $service->properties->firstWhere('key', 'proxy_password')?->value;
+                        @endphp
                         <tr class="ao-eo-provision">
                             <td colspan="6">
-                                <span class="ao-eo-prov-inert" title="Credentials are issued by the panel when it creates the account, not chosen here">
-                                    Username: <input type="text" disabled> Password: <input type="text" disabled>
-                                </span>
-                                <span class="ao-eo-prov-inert" title="A product names its server, so every service on it provisions there">
-                                    Server:
-                                    <input type="text" disabled value="{{ $service->product?->server?->name ?? 'None' }}">
+                                <span class="ao-eo-prov-inert" title="{{ $panelUser ? 'The panel account this service runs as' : 'Credentials are issued by the panel when it creates the account, not chosen here' }}">
+                                    Username: <input type="text" disabled value="{{ $panelUser }}">
+                                    Password: <input type="text" disabled value="{{ $panelPass }}">
                                 </span>
                                 <label class="ao-check">
                                     <input type="checkbox" wire:model="runModuleCreate.{{ $service->id }}"

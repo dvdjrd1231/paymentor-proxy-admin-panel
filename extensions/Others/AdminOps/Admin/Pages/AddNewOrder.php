@@ -93,6 +93,11 @@ class AddNewOrder extends Page
     public function mount(): void
     {
         $this->items = [self::blankItem()];
+
+        // No "Default" row — the reference preselects the first configured gateway.
+        $this->gatewayId ??= collect(\Paymenter\Extensions\Others\AdminOps\Support\GatewayOrder::sort(
+            Gateway::where('enabled', true)->get(['id', 'name']),
+        ))->first()?->id;
     }
 
     private static function blankItem(): array
@@ -396,7 +401,7 @@ class AddNewOrder extends Page
     {
         return [
             'clients' => User::whereNull('role_id')->orderBy('first_name')->limit(500)->get(['id', 'first_name', 'last_name', 'email']),
-            'gateways' => Gateway::where('enabled', true)->get(['id', 'name']),
+            'gateways' => \Paymenter\Extensions\Others\AdminOps\Support\GatewayOrder::sort(Gateway::where('enabled', true)->get(['id', 'name'])),
             'coupons' => Coupon::query()->orderBy('code')->limit(100)->get(['id', 'code']),
             'products' => Product::with('category')->orderBy('name')->get(['id', 'name', 'category_id']),
             'plansByItem' => collect($this->items)->map(fn ($item) => $this->plansFor($item['productId'])),

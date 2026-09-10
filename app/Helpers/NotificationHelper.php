@@ -31,6 +31,23 @@ class NotificationHelper
         User $user,
         array $attachments = []
     ): void {
+        // Email template languages (extensions/Others/AdminOps) — send the translation for
+        // this reader's language when one exists. Falls through to the default otherwise.
+        if (class_exists(\Paymenter\Extensions\Others\AdminOps\Models\TemplateLocale::class)) {
+            $localeClass = \Paymenter\Extensions\Others\AdminOps\Models\TemplateLocale::class;
+            $translated = $localeClass::resolve($notificationTemplate, $localeClass::localeFor($user));
+
+            if ($translated) {
+                // A copy, not the shared instance: this send must not change the subject
+                // and body every later recipient in the same request is given.
+                $notificationTemplate = $notificationTemplate->replicate()->forceFill([
+                    'id' => $notificationTemplate->id,
+                    'subject' => $translated['subject'],
+                    'body' => $translated['body'],
+                ]);
+            }
+        }
+
         $mail = new Mail($notificationTemplate, $data);
 
         $emailLog = EmailLog::create([

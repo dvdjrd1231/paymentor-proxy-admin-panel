@@ -8,6 +8,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Panel;
 use Illuminate\Support\Str;
+use Paymenter\Extensions\Others\AdminOps\Models\TemplateLocale;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
@@ -44,6 +45,14 @@ class EditEmailTemplate extends Page
 
     public string $body = '';
 
+    /**
+     * The reference's per-language versions, [locale => ['subject' => …, 'body' => …]].
+     * One entry per language Manage Languages has activated.
+     *
+     * @var array<string, array{subject: string, body: string}>
+     */
+    public array $locales = [];
+
     /** source | preview — the reference's rich-text/source toggle, honest version. */
     public string $mode = 'source';
 
@@ -72,6 +81,17 @@ class EditEmailTemplate extends Page
         $this->bcc = implode(', ', (array) $this->template->bcc);
         $this->disabled = !$this->template->enabled;
         $this->body = (string) $this->template->body;
+
+        // A version per language Manage Languages has switched on. Blank until someone
+        // writes one, and a blank one is not sent — see TemplateLocale::resolve().
+        $stored = TemplateLocale::where('notification_template_id', $this->template->id)->get()->keyBy('locale');
+
+        foreach (TemplateLocale::active() as $locale) {
+            $this->locales[$locale] = [
+                'subject' => (string) ($stored[$locale]->subject ?? ''),
+                'body' => (string) ($stored[$locale]->body ?? ''),
+            ];
+        }
     }
 
     public function save(): void
@@ -105,6 +125,23 @@ class EditEmailTemplate extends Page
             'enabled' => !$this->disabled,
             'body' => $this->body,
         ]);
+
+        // The translations, one row per active language. A version left entirely blank is
+        // removed rather than stored, so "no translation" and "an empty translation" stay
+        // the same thing and the default keeps sending.
+        foreach ($this->locales as $locale => $version) {
+            $subject = trim((string) ($version['subject'] ?? ''));
+            $body = trim((string) ($version['body'] ?? ''));
+            $where = ['notification_template_id' => $this->template->id, 'locale' => $locale];
+
+            if ($subject === '' && $body === '') {
+                TemplateLocale::where($where)->delete();
+
+                continue;
+            }
+
+            TemplateLocale::updateOrCreate($where, ['subject' => $subject, 'body' => $body]);
+        }
 
         Notification::make()->title('Template saved')->success()->send();
     }
@@ -148,6 +185,11 @@ class EditEmailTemplate extends Page
         sort($links);
 
         return ['fields' => $fields, 'links' => $links];
+    }
+
+    protected function getViewData(): array
+    {
+        return ['localeNames' => AddNewClient::languages()];
     }
 
     /**
