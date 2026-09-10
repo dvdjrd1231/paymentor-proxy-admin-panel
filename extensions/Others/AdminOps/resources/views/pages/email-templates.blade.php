@@ -99,26 +99,44 @@
                     </div>
                     <div class="ao-mud-text">
                         <p>To localise email templates into other languages, activate the language here.</p>
-                        <p class="ao-gs-empty">
+                        <p class="ao-ml-info">
                             The default version of an email template is used for any language for which no
                             localised template is available.
                         </p>
-                        <p><b>Currently Active Languages</b><br>None</p>
-                        <p>
-                            <b>Choose language to add</b><br>
-                            <select disabled title="A template on this platform has one version, sent to every client">
-                                <option>&mdash;</option>
+
+                        <p class="ao-ml-head">Currently Active Languages</p>
+                        @forelse ($activeLocales as $code => $label)
+                            <p class="ao-ml-row">
+                                <span>{{ $label }}</span>
+                                <button type="button" class="ao-cp-link" wire:click="deactivateLocale(@js($code))"
+                                    title="Stop sending this language's versions. The wording is kept.">Deactivate</button>
+                            </p>
+                        @empty
+                            <p>None</p>
+                        @endforelse
+
+                        <p class="ao-ml-head">Choose language to add</p>
+                        @if ($addableLocales)
+                            <select wire:model="newLocale">
+                                <option value="">&mdash;</option>
+                                @foreach ($addableLocales as $code => $label)
+                                    <option value="{{ $code }}">{{ $label }}</option>
+                                @endforeach
                             </select>
-                        </p>
-                        <p class="ao-cp-note">
-                            Not available: a template here has one body, sent to every client whatever
-                            language they browse in. Adding a language would create a second version
-                            nothing would ever choose between.
-                        </p>
+                            @error('newLocale') <span class="ao-of-note">{{ $message }}</span> @enderror
+                        @else
+                            <p class="ao-cp-note">
+                                Every installed language is already active. More become available by adding
+                                their translation files under <code>lang/</code>.
+                            </p>
+                        @endif
                     </div>
                     <div class="ao-mud-foot ao-mud-foot-only-right">
                         <span class="ao-mud-foot-right">
-                            <button type="button" class="ao-mud-close" wire:click="$set('modal', null)">Close</button>
+                            <button type="button" class="ao-mud-close" wire:click="$set('modal', null)">Cancel</button>
+                            @if ($addableLocales)
+                                <button type="button" class="ao-find-go" wire:click="activateLocale">Activate</button>
+                            @endif
                         </span>
                     </div>
                 </div>

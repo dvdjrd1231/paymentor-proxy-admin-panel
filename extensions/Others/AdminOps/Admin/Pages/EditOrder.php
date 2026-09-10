@@ -49,6 +49,21 @@ class EditOrder extends Page
     /** @var array<int, bool> */
     public array $sendWelcome = [];
 
+    /** The reference's Add Notes — kept in ext_ao_meta, since orders carry no column. */
+    public bool $notesOpen = false;
+
+    public string $orderNotes = '';
+
+    public function saveNotes(): void
+    {
+        abort_unless(OrderResource::canEdit($this->order), 403);
+
+        \Paymenter\Extensions\Others\AdminOps\Models\Meta::put($this->order, 'notes', trim($this->orderNotes));
+        $this->notesOpen = false;
+
+        Notification::make()->title('Notes saved')->success()->send();
+    }
+
     /**
      * @var array<int, array{id: int|null, productId: int|string|null, planId: int|string|null, quantity: int|string, price: string, status: string}>
      */
@@ -87,6 +102,8 @@ class EditOrder extends Page
     public function mount(int|string $record): void
     {
         $this->order = Order::with(['user', 'services.product'])->findOrFail($record);
+
+        $this->orderNotes = (string) (\Paymenter\Extensions\Others\AdminOps\Models\Meta::for($this->order)['notes'] ?? '');
 
         // Both provisioning ticks start on, so an order accepted without touching them
         // behaves exactly as it did before they existed.
@@ -328,18 +345,29 @@ class EditOrder extends Page
     {
         $this->order->loadMissing([
             'services.product.category', 'services.plan', 'services.invoices.transactions.gateway',
-            'services.coupon', 'user.properties',
+            'services.coupon', 'services.properties', 'user.properties',
         ]);
 
         $properties = $this->order->user?->properties?->pluck('value', 'key') ?? collect();
 
-        // The reference's IP Address line, from the created audit — the same trail the
-        // list's IP filter searches.
-        $ip = DB::table('audits')
+        // The reference's IP Address and Order Placed By lines, from the created audit —
+        // the same trail the list's IP filter searches. The audit's user is whoever was
+        // logged in when the order was created: an admin placing it from here, or the
+        // client ordering at checkout.
+        $created = DB::table('audits')
             ->where('auditable_type', Order::class)
             ->where('auditable_id', $this->order->id)
             ->where('event', 'created')
-            ->value('ip_address');
+            ->first(['ip_address', 'user_id']);
+        $ip = $created?->ip_address;
+
+        $actor = ($created?->user_id ? \App\Models\User::find($created->user_id) : null) ?? $this->order->user;
+        $placedBy = $actor ? [
+            'role' => $actor->role_id ? 'Admin' : 'User',
+            'name' => trim(($actor->first_name ?? '') . ' ' . ($actor->last_name ?? '')) ?: $actor->email,
+            'id' => $actor->id,
+            'email' => $actor->email,
+        ] : null;
 
         $affiliate = null;
 
@@ -358,6 +386,7 @@ class EditOrder extends Page
             'number' => ManageOrders::numberOf($this->order),
             'invoice' => $invoice,
             'ip' => $ip,
+            'placedBy' => $placedBy,
             'coupon' => $this->order->services->pluck('coupon')->filter()->first()?->code,
             'affiliateName' => $affiliate,
             'addressLines' => array_values(array_filter([

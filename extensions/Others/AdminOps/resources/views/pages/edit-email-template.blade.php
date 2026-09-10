@@ -44,8 +44,9 @@
                          so this names it rather than implying a picker that is not there. --}}
                     <h3 class="ao-sub ao-ete-version">
                         Default Version
-                        <i>The only version: this template is sent to every customer, whatever
-                            language they read. See Manage Languages on the
+                        <i>Used for the {{ \Illuminate\Support\Str::upper(config('app.locale', 'en')) }} language
+                            and any languages where email template translations are not defined. Languages are
+                            activated under Manage Languages on the
                             <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::getUrl() }}">templates list</a>.</i>
                     </h3>
 
@@ -107,6 +108,28 @@
             @else
                 <div class="ao-ete-preview">{!! $this->previewHtml() !!}</div>
             @endif
+
+            {{-- One version per language Manage Languages has activated. Leaving a version
+                 blank is how you say "no translation" — the default sends instead, which is
+                 what the heading above promises. --}}
+            @foreach ($locales as $code => $version)
+                <h3 class="ao-sub ao-ete-version">
+                    {{ $localeNames[$code] ?? \Illuminate\Support\Str::upper($code) }} Version
+                    <i>Sent to clients whose profile language is
+                        {{ $localeNames[$code] ?? \Illuminate\Support\Str::upper($code) }}. Leave both boxes
+                        empty and they are sent the default version.</i>
+                </h3>
+
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-ete-subject-{{ $code }}">Subject</label>
+                    <span><input id="ao-ete-subject-{{ $code }}" class="ao-of-xl" type="text"
+                        wire:model="locales.{{ $code }}.subject" placeholder="Untranslated — the default subject sends"></span>
+                </div>
+
+                <textarea class="ao-ete-source" rows="12" spellcheck="false"
+                    wire:model="locales.{{ $code }}.body"
+                    placeholder="Untranslated — the default body sends"></textarea>
+            @endforeach
 
             @if ($errors->any())
                 <ul class="ao-anc-errors">

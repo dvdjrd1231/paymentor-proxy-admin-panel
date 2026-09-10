@@ -478,4 +478,45 @@ customer told their file was too large with no reason visible on this side.
 
 ---
 
+## 11. Send the reader's language version of an email template
+
+**File:** `app/Helpers/NotificationHelper.php`, method `sendEmailNotification()`.
+
+**Change:** immediately **before** `$mail = new Mail($notificationTemplate, $data);`, insert:
+
+```php
+// Email template languages (extensions/Others/AdminOps) — send the translation for
+// this reader's language when one exists. Falls through to the default otherwise.
+if (class_exists(\Paymenter\Extensions\Others\AdminOps\Models\TemplateLocale::class)) {
+    $localeClass = \Paymenter\Extensions\Others\AdminOps\Models\TemplateLocale::class;
+    $translated = $localeClass::resolve($notificationTemplate, $localeClass::localeFor($user));
+
+    if ($translated) {
+        // A copy, not the shared instance: this send must not change the subject
+        // and body every later recipient in the same request is given.
+        $notificationTemplate = $notificationTemplate->replicate()->forceFill([
+            'id' => $notificationTemplate->id,
+            'subject' => $translated['subject'],
+            'body' => $translated['body'],
+        ]);
+    }
+}
+```
+
+**Why it cannot be done from the extension:** core reads the template with
+`NotificationTemplate::where('key', …)->first()` and hands the model straight to
+`new Mail(...)`. There is no event between the two, `Mail` is constructed with `new` so it
+cannot be swapped through the container, and Laravel's own mail events fire after the body
+has already been rendered. The recipient — which is what decides the language — is only
+known at this point.
+
+**Guarded:** wrapped in `class_exists`, so core still sends normally if AdminOps is removed.
+
+**If not re-applied after an upgrade:** Manage Languages keeps accepting activations and
+the per-language versions stay editable and stored, but every client is sent the default
+version again — the feature goes quiet rather than breaking, which is the harder failure to
+notice.
+
+---
+
 _(Everything else is implemented via extensions, themes, events, or configuration.)_

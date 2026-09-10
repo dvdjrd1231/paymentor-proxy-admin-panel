@@ -3134,6 +3134,23 @@
         color: #888;
     }
 
+    /* The type-to-search variant: the frame is the span, the input inside is bare. */
+    .ao-xsel-editable:focus-within {
+        border-color: var(--wa-link, #337ab7);
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+    }
+
+    .ao-xsel-input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        font: inherit;
+        color: inherit;
+    }
+
+    .ao-xsel-input:focus { outline: none; }
+
     .ao-xsel-list {
         position: absolute;
         z-index: 30;
@@ -4978,6 +4995,19 @@
     }
 
     .ao-eo-items-head h4 { margin: 0; font-weight: 600; }
+
+    .ao-eo-notes { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.6rem; }
+    .ao-eo-notes textarea {
+        width: 100%;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        font: inherit;
+        font-size: 0.9rem;
+    }
+    .ao-eo-notes > span { display: flex; gap: 0.5rem; }
+    .ao-eo-notes .ao-of-go { margin: 0; }
+    .ao-eo-notes-text { margin: 0 0 0.6rem; padding: 0.5rem 0.7rem; background: #fcf8e3; border: 1px solid #faebcc; border-radius: 4px; white-space: pre-wrap; }
 
     .ao-eo-total td { background: var(--wa-navy, #1a4d80); color: #fff; font-weight: 700; }
 
@@ -7075,6 +7105,34 @@
     .ao-mud-text { padding: 1.1rem 1.5rem 0; }
 
     .ao-mud-text p + p { margin-top: 0.8rem; }
+
+    /* Manage Languages. The reference states the fallback rule in a tinted notice rather
+       than as another paragraph, because it is the one thing in the dialog that explains
+       what *not* translating a template does. */
+    .ao-ml-info {
+        padding: 0.6rem 0.8rem;
+        border: 1px solid #bce8f1;
+        border-radius: var(--wa-radius, 6px);
+        background: #d9edf7;
+        color: #31708f;
+        font-size: 0.9rem;
+    }
+
+    .ao-ml-head { font-weight: 600; }
+    .ao-mud-text .ao-ml-head + p,
+    .ao-mud-text .ao-ml-head + .ao-ml-row { margin-top: 0.2rem; }
+
+    .ao-ml-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+
+    .ao-mud-text select {
+        width: 100%;
+        height: 1.9rem;
+        padding: 0 0.4rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font-size: 0.9rem;
+    }
 
     /* Outside the padded form body the footer has nothing to un-indent from — the negative
        margins that align it inside .ao-mud-body would push it out of the dialog here. */
