@@ -106,15 +106,19 @@
                         </p>
 
                         <p class="ao-ml-head">Currently Active Languages</p>
-                        @forelse ($activeLocales as $code => $label)
-                            <p class="ao-ml-row">
-                                <span>{{ $label }}</span>
-                                <button type="button" class="ao-cp-link" wire:click="deactivateLocale(@js($code))"
-                                    title="Stop sending this language's versions. The wording is kept.">Deactivate</button>
-                            </p>
-                        @empty
-                            <p>None</p>
-                        @endforelse
+                        @if ($activeLocales)
+                            <div class="ao-ml-list">
+                                @foreach ($activeLocales as $code => $label)
+                                    <p class="ao-ml-row">
+                                        <span>{{ $label }}</span>
+                                        <button type="button" class="ao-cp-link" wire:click="deactivateLocale(@js($code))"
+                                            title="Stop sending this language's versions. The wording is kept.">Deactivate</button>
+                                    </p>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="ao-ml-empty">None</p>
+                        @endif
 
                         <p class="ao-ml-head">Choose language to add</p>
                         @if ($addableLocales)

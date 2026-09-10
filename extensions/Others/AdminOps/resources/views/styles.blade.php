@@ -3276,8 +3276,13 @@
     /* The reference's density on the two order screens: a narrower label column and
        tighter rows than the generic forms. */
     .ao-ano .ao-anc-row { grid-template-columns: 8.5rem 1fr; gap: 0.6rem; padding: 0.35rem 0.6rem; }
-    .ao-eo .ao-of-row > * { padding: 0.4rem 0.6rem; }
+    /* Measured against the reference: its fact rows run ~29px, ours were ~38px. */
+    .ao-eo .ao-of-row > * { padding: 0.25rem 0.6rem; font-size: 0.82rem; }
+    .ao-eo .ao-of-label { font-size: 0.82rem; }
+    .ao-eo .ao-eo-fact { line-height: 1.5; }
+    .ao-eo .ao-of-rows { gap: 1px; padding: 1px; }
     .ao-eo .ao-mu-grid td { padding: 0.5rem 0.6rem; }
+    .ao-eo .ao-of-row select { height: 1.7rem; font-size: 0.82rem; }
 
     /* The reference's two side-by-side fact tables, each with its own row count. */
     .ao-eo-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; align-items: start; }
@@ -3376,8 +3381,10 @@
 
     .ao-xsel-opt mark { background: #fff3cd; font-weight: 700; padding: 0; color: inherit; }
 
+    /* A cycle this product carries no price for still reads as part of the list — the
+       reference shows every cycle — just muted, with the reason on its title. */
     .ao-xsel-opt.ao-off {
-        color: #999;
+        color: #8a8a8a;
         cursor: not-allowed;
     }
 
@@ -7332,10 +7339,30 @@
     .ao-mud-text .ao-ml-head + p,
     .ao-mud-text .ao-ml-head + .ao-ml-row { margin-top: 0.2rem; }
 
-    /* The language and its Deactivate on one line. Deliberately inline rather than pushed
-       to opposite edges: the dialog's body shrinks each child to its content, so a
-       space-between here had no room to distribute and quietly did nothing. */
-    .ao-ml-row { display: flex; align-items: baseline; gap: 0.75rem; }
+    /* The active languages read as a real list — a bordered box, one striped row each,
+       the name at the left and its Deactivate at the right. Loose text with a link
+       trailing after it was what made this section look unfinished. */
+    .ao-ml-list {
+        margin: 0.3rem 0 0.9rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .ao-ml-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin: 0;
+        padding: 0.4rem 0.7rem;
+        font-size: 0.9rem;
+    }
+
+    .ao-ml-list .ao-ml-row:nth-child(even) { background: #f6f6f6; }
+    .ao-ml-list .ao-ml-row + .ao-ml-row { border-top: 1px solid #ececec; }
+    .ao-ml-row .ao-cp-link { display: inline-flex; width: auto; padding: 0; color: #cc0000; }
+    .ao-ml-empty { margin: 0.3rem 0 0.9rem; color: var(--wa-muted, #6b6b6b); }
 
     .ao-mud-text select {
         width: 100%;
@@ -7353,10 +7380,10 @@
 
     .ao-mud-foot-only-right { justify-content: flex-end; margin-top: 1.1rem; }
 
-    /* The compact dialog's own footer padding — the 1.5rem the wide one uses left the
-       reference's pair floating well short of the right edge. */
-    .ao-mud-sm .ao-mud-foot { padding-inline: 1rem; margin-inline: -1rem; }
-    .ao-mud-sm .ao-mud-foot-right { display: inline-flex; align-items: center; gap: 0.5rem; }
+    /* The footer un-indents itself by exactly the body's padding; anything else and it
+       hangs past the dialog edge (measured live: 17px of overflow, the pair pinned to
+       the very edge with no inset). Its own padding is the inset. */
+    .ao-mud-foot-right { display: inline-flex; align-items: center; gap: 0.5rem; }
 
     .ao-mu-selected {
         margin-top: 0.7rem;

@@ -139,6 +139,7 @@
                                         'value' => $byCycle[$cycle]->id ?? '',
                                         'label' => $cycle,
                                         'disabled' => !isset($byCycle[$cycle]),
+                                        'title' => isset($byCycle[$cycle]) ? null : 'This product carries no price for ' . $cycle,
                                         'group' => false,
                                     ];
                                 }
