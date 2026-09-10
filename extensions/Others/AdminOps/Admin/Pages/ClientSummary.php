@@ -600,6 +600,21 @@ class ClientSummary extends Page
 
         $prop = fn (string $key): string => (string) $service->properties->firstWhere('key', $key)?->value;
 
+        // A stored Y-m-d day as the form's own m/d/Y, or '' when there is none.
+        $day = function (string $stored): string {
+            $stored = trim($stored);
+
+            if ($stored === '') {
+                return '';
+            }
+
+            try {
+                return \Carbon\Carbon::parse($stored)->format('m/d/Y');
+            } catch (\Throwable) {
+                return $stored;
+            }
+        };
+
         $this->svc = [
             'productId' => $service->product_id,
             'planId' => $service->plan_id,
@@ -622,11 +637,15 @@ class ClientSummary extends Page
             // WHMCS's Termination Date: the day this service ends regardless of renewals.
             // Stored as a property; saving one writes/updates the real end-of-period
             // cancellation the Cancellations sweeper terminates on (see saveService).
-            'terminationDate' => $prop('termination_date'),
+            //
+            // Stored Y-m-d, shown m/d/Y like every other date on this form. Handed over
+            // raw it reached the picker as "2026-11-30", which reads as a foreign format
+            // and does not round-trip (issue #53).
+            'terminationDate' => $day($prop('termination_date')),
             // WHMCS's Override Auto-Suspend: the overdue ladder leaves this service alone
             // until the date passes. Enforced by AdminOps::boot()'s post-cron restore.
             'noSuspend' => $prop('no_suspend_until') !== '',
-            'noSuspendUntil' => $prop('no_suspend_until'),
+            'noSuspendUntil' => $day($prop('no_suspend_until')),
             // WHMCS's Auto-Terminate End of Cycle: an end-of-period cancellation with a
             // reason, written as the real ServiceCancellation row core already honours.
             'autoTerminate' => (bool) $service->cancellation,
