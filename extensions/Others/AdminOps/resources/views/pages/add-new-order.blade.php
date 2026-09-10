@@ -4,7 +4,12 @@
     with "+ Add Another Product" — and the Order Summary card with Submit Order right.
 --}}
 <x-filament-panels::page>
-    <form class="ao-mu ao-ano" wire:submit.prevent="create">
+    {{-- The domain blocks' None/Registration/Transfer lives in Alpine: it only decides
+         which rows show, and behind wire:model.live each click cost a whole server
+         round trip — which is what made this page feel slow (Leandro, 2026-09-10). The
+         value still binds to Livewire, deferred, so it submits with the form. --}}
+    <form class="ao-mu ao-ano" wire:submit.prevent="create"
+        x-data="{ domainTypes: @js(collect($domains)->pluck('type')->all()) }">
         <div class="ao-ano-main">
             <div class="ao-anc-card">
                 <label class="ao-anc-row">
@@ -310,18 +315,19 @@
                  reference's own Order Summary note — its behaviour for exactly this. --}}
             <h4 class="ao-ano-heading">Domain Registration</h4>
             @foreach ($domains as $i => $d)
-                @php $off = $d['type'] === 'none'; @endphp
                 <div class="ao-anc-card ao-ano-domain" wire:key="dom-{{ $i }}">
                     <div class="ao-anc-row">
                         <span>Registration Type</span>
                         <span class="ao-ano-checks">
-                            <label><input type="radio" value="none" wire:model.live="domains.{{ $i }}.type"> None</label>
-                            <label><input type="radio" value="register" wire:model.live="domains.{{ $i }}.type"> Registration</label>
-                            <label><input type="radio" value="transfer" wire:model.live="domains.{{ $i }}.type"> Transfer</label>
+                            <label><input type="radio" value="none" wire:model="domains.{{ $i }}.type" x-model="domainTypes[{{ $i }}]"> None</label>
+                            <label><input type="radio" value="register" wire:model="domains.{{ $i }}.type" x-model="domainTypes[{{ $i }}]"> Registration</label>
+                            <label><input type="radio" value="transfer" wire:model="domains.{{ $i }}.type" x-model="domainTypes[{{ $i }}]"> Transfer</label>
                         </span>
                     </div>
-                    {{-- The reference folds the block to the one radio row while None. --}}
-                    @unless ($off)
+                    {{-- The reference folds the block to the one radio row while None. A
+                         block added after this markup rendered has no entry yet, and a new
+                         one starts at None — hence the ?? rather than a bare lookup. --}}
+                    <div x-show="(domainTypes[{{ $i }}] ?? 'none') !== 'none'" x-cloak>
                         <label class="ao-anc-row">
                             <span>Domain</span>
                             <input type="text" class="ao-ano-dom" wire:model="domains.{{ $i }}.domain" placeholder="example.com">
@@ -334,13 +340,11 @@
                                 @endforeach
                             </select>
                         </label>
-                        @if ($d['type'] === 'transfer')
-                            <label class="ao-anc-row">
-                                <span>EPP Code</span>
-                                <input type="text" class="ao-xw-md" wire:model="domains.{{ $i }}.epp"
-                                    title="The transfer authorisation code the current registrar issues">
-                            </label>
-                        @endif
+                        <label class="ao-anc-row" x-show="domainTypes[{{ $i }}] === 'transfer'" x-cloak>
+                            <span>EPP Code</span>
+                            <input type="text" class="ao-xw-md" wire:model="domains.{{ $i }}.epp"
+                                title="The transfer authorisation code the current registrar issues">
+                        </label>
                         <div class="ao-anc-row">
                             <span>Domain Addons</span>
                             <span class="ao-ano-checks">
@@ -363,7 +367,7 @@
                                 <i>(Only enter to manually override default pricing)</i>
                             </span>
                         </label>
-                    @endunless
+                    </div>
                 </div>
             @endforeach
 
@@ -377,11 +381,12 @@
             <h4>Order Summary</h4>
             {{-- The reference's own answer for a TLD it cannot sell, word for word. No TLD
                  is configured on this store (no registrar), so it covers every request. --}}
-            @if (collect($domains)->contains(fn ($d) => ($d['type'] ?? 'none') !== 'none'))
-                <p class="ao-ml-info">This order contains one or more domain registrations with
-                    TLDs/extensions that are <b>not configured for sale</b> and have been
-                    omitted as a result.</p>
-            @endif
+            {{-- Alpine-driven like the blocks themselves, so it appears the moment a
+                 registration is asked for rather than on the next round trip. --}}
+            <p class="ao-ml-info" x-show="domainTypes.some((t) => (t ?? 'none') !== 'none')" x-cloak>
+                This order contains one or more domain registrations with TLDs/extensions
+                that are <b>not configured for sale</b> and have been omitted as a result.
+            </p>
             <div class="ao-ano-card">
                 @forelse ($summary['lines'] as $line)
                     {{-- The reference's wording: "1 x Category - Product", the cycle on its
