@@ -308,7 +308,32 @@
         @endphp
 
         @foreach ($bands as $band)
-            <div class="ao-cs-band">
+            {{-- The band's own pager. Show-entries, Previous and Next were drawn disabled
+                 with nothing behind them, which is what Leandro read as the profile having
+                 things on it that do not work (2026-09-10). Every row is already on the
+                 page, so this pages them here rather than asking the server for a slice —
+                 the buttons respond immediately and the counts are the real ones. --}}
+            <div class="ao-cs-band" x-data="{
+                per: 50,
+                page: 1,
+                rows: [],
+                init() {
+                    // this.$el, not $el: inside an x-data method the magics are only on
+                    // `this`, and a bare $el is a ReferenceError that kills the component.
+                    this.rows = [...this.$el.querySelectorAll('tbody > tr')]
+                        .filter(row => !row.querySelector('.ao-mu-none'));
+                },
+                get total() { return this.rows.length },
+                get pages() { return Math.max(1, Math.ceil(this.total / this.per)) },
+                get first() { return this.total ? (this.page - 1) * this.per + 1 : 0 },
+                get last() { return Math.min(this.page * this.per, this.total) },
+                show() {
+                    if (this.page > this.pages) this.page = this.pages;
+                    this.rows.forEach((row, i) => {
+                        row.style.display = (i >= this.first - 1 && i < this.last) ? '' : 'none';
+                    });
+                },
+            }" x-effect="show()">
                 <h4>{{ $band['title'] }}</h4>
                 @php $tickable = $band['title'] === 'Products/Services'; @endphp
                 <table class="ao-mu-grid">
@@ -379,17 +404,18 @@
                     </tbody>
                 </table>
 
-                @php $bandCount = count($band['rows']); @endphp
                 <div class="ao-cs-band-foot">
                     <span>Show
-                        <select disabled><option>50</option></select>
+                        <select x-model.number="per"><option>10</option><option>25</option><option>50</option><option>100</option></select>
                         entries
                     </span>
-                    <span>Showing {{ $bandCount > 0 ? 1 : 0 }} to {{ $bandCount }} of {{ $bandCount }} entries</span>
+                    <span x-text="`Showing ${first} to ${last} of ${total} entries`"></span>
                     <span class="ao-cs-band-pages">
-                        <button type="button" disabled>Previous</button>
-                        <i>1</i>
-                        <button type="button" disabled>Next</button>
+                        <button type="button" @click="page = Math.max(1, page - 1)"
+                            :disabled="page <= 1">Previous</button>
+                        <i x-text="page"></i>
+                        <button type="button" @click="page = Math.min(pages, page + 1)"
+                            :disabled="page >= pages">Next</button>
                     </span>
                 </div>
             </div>
