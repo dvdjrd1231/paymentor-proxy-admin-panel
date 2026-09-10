@@ -5856,6 +5856,18 @@
     .ao-mo-delete .ao-mu-cell-icon,
     .ao-mu-icon-red { color: #d9534f; }
 
+    /* The Notes toolbar sits on its box, as the reference draws them joined. */
+    .ao-cn-toolbar { border-radius: 4px 4px 0 0; }
+    .ao-cn-toolbar + textarea { border-radius: 0 0 4px 4px; }
+
+    /* Filter Log: the reference hangs its button off the right of the band above the panel
+       it opens. */
+    .ao-ct-head-end { justify-content: flex-end; }
+
+    /* The list tabs' grid, now that it is no longer wrapped in a Filament section that was
+       giving it the section's own spacing. */
+    .ao-ct-list { margin-top: 0.6rem; }
+
     .ao-rail-panel:nth-of-type(6n+1) .ao-rail-heading-icon { color: #337ab7; }
     .ao-rail-panel:nth-of-type(6n+2) .ao-rail-heading-icon { color: #5cb85c; }
     .ao-rail-panel:nth-of-type(6n+3) .ao-rail-heading-icon { color: #f0ad4e; }

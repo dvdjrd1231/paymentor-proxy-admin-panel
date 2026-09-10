@@ -19,7 +19,9 @@
     };
 @endphp
 
-<x-filament-panels::page>
+{{-- logFilterOpen lives here rather than on the Log tab itself: the button that toggles it
+     sits above the panel it opens, so both need the same Alpine scope. --}}
+<x-filament-panels::page x-data="{ logFilterOpen: false }">
     {{-- The reference's client switcher sits above the tab bar, on every tab: pick any
          client and land on their profile. Named its way: "name (company) - #id". --}}
     <div class="ao-cs-switch">
