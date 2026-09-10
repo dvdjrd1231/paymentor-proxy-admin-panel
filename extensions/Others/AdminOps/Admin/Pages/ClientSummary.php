@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Livewire\Attributes\Url;
 use Paymenter\Extensions\Others\AdminOps\Models\ClientNote;
+use Paymenter\Extensions\Others\AdminOps\Models\Meta;
 use Paymenter\Extensions\Others\AdminOps\Support\Money;
 use Paymenter\Extensions\Others\ClientTools\Models\Contact;
 
@@ -1090,6 +1091,48 @@ class ClientSummary extends Page
     }
 
     /** The Profile tab's Save Changes. Everything it writes is readable back on this page. */
+    /**
+     * The reference's Close Client Account.
+     *
+     * Paymenter keeps no status on a user, so "closed" is this extension's own mark in
+     * `ext_ao_meta` plus what closing actually means for the business: every running
+     * service cancelled. {@see \Paymenter\Extensions\Others\AdminOps\AdminOps::boot()}
+     * turns the mark into a refused sign-in.
+     */
+    public function closeAccount(): void
+    {
+        abort_unless(UserResource::canEdit($this->customer), 403);
+
+        $cancelled = 0;
+
+        DB::transaction(function () use (&$cancelled): void {
+            foreach ($this->customer->services()->whereIn('status', ['active', 'suspended', 'pending'])->get() as $service) {
+                $service->update(['status' => Service::STATUS_CANCELLED]);
+                $cancelled++;
+            }
+
+            Meta::put($this->customer, 'closed_at', now()->toDateTimeString());
+        });
+
+        Notification::make()->title('Account closed')
+            ->body($cancelled === 0
+                ? 'The client can no longer sign in. Nothing was running to cancel.'
+                : $cancelled . ' service(s) cancelled, and the client can no longer sign in.')
+            ->success()->send();
+    }
+
+    /** Lifts the mark. Cancelled services stay cancelled, as the reference leaves them. */
+    public function reopenAccount(): void
+    {
+        abort_unless(UserResource::canEdit($this->customer), 403);
+
+        Meta::put($this->customer, 'closed_at', null);
+
+        Notification::make()->title('Account reopened')
+            ->body('The client can sign in again. Services cancelled on closing stay cancelled.')
+            ->success()->send();
+    }
+
     public function saveProfile(): void
     {
         $this->validate([
@@ -1241,6 +1284,9 @@ class ClientSummary extends Page
 
                 return $countries;
             })(),
+            // The reference's closed-account state, for the Other Actions entry.
+            'isClosed' => ($closedAt = Meta::for($this->customer)['closed_at'] ?? null) !== null,
+            'closedAt' => $closedAt ? \Carbon\Carbon::parse($closedAt)->format('j M Y') : null,
             'hasContacts' => $this->hasContacts(),
             // The Summary panel lists them; the Contacts tab edits them.
             'summaryContacts' => $this->contactRows()->take(5),

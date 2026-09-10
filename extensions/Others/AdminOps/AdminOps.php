@@ -78,6 +78,7 @@ class AdminOps extends Extension
         $this->registerQuotePdf();
         $this->registerUpdatesNotice();
         $this->sweepServiceOverrides();
+        $this->refuseClosedAccounts();
         $this->retireRawProductList();
         $this->retireCoreCurrencyScreens();
         $this->retireCoreRoleScreens();
@@ -500,6 +501,42 @@ class AdminOps extends Extension
      * `booted()` on every request and would 500 the whole site, so it is caught and
      * logged instead.
      */
+    /**
+     * A closed account cannot sign in — the half of the reference's Close Client Account
+     * that has to live outside the button.
+     *
+     * Paymenter keeps no status on a user, so the mark is this extension's own
+     * (`ext_ao_meta`, key `closed_at`, written by {@see Admin\Pages\ClientSummary::closeAccount()}).
+     * Enforced on the Login event rather than by middleware so no core file is touched:
+     * the credentials are accepted, then the session is thrown away immediately. Staff are
+     * never affected — closing is a client action, and locking an admin out of the panel
+     * from a client screen would be a way to lose the panel.
+     */
+    private function refuseClosedAccounts(): void
+    {
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, function ($event): void {
+            $user = $event->user ?? null;
+
+            if (!$user instanceof \App\Models\User || $user->role_id !== null) {
+                return;
+            }
+
+            try {
+                $closed = Models\Meta::for($user)['closed_at'] ?? null;
+            } catch (\Throwable) {
+                return;     // before the meta table exists, nothing is closed
+            }
+
+            if ($closed === null) {
+                return;
+            }
+
+            \Illuminate\Support\Facades\Auth::guard($event->guard ?? 'web')->logout();
+            session()->invalidate();
+            session()->flash('error', 'This account has been closed. Please contact support.');
+        });
+    }
+
     private function sweepServiceOverrides(): void
     {
         app()->booted(function (): void {
