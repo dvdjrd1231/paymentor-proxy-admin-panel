@@ -268,9 +268,24 @@
                         <span class="ao-cp-link ao-cp-dead" title="Paymenter has no account merging">
                             <x-filament::icon icon="ri-git-merge-line" class="ao-cp-ic" /> Merge Clients Accounts
                         </span>
-                        <span class="ao-cp-link ao-cp-dead" title="Paymenter has no closed status — cancel the client's services instead">
-                            <x-filament::icon icon="ri-forbid-line" class="ao-cp-ic" /> Close Clients Account
-                        </span>
+                        {{-- The reference's Close Client Account, made real. Paymenter has
+                             no status column on a user, so closing is this extension's own
+                             mark plus the thing closing actually means: every running
+                             service cancelled. Reopening lifts the mark; it does not
+                             resurrect the services, which is the reference's behaviour. --}}
+                        @if ($isClosed)
+                            <button type="button" class="ao-cp-link" wire:click="reopenAccount"
+                                wire:confirm="Reopen this account? Its cancelled services stay cancelled."
+                                title="Closed {{ $closedAt }} — the client cannot sign in">
+                                <x-filament::icon icon="ri-lock-unlock-line" class="ao-cp-ic" /> Reopen Clients Account
+                            </button>
+                        @else
+                            <button type="button" class="ao-cp-link" wire:click="closeAccount"
+                                wire:confirm="Close this account? Every active or suspended service is cancelled and the client can no longer sign in."
+                                title="Cancels every running service and stops the client signing in">
+                                <x-filament::icon icon="ri-forbid-line" class="ao-cp-ic" /> Close Clients Account
+                            </button>
+                        @endif
                         {{-- Red, like the reference's: deletion itself lives on core's user
                              edit page, behind its own confirmation. --}}
                         <a class="ao-cp-link ao-cp-danger" href="{{ \App\Admin\Resources\UserResource::getUrl('edit', ['record' => $user->id]) }}">
