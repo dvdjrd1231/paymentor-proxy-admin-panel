@@ -467,13 +467,12 @@
        strip between the two. It keeps its rounded top corners and squares off at the
        bottom, which is the edge the panel joins.
 
-       The panel itself is already flush: it is anchored to `.fi-dropdown-trigger`, which
-       is pinned to the bar's full height, and margin-top: -8px cancels Filament's offset. */
-       Keyed off the panel, not the button: Filament's topbar trigger carries no
-       `aria-expanded` — the open state lives in Alpine's `filamentDropdown` data, which
-       CSS cannot read. What it can read is the inline `display` x-float always writes on
-       the panel (the same fact the degraded-JS guard below relies on): none when closed,
-       block when open. */
+       The panel itself is already pinned to the bar's bottom edge; this closes the strip
+       between that edge and the cell above it.
+
+       Keyed off a class our own hover script sets, not off the button: Filament's topbar
+       trigger carries no `aria-expanded`, and the open state lives in Alpine's
+       `filamentDropdown` data where CSS cannot reach it. */
     nav.fi-topbar .fi-dropdown.ao-menu-open .fi-topbar-item-btn {
         height: var(--wa-topbar-h);
         line-height: var(--wa-topbar-h);
