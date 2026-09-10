@@ -1738,10 +1738,6 @@
        is a phrase, not a field of one word. */
     .ao-tx-tabs + .ao-of .ao-of-md { width: 18.5rem; }
 
-    /* Air under the panel, so Filter and the list's own buttons are not read as one row
-       (Leandro, 2026-09-10: "there should be a big space between Search/Filter button and
-       Show Open Requests"). */
-    .ao-tx-tabs + .ao-of { margin-bottom: 1.5rem; }
 
     .ao-of-row {
         display: grid;
@@ -7094,7 +7090,11 @@
 
     /* Cancellation Requests (issue #30): the reference's segmented Open/Completed
        toggle — two joined buttons, the active one pressed darker. */
-    .ao-sc-toggle { display: flex; margin-bottom: 0.7rem; }
+    /* The space above belongs here, not under the filter panel. The panel is x-show'd, so
+       when Search/Filter is closed it is display:none and its own margin goes with it —
+       which left the tab sitting straight on top of these buttons (Leandro, 2026-09-10:
+       the gap is wanted "when the Search/Filter close"). On this row it holds either way. */
+    .ao-sc-toggle { display: flex; margin-top: 1.25rem; margin-bottom: 0.7rem; }
 
     .ao-sc-toggle button {
         padding: 0.45rem 1.1rem;
