@@ -1026,6 +1026,59 @@
         color: var(--wa-ink);
     }
 
+    /* The administrators' edit screen in the Client Profile's shape — its rows, not its
+       page (Leandro, 2026-09-10: "similar with client profile page ... not same"). Core's
+       resource form stacks a label over its input; the profile puts the label in a white
+       column with the field beside it on grey, and that row shape is what makes the two
+       screens read as the same panel.
+
+       Scoped to this one resource on purpose. `.fi-fo-field` is every Filament form field
+       in the panel — products, gateways, servers — and restyling it unscoped would move a
+       dozen screens nobody asked about. */
+    .fi-resource-users.fi-resource-edit-record-page .fi-fo-field {
+        display: grid;
+        grid-template-columns: 11rem minmax(0, 1fr);
+        align-items: center;
+        background: #efefef;
+        border-radius: 3px;
+        margin-bottom: 2px;
+    }
+
+    /* display:flex here on purpose — the column is a plain block, so `justify-content`
+       alone had nothing to act on and the labels stayed left against the white. */
+    .fi-resource-users.fi-resource-edit-record-page .fi-fo-field-label-col {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 0.5rem 0.7rem;
+        background: #ffffff;
+        text-align: end;
+    }
+
+    .fi-resource-users.fi-resource-edit-record-page .fi-fo-field-content-col {
+        padding: 0.5rem 0.7rem;
+    }
+
+    /* The field fills its cell, as the profile's do — a short input floating in a wide
+       grey band is the ragged edge Leandro has flagged on other screens. */
+    .fi-resource-users.fi-resource-edit-record-page .fi-fo-field-content-col .fi-input-wrp {
+        width: 100%;
+    }
+
+    /* A toggle row reads the other way round: the switch first, its name beside it, both
+       on the grey. Forcing it into the label column wrapped the name over two lines. */
+    .fi-resource-users.fi-resource-edit-record-page .fi-fo-field:has(.fi-fo-toggle) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .fi-resource-users.fi-resource-edit-record-page .fi-fo-field:has(.fi-fo-toggle) .fi-fo-field-label-col {
+        justify-content: flex-start;
+        background: transparent;
+        text-align: start;
+        order: 2;
+        padding-inline-start: 0;
+    }
+
     /* Empty lists: the reference states the fact in one grey line, centred, with no
        illustration above it. */
     .fi-ta-empty-state-icon-bg {

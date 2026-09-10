@@ -1202,6 +1202,10 @@ class ClientSummary extends Page
                         'rows' => $rows,
                         'totals' => [
                             'in' => $rows->sum(fn (array $row): float => (float) $row['in']),
+                            // The reference's fourth figure, and a real one: core records
+                            // what the gateway took on `invoice_transactions.fee`. It was
+                            // drawn inert on the belief that nothing stored it.
+                            'fees' => $rows->sum(fn (array $row): float => (float) ($row['fee'] ?? 0)),
                             'out' => $rows->sum(fn (array $row): float => (float) $row['out']),
                         ],
                     ];
@@ -1736,6 +1740,7 @@ class ClientSummary extends Page
                 'description' => 'Invoice #' . $transaction->invoice_id
                     . ($transaction->transaction_id ? ' · ' . $transaction->transaction_id : ''),
                 'in' => (float) $transaction->amount,
+                'fee' => (float) $transaction->fee,
                 'out' => 0.0,
             ]);
 
@@ -1752,6 +1757,7 @@ class ClientSummary extends Page
                         'description' => 'Invoice #' . $refund->invoice_id
                             . ($refund->reason ? ' · ' . str($refund->reason)->limit(50) : ''),
                         'in' => 0.0,
+                        'fee' => 0.0,
                         'out' => (float) $refund->amount,
                     ])
             );
