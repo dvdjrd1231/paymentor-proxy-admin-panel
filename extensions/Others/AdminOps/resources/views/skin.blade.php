@@ -515,13 +515,16 @@
            Sitting the panel on the bar instead of under it keeps it flush and lets the
            radius from .fi-dropdown-panel apply the whole way round.
 
-           `margin-top: 0` was not enough on its own, which is the strip Leandro circled
-           again: Filament anchors the panel 8px *below* its trigger and applies that
-           offset through an inline transform, so a zero margin still left 8px of page
-           showing. -8px cancels exactly that offset, putting the panel's top edge on the
-           bar's bottom edge — flush, as the reference has it, with the corners sitting
-           below the bar rather than hidden behind it. */
-        margin-top: -8px;
+           Pinned rather than nudged. x-float writes the panel's position as an inline
+           `top` — Leandro read it off the element as `top: 53px`, which is the bar's 45px
+           plus the `offset: 8` in Filament's own x-float directive. A negative margin only
+           moves the painted box and leaves that 53 in place, so the number never matched
+           what the reference does and the two kept drifting apart as the cell's height
+           changed. An `!important` top beats the inline style outright: the panel starts
+           exactly at the bar's bottom edge, whatever offset Filament asks for. Both are
+           position: fixed, so this holds while the page scrolls too. */
+        top: var(--wa-topbar-h) !important;
+        margin-top: 0;
     }
 
     .fi-dropdown-panel {
