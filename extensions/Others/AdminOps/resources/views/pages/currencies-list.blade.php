@@ -6,6 +6,8 @@
 --}}
 <x-filament-panels::page>
     <div class="ao-mu">
+        <p class="ao-cp-note">You can sell in different currencies concurrently by setting them up below. Customers who visit your site can then choose to shop in their local currency.</p>
+
         <table class="ao-mu-grid">
             <thead>
                 <tr>
@@ -59,43 +61,40 @@
         </div>
 
         <h4 class="ao-ano-heading">Add Additional Currency</h4>
-        <form class="ao-anc-card" wire:submit.prevent="addCurrency">
-            <label class="ao-anc-row">
-                <span>Currency Code</span>
-                <span class="ao-anc-field">
-                    <input type="text" class="ao-w-25" maxlength="3" wire:model="newCode" placeholder="e.g. BRL" required>
-                    <i>eg. USD, GBP, etc...</i>
-                </span>
-            </label>
-            <label class="ao-anc-row">
-                <span>Display Name</span>
-                <input type="text" class="ao-w-25" wire:model="newName" placeholder="Optional — defaults to the code">
-            </label>
-            <label class="ao-anc-row">
-                <span>Prefix</span>
-                <input type="text" class="ao-w-25" wire:model="newPrefix" placeholder="e.g. R$">
-            </label>
-            <label class="ao-anc-row">
-                <span>Suffix</span>
-                <input type="text" class="ao-w-25" wire:model="newSuffix" placeholder="Defaults to the code">
-            </label>
-            <label class="ao-anc-row">
-                <span>Format</span>
-                <select class="ao-w-25" wire:model="newFormat">
-                    @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\CurrenciesList::FORMATS as $format)
-                        <option value="{{ $format }}">{{ $format }}</option>
-                    @endforeach
-                </select>
-            </label>
-            <label class="ao-anc-row">
-                <span>Base Conv. Rate</span>
-                <span class="ao-anc-field">
-                    <input type="text" class="ao-w-25" wire:model="newRate" placeholder="e.g. 5.42000">
-                    <i>How many of the new currency one {{ $baseCode }} buys. Leave blank to let
-                        Update Exchange Rates fill it in.</i>
-                </span>
-            </label>
-            <div class="ao-pr-center"><button type="submit" class="ao-find-go">Add Currency</button></div>
+        <form class="ao-find ao-of" wire:submit.prevent="addCurrency">
+            <div class="ao-of-rows">
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cur-code">Currency Code</label>
+                    <span class="ao-of-stack">
+                        <input @nofill id="ao-cur-code" class="ao-of-sm" type="text" maxlength="3" wire:model="newCode" required>
+                        <i class="ao-of-note-dim">eg. USD, GBP, etc...</i>
+                    </span>
+                </div>
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cur-prefix">Prefix</label>
+                    <span><input @nofill id="ao-cur-prefix" class="ao-of-sm" type="text" wire:model="newPrefix"></span>
+                </div>
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cur-suffix">Suffix</label>
+                    <span><input @nofill id="ao-cur-suffix" class="ao-of-sm" type="text" wire:model="newSuffix"></span>
+                </div>
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cur-format">Format</label>
+                    <span><select @nofill id="ao-cur-format" class="ao-of-md" wire:model="newFormat">
+                        @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\CurrenciesList::FORMATS as $format)
+                            <option value="{{ $format }}">{{ $format }}</option>
+                        @endforeach
+                    </select></span>
+                </div>
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cur-rate">Base Conv. Rate</label>
+                    <span class="ao-of-stack">
+                        <input @nofill id="ao-cur-rate" class="ao-of-sm" type="text" wire:model="newRate" placeholder="1.00">
+                        <i class="ao-of-note-dim">The current rate to convert to base currency</i>
+                    </span>
+                </div>
+            </div>
+            <div class="ao-of-buttons"><button type="submit" class="ao-find-go">Add Currency</button></div>
         </form>
         @if ($errors->any())
             <ul class="ao-anc-errors">

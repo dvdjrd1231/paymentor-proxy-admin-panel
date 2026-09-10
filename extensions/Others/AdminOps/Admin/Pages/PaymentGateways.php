@@ -36,6 +36,22 @@ class PaymentGateways extends Page
         return 'Payment Gateways';
     }
 
+    /** The drag handle's drop — the row order, first to last, applied at checkout too. */
+    public function reorder(array $ids): void
+    {
+        $first = Gateway::first();
+
+        if (!$first || !GatewayResource::canEdit($first)) {
+            return;
+        }
+
+        \Paymenter\Extensions\Others\AdminOps\Support\GatewayOrder::save($ids);
+
+        Notification::make()->title('Order saved')
+            ->body('Checkout offers the gateways in this order now.')
+            ->success()->send();
+    }
+
     public function confirm(int $id, bool $enable): void
     {
         $this->confirming = $id;
@@ -76,7 +92,7 @@ class PaymentGateways extends Page
         }
 
         return [
-            'gateways' => Gateway::orderBy('name')->get(),
+            'gateways' => \Paymenter\Extensions\Others\AdminOps\Support\GatewayOrder::sort(Gateway::orderBy('name')->get()),
             'canEdit' => fn (Gateway $gateway) => GatewayResource::canEdit($gateway)
                 // Straight to our own editor rather than through core's route.
                 ? EditGateway::getUrl(['record' => $gateway->id])

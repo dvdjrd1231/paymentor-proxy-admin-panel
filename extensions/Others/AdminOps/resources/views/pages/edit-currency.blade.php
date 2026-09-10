@@ -10,51 +10,58 @@
                 href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\CurrenciesList::getUrl() }}">&laquo; Back to Currencies</a>
         </div>
 
-        <form class="ao-anc-card" wire:submit.prevent="save">
-            <label class="ao-anc-row">
-                <span>Currency Code</span>
-                <span class="ao-anc-field">
-                    <input type="text" class="ao-w-25" value="{{ $this->currency->code }}" disabled>
-                    <i>The code cannot change once money has been priced in it.</i>
-                </span>
-            </label>
-            <label class="ao-anc-row">
-                <span>Display Name</span>
-                <input type="text" class="ao-w-25" wire:model="name" required>
-            </label>
-            <label class="ao-anc-row">
-                <span>Prefix</span>
-                <input type="text" class="ao-w-25" wire:model="prefix" placeholder="e.g. R$">
-            </label>
-            <label class="ao-anc-row">
-                <span>Suffix</span>
-                <input type="text" class="ao-w-25" wire:model="suffix">
-            </label>
-            <label class="ao-anc-row">
-                <span>Format</span>
-                <select class="ao-w-25" wire:model="format">
-                    @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\CurrenciesList::FORMATS as $format)
-                        <option value="{{ $format }}">{{ $format }}</option>
-                    @endforeach
-                </select>
-            </label>
-            <label class="ao-anc-row">
-                <span>Base Conv. Rate</span>
-                <span class="ao-anc-field">
-                    @if ($this->isBase())
-                        <input type="text" class="ao-w-25" value="1.00000" disabled>
-                        <i>This is the default currency — everything is priced against it, so its rate is 1.</i>
-                    @else
-                        <input type="text" class="ao-w-25" wire:model="rate" placeholder="e.g. 5.42000">
-                        <i>How many {{ $this->currency->code }} one
-                            {{ config('settings.default_currency') }} buys. Set it here, then use
-                            <strong>Update Product Prices</strong> on the Currencies screen to reprice from it —
-                            or leave it to <strong>Update Exchange Rates</strong> to fill in from the market.</i>
-                    @endif
-                </span>
-            </label>
-
-            <div class="ao-pr-center"><button type="submit" class="ao-find-go">Save Changes</button></div>
+        <form class="ao-find ao-of" wire:submit.prevent="save">
+            <div class="ao-of-rows">
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cur-code">Currency Code</label>
+                    <span class="ao-of-stack">
+                        <input id="ao-cur-code" class="ao-of-sm" type="text" value="{{ $this->currency->code }}" disabled
+                            title="The code cannot change once money has been priced in it">
+                        <i class="ao-of-note-dim">eg. USD, GBP, etc...</i>
+                    </span>
+                </div>
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cur-prefix">Prefix</label>
+                    <span><input @nofill id="ao-cur-prefix" class="ao-of-sm" type="text" wire:model="prefix"></span>
+                </div>
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cur-suffix">Suffix</label>
+                    <span><input @nofill id="ao-cur-suffix" class="ao-of-sm" type="text" wire:model="suffix"></span>
+                </div>
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cur-format">Format</label>
+                    <span><select @nofill id="ao-cur-format" class="ao-of-md" wire:model="format">
+                        @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\CurrenciesList::FORMATS as $format)
+                            <option value="{{ $format }}">{{ $format }}</option>
+                        @endforeach
+                    </select></span>
+                </div>
+                <div class="ao-of-row ao-of-row-single">
+                    <label class="ao-of-label" for="ao-cur-rate">Base Conv. Rate</label>
+                    <span class="ao-of-stack">
+                        @if ($this->isBase())
+                            <input id="ao-cur-rate" class="ao-of-sm" type="text" value="1.00000" disabled
+                                title="This is the default currency — everything is priced against it, so its rate is 1">
+                        @else
+                            <input @nofill id="ao-cur-rate" class="ao-of-sm" type="text" wire:model="rate">
+                        @endif
+                        <i class="ao-of-note-dim">The current rate to convert to base currency</i>
+                    </span>
+                </div>
+                @unless ($this->isBase())
+                    <div class="ao-of-row ao-of-row-single">
+                        <span class="ao-of-label">Update Pricing</span>
+                        <label class="ao-of-check">
+                            <input type="checkbox" wire:model="updatePricing">
+                            Check to recalculate prices for this currency using the conversion rate
+                        </label>
+                    </div>
+                @endunless
+            </div>
+            <div class="ao-of-buttons">
+                <button type="submit" class="ao-find-go">&#128190; Save Changes</button>
+                <a class="ao-gs-cancel" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\CurrenciesList::getUrl() }}">Cancel Changes</a>
+            </div>
         </form>
 
         @if ($errors->any())

@@ -46,6 +46,9 @@ class EditCurrency extends Page
 
     public string $rate = '';
 
+    /** The reference's "Update Pricing" — reprice this currency from the rate on save. */
+    public bool $updatePricing = false;
+
     public bool $confirmingDelete = false;
 
     public static function getRoutePath(Panel $panel): string
@@ -111,11 +114,48 @@ class EditCurrency extends Page
                 : ($this->rate === '' ? null : (float) $this->rate),
         ])->save();
 
+        if ($this->updatePricing && !$this->isBase() && $this->rate !== '') {
+            $this->repriceFromRate();
+
+            return;
+        }
+
         Notification::make()->title('Currency updated')
             ->body($this->isBase() || $this->rate === ''
                 ? null
                 : 'Use Update Product Prices on the Currencies screen to reprice from this rate.')
             ->success()->send();
+    }
+
+    /** Rewrite this one currency's product prices from the rate just saved. */
+    private function repriceFromRate(): void
+    {
+        $this->updatePricing = false;
+
+        if (!class_exists(\Paymenter\Extensions\Others\CurrencyRates\Support\RateSync::class)) {
+            Notification::make()->title('Currency updated')
+                ->body('The Currency Rates extension is not installed, so prices were left as they are.')
+                ->warning()->send();
+
+            return;
+        }
+
+        try {
+            $sync = new \Paymenter\Extensions\Others\CurrencyRates\Support\RateSync(
+                providerUrl: '',
+                base: (string) config('settings.default_currency'),
+                targets: [$this->currency->code],
+                markupPercent: 0,
+                rounding: 'none',
+            );
+            $result = $sync->run(false, [$this->currency->code => (float) $this->rate]);
+
+            Notification::make()->title('Currency updated and prices recalculated')
+                ->body(($result['updated'] ?? 0) . ' price(s) rewritten at ' . $this->rate . ' ' . $this->currency->code . ' per ' . config('settings.default_currency') . '.')
+                ->success()->send();
+        } catch (\Throwable $e) {
+            Notification::make()->title('Saved, but repricing failed')->body($e->getMessage())->danger()->send();
+        }
     }
 
     public function delete()
