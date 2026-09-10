@@ -132,7 +132,7 @@
                  and the list looks stuck open until the user clicks outside. mousedown
                  fires on press alone, before a morph can eat it. .prevent keeps focus
                  on the combobox button. --}}
-            <li role="option"
+            <li role="option" :title="o.title || null"
                 :class="o.group ? 'ao-xsel-group' : ('ao-xsel-opt' + (String(o.value) === String(value) ? ' ao-on' : '') + (o.disabled ? ' ao-off' : ''))"
                 :aria-selected="!o.group && String(o.value) === String(value) ? 'true' : 'false'"
                 @mousedown.prevent="pick(o)">

@@ -68,9 +68,16 @@
     </div>
 @endif
 
-{{-- The reference's Filter Log band, above the list. --}}
+{{-- The reference's Filter Log band, above the list, behind its own button. It was always
+     open, which is a panel of four fields between you and the log every time you open the
+     tab; the reference folds it away and lets you ask for it. --}}
 @if ($tab === 'log')
-    <div class="ao-anc-card ao-ct-filter">
+    <div class="ao-ct-head ao-ct-head-end">
+        <button type="button" class="ao-mu-tab" :class="{ 'ao-on': logFilterOpen }"
+            @click="logFilterOpen = !logFilterOpen">Filter Log</button>
+    </div>
+
+    <div class="ao-anc-card ao-ct-filter" x-show="logFilterOpen" x-cloak>
         <label class="ao-anc-row">
             <span>Date</span>
             <input type="date" wire:model.live="logFilter.date">
@@ -100,19 +107,28 @@
     'total' => $rowTotal(), 'page' => $page, 'perPage' => $perPage,
 ])
 
-<x-filament::section :heading="ucfirst(str_replace('_', ' ', $tab))">
+{{-- No section wrapper, and the panel's own grid rather than `ao-list`: the reference puts
+     the navy grid straight under the records band, with no grey heading strip naming the
+     tab you already clicked. Every list tab comes through here, so this is what made most
+     of them read as a different table from the rest of the panel (Leandro, 2026-09-10:
+     "some tabs are different with the WHMCS client profile page tabs content"). --}}
+<div class="ao-ct-list">
     @if ($count === 0)
-        <p class="ao-empty">
-            @switch($tab)
-                @case('billable') Nothing has been charged to this account outside their products. @break
-                @case('transactions') No money has moved on this account yet. @break
-                @case('emails') Nothing has been sent to this customer yet. @break
-                @case('log') Nothing has been recorded against this account. @break
-                @default Nothing here yet.
-            @endswitch
-        </p>
+        <table class="ao-mu-grid">
+            <tbody>
+                <tr><td class="ao-mu-none">
+                    @switch($tab)
+                        @case('billable') Nothing has been charged to this account outside their products. @break
+                        @case('transactions') No money has moved on this account yet. @break
+                        @case('emails') Nothing has been sent to this customer yet. @break
+                        @case('log') Nothing has been recorded against this account. @break
+                        @default No Records Found.
+                    @endswitch
+                </td></tr>
+            </tbody>
+        </table>
     @else
-        <table class="ao-list">
+        <table class="ao-mu-grid">
             <thead>
                 <tr>
                     @switch($tab)
@@ -227,7 +243,7 @@
             @endswitch
         </p>
     @endif
-</x-filament::section>
+</div>
 
 @include('adminops::partials.records-pager', [
     'total' => $rowTotal(), 'page' => $page, 'perPage' => $perPage,
