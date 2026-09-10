@@ -5384,6 +5384,9 @@
     /* A button this order's state leaves nothing to do, drawn as the reference greys it. */
     .ao-eo-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    /* Same for the service editor's module commands. */
+    .ao-of-inline .ao-of-go:disabled { opacity: 0.5; cursor: not-allowed; }
+
     /* The service editor's picker row: the reference's select + Go left, New Addon at
        the row's right end. */
     .ao-cs-pickrow {

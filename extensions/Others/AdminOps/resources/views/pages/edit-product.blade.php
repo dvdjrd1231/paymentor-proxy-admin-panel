@@ -511,18 +511,18 @@
             <form class="ao-anc-card" wire:submit.prevent="saveUpgrades">
                 <div class="ao-anc-row">
                     <span>
-                        Package Upgrades
+                        Packages Upgrades
                         <i>The products a customer on this one may move to.</i>
                     </span>
                     <span class="ao-anc-field">
                         <select class="ao-ep-list" multiple size="10" wire:model="upgradeIds">
                             @foreach ($otherProducts as $other)
-                                <option value="{{ $other->id }}">{{ $other->name }}</option>
+                                <option value="{{ $other->id }}">{{ trim(($other->category?->name ? $other->category->name . ' - ' : '') . $other->name) }}</option>
                             @endforeach
                         </select>
                         <i>{{ $otherProducts->isEmpty()
                             ? 'There are no other products to upgrade to.'
-                            : 'Ctrl-click or Shift-click to choose more than one.' }}</i>
+                            : 'Use Ctrl+Click to select multiple packages' }}</i>
                     </span>
                 </div>
 
@@ -537,7 +537,7 @@
                     <span class="ao-anc-field">
                         <label class="ao-check">
                             <input type="checkbox" wire:model="upgradeConfigOptions">
-                            <span>Check to allow configurable options to be upgraded/downgraded</span>
+                            <span>Check to allow Upgrading/Downgrading of configurable options</span>
                         </label>
                         <i>Applies to drop-down, radio and slider options — a text box has no second
                             choice to move to. This product carries
@@ -728,18 +728,24 @@
             <form class="ao-anc-card" wire:submit.prevent="saveCrossSells">
                 <div class="ao-anc-row">
                     <span>
-                        Product Cross-sells
+                        Product Cross sells
                         <i>Shown as recommendations on this product's own page.</i>
                     </span>
                     <span class="ao-anc-field">
+                        {{-- Grouped as the reference groups its own picker, so a plan name
+                             that repeats across groups is still tellable apart. --}}
                         <select class="ao-ep-list" multiple size="10" wire:model="crossSellIds">
-                            @foreach ($otherProducts as $other)
-                                <option value="{{ $other->id }}">{{ $other->name }}</option>
+                            @foreach ($otherProducts->groupBy(fn ($p) => $p->category?->name ?? 'Ungrouped') as $groupName => $groupProducts)
+                                <optgroup label="{{ $groupName }}">
+                                    @foreach ($groupProducts as $other)
+                                        <option value="{{ $other->id }}">{{ $other->name }}</option>
+                                    @endforeach
+                                </optgroup>
                             @endforeach
                         </select>
                         <i>{{ $otherProducts->isEmpty()
                             ? 'There are no other products to recommend.'
-                            : 'Ctrl-click or Shift-click to choose more than one.' }}</i>
+                            : 'Use Ctrl+Click to select multiple products' }}</i>
                     </span>
                 </div>
 
