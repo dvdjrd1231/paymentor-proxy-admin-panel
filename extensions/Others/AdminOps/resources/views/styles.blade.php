@@ -3435,6 +3435,11 @@
 
     @media (max-width: 900px) { .ao-eo-facts { grid-template-columns: 1fr; } }
 
+    /* Measured against the reference: its label column runs ~220px and its rows ~38px,
+       where ours were 170px and 49px — the band read looser than the target's. */
+    .ao-ete-band .ao-of-row-single { grid-template-columns: 13rem minmax(0, 1fr); }
+    .ao-ete-band .ao-of-row > * { padding: 0.35rem 0.7rem; }
+
     /* The reference's From pair: a short name box, a longer address box. */
     .ao-ete-from input:first-child { max-width: 13rem; }
 
