@@ -3443,9 +3443,31 @@
     /* The reference's From pair: a short name box, a longer address box. */
     .ao-ete-from input:first-child { max-width: 13rem; }
 
-    /* The reference names each merge tag beside it. */
-    .ao-ete-mrow { display: grid; grid-template-columns: 10.5rem auto; gap: 0.6rem; align-items: baseline; margin: 0.2rem 0; }
-    .ao-ete-mrow > span { color: var(--wa-link, #337ab7); font-size: 0.9rem; }
+    /* The reference names each merge tag beside it, in a dense plain-text list — its
+       rows run ~19px at ~12px type, with the tag as bare text rather than a filled
+       chip. Ours was half again as tall with a pill on every row. */
+    .ao-ete-mrow {
+        display: grid;
+        grid-template-columns: 9rem auto;
+        gap: 0.5rem;
+        align-items: baseline;
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    .ao-ete-mrow > span { color: var(--wa-link, #337ab7); font-size: 0.8rem; }
+
+    .ao-ete-mrow .ao-ete-token {
+        padding: 0;
+        border: 0;
+        background: none;
+        font-size: 0.8rem;
+        color: var(--wa-ink, #2b2b2b);
+    }
+
+    .ao-ete-merge .ao-ano-heading { font-size: 0.85rem; margin-bottom: 0.15rem; }
+    .ao-ete-merge p { font-size: 0.8rem; }
+    .ao-ete-merge .ao-ete-snippet { font-size: 0.78rem; padding: 0.4rem 0.55rem; }
 
     /* The template editor's Attachments row, drawn at full strength like the
        reference — the titles carry why the pair cannot submit anything. */
