@@ -89,7 +89,8 @@
     @if (!empty($searchable))
         {{-- The reference's type-to-search combobox: the closed state shows the pick,
              focusing clears it for typing, and the list filters as the filter grows. --}}
-        <span class="ao-xsel-btn ao-xsel-editable" :aria-expanded="open ? 'true' : 'false'">
+        <span class="ao-xsel-btn ao-xsel-editable" :aria-expanded="open ? 'true' : 'false'"
+            @click="if ($event.target === $el || $event.target.closest('svg')) { toggle(); if (open) { search = ''; $refs.btn.focus() } }">
             <input type="text" class="ao-xsel-input" x-ref="btn" autocomplete="off"
                 role="combobox" aria-haspopup="listbox"
                 :value="search === null ? label() : search"
