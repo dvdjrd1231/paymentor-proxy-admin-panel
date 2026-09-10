@@ -761,7 +761,7 @@
             </form>
         @else
 
-        <form class="ao-find ao-of ao-of-even" autocomplete="off" wire:submit.prevent="saveService">
+        <form class="ao-find ao-of ao-of-even ao-cs-service" autocomplete="off" wire:submit.prevent="saveService">
             <div class="ao-of-rows">
                 <div class="ao-of-row">
                     <span class="ao-of-label">Order #</span>
@@ -786,16 +786,33 @@
                     <span><input id="ao-cs-qty" class="ao-of-sm" type="number" min="1" wire:model="svc.quantity"></span>
                 </div>
                 <div class="ao-of-row">
+                    {{-- A select like the reference's, but the product decides the server,
+                         so it shows rather than chooses. --}}
                     <span class="ao-of-label">Server</span>
-                    <span class="ao-eo-fact">{{ $svcModel->product?->server?->name ?? 'None' }}</span>
+                    <span><select class="ao-of-md" disabled
+                        title="A product names its server, so every service on it provisions there — change it on the product">
+                        <option>{{ $svcModel->product?->server?->name ?? 'None' }}</option>
+                    </select></span>
                     <label class="ao-of-label" for="ao-cs-price">First Payment Amount</label>
                     <span><input id="ao-cs-price" class="ao-of-sm" type="text" inputmode="decimal" wire:model="svc.price"></span>
                 </div>
                 <div class="ao-of-row">
                     <label class="ao-of-label" for="ao-cs-domain">Domain</label>
                     <span><input id="ao-cs-domain" class="ao-of-md" type="text" wire:model="svc.domain" placeholder=""></span>
+                    {{-- The reference's Recurring Amount and its Recalculate on Save. One
+                         figure is charged each cycle here, so this shows what the next
+                         renewal takes; ticking Recalculate re-reads the plan's price on
+                         save instead of keeping what this service was sold at. --}}
                     <span class="ao-of-label">Recurring Amount</span>
-                    <span class="ao-eo-fact">${{ number_format((float) $svcModel->price * max(1, (int) $svcModel->quantity), 2) }} {{ $svcModel->currency_code }}</span>
+                    <span class="ao-of-inline">
+                        <input class="ao-of-sm" type="text" readonly
+                            value="{{ number_format((float) $svcModel->price * max(1, (int) $svcModel->quantity), 2) }}"
+                            title="The renewal charge — set it through First Payment Amount, or tick Recalculate on Save to take the plan's current price">
+                        <label class="ao-check ao-cs-recalc">
+                            <input type="checkbox" wire:model="svc.recalculate">
+                            <span>Recalculate on Save</span>
+                        </label>
+                    </span>
                 </div>
                 <div class="ao-of-row">
                     <label class="ao-of-label" for="ao-cs-dip">Dedicated IP</label>
@@ -836,14 +853,25 @@
                         <option value="suspended">Suspended</option>
                         <option value="cancelled">Terminated</option>
                     </select></span>
+                    {{-- Shown as the reference's select. The gateway is whichever one took
+                         payment on this service's invoices, which is a fact about those
+                         transactions rather than a setting to change here. --}}
                     <span class="ao-of-label">Payment Method</span>
-                    <span class="ao-eo-fact">{{ $svcPayment }}</span>
+                    <span><select class="ao-of-md" disabled
+                        title="The gateway that took payment on this service's invoices — set at checkout, not here">
+                        <option>{{ $svcPayment }}</option>
+                    </select></span>
                 </div>
                 <div class="ao-of-row">
                     <span class="ao-of-label"></span>
                     <span></span>
-                    <span class="ao-of-label">Promotion Code</span>
-                    <span class="ao-eo-fact">{{ $svcModel->coupon?->code ?? 'None' }}</span>
+                    <label class="ao-of-label" for="ao-cs-coupon">Promotion Code</label>
+                    <span><select id="ao-cs-coupon" class="ao-of-md" wire:model="svc.couponId">
+                        <option value="">None</option>
+                        @foreach ($svcCoupons as $coupon)
+                            <option value="{{ $coupon->id }}">{{ $coupon->code }}</option>
+                        @endforeach
+                    </select></span>
                 </div>
                 {{-- The reference's Region row (and any other configurable option): a real
                      select over that option's own values, saving with the form. --}}
