@@ -242,14 +242,21 @@ class EditTicket extends Page
 
         foreach ($this->attachments as $attachment) {
             $name = Str::ulid() . '.' . $attachment->getClientOriginalExtension();
+
+            // Facts first, then the move: storeAs() takes the upload out of livewire-tmp,
+            // and reading its size afterwards throws on a path that is already gone.
+            $filename = $attachment->getClientOriginalName();
+            $filesize = $attachment->getSize();
+            $mime = (string) $attachment->getMimeType();
+
             $attachment->storeAs('tickets/uploads', $name);
 
             $message->attachments()->create([
                 'uuid' => Str::uuid(),
-                'filename' => $attachment->getClientOriginalName(),
+                'filename' => $filename,
                 'path' => 'tickets/uploads/' . $name,
-                'filesize' => $attachment->getSize(),
-                'mime_type' => (string) $attachment->getMimeType(),
+                'filesize' => $filesize,
+                'mime_type' => $mime,
             ]);
         }
 

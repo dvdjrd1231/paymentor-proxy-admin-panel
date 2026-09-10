@@ -146,14 +146,24 @@ class OpenNewTicket extends Page
             foreach ($this->attachments as $attachment) {
                 // Stored exactly as the client portal stores its own uploads.
                 $name = Str::ulid() . '.' . $attachment->getClientOriginalExtension();
+
+                // Read the file's own facts *before* storing it. storeAs() moves the upload
+                // out of livewire-tmp, so asking for its size afterwards reads a path that
+                // no longer exists — "Unable to retrieve the file_size for file at location:
+                // livewire-tmp/…", which surfaced as the "Error while loading page" toast
+                // whenever a ticket was opened with an attachment.
+                $filename = $attachment->getClientOriginalName();
+                $filesize = $attachment->getSize();
+                $mime = (string) $attachment->getMimeType();
+
                 $attachment->storeAs('tickets/uploads', $name);
 
                 $message->attachments()->create([
                     'uuid' => Str::uuid(),
-                    'filename' => $attachment->getClientOriginalName(),
+                    'filename' => $filename,
                     'path' => 'tickets/uploads/' . $name,
-                    'filesize' => $attachment->getSize(),
-                    'mime_type' => (string) $attachment->getMimeType(),
+                    'filesize' => $filesize,
+                    'mime_type' => $mime,
                 ]);
             }
 
