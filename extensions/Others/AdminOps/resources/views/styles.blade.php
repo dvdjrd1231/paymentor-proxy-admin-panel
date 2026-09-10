@@ -3305,7 +3305,9 @@
        client cell carries four address lines; ours has fewer, so the shorter table's
        rows share out the height rather than leaving a gap beneath the box. */
     .ao-eo-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; align-items: stretch; }
-    .ao-eo-facts > .ao-find { display: flex; }
+    /* align-items: stretch, not the .ao-find base's flex-end — that pushed the shorter
+       table to the bottom of its column instead of filling it. */
+    .ao-eo-facts > .ao-find { display: flex; align-items: stretch; }
     .ao-eo-facts .ao-of-rows { flex: 1; }
     .ao-eo-facts .ao-of-row { flex: 1 1 auto; }
     .ao-eo-facts .ao-of-row-single { grid-template-columns: 9.5rem minmax(0, 1fr); }
