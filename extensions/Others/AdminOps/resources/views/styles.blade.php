@@ -1700,6 +1700,22 @@
         background: #fff;
     }
 
+    /* The Search/Filter bands run tighter than the editors that share these classes. The
+       reference's filter panel is a compact block you read past on the way to the list —
+       about 30px a row against the ~46px an editor row takes. Scoped to the band under the
+       tab strip so the ticket Options and email template forms keep their own spacing. */
+    .ao-tx-tabs + .ao-of .ao-of-row > * { padding: 0.25rem 0.5rem; }
+
+    .ao-tx-tabs + .ao-of .ao-of-row input,
+    .ao-tx-tabs + .ao-of .ao-of-row select {
+        height: 1.55rem;
+        font-size: 0.85rem;
+    }
+
+    .ao-tx-tabs + .ao-of .ao-of-label { font-size: 0.85rem; }
+
+    .ao-tx-tabs + .ao-of .ao-of-buttons { margin-top: 0.55rem; }
+
     /* Attached under the Search/Filter tab strip, as the band it replaces was. */
     .ao-tx-tabs + .ao-of .ao-of-rows {
         border-top: 0;

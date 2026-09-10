@@ -461,6 +461,23 @@
         color: #ffffff;
     }
 
+    /* While its menu is open the cell reaches the bottom of the bar, so it meets the panel
+       that drops from it (Leandro, 2026-09-10: in the reference "the menu and submenu
+       appear close to each other"). Inset, the pill stopped 5px short and left a navy
+       strip between the two. It keeps its rounded top corners and squares off at the
+       bottom, which is the edge the panel joins.
+
+       The panel itself is already flush: it is anchored to `.fi-dropdown-trigger`, which
+       is pinned to the bar's full height, and margin-top: -8px cancels Filament's offset. */
+    nav.fi-topbar .fi-dropdown-trigger button[aria-expanded="true"],
+    nav.fi-topbar .fi-topbar-item-btn[aria-expanded="true"] {
+        height: var(--wa-topbar-h);
+        line-height: var(--wa-topbar-h);
+        border-radius: 4px 4px 0 0;
+        background: var(--wa-blue-dark);
+        color: #ffffff;
+    }
+
     /* Filament marks the active group with an underline; WHMCS shades the cell instead. */
     .fi-topbar-item-btn::after {
         display: none;
