@@ -532,9 +532,33 @@
                             <span class="ao-anc-field"><input type="text" wire:model="pf.address2" placeholder="Suite 400"><i>(Optional)</i></span>
                         </label>
                         <label class="ao-anc-row"><span>City</span><input type="text" wire:model="pf.city" placeholder="San Francisco"></label>
-                        <label class="ao-anc-row"><span>State/Region</span><input type="text" wire:model="pf.state" placeholder="—"></label>
+                        {{-- Country and its subdivisions are picked, not typed — the
+                             reference's own behaviour, and the profile stores the country's
+                             name so the select's values are names too. --}}
+                        @php $pfRegions = \Paymenter\Extensions\Others\AdminOps\Support\Regions::for($pf['country'] ?? ''); @endphp
+                        <label class="ao-anc-row">
+                            <span>State/Region</span>
+                            @if ($pfRegions)
+                                <select wire:model="pf.state" wire:key="pf-state-{{ $pf['country'] ?? '' }}">
+                                    <option value="">—</option>
+                                    @foreach ($pfRegions as $region)
+                                        <option value="{{ $region }}">{{ $region }}</option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <input type="text" wire:model="pf.state" placeholder="—">
+                            @endif
+                        </label>
                         <label class="ao-anc-row"><span>Postcode</span><input type="text" wire:model="pf.zip" placeholder="94105"></label>
-                        <label class="ao-anc-row"><span>Country</span><input type="text" wire:model="pf.country" placeholder="United States"></label>
+                        <label class="ao-anc-row">
+                            <span>Country</span>
+                            <select wire:model.live="pf.country">
+                                <option value="">Select a country</option>
+                                @foreach ($countries as $name)
+                                    <option value="{{ $name }}">{{ $name }}</option>
+                                @endforeach
+                            </select>
+                        </label>
                         <label class="ao-anc-row"><span>Phone Number</span><input type="text" wire:model="pf.phone" placeholder="+1 201-555-0123"></label>
                         <label class="ao-anc-row"><span>Currency</span><input type="text" wire:model="pf.currency" placeholder="USD"></label>
                     </div>
