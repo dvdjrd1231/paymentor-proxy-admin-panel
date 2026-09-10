@@ -2413,6 +2413,11 @@
     .ao-eo-item a { color: var(--wa-ink, #2b2b2b); font-weight: 700; }
     .ao-eo-item a:hover { color: var(--wa-link, #337ab7); text-decoration: underline; }
 
+    /* The reference's domain tool links under a description: the domain red, the
+       whois/intoDNS pair green. */
+    .ao-eo-dom { color: #cc0000; }
+    .ao-eo-tool { color: #3c763d; }
+
     /* The cell must stay a table-cell — flex on a td makes it shrink-wrap instead of
        spanning its colspan, which cut the reference's light band off mid-table. The
        flex layout lives on an inner wrapper instead. */
