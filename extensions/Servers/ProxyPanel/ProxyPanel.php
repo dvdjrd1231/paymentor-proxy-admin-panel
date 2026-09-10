@@ -87,6 +87,11 @@ class ProxyPanel extends Server
     /** Backstop on /locations/list paging: 246 locations at 100 a page needs 3. */
     private const MAX_LOCATION_PAGES = 20;
 
+    /** Where the catalogue is parked between requests, and for how long. */
+    private const CATALOGUE_CACHE = 'proxypanel.location-catalogue';
+
+    private const CATALOGUE_TTL = 60;
+
     /** @var array<int, array<string, mixed>>|null memoised /v0/locations/list, all pages */
     private ?array $locationCatalogue = null;
 
@@ -422,6 +427,19 @@ class ProxyPanel extends Server
             return $this->locationCatalogue;
         }
 
+        // Held for a minute across requests, not just within one.
+        //
+        // The catalogue is 246 locations over three HTTP calls, and the checkout config is
+        // rebuilt on *every* Livewire round trip — so a radio click on Add New Order was
+        // paying for the whole fetch, which is what made that page feel slow (Leandro,
+        // 2026-09-10). A minute is safe because stock is never trusted from here anyway:
+        // adminProxies counts it and re-checks it again at the moment of provisioning.
+        $cached = \Illuminate\Support\Facades\Cache::get(self::CATALOGUE_CACHE);
+
+        if (is_array($cached)) {
+            return $this->locationCatalogue = $cached;
+        }
+
         $rows = [];
         $seen = [];
         $page = 1;
@@ -447,6 +465,12 @@ class ProxyPanel extends Server
 
             $page++;
         } while ($batch !== [] && $page <= min($expected, self::MAX_LOCATION_PAGES));
+
+        // Only a real answer is parked — an empty list usually means the panel was
+        // unreachable, and caching that would blank the Region select for a minute.
+        if ($rows !== []) {
+            \Illuminate\Support\Facades\Cache::put(self::CATALOGUE_CACHE, $rows, self::CATALOGUE_TTL);
+        }
 
         return $this->locationCatalogue = $rows;
     }
