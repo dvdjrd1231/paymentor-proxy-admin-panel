@@ -40,14 +40,31 @@ class ProductConfig
             return 'Free';
         }
 
-        return match ($plan->billing_unit) {
-            'day' => $plan->billing_period == 1 ? 'Daily' : $plan->billing_period . ' Days',
-            'week' => $plan->billing_period == 1 ? 'Weekly' : $plan->billing_period . ' Weeks',
-            'month' => $plan->billing_period == 1 ? 'Monthly' : $plan->billing_period . ' Months',
-            'year' => $plan->billing_period == 1 ? 'Annually' : $plan->billing_period . ' Years',
+        // The reference names the standard periods rather than counting them —
+        // Quarterly, not "3 Months"; Biennially, not "2 Years".
+        return match (true) {
+            $plan->billing_unit === 'day' && $plan->billing_period == 1 => 'Daily',
+            $plan->billing_unit === 'week' && $plan->billing_period == 1 => 'Weekly',
+            $plan->billing_unit === 'month' && $plan->billing_period == 1 => 'Monthly',
+            $plan->billing_unit === 'month' && $plan->billing_period == 3 => 'Quarterly',
+            $plan->billing_unit === 'month' && $plan->billing_period == 6 => 'Semi-Annually',
+            $plan->billing_unit === 'month' && $plan->billing_period == 12 => 'Annually',
+            $plan->billing_unit === 'year' && $plan->billing_period == 1 => 'Annually',
+            $plan->billing_unit === 'year' && $plan->billing_period == 2 => 'Biennially',
+            $plan->billing_unit === 'year' && $plan->billing_period == 3 => 'Triennially',
+            $plan->billing_unit === 'day' => $plan->billing_period . ' Days',
+            $plan->billing_unit === 'week' => $plan->billing_period . ' Weeks',
+            $plan->billing_unit === 'month' => $plan->billing_period . ' Months',
+            $plan->billing_unit === 'year' => $plan->billing_period . ' Years',
             default => ucfirst((string) $plan->type),
         };
     }
+
+    /** The reference's Billing Cycle list, in its order. */
+    public const CYCLES = [
+        'Free', 'One Time', 'Monthly', 'Quarterly', 'Semi-Annually',
+        'Annually', 'Biennially', 'Triennially',
+    ];
 
     /** Core's Configurable Options for a product, with their priced children preloaded. */
     public static function configOptions(?int $productId): Collection

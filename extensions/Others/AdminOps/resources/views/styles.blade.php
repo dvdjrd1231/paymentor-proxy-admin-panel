@@ -2749,9 +2749,18 @@
 
     /* The reference's merge-field panel: fields on the left, the Blade a body may use on
        the right, side by side until the viewport is too narrow to hold both. */
-    .ao-ete-merge { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    /* The reference's panel: two columns inside one bordered box that scrolls once the
+       list outgrows it, rather than pushing the page down. */
+    .ao-ete-merge {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        max-height: 22rem;
+        overflow-y: auto;
+    }
     .ao-ete-merge p { margin: 0 0 0.35rem; }
     .ao-ete-merge .ao-ano-heading:not(:first-child) { margin-top: 1rem; }
+    .ao-ete-merge .ao-ano-heading { font-weight: 700; }
 
     .ao-ete-snippet {
         margin: 0 0 0.6rem;
@@ -3267,9 +3276,14 @@
     /* The reference's density on the two order screens: a narrower label column and
        tighter rows than the generic forms. */
     .ao-ano .ao-anc-row { grid-template-columns: 8.5rem 1fr; gap: 0.6rem; padding: 0.35rem 0.6rem; }
-    .ao-eo .ao-of-row { grid-template-columns: 9.5rem minmax(0, 1fr) 9.5rem minmax(0, 1fr); }
     .ao-eo .ao-of-row > * { padding: 0.4rem 0.6rem; }
     .ao-eo .ao-mu-grid td { padding: 0.5rem 0.6rem; }
+
+    /* The reference's two side-by-side fact tables, each with its own row count. */
+    .ao-eo-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; align-items: start; }
+    .ao-eo-facts .ao-of-row-single { grid-template-columns: 9.5rem minmax(0, 1fr); }
+
+    @media (max-width: 900px) { .ao-eo-facts { grid-template-columns: 1fr; } }
 
     /* The reference's From pair: a short name box, a longer address box. */
     .ao-ete-from input:first-child { max-width: 13rem; }
@@ -7338,6 +7352,11 @@
     .ao-mud > .ao-mud-foot { margin-inline: 0; }
 
     .ao-mud-foot-only-right { justify-content: flex-end; margin-top: 1.1rem; }
+
+    /* The compact dialog's own footer padding — the 1.5rem the wide one uses left the
+       reference's pair floating well short of the right edge. */
+    .ao-mud-sm .ao-mud-foot { padding-inline: 1rem; margin-inline: -1rem; }
+    .ao-mud-sm .ao-mud-foot-right { display: inline-flex; align-items: center; gap: 0.5rem; }
 
     .ao-mu-selected {
         margin-top: 0.7rem;
