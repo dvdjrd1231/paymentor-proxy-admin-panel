@@ -2655,6 +2655,84 @@
     /* The reference keeps its source/preview switch in the toolbar, at the right. */
     .ao-ete-mode { margin-left: auto; white-space: nowrap; }
 
+    /* ── The editor's menu bar and second toolbar row ────────────────────────────
+       The reference's chrome: a menu row over two rows of controls, all of which
+       write Markdown into the box below. */
+    .ao-ete-menubar {
+        display: flex;
+        align-items: center;
+        gap: 0.1rem;
+        padding: 0.2rem 0.35rem;
+        border-bottom: 1px solid var(--wa-panel-border, #ddd);
+        background: #fff;
+    }
+
+    .ao-ete-menu { position: relative; }
+
+    .ao-ete-menu > button {
+        padding: 0.2rem 0.6rem;
+        border: 0;
+        border-radius: 3px;
+        background: none;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+    .ao-ete-menu > button:hover,
+    .ao-ete-menu > button.ao-on { background: #ececec; }
+
+    .ao-ete-menu ul {
+        position: absolute;
+        z-index: 30;
+        top: 100%;
+        left: 0;
+        min-width: 12rem;
+        padding: 0.25rem 0;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .ao-ete-menu ul button {
+        display: block;
+        width: 100%;
+        padding: 0.3rem 0.9rem;
+        border: 0;
+        background: none;
+        text-align: start;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+    .ao-ete-menu ul button:hover { background: #f0f4f8; }
+
+    .ao-ete-toolbar2 { border-top: 1px solid #f0f0f0; }
+
+    .ao-ete-sel {
+        height: 1.8rem;
+        padding: 0 0.35rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 3px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.85rem;
+    }
+
+    /* The reference's fullscreen button expands the editor over the page. */
+    .ao-ete-box.ao-ete-full {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        margin: 0;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .ao-ete-box.ao-ete-full .ao-ete-source,
+    .ao-ete-box.ao-ete-full .ao-ete-preview { flex: 1; }
+
     /* The merge panel scrolls rather than running the page on for a screenful of tags,
        as the reference's does. */
     .ao-ete-merge { max-height: 26rem; overflow-y: auto; }
