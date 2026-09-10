@@ -2522,7 +2522,12 @@
 
     /* The email editor's "Default Version" heading — the note sits under the title
        rather than beside it, so a long sentence does not push the heading around. */
-    .ao-ete-version { display: flex; flex-direction: column; gap: 0.2rem; }
+    /* The reference runs the version name and its rule together on one line — the name in
+       bold, the rule after a dash in the body weight. It was a heading over a wrapped
+       paragraph, which took three lines where the reference takes one. */
+    .ao-ete-version { display: block; font-weight: 400; }
+    .ao-ete-version b { font-weight: 600; }
+    .ao-ete-version span { font-weight: 400; }
     .ao-ete-version i { font-size: 0.82rem; font-style: normal; font-weight: 400; opacity: 0.7; }
 
     /* The reference puts the version heading and the subject outside the settings band,
@@ -2559,6 +2564,16 @@
     /* Sits on the source box rather than floating above it. */
     .ao-ete-toolbar { margin-top: 0.9rem; border-radius: 4px 4px 0 0; }
     .ao-ete-toolbar + .ao-ete-source { border-radius: 0 0 4px 4px; }
+
+    /* The reference's word count, on the editor's bottom edge and right-aligned. */
+    .ao-ete-count {
+        margin-top: 0.3rem;
+        text-align: right;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--wa-muted, #6b6b6b);
+    }
 
     /* Same reason as the button above — scoped so it outranks the sheet's later, broader
        input rules rather than depending on where it happens to sit in the file. */
