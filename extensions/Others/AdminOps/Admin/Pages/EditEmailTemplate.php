@@ -71,6 +71,12 @@ class EditEmailTemplate extends Page
         return 'Email Templates';
     }
 
+    /** The reference names the template under the page's own title, not in a form row. */
+    public function getSubheading(): ?string
+    {
+        return EmailTemplates::label($this->template);
+    }
+
     public function mount(int|string $record): void
     {
         abort_unless(static::canAccess(), 403);
