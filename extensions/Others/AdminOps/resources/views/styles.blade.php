@@ -2437,9 +2437,20 @@
 
     /* The order page's provisioning row: the reference tucks it under its item as a
        quieter band, so the item line above stays the thing you read first. */
-    /* The reference's proportions: Item narrow, Description carries the width. */
-    .ao-eo .ao-mu-grid th:first-child { width: 16%; }
-    .ao-eo .ao-mu-grid th:nth-child(2) { width: 44%; }
+    /* Measured off the reference's own order: Item 16%, Description 35%, Billing Cycle
+       13%, Amount 12%, Status 8%, Payment Status 16%. Description had been taking 44%,
+       which squeezed the four columns after it. */
+    .ao-eo .ao-mu-grid th:nth-child(1) { width: 16%; }
+    .ao-eo .ao-mu-grid th:nth-child(2) { width: 35%; }
+    .ao-eo .ao-mu-grid th:nth-child(3) { width: 13%; }
+    .ao-eo .ao-mu-grid th:nth-child(4) { width: 12%; }
+    .ao-eo .ao-mu-grid th:nth-child(5) { width: 8%; }
+    .ao-eo .ao-mu-grid th:nth-child(6) { width: 16%; }
+
+    /* Its fact label columns run ~205px; ours were 161px, which is what pushed the
+       values out of line with the reference's. */
+    .ao-eo-facts .ao-of-row-single { grid-template-columns: 12rem minmax(0, 1fr); }
+    .ao-eo .ao-of-row { grid-template-columns: 12rem minmax(0, 1fr) 12rem minmax(0, 1fr); }
 
     /* The reference sets the item in bold ink; the hop to the service editor stays,
        showing itself on hover. */
@@ -2707,7 +2718,68 @@
 
     .ao-ete-menu ul button:hover { background: #f0f4f8; }
 
+    /* The product editor's cross-sell picker: the reference's search box with the picks
+       sitting inside it as tags, over a grouped result list. */
+    .ao-ep-cross { position: relative; display: block; width: 100%; max-width: 34rem; }
+
+    .ao-ep-cross-box {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.3rem;
+        min-height: 2.1rem;
+        padding: 0.25rem 0.4rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+    }
+
+    .ao-ep-cross-box:focus-within { border-color: var(--wa-link, #337ab7); }
+
+    .ao-ep-cross-input {
+        flex: 1 1 10rem;
+        min-width: 8rem;
+        border: 0;
+        background: none;
+        font: inherit;
+        font-size: 0.9rem;
+    }
+
+    .ao-ep-cross-input:focus { outline: none; }
+
+    .ao-ep-cross-list { max-height: 16rem; overflow-y: auto; }
+    .ao-ep-cross-list .ao-xsel-group,
+    .ao-ep-cross-list .ao-xsel-opt { display: block; }
+
     .ao-ete-toolbar2 { border-top: 1px solid #f0f0f0; }
+
+    /* The reference's controls are small flat glyphs in a tight row, not bordered pills
+       — its two rows together stand about as tall as one of ours did. */
+    .ao-ete-toolbar { gap: 0.1rem; padding: 0.25rem 0.35rem; background: #fff; }
+
+    .ao-ete-toolbar button {
+        min-width: 1.75rem;
+        height: 1.75rem;
+        padding: 0 0.35rem;
+        border: 1px solid transparent;
+        border-radius: 3px;
+        background: none;
+        color: #3d3d3d;
+        font-size: 0.85rem;
+    }
+
+    .ao-ete-toolbar button:hover { background: #ececec; border-color: #ddd; }
+
+    /* Blue like the reference's active control, and it keeps that colour while on. */
+    .ao-ete-toolbar .ao-ete-mode {
+        min-width: 0;
+        padding: 0 0.6rem;
+        color: var(--wa-link, #337ab7);
+    }
+
+    .ao-ete-toolbar .ao-ete-mode.ao-on { background: #e7f0f8; border-color: #bcd6ea; }
+
+    .ao-ete-toolbar .ao-rte-sep { width: 1px; height: 1.1rem; margin: 0 0.25rem; background: #e0e0e0; align-self: center; }
 
     .ao-ete-sel {
         height: 1.8rem;
@@ -6078,7 +6150,19 @@
 
     /* The list tabs' grid, now that it is no longer wrapped in a Filament section that was
        giving it the section's own spacing. */
-    .ao-ct-list { margin-top: 0.6rem; }
+    /* The reference wraps each tab's list in one bordered panel, with its records band,
+       grid and pager inside it rather than floating on the page. */
+    .ao-ct-list {
+        margin-top: 0;
+        padding: 0.7rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: 0 0 4px 4px;
+        background: #fff;
+    }
+
+    /* The records band belongs inside that panel, above the grid. */
+    .ao-ct-list + .ao-mu-line,
+    .ao-mu-line + .ao-ct-list { margin-top: 0; }
 
     .ao-rail-panel:nth-of-type(6n+1) .ao-rail-heading-icon { color: #337ab7; }
     .ao-rail-panel:nth-of-type(6n+2) .ao-rail-heading-icon { color: #5cb85c; }
