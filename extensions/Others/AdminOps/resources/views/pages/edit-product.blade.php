@@ -708,16 +708,40 @@
 
         {{-- ── Free Domain ─────────────────────────────────────────────────────── --}}
         <div x-show="tab === 'domain'" x-cloak>
+            {{-- The reference's three rows, drawn rather than described. All inert: this
+                 deployment sells proxies, with no registrar, no TLD pricing and no domain
+                 field at checkout (docs/10-disable-domains.md), so each says so on itself
+                 the way the rest of this skin marks a control it cannot honour. --}}
+            @php $domainOff = 'Domains are switched off on this store — there is no registrar, so nothing here can be granted'; @endphp
             <div class="ao-anc-card">
-                <div class="ao-anc-row">
+                <div class="ao-anc-row ao-gs-off">
                     <span>Free Domain</span>
-                    <span class="ao-ep-explain">
-                        <p>Domains are switched off on this deployment — it sells proxies, and there
-                            is no registrar, no TLD pricing and no domain field at checkout. See
-                            <code>docs/10-disable-domains.md</code>.</p>
-                        <p>Every control the reference puts on this tab — the free-domain radios,
-                            payment terms and TLD list — would have nothing to act on, so they are
-                            not drawn.</p>
+                    <span class="ao-ep-radios" title="{{ $domainOff }}">
+                        <label class="ao-check"><input type="radio" name="ao-ep-freedom" checked disabled>
+                            <span>None</span></label>
+                        <label class="ao-check"><input type="radio" name="ao-ep-freedom" disabled>
+                            <span>Offer a free domain registration/transfer only (renew as normal)</span></label>
+                        <label class="ao-check"><input type="radio" name="ao-ep-freedom" disabled>
+                            <span>Offer a free domain registration/transfer and free renewal (if product is renewed)</span></label>
+                    </span>
+                </div>
+                <div class="ao-anc-row ao-gs-off">
+                    <span>Free Domain Payment Terms</span>
+                    <span class="ao-anc-field" title="{{ $domainOff }}">
+                        <select class="ao-ep-list" multiple size="6" disabled>
+                            @foreach (\Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::CYCLES as $cycle)
+                                <option>{{ $cycle }}</option>
+                            @endforeach
+                        </select>
+                        <i>Select the payment term(s) the product must be paid with to receive a free domain</i>
+                    </span>
+                </div>
+                <div class="ao-anc-row ao-gs-off">
+                    <span>Free Domain TLD's</span>
+                    <span class="ao-anc-field" title="{{ $domainOff }}">
+                        <select class="ao-ep-list" multiple size="4" disabled></select>
+                        <i>Use Ctrl + Click to select multiple payment terms and TLD's — no TLD is
+                            configured for sale on this store.</i>
                     </span>
                 </div>
             </div>

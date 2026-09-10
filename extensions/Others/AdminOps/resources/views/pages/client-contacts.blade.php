@@ -59,9 +59,22 @@
                         <span>City</span>
                         <input type="text" wire:model="contactForm.city" maxlength="255">
                     </label>
+                    {{-- Picked from the chosen country's own subdivisions, as the reference
+                         does — free text only where the standard lists none. Keyed by
+                         country so the morph re-reads the options. --}}
                     <label class="ao-anc-row">
                         <span>State/Region</span>
-                        <input type="text" wire:model="contactForm.state" maxlength="255">
+                        @php $contactRegions = \Paymenter\Extensions\Others\AdminOps\Support\Regions::for($countries[$contactForm['country'] ?? ''] ?? ($contactForm['country'] ?? '')); @endphp
+                        @if ($contactRegions)
+                            <select wire:model="contactForm.state" wire:key="ct-state-{{ $contactForm['country'] ?? '' }}">
+                                <option value="">—</option>
+                                @foreach ($contactRegions as $region)
+                                    <option value="{{ $region }}">{{ $region }}</option>
+                                @endforeach
+                            </select>
+                        @else
+                            <input type="text" wire:model="contactForm.state" maxlength="255">
+                        @endif
                     </label>
                     <label class="ao-anc-row">
                         <span>Postcode</span>
@@ -69,7 +82,7 @@
                     </label>
                     <label class="ao-anc-row">
                         <span>Country</span>
-                        <select wire:model="contactForm.country">
+                        <select wire:model.live="contactForm.country">
                             <option value="">Select a country</option>
                             @foreach ($countries as $code => $name)
                                 <option value="{{ $code }}">{{ $name }}</option>
