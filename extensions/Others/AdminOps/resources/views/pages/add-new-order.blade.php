@@ -134,12 +134,13 @@
                                     fn ($plan) => \Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::cycleLabel($plan),
                                 );
                                 $planOptions = [];
+                                // Every cycle is pickable, as the reference draws them. One
+                                // with no price for this product carries an "x:" value, so
+                                // the row below can say so rather than failing silently.
                                 foreach (\Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::CYCLES as $cycle) {
                                     $planOptions[] = [
-                                        'value' => $byCycle[$cycle]->id ?? '',
+                                        'value' => $byCycle[$cycle]->id ?? 'x:' . $cycle,
                                         'label' => $cycle,
-                                        'disabled' => !isset($byCycle[$cycle]),
-                                        'title' => isset($byCycle[$cycle]) ? null : 'This product carries no price for ' . $cycle,
                                         'group' => false,
                                     ];
                                 }
@@ -160,6 +161,10 @@
                                 'class' => 'ao-xw-md',
                                 'key' => "plan-select-{$index}-{$item['productId']}",
                             ])
+                            @if (str_starts_with((string) $item['planId'], 'x:'))
+                                <i class="ao-of-note">No {{ substr($item['planId'], 2) }} price is set for this
+                                    product — give it one under Products/Services, or pick a cycle it prices.</i>
+                            @endif
                         @endif
                     </label>
                     <label class="ao-anc-row">

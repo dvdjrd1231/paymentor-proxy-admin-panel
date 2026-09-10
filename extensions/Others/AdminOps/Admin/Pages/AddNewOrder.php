@@ -203,7 +203,9 @@ class AddNewOrder extends Page
                 continue;
             }
 
-            $plan = $item['planId'] ? Plan::with('prices')->find($item['planId']) : null;
+            // "x:Quarterly" means a cycle this product prices nothing for — the row says
+            // so; there is no plan to load, and it must never reach the query.
+            $plan = is_numeric($item['planId']) ? Plan::with('prices')->find($item['planId']) : null;
             $options = ProductConfig::configOptions($item['productId']);
             $checkoutFields = ProductConfig::checkoutConfig($item['productId'], $item['checkoutConfig']);
             $delta = $plan ? ProductConfig::priceDelta($options, $item['configOptions'], $plan) : ['price' => 0.0, 'setup_fee' => 0.0];
@@ -299,7 +301,11 @@ class AddNewOrder extends Page
 
         foreach ($summary['lines'] as $line) {
             if (!$line['plan']) {
-                $this->addError('items', 'Every product line needs a billing cycle.');
+                $wanted = (string) ($this->items[$line['index']]['planId'] ?? '');
+
+                $this->addError('items', str_starts_with($wanted, 'x:')
+                    ? 'This product has no ' . substr($wanted, 2) . ' price. Give it one under Products/Services, or pick a cycle it prices.'
+                    : 'Every product line needs a billing cycle.');
 
                 return;
             }
