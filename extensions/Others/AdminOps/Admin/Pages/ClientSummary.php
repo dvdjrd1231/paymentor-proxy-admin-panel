@@ -624,6 +624,9 @@ class ClientSummary extends Page
             'regDate' => $service->created_at?->format('m/d/Y') ?? '',
             'nextDue' => $service->expires_at?->format('m/d/Y') ?? '',
             'subscriptionId' => (string) $service->subscription_id,
+            // The reference's Promotion Code and its Recalculate on Save toggle.
+            'couponId' => (string) ($service->coupon_id ?? ''),
+            'recalculate' => false,
             'domain' => $prop('domain'),
             'dedicatedIp' => $prop('dedicated_ip'),
             'username' => $prop('proxy_username'),
@@ -842,13 +845,28 @@ class ClientSummary extends Page
         $noSuspendUntil = $parseDay((string) ($this->svc['noSuspendUntil'] ?? ''));
 
         DB::transaction(function () use ($service, $nextDue, $regDate, $termDate, $noSuspendUntil): void {
+            // The reference's "Recalculate on Save": take the plan's current price again
+            // rather than keeping whatever this service was sold at.
+            $price = (float) $this->svc['price'];
+
+            if (!empty($this->svc['recalculate'])) {
+                $plan = \App\Models\Plan::with('prices')->find((int) $this->svc['planId']);
+                $fresh = $plan?->price($service->currency_code)?->price;
+
+                if ($fresh !== null) {
+                    $price = (float) $fresh;
+                }
+            }
+
             $service->update([
                 'product_id' => (int) $this->svc['productId'],
                 'plan_id' => (int) $this->svc['planId'],
                 'quantity' => max(1, (int) $this->svc['quantity']),
-                'price' => (float) $this->svc['price'],
+                'price' => $price,
                 'status' => $this->svc['status'],
                 'subscription_id' => trim((string) $this->svc['subscriptionId']) ?: null,
+                // The reference's Promotion Code select — core's own column.
+                'coupon_id' => ($this->svc['couponId'] ?? '') !== '' ? (int) $this->svc['couponId'] : null,
                 'expires_at' => $nextDue,
             ]);
 
@@ -1057,6 +1075,9 @@ class ClientSummary extends Page
                 \App\Models\Category::where('name', ServiceAddons::CATEGORY)->pluck('id'))
                 ->orderBy('name')->get(['id', 'name']),
             'svcPayment' => $service->invoices->flatMap->transactions->first()?->gateway?->name ?? '—',
+            // The reference's Promotion Code select lists the store's real coupons.
+            'svcCoupons' => \App\Models\Coupon::orderBy('code')->limit(200)->get(['id', 'code']),
+            'svcServers' => \App\Models\Server::orderBy('name')->get(['id', 'name']),
             // Each config option with its child values, for the editable Region-style selects.
             'svcConfigChoices' => $service->configs->mapWithKeys(fn ($config) => [
                 (string) $config->config_option_id => [

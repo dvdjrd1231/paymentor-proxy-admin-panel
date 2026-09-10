@@ -5392,6 +5392,18 @@
     /* Same for the service editor's module commands. */
     .ao-of-inline .ao-of-go:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    /* ── The service editor, to the reference's proportions ──────────────────────
+       Its label columns are wide enough that "First Payment Amount" sits on one
+       line; ours wrapped it, which is what made the rows read taller than the
+       reference's (issue #53). */
+    .ao-cs-service .ao-of-row { grid-template-columns: 11rem minmax(0, 1fr) 12rem minmax(0, 1fr); }
+    .ao-cs-service .ao-of-row > * { padding: 0.3rem 0.6rem; }
+    .ao-cs-service .ao-of-label { white-space: nowrap; }
+
+    /* The commands sit together as one group, not spread across the row. */
+    .ao-cs-service .ao-of-inline { gap: 0.4rem; flex-wrap: wrap; }
+    .ao-cs-recalc { display: inline-flex; align-items: center; gap: 0.3rem; white-space: nowrap; font-size: 0.85rem; }
+
     /* The service editor's picker row: the reference's select + Go left, New Addon at
        the row's right end. */
     .ao-cs-pickrow {
