@@ -92,7 +92,8 @@
              install's own answer, which is that a template has one version. --}}
         @if ($modal === 'languages')
             <div class="ao-mud-overlay" wire:click.self="$set('modal', null)">
-                <div class="ao-mud" role="dialog" aria-modal="true">
+                {{-- ao-mud-sm: the reference's dialog is compact, not the full 56rem. --}}
+                <div class="ao-mud ao-mud-sm" role="dialog" aria-modal="true">
                     <div class="ao-mud-head">
                         Manage Languages
                         <button type="button" wire:click="$set('modal', null)" aria-label="Close">&times;</button>

@@ -37,7 +37,7 @@
                             $gatewayOptions[] = ['value' => $gateway->id, 'label' => $gateway->name, 'group' => false];
                         }
                     @endphp
-                    @include('adminops::partials.select', ['model' => 'gatewayId', 'live' => false, 'options' => $gatewayOptions, 'placeholder' => 'Select payment method'])
+                    @include('adminops::partials.select', ['model' => 'gatewayId', 'live' => false, 'class' => 'ao-xw-sm', 'options' => $gatewayOptions, 'placeholder' => 'Select payment method'])
                 </label>
                 <div class="ao-anc-row">
                     <span>Promotion Code</span>
@@ -48,7 +48,7 @@
                                 $couponOptions[] = ['value' => $coupon->id, 'label' => $coupon->code, 'group' => false];
                             }
                         @endphp
-                        @include('adminops::partials.select', ['model' => 'couponId', 'live' => false, 'options' => $couponOptions, 'placeholder' => 'None'])
+                        @include('adminops::partials.select', ['model' => 'couponId', 'live' => false, 'class' => 'ao-xw-md', 'options' => $couponOptions, 'placeholder' => 'None'])
                         @php
                             $promoUrl = null;
                             try {
@@ -70,7 +70,7 @@
                     {{-- Active provisions immediately and skips Pending — for an order whose
                          payment was already collected outside the system. --}}
                     @include('adminops::partials.select', [
-                        'model' => 'orderStatus', 'live' => false,
+                        'model' => 'orderStatus', 'live' => false, 'class' => 'ao-xw-xs',
                         'options' => [
                             ['value' => 'pending', 'label' => 'Pending', 'group' => false],
                             ['value' => 'active', 'label' => 'Active', 'group' => false],
@@ -106,7 +106,7 @@
                                 }
                             @endphp
                             @include('adminops::partials.select', [
-                                'model' => "items.{$index}.productId", 'live' => true,
+                                'model' => "items.{$index}.productId", 'live' => true, 'class' => 'ao-xw-md',
                                 'options' => $productOptions, 'placeholder' => 'None',
                             ])
                             @if (count($items) > 1)
@@ -117,14 +117,14 @@
                     </label>
                     <label class="ao-anc-row">
                         <span>Domain</span>
-                        <input type="text" wire:model="items.{{ $index }}.domain" placeholder="example.com">
+                        <input type="text" class="ao-ano-dom" wire:model="items.{{ $index }}.domain" placeholder="example.com">
                     </label>
                     <label class="ao-anc-row">
                         <span>Billing Cycle</span>
                         @if ($plansByItem[$index]->isEmpty())
                             {{-- Nothing to pick yet — a disabled real select reads better
                                  here than a custom one with a single dead row. --}}
-                            <select disabled><option>Select a product first</option></select>
+                            <select class="ao-xw-md" disabled><option>Select a product first</option></select>
                         @else
                             @php
                                 $planOptions = $plansByItem[$index]->map(fn ($plan) => [
@@ -137,6 +137,7 @@
                                  the one it opened with. --}}
                             @include('adminops::partials.select', [
                                 'model' => "items.{$index}.planId", 'live' => true, 'options' => $planOptions,
+                                'class' => 'ao-xw-md',
                                 'key' => "plan-select-{$index}-{$item['productId']}",
                             ])
                         @endif
@@ -337,7 +338,7 @@
             @endforeach
 
             <button type="button" class="ao-ano-add" wire:click="addDomain">
-                <span aria-hidden="true">&#10133;</span> Add Another Domain
+                <span aria-hidden="true">&#10010;</span> Add Another Domain
             </button>
 
         </div>

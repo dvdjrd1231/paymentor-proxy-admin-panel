@@ -35,7 +35,7 @@
     options". Omit it for a list that cannot change under this component (Client,
     Payment Method, Order Status).
 --}}
-<span class="ao-xsel" @if (isset($key)) wire:key="{{ $key }}" @endif x-data="{
+<span class="ao-xsel {{ $class ?? '' }}" @if (isset($key)) wire:key="{{ $key }}" @endif x-data="{
         open: false,
         value: $wire.entangle('{{ $model }}'){{ !empty($live) ? '.live' : '' }},
         options: @js(collect($options)->values()->all()),
