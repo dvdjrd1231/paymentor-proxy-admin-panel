@@ -483,19 +483,18 @@
                 <div class="ao-anc-row">
                     <span>Assigned Option Groups</span>
                     <span class="ao-anc-field">
-                        <select class="ao-ep-list" multiple size="10" wire:model="optionIds">
+                        <select class="ao-ep-list" multiple size="10" wire:model="optionIds"
+                            title="Ctrl-click or Shift-click to choose more than one">
                             @foreach ($optionGroups as $group)
                                 <option value="{{ $group->id }}">{{ $group->name }}</option>
                             @endforeach
                         </select>
-                        <i>
-                            @if ($optionGroups->isEmpty())
-                                No configurable option groups exist yet —
-                            @else
-                                Ctrl-click or Shift-click to choose more than one. Groups are created on
-                            @endif
-                            <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ConfigOptionGroups::getUrl() }}">Configurable Options</a>.
-                        </i>
+                        {{-- The reference draws the box alone; only an empty store needs
+                             telling where groups come from. --}}
+                        @if ($optionGroups->isEmpty())
+                            <i>No configurable option groups exist yet — create them on
+                                <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ConfigOptionGroups::getUrl() }}">Configurable Options</a>.</i>
+                        @endif
                     </span>
                 </div>
 
@@ -510,10 +509,7 @@
         <div x-show="tab === 'upgrades'" x-cloak>
             <form class="ao-anc-card" wire:submit.prevent="saveUpgrades">
                 <div class="ao-anc-row">
-                    <span>
-                        Packages Upgrades
-                        <i>The products a customer on this one may move to.</i>
-                    </span>
+                    <span title="The products a customer on this one may move to">Packages Upgrades</span>
                     <span class="ao-anc-field">
                         <select class="ao-ep-list" multiple size="10" wire:model="upgradeIds">
                             @foreach ($otherProducts as $other)
@@ -530,31 +526,22 @@
                      `config_options.upgradable`, which core reads when a client asks to
                      change an option mid-term. --}}
                 <div class="ao-anc-row">
-                    <span>
-                        Configurable Options
-                        <i>Allow the options this product carries to be changed mid-term.</i>
-                    </span>
+                    <span title="Allow the options this product carries to be changed mid-term">Configurable Options</span>
                     <span class="ao-anc-field">
-                        <label class="ao-check">
+                        <label class="ao-check"
+                            title="Applies to drop-down, radio and slider options — a text box has no second choice to move to. This product carries {{ $product->configOptions->whereIn('type', ['select', 'radio', 'slider'])->count() }} such option(s).">
                             <input type="checkbox" wire:model="upgradeConfigOptions">
                             <span>Check to allow Upgrading/Downgrading of configurable options</span>
                         </label>
-                        <i>Applies to drop-down, radio and slider options — a text box has no second
-                            choice to move to. This product carries
-                            {{ $product->configOptions->whereIn('type', ['select', 'radio', 'slider'])->count() }}
-                            such option(s).</i>
                     </span>
                 </div>
 
                 <div class="ao-anc-row">
                     <span>Upgrade Email</span>
                     <span class="ao-anc-field ao-gs-off">
-                        <select disabled title="Upgrades here amend the existing service rather than announcing a new one">
+                        <select disabled title="Not available: an upgrade amends the running service and raises the difference as an invoice, so the client is told by that invoice rather than by a separate template">
                             <option>None</option>
                         </select>
-                        <i>Not available: an upgrade amends the running service and raises the difference
-                            as an invoice, so the client is told by that invoice rather than by a separate
-                            template.</i>
                     </span>
                 </div>
 
@@ -763,10 +750,7 @@
         <div x-show="tab === 'crosssells'" x-cloak>
             <form class="ao-anc-card" wire:submit.prevent="saveCrossSells">
                 <div class="ao-anc-row">
-                    <span>
-                        Product Cross sells
-                        <i>Shown as recommendations on this product's own page.</i>
-                    </span>
+                    <span title="Shown as recommendations on this product's own page">Product Cross-sells</span>
                     {{-- The reference's type-to-search picker: a search box that filters a
                          grouped list, each pick becoming a removable tag. Livewire holds
                          the ids; Alpine does the searching, so typing costs no round trip. --}}
@@ -825,28 +809,11 @@
 
         {{-- ── Other ───────────────────────────────────────────────────────────── --}}
         <div x-show="tab === 'other'" x-cloak>
-            <form class="ao-anc-card" wire:submit.prevent="saveDetails">
-                {{-- The two things on the reference's Other tab this platform genuinely
-                     has. They save through Details, which owns the same record. --}}
-                <label class="ao-anc-row">
-                    <span>
-                        Sort Order
-                        <i>Where this product sits within its group on the storefront.</i>
-                    </span>
-                    <input type="number" min="0" class="ao-w-25" wire:model="form.sort">
-                </label>
-
-                <label class="ao-anc-row">
-                    <span>
-                        Limit Per Client
-                        <i>0 or blank for no limit.</i>
-                    </span>
-                    <input type="number" min="0" class="ao-w-25" wire:model="form.per_user_limit">
-                </label>
-
-                {{-- The reference's own rows, drawn rather than described (issue #35). Each
-                     is inert because this platform has nothing behind it, and each says so
-                     on itself instead of in a paragraph underneath. --}}
+            <form class="ao-anc-card" wire:submit.prevent="saveOther">
+                {{-- The reference's own rows, in its order (issue #35). The inert ones say
+                     so on themselves rather than in a paragraph underneath; the three that
+                     are real — Associated Downloads, and this platform's own Sort Order and
+                     Limit Per Client below — save with the rest. --}}
                 @php
                     $affiliateOff = 'Commission is set for the whole store by the Affiliates extension, not per product';
                     $hostingOff = 'Belongs to shared hosting — a proxy service has no disk or bandwidth to meter';
@@ -874,12 +841,70 @@
                         <input type="text" disabled placeholder="Enter in the format .example.com (comma separated list supported for multiple options)">
                     </span>
                 </div>
-                <div class="ao-anc-row ao-gs-off">
+                {{-- The reference's own sentence, above the pair it explains. --}}
+                <p class="ao-ep-dl-lead">This is where you can specify files that are granted
+                    access to by purchasing this product.</p>
+
+                {{-- Available Files / Selected Files, with the reference's single `<->`
+                     between them: it moves whichever box has a highlighted row. The list is
+                     AdminOps' own Downloads area, so this records a real grant rather than
+                     a remembered one. Alpine does the moving; Livewire keeps the ids. --}}
+                <div class="ao-anc-row ao-ep-dl-row">
                     <span>Associated Downloads</span>
-                    <span class="ao-anc-field" title="Downloads exist here but are published by category to everyone; nothing ties a file to one product">
-                        <span class="ao-cpg-muted">Downloads are published by category rather than attached to a product.</span>
-                    </span>
+                    @if ($downloadFiles === [])
+                        <span class="ao-cpg-muted">
+                            No files have been uploaded yet — add them on
+                            <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin::getUrl() }}">Downloads</a>.
+                        </span>
+                    @else
+                        <span class="ao-anc-field ao-ep-dl"
+                            x-data="{
+                                all: @js($downloadFiles),
+                                left: [],
+                                right: [],
+                                get chosen() { return this.$wire.downloadIds.map(String) },
+                                get available() { return this.all.filter((f) => !this.chosen.includes(f.id)) },
+                                get selected() { return this.all.filter((f) => this.chosen.includes(f.id)) },
+                                move() {
+                                    if (this.left.length) {
+                                        this.$wire.downloadIds = [...this.chosen, ...this.left.map(String)];
+                                        this.left = [];
+                                    } else if (this.right.length) {
+                                        const drop = this.right.map(String);
+                                        this.$wire.downloadIds = this.chosen.filter((id) => !drop.includes(id));
+                                        this.right = [];
+                                    }
+                                },
+                            }">
+                            <span class="ao-ep-dl-col">
+                                <b>Available Files</b>
+                                <select class="ao-ep-list ao-ep-dl-list" multiple size="8" x-model="left">
+                                    <template x-for="file in available" :key="file.id">
+                                        <option :value="file.id" x-text="file.title"></option>
+                                    </template>
+                                </select>
+                            </span>
+                            <button type="button" class="ao-pg-btn ao-ep-dl-move" @click="move()"
+                                title="Move the highlighted files between the two lists">&lt;-&gt;</button>
+                            <span class="ao-ep-dl-col">
+                                <b>Selected Files</b>
+                                <select class="ao-ep-list ao-ep-dl-list" multiple size="8" x-model="right">
+                                    <template x-for="file in selected" :key="file.id">
+                                        <option :value="file.id" x-text="file.title"></option>
+                                    </template>
+                                </select>
+                            </span>
+                        </span>
+                    @endif
                 </div>
+
+                {{-- The reference's two buttons under the pair. Both are the Downloads area's
+                     own jobs, so they go there rather than opening a second uploader here. --}}
+                <div class="ao-pr-center ao-ep-dl-actions">
+                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin::getUrl() }}">Add Category</a>
+                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin::getUrl() }}">Quick Upload</a>
+                </div>
+
                 <div class="ao-anc-row ao-gs-off">
                     <span>Overages Billing</span>
                     <span class="ao-of-check" title="{{ $hostingOff }}">
@@ -890,7 +915,9 @@
                     <span>Soft Limits</span>
                     <span class="ao-anc-field" title="{{ $hostingOff }}">
                         <i>Disk Usage</i> <input type="text" class="ao-w-25" value="0" disabled>
+                        <select class="ao-ep-unit" disabled><option>MB</option><option>GB</option></select>
                         <i>Bandwidth</i> <input type="text" class="ao-w-25" value="0" disabled>
+                        <select class="ao-ep-unit" disabled><option>MB</option><option>GB</option></select>
                     </span>
                 </div>
                 <div class="ao-anc-row ao-gs-off">
@@ -901,6 +928,24 @@
                         <i>(Price Per Unit Over Above)</i>
                     </span>
                 </div>
+
+                {{-- Not on the reference's tab, but this platform's own and real: they sit
+                     after its rows so the top of the screen reads as the target does. --}}
+                <label class="ao-anc-row">
+                    <span>
+                        Sort Order
+                        <i>Where this product sits within its group on the storefront.</i>
+                    </span>
+                    <input type="number" min="0" class="ao-w-25" wire:model="form.sort">
+                </label>
+
+                <label class="ao-anc-row">
+                    <span>
+                        Limit Per Client
+                        <i>0 or blank for no limit.</i>
+                    </span>
+                    <input type="number" min="0" class="ao-w-25" wire:model="form.per_user_limit">
+                </label>
 
                 <div class="ao-pr-center ao-cpg-actions">
                     <button type="submit" class="ao-find-go">Save Changes</button>

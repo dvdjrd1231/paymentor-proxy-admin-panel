@@ -2448,6 +2448,25 @@
 
     .ao-ep-list option { padding: 0.2rem 0.35rem; }
 
+    /* Other → Associated Downloads: the reference's Available/Selected pair with one
+       `<->` between them. The pair runs the width of the card rather than sitting in a
+       field-sized column, so .ao-ep-list's 34rem cap is lifted for these two. */
+    .ao-ep-dl-lead { margin: 0.4rem 0.7rem 0.2rem; color: var(--wa-muted, #6b6b6b); }
+
+    .ao-ep-dl-row { align-items: start; }
+
+    .ao-ep-dl { align-items: center; gap: 0.7rem; width: 100%; }
+
+    .ao-ep-dl-col { flex: 1 1 0; min-width: 0; text-align: center; }
+
+    .ao-ep-dl-col > b { display: block; margin-bottom: 0.3rem; font-weight: 600; }
+
+    .ao-ep-dl-list { max-width: none; text-align: start; }
+
+    .ao-ep-dl-move { flex: none; align-self: center; margin-top: 1.2rem; }
+
+    .ao-ep-dl-actions { margin: 0.2rem 0 0.6rem; }
+
     /* The group screen's Assigned Products box is the tall one in the reference — it runs
        the width of the card rather than sitting in a field-sized column. */
     .ao-cog-products { align-items: start; }
@@ -7529,6 +7548,12 @@
     .ao-et-msg-text p { margin: 0.35rem 0; }
 
     .ao-et-msg-file { color: var(--wa-muted, #6b6b6b); font-size: 0.85rem; }
+
+    .ao-et-msg-dl { color: var(--wa-link, #337ab7); text-decoration: none; }
+
+    .ao-et-msg-dl:hover { text-decoration: underline; }
+
+    .ao-et-msg-size { color: var(--wa-muted, #6b6b6b); }
 
     .ao-et-note {
         border: 1px solid #faebcc;

@@ -15,6 +15,7 @@ use Filament\Pages\Page;
 use Filament\Panel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Paymenter\Extensions\Others\AdminOps\Models\DownloadFile;
 use Paymenter\Extensions\Others\AdminOps\Models\Meta;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 use Paymenter\Extensions\Others\TermLimits\Models\ProductTerm;
@@ -49,9 +50,10 @@ use Paymenter\Extensions\Others\TermLimits\Models\ProductTerm;
  *
  * - **Free Domain** — this deployment sells proxies and domains are switched off; see
  *   `docs/10-disable-domains.md`. Every control on that tab would be inert.
- * - **Other** — its contents are affiliate payout overrides, subdomain options and overage
- *   billing, none of which exist here. The two parts that do — per-user limit and the
- *   product's sort position — are on it, beside a note naming the rest.
+ * - **Other** — its affiliate payout overrides, subdomain options and overage billing have
+ *   nothing behind them here, so they are drawn inert with a title saying why. Three parts
+ *   are real: per-user limit, the product's sort position, and Associated Downloads, which
+ *   picks from the files the Downloads area already holds.
  *
  * Where a single control has nothing behind it — Server Group, three of the four auto-setup
  * choices, Upgrade Email, Require Domain, Apply Tax — it is still drawn, disabled, with a
@@ -124,6 +126,16 @@ class EditProduct extends Page
 
     /** Product ids recommended alongside this one — the reference's Cross-sells. */
     public array $crossSellIds = [];
+
+    /**
+     * Download ids this product grants — the reference's Associated Downloads.
+     *
+     * The files are AdminOps' own (`ext_downloads`, the Downloads admin area), and the one
+     * the reference means by a product download is already flagged there. The association
+     * is a list on the product rather than a column on the file, because one file may be
+     * granted by several products.
+     */
+    public array $downloadIds = [];
 
     /**
      * The reference's Upgrades tab has a "Configurable Options" tick beside the package
@@ -258,6 +270,7 @@ class EditProduct extends Page
             ->pluck('upgrade_id')->map(fn ($id) => (string) $id)->all();
 
         $this->crossSellIds = array_values(array_filter(explode(',', (string) ($meta['cross_sells'] ?? ''))));
+        $this->downloadIds = array_values(array_filter(explode(',', (string) ($meta['downloads'] ?? ''))));
 
         // Ticked when every option that *could* be upgradable already is, so the box
         // reports the product's real state rather than a remembered intention.
@@ -326,6 +339,36 @@ class EditProduct extends Page
 
         Meta::put($this->product, 'featured', $this->extra['featured']);
         Meta::put($this->product, 'retired', $this->extra['retired']);
+
+        $this->done('Product saved');
+    }
+
+    // ── Other ───────────────────────────────────────────────────────────────────────
+
+    /**
+     * The reference's Other tab.
+     *
+     * It used to submit through {@see saveDetails()}, which validates the product's group,
+     * name and URL — fields this tab does not draw. A product whose slug had been taken
+     * meanwhile would fail here with an error the admin could not see, let alone fix. This
+     * validates only what the tab shows.
+     */
+    public function saveOther(): void
+    {
+        $this->validate([
+            'form.sort' => 'nullable|integer|min:0',
+            'form.per_user_limit' => 'nullable|integer|min:0',
+        ], attributes: [
+            'form.sort' => 'sort order', 'form.per_user_limit' => 'limit per client',
+        ]);
+
+        $this->product->update([
+            'sort' => $this->form['sort'] !== '' ? (int) $this->form['sort'] : null,
+            'per_user_limit' => $this->form['per_user_limit'] !== '' ? (int) $this->form['per_user_limit'] : null,
+        ]);
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $this->downloadIds))));
+        Meta::put($this->product, 'downloads', implode(',', $ids));
 
         $this->done('Product saved');
     }
@@ -613,6 +656,31 @@ class EditProduct extends Page
         Notification::make()->title($message)->success()->send();
     }
 
+    /**
+     * The files the Associated Downloads pair chooses between, named as the Downloads area
+     * lists them — "Category — Title", because two categories may hold a "Setup Guide".
+     *
+     * Guarded on the table: AdminOps can be enabled before its migrations have run, and a
+     * missing table must cost this tab its list rather than the whole product screen.
+     *
+     * @return array<int, array{id: string, title: string}>
+     */
+    private function downloadFiles(): array
+    {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('ext_downloads')) {
+            return [];
+        }
+
+        return DownloadFile::with('category:id,name')
+            ->orderBy('category_id')->orderBy('title')
+            ->get(['id', 'category_id', 'title'])
+            ->map(fn (DownloadFile $file): array => [
+                'id' => (string) $file->id,
+                'title' => trim(($file->category?->name ? $file->category->name . ' — ' : '') . $file->title),
+            ])
+            ->all();
+    }
+
     protected function getViewData(): array
     {
         $server = $this->product->server;
@@ -650,6 +718,7 @@ class EditProduct extends Page
 
         return [
             'groups' => Category::orderBy('name')->get(['id', 'name']),
+            'downloadFiles' => $this->downloadFiles(),
             'servers' => Server::orderBy('name')->get(['id', 'name', 'extension']),
             'currencies' => Currency::orderBy('code')->pluck('code')->all(),
             'optionGroups' => \App\Models\ConfigOption::whereNull('parent_id')->orderBy('name')->get(['id', 'name']),
