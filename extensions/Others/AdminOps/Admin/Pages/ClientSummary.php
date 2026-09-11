@@ -232,6 +232,103 @@ class ClientSummary extends Page
      * page load, which is this screen's equivalent of the catalogue page expanding a row
      * in place.
      */
+    /**
+     * The reference's Create Add Funds Invoice and Manage Credits, both of which used to
+     * point back at this same page and so did nothing at all (Leandro, 2026-09-11).
+     *
+     * Which of the two dialogs is open - 'funds' | 'credits' - or null.
+     */
+    public ?string $money = null;
+
+    public string $fundsAmount = '10.00';
+
+    public string $creditAmount = '0.00';
+
+    /** The invoice the last Add Funds run made, shown as the reference's green banner. */
+    public ?int $fundsInvoice = null;
+
+    public function openMoney(string $which): void
+    {
+        $this->money = in_array($which, ['funds', 'credits'], true) ? $which : null;
+        $this->fundsAmount = number_format((float) (config('settings.credits_minimum_deposit') ?: 10), 2, '.', '');
+        $this->creditAmount = '0.00';
+        $this->resetErrorBag();
+    }
+
+    /**
+     * An unpaid invoice the client can settle to top their balance up, which is what the
+     * reference's dialog makes. Core recognises a deposit by its item's reference_type
+     * being Credit - that is what turns payment into credit rather than into nothing -
+     * so the item is written exactly as the client area's own add-funds writes it.
+     */
+    public function createAddFundsInvoice(): void
+    {
+        Gate::authorize('has-permission', 'admin.invoices.create');
+
+        $this->validate(
+            ['fundsAmount' => 'required|numeric|min:0.01|max:1000000'],
+            attributes: ['fundsAmount' => 'amount'],
+        );
+
+        $currency = $this->customer->currency_code ?: config('settings.default_currency', 'USD');
+
+        $invoice = DB::transaction(function () use ($currency): \App\Models\Invoice {
+            $invoice = \App\Models\Invoice::create([
+                'user_id' => $this->customer->id,
+                'currency_code' => $currency,
+                'due_at' => now(),
+            ]);
+
+            $invoice->items()->create([
+                'description' => 'Add Funds to ' . $currency . ' Balance',
+                'quantity' => 1,
+                'price' => (float) $this->fundsAmount,
+                'reference_type' => \App\Models\Credit::class,
+            ]);
+
+            return $invoice;
+        });
+
+        $this->money = null;
+        $this->fundsInvoice = $invoice->id;
+
+        $this->dispatch('$refresh');
+    }
+
+    /**
+     * The reference's Manage Credits: move the balance by hand, up or down. Core keeps one
+     * credit row per currency, so this adds to that row rather than making another.
+     */
+    public function applyCredit(): void
+    {
+        Gate::authorize('has-permission', 'admin.users.update');
+
+        $this->validate(
+            ['creditAmount' => 'required|numeric|not_in:0'],
+            attributes: ['creditAmount' => 'amount'],
+        );
+
+        $currency = $this->customer->currency_code ?: config('settings.default_currency', 'USD');
+        $delta = (float) $this->creditAmount;
+
+        $credit = \App\Models\Credit::firstOrCreate(
+            ['user_id' => $this->customer->id, 'currency_code' => $currency],
+            ['amount' => 0],
+        );
+
+        // Never below zero: a negative balance is not a thing core knows how to spend.
+        $credit->amount = max(0, (float) $credit->amount + $delta);
+        $credit->save();
+
+        $this->money = null;
+        $this->customer->load('credits');
+
+        Notification::make()
+            ->title('Credit ' . ($delta > 0 ? 'added' : 'removed'))
+            ->body('The balance is now ' . number_format((float) $credit->amount, 2) . ' ' . $currency . '.')
+            ->success()->send();
+    }
+
     /** The reference's Export Client Data: everything held on this account, as a file. */
     public function exportClientData(): StreamedResponse
     {

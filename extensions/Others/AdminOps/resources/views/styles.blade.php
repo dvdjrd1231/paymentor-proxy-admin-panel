@@ -8143,6 +8143,50 @@
     /* The small "Are you sure?" variant of the modal, as the reference confirms resets. */
     .ao-mud-sm { width: 37rem; }
 
+    /* ── Client Profile's money dialogs ──────────────────────────────────────
+       The reference's Add Funds box is small and holds one labelled field. */
+    .ao-mud-money { width: 34rem; }
+
+    .ao-mud-money .ao-mud-body { padding: 1.2rem 1.5rem 0.4rem; }
+
+    .ao-mud-money .ao-mud-text { padding: 0 0 1rem; font-size: 0.9rem; }
+
+    .ao-mud-row {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        margin-bottom: 0.7rem;
+        font-size: 0.9rem;
+    }
+
+    .ao-mud-row label { min-width: 8.5rem; text-align: right; }
+
+    .ao-mud-row input {
+        width: 9rem;
+        padding: 0.3rem 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        font: inherit;
+        font-size: 0.9rem;
+    }
+
+    /* The reference's banner after an add-funds invoice is raised. */
+    .ao-cs-banner {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.7rem;
+        margin-bottom: 1rem;
+        padding: 0.8rem 1rem;
+        border: 1px solid #faebcc;
+        border-radius: 4px;
+        background: #fcf8e3;
+        color: #8a6d3b;
+        font-size: 0.9rem;
+    }
+
+    .ao-cs-banner-ic { width: 1.3rem; height: 1.3rem; flex: none; }
+
     .ao-mud-text { padding: 1.1rem 1.5rem 0; }
 
     .ao-mud-text p + p { margin-top: 0.8rem; }
