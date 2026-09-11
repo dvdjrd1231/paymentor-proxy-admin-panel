@@ -166,7 +166,6 @@ class ClientSummary extends Page
         'users' => 'Users',
         'contacts' => 'Contacts',
         'services' => 'Products/Services',
-        'domains' => 'Domains',
         'billable' => 'Billable Items',
         'invoices' => 'Invoices',
         'quotes' => 'Quotes',
@@ -635,7 +634,6 @@ class ClientSummary extends Page
             // The reference's Promotion Code and its Recalculate on Save toggle.
             'couponId' => (string) ($service->coupon_id ?? ''),
             'recalculate' => false,
-            'domain' => $prop('domain'),
             'dedicatedIp' => $prop('dedicated_ip'),
             'username' => $prop('proxy_username'),
             'password' => $prop('proxy_password'),
@@ -885,7 +883,6 @@ class ClientSummary extends Page
             }
 
             $namedProps = [
-                'domain' => ['Domain', trim((string) $this->svc['domain'])],
                 'dedicated_ip' => ['Dedicated IP', trim((string) $this->svc['dedicatedIp'])],
                 'admin_notes' => ['Admin Notes', trim((string) $this->svc['svcNotes'])],
                 'proxy_username' => ['Username', trim((string) $this->svc['username'])],
@@ -1389,10 +1386,6 @@ class ClientSummary extends Page
                         )->get(['id', 'first_name', 'last_name', 'email']),
                     ];
                 })(),
-                // The reference's Domains tab. Domains are switched off on this store
-                // (§10 of the brief), so it lists nothing — but the reference shows the tab
-                // with an empty table, and a missing tab reads as a missing feature.
-                'domains' => ['rows' => collect()],
                 'users' => ['rows' => $this->contactRows()],
                 'contacts' => ['rows' => $this->contactRows()],
                 // The reference's Profile tab is the client's stored details; ours reads the

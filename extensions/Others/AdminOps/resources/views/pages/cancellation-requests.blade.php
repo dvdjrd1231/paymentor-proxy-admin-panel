@@ -10,18 +10,15 @@
                 @click="filter = !filter">Search/Filter</button>
         </div>
 
-            {{-- The reference's Search/Filter panel, field for field: Reason, Domain,
+            {{-- The reference's Search/Filter panel, field for field: Reason and
                  Service ID on the left; Client and Type on the right; the Filter button
-                 centred below. Domain is the one honestly-dead field — proxy services
-                 carry no domain — with the reason on its title.
-
                  The band ships rendered and Alpine shows it, as its siblings do: behind
                  @if it cost a Livewire round trip each way, and closing felt the slower
                  of the two because the reply had to rebuild the whole list to say the
                  panel had gone. --}}
             {{-- Not ao-of-even. Stretching every box to its cell made the three on the left
                  a third of the screen each; the reference sizes them to what goes in them —
-                 Reason and Domain the same medium box, Service ID short, Client wide
+                 Reason the same medium box, Service ID short, Client wide
                  because a client's name is (Leandro, 2026-09-10: "take a look at the WHMCS
                  search area"). --}}
             <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="$refresh"
@@ -36,9 +33,6 @@
                             wire:model.live.debounce.500ms="client" placeholder="Start Typing to Search Clients"></span>
                     </div>
                     <div class="ao-of-row">
-                        <label class="ao-of-label" for="ao-cr-domain">Domain</label>
-                        <span><input @nofill id="ao-cr-domain" class="ao-of-md" type="text"
-                            wire:model.live.debounce.500ms="domain" placeholder="Domain on the service"></span>
                         <label class="ao-of-label" for="ao-cr-type">Type</label>
                         {{-- Narrower than the text boxes, as the reference draws it: its
                              longest option is "End of Billing Period", not a phrase. --}}
