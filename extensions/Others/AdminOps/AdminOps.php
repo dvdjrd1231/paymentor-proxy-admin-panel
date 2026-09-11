@@ -86,12 +86,40 @@ class AdminOps extends Extension
         $this->retireRawCoreScreens();
 
         $this->registerTicketPrintView();
+        $this->registerAccountMenuItems();
 
         $this->countProductUrlVisits();
         $this->attachTemplateFiles();
         $this->registerErrorPages();
         $this->applyClientGroupDiscounts();
         $this->creditCancelledServices();
+    }
+
+    /**
+     * Branding on the account menu (Leandro, 2026-09-11: "Logo / Dark logo template /
+     * Favicon … I think these are existed in User Icon Menu Item on top right menu").
+     * Core builds that menu in its panel provider, which we do not edit; a panel takes
+     * further items at serve time and merges them with its own.
+     */
+    private function registerAccountMenuItems(): void
+    {
+        \Filament\Facades\Filament::serving(function (): void {
+            $panel = \Filament\Facades\Filament::getPanel('admin', isStrict: false);
+
+            if (!$panel || !Admin\Pages\Branding::canAccess()) {
+                return;
+            }
+
+            $panel->userMenuItems([
+                'branding' => \Filament\Actions\Action::make('branding')
+                    ->label('Branding')
+                    ->icon('heroicon-o-photo')
+                    ->url(fn (): string => Admin\Pages\Branding::getUrl())
+                    // Above Exit Admin and Sign out: the menu appends, and the reference
+                    // keeps leaving the admin and logging out at the foot of its own.
+                    ->sort(-10),
+            ]);
+        });
     }
 
     /** Credit the unused period back when a service is cancelled (Leandro, 2026-09-08). */
