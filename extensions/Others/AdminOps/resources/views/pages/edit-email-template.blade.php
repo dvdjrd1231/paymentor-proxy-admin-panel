@@ -149,6 +149,10 @@
                     @endforeach
                 </div>
 
+                {{-- Row for row, in the reference's order (configemailtemplates.php):
+                     block, font, size | B I S U | colour, highlight | link, unlink |
+                     bullets, numbers. Markdown carries no colour, so those two write the
+                     HTML span Markdown passes through untouched. --}}
                 <div class="ao-ont-toolbar ao-ete-toolbar" x-show="rich" x-cloak>
                     <select class="ao-ete-sel" data-ao-block title="Paragraph format">
                         <option value="">Paragraph</option>
@@ -156,10 +160,9 @@
                         <option value="## ">Heading 2</option>
                         <option value="### ">Heading 3</option>
                     </select>
-                    {{-- The reference's font and size pickers. Markdown carries no
-                         typeface, and the sent email takes its face from the mail
-                         template — so these show the face that will be used rather
-                         than offering a choice the message cannot keep. --}}
+                    {{-- Markdown carries no typeface, and the sent email takes its face
+                         from the mail template — so these show the face that will be used
+                         rather than offering a choice the message cannot keep. --}}
                     <select class="ao-ete-sel" disabled title="The email's typeface comes from the mail template, not from this box">
                         <option>Helvetica</option>
                     </select>
@@ -173,38 +176,60 @@
                     {{-- Markdown has no underline, so this writes the HTML tag around the
                          selection — Markdown passes raw HTML through untouched. --}}
                     <button type="button" data-md-pair="&lt;u&gt;|&lt;/u&gt;" title="Underline"><u>U</u></button>
-                    <button type="button" data-md="`" title="Inline code">&lt;/&gt;</button>
+                    <span class="ao-rte-sep"></span>
+                    <button type="button" data-ao-act="forecolor" title="Text colour"><span class="ao-ete-fore">A</span></button>
+                    <button type="button" data-ao-act="backcolor" title="Background colour"><span class="ao-ete-back">A</span></button>
                     <span class="ao-rte-sep"></span>
                     <button type="button" data-md-line="[Link](https://)" title="Insert link">&#128279;</button>
                     <button type="button" data-ao-act="unlink" title="Remove the link around the selection">&#9986;&#65038;</button>
-                    <button type="button" data-md-line="![alt](https://)" title="Insert image">&#128444;</button>
                     <span class="ao-rte-sep"></span>
                     <button type="button" data-md-line="- " title="Bullet list">&#8226;&#8226;</button>
                     <button type="button" data-md-line="1. " title="Numbered list">1.</button>
-                    <button type="button" data-md-line="> " title="Quote">&#10078;</button>
                 </div>
 
+                {{-- The reference's second row, same order: outdent, indent | quote |
+                     undo, redo | cut, copy, paste, paste as text | table | rule |
+                     character | image | media | print | ltr, rtl | fullscreen | help |
+                     source | clear formatting. --}}
                 <div class="ao-ont-toolbar ao-ete-toolbar ao-ete-toolbar2" x-show="rich" x-cloak>
-                    <button type="button" data-md-line="    " title="Indent">&#8677;</button>
                     <button type="button" data-ao-act="outdent" title="Outdent">&#8676;</button>
+                    <button type="button" data-md-line="    " title="Indent">&#8677;</button>
+                    <span class="ao-rte-sep"></span>
+                    <button type="button" data-md-line="> " title="Quote">&#10078;</button>
                     <span class="ao-rte-sep"></span>
                     <button type="button" data-ao-act="undo" title="Undo">&#8630;</button>
                     <button type="button" data-ao-act="redo" title="Redo">&#8631;</button>
                     <span class="ao-rte-sep"></span>
                     <button type="button" data-ao-act="cut" title="Cut">&#9986;</button>
-                    <button type="button" data-ao-act="copy" title="Copy">&#128203;</button>
+                    <button type="button" data-ao-act="copy" title="Copy">&#10697;</button>
+                    <button type="button" data-ao-act="paste" title="Paste">&#128203;</button>
+                    <button type="button" data-ao-act="pastetext" title="Paste as plain text">&#128462;</button>
+                    <span class="ao-rte-sep"></span>
+                    <button type="button" data-md-line="| Column | Column |&#10;| --- | --- |&#10;| Cell | Cell |" title="Insert table">&#9638;</button>
                     <span class="ao-rte-sep"></span>
                     <button type="button" data-md-line="---" title="Horizontal rule">&#8213;</button>
-                    <button type="button" data-md-line="| Column | Column |&#10;| --- | --- |&#10;| Cell | Cell |" title="Insert table">&#9638;</button>
                     <button type="button" data-ao-act="omega" title="Special character">&Omega;</button>
-                    <span class="ao-rte-sep"></span>
+                    <button type="button" data-md-line="![alt](https://)" title="Insert image">&#128444;</button>
+                    <button type="button" data-ao-act="media" title="Insert media">&#9654;</button>
                     <button type="button" data-ao-act="print" title="Print">&#128424;</button>
-                    <button type="button" data-ao-act="fullscreen" title="Fullscreen">&#9974;</button>
-                    <button type="button" data-ao-act="clearfmt" title="Clear formatting">&#10006;</button>
                     <span class="ao-rte-sep"></span>
+                    <button type="button" data-ao-act="ltr" title="Left to right">&#182;</button>
+                    <button type="button" data-ao-act="rtl" title="Right to left">&#8267;</button>
+                    <span class="ao-rte-sep"></span>
+                    <button type="button" data-ao-act="fullscreen" title="Fullscreen">&#9974;</button>
                     <button type="button" data-ao-act="help" title="Markdown guide">?</button>
-                    {{-- The reference keeps source/preview here, as its <> button. --}}
+                    {{-- The reference's `<>` - source against rendered. --}}
                     @if ($mode === 'source')
+                        <button type="button" class="ao-ete-mode" wire:click="$set('mode', 'preview')"
+                            title="The rendered Markdown; placeholders show as tokens and are filled with the client's real values when the email sends">&lt;&gt;</button>
+                    @else
+                        <button type="button" class="ao-ete-mode ao-on" wire:click="$set('mode', 'source')"
+                            title="Back to the Markdown source">&lt;&gt;</button>
+                    @endif
+                    <button type="button" data-ao-act="clearfmt" title="Clear formatting">&#8455;x</button>
+                </div>
+
+                @if ($mode === 'source')
                         <button type="button" class="ao-ete-mode" wire:click="$set('mode', 'preview')"
                             title="The rendered Markdown; placeholders show as tokens and are filled with the client's real values when the email sends">&#128065; Preview</button>
                     @else
@@ -399,6 +424,50 @@
                     const line = box.value.slice(from, to).replace(/^ {1,4}/, '');
                     box.setSelectionRange(from, to);
                     document.execCommand('insertText', false, line);
+                    return box.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                if (act === 'forecolor' || act === 'backcolor') {
+                    const [from, to] = [box.selectionStart, box.selectionEnd];
+                    if (from === to) return window.alert('Select the text to colour first.');
+                    const colour = window.prompt(act === 'forecolor' ? 'Text colour' : 'Background colour', '#337ab7');
+                    if (!colour) return;
+                    const prop = act === 'forecolor' ? 'color' : 'background-color';
+                    const picked = box.value.slice(from, to);
+                    document.execCommand('insertText', false,
+                        '<span style="' + prop + ': ' + colour + '">' + picked + '</span>');
+                    return box.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                if (act === 'paste' || act === 'pastetext') {
+                    {{-- A button may only read the clipboard with the user's permission, and
+                         a refusal is silent — so say what happened rather than doing nothing.
+                         Ctrl+V always works; this button is here because the reference has it. --}}
+                    if (!navigator.clipboard || !navigator.clipboard.readText) {
+                        return window.alert('This browser will not let a button read the clipboard - use Ctrl+V.');
+                    }
+                    return navigator.clipboard.readText().then((text) => {
+                        if (!text) return;
+                        box.focus();
+                        document.execCommand('insertText', false,
+                            act === 'pastetext' ? text.replace(/[*_`~#>[\]()]/g, '') : text);
+                        box.dispatchEvent(new Event('input', { bubbles: true }));
+                    }).catch(() => window.alert('Clipboard access was refused - use Ctrl+V.'));
+                }
+
+                if (act === 'media') {
+                    const src = window.prompt('Media URL (video or embed)', 'https://');
+                    if (!src || src === 'https://') return;
+                    document.execCommand('insertText', false,
+                        '<video src="' + src + '" controls width="560"></video>');
+                    return box.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                if (act === 'ltr' || act === 'rtl') {
+                    const [from, to] = [box.selectionStart, box.selectionEnd];
+                    const picked = from === to ? '' : box.value.slice(from, to);
+                    document.execCommand('insertText', false,
+                        '<div dir="' + (act === 'ltr' ? 'ltr' : 'rtl') + '">' + picked + '</div>');
                     return box.dispatchEvent(new Event('input', { bubbles: true }));
                 }
 
