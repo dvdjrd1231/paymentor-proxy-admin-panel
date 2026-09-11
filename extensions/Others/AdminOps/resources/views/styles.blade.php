@@ -2528,6 +2528,23 @@
         align-items: center;
     }
 
+    /* The reference's Username and Password sit on the band as editable boxes, each label
+       against its own field, at its own width — Username short, Password wide enough for
+       the value it carries. */
+    .ao-eo-prov-cred { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+    .ao-eo-prov-cred input {
+        padding: 0.25rem 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        color: var(--wa-ink, #2b2b2b);
+        font: inherit;
+        font-size: 0.9rem;
+    }
+    .ao-eo-prov-cred input:disabled { background: #f5f5f5; color: var(--wa-muted, #6b6b6b); }
+    .ao-eo-prov-user { width: 6rem; }
+    .ao-eo-prov-pass { width: 10rem; }
+
     /* The reference draws these white in the band — full-strength boxes carrying real
        values, with the titles explaining what can't change here. */
     .ao-eo-prov-inert { display: inline-flex; align-items: center; gap: 0.35rem; }
@@ -3456,6 +3473,28 @@
            short ones still sit on one line because the row has the width for them. */
         min-width: 0;
     }
+
+    /* Add New Client's control widths, measured off clientsadd.php. Every box used to
+       stretch to its grid cell, so a row carrying "(Optional)" got a narrower input than
+       one without — First Name against Company Name — and the note was pushed out to the
+       panel edge instead of sitting beside its field. */
+    .ao-anc .ao-anc-row > input,
+    .ao-anc .ao-anc-row > select,
+    .ao-anc .ao-anc-field > input,
+    .ao-anc .ao-anc-field > select { width: 250px; flex: 0 0 auto; }
+
+    .ao-anc .ao-anc-field { justify-content: flex-start; }
+    .ao-anc .ao-anc-field > i { flex: 0 0 auto; white-space: nowrap; }
+
+    .ao-anc .ao-anc-row input.ao-aw-email { width: 300px; }
+    .ao-anc .ao-anc-row input.ao-aw-sm { width: 150px; }
+    .ao-anc .ao-anc-row input.ao-aw-phone,
+    .ao-anc .ao-anc-field input.ao-aw-phone { width: 200px; }
+    .ao-anc .ao-anc-row select.ao-aw-state { width: 167px; }
+    .ao-anc .ao-anc-row select.ao-aw-country { width: 197px; }
+    .ao-anc .ao-anc-row select.ao-aw-lang { width: 132px; }
+    .ao-anc .ao-anc-row select.ao-aw-tiny { width: 91px; }
+    .ao-anc .ao-anc-row select.ao-aw-cur { width: 79px; }
 
     .ao-anc-generate {
         flex: none;
@@ -7537,7 +7576,11 @@
        under the button the way the reference's does. */
     .ao-et-more { position: relative; display: inline-flex; }
 
+    /* .ao-xsel-opt is a span, and the custom select leaves it inline with white-space:normal
+       — fine stacked in a select list, but here the two entries ran together on one line and
+       broke as "Insert Knowledgebase Link  Add / Billing Entry". One row each. */
     .ao-et-more-list { left: 0; right: auto; min-width: 15rem; }
+    .ao-et-more-list .ao-xsel-opt { display: block; white-space: nowrap; }
 
     .ao-et-caret { font-size: 0.7em; }
 
@@ -7585,7 +7628,10 @@
 
     .ao-et-panel-none { margin: 0.4rem 0 0; color: var(--wa-muted, #6b6b6b); }
 
-    .ao-et-canned-list { margin-top: 0.3rem; }
+    /* The reference keeps this panel a fixed, compact height and scrolls inside it. Ours
+       printed every reply, so a department with two dozen of them pushed the thread off
+       the screen (Leandro's screenshot of "Ask for auth IP" twenty times over). */
+    .ao-et-canned-list { margin-top: 0.3rem; max-height: 15rem; overflow-y: auto; }
 
     .ao-et-canned-cat {
         margin-top: 0.5rem;
@@ -7704,7 +7750,14 @@
 
     .ao-et-showing { margin: 0.4rem 0 0.5rem; color: var(--wa-muted, #6b6b6b); font-size: 0.9rem; }
 
-    .ao-et-print { display: inline-block; margin-top: 0.6rem; }
+    /* An anchor now, not a button: the reference opens a separate printable page. */
+    .ao-et-print {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 0.6rem;
+        text-decoration: none;
+        color: var(--wa-ink, #2b2b2b);
+    }
 
     .ao-et-msg-body { padding: 0.9rem 1rem; border-left: 1px solid var(--wa-panel-border, #eee); }
 

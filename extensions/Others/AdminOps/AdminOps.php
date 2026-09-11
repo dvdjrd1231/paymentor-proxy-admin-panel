@@ -91,6 +91,8 @@ class AdminOps extends Extension
         $this->retireCoreUserSubPages();
 
         $this->retireRawCoreScreens();
+
+        $this->registerTicketPrintView();
         $this->registerErrorPages();
         $this->applyClientGroupDiscounts();
         $this->creditCancelledServices();
@@ -532,6 +534,33 @@ class AdminOps extends Extension
             ->get('/admin/notification-templates/{record}/edit', $guarded(
                 fn (string $record): string => Admin\Pages\EditEmailTemplate::getUrl(['record' => $record]),
             ))->name('filament.admin.resources.notification-templates.edit');
+    }
+
+    /**
+     * The reference's View Printable Version — a standalone page, not window.print() on the
+     * editor, which printed the whole admin chrome and every form on it.
+     */
+    private function registerTicketPrintView(): void
+    {
+        \Illuminate\Support\Facades\Route::middleware(['web', 'auth'])
+            ->get('/admin/ticket/{ticket}/print', function (\App\Models\Ticket $ticket) {
+                abort_unless(\App\Admin\Resources\TicketResource::canViewAny(), 403);
+
+                $messages = $ticket->messages()->with(['user', 'attachments'])->oldest()->get();
+                $requestor = $messages->first()?->user ?? $ticket->user;
+                $name = fn ($user): string => $user
+                    ? (trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: $user->email)
+                    : 'Unknown';
+
+                return view('adminops::pages.ticket-print', [
+                    'ticket' => $ticket,
+                    'messages' => $messages,
+                    'lastReply' => $messages->last(),
+                    'ownerName' => $name($ticket->user),
+                    'requestorName' => $name($requestor),
+                    'requestorIsStaff' => (bool) $requestor?->role_id,
+                ]);
+            })->name('adminops.ticket.print');
     }
 
     /**

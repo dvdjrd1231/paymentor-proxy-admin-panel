@@ -709,12 +709,12 @@ class ProxyPanel extends Server
                 return ['status' => 'ok', 'id' => $remoteId, 'description' => 'already provisioned'];
             }
 
-            // Both 8 characters, as the reference issues them: the username from WHMCS's
-            // Random Usernames (which this module's readme requires enabling, and which is
-            // 8 either way — random, or the first 8 letters of the domain), the password
-            // from the module's own `substr(sha1(random_bytes(10)), 0, 8)`.
-            $username = $this->randomCredential();
-            $password = substr(sha1(random_bytes(10)), 0, 8);
+            // Whatever the order screen holds wins, which is the reference's contract: WHMCS
+            // hands the module `$params['username']` and `$params['password']` from the
+            // service row, so what an admin sees before accepting is what the panel gets.
+            // Only when nothing was set do we issue them — 8 characters either way.
+            $username = (string) ($this->prop($service, self::USERNAME_KEY) ?: $this->randomCredential());
+            $password = (string) ($this->prop($service, self::PASSWORD_KEY) ?: substr(sha1(random_bytes(10)), 0, 8));
             $amount = max(1, (int) ($settings['amount'] ?? 1));
             $bwlimit = (int) ($settings['bwlimit'] ?? 0);
 

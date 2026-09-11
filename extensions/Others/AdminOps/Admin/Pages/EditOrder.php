@@ -51,6 +51,14 @@ class EditOrder extends Page
     /** @var array<int, bool> */
     public array $sendWelcome = [];
 
+    /**
+     * The reference's per-item Username and Password, editable before the order is accepted
+     * and handed to the module as they stand.
+     *
+     * @var array<int, array{username: string, password: string}>
+     */
+    public array $creds = [];
+
     /** The reference's Add Notes — kept in ext_ao_meta, since orders carry no column. */
     public bool $notesOpen = false;
 
@@ -119,6 +127,7 @@ class EditOrder extends Page
         foreach ($this->order->services as $service) {
             $this->runModuleCreate[$service->id] = true;
             $this->sendWelcome[$service->id] = true;
+            $this->creds[$service->id] = $this->credentialsFor($service);
         }
 
         $this->items = $this->order->services->map(fn (Service $service): array => [
@@ -132,6 +141,57 @@ class EditOrder extends Page
 
         if ($this->items === []) {
             $this->items = [self::blankItem()];
+        }
+    }
+
+    /**
+     * A pending service's credentials, issued now if it has none.
+     *
+     * The reference has them from the moment the order exists — WHMCS generates them at
+     * order time and shows them here — so the boxes were empty on every unprovisioned
+     * order, which is what read as "generated with a different length": there was nothing
+     * to compare. The module decides the shape; anything without one falls back to 8.
+     *
+     * @return array{username: string, password: string}
+     */
+    private function credentialsFor(Service $service): array
+    {
+        $username = (string) ($service->properties->firstWhere('key', 'proxy_username')?->value ?? '');
+        $password = (string) ($service->properties->firstWhere('key', 'proxy_password')?->value ?? '');
+
+        $server = $service->product?->server;
+
+        if ($server && $service->status === 'pending' && ($username === '' || $password === '')) {
+            $issue = fn (): string => \App\Helpers\ExtensionHelper::hasFunction($server, 'randomCredential')
+                ? (string) \App\Helpers\ExtensionHelper::call($server, 'randomCredential')
+                : substr(sha1(random_bytes(10)), 0, 8);
+
+            $username = $username ?: $issue();
+            $password = $password ?: $issue();
+
+            $service->properties()->updateOrCreate(['key' => 'proxy_username'], ['name' => 'Username', 'value' => $username]);
+            $service->properties()->updateOrCreate(['key' => 'proxy_password'], ['name' => 'Password', 'value' => $password]);
+            $service->load('properties');
+        }
+
+        return ['username' => $username, 'password' => $password];
+    }
+
+    /** Persist whatever the per-item boxes hold, so the module is handed exactly that. */
+    private function saveCredentials(Service $service): void
+    {
+        $row = $this->creds[$service->id] ?? null;
+
+        if (!$row || !$service->product?->server) {
+            return;
+        }
+
+        foreach (['username' => 'proxy_username', 'password' => 'proxy_password'] as $field => $key) {
+            $value = trim((string) ($row[$field] ?? ''));
+
+            if ($value !== '') {
+                $service->properties()->updateOrCreate(['key' => $key], ['name' => ucfirst($field), 'value' => $value]);
+            }
         }
     }
 
@@ -233,6 +293,9 @@ class EditOrder extends Page
                 // which left no way to accept an order you had already set up by hand.
                 $create = (bool) ($this->runModuleCreate[$service->id] ?? true);
                 $welcome = (bool) ($this->sendWelcome[$service->id] ?? true);
+
+                // Before the job runs, so the panel is handed what the boxes show.
+                $this->saveCredentials($service);
 
                 if ($create && $service->product?->server) {
                     // CreateJob sends the welcome itself once the panel answers.
