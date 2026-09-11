@@ -116,7 +116,9 @@
                             @click="attach = !attach">&#128196; Attach Files</button>
                         <button type="button" class="ao-of-go" :class="{ 'ao-on': canned }"
                             @click="canned = !canned">&#9999;&#65039; Insert Predefined Reply</button>
-                        <span class="ao-et-more">
+                        {{-- Opens on hover, as a menu does. The click stays so a tap still
+                             works where there is no pointer to hover with. --}}
+                        <span class="ao-et-more" @mouseenter="more = true" @mouseleave="more = false">
                             <button type="button" class="ao-of-go" :class="{ 'ao-on': more }"
                                 @click="more = !more">&#9881; More options <span class="ao-et-caret">&#9662;</span></button>
                             <span class="ao-xsel-list ao-et-more-list" x-show="more" x-cloak>

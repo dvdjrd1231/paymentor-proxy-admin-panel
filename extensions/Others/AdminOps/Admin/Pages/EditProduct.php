@@ -14,6 +14,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Panel;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Paymenter\Extensions\Others\AdminOps\Models\DownloadFile;
 use Paymenter\Extensions\Others\AdminOps\Models\Meta;
@@ -743,6 +744,34 @@ class EditProduct extends Page
             'emailTemplates' => \App\Models\NotificationTemplate::orderBy('key')
                 ->pluck('key', 'key')->all(),
             'links' => $links,
+            'urlVisits' => $this->urlVisits(),
         ];
+    }
+
+    /**
+     * Hits per storefront path for this product, keyed by path.
+     *
+     * Counted by AdminOps::countProductUrlVisits() on every products.show request. A path
+     * nobody has reached yet simply has no row, which reads as zero.
+     *
+     * @return array<string, int>
+     */
+    private function urlVisits(): array
+    {
+        if (!Schema::hasTable('ext_product_url_visits')) {
+            return [];
+        }
+
+        return DB::table('ext_product_url_visits')
+            ->where('product_id', $this->product->id)
+            ->pluck('visits', 'path')
+            ->map(fn ($count): int => (int) $count)
+            ->all();
+    }
+
+    /** The visits for one absolute URL, matched on its path. */
+    public static function visitsFor(array $visits, string $url): int
+    {
+        return (int) ($visits[parse_url($url, PHP_URL_PATH) ?? ''] ?? 0);
     }
 }

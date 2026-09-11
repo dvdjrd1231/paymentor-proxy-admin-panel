@@ -972,14 +972,16 @@
         {{-- ── Links ───────────────────────────────────────────────────────────── --}}
         <div x-show="tab === 'links'" x-cloak>
             <div class="ao-anc-card">
-                {{-- The reference's four rows, in its order and under its names. It has a
-                     fifth shape — "…Specifying Template" — for picking a cart template;
-                     this storefront draws one cart, so that link is the plain one. --}}
+                {{-- The reference's four rows, in its order and under its names, plus this
+                     storefront's own direct product link. Its template and domain variants
+                     carry the same parameters the reference puts on them; this storefront
+                     draws one cart template, which is the one named. --}}
                 @foreach ([
                     'Direct Shopping Cart Link' => $links['checkout'],
-                    'Direct Product Link' => $links['product'],
+                    'Direct Shopping Cart Link Specifying Template' => $links['checkout'] ? $links['checkout'] . '?carttpl=' . config('settings.theme', 'proxy') : null,
                     'Direct Shopping Cart Link Including Domain' => $links['checkout'],
                     'Product Group Cart Link' => $links['group'],
+                    'Direct Product Link' => $links['product'],
                 ] as $label => $url)
                     @continue(!$url)
                     <div class="ao-anc-row">
@@ -1005,10 +1007,11 @@
                 </p>
             </div>
 
-            {{-- The reference's Product URLs table, inside the card under its own grey
-                 band. Its Visits column counts hits against a tracking row per URL and
-                 its last column removes one; nothing here records or stores either, so
-                 both say so rather than showing a zero and a button that does nothing. --}}
+            {{-- The reference's Product URLs table, inside the card under its own grey band.
+                 Visits are real now — counted per requested path in ext_product_url_visits
+                 (AdminOps::countProductUrlVisits) — so a figure here is traffic that
+                 happened. The remove column stays inert: these addresses are derived from
+                 the group and slug, not a stored list there is a row to delete from. --}}
             <div class="ao-anc-card ao-ep-urls">
                 <div class="ao-ep-urls-head">Product URLs</div>
                 <table class="ao-mu-grid">
@@ -1029,7 +1032,7 @@
                                             onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.textContent = 'Copied';">&#128203;</button>
                                     </span>
                                 </td>
-                                <td class="ao-cpg-muted" title="Visits are not counted per URL on this platform">Not tracked</td>
+                                <td title="Hits on this address since counting began">{{ number_format(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::visitsFor($urlVisits, $url)) }}</td>
                                 <td class="ao-mu-actions">
                                     <span title="These addresses are derived from the product's group and slug — change those to change the link; there is no stored list to delete from">
                                         <x-filament::icon icon="ri-indeterminate-circle-fill" class="ao-mu-cell-icon ao-pl-dead" />
@@ -1043,9 +1046,9 @@
                 </table>
 
                 <p class="ao-cp-note">
-                    These are the product's real addresses rather than a list to add to. The reference
-                    lets an admin coin extra URLs and counts the hits on each; nothing here records a
-                    visit against a URL, so there is no figure to show and no row to delete.
+                    These are the product's real addresses rather than a list to add to, so there is
+                    no row to delete. Visits count every storefront request for each address, from the
+                    day this was deployed onwards — earlier traffic was never recorded.
                 </p>
             </div>
         </div>
