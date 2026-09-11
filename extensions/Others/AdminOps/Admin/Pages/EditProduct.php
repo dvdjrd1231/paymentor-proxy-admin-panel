@@ -147,6 +147,33 @@ class EditProduct extends Page
     public string $subdomainOptions = '';
 
     /**
+     * The reference's Custom Affiliate Payout, and it is real.
+     *
+     * Affiliates pays a percentage of the whole invoice, taken from the affiliate's own
+     * reward or the store default. These override that for lines selling *this* product:
+     * a percentage of the line, a fixed amount per line, or nothing at all.
+     */
+    public string $affiliatePayout = 'default';
+
+    public string $affiliateAmount = '0.00';
+
+    public bool $affiliateOneTime = false;
+
+    /**
+     * Overages, kept but not acted on.
+     *
+     * Enabled at Leandro's instruction so the rows take a value; nothing bills from them,
+     * because billing an overage needs a usage figure and the panel reports none — api.md
+     * has no traffic or usage field and the module reads none. A product's bandwidth cap
+     * is set on Module Settings as `bwlimit`, which the panel does honour.
+     */
+    public bool $overagesBilling = false;
+
+    public array $softLimits = ['disk' => '0', 'disk_unit' => 'MB', 'bw' => '0', 'bw_unit' => 'MB'];
+
+    public array $overageCosts = ['disk' => '0.0000', 'bw' => '0.0000'];
+
+    /**
      * Download ids this product grants — the reference's Associated Downloads.
      *
      * The files are AdminOps' own (`ext_downloads`, the Downloads admin area), and the one
@@ -294,6 +321,14 @@ class EditProduct extends Page
         $this->freeDomainTerms = array_values(array_filter(explode(',', (string) ($meta['free_domain_terms'] ?? ''))));
         $this->freeDomainTlds = (string) ($meta['free_domain_tlds'] ?? '');
         $this->subdomainOptions = (string) ($meta['subdomain_options'] ?? '');
+
+        $this->affiliatePayout = (string) ($meta['affiliate_payout'] ?? 'default');
+        $this->affiliateAmount = (string) ($meta['affiliate_amount'] ?? '0.00');
+        $this->affiliateOneTime = (bool) ($meta['affiliate_one_time'] ?? false);
+
+        $this->overagesBilling = (bool) ($meta['overages_billing'] ?? false);
+        $this->softLimits = array_merge($this->softLimits, (array) json_decode((string) ($meta['soft_limits'] ?? '{}'), true));
+        $this->overageCosts = array_merge($this->overageCosts, (array) json_decode((string) ($meta['overage_costs'] ?? '{}'), true));
         $this->downloadIds = array_values(array_filter(explode(',', (string) ($meta['downloads'] ?? ''))));
 
         // Ticked when every option that *could* be upgradable already is, so the box
@@ -393,6 +428,19 @@ class EditProduct extends Page
 
         $ids = array_values(array_unique(array_filter(array_map('intval', $this->downloadIds))));
         Meta::put($this->product, 'downloads', implode(',', $ids));
+
+        $this->validate([
+            'affiliatePayout' => 'required|in:default,percentage,fixed,none',
+            'affiliateAmount' => 'nullable|numeric|min:0',
+        ], attributes: ['affiliatePayout' => 'custom affiliate payout', 'affiliateAmount' => 'affiliate pay amount']);
+
+        Meta::put($this->product, 'affiliate_payout', $this->affiliatePayout);
+        Meta::put($this->product, 'affiliate_amount', number_format((float) $this->affiliateAmount, 2, '.', ''));
+        Meta::put($this->product, 'affiliate_one_time', $this->affiliateOneTime ? '1' : '');
+
+        Meta::put($this->product, 'overages_billing', $this->overagesBilling ? '1' : '');
+        Meta::put($this->product, 'soft_limits', json_encode($this->softLimits));
+        Meta::put($this->product, 'overage_costs', json_encode($this->overageCosts));
 
         $this->done('Product saved');
     }

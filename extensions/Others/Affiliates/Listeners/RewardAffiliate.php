@@ -58,7 +58,7 @@ class RewardAffiliate
 
         $extension = ExtensionHelper::getExtension('other', 'Affiliates');
         $reward_percentage = $affiliate->reward ?: $extension->config('default_reward');
-        $reward_amount = $invoice->total * $reward_percentage / 100;
+        $reward_amount = static::rewardFor($invoice, (float) $reward_percentage);
 
         /**
          * @var Collection
@@ -80,5 +80,64 @@ class RewardAffiliate
                 'currency_code' => $invoice->currency_code,
             ]);
         }
+    }
+
+    /**
+     * What this invoice earns, honouring each product's Custom Affiliate Payout.
+     *
+     * The flat "percentage of the invoice total" is the default, and still applies to every
+     * line whose product says Use Default. A product may instead name its own percentage, a
+     * fixed amount per line, or no commission at all — the reference's four choices on Edit
+     * Product's Other tab.
+     *
+     * Public and static because {@see \Paymenter\Extensions\Others\Affiliates\Models\AffiliateOrder::earnings()}
+     * sums the same invoices for the credits page and has to arrive at the same figure.
+     */
+    public static function rewardFor($invoice, float $defaultPercentage): float
+    {
+        $items = $invoice->items ?? collect();
+
+        // No line detail to work from: the whole-invoice percentage is all there is.
+        if ($items->isEmpty()) {
+            return (float) $invoice->total * $defaultPercentage / 100;
+        }
+
+        $total = 0.0;
+
+        foreach ($items as $item) {
+            $line = (float) $item->price * max(1, (int) ($item->quantity ?: 1));
+            $product = static::productFor($item);
+
+            $meta = $product
+                ? \Paymenter\Extensions\Others\AdminOps\Models\Meta::for($product)
+                : [];
+
+            switch ($meta['affiliate_payout'] ?? 'default') {
+                case 'none':
+                    break;
+                case 'percentage':
+                    $total += $line * (float) ($meta['affiliate_amount'] ?? 0) / 100;
+                    break;
+                case 'fixed':
+                    $total += (float) ($meta['affiliate_amount'] ?? 0);
+                    break;
+                default:
+                    $total += $line * $defaultPercentage / 100;
+            }
+        }
+
+        return $total;
+    }
+
+    /** The product an invoice line sells, where the line references a service. */
+    private static function productFor($item)
+    {
+        $reference = $item->reference ?? null;
+
+        if ($reference instanceof \App\Models\Service) {
+            return $reference->product;
+        }
+
+        return null;
     }
 }

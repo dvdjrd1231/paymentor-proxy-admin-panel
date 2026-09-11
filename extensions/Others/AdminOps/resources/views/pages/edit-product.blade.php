@@ -864,21 +864,23 @@
                 @php
                     $affiliateOff = 'Commission is set for the whole store by the Affiliates extension, not per product';
                     $hostingOff = 'Belongs to shared hosting — a proxy service has no disk or bandwidth to meter';
+                    $overagesNote = 'Saved, but nothing bills from it: an overage needs a usage figure and the panel reports none. A bandwidth cap the panel does honour is set on Module Settings as bwlimit.';
                 @endphp
                 <div class="ao-anc-row ao-gs-off">
                     <span>Custom Affiliate Payout</span>
-                    <span class="ao-ano-checks" title="{{ $affiliateOff }}">
-                        <label><input type="radio" name="ao-ep-aff" checked disabled> Use Default</label>
-                        <label><input type="radio" name="ao-ep-aff" disabled> Percentage</label>
-                        <label><input type="radio" name="ao-ep-aff" disabled> Fixed Amount</label>
-                        <label><input type="radio" name="ao-ep-aff" disabled> No Commission</label>
+                    <span class="ao-ano-checks">
+                        @foreach (['default' => 'Use Default', 'percentage' => 'Percentage',
+                                   'fixed' => 'Fixed Amount', 'none' => 'No Commission'] as $value => $label)
+                            <label><input type="radio" value="{{ $value }}" wire:model="affiliatePayout"> {{ $label }}</label>
+                        @endforeach
                     </span>
                 </div>
                 <div class="ao-anc-row ao-gs-off">
                     <span>Affiliate Pay Amount</span>
-                    <span class="ao-anc-field" title="{{ $affiliateOff }}">
-                        <input type="text" class="ao-w-25" value="0.00" disabled>
-                        <label class="ao-check"><input type="checkbox" disabled>
+                    <span class="ao-anc-field">
+                        <input type="text" class="ao-w-25" wire:model="affiliateAmount"
+                            title="A percentage of the line when Percentage is picked, or an amount in the invoice's currency when Fixed Amount is">
+                        <label class="ao-check"><input type="checkbox" wire:model="affiliateOneTime">
                             <span>One Time Payout (Default is Recurring)</span></label>
                     </span>
                 </div>
@@ -952,24 +954,24 @@
 
                 <div class="ao-anc-row ao-gs-off">
                     <span>Overages Billing</span>
-                    <span class="ao-of-check" title="{{ $hostingOff }}">
-                        <input type="checkbox" disabled> Check to Enable
+                    <span class="ao-of-check" title="{{ $overagesNote }}">
+                        <input type="checkbox" wire:model="overagesBilling"> Check to Enable
                     </span>
                 </div>
                 <div class="ao-anc-row ao-gs-off">
                     <span>Soft Limits</span>
-                    <span class="ao-anc-field ao-ep-units" title="{{ $hostingOff }}">
-                        <i>Disk Usage</i> <input type="text" class="ao-w-25" value="0" disabled>
-                        <select class="ao-ep-unit" disabled><option>MB</option><option>GB</option></select>
-                        <i>Bandwidth</i> <input type="text" class="ao-w-25" value="0" disabled>
-                        <select class="ao-ep-unit" disabled><option>MB</option><option>GB</option></select>
+                    <span class="ao-anc-field ao-ep-units" title="{{ $overagesNote }}">
+                        <i>Disk Usage</i> <input type="text" class="ao-w-25" wire:model="softLimits.disk">
+                        <select class="ao-ep-unit" wire:model="softLimits.disk_unit"><option>MB</option><option>GB</option></select>
+                        <i>Bandwidth</i> <input type="text" class="ao-w-25" wire:model="softLimits.bw">
+                        <select class="ao-ep-unit" wire:model="softLimits.bw_unit"><option>MB</option><option>GB</option></select>
                     </span>
                 </div>
                 <div class="ao-anc-row ao-gs-off">
                     <span>Overage Costs</span>
-                    <span class="ao-anc-field ao-ep-units" title="{{ $hostingOff }}">
-                        <i>Disk Usage</i> <input type="text" class="ao-w-25" value="0.0000" disabled>
-                        <i>Bandwidth</i> <input type="text" class="ao-w-25" value="0.0000" disabled>
+                    <span class="ao-anc-field ao-ep-units" title="{{ $overagesNote }}">
+                        <i>Disk Usage</i> <input type="text" class="ao-w-25" wire:model="overageCosts.disk">
+                        <i>Bandwidth</i> <input type="text" class="ao-w-25" wire:model="overageCosts.bw">
                         <i>(Price Per Unit Over Above)</i>
                     </span>
                 </div>
