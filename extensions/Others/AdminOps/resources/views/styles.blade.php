@@ -6796,6 +6796,53 @@
 
     .ao-gs-actions { display: flex; justify-content: center; gap: 0.6rem; margin-top: 1rem; }
 
+    /* ── Branding ────────────────────────────────────────────────────────────
+       Each row shows what is live beside the chooser, so it is obvious which of
+       the three a given picture is. */
+    .ao-gs-errors {
+        margin-bottom: 0.8rem;
+        padding: 0.5rem 0.7rem;
+        border: 1px solid #ebccd1;
+        border-radius: 4px;
+        background: #f2dede;
+        color: #a94442;
+        font-size: 0.85rem;
+    }
+
+    .ao-br-page .ao-br-field { display: flex; align-items: center; gap: 0.9rem; }
+
+    .ao-br-preview {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 8rem;
+        height: 3rem;
+        padding: 0.2rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+    }
+
+    .ao-br-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+    .ao-br-empty { color: var(--wa-muted, #6b6b6b); font-size: 0.8rem; }
+
+    .ao-br-controls { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; }
+
+    .ao-br-note { color: var(--wa-muted, #6b6b6b); font-size: 0.8rem; }
+
+    .ao-br-clear {
+        padding: 0.25rem 0.7rem;
+        border: 1px solid #d43f3a;
+        border-radius: 4px;
+        background: #d9534f;
+        color: #fff;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    .ao-br-clear:hover { background: #c9302c; }
+
     .ao-gs-cancel {
         display: inline-flex;
         align-items: center;
