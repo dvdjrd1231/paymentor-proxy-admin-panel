@@ -153,7 +153,7 @@ class EditOrder extends Page
         // 8-character shape, which orders placed before this screen learned WHMCS's format
         // are carrying. Safe to overwrite: nothing has been sent to the panel yet — the
         // module generates its own at create — so this value is only what the admin reads.
-        $stale = $password !== '' && preg_match('/^[0-9a-f]{8}$/', $password) === 1;
+        $stale = preg_match('/^[0-9a-z]{8}$/', $password) === 1;
 
         if ($server && $service->status === 'pending' && ($username === '' || $password === '' || $stale)) {
             $issue = fn (): string => \App\Helpers\ExtensionHelper::hasFunction($server, 'randomCredential')
