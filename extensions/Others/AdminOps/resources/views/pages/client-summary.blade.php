@@ -941,7 +941,7 @@
                 @endphp
                 <div class="ao-of-row ao-of-row-single">
                     <span class="ao-of-label">Module Commands</span>
-                    <span class="ao-of-inline">
+                    <span class="ao-of-inline ao-cs-cmds">
                         @foreach ($commands as [$cmd, $label, $states, $confirm])
                             @php $can = $hasServer && in_array($svcState, $states, true); @endphp
                             <button type="button" class="ao-of-go" @disabled(!$can)
@@ -967,7 +967,12 @@
                                 @forelse ($svcAddons as $addon)
                                     <tr>
                                         <td>{{ $addon->service?->created_at?->format('m/d/Y') }}</td>
-                                        <td class="ao-mu-left">{{ $addon->service?->product?->name }}</td>
+                                        {{-- The Custom Name the Add New Addon form takes, which
+                                             this column used to throw away by naming the product
+                                             instead — so an addon you had deliberately named came
+                                             back indistinguishable from any other of that product.
+                                             `label` falls back to the product name on its own. --}}
+                                        <td class="ao-mu-left">{{ $addon->service?->label }}</td>
                                         <td>${{ number_format((float) $addon->service?->price, 2) }} {{ $addon->service?->currency_code }}</td>
                                         <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel((string) $addon->service?->status) }}</td>
                                         <td>{{ $addon->service?->expires_at?->format('m/d/Y') ?? '—' }}</td>
