@@ -984,7 +984,7 @@
                     'Direct Product Link' => $links['product'],
                 ] as $label => $url)
                     @continue(!$url)
-                    <div class="ao-anc-row">
+                    <div class="ao-anc-row ao-ep-linkrow">
                         <span>{{ $label }}</span>
                         <span class="ao-anc-field">
                             <input type="text" value="{{ $url }}" readonly onclick="this.select()">
