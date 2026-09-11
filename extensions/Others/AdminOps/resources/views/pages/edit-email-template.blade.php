@@ -54,14 +54,38 @@
                          and each says why rather than looking live. --}}
                     <div class="ao-of-row ao-of-row-single">
                         <span class="ao-of-label">Attachments</span>
-                        {{-- The reasons these two are inert live on their titles rather than
-                             under them: the reference's rows are one line each, and a
-                             paragraph of explanation per row was what made this band twice
-                             the height of the one in the screenshots. --}}
-                        <span class="ao-of-stack ao-ete-attach"
-                            title="Not available: nothing is stored against a template to attach. An invoice reaches the client as a link to its own page, where the PDF is downloaded.">
-                            <input type="file" disabled>
-                            <button type="button" class="ao-of-go" disabled>&plus; Add More</button>
+                        {{-- One Choose File per row and Add More for the next, as the
+                             reference does it. Every email built from this template carries
+                             these; AdminOps::attachTemplateFiles() puts them on the message
+                             as it goes out. --}}
+                        <span class="ao-of-stack ao-ete-attach">
+                            @foreach ($attachments as $index => $pending)
+                                <input type="file" wire:key="ete-file-{{ $index }}"
+                                    wire:model="attachments.{{ $index }}">
+                            @endforeach
+                            @error('attachments.*') <i class="ao-anc-errors">{{ $message }}</i> @enderror
+
+                            <span class="ao-ete-attach-acts">
+                                <button type="button" class="ao-of-go" wire:click="addAttachmentRow">&plus; Add More</button>
+                                <button type="button" class="ao-find-go" wire:click="saveAttachments"
+                                    wire:loading.attr="disabled">Upload</button>
+                            </span>
+
+                            @if ($storedAttachments->isNotEmpty())
+                                <span class="ao-ete-attach-list">
+                                    @foreach ($storedAttachments as $file)
+                                        <span class="ao-stf-chip">
+                                            <span>{{ $file->filename }}
+                                                ({{ $file->filesize > 1048576
+                                                    ? number_format($file->filesize / 1048576, 1) . ' MB'
+                                                    : max(1, (int) round($file->filesize / 1024)) . ' KB' }})</span>
+                                            <button type="button" wire:click="removeAttachment({{ $file->id }})"
+                                                wire:confirm="Remove {{ $file->filename }} from this template?"
+                                                title="Remove">&times;</button>
+                                        </span>
+                                    @endforeach
+                                </span>
+                            @endif
                         </span>
                     </div>
 

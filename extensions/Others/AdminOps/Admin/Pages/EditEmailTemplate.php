@@ -8,6 +8,8 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Panel;
 use Illuminate\Support\Str;
+use Livewire\WithFileUploads;
+use Paymenter\Extensions\Others\AdminOps\Models\EmailTemplateAttachment;
 use Paymenter\Extensions\Others\AdminOps\Models\TemplateLocale;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
@@ -25,6 +27,18 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  */
 class EditEmailTemplate extends Page
 {
+    use WithFileUploads;
+
+    /**
+     * Files queued by the reference's Attachments row — one per Choose File, as its
+     * Add More adds rows.
+     *
+     * @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile|null>
+     */
+    public array $attachments = [null];
+
+    public ?int $removingAttachment = null;
+
     protected string $view = 'adminops::pages.edit-email-template';
 
     protected static ?string $slug = 'edit-email-template';
@@ -98,6 +112,70 @@ class EditEmailTemplate extends Page
                 'body' => (string) ($stored[$locale]->body ?? ''),
             ];
         }
+    }
+
+    public function addAttachmentRow(): void
+    {
+        $this->attachments[] = null;
+    }
+
+    /**
+     * Store what was chosen against this template. Kept apart from save() so a file lands
+     * without waiting for the body to be saved — the reference uploads on its own too.
+     */
+    public function saveAttachments(): void
+    {
+        abort_unless(NotificationTemplateResource::canEdit($this->template), 403);
+
+        $this->validate([
+            'attachments.*' => 'nullable|file|max:10240',
+        ], ['attachments.*.max' => 'Each attachment must be 10 MB or smaller.']);
+
+        $stored = 0;
+
+        foreach (array_filter($this->attachments) as $upload) {
+            // Facts before the move: storeAs() takes the upload out of livewire-tmp, and
+            // reading its size afterwards throws on a path that is already gone.
+            $filename = $upload->getClientOriginalName();
+            $filesize = $upload->getSize();
+            $mime = (string) $upload->getMimeType();
+            $name = Str::ulid() . '.' . ($upload->getClientOriginalExtension() ?: 'bin');
+
+            $upload->storeAs('email-templates/attachments', $name);
+
+            EmailTemplateAttachment::create([
+                'template_id' => $this->template->id,
+                'filename' => $filename,
+                'path' => 'email-templates/attachments/' . $name,
+                'filesize' => $filesize,
+                'mime_type' => $mime,
+            ]);
+
+            $stored++;
+        }
+
+        $this->attachments = [null];
+
+        Notification::make()
+            ->title($stored ? $stored . ' attachment(s) added' : 'No file chosen')
+            ->{$stored ? 'success' : 'warning'}()->send();
+    }
+
+    public function removeAttachment(int $id): void
+    {
+        abort_unless(NotificationTemplateResource::canEdit($this->template), 403);
+
+        $file = EmailTemplateAttachment::where('template_id', $this->template->id)->findOrFail($id);
+
+        // The row goes either way: a file already gone from disk must not leave a record
+        // pointing at nothing.
+        if (is_file($file->absolutePath())) {
+            @unlink($file->absolutePath());
+        }
+
+        $file->delete();
+
+        Notification::make()->title('Attachment removed')->success()->send();
     }
 
     public function save(): void
@@ -221,7 +299,11 @@ class EditEmailTemplate extends Page
 
     protected function getViewData(): array
     {
-        return ['localeNames' => AddNewClient::languages()];
+        return [
+            'localeNames' => AddNewClient::languages(),
+            'storedAttachments' => EmailTemplateAttachment::where('template_id', $this->template->id)
+                ->orderBy('id')->get(),
+        ];
     }
 
     /**

@@ -2984,6 +2984,10 @@
     .ao-ete-fore { border-bottom: 3px solid #c0392b; line-height: 1; }
     .ao-ete-back { background: #f6e58d; padding: 0 2px; line-height: 1; }
 
+    .ao-ete-attach-acts { display: flex; gap: 0.4rem; margin-top: 0.35rem; }
+    .ao-ete-attach-acts .ao-of-go, .ao-ete-attach-acts .ao-find-go { margin: 0; }
+    .ao-ete-attach-list { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+
     .ao-ete-band .ao-of-check { white-space: normal; align-items: flex-start; flex-wrap: wrap; }
 
     /* The reason takes a line of its own under the control rather than sharing one: full
