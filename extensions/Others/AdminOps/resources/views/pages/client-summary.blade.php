@@ -275,7 +275,10 @@
                         <button type="button" class="ao-cp-link" wire:click="$set('tab', 'transactions')">
                             <x-filament::icon icon="ri-file-list-3-line" class="ao-cp-ic" /> View Account Statement
                         </button>
-                        <a class="ao-cp-link" href="{{ \App\Admin\Resources\TicketResource::getUrl('create') }}">
+                        {{-- AdminOps' own form with this client already chosen, rather than
+                             core's bare create page — the reference opens its ticket form
+                             on the client you are looking at. --}}
+                        <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\OpenNewTicket::getUrl(['client' => $user->id]) }}">
                             <x-filament::icon icon="ri-mail-add-line" class="ao-cp-ic" /> Open New Support Ticket
                         </a>
                         <button type="button" class="ao-cp-link" wire:click="$set('tab', 'tickets')">
