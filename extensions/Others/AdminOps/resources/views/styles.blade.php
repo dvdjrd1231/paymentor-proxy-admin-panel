@@ -2985,8 +2985,34 @@
     .ao-ete-back { background: #f6e58d; padding: 0 2px; line-height: 1; }
 
     .ao-ete-attach-acts { display: flex; gap: 0.4rem; margin-top: 0.35rem; }
-    .ao-ete-attach-acts .ao-of-go, .ao-ete-attach-acts .ao-find-go { margin: 0; }
+    .ao-ete-attach-acts .ao-of-go { margin: 0; }
     .ao-ete-attach-list { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+
+    /* Save Changes / Cancel Changes at the reference's own metrics: 116 and 129 wide,
+       4px apart, centred on the card (measured on configemailtemplates.php). */
+    .ao-ete-save { display: flex; justify-content: center; align-items: center; gap: 4px; }
+    .ao-ete-save > .ao-find-go,
+    .ao-ete-save > .ao-of-go {
+        margin: 0;
+        height: 34px;
+        padding: 0;
+        /* The reference's widths are tight, so the label has to stop wrapping to fit. */
+        white-space: nowrap;
+        font-size: 0.9rem;
+        line-height: 34px;
+        text-align: center;
+    }
+    .ao-ete-save > .ao-find-go { width: 116px; }
+    .ao-ete-save > .ao-of-go { width: 129px; }
+
+    /* The reference prints its examples as plain text inside the panel — no tinted code
+       block — and keeps the rows tight. */
+    .ao-ete-example {
+        margin: 0.35rem 0 0.9rem;
+        font-family: inherit;
+        line-height: 1.45;
+        color: var(--wa-ink, #2b2b2b);
+    }
 
     .ao-ete-band .ao-of-check { white-space: normal; align-items: flex-start; flex-wrap: wrap; }
 

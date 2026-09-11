@@ -120,10 +120,14 @@ class EditEmailTemplate extends Page
     }
 
     /**
-     * Store what was chosen against this template. Kept apart from save() so a file lands
-     * without waiting for the body to be saved — the reference uploads on its own too.
+     * Store what the Attachments rows hold against this template.
+     *
+     * Called from save(): the reference takes its files with Save Changes rather than on a
+     * button of their own.
+     *
+     * @return int how many files were taken
      */
-    public function saveAttachments(): void
+    private function storeQueuedAttachments(): int
     {
         abort_unless(NotificationTemplateResource::canEdit($this->template), 403);
 
@@ -156,9 +160,7 @@ class EditEmailTemplate extends Page
 
         $this->attachments = [null];
 
-        Notification::make()
-            ->title($stored ? $stored . ' attachment(s) added' : 'No file chosen')
-            ->{$stored ? 'success' : 'warning'}()->send();
+        return $stored;
     }
 
     public function removeAttachment(int $id): void
@@ -227,7 +229,13 @@ class EditEmailTemplate extends Page
             TemplateLocale::updateOrCreate($where, ['subject' => $subject, 'body' => $body]);
         }
 
-        Notification::make()->title('Template saved')->success()->send();
+        // The reference takes the chosen files with Save Changes rather than on a button
+        // of their own, so this is where they land.
+        $files = $this->storeQueuedAttachments();
+
+        Notification::make()->title('Template saved')
+            ->body($files ? $files . ' attachment(s) added.' : null)
+            ->success()->send();
     }
 
     /**

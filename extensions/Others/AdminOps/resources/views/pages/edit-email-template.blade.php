@@ -65,10 +65,11 @@
                             @endforeach
                             @error('attachments.*') <i class="ao-anc-errors">{{ $message }}</i> @enderror
 
+                            {{-- The reference has one button here and takes the files with
+                                 Save Changes; a second, primary-coloured Upload beside it was
+                                 ours, and it is what threw the row out. --}}
                             <span class="ao-ete-attach-acts">
                                 <button type="button" class="ao-of-go" wire:click="addAttachmentRow">&plus; Add More</button>
-                                <button type="button" class="ao-find-go" wire:click="saveAttachments"
-                                    wire:loading.attr="disabled">Upload</button>
                             </span>
 
                             @if ($storedAttachments->isNotEmpty())
@@ -305,7 +306,7 @@
                 </ul>
             @endif
 
-            <div class="ao-of-buttons">
+            <div class="ao-of-buttons ao-ete-save">
                 <button type="submit" class="ao-find-go">Save Changes</button>
                 <a class="ao-of-go" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::getUrl() }}">Cancel Changes</a>
             </div>
@@ -347,17 +348,17 @@
             <div class="ao-ete-merge-col">
                 <h4 class="ao-ano-heading">Conditional Display</h4>
                 <p>Show text only when something is true:</p>
-                <pre class="ao-ete-snippet">&#64;if ($invoice-&gt;status === 'paid')
-    Thank you — nothing further is owed.
-&#64;else
-    This invoice is still open.
-&#64;endif</pre>
+                <p class="ao-ete-example">&#64;if ($invoice-&gt;status === 'paid')<br>
+                    Thank you — nothing further is owed.<br>
+                    &#64;else<br>
+                    This invoice is still open.<br>
+                    &#64;endif</p>
 
                 <h4 class="ao-ano-heading">Looping through data</h4>
                 <p>Repeat a block for each item:</p>
-                <pre class="ao-ete-snippet">&#64;foreach ($invoice-&gt;items as $item)
-    &#123;&#123; $item-&gt;description &#125;&#125;: &#123;&#123; $item-&gt;formattedPrice &#125;&#125;
-&#64;endforeach</pre>
+                <p class="ao-ete-example">&#64;foreach ($invoice-&gt;items as $item)<br>
+                    &#123;&#123; $item-&gt;description &#125;&#125;: &#123;&#123; $item-&gt;formattedPrice &#125;&#125;<br>
+                    &#64;endforeach</p>
 
                 <p class="ao-cp-note">
                     Bodies are Markdown with Blade, so the directives are Blade's own rather than
