@@ -2533,17 +2533,20 @@
         font-size: 0.85rem;
     }
 
+    /* The reference centres this band's contents across the table rather than starting
+       them at the left edge, and sets the groups close together — its Username box ends
+       7px before the Password label. */
     .ao-eo-provision .ao-eo-prov-line {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.4rem 1.25rem;
+        gap: 0.4rem 0.45rem;
         align-items: center;
+        justify-content: center;
     }
 
-    /* The reference's Username and Password sit on the band as editable boxes, each label
-       against its own field, at its own width — Username short, Password wide enough for
-       the value it carries. */
-    .ao-eo-prov-cred { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+    /* The reference's Username and Password sit on the band as editable boxes of one
+       width, each label tight against its own field. */
+    .ao-eo-prov-cred { display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; }
     .ao-eo-prov-cred input {
         padding: 0.25rem 0.5rem;
         border: 1px solid var(--wa-border, #ccc);
@@ -2554,8 +2557,8 @@
         font-size: 0.9rem;
     }
     .ao-eo-prov-cred input:disabled { background: #f5f5f5; color: var(--wa-muted, #6b6b6b); }
-    .ao-eo-prov-user { width: 6rem; }
-    .ao-eo-prov-pass { width: 10rem; }
+    .ao-eo-prov-user,
+    .ao-eo-prov-pass { width: 8.75rem; }
 
     /* The reference draws these white in the band — full-strength boxes carrying real
        values, with the titles explaining what can't change here. */
