@@ -278,6 +278,16 @@
        so there is no hook between them to render into — but the row is a flexbox, so ordering
        the help cluster after everything else puts the two in the reference's order without
        replacing the account menu with a copy of our own. */
+    /* The + sits with the same rhythm as a menu item: 15px of padding either side and the
+       2px gutter between them, measured off the bar's own Clients/Orders buttons. Without
+       it the icon butted straight onto the logo. */
+    .ao-tool-create {
+        padding-left: 15px;
+        padding-right: 15px;
+        margin-left: 6px;
+        margin-right: 2px;
+    }
+
     .ao-tool-wrap-help {
         order: 1;
     }
