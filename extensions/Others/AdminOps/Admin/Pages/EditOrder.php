@@ -149,13 +149,19 @@ class EditOrder extends Page
 
         $server = $service->product?->server;
 
-        if ($server && $service->status === 'pending' && ($username === '' || $password === '')) {
+        // A password already on the row is reissued when it is still in the module's old
+        // 8-character shape, which orders placed before this screen learned WHMCS's format
+        // are carrying. Safe to overwrite: nothing has been sent to the panel yet — the
+        // module generates its own at create — so this value is only what the admin reads.
+        $stale = $password !== '' && preg_match('/^[0-9a-f]{8}$/', $password) === 1;
+
+        if ($server && $service->status === 'pending' && ($username === '' || $password === '' || $stale)) {
             $issue = fn (): string => \App\Helpers\ExtensionHelper::hasFunction($server, 'randomCredential')
                 ? (string) \App\Helpers\ExtensionHelper::call($server, 'randomCredential')
                 : substr(sha1(random_bytes(10)), 0, 8);
 
             $username = $username ?: $issue();
-            $password = $password ?: static::servicePassword();
+            $password = ($password === '' || $stale) ? static::servicePassword() : $password;
 
             $service->properties()->updateOrCreate(['key' => 'proxy_username'], ['name' => 'Username', 'value' => $username]);
             $service->properties()->updateOrCreate(['key' => 'proxy_password'], ['name' => 'Password', 'value' => $password]);
@@ -166,12 +172,14 @@ class EditOrder extends Page
     }
 
     /**
-     * A service password in WHMCS's shape: 14 characters of mixed case, digits and the
-     * handful of symbols it uses (its own look on the order screen is "CY4@y2H8g@X8dk").
+     * A service password in WHMCS's shape. Its "Auto Generated Password Format" default is
+     * 14 characters of letters, digits and symbols; the symbol set is the one its own
+     * generator uses (assets/js/whmcs/utils.js). A real WHMCS value: "CY4@y2H8g@X8dk".
      */
     private static function servicePassword(): string
     {
-        $alphabet = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789@#$%';
+        $alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+            . '!#$%()*+,-.:;=@_|{}~';
         $max = strlen($alphabet) - 1;
         $out = '';
 
