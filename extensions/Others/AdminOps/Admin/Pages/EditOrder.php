@@ -199,21 +199,25 @@ class EditOrder extends Page
         $count = 0;
         $skipped = 0;
         $resumed = 0;
-        $gone = 0;
+        $revived = 0;
 
-        DB::transaction(function () use (&$count, &$skipped, &$resumed, &$gone): void {
+        DB::transaction(function () use (&$count, &$skipped, &$resumed, &$revived): void {
             foreach ($this->order->services as $service) {
-                // A cancelled service is gone from its panel, so there is nothing here that
-                // could bring it back — counted and reported rather than silently skipped.
-                if ($service->status === 'cancelled') {
-                    $gone++;
-
-                    continue;
-                }
-
                 // Already live: the select re-picking Active is not an instruction to
                 // re-provision anything.
                 if ($service->status === 'active') {
+                    continue;
+                }
+
+                // A cancelled service goes back to Active as a record correction — the same
+                // reasoning as Set Back to Pending. The reference's Status is a field on the
+                // order, not a deprovision, and refusing here left orders whose services had
+                // all been cancelled with a Status select that did nothing at all. Nothing is
+                // sent to the panel; Module Commands → Create is what re-provisions.
+                if ($service->status === 'cancelled') {
+                    $service->update(['status' => 'active']);
+                    $revived++;
+
                     continue;
                 }
 
@@ -258,17 +262,17 @@ class EditOrder extends Page
 
         $this->refreshOrder();
 
-        $moved = $count + $resumed;
+        $moved = $count + $resumed + $revived;
         $detail = array_filter([
             $count ? $count . ' activated' : null,
             $resumed ? $resumed . ' resumed' : null,
+            $revived ? $revived . ' set back to active' : null,
             $skipped ? $skipped . ' not provisioned' : null,
-            $gone ? $gone . ' already terminated and cannot be revived' : null,
         ]);
 
         Notification::make()
-            ->title($moved ? 'Accepted: ' . implode(', ', $detail) : 'Nothing on this order to activate')
-            ->body($moved || !$gone ? null : 'A terminated service no longer exists on its panel — place a new order instead.')
+            ->title($moved ? 'Accepted: ' . implode(', ', $detail) : 'This order is already active')
+            ->body($revived ? 'A previously terminated service now reads Active. Nothing was sent to the panel — use Module Commands → Create to re-provision it.' : null)
             ->{$moved ? 'success' : 'warning'}()->send();
     }
 

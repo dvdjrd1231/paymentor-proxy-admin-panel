@@ -222,12 +222,12 @@
             $hasPending = $statuses->contains('pending');
             $hasSuspended = $statuses->contains('suspended');
             $hasLive = $statuses->contains('active') || $hasSuspended;
-            $canActivate = $hasPending || $hasSuspended;
+            $canActivate = !$statuses->every(fn ($s) => $s === 'active');
         @endphp
 
         <div class="ao-eo-actions">
             <button type="button" class="ao-eo-accept" wire:click="acceptOrder" @disabled(!$canActivate)
-                title="{{ $canActivate ? 'Activate every pending service on this order, and resume any suspended one' : 'Nothing on this order is pending or suspended' }}"
+                title="{{ $canActivate ? 'Activate every service on this order that is not already active' : 'Every service on this order is already active' }}"
                 wire:confirm="Activate every pending service on this order?">&#10004; Accept Order</button>
             <button type="button" class="ao-eo-cancel" wire:click="cancelOrder" @disabled(!$hasPending && !$hasLive)
                 title="{{ $hasPending || $hasLive ? 'Cancel every running service on this order' : 'Nothing on this order is running' }}"

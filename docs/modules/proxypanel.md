@@ -318,10 +318,13 @@ query string or form body, and **no credential of any kind**.
 
 **Authentication** — any one of:
 
+- `?token=<callback secret>` on the URL — the one the panel can use today, since it sends no
+  headers and its origin address is hidden behind Cloudflare, and
+  `adminproxies-dev.melodyproxy.com` resolves only to Cloudflare edge IPs. Set the panel's
+  callback URL to include it.
 - `X-Panel-Secret: <callback secret>` (constant-time compared), or
 - `X-Panel-Signature: <hex HMAC-SHA256 of the raw request body, keyed with the secret>`, or
-- a source address inside **Callback IPs** — which is what the panel actually uses, since it
-  sends no headers.
+- a source address inside **Callback IPs**.
 
 With neither a secret nor an IP list configured the endpoint returns **403**: callbacks are
 opt-in and never open by default. Anything else unauthorized returns **401**. Every request

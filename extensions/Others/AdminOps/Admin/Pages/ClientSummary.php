@@ -102,24 +102,11 @@ class ClientSummary extends Page
     /** @var array<string, mixed> */
     public array $addon = self::ADDON_DEFAULTS;
 
-    /**
-     * Properties the editor draws itself, plus the module's own machine state.
-     *
-     * The reference's custom fields for this module are exactly Proxies, Service ID and
-     * api-key (the WHMCS module's readme says so). Everything else a module parks on a
-     * service — cached endpoint lists, rotation counters, the last sync time, the
-     * provisioning gate's flags — was being rendered as an editable admin field, which
-     * invites correcting a value nothing reads back and, for the gate flags, silently
-     * changes whether the service may activate.
-     */
+    /** Properties the editor already draws as their own rows, plus the gate's own flags. */
     private const HIDDEN_PROPS = [
-        // Drawn as their own rows above.
         'domain', 'dedicated_ip', 'admin_notes', 'proxy_username', 'proxy_password',
         'termination_date', 'no_suspend_until', 'proxypanel_service_id', 'proxy_api_key',
-        // ProxyPanel's cache and bookkeeping — refreshed from the panel, never typed.
-        'proxy_ips', 'proxy_expiration', 'proxy_rotation_counter', 'proxy_max_rotate',
-        'proxy_rotation_time', 'proxy_synced_at', 'proxy_amount', 'proxy_auth_ips',
-        'proxy_confirmed_at', 'proxy_manual_status_at', 'proxypanel_lock',
+        'proxy_confirmed_at', 'proxy_manual_status_at',
     ];
 
     private const ADDON_DEFAULTS = [
