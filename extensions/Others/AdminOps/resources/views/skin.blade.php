@@ -286,6 +286,10 @@
         padding-right: 15px;
         margin-left: 6px;
         margin-right: 2px;
+        /* Inset from the bar's edges like a menu item, so the hover lands on a pill
+           rather than a band running the full height of the topbar. */
+        height: calc(var(--wa-topbar-h) - (2 * var(--wa-menu-inset)));
+        border-radius: 4px;
     }
 
     .ao-tool-wrap-help {
