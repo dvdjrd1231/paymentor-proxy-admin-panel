@@ -2814,6 +2814,12 @@
 
     /* The reference's Product URLs block: its own grey band above the grid, a narrow
        Visits column and a narrower action column at the end. */
+    /* The Links tab's names are long — "Direct Shopping Cart Link Specifying Template" is
+       44 characters — and the 9.5rem label column broke every one of them over two or
+       three lines. The reference gives them a column wide enough to sit on one. */
+    .ao-anc-row.ao-ep-linkrow { grid-template-columns: 25rem 1fr; }
+    .ao-anc-row.ao-ep-linkrow > span:first-child { white-space: nowrap; }
+
     .ao-ep-urls { padding: 0; overflow: hidden; }
 
     .ao-ep-urls-head {
