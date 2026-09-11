@@ -2832,7 +2832,10 @@
 
     /* The product editor's cross-sell picker: the reference's search box with the picks
        sitting inside it as tags, over a grouped result list. */
-    .ao-ep-cross { position: relative; display: block; width: 100%; max-width: 34rem; }
+    /* Names .ao-anc-field too — same reason as .ao-ep-dl and .ao-ep-listfield: that class
+       sets display:flex further down the sheet, so at equal specificity the flex row won,
+       the picker became a shrink-to-fit flex item, and its placeholder was cut mid-word. */
+    .ao-anc-field.ao-ep-cross { position: relative; display: block; width: 100%; max-width: 34rem; }
 
     .ao-ep-cross-box {
         display: flex;
@@ -2941,9 +2944,9 @@
     /* Same reason as the button above — scoped so it outranks the sheet's later, broader
        input rules rather than depending on where it happens to sit in the file. */
     .ao-mu .ao-ete-subject input {
-        flex: 1;
+        flex: 0 0 700px;
         min-width: 0;
-        max-width: 46rem;
+        max-width: 700px;
         height: 2rem;
         padding: 0 0.5rem;
         border: 1px solid var(--wa-border, #ccc);
@@ -3661,8 +3664,14 @@
     .ao-ete-band .ao-of-row-single { grid-template-columns: 13rem minmax(0, 1fr); }
     .ao-ete-band .ao-of-row > * { padding: 0.35rem 0.7rem; }
 
-    /* The reference's From pair: a short name box, a longer address box. */
-    .ao-ete-from input:first-child { max-width: 13rem; }
+    /* The reference's From pair, at its measured widths: a 200px name box and a 400px
+       address box (configemailtemplates.php, 1600px viewport). */
+    .ao-ete .ao-of-row .ao-ete-from input:first-child { flex: 0 0 200px; width: 200px; max-width: 200px; }
+    .ao-ete .ao-of-row .ao-ete-from input:last-child { flex: 0 0 400px; width: 400px; max-width: 400px; }
+
+    /* Copy To and Blind Copy To are 400 there too — .ao-of-lg's 24rem cap made them 408,
+       which is close enough to look right and wrong enough to notice beside the From row. */
+    .ao-ete .ao-of-row .ao-of-lg { flex: 0 0 400px; width: 400px; max-width: 400px; }
 
     /* The reference names each merge tag beside it, in a dense plain-text list — its
        rows run ~19px at ~12px type, with the tag as bare text rather than a filled
@@ -3695,7 +3704,7 @@
     .ao-of-row .ao-ete-attach input[type="file"],
     .ao-ete-attach input[type="file"] {
         width: 100%;
-        max-width: 46rem;
+        max-width: none;
         height: 2.1rem;
         padding: 0.28rem 0.55rem;
         border: 1px solid var(--wa-border, #ccc);
