@@ -93,6 +93,8 @@ class AdminOps extends Extension
         $this->retireRawCoreScreens();
 
         $this->registerTicketPrintView();
+
+        $this->countProductUrlVisits();
         $this->registerErrorPages();
         $this->applyClientGroupDiscounts();
         $this->creditCancelledServices();
@@ -534,6 +536,52 @@ class AdminOps extends Extension
             ->get('/admin/notification-templates/{record}/edit', $guarded(
                 fn (string $record): string => Admin\Pages\EditEmailTemplate::getUrl(['record' => $record]),
             ))->name('filament.admin.resources.notification-templates.edit');
+    }
+
+    /**
+     * The Visits figure on Edit Product's Links tab. The reference counts hits per product
+     * URL; this counts them the same way, against the path the visitor actually used, so a
+     * product reached by two addresses shows two separate figures.
+     *
+     * Bots and prefetches are not filtered — the reference does not either, and a count that
+     * quietly drops traffic is worse than one that says what it saw.
+     */
+    private function countProductUrlVisits(): void
+    {
+        // RouteMatched, with the slug resolved here rather than read off the route: this
+        // fires before substituteBindings, so the product parameter is still a string at
+        // this point — taking it as a model is why the first attempt counted nothing.
+        Event::listen(\Illuminate\Routing\Events\RouteMatched::class, function ($event): void {
+            try {
+                if ($event->route->getName() !== 'products.show' || !$event->request->isMethod('GET')) {
+                    return;
+                }
+
+                $slug = $event->route->parameter('product');
+                $slug = $slug instanceof \App\Models\Product ? $slug->slug : (string) $slug;
+
+                $productId = \App\Models\Product::where('slug', $slug)->value('id');
+
+                if (!$productId) {
+                    return;
+                }
+
+                \Illuminate\Support\Facades\DB::table('ext_product_url_visits')->upsert(
+                    [[
+                        'product_id' => $productId,
+                        'path' => substr('/' . ltrim($event->request->path(), '/'), 0, 191),
+                        'visits' => 1,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]],
+                    ['product_id', 'path'],
+                    ['visits' => \Illuminate\Support\Facades\DB::raw('visits + 1'), 'updated_at' => now()],
+                );
+            } catch (\Throwable $e) {
+                // A counter must never take the storefront down.
+                report($e);
+            }
+        });
     }
 
     /**

@@ -6658,6 +6658,20 @@
         padding-right: 0.55rem !important;
     }
 
+    /* The cell stops being a flex row. Hiding the injected badge was not enough: an
+       extension styles its own node inline with !important, which outranks any rule here,
+       and as a flex sibling it then takes a share of the row — so the fields carrying one
+       stayed shorter than the rest however they were hidden. Block layout gives the control
+       the full column no matter what else the page ends up holding, so nothing a browser
+       adds after the fact can change a field's width again. */
+    .ao-gs-page .ao-gs-field { display: block; }
+    .ao-gs-page .ao-gs-field > input,
+    .ao-gs-page .ao-gs-field > select,
+    .ao-gs-page .ao-gs-field > textarea { display: block; width: 100%; }
+
+    /* Checkbox rows keep their label beside the box. */
+    .ao-gs-page .ao-gs-field > input[type="checkbox"] { display: inline-block; width: auto; }
+
     .ao-gs-hint { color: var(--wa-muted, #6b6b6b); font-size: 0.86rem; line-height: 1.35; }
 
     .ao-gs-empty { margin: 0.4rem 0; }
@@ -7579,7 +7593,9 @@
     /* .ao-xsel-opt is a span, and the custom select leaves it inline with white-space:normal
        — fine stacked in a select list, but here the two entries ran together on one line and
        broke as "Insert Knowledgebase Link  Add / Billing Entry". One row each. */
-    .ao-et-more-list { left: 0; right: auto; min-width: 15rem; }
+    /* Flush to the button: .ao-xsel-list's 2px margin is dead space the pointer crosses on
+       its way down, and the menu opens on hover — it would shut halfway there. */
+    .ao-et-more-list { left: 0; right: auto; min-width: 15rem; margin-top: 0; }
     .ao-et-more-list .ao-xsel-opt { display: block; white-space: nowrap; }
 
     .ao-et-caret { font-size: 0.7em; }
