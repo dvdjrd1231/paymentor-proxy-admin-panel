@@ -101,19 +101,15 @@
                             'invoice' => 'Invoice Emails - New Invoices, Reminders, & Overdue Notices',
                             'support' => 'Support Emails - Receive a copy of all Support Ticket Communications',
                             'product' => 'Product Emails - Welcome Emails, Suspensions & Other Lifecycle Notifications',
-                            'domain' => 'Domain Emails - Registration/Transfer Confirmation & Renewal Notices',
+                            {{-- No Domain Emails row: we neither sell nor register domains,
+                                 and the rest of that UI went with them. --}}
+                            'affiliate' => 'Affiliate Emails - Receive Affiliate Notifications',
                         ] as $key => $label)
                             <label class="ao-check">
                                 <input type="checkbox" value="{{ $key }}" wire:model="contactPrefs">
                                 <span>{{ $label }}</span>
                             </label>
                         @endforeach
-                        {{-- The reference's sixth row. Affiliate notices go to the account
-                             holder, not to a contact, so there is nothing to tick. --}}
-                        <label class="ao-check ao-gs-off">
-                            <input type="checkbox" disabled title="Affiliate notices go to the account holder rather than to a contact">
-                            <span>Affiliate Emails - Receive Affiliate Notifications</span>
-                        </label>
                         <button type="button" class="ao-link ao-cc-all" @click="all()">Check All</button>
                     </span>
                 </div>

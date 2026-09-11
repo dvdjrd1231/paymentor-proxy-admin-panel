@@ -491,13 +491,10 @@
                 <option value="suspended">Suspended</option>
                 <option value="cancelled">Terminated</option>
             </select>
-            {{-- Dead with the reason on it: a service's payment method is not a column
-                 here, it is read back from the gateway of its last transaction, so there
-                 is nothing to set. --}}
-            <select disabled aria-label="Set payment method"
-                title="A service's payment method is derived from its last transaction's gateway — there is no field to set">
-                <option>- Set Payment Method -</option>
-            </select>
+            {{-- No Set Payment Method: a service has no payment-method column here — it
+                 is read back from the gateway of its last transaction — so the reference's
+                 bulk select had nothing to write to. A disabled control that can never be
+                 enabled is worse than none (Leandro, 2026-09-12). --}}
             <label class="ao-cs-bulk-hold">
                 <input type="checkbox" wire:model.live="bulkHold"> Do not suspend until
             </label>
@@ -851,13 +848,19 @@
                     <span><input id="ao-cs-qty" class="ao-of-sm" type="number" min="1" wire:model="svc.quantity"></span>
                 </div>
                 <div class="ao-of-row">
-                    {{-- A select like the reference's, but the product decides the server,
-                         so it shows rather than chooses. --}}
+                    {{-- The server this service runs on. It is the product's, and core
+                         resolves it from `product->server` on every lifecycle call, so it
+                         is stated rather than offered as a choice that cannot be made —
+                         the product's own editor is where it changes. --}}
                     <span class="ao-of-label">Server</span>
-                    <span><select class="ao-of-md" disabled
-                        title="A product names its server, so every service on it provisions there — change it on the product">
-                        <option>{{ $svcModel->product?->server?->name ?? 'None' }}</option>
-                    </select></span>
+                    <span class="ao-of-plain">
+                        {{ $svcModel->product?->server?->name ?? 'None' }}
+                        @if ($svcModel->product)
+                            <a class="ao-link ao-of-plain-go"
+                                href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::getUrl(['record' => $svcModel->product->id]) }}"
+                                title="Change the server on the product">change</a>
+                        @endif
+                    </span>
                     <label class="ao-of-label" for="ao-cs-price">First Payment Amount</label>
                     <span><input id="ao-cs-price" class="ao-of-sm" type="text" inputmode="decimal" wire:model="svc.price"></span>
                 </div>
@@ -918,14 +921,11 @@
                         <option value="suspended">Suspended</option>
                         <option value="cancelled">Terminated</option>
                     </select></span>
-                    {{-- Shown as the reference's select. The gateway is whichever one took
-                         payment on this service's invoices, which is a fact about those
-                         transactions rather than a setting to change here. --}}
+                    {{-- The gateway that took payment on this service's invoices: a fact
+                         about those transactions, not a setting, so it is stated rather
+                         than offered as a choice that cannot be made. --}}
                     <span class="ao-of-label">Payment Method</span>
-                    <span><select class="ao-of-md" disabled
-                        title="The gateway that took payment on this service's invoices — set at checkout, not here">
-                        <option>{{ $svcPayment }}</option>
-                    </select></span>
+                    <span class="ao-of-plain" title="Whichever gateway the client paid this service's invoices with — chosen at checkout">{{ $svcPayment }}</span>
                 </div>
                 <div class="ao-of-row">
                     <span class="ao-of-label"></span>
