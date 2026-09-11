@@ -8,17 +8,7 @@ use App\Models\Invoice;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Mass Payment — settle several unpaid invoices in one action.
- *
- * The reference portal's version batches invoices into a single gateway payment.
- * Paymenter's gateways are driven one invoice at a time (`ExtensionHelper::pay()` takes
- * a single invoice), so batching through a gateway would mean inventing a synthetic
- * invoice and reconciling it afterwards — the kind of thing that goes wrong quietly with
- * real money. What is offered instead is the part that can be done atomically and
- * correctly: apply account credit across the selection, oldest first, and say plainly
- * what is left to pay individually.
- */
+/** Mass Payment — settle several unpaid invoices in one action. */
 class MassPayment extends Component
 {
     /** Invoice ids the customer has ticked. */
@@ -47,12 +37,7 @@ class MassPayment extends Component
         $this->selected = count($this->selected) === count($all) ? [] : $all;
     }
 
-    /**
-     * Apply credit to the ticked invoices, oldest first.
-     *
-     * Each invoice is settled inside its own locked transaction so a crash midway leaves
-     * earlier invoices genuinely paid rather than half-applied, and re-running is safe.
-     */
+    /** Apply credit to the ticked invoices, oldest first. */
     public function payWithCredit()
     {
         $invoices = $this->invoices()->whereIn('id', $this->selected);

@@ -6,18 +6,6 @@ use Illuminate\Support\Facades\DB;
 /**
  * Issue #38: a Brazilian registration is one of two things, and which one decides the whole
  * set of documents required.
- *
- * - Pessoa Física — a private citizen: RG and CPF.
- * - Pessoa Jurídica — a constituted company: CNPJ, plus Inscrição Estadual (which may be
- *   declared exempt instead of given) and Inscrição Municipal.
- *
- * The original seed deliberately left this out and showed every field at once, on the
- * reading that the customer could pick what applied. Leandro's feedback reverses that: the
- * documents are not interchangeable, and asking a company for a CPF is asking the wrong
- * question. The selector is what the rest of the block keys off, in the admin's Add New
- * Client and on the client's own registration form.
- *
- * Values are stored as written here, so they read correctly on a tax document.
  */
 return new class extends Migration
 {

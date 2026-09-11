@@ -5,15 +5,7 @@ namespace Paymenter\Extensions\Others\ClientTools\Livewire;
 use App\Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * View Available Addons.
- *
- * The reference portal lists what an existing service can be extended with. Paymenter
- * models that as product upgrades (`product_upgrades`, surfaced by Service::upgradable
- * and Service::productUpgrades), so each active service is paired with the products it
- * can move up to and linked at the core upgrade flow — no parallel purchase path, so
- * pricing, proration and provisioning all stay in core's hands.
- */
+/** View Available Addons. */
 class Addons extends Component
 {
     public function render()

@@ -1,10 +1,5 @@
-{{--
-    Create a New Product, to the reference's screen: group, name, URL, module and hidden,
-    then Continue » into the product's own editor for pricing.
-
-    Each row carries the reference's small grey hint under its label. The Product Type tiles
-    are absent — see CreateProduct's docblock.
---}}
+{{-- Create a New Product, to the reference's screen: group, name, URL, module and hidden,
+     then Continue » into the product's own editor for pricing. --}}
 <x-filament-panels::page>
     <div class="ao-mu">
         <form class="ao-anc-card ao-cp-create" wire:submit.prevent="create">

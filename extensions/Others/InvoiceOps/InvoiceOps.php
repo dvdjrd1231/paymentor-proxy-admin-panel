@@ -12,29 +12,6 @@ use Paymenter\Extensions\Others\InvoiceOps\Support\Drafts;
 /**
  * Draft invoices, refunds, and sending an invoice notice by hand.
  *
- * ## Draft — the one that changes behaviour
- *
- * The reference says it plainly on every draft: *"The client is not able to see or access
- * this invoice until it is published."* Paymenter has no such state, and
- * `App\Livewire\Invoices\Index` lists `Auth::user()->invoices()` with **no status filter**.
- * An invoice is therefore visible the instant it exists — so drafting one to check the
- * figures shows the customer a bill you were still writing.
- *
- * `invoices.status` is a plain string column, so `draft` costs no migration. What it costs is
- * a global scope: see {@see Drafts::hideFromCustomers()} for why a scope rather than patching
- * the components that list invoices, and why it does not apply in the console.
- *
- * ## Refunds
- *
- * Recorded, not executed — Paymenter has no refund contract for gateways, and pretending the
- * money moved when it did not is worse than not offering it. {@see Support\Refunds}.
- *
- * ## Sending a notice
- *
- * Core has fifteen invoice templates and no way to fire one at a single invoice; everything
- * is the cron's. The reference puts that dropdown beside the invoice status, and so does
- * **Billing → Invoice Operations**.
- *
  * @link docs/modules/invoice-ops.md
  */
 #[ExtensionMeta(

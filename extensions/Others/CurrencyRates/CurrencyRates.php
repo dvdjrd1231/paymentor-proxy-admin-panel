@@ -13,17 +13,6 @@ use Paymenter\Extensions\Others\CurrencyRates\Support\RateSync;
 /**
  * Keeps secondary-currency prices in step with a published exchange rate.
  *
- * Paymenter stores a price per currency with no rate column, so selling in a second
- * currency means a second price row on every plan. Left to hand-editing those drift, and a
- * currency whose prices are missing makes products unbuyable for whoever selects it.
- *
- * This recomputes them from the base currency on a schedule, and refuses to touch a price
- * that has been edited by hand — see Support\RateSync for both rules.
- *
- * Rates come from open.er-api.com, which needs no API key. The scheduler runs the sync
- * hourly; exchange rates move slowly, so this is about not going stale rather than being
- * live to the minute.
- *
  * @link docs/modules/currency-rates.md
  */
 #[ExtensionMeta(
@@ -126,9 +115,6 @@ class CurrencyRates extends Extension
      * Run one synchronisation. Safe to call from the scheduler or by hand.
      *
      * @param  bool  $useStoredRates  Rewrite prices from the Base Conv. Rate already stored
-     *                                against each currency instead of asking the provider —
-     *                                the Currencies screen's "Update Product Prices", which
-     *                                is how a rate an admin typed in becomes real money.
      */
     public function sync(bool $dryRun = false, bool $useStoredRates = false): array
     {

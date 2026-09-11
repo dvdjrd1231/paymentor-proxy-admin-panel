@@ -9,37 +9,10 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Acting on a cancellation request.
- *
- * ## The gap this closes
- *
- * `service_cancellations.type` is `immediate` or `end_of_period`, and **nothing in core
- * reads it**. The only place a cancellation is consulted at all is the invoicing branch of
- * `app:cron-job`:
- *
- * ```php
- * if ($service->invoices()->where('status','pending')->exists() || $service->cancellation()->exists()) {
- *     return;   // no renewal invoice
- * }
- * ```
- *
- * So every request, whichever type the customer chose, does exactly one thing: it stops the
- * next invoice. A customer who asks to cancel **immediately** keeps a working proxy until the
- * expiry ladder catches up — two days to suspend, fourteen more to terminate — and on a
- * one-time plan, whose `expires_at` is NULL, for ever.
- *
- * There is also no way for an administrator to accept or refuse one: core's list offers Edit
- * and Delete, and deleting is indistinguishable from refusing.
- */
+/** Acting on a cancellation request. */
 class Requests
 {
-    /**
-     * Honour an immediate request: terminate now, release the proxies now.
-     *
-     * The request row is kept, not deleted. It is why the service ended, and a terminated
-     * service with no record of who asked is the question support cannot answer later.
-     */
+    /** Honour an immediate request: terminate now, release the proxies now. */
     public static function accept(ServiceCancellation $request): void
     {
         $service = $request->service;
@@ -73,13 +46,7 @@ class Requests
         });
     }
 
-    /**
-     * Refuse the request: the service goes back to renewing as though it had never been made.
-     *
-     * Deleting the row is what does that — core decides "is this service cancelled" by the
-     * row's existence, so removing it is the whole of un-cancelling. The audit trail is
-     * `owen-it/laravel-auditing`, which core already applies to this model.
-     */
+    /** Refuse the request: the service goes back to renewing as though it had never been made. */
     public static function deny(ServiceCancellation $request): void
     {
         $request->delete();
@@ -102,21 +69,6 @@ class Requests
 
     /**
      * End-of-period requests whose period has now ended.
-     *
-     * This is the reference's *"automatically terminate accounts with cancellation requests
-     * **when due**"*, and it is the half Paymenter never had. Core treats a cancellation as
-     * nothing but a reason to skip the next invoice, so an end-of-period request runs out its
-     * term and then falls into the ordinary overdue ladder: still working for two days past
-     * the period the customer paid for, then suspended for twelve more with its proxies still
-     * allocated. Fourteen days of capacity for a service both sides agreed was finished.
-     *
-     * Terminating on the due date is what the customer asked for and what returns the
-     * capacity. `expires_at` is the due date core keeps for a recurring service; a one-time
-     * service has none — its clock belongs to `Others/TermLimits`, which ends it on its own
-     * schedule, so those are left alone here rather than ended twice by two modules.
-     *
-     * `endOfDay()` because core casts `expires_at` to a date: the customer paid for that day,
-     * so the service is due at the end of it, not at midnight when it begins.
      *
      * @return Collection<int, ServiceCancellation>
      */

@@ -1,18 +1,4 @@
-{{--
-    Styling for the AdminOps dashboard widgets and the client summary.
-
-    Plain CSS, not Tailwind utilities, on purpose. The admin theme
-    (`resources/css/filament/admin/theme.css`) only scans `app/Admin` and `resources/views`
-    for classes — `extensions/` is not a `@source` — so any utility class written in an
-    extension view would simply not exist in the compiled stylesheet. Adding the path
-    would be a core edit *and* would make every deployment depend on an admin CSS rebuild.
-    This has neither problem: it ships with the extension and needs no build step.
-
-    Colours are the custom properties the panel already publishes into `<head>` (see
-    AdminPanelProvider's `panels::head.end` hook, which renders the active theme's
-    colors.blade.php), so these widgets follow the store's palette and dark mode without
-    knowing anything about either.
---}}
+{{-- Styling for the AdminOps dashboard widgets and the client summary. --}}
 <style>
     .ao-panel {
         color: hsl(var(--color-base));

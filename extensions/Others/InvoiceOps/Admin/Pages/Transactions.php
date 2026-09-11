@@ -15,33 +15,7 @@ use Paymenter\Extensions\Others\InvoiceOps\Models\InvoiceRefund;
 use Paymenter\Extensions\Others\InvoiceOps\Models\TransactionNote;
 use Paymenter\Extensions\Others\InvoiceOps\Models\UnappliedTransaction;
 
-/**
- * The reference's **Transactions** page: money in, fees, money out.
- *
- * Its three tiles — Total Income, Total Fees, Total Expenditure — and its columns: Client
- * Name, Date, Payment Method, Description, **Amount In**, **Fees**, **Amount Out**.
- *
- * Core's transaction list has Amount and nothing else, which makes a perfectly ordinary
- * question unanswerable: *what did we actually keep*. A gateway takes its cut before the
- * money arrives, and a refund gives some of it back, so gross receipts are not revenue and
- * a list that only shows receipts cannot say so.
- *
- * ## Where each column comes from
- *
- * - **Amount In** — `invoice_transactions.amount`, which core already records.
- * - **Fees** — `invoice_transactions.fee`. **This column has existed in Paymenter since the
- *   table was created and nothing has ever written to it.** It is populated here for any
- *   gateway that reports a fee; the ones here do not yet, which is why the Fees tile reads
- *   zero and says so rather than implying no fees were charged.
- * - **Amount Out** — refunds, from `Others/InvoiceOps`. This is the half that makes the
- *   reference's Expenditure tile mean anything, and it is why this page lives in this
- *   extension rather than in AdminOps: without the refund record there is nothing to put
- *   in the column.
- *
- * Never summed across currencies, for the reason in `AdminOps\Support\Money`: Paymenter
- * stores a price per currency and no exchange rate, so a single total spanning two would be
- * neither of them.
- */
+/** The reference's **Transactions** page: money in, fees, money out. */
 class Transactions extends Page
 {
     protected string $view = 'invoiceops::pages.transactions';
@@ -546,10 +520,6 @@ class Transactions extends Page
     /**
      * One list, in date order, of payments and refunds.
      *
-     * Interleaved rather than shown as two tables, because the reference's ledger reads as
-     * one story per customer and because "paid, then half of it refunded a week later" is
-     * only obvious when the two lines are next to each other.
-     *
      * @return array<int, array<string, mixed>>
      */
     private function merge($transactions, $refunds, $notes = null, $unapplied = null): array
@@ -614,9 +584,6 @@ class Transactions extends Page
 
     /**
      * The reference's three tiles, per currency.
-     *
-     * Per currency and not one number, because there is no rate to convert with. A store
-     * selling only in USD — the normal case — sees exactly what the reference shows.
      *
      * @return array<string, array{in: float, fee: float, out: float}>
      */

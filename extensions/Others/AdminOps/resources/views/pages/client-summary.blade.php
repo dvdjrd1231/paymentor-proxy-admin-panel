@@ -1,14 +1,5 @@
-{{--
-    The reference's Client Profile: one customer, one screen, in tabs — Summary first, as it
-    is there.
-
-    Only the showing tab is rendered. The obvious build renders all of them and hides the
-    rest with CSS, which is fine for six rows and ruinous for a customer with four hundred
-    invoices: every visit would pay for every tab.
-
-    Everything is read-only and links out to the core page that owns each record, so this
-    stays a view and never a second place to edit from.
---}}
+{{-- The reference's Client Profile: one customer, one screen, in tabs — Summary first, as it
+     is there. --}}
 @php
     $statusTag = fn (string $status) => match ($status) {
         'active', 'paid' => 'ao-tag-success',

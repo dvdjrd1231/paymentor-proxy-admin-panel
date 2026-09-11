@@ -17,18 +17,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * WHMCS's Administrator Roles editor — the Name field over the permission matrix, three
  * columns, with Check All / Uncheck All and the Save Changes / Cancel Changes pair
  * (Leandro, 2026-09-07, screenshots).
- *
- * One page for both create and edit, because the reference uses one form for both. Core's
- * own screens were a Filament resource form with a searchable checkbox list, and its edit
- * page answered **403** for role 1 — that is the "error" on `/admin/roles/1/edit`. It is
- * core refusing on purpose: {@see RoleResource::canEdit} returns `$record->id !== 1`, so
- * the built-in full-administrator group cannot be touched at all.
- *
- * The reference does let you edit Full Administrator, so this page does too, with the
- * guard that actually matters in its place: you may not remove your **own** role's access
- * to role management, because that is the one edit that cannot be undone from inside the
- * admin area. Locking the whole group instead — core's answer — also blocks renaming it
- * and granting permissions, neither of which can lock anybody out.
  */
 class RoleGroup extends Page
 {

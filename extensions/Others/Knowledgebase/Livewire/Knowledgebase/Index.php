@@ -12,12 +12,7 @@ class Index extends Component
 {
     use WithPagination;
 
-    /**
-     * Bound to the search box; `live` on the input keeps results updating as you type.
-     *
-     * Mirrored to `?q=` so the dashboard's knowledgebase search box can hand a question
-     * straight to this page as a plain GET, and so a result list stays shareable.
-     */
+    /** Bound to the search box; `live` on the input keeps results updating as you type. */
     #[Url(except: '')]
     public string $q = '';
 

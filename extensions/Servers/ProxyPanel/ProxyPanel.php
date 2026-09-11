@@ -24,29 +24,6 @@ use Paymenter\Extensions\Servers\ProxyPanel\Support\Endpoints;
  * ProxyPanel — native Paymenter server (provisioning) module, converted from the client's
  * WHMCS "proxyPanel" module.
  *
- * /plans, /locations, /stop, /start, /credentials, /auth_ips, /rotate and /setRotate are
- * absent from api.md but live in production, so the working WHMCS module is authoritative:
- *
- *   GET  /{id}                          service info (expiration, rotation, ips[])
- *   POST /newIpv6                       create
- *   GET  /renew/{id}                    renew (clears counters)
- *   GET  /extend/{id}/{unixtimestamp}   set expiration
- *   GET  /expand|shrink/{id}/{amount}   add / remove proxies (upgrade / downgrade)
- *   GET  /stop/{id} · /start/{id}       suspend / unsuspend
- *   GET  /cancel/{id}                   immediate termination
- *   POST /credentials/{id}              username + password
- *   POST /auth_ips/{id}                 authorized IPs (max 3)
- *   GET  /rotate/{id}/1                 manual rotation
- *   GET  /setRotate/{id}/{minutes}      automatic rotation interval
- *   GET  /reboot/{id}[/hard]            reboot
- *   GET  /plans · /locations            catalogue for the Plan and Region dropdowns
- *   GET  /blacklist/{id}/{enabled|disabled}
- *
- * Auth: every call sends the `Panel: <token>` header. Responses are JSON with a
- * `status` field (`ok`/`error`) and an optional `description`.
- *
- * Renewal has no Paymenter hook: a Service\Updated listener calls /renew then /extend.
- *
  * @link docs/modules/proxypanel.md
  */
 class ProxyPanel extends Server
@@ -108,13 +85,7 @@ class ProxyPanel extends Server
     /** @var array<int, array<string, mixed>>|null memoised /v0/locations/list, all pages */
     private ?array $locationCatalogue = null;
 
-    /**
-     * Endpoints listed on the management page before it defers to the export.
-     *
-     * The catalogue sells 1,500 to 31,500 proxies per service. Rendering them all produces a
-     * page nobody scrolls and every browser struggles with; the Export button already hands
-     * over the complete list in the format customers actually feed to their tooling.
-     */
+    /** Endpoints listed on the management page before it defers to the export. */
     private const MANAGE_PREVIEW = 100;
 
     private const LOG_CHANNEL = 'stack';
@@ -196,16 +167,7 @@ class ProxyPanel extends Server
         }
     }
 
-    /**
-     * Creates `proxypanel_endpoints` (see its migration for why it exists).
-     *
-     * Paymenter runs this when the extension is enabled. ProxyPanel was already enabled when
-     * the table was introduced, so on an existing install run it once by hand:
-     *
-     *   php artisan tinker --execute="\App\Helpers\ExtensionHelper::runMigrations('extensions/Servers/ProxyPanel/database/migrations');"
-     *
-     * Everything degrades to the old property until it exists, so the order does not matter.
-     */
+    /** Creates `proxypanel_endpoints` (see its migration for why it exists). */
     public function installed()
     {
         ExtensionHelper::runMigrations('extensions/Servers/ProxyPanel/database/migrations');
@@ -372,12 +334,6 @@ class ProxyPanel extends Server
      * The Region select, built from `GET /v0/locations/list` — the only endpoint that reports
      * capacity (`total` tunnels, `free` of them unused, enabled/disabled `status`).
      * `/v0/services/locations` returns only the in-stock names, so it cannot mark the rest.
-     *
-     * Offered once a location has capacity at all (`total > 0`); sellable only while enabled
-     * with `free > 0`. The rest are listed, marked and disabled, as the reference does.
-     *
-     * Option values are the "Country - City" label, not the tag: that is what the panel
-     * expects back as `location_name`.
      */
     public function getCheckoutConfig(Product $product): array
     {
@@ -460,10 +416,6 @@ class ProxyPanel extends Server
 
     /**
      * Every page of `GET /v0/locations/list` (docs/client-brief/locations.md).
-     *
-     * Paged on `total`/`items_per_page`, never `total_pages`: the panel reports 2 pages for
-     * 246 locations at 100 each, and page 3 does return the missing 46. Memoised per
-     * instance — ExtensionHelper builds a fresh one per resolution, so it cannot go stale.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -555,12 +507,7 @@ class ProxyPanel extends Server
         return false;
     }
 
-    /**
-     * `GET /plans` and `GET /locations` as `[tag => label]`.
-     *
-     * The live panel answers with a bare JSON array of label strings; `data`-wrapped and
-     * object-row forms are accepted too, since neither endpoint is in api.md.
-     */
+    /** `GET /plans` and `GET /locations` as `[tag => label]`. */
     private function fetchOptions(string $path): array
     {
         $data = $this->request('get', $path);
@@ -773,14 +720,7 @@ class ProxyPanel extends Server
         });
     }
 
-    /**
-     * WHMCS SuspendAccount → GET /stop/{id}.
-     *
-     * A service the panel never created has nothing to stop, so this says so rather than
-     * throwing — the same idempotence {@see terminateServer} has always had. Without it,
-     * changing the status of an order whose services were never provisioned queued a job
-     * that could only fail, and the failure landed in Failed Jobs looking like an outage.
-     */
+    /** WHMCS SuspendAccount → GET /stop/{id}. */
     public function suspendServer(Service $service, $settings, $properties)
     {
         return $this->withLock($service, 'suspend', function () use ($service) {
@@ -947,14 +887,7 @@ class ProxyPanel extends Server
         ])->render();
     }
 
-    /**
-     * `ip:port` endpoints for the management table.
-     *
-     * Capped: a Ruby service has 31,500 of them, and rendering that many rows produces a
-     * page no browser handles well and nobody reads. The table shows the first
-     * `MANAGE_PREVIEW`, says how many there are in total, and the Export button — which
-     * streams — remains the way to get all of them.
-     */
+    /** `ip:port` endpoints for the management table. */
     private function endpointList(Service $service): array
     {
         return Endpoints::all($service, self::MANAGE_PREVIEW);
@@ -1029,12 +962,7 @@ class ProxyPanel extends Server
         return $data;
     }
 
-    /**
-     * Does this panel payload describe a deployed, usable service?
-     *
-     * The panel's list view shows "deployed: none / status: pending" until it finishes,
-     * so proxies actually being assigned is the reliable signal.
-     */
+    /** Does this panel payload describe a deployed, usable service? */
     private function panelReportsDeployed(array $payload): bool
     {
         $state = strtolower((string) ($payload['status'] ?? $payload['state'] ?? ''));
@@ -1199,14 +1127,7 @@ class ProxyPanel extends Server
 
     // ── Activation gating ────────────────────────────────────────────────────
 
-    /**
-     * Write a status straight to the row.
-     *
-     * The guard runs inside the model's own `updated` event, where the attribute is written
-     * but `original` still holds the pre-save value — so assigning the old value back leaves
-     * the model *not dirty* and `save()` would write nothing. Go through the query builder
-     * and re-sync the attribute; this also avoids re-entering the observer.
-     */
+    /** Write a status straight to the row. */
     private function forceStatus(Service $service, string $status): void
     {
         Service::whereKey($service->getKey())->update(['status' => $status]);
@@ -1276,22 +1197,6 @@ class ProxyPanel extends Server
     /**
      * Handle a status callback from the panel: resolve the service, apply the status, and
      * record failures so they surface in the admin with a retry.
-     *
-     * Shape is the panel's, not ours — the WHMCS module's `callback.php` is the contract it
-     * was written against, and it reads `$_REQUEST['id']` and `$_REQUEST['status']`. That
-     * means GET or POST, form-encoded or query string, with no credential at all. Accepting
-     * only signed JSON POSTs is why nothing ever landed: a GET never even reached this
-     * method, because the router answered 405 first.
-     *
-     * Authentication, any one of:
-     *   ?token=<callback_secret>                                 (works with a URL alone)
-     *   X-Panel-Secret: <callback_secret>                        (constant-time compared)
-     *   X-Panel-Signature: <hex HMAC-SHA256 of the raw body>
-     *   a source address inside callback_ips
-     *
-     * The token is there because the panel sends no headers and sits behind Cloudflare, so
-     * its origin address cannot be read from DNS — but its callback URL is configurable, and
-     * a secret in that URL is something it can already do today.
      */
     public function callback(Request $request)
     {
@@ -1383,18 +1288,7 @@ class ProxyPanel extends Server
         ));
     }
 
-    /**
-     * The panel's `id` is ambiguous and has to be tried both ways round.
-     *
-     * `callback.php` looks it up as `tblhosting.id` — the *WHMCS service* id, which the module
-     * sent across as `client_id`. So the panel echoes our own id back to us under the name
-     * `id`. But `/newIpv6` answers with the panel's own id under that same name, and the other
-     * keys (`service_id`, `panel_id`) have been seen carrying it too. Reading `id` as the
-     * panel's id alone is how a callback could resolve to a completely unrelated service whose
-     * remote id happened to equal our service id.
-     *
-     * Our own id wins when both match, because that is the reading `callback.php` codifies.
-     */
+    /** The panel's `id` is ambiguous and has to be tried both ways round. */
     private function resolveServiceFromCallback(array $payload): ?Service
     {
         $ids = [];
@@ -1561,12 +1455,6 @@ class ProxyPanel extends Server
      */
     /**
      * The customer's `host:port` endpoints. The live panel returns three shapes:
-     *
-     *  1. `"ips": [{"ip": null, "port": 10000, "out": "2a10:500:…"}]` — just after create,
-     *     before a node is assigned; `out` carries the outbound address.
-     *  2. `"ips": null` — still undeployed.
-     *  3. `{"ip": "23.159.233.5", "first": 10000, "last": 10000, "amount": 1}` — deployed:
-     *     one host with a port *range*, not a list.
      *
      * @return array<int,string>
      */

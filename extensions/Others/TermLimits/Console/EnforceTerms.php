@@ -5,17 +5,7 @@ namespace Paymenter\Extensions\Others\TermLimits\Console;
 use Illuminate\Console\Command;
 use Paymenter\Extensions\Others\TermLimits\Support\Sweeper;
 
-/**
- * The sweeper, by hand.
- *
- * The every-minute schedule calls {@see Sweeper::run()} directly; this is the same pass for
- * an operator who wants to see it, and `--dry-run` is the safe way to find out what a fresh
- * install is about to stop before it stops it.
- *
- *   php artisan term-limits:enforce --dry-run
- *   php artisan term-limits:enforce
- *   php artisan term-limits:enforce --backfill   open terms for services already running
- */
+/** The sweeper, by hand. */
 class EnforceTerms extends Command
 {
     protected $signature = 'term-limits:enforce

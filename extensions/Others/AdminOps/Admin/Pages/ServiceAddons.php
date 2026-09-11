@@ -19,11 +19,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * Issue #7 — WHMCS's Service Addons, now to its screenshot: the Search/Filter framed
  * panel (addon, product/service, status, client name, server, billing cycle), the navy
  * grid with the reference's columns, With Selected: Send Message, and Hide Inactive.
- *
- * An addon **is a service row** — that single decision buys the whole billing lifecycle:
- * core raises its renewal invoices, suspends it when unpaid, and the admin's normal
- * service tools all apply. What core cannot hold is whose addon it is; that link lives in
- * `ext_service_addons`. The catalogue is the **Service Addons** product category.
  */
 class ServiceAddons extends Page
 {

@@ -11,17 +11,6 @@ use Illuminate\Support\Facades\Schema;
  * Currencies-fields migration: guarded column-by-column, added here rather than in that
  * extension's own migrations, because `installed()` re-runs every migration on enable and
  * this file belongs to the feature that needed it.
- *
- * Fixed Amount is not added as a real commission mode: `AffiliateOrder::earnings()` and
- * `RewardAffiliate` both compute strictly `invoice total × percentage`, so a "fixed
- * amount" column with nothing that reads it would be a setting that lies. The screen
- * offers Use Default and Percentage — the two modes that already are `reward` being null
- * or set — and Fixed Amount stays a disabled option with the reason on it.
- *
- * `ext_affiliate_manual_commissions` is the reference's "Add Manual Commission Entry" —
- * AdminOps's own ledger, same pattern as `ext_affiliate_withdrawals` (issue #6): the
- * Affiliates extension keeps no such record, so this is a new table rather than a change
- * to that extension's own.
  */
 return new class extends Migration
 {

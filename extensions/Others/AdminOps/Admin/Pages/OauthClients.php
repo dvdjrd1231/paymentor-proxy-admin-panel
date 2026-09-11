@@ -13,10 +13,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * Issue #51 — WHMCS's OpenID Connect screen, to its screenshots (Leandro, 2026-09-07):
  * the intro, the green Generate button, the records line with Jump to Page, and the navy
  * Name / Description / Last Updated grid with a Manage button on each row.
- *
- * Both Generate and Manage lead to {@see OauthClient}, which is the reference's own
- * create-and-manage form. Core's resource screens are retired behind redirects — the
- * secret is minted there and shown once, and this list never prints a credential.
  */
 class OauthClients extends Page
 {

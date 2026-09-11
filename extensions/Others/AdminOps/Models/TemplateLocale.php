@@ -10,9 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * A template's translation into one active language, and the list of which languages are
  * active at all.
- *
- * See the `ext_notification_template_locales` migration for why the translations live
- * beside core's table rather than in it.
  */
 class TemplateLocale extends Model
 {
@@ -63,12 +60,7 @@ class TemplateLocale extends Model
         \App\Classes\Settings::flushCache();
     }
 
-    /**
-     * The language a user reads in, or null for the default.
-     *
-     * Clients carry it as a profile property (Add New Client writes it); anyone without
-     * one reads the default version, which is what the reference does for English.
-     */
+    /** The language a user reads in, or null for the default. */
     public static function localeFor(User $user): ?string
     {
         $locale = (string) ($user->properties->firstWhere('key', 'language')?->value ?? '');
@@ -78,10 +70,6 @@ class TemplateLocale extends Model
 
     /**
      * The translated subject and body for a template in one language, or null.
-     *
-     * Returns null unless *both* the language is still active and a translation exists
-     * with something in it — a half-filled translation must not send a blank email, so a
-     * missing piece falls back to the default rather than overriding it with nothing.
      *
      * @return array{subject: string, body: string}|null
      */

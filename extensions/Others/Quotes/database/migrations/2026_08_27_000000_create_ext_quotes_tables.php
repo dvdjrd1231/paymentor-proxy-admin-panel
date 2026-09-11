@@ -4,17 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Quotes: a priced proposal a customer can accept, which then becomes an invoice.
- *
- * Paymenter has no document that is not already a bill. An invoice is `pending`, `paid` or
- * `cancelled`, and none of those can stand in for "here is what it would cost" without
- * misrepresenting a proposal as a debt — the customer sees it in their invoice list, the
- * overdue ladder starts counting, and a reminder goes out for money nobody agreed to pay.
- *
- * So a quote is its own record, with its own life, and only becomes an invoice at the moment
- * somebody accepts it.
- */
+/** Quotes: a priced proposal a customer can accept, which then becomes an invoice. */
 return new class extends Migration
 {
     public function up(): void

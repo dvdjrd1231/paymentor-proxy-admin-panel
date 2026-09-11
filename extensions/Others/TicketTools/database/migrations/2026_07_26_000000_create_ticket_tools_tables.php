@@ -4,13 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Ticket tooling: canned (quick) replies + staff-only internal notes.
- *
- * These are additive tables — core ticket tables are untouched, so upgrades are safe.
- * Internal notes live in their own table the client theme never renders, so they are
- * never exposed to customers.
- */
+/** Ticket tooling: canned (quick) replies + staff-only internal notes. */
 return new class extends Migration
 {
     public function up(): void

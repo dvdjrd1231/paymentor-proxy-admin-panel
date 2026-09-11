@@ -24,13 +24,6 @@ use Paymenter\Extensions\Others\Quotes\Support\Quoting;
  * WHMCS's Create New Quote, to its screenshots: General Information (subject, stage, dates),
  * the button row, Client Information (existing client or a new one typed in place), the
  * Line Items grid with per-line discount and taxed flag, and the three notes boxes.
- *
- * One page for create and edit — the reference's own behaviour: Save on an empty form
- * creates the quote and stays on it, every later Save updates it. The stage select speaks
- * the reference's words (Draft/Delivered/…) over the extension's real statuses.
- *
- * "Quote for new client" creates a real client account — a quote must belong to someone
- * the system knows, so the lead becomes a user with a random password they can reset.
  */
 class CreateQuote extends Page
 {

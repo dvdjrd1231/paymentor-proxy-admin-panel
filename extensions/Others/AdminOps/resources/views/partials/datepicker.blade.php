@@ -1,18 +1,7 @@
-{{--
-    The reference's calendar, shared by every date field. Entirely client-side Alpine —
-    opening, paging months and picking days never leave the browser, which is what makes
-    it feel like the reference's; the one server call is the final $wire.set that lands
-    the chosen value in the Livewire property.
-
-    Included with:
-      @include('adminops::partials.datepicker', [
-          'model' => 'dates',          // the Livewire property the value lands in
-          'range' => true,             // two months + Apply; false = one month, click picks
-          'id' => 'ao-of-dates',
-          'placeholder' => 'MM/DD/YYYY - MM/DD/YYYY',
-          'class' => 'ao-of-lg',
-      ])
---}}
+{{-- The reference's calendar, shared by every date field. Entirely client-side Alpine —
+     opening, paging months and picking days never leave the browser, which is what makes
+     it feel like the reference's; the one server call is the final $wire.set that lands
+     the chosen value in the Livewire property. --}}
 <span class="ao-of-date" x-data="{
         open: false,
         range: {{ !empty($range) ? 'true' : 'false' }},

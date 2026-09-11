@@ -1,13 +1,7 @@
-{{--
-    System Settings, to issues #34 and #40: the reference's landing screen — the
-    setup-tasks progress box up top, a left rail with Search, the category list and
-    Recently Visited, then the "All Settings" band with its sort control over the grid
-    of tall cards.
-
-    Everything on it is real. The progress bar counts actual setup state; the search
-    filters the cards that are on the page; Recently Visited is this browser's own
-    trail, kept in localStorage; the sort control reorders the cards it says it does.
---}}
+{{-- System Settings, to issues #34 and #40: the reference's landing screen — the
+     setup-tasks progress box up top, a left rail with Search, the category list and
+     Recently Visited, then the "All Settings" band with its sort control over the grid
+     of tall cards. --}}
 <x-filament-panels::page>
     <div class="ao-mu ao-ssx">
         {{-- The reference's setup-tasks box, top right of the hero. --}}

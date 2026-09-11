@@ -13,11 +13,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * WHMCS's Support Overview, to its screenshot: the department band, the tile row —
  * Active Tickets, Client Replies, Staff Replies, Tickets Without Reply, Average First
  * Response — and the two charts, Average First Reply Time and Tickets Submitted by Hour.
- *
- * All of it is computed from `tickets` and `ticket_messages` over the last 30 days: a
- * client reply is a message by the ticket's own user after the first, a staff reply is
- * anyone else's, and first response is the gap between the ticket's first message and the
- * first staff message after it.
  */
 class SupportOverview extends Page
 {

@@ -16,22 +16,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * The reference's Create a New Product screen (Leandro, 2026-09-07, screenshot of
  * `configproducts.php?action=create`): group, name, URL, module and hidden, then Continue
  * into the product's own page for pricing and the rest.
- *
- * Continue is the reference's own shape and the right one here too — a product is not
- * finished until it has a plan and a price, and those live on core's product editor. This
- * screen creates the row and hands over.
- *
- * ## Product Type
- *
- * The reference opens with four tiles — Shared Hosting, Reseller Hosting, Server/VPS,
- * Other. Paymenter has no type column and no behaviour hanging off one: what a product
- * *does* comes entirely from the server module it provisions through, which is the Module
- * field. The type is what the catalogue's Type column *reads*, though — Leandro's own
- * WHMCS prints "Other (ProxyPanel)" on every row of this store — so it is stored per
- * product in `ext_ao_meta` and shown there.
- *
- * It is presentation, and only presentation. Nothing branches on it, which is why the
- * tiles carry no promise of changing the fields below them the way the reference's do.
  */
 class CreateProduct extends Page
 {

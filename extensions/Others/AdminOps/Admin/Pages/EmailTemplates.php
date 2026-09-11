@@ -59,14 +59,7 @@ class EmailTemplates extends Page
         }
     }
 
-    /**
-     * The reference's Create New Email Template dialog: a type and a unique name.
-     *
-     * The name becomes the template's key, because the key is what the system sends by.
-     * The type is only where the row files itself on this list — nothing about a template
-     * here is decided by its category — so it is kept beside the record rather than in a
-     * column core would have to grow.
-     */
+    /** The reference's Create New Email Template dialog: a type and a unique name. */
     public function createTemplate(): void
     {
         abort_unless(NotificationTemplateResource::canCreate(), 403);

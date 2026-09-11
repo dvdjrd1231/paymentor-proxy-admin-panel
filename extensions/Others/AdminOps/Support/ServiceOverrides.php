@@ -13,19 +13,6 @@ use Illuminate\Support\Facades\Schema;
  * The enforcement half of the Client Profile's Termination Date and Override
  * Auto-Suspend fields (user request, 2026-09-04). Both are service properties; a
  * property nothing reads is a setting that lies, so this sweep is what reads them:
- *
- * - `termination_date` — the reference's Termination Date: the day the service ends,
- *   renewals or not. Once the date has passed, terminate exactly the way the overdue
- *   ladder does (TerminateJob + status), and clear the property so it acts once.
- * - `no_suspend_until` — the reference's Override Auto-Suspend ("do not suspend
- *   until…"): core's cron suspends unconditionally, and nothing in an extension can
- *   argue with it before the fact — so this undoes it right after: a service the
- *   ladder suspended while its override is still ahead is unsuspended again. Expired
- *   overrides are cleared so the next overdue pass acts normally.
- *
- * Hourly, same cadence and guard pattern as the Cancellations sweeper — and like it,
- * failures are logged per-service rather than thrown, so one unreachable panel does not
- * stop the rest of the queue.
  */
 class ServiceOverrides
 {
@@ -102,11 +89,6 @@ class ServiceOverrides
     /**
      * Un-suspend every service belonging to a client whose group is exempt from suspend
      * and terminate.
-     *
-     * Corrective rather than preventive: the overdue ladder that suspends services is
-     * core's, and an extension cannot stop it deciding. What it can do is put the service
-     * back on the next pass, which is the same shape the per-service Override
-     * Auto-Suspend already works in.
      */
     private static function liftExemptGroups(): int
     {

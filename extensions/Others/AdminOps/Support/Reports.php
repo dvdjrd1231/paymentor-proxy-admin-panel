@@ -20,9 +20,6 @@ use Illuminate\Support\Carbon;
  * report Paymenter can honestly answer. One registry, one data method per report — the
  * landing page, the dropdown, the rail and the report screen all read the same list, so
  * none of them can disagree about what exists.
- *
- * A report is "real" when its numbers come from tables this install actually writes.
- * The rest render as the reference's pills but disabled, each saying why.
  */
 class Reports
 {

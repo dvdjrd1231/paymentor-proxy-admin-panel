@@ -14,26 +14,6 @@ use Illuminate\Support\Facades\Http;
  * tiles — Your Version in grey, Latest Version in blue — with the release links under
  * them. Core's own Updates page stays reachable and untouched; this one exists because
  * the reference's screen is the one the staff know how to read.
- *
- * ## Why core says "development", and what this page says instead
- *
- * Core ships `app.version = development` because this install runs from source rather
- * than a tagged release tarball — the string is core's own, not a warning. Leandro's
- * instruction on the issue is that production should always present production versions,
- * the way WHMCS does. So this page reports the *upstream release line* honestly:
- *
- * - **Your Version** is {@see self::VENDORED_BASE}, the upstream release the vendored
- *   core was taken after, with the deployed source commit under it. That constant is
- *   maintained by hand and belongs to the vendoring commit — re-vendor core, update it.
- * - **Latest Version** comes from the same endpoint core's own update checker uses,
- *   `https://api.paymenter.org/version`, cached for six hours so the page never hangs
- *   on a slow upstream.
- *
- * Updating itself is not a button here. This install updates by vendoring upstream into
- * the repository and deploying — core's web updater would overwrite source-controlled
- * files in place and drift the server from git — so Update Now is an honestly-dead
- * control whose title says exactly that, the accepted convention for the reference's
- * controls this deployment cannot offer.
  */
 class UpdatePaymenter extends Page
 {
@@ -44,14 +24,7 @@ class UpdatePaymenter extends Page
     /** Navigation is built by {@see \Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation}. */
     protected static bool $shouldRegisterNavigation = false;
 
-    /**
-     * The upstream release the vendored core sits at.
-     *
-     * Raised to 1.5.8 on 2026-09-07: the release was vendored file by file — 31 changed
-     * files and one new one taken as-is, and the nine files `docs/CORE-TOUCHPOINTS.md`
-     * records as modified compared by hand, all nine of which turned out to already carry
-     * 1.5.8's content plus our changes. Update this alongside any re-vendor of core.
-     */
+    /** The upstream release the vendored core sits at. */
     public const VENDORED_BASE = '1.5.8';
 
     /** How long a fetched latest-version answer is trusted before asking again. */
@@ -69,22 +42,7 @@ class UpdatePaymenter extends Page
         return 'Update Paymenter';
     }
 
-    /**
-     * The blue button, which examines the release rather than applying it.
-     *
-     * On this install applying an update is not a file overwrite, and the reason is
-     * structural rather than a policy I chose: `/opt/paymenter-proxy-admin-panel/app` is
-     * bind-mounted straight into the container as `/app/app`, so a file this page wrote
-     * would land in the server's own git working tree. That tree is what `git pull`
-     * fast-forwards on every deploy, so the next deploy would refuse to run — and the
-     * write would have gone around the review that vendoring a release exists to provide,
-     * silently replacing the nine files `docs/CORE-TOUCHPOINTS.md` records as modified.
-     *
-     * So the button downloads the release and answers the only question it honestly can:
-     * exactly which files differ, and which of them carry our own changes. Applying is a
-     * repository operation — vendor the release, merge those nine by hand, commit, deploy
-     * — and the panel is not the place it happens.
-     */
+    /** The blue button, which examines the release rather than applying it. */
     public function updateNow(): void
     {
         Cache::forget(self::CACHE_KEY);
@@ -122,14 +80,6 @@ class UpdatePaymenter extends Page
      * Download the newest release and work out exactly which core files it would change
      * (Leandro, 2026-09-07: "update only possible and necessary files without changing
      * functions and designs").
-     *
-     * This is the honest form of that request on this deployment. Core's own updater
-     * unpacks a release over the installation wholesale, which here would overwrite the
-     * fourteen modifications `docs/CORE-TOUCHPOINTS.md` records and leave the server's
-     * git tree diverged from the repository — the two outcomes his sentence rules out.
-     * So the download is real, and what comes back is the file-by-file answer to "what is
-     * actually necessary": how much is already identical, what may be taken safely, and
-     * the short list of files carrying our own changes that a person has to merge.
      */
     public function buildPlan(): void
     {

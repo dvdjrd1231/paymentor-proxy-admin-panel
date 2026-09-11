@@ -98,17 +98,7 @@ class ServersList extends Page
         ];
     }
 
-    /**
-     * The reference's IP Address column.
-     *
-     * A Paymenter server is a module instance rather than a box with an address of its own,
-     * so what belongs here is the address the module actually talks to — the host out of its
-     * configured API URL. Shown as the host alone, because the full URL with its scheme and
-     * path is longer than the column and says no more.
-     *
-     * Never the token or secret beside it in the same settings: this list is the most-linked
-     * screen in Setup and credentials do not belong on a page people leave open.
-     */
+    /** The reference's IP Address column. */
     private function address(Server $server): ?string
     {
         foreach (['api_url', 'host', 'hostname', 'url', 'panel_url'] as $key) {

@@ -1,12 +1,6 @@
-{{--
-    WHMCS's left sidebar column, rendered on every admin page through the
-    `panels::layout.start` hook — which puts it inside `.fi-layout`, immediately before
-    Filament's own (off-screen) sidebar, so it becomes the first column of the page.
-
-    Static markup on purpose: this is not a Livewire component, so it costs one render and
-    never polls. Everything on it changes on the scale of minutes, and the dashboard widgets
-    already carry the live figures.
---}}
+{{-- WHMCS's left sidebar column, rendered on every admin page through the
+     `panels::layout.start` hook — which puts it inside `.fi-layout`, immediately before
+     Filament's own (off-screen) sidebar, so it becomes the first column of the page. --}}
 @php
     use Paymenter\Extensions\Others\AdminOps\Support\Rail;
 

@@ -10,17 +10,6 @@ use Illuminate\Support\HtmlString;
 /**
  * Ticket Tools — the two ticket features Paymenter core lacks (spec item 3):
  *
- *  - **Quick replies (canned responses)**: a staff-managed library of reusable
- *    answers (`CannedResponse`), optionally scoped by department.
- *  - **Internal notes**: staff-only notes attached to a ticket (`TicketNote`),
- *    kept in their own table that the client theme never renders — so they are
- *    never exposed to customers.
- *
- * Everything else the spec asks for (departments, priorities, attachments, service
- * association, permission-based access, notifications) is already provided by core;
- * this extension only fills the two real gaps. No core edits — additive tables +
- * auto-discovered Filament resources.
- *
  * @link docs/modules/ticket-tools.md
  */
 class TicketTools extends Extension
@@ -45,13 +34,7 @@ class TicketTools extends Extension
         ];
     }
 
-    /**
-     * Auto-assign a new ticket from the department routing table.
-     *
-     * WHMCS routes by department; Paymenter stores the department but leaves assignment
-     * manual. Rules are plain text so support staff can edit them without a deploy, and an
-     * unmatched department simply stays unassigned rather than guessing.
-     */
+    /** Auto-assign a new ticket from the department routing table. */
     private function routeTicket(\App\Models\Ticket $ticket): void
     {
         $rules = trim((string) $this->config('department_routing'));

@@ -8,25 +8,10 @@ use Illuminate\Support\Facades\Log;
 use Paymenter\Extensions\Others\TermLimits\Models\ServiceTerm;
 use Paymenter\Extensions\Others\TermLimits\TermLimits;
 
-/**
- * One pass over the terms that are due.
- *
- * A plain class rather than the console command's `handle()` so the scheduler can call it
- * directly — the same reason `Others/CurrencyRates` schedules a closure. There is one
- * implementation, and `php artisan term-limits:enforce` and the every-minute schedule are
- * two ways into it rather than two copies of it.
- */
+/** One pass over the terms that are due. */
 class Sweeper
 {
-    /**
-     * The reference's **Fixed Term Terminations** task, and the key it reports under.
-     *
-     * WHMCS's Automation Status lists this beside "Overdue Terminations" as a task of its
-     * own, because they are different things: one is a service whose paid period ran out
-     * unpaid, the other is a service that was always going to end on a date. Reporting them
-     * together would hide a fixed-term module that has stopped behind an overdue ladder that
-     * has not.
-     */
+    /** The reference's **Fixed Term Terminations** task, and the key it reports under. */
     public const STAT_KEY = 'fixed_term_terminations';
 
     /**
@@ -98,10 +83,6 @@ class Sweeper
     /**
      * Report the pass to `cron_stats`, which is where core's own tasks report and therefore
      * where Automation Status reads.
-     *
-     * Written even when both numbers are zero. A task that only records a row when it did
-     * something is, on that page, indistinguishable from a task that has stopped running —
-     * and "nothing was due today" is the answer you want to be able to see.
      */
     private static function record(int $stopped, int $failed): void
     {
@@ -109,14 +90,7 @@ class Sweeper
         CronStat::create(['key' => static::STAT_KEY . '_failed', 'value' => $failed, 'date' => now()->toDateString()]);
     }
 
-    /**
-     * Terms for services that were already live when this was installed.
-     *
-     * Each gets a full term from **now** rather than from its order date: a customer who has
-     * had an unmetered proxy for three weeks through no fault of their own should not lose
-     * it the moment somebody ticks a box. Re-runnable — {@see Terms::open()} is keyed on the
-     * service, so a second pass opens nothing twice.
-     */
+    /** Terms for services that were already live when this was installed. */
     public static function backfill(): int
     {
         $opened = 0;
@@ -141,13 +115,7 @@ class Sweeper
         return $opened;
     }
 
-    /**
-     * Whether expiry terminates or suspends.
-     *
-     * Read through the extension itself rather than from `config('settings.…')`: this is an
-     * extension setting, and `Extension::config()` is what loads those — including keeping
-     * the default in one place, the `getConfig()` definition.
-     */
+    /** Whether expiry terminates or suspends. */
     public static function terminates(): bool
     {
         try {

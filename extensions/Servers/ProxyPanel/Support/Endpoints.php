@@ -6,23 +6,7 @@ use App\Models\Service;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Where a service's provisioned proxies live.
- *
- * They used to be one comma-joined string in a `properties` row. That column is `TEXT`
- * (65,535 bytes ≈ 1,213 endpoints) and the smallest product in the catalogue sells 1,500
- * ports, so storing the panel's reply threw `Data too long for column 'value'` and the whole
- * provisioning run failed — after the panel had already allocated the proxies. See the
- * migration for the full reasoning.
- *
- * Two things this has to keep doing, which is why it is a class and not a query:
- *
- *  - **Read the old property when the new table has nothing.** Services provisioned before
- *    this change still have their list in `proxy_ips`, and they must keep working.
- *  - **Survive the table not existing.** The migration runs from the extension's
- *    `installed()` hook, so between deploying the code and running it there is a window
- *    where the table is absent. Everything degrades to the legacy property rather than 500s.
- */
+/** Where a service's provisioned proxies live. */
 class Endpoints
 {
     public const LEGACY_PROPERTY = 'proxy_ips';
@@ -39,9 +23,6 @@ class Endpoints
 
     /**
      * Replace this service's endpoints with the given `host:port` strings.
-     *
-     * Delete-then-insert rather than a diff: the panel's reply is the whole truth about what
-     * a service owns, and a rotation can change every entry at once.
      *
      * @param  array<int, string>  $endpoints
      */
@@ -116,9 +97,6 @@ class Endpoints
     /**
      * Walk every endpoint in batches.
      *
-     * The export for a 31,500-proxy service is about 1.7 MB of text; building it from a
-     * single `get()` would hold every row and every rendered line in memory at once.
-     *
      * @param  callable(array<int, string>): void  $callback
      */
     public static function each(Service $service, callable $callback): void
@@ -168,10 +146,6 @@ class Endpoints
 
     /**
      * Split `host:port`, coping with IPv6.
-     *
-     * `2a10:500::1:10000` is mostly colons, so the port is the last colon-separated segment
-     * and only when it is numeric — the same rule the export uses. A bracketed form
-     * (`[2a10:500::1]:10000`) is unwrapped first.
      *
      * @return array{0: string|null, 1: int|null}
      */

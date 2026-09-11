@@ -32,16 +32,6 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\SystemSettings;
  * The icon clusters at each end of WHMCS's menu bar: the `+` at the start, and search, cogs,
  * updater, wrench, account and help at the end.
  *
- * Which of those are links and which are menus was read off the reference's own template
- * (`admin/templates/blend/nav.tpl`, `ul.right-nav`) — a screenshot cannot show the difference.
- * The cogs and the updater are plain links; the wrench and help are menus. The account menu is
- * Filament's own, moved into position by the skin rather than rebuilt here, so its sign-out
- * keeps working.
- *
- * Permission checks and URL resolution happen here, not in the view: this renders on every
- * admin page, so an unbuildable link must vanish rather than throw. See
- * {@see WhmcsNavigation::resolveUrl()}.
- *
  * @link docs/02b-admin-area.md
  */
 class Toolbar

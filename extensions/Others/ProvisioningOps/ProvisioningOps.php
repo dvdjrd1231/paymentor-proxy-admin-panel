@@ -14,23 +14,6 @@ use Paymenter\Extensions\Others\ProvisioningOps\Models\ProvisioningOperation;
  * Provisioning operations log — makes failed provisioning **visible to the admin and
  * retryable**, and stops a failed provision from leaving an order silently "active".
  *
- * Why this exists
- * ---------------
- * Paymenter activates a service and dispatches provisioning as a queued job
- * (`App\Services\Service\RenewServiceService`): the status is set to `active` and saved
- * immediately, *before* the queue worker runs `CreateJob`. If the panel API is down, the
- * job fails on the worker and nothing points back at the service — the customer has an
- * "active" proxy service that was never provisioned.
- *
- * Server extensions call `ProvisioningOps::failed()` from their error path. That:
- *   1. records the failure (one row per service+extension+action, attempts counted),
- *   2. reverts a service that a failed *create* had already marked active back to
- *      `pending`, so it is never silently active, and
- *   3. surfaces it in the admin with a one-click **Retry**.
- *
- * All entry points are null-safe and table-existence guarded, so a server extension can
- * call them unconditionally even when this module is disabled.
- *
  * @link docs/modules/provisioning-ops.md
  */
 class ProvisioningOps extends Extension
@@ -156,9 +139,6 @@ class ProvisioningOps extends Extension
     /**
      * Push the failure to the notification channels (scope §11 "critical failures"), so a
      * panel outage reaches someone instead of sitting unnoticed in the admin list.
-     *
-     * Optional by design: the Notifications extension may not be installed, and a
-     * notification problem must never mask the provisioning problem.
      */
     private static function alertAdmins(Service $service, string $extension, \Throwable $e): void
     {

@@ -29,13 +29,6 @@ class BillableItem extends Model
     /**
      * The reference's **Invoice Action**, less the two that only mean something inside its
      * own due-date model.
-     *
-     * - `next_invoice` — wait, and ride along on whatever invoice the customer gets next.
-     *   The reference's "Add to User's Next Invoice", and the sensible default: a charge
-     *   that arrives on its own invoice for £5 costs more to collect than it is worth.
-     * - `immediately` — raise an invoice for it now, on its own.
-     * - `hold` — the reference's "Don't Invoice for Now". Recorded, visible, never swept.
-     *   The difference from deleting it is that somebody decided, and can undecide.
      */
     public const ACTION_NEXT_INVOICE = 'next_invoice';
 

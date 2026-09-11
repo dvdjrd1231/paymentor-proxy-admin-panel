@@ -8,19 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Customer-facing actions for a provisioned proxy service.
- *
- * Core's service page can only call zero-argument extension functions, so the forms in
- * `resources/views/manage.blade.php` post here instead. Every action:
- *
- *   - runs behind `auth` + CSRF (the routes are in the `web` group),
- *   - authorizes with the Service policy, so one customer can never touch another's
- *     service — the service id in the URL is never trusted on its own,
- *   - delegates to the extension, which re-checks the product's permission flags
- *     server-side, and
- *   - reports failures back to the customer rather than throwing a 500.
- */
+/** Customer-facing actions for a provisioned proxy service. */
 class ProxyPanelController
 {
     /** Authorize and confirm this really is a ProxyPanel service. */

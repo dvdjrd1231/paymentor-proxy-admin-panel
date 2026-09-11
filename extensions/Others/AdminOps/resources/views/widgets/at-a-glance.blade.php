@@ -1,9 +1,4 @@
-{{--
-    The WHMCS Overview panel: measures down the side, periods across the top.
-
-    Income is a pre-formatted string rather than a number because a store selling in more
-    than one currency has no single total — see Money::formatTotals().
---}}
+{{-- The WHMCS Overview panel: measures down the side, periods across the top. --}}
 @php
     $pollingInterval = $this->getPollingInterval();
 @endphp

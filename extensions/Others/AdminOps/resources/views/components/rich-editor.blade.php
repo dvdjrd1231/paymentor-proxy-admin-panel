@@ -1,23 +1,7 @@
-{{--
-    A genuine WYSIWYG, not a read-only preview of the raw HTML — the gap Leandro's
-    Announcements screenshot showed precisely: the reference's toolbar (Bold, Italic,
-    lists, links, undo/redo…) actually edits with formatting; toggling "Rich-Text Editor"
-    off/on before this showed a live-rendered `<div>` that could not be typed into at all.
-
-    No build step and no third-party library, matching how every other script in this skin
-    is written: a plain `[contenteditable]` div, a toolbar of `document.execCommand()`
-    buttons — deprecated, but still the one API every evergreen browser implements for
-    exactly this, and there is no bundler here to pull TipTap or Quill in through instead.
-
-    Bound to Livewire through a hidden textarea rather than directly: `wire:model` has
-    nothing to listen to on a contenteditable div, whose changes fire neither `input` nor
-    `change` the way a form control's do. The hidden field is the real source of truth
-    Livewire sees; the visible div is kept in sync with it in both directions.
-
-    Usage: @include('adminops::components.rich-editor', ['model' => 'body', 'value' => $body])
-    `model` is the Livewire property name; `value` seeds the editor's first paint, since
-    Livewire's own hydration re-renders the hidden field but not a plain div's innerHTML.
---}}
+{{-- A genuine WYSIWYG, not a read-only preview of the raw HTML — the gap Leandro's
+     Announcements screenshot showed precisely: the reference's toolbar (Bold, Italic,
+     lists, links, undo/redo…) actually edits with formatting; toggling "Rich-Text Editor"
+     off/on before this showed a live-rendered `<div>` that could not be typed into at all. --}}
 @php
     $rteId = 'ao-rte-' . \Illuminate\Support\Str::random(8);
 @endphp

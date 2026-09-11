@@ -62,14 +62,7 @@ class Quote extends Model
         return round($this->items->sum(fn (QuoteItem $item): float => $item->total()), 2);
     }
 
-    /**
-     * Whether the customer can still act on it.
-     *
-     * A quote past its date is answerable right up until the sweep marks it expired, and
-     * deliberately so: a customer accepting at one minute past midnight on the closing day
-     * has done what was asked of them, and losing that sale to a cron schedule would be a
-     * self-inflicted wound. The sweep closes it; the clock alone does not.
-     */
+    /** Whether the customer can still act on it. */
     public function isOpen(): bool
     {
         return $this->status === self::STATUS_SENT;

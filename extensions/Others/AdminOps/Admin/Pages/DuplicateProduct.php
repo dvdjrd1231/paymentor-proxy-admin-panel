@@ -13,15 +13,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 /**
  * The reference's Duplicate a Product screen (Leandro, 2026-09-07, screenshot of
  * `configproducts.php?action=duplicate`): pick the product, name the copy, Continue.
- *
- * This was an inline panel on the catalogue that always named the copy "<name> (Copy)".
- * The reference asks for the name up front, which is better: the copy usually exists to
- * become a specific thing — the weekly version of a monthly plan — and renaming it
- * afterwards on another screen is a step nobody should have to remember.
- *
- * A full copy: the product row, its plans and their prices, its settings, and its
- * configurable-option links. `sort` is deliberately not copied — the copy goes to the end
- * of its group rather than sharing a position with the original.
  */
 class DuplicateProduct extends Page
 {

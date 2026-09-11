@@ -1,9 +1,4 @@
-{{-- The reference portal's "By Month" archive rail beside the news list.
-
-     Months are derived from the published announcements themselves, so the list can never
-     offer a month with nothing in it. Selecting one filters the page through the `month`
-     query parameter — a plain link, so the archive stays bookmarkable and works without
-     JavaScript. --}}
+{{-- The reference portal's "By Month" archive rail beside the news list. --}}
 @php
     $model = 'Paymenter\Extensions\Others\Announcements\Models\Announcement';
     $months = collect();

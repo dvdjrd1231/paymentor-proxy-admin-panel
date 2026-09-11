@@ -8,22 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Keeps secondary-currency prices in step with a published exchange rate.
- *
- * Paymenter has no exchange-rate column — every price is stored per currency — so a second
- * currency means a second price row per plan. Maintaining those by hand goes stale; this
- * recomputes them from the base currency on a schedule.
- *
- * Two rules keep it safe:
- *
- *  - **A hand-edited price is never overwritten.** Each row this module writes is recorded
- *    in `currency_rate_prices`. If the stored price no longer matches what was last written,
- *    someone changed it deliberately and the sync skips it from then on.
- *  - **A currency is never registered without prices.** Offering a currency with no prices
- *    makes every product unbuyable for anyone who selects it, so the currency row is created
- *    in the same transaction as its first prices, never before.
- */
+/** Keeps secondary-currency prices in step with a published exchange rate. */
 class RateSync
 {
     public function __construct(
@@ -44,11 +29,6 @@ class RateSync
 
     /**
      * @param  array<string,float>|null  $overrideRates  Use these rates instead of asking the
-     *                                                   provider — the Currencies screen's
-     *                                                   "Update Product Prices", which rewrites
-     *                                                   prices from the Base Conv. Rate an admin
-     *                                                   set by hand. Already-effective values, so
-     *                                                   the FX buffer is not applied a second time.
      * @return array{rates: array<string,float>, updated: int, unchanged: int, skipped: int, created: array<string>}
      */
     public function run(bool $dryRun = false, ?array $overrideRates = null): array

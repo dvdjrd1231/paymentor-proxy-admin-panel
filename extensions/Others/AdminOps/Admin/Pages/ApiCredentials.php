@@ -17,22 +17,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 /**
  * Issue #50 — WHMCS's Manage API Credentials, both tabs (Leandro, 2026-09-07: "the Role
  * Management modal contain many options").
- *
- * ## API Credentials
- *
- * The green Generate button opens the reference's modal — Admin User, Description, API
- * Role(s) — and the grid lists Identifier / Description / Admin User / Roles / Last
- * Access. The identifier is truncated on purpose: unlike WHMCS's identifier/secret pair,
- * Paymenter's token *is* the secret, so the full value is shown once, at generation.
- *
- * ## API Roles
- *
- * This tab used to say Paymenter had no equivalent. It has one now — see the
- * `create_ext_api_roles_table` migration. A role is a saved set of the ability keys core
- * already enforces, and assigning roles to a credential writes their union into the
- * credential's own `permissions` column, which is the only thing core's API middleware
- * reads. Re-saving a role re-applies it to every credential holding it, which is the
- * entire point of having roles at all.
  */
 class ApiCredentials extends Page
 {
@@ -194,11 +178,6 @@ class ApiCredentials extends Page
      * The reference's Credential Management modal (Leandro, 2026-09-07: "edit function
      * should be worked with the modal ... now the page is redirect to other page and
      * working as complex").
-     *
-     * Editing used to send the admin to core's own API resource screen, which is a
-     * different design, a different route, and shows fields this page does not manage.
-     * Description and role assignment are what the reference edits here, so they are
-     * edited here.
      */
     public ?int $editing = null;
 

@@ -16,12 +16,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\Metrics;
  * The work waiting to be done, most urgent first — every line a link to the exact list
  * that shows it.
  *
- * This is the part of WHMCS's homepage that makes it usable: you do not go looking for
- * pending orders, overdue invoices and unanswered tickets across five screens, they come
- * to you already counted. Rows with nothing in them are omitted rather than shown as zero,
- * so an empty queue reads as "nothing to do" at a glance instead of as four zeroes to
- * check.
- *
  * @link docs/02b-admin-area.md
  */
 class ActionQueue extends Widget

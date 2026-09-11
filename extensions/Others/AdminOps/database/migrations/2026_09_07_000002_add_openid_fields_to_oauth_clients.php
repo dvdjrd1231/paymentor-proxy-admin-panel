@@ -8,13 +8,6 @@ use Illuminate\Support\Facades\Schema;
  * WHMCS's OpenID Connect credential screen carries a Description and a Logo URL beside
  * the client's id and secret (Leandro, 2026-09-07: "The OpenId Connect page should be
  * updated as same as ... and have create / edit page").
- *
- * `oauth_clients` is Passport's table and has neither: Passport stores a name, a secret,
- * the redirect list and the revoked flag, and nothing descriptive. Both columns are
- * presentation only — nothing in the OAuth flow reads them — so adding them cannot affect
- * authentication, and Passport ignores columns it does not know about.
- *
- * Guarded ALTER on a core table, same pattern as the currencies and affiliates fields.
  */
 return new class extends Migration
 {

@@ -12,10 +12,6 @@ use Paymenter\Extensions\Others\GatewayRules\Support\GatewayRuleEngine;
  * Gateway availability rules by country, product, group, currency, customer or amount.
  * Managed in the admin panel, evaluated by Support\GatewayRuleEngine, enforced server-side.
  *
- * Our own gateways call allows() from their canUseGateway() hook. Covering every gateway
- * takes one documented line in ExtensionHelper::getCheckoutGateways() — see
- * docs/CORE-TOUCHPOINTS.md.
- *
  * @link docs/modules/gateway-rules.md
  */
 class GatewayRules extends Extension

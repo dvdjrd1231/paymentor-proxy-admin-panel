@@ -8,12 +8,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * One refund, recorded against an invoice.
- *
- * Append-only, like a term extension: a refund is a fact about money that has moved, and
- * correcting one is another row, not an edit.
- */
+/** One refund, recorded against an invoice. */
 class InvoiceRefund extends Model
 {
     protected $table = 'ext_invoice_refunds';

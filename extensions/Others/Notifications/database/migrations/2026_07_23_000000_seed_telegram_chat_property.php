@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\DB;
  * Adds an optional "Telegram Chat ID" field to customer profiles (a Paymenter
  * custom property on the User model). Customers who fill it in will receive their
  * notifications on Telegram in addition to email/in-app.
- *
- * Idempotent: insertOrIgnore keyed on the unique `key`.
  */
 return new class extends Migration
 {

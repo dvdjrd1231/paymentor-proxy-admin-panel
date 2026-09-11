@@ -29,14 +29,7 @@ class Metrics
      */
     public const TICKET_AWAITING_REPLY = 'open';
 
-    /**
-     * Lower bound for an "all time" period.
-     *
-     * Every measure below is a `whereBetween`, so the all-time column is one more call with
-     * a start date old enough to predate any row, rather than a parallel set of unbounded
-     * queries that could drift from the dated ones. The Unix epoch is safely inside MySQL's
-     * `DATETIME` range and comfortably before Paymenter existed.
-     */
+    /** Lower bound for an "all time" period. */
     public static function beginningOfTime(): Carbon
     {
         return Carbon::createFromTimestampUTC(0);
@@ -99,14 +92,7 @@ class Metrics
         return static::customers()->whereBetween('created_at', [$from, $to])->count();
     }
 
-    /**
-     * Services ordered in a period — WHMCS's "New Orders" row.
-     *
-     * Counted from services rather than from `orders`, because a Paymenter order carries no
-     * status and no total: it is a container row holding the services that were bought
-     * together. The service is the thing that gets provisioned, billed and renewed, so it
-     * is also the thing worth counting.
-     */
+    /** Services ordered in a period — WHMCS's "New Orders" row. */
     public static function newServices(Carbon $from, Carbon $to): int
     {
         return Service::query()->whereBetween('created_at', [$from, $to])->count();
@@ -125,17 +111,7 @@ class Metrics
      */
     private static array $counted = [];
 
-    /**
-     * Memoised for the request, then cached for half a minute across requests.
-     *
-     * The per-request memo was not enough: one admin page is not one request. Filament
-     * renders each widget and each Livewire component separately, so a dashboard visit
-     * re-ran every badge count ten times over. These are sidebar hints and menu badges —
-     * thirty seconds of staleness is invisible, and the queries they replace are not.
-     *
-     * Cache failures fall through to the query rather than to an empty page: a panel that
-     * loads slowly is a nuisance, one that shows a wrong zero is a lie.
-     */
+    /** Memoised for the request, then cached for half a minute across requests. */
     private static function remember(string $key, callable $count): int
     {
         return static::$counted[$key] ??= (function () use ($key, $count): int {
@@ -204,13 +180,7 @@ class Metrics
             ->count();
     }
 
-    /**
-     * Unresolved provisioning failures, or null when ProvisioningOps is not installed.
-     *
-     * Both guards are needed: the class is absent when the extension has been removed, and
-     * the table is absent when it is present but has never been enabled (its migration runs
-     * from the `installed()` hook).
-     */
+    /** Unresolved provisioning failures, or null when ProvisioningOps is not installed. */
     public static function provisioningFailures(): ?int
     {
         $model = ProvisioningOperation::class;
@@ -225,14 +195,7 @@ class Metrics
             ->count();
     }
 
-    /**
-     * Cancellation requests still waiting on someone — WHMCS's "Pending Cancellations".
-     *
-     * A `service_cancellations` row carries no status of its own; it is a request, and it
-     * stops being outstanding when the service it names actually reaches `cancelled`. An
-     * end-of-period request therefore stays in this count for the rest of the term, which
-     * is right: it is work that has not happened yet.
-     */
+    /** Cancellation requests still waiting on someone — WHMCS's "Pending Cancellations". */
     public static function cancellationsPending(): int
     {
         return static::remember(__FUNCTION__, fn () => ServiceCancellation::query()
@@ -240,12 +203,7 @@ class Metrics
             ->count());
     }
 
-    /**
-     * Customers, i.e. everyone without a staff role.
-     *
-     * Staff accounts live in the same table, so counting `users` outright would report
-     * every administrator as a new customer.
-     */
+    /** Customers, i.e. everyone without a staff role. */
     public static function customers()
     {
         return User::query()->whereNull('role_id');
@@ -286,13 +244,7 @@ class Metrics
             ->count();
     }
 
-    /**
-     * Customers with at least one running service — WHMCS's "Active Clients".
-     *
-     * Not "customers who have ever bought": someone whose only service was cancelled two
-     * years ago is a past customer, and counting them makes the figure grow forever and
-     * mean nothing.
-     */
+    /** Customers with at least one running service — WHMCS's "Active Clients". */
     public static function customersActive(): int
     {
         return static::remember(__FUNCTION__, fn () => static::customers()

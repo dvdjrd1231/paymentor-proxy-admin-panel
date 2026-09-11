@@ -1,16 +1,4 @@
-{{--
-    Automation Status — the reference's layout, taken from a screenshot of its own page.
-
-    Three tiles across the top: overall verdict, when the automation last ran, when it next
-    runs. Then **Daily Actions** — a tile per task carrying what it did today and, in red
-    beside it, what failed. That failed count is the part worth copying: a task can
-    half-work, and a grid that only showed successes would call that a good day.
-
-    Two clocks feed the top row rather than one, because they fail differently and want
-    different fixes. The heartbeat says whether `schedule:run` is in cron at all; the daily
-    stamp says whether `app:cron-job` is completing. A fresh heartbeat with a stale daily run
-    is a working scheduler and a failing job.
---}}
+{{-- Automation Status — the reference's layout, taken from a screenshot of its own page. --}}
 <x-filament-panels::page>
     {{-- The reference's three banner tiles: a darker icon square on the left, the big
          figure and its label on the right (issue #28). --}}

@@ -11,18 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Paymenter\Extensions\Others\InvoiceOps\Admin\Resources\RefundResource\Pages\ListRefunds;
 use Paymenter\Extensions\Others\InvoiceOps\Models\InvoiceRefund;
 
-/**
- * Every refund, in one place — the ledger behind the Refund action.
- *
- * Deliberately **read-only**. A refund is a fact about money that has already moved; the way
- * to correct one is another refund with its own reason, not an edit that quietly rewrites
- * what the books say happened. Same rule as a term extension.
- *
- * The reference has no page quite like this — its refunds live on each invoice — but its
- * Transactions page has an *Amount Out* column that has to come from somewhere, and "show me
- * everything we have given back this month" is a question an invoice-at-a-time view cannot
- * answer.
- */
+/** Every refund, in one place — the ledger behind the Refund action. */
 class RefundResource extends Resource
 {
     protected static ?string $model = InvoiceRefund::class;

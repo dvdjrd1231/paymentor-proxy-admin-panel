@@ -1,10 +1,4 @@
-{{--
-    The reference's Two-Factor Authentication page, reduced to the part with work behind it.
-
-    WHMCS lists 2FA modules to switch on because it ships several; Paymenter has one, and each
-    account turns it on for itself. What an admin cannot do from anywhere else is see who has
-    it and rescue someone who is locked out — so that is this screen.
---}}
+{{-- The reference's Two-Factor Authentication page, reduced to the part with work behind it. --}}
 <x-filament-panels::page>
     <div class="ao-mu">
         <p class="ao-ax-note">

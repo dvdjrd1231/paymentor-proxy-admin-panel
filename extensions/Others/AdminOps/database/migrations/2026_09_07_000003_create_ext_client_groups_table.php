@@ -8,16 +8,6 @@ use Illuminate\Support\Facades\Schema;
  * WHMCS's Client Groups (Leandro, 2026-09-07: "Is there client group function in the
  * Paymenter project? ... this pages should be clear and update to same as
  * configclientgroups.php").
- *
- * The answer to his question was no — Paymenter has no such concept, and the Client
- * Profile's "Client Group: None" row was a parity placeholder reading a value that could
- * never be anything else. This gives it something to read.
- *
- * The reference's five columns, kept as its own table rather than added to `users`: a
- * group is a record clients point at, not a property each client owns.
- *
- * A client's membership is stored as the user property `client_group_id`, which is how
- * every other per-client value this deployment adds is stored.
  */
 return new class extends Migration
 {

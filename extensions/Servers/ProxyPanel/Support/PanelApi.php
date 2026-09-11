@@ -9,15 +9,6 @@ use Illuminate\Support\Facades\Log;
 /**
  * The panel API as seen from the admin panel rather than from a service.
  *
- * `ProxyPanel` is a `Server` extension whose `config()` resolves settings by walking the call
- * stack, so it needs a `Service`. The Locations console manages the panel's own infrastructure
- * and has none, so it needs a client built from the `Server` row alone. That is all this is.
- *
- * Live-panel state (probed 2026-08-26): `locations/*` and `tunnels/list` all work;
- * `tunnels/{id}/class/{class}` and `tunnels/info/{id}/class/{class}` answer 404, and
- * `tunnels/new|update|delete|status` are untested because they mutate real infrastructure.
- * The two 404s are worked around per-method. See docs/PANEL-QUESTIONS.md.
- *
  * @link docs/client-brief/locations.md
  * @link docs/client-brief/tunnels.md
  */
@@ -42,12 +33,7 @@ class PanelApi
         $this->config = $server->settings->pluck('value', 'key')->toArray();
     }
 
-    /**
-     * The configured ProxyPanel server, or null when none is set up yet.
-     *
-     * Returns null rather than throwing so the admin page can render an explanatory empty
-     * state instead of a 500 on a fresh install.
-     */
+    /** The configured ProxyPanel server, or null when none is set up yet. */
     public static function resolve(): ?self
     {
         $server = Server::where('extension', 'ProxyPanel')->first();
@@ -64,10 +50,6 @@ class PanelApi
 
     /**
      * Every location the panel knows about, across all pages.
-     *
-     * Paged on `total`/`items_per_page`, never on `total_pages`: the live panel reports
-     * `total_pages: 2` for 246 rows at 100 a page, and page 3 does return the missing 46.
-     * Verified again on 2026-08-25.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -115,13 +97,7 @@ class PanelApi
         return $this->get('/locations/' . rawurlencode($tag));
     }
 
-    /**
-     * Create a location. `POST /v0/locations/new`.
-     *
-     * A location starts with no tunnels, so `total` is 0 and checkout will not offer it
-     * until tunnels are attached on the panel — creating one here cannot put a region the
-     * business cannot serve in front of a customer.
-     */
+    /** Create a location. `POST /v0/locations/new`. */
     public function createLocation(array $data): array
     {
         return $this->post('/locations/new', $data);
@@ -215,10 +191,6 @@ class PanelApi
     /**
      * Live detail from the upstream provider. The documented path 404s; the panel serves the
      * same body at `GET /tunnels/{id}`, so the two routes appear to have been folded into one.
-     *
-     * This reaches the provider, so it can fail per-tunnel — about a third of `NewRoute`
-     * tunnels answer `Unable to get tunnel info: 404|`. That is an upstream failure, not a
-     * missing route, and is surfaced as the panel error it is.
      */
     public function tunnelInfo(string $tunnelId, string $class): array
     {
@@ -254,12 +226,7 @@ class PanelApi
         return $this->get('/tunnels/status/' . rawurlencode($tunnelId) . '/class/' . rawurlencode($class) . '/' . rawurlencode($status));
     }
 
-    /**
-     * Whether the panel's tunnel API answers at all.
-     *
-     * Cheap and cached for the request: the console calls it before rendering, so a broken
-     * panel produces one explanatory banner rather than a 500 per row.
-     */
+    /** Whether the panel's tunnel API answers at all. */
     public function tunnelsAvailable(): bool
     {
         static $available = null;

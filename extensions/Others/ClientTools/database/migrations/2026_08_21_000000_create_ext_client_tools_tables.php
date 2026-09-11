@@ -4,13 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Tables for the two client-area features Paymenter has no equivalent for.
- *
- * The other five pages this extension adds (Quotes, Mass Payment, Email History,
- * User Management, Available Addons) read data that already exists — invoices,
- * `email_logs`, `user_sessions` and `product_upgrades` — so they need no table.
- */
+/** Tables for the two client-area features Paymenter has no equivalent for. */
 return new class extends Migration
 {
     public function up(): void

@@ -12,11 +12,6 @@ use Paymenter\Extensions\Others\Affiliates\Models\Affiliate;
 /**
  * WHMCS's Affiliates list, to its screenshot: ID, Signup Date, Client Name, Visitors
  * Referred, Signups, Balance, Withdrawn — sorted by client name as the reference's ▲ shows.
- *
- * Balance is the affiliate's earnings, summed per currency from their referred orders.
- * Withdrawn is an em dash: Paymenter's affiliate extension keeps no withdrawal ledger, and a
- * column that always said $0.00 would be claiming an answer nobody recorded. The column is
- * kept so the grid reads as the reference's; the dash is the honest cell.
  */
 class ManageAffiliates extends Page
 {

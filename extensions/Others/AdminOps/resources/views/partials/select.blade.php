@@ -1,40 +1,4 @@
-{{--
-    The reference's dropdown, over a native <select> Windows/Chrome won't let us style.
-
-    Why this exists: a native <option> popup is drawn by the OS on Windows, not the page —
-    no font-family, no font-size, no colour, no flag webfont crosses that boundary. Every
-    "the dropdown looks nothing like WHMCS" and "the flag doesn't show" report traced back
-    to that one fact once ProxyPanel's own CountryFlag helper spelled it out: "Only an
-    image-based custom dropdown could change that." This is that dropdown — plain HTML/CSS
-    list items the page fully controls, laid over Alpine, wired to Livewire the same way
-    the datepicker is: `$wire.entangle`, not a hidden native <select> plus synthetic events.
-
-    Included with:
-      @include('adminops::partials.select', [
-          'model' => 'orderStatus',    // the Livewire property this binds to
-          'live' => false,             // true = wire:model.live semantics, false = deferred
-          'options' => $flatOptions,   // [['value'=>.., 'label'=>.., 'disabled'=>bool, 'group'=>bool], ...]
-          'placeholder' => 'None',     // shown when nothing matches the current value
-          'id' => 'ao-ano-status',
-          // 'key' => 'a wire:key — see below; only needed when $options can change',
-      ])
-
-    `$options` is already flattened by the caller — a plain row per item, and a `group: true`
-    row (no value) wherever a heading belongs, since the shapes an Eloquent collection, a
-    ConfigOption tree and a server's checkout-field array come in are different enough that
-    normalising them here would need three separate branches anyway.
-
-    `key`: Alpine's morph (what Livewire v3 diffs DOM with) deliberately *keeps* an
-    element's existing x-data state across a re-render — that is what stops every
-    Livewire update from resetting every open dropdown, but it also means the
-    `options:` array snapshotted at init time survives untouched even when the server
-    sends genuinely different options (Billing Cycle after the product changes; Region
-    after the product's server changes). Pass a `key` that includes whatever the
-    options depend on — Livewire tears down and rebuilds a widget whose `wire:key`
-    changed rather than morphing it, which is exactly "please re-read the new
-    options". Omit it for a list that cannot change under this component (Client,
-    Payment Method, Order Status).
---}}
+{{-- The reference's dropdown, over a native <select> Windows/Chrome won't let us style. --}}
 <span class="ao-xsel {{ $class ?? '' }}" @if (isset($key)) wire:key="{{ $key }}" @endif x-data="{
         open: false,
         value: $wire.entangle('{{ $model }}'){{ !empty($live) ? '.live' : '' }},

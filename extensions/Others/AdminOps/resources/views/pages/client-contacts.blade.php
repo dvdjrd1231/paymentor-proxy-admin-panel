@@ -1,11 +1,6 @@
-{{--
-    The reference's Contacts tab: a select of the people on this account whose last option
-    is Add New, then one form over the picked contact, and the Email Notifications ticks
-    beneath it.
-
-    Backed by ClientTools' `ext_ct_contacts`, which is the same record the client edits from
-    their own Contacts page — so a change here is a change they see, not a second copy.
---}}
+{{-- The reference's Contacts tab: a select of the people on this account whose last option
+     is Add New, then one form over the picked contact, and the Email Notifications ticks
+     beneath it. --}}
 @if (!$hasContacts)
     <x-filament::section heading="Contacts">
         <p class="ao-empty">

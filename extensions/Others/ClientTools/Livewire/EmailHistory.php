@@ -7,13 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\WithPagination;
 
-/**
- * Email History — every message the system has sent this customer.
- *
- * Backed by the core `email_logs` table, which already records subject, recipient, body
- * and delivery status. Rows are filtered to the signed-in user, so the page cannot show
- * another account's mail.
- */
+/** Email History — every message the system has sent this customer. */
 class EmailHistory extends Component
 {
     use WithPagination;

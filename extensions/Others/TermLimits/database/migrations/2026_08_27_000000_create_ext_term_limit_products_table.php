@@ -4,25 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * The reference's **Auto Terminate/Fixed Term** field, per product.
- *
- * On WHMCS this lives on the product's Pricing tab: *"Enter the number of days after
- * activation to automatically terminate (eg. free trials, time limited products, etc...)"*,
- * with `0` meaning off, and a **Termination Email** beside it — *"Choose the email template
- * to send when the fixed term comes to an end"*.
- *
- * It is a table rather than a column on `products` for the usual reason: this extension does
- * not edit core, and a column core does not know about is a column core's own migrations
- * could collide with. A product with no row here falls back to the term derived from its
- * plan, which is the case for all twenty of this store's daily and weekly products — the
- * reference needs the field because a WHMCS "One Time" product carries no period at all,
- * and Paymenter's does.
- *
- * The point of having it anyway is the case derivation cannot reach: a **fixed term on a
- * recurring product**, which is how a free trial is built. "Monthly plan, terminates after
- * 3 days" is not something a billing cycle can express.
- */
+/** The reference's **Auto Terminate/Fixed Term** field, per product. */
 return new class extends Migration
 {
     public function up(): void

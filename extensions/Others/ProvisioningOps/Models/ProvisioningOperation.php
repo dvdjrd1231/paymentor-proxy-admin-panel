@@ -6,13 +6,7 @@ use App\Models\Service;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * One provisioning attempt (per service + extension + action).
- *
- * A row is created the first time an operation fails and updated in place on every
- * later attempt, so the admin list shows one line per broken thing rather than one
- * line per retry.
- */
+/** One provisioning attempt (per service + extension + action). */
 class ProvisioningOperation extends Model
 {
     public const STATUS_FAILED = 'failed';
@@ -47,11 +41,7 @@ class ProvisioningOperation extends Model
         return $this->status === self::STATUS_FAILED;
     }
 
-    /**
-     * The ExtensionHelper method that re-runs this operation.
-     *
-     * Only lifecycle actions are retryable; `callback` rows are informational.
-     */
+    /** The ExtensionHelper method that re-runs this operation. */
     public function retryMethod(): ?string
     {
         return match ($this->action) {

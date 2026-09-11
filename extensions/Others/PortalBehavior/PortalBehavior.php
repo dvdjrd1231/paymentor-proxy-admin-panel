@@ -12,9 +12,6 @@ use Paymenter\Extensions\Others\PortalBehavior\Middleware\RedirectPortalHome;
  * Portal entry behaviour: on the reference portal `/` is never a page of its own — guests
  * go to login, customers to their dashboard. Paymenter renders a storefront there instead.
  *
- * Middleware from an extension rather than a route, so the core `/` route stays untouched
- * and disabling the extension restores the storefront immediately.
- *
  * @link docs/modules/portal-behavior.md
  */
 #[ExtensionMeta(
@@ -40,17 +37,7 @@ class PortalBehavior extends Extension
         ];
     }
 
-    /**
-     * Cache-busting token for the theme stylesheet.
-     *
-     * The file is served with a one-year immutable cache, so without this a CSS change
-     * would not reach anyone who had already loaded the site. Derived from the file's
-     * own contents rather than a hand-maintained version, so it cannot be forgotten.
-     *
-     * The hash is memoised for the request and falls back to a fixed string when the file
-     * is missing — the stylesheet 404s in that case anyway, and throwing here would take
-     * down every page instead of just the styling.
-     */
+    /** Cache-busting token for the theme stylesheet. */
     public static function styleVersion(): string
     {
         static $version = null;

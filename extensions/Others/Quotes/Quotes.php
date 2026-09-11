@@ -14,21 +14,6 @@ use Throwable;
 /**
  * Quotes: a priced proposal a customer can accept, which then becomes an invoice.
  *
- * Paymenter has no document that is not already a bill. An invoice is `pending`, `paid` or
- * `cancelled`, and none of those can stand in for "here is what it would cost" without
- * misrepresenting a proposal as a debt: the customer sees it among their invoices, the
- * overdue ladder starts counting, and a reminder goes out for money nobody agreed to pay.
- *
- * So a quote is its own record with its own life — draft, sent, then accepted, declined or
- * expired — and becomes an invoice only at the moment somebody accepts it. Every transition
- * is one-way and guarded on the state before it, which is the whole safety of the feature:
- * an accepted quote creates a real invoice, and creating two creates a debt that does not
- * exist.
- *
- * The client-area page was already waiting for this. `Others/ClientTools` shipped a Quotes
- * screen with an empty state and a note saying *"a future quoting extension only has to fill
- * this collection"* — this is that extension, and it fills it.
- *
  * @link docs/modules/quotes.md
  */
 #[ExtensionMeta(
@@ -69,14 +54,7 @@ class Quotes extends Extension
         $this->expireDaily();
     }
 
-    /**
-     * Daily, not every minute.
-     *
-     * A quote carries a *date*, not a clock, so expiring one at 00:04 rather than 00:00
-     * changes nothing for anybody — and a customer who accepts at one minute past midnight
-     * on the closing day has done what was asked of them. Losing that sale to a scheduler
-     * would be a self-inflicted wound.
-     */
+    /** Daily, not every minute. */
     private function expireDaily(): void
     {
         app()->booted(function (): void {

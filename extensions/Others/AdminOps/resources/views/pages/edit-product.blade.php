@@ -4,16 +4,7 @@
     nothing behind (Free Domain, Cross-sells, Custom Fields, Other).
 --}}
 <x-filament-panels::page>
-    {{-- Tabs switch in the browser, not on the server.
-
-         Each one used to be `wire:click="$set('tab', …)"`, so every click was a round
-         trip that re-rendered the whole page before anything moved — which is what made
-         the strip feel slow (Leandro, 2026-09-08: "change tab is too slow ... in every
-         pages that have tab"). Every section is built from data this component has
-         already loaded, so none of them needed the server to begin with.
-
-         The state lives on this wrapper, which Livewire morphs rather than replaces, so
-         saving a tab leaves you on it. --}}
+    {{-- Tabs switch in the browser, not on the server. --}}
     <div class="ao-mu ao-ep" x-data="{ tab: @js($tab) }">
         <div class="ao-ei-top">
             <div class="ao-tx-tabs ao-ei-tabs">
@@ -724,14 +715,7 @@
                 <div class="ao-anc-row">
                     <span title="Shown as recommendations on this product's own page">Product Cross-sells</span>
                     {{-- The reference's type-to-search picker: a search box that filters a
-                         grouped list, each pick becoming a removable tag.
-
-                         Alpine owns the selection and pushes it to Livewire deferred, so a
-                         pick lands at once and rides to the server with Save Changes. It
-                         used to assign `$wire.crossSellIds` directly and read it back in
-                         `picked`/`groups`, so every pick waited on a round trip before the
-                         list caught up — and it closed the panel each time, so the second
-                         one needed the box clicking again. --}}
+                         grouped list, each pick becoming a removable tag. --}}
                     <span class="ao-anc-field ao-ep-cross"
                         x-data="{
                             open: false,

@@ -1,10 +1,4 @@
-{{--
-    Every grant of extra time on one term, newest first.
-
-    Shown rather than summarised: the reason is the point of the record, and a total number
-    of hours with the reasons collapsed behind it would answer the easy question and hide
-    the one anybody actually asks later — who gave this customer another day, and why.
---}}
+{{-- Every grant of extra time on one term, newest first. --}}
 <div class="ao-panel" style="display: flex; flex-direction: column; gap: 0.75rem;">
     @foreach ($extensions as $extension)
         <div style="border-inline-start: 3px solid hsl(var(--color-primary)); padding-inline-start: 0.75rem;">

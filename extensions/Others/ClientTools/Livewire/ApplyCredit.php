@@ -9,17 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Locked;
 
-/**
- * The reference portal's "Apply Credit" panel on an invoice.
- *
- * Core can already pay an invoice from credit, but only all-or-nothing: its
- * `payWithCredit()` spends the whole balance up to the invoice total. The reference lets
- * the customer choose how much to put against this invoice and keep the rest, which is
- * what this adds.
- *
- * The invoice is `#[Locked]` so the id cannot be swapped client-side, and ownership is
- * re-checked on every apply rather than trusting the mounted model.
- */
+/** The reference portal's "Apply Credit" panel on an invoice. */
 class ApplyCredit extends Component
 {
     #[Locked]

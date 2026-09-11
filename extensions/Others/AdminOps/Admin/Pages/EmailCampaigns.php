@@ -16,10 +16,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * recipients — message type, client criteria, product/service criteria — and Compose
  * Message moves to step 2 only when somebody would actually receive it, otherwise the
  * reference's own blue banner. Step 2 writes the subject and body and sends.
- *
- * Sending is real: one mail per matching client through Laravel's mailer — the same
- * transport every Paymenter notification uses. "Send for each service" mirrors the
- * reference's per-domain switch: one mail per matching service instead of one per client.
  */
 class EmailCampaigns extends Page
 {
@@ -69,11 +65,6 @@ class EmailCampaigns extends Page
 
     /**
      * The matching set, computed once per request.
-     *
-     * It is asked for twice on every render — the count on screen and, on send, the list
-     * itself — and it walks every client with their services. Without this memo the page
-     * ran that walk on each Livewire round trip, which is every keystroke in a criteria
-     * field.
      *
      * @var array<int, array{user: User, service: ?\App\Models\Service}>|null
      */

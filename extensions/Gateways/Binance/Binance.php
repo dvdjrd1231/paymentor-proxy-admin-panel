@@ -16,20 +16,6 @@ use Illuminate\Support\Str;
 /**
  * Binance Pay gateway for Paymenter — official Merchant API only.
  *
- * Flow:
- *  - pay(): creates a Binance Pay order (v3) and redirects the buyer to the hosted
- *    checkout. A processing transaction is recorded keyed on our merchantTradeNo.
- *  - webhook(): receives Binance Pay notifications, verifies the RSA signature
- *    against Binance's public certificate, and settles idempotently.
- *
- * Security / robustness (spec item 4):
- *  - Requests are signed HMAC-SHA512 per Binance's scheme; nothing is hard-coded.
- *  - Webhook signature verified with Binance's certificate (constant-time compare
- *    is inherent to RSA verify); merchant id implicitly bound via credentials.
- *  - Idempotent settlement keyed on merchantTradeNo (updateOrCreate on the
- *    transaction), so duplicate notifications never double-credit.
- *  - Structured logging on every step; errors handled, never leak secrets.
- *
  * @link https://developers.binance.com/docs/binance-pay/api-order-create-v3
  */
 #[ExtensionMeta(
@@ -230,12 +216,7 @@ class Binance extends Gateway
         return $json;
     }
 
-    /**
-     * Handle a Binance Pay webhook notification.
-     *
-     * Binance expects a 200 with {"returnCode":"SUCCESS","returnMessage":null} once
-     * handled, otherwise it retries. We only reject on signature failure.
-     */
+    /** Handle a Binance Pay webhook notification. */
     public function webhook(Request $request)
     {
         $raw = $request->getContent();

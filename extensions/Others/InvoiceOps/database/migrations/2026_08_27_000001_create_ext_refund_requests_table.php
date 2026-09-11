@@ -5,19 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Paymenter\Extensions\Others\InvoiceOps\Models\InvoiceRefund;
 
-/**
- * A customer asking for their money back, and the answer.
- *
- * The request is the piece that makes refunds workable without a gateway API. Paymenter
- * cannot move money back through Stripe — no gateway here defines a `refund()` — but the
- * decision, the reason and the record are the parts a business actually needs, and none of
- * them require the API. You approve here, refund in the gateway's own dashboard, and the
- * approval writes the {@see InvoiceRefund}
- * that the ledger and the Amount Out column read.
- *
- * Same shape as a cancellation request, deliberately: the customer asks, an administrator
- * answers, and the answer is on the record with its reason.
- */
+/** A customer asking for their money back, and the answer. */
 return new class extends Migration
 {
     public function up(): void

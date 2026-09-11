@@ -14,26 +14,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * WHMCS's payment gateway configuration screen (Leandro, 2026-09-07: the page "is working
  * as correctly but page design and styles format should be the WHMCS page standard
  * format").
- *
- * The gateway's own name and module over its module settings, label-left with the hint
- * beside each, closed by Save Changes / Cancel Changes / Deactivate — the shape every
- * other Setup screen here already uses. Core's own edit route redirects in.
- *
- * ## Stored values are shown
- *
- * Core masks encrypted settings and makes you retype them. Leandro asked for the stored
- * value (2026-09-07), which is also what the reference does — its gateway screen shows
- * the API keys it holds — so an encrypted setting renders with its real value.
- *
- * Two guards stay, because they cost nothing and this page prints live payment
- * credentials: it is behind the same permission that edits gateways at all, and every
- * field is marked no-autofill so a password manager never captures or overwrites a key.
- *
- * ## Saving
- *
- * Deliberately the same writes core's own EditGateway performs — the same settings rows
- * with the same `type` and `encrypted` flags, then the extension's `updated` hook — so a
- * gateway configured here behaves identically to one configured through core.
  */
 class EditGateway extends Page
 {
@@ -90,9 +70,6 @@ class EditGateway extends Page
 
     /**
      * The module's configuration fields.
-     *
-     * A gateway whose extension has been removed from disk returns none rather than
-     * throwing, so the screen still opens and can be renamed or deactivated.
      *
      * @return array<int, array<string, mixed>>
      */

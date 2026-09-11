@@ -11,12 +11,6 @@ use Paymenter\Extensions\Others\ProvisioningOps\Models\ProvisioningOperation;
 /**
  * The Module Queue in the panel's standard window (Leandro, 2026-09-09: "the current
  * window differs from the standard used for new windows").
- *
- * It was Filament's own ListRecords table — a different shell, a different header, a
- * different grid and a different search from every other screen reached off the same
- * menu. The records here are the same ones; what changed is that the page is now the
- * Search/Filter band, records line, navy grid and confirm modal the rest of the admin
- * uses. Retry still runs the real lifecycle call through the resource.
  */
 class ListProvisioningOperations extends Page
 {

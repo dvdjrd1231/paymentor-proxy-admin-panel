@@ -14,16 +14,6 @@ use Illuminate\Support\Facades\View;
 /**
  * Cryptomus payment gateway for Paymenter (official API).
  *
- * Creates a hosted Cryptomus payment and settles via webhook. Requests and webhook
- * callbacks are authenticated with Cryptomus's `sign` scheme:
- *   sign = md5( base64(json_body) . payment_api_key )
- *
- * Security / robustness (spec item 4):
- *  - `sign` verified on every webhook (constant-time compare); invalid → rejected.
- *  - Idempotent settlement keyed on the Cryptomus payment uuid, so duplicate
- *    callbacks never double-credit.
- *  - Encrypted credentials, structured logging, error handling; no secrets logged.
- *
  * @link https://doc.cryptomus.com/
  */
 #[ExtensionMeta(
@@ -104,13 +94,7 @@ class Cryptomus extends Gateway
         ];
     }
 
-    /**
-     * Serve the Cryptomus domain-verification file from the stored setting.
-     *
-     * Any `cryptomus_<hash>.html` path resolves here — the hash is per-account and changes
-     * if Cryptomus reissues it, so matching the pattern rather than one literal filename
-     * means a reissued file needs no code change.
-     */
+    /** Serve the Cryptomus domain-verification file from the stored setting. */
     public function domainVerification()
     {
         $contents = (string) $this->config('domain_verification');

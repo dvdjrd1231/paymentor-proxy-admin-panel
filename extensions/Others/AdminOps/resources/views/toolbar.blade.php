@@ -1,14 +1,4 @@
-{{--
-    The utility icons at the end of the menu bar, rendered at `panels::global-search.after`.
-
-    The reference's order runs …wrench, avatar, question mark, so the account menu belongs
-    between the last two — but there is no render hook there, so the skin reorders the flex
-    row instead (`.ao-tool-wrap-help`). Done in CSS rather than by rebuilding the account menu
-    here, which keeps Filament's own sign-out and theme switcher.
-
-    The cogs and the updater are plain links, not dropdowns, as on the reference. The cogs
-    badge shows a number or nothing, never a zero.
---}}
+{{-- The utility icons at the end of the menu bar, rendered at `panels::global-search.after`. --}}
 @php
     use Paymenter\Extensions\Others\AdminOps\Support\Toolbar;
 

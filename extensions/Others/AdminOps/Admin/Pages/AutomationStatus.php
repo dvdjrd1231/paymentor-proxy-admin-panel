@@ -19,27 +19,6 @@ use Paymenter\Extensions\Others\CurrencyRates\CurrencyRates;
 /**
  * WHMCS's Automation Status: is the automation running, and what did it do.
  *
- * The reference's `automationstatus.php` answers one question before any other — *is this
- * thing running at all* — and shows the day's task activity underneath. Paymenter's Cron
- * Statistics page shows the activity but not the health: it will happily draw a tidy row of
- * zeroes for a scheduler that has been dead for a week, because a task that never ran
- * records nothing and nothing is exactly what zero looks like.
- *
- * That distinction stopped being cosmetic when `Others/TermLimits` arrived. Fixed-term
- * services are stopped by a sweep that runs **every minute**; if the scheduler is not
- * running, daily proxies quietly go on working past their term and nothing anywhere says
- * so. This page is where that shows up.
- *
- * Two independent clocks, which is the whole point:
- *
- * - **`last_scheduler_run`** — stamped every minute by core's heartbeat command. This is
- *   the one that says whether `php artisan schedule:run` is in cron at all.
- * - **`last_cron_run`** — stamped by `app:cron-job` when the daily pass finishes. A fresh
- *   heartbeat with a stale daily run means the scheduler is up but the daily job is
- *   failing, which is a different fault with a different fix.
- *
- * Read-only. Nothing here changes anything; the actions link to the pages that do.
- *
  * @link docs/02b-admin-area.md
  */
 class AutomationStatus extends Page
@@ -62,23 +41,6 @@ class AutomationStatus extends Page
 
     /**
      * The reference's **Daily Actions** tiles, in its order and its words.
-     *
-     * Each is `key => [title, past participle]` — the reference labels the figure with what
-     * the task *did* ("0 Generated", "0 Suspended", "0 Terminated") rather than repeating the
-     * task name, which is what makes a wall of zeroes readable at a glance.
-     *
-     * Two of these are ours. **Fixed Term Terminations** and **Cancellation Requests** are
-     * tasks the reference has and core did not; they write to `cron_stats` like everything
-     * else, so this page needs no knowledge of which extension owns them — a key that never
-     * appears simply has no tile.
-     *
-     * `Overdue Terminations` and `Fixed Term Terminations` are deliberately separate, as they
-     * are on the reference. One is a service whose paid period ran out unpaid; the other was
-     * always going to end on a date. Merged, a fixed-term module that had stopped would hide
-     * behind an overdue ladder that had not.
-     *
-     * The third element is the tile's glyph — the reference puts a grey icon in the top
-     * right corner of every Daily Actions tile, one per task (issue #28).
      *
      * @var array<string, array{0: string, 1: string, 2: string}>
      */
@@ -181,17 +143,6 @@ class AutomationStatus extends Page
      * The reference's second tier under Daily Actions — Database Backup, WHMCS Updates,
      * Currency Exchange Rates, Product Pricing Updates, Server Usage Stats — a status
      * line each, not a count. Paymenter has real ground truth for two of the five:
-     *
-     * - **Database Backup** — real, but never admin-visible: {@see \Paymenter\Extensions\Others\AdminOps\Admin\Pages\DatabaseStatus}'s
-     *   own reasoning applies here too — backups run on the host via `scripts/backup` on
-     *   a schedule, not a PHP request this page could report on. Honestly dead.
-     * - **Platform Updates** — real: the same up-to-date check {@see UpdatePaymenter} makes.
-     * - **Currency Exchange Rates** — real: whether `Others/CurrencyRates` is installed,
-     *   which is the whole fact behind WHMCS's own green check — not a fabricated "last
-     *   synced" timestamp, since price rows are updated in place and carry no such stamp.
-     *
-     * Product Pricing Updates and Server Usage Stats have no Paymenter counterpart at
-     * all — omitted rather than shown as a permanent, meaningless "Disabled".
      *
      * @return array<int, array{label: string, icon: string, ok: bool, note: string}>
      */
@@ -329,13 +280,7 @@ class AutomationStatus extends Page
         return ['label' => $label, 'did' => $did, 'days' => $days];
     }
 
-    /**
-     * When the daily pass is next due — the reference's "Next Daily Task Run" tile.
-     *
-     * Derived from `cronjob_time` rather than stored, because nothing stores it: the
-     * scheduler decides at run time whether the hour has come. Today's slot if it has not
-     * passed, tomorrow's if it has.
-     */
+    /** When the daily pass is next due — the reference's "Next Daily Task Run" tile. */
     private function nextDailyRun(): Carbon
     {
         [$hour, $minute] = array_pad(explode(':', (string) config('settings.cronjob_time', '00:00')), 2, '0');
@@ -345,13 +290,7 @@ class AutomationStatus extends Page
         return $next->isFuture() ? $next : $next->addDay();
     }
 
-    /**
-     * A timestamp written by the schedulers, or null if it has never been written.
-     *
-     * Both live in `settings` under `settingable_type = CronStat::class`, which is where
-     * core puts them. Parsing is guarded: a malformed value should read as "unknown"
-     * rather than take down the page that exists to report faults.
-     */
+    /** A timestamp written by the schedulers, or null if it has never been written. */
     private function stamp(string $key): ?Carbon
     {
         $value = Setting::query()
@@ -372,12 +311,6 @@ class AutomationStatus extends Page
 
     /**
      * What each task has done — today, and over the last week.
-     *
-     * The week matters more than the day here. `app:cron-job` runs once, at
-     * `cronjob_time`, so before that hour every one of today's figures is legitimately
-     * zero — a page that showed only today would report a healthy install as idle every
-     * morning. The seven-day column is what tells you a task has genuinely stopped doing
-     * anything.
      *
      * @return array<int, array{key: string, label: string, today: int, week: int, lastSeen: ?string}>
      */
@@ -445,9 +378,6 @@ class AutomationStatus extends Page
 
     /**
      * The things worth saying out loud, worst first.
-     *
-     * Deliberately specific about the fix. "Automation is not running" sends somebody to
-     * the wrong place; the command that is missing from cron is the useful sentence.
      *
      * @return array<int, array{title: string, body: string}>
      */

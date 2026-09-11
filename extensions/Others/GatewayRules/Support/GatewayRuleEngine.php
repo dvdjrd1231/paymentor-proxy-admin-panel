@@ -7,14 +7,7 @@ use App\Models\Service;
 use Illuminate\Support\Facades\Auth;
 use Paymenter\Extensions\Others\GatewayRules\Models\GatewayRule;
 
-/**
- * Server-side gateway-availability decision.
- *
- * Given a gateway and the checkout context ($total, $currency, $type, $items),
- * returns whether the gateway may be offered. First active rule (ascending
- * priority) whose scope matches decides via its mode (allow|deny). No matching
- * rule → available (true).
- */
+/** Server-side gateway-availability decision. */
 class GatewayRuleEngine
 {
     /**

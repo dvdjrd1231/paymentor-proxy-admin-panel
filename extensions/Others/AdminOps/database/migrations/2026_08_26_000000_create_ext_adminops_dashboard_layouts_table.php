@@ -4,17 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Where each administrator's dashboard layout lives.
- *
- * One row per admin, not per admin per widget: the whole layout is read on every dashboard
- * render and written whole on every change, so a row per widget would be several queries to
- * answer one question and a delete to answer "this widget no longer exists".
- *
- * `order` and `hidden` hold Livewire component names — `paymenter.extensions...at-a-glance`
- * — because that is the only identifier that survives a page load. A widget that has since
- * been uninstalled simply stops matching and is ignored; nothing has to clean up after it.
- */
+/** Where each administrator's dashboard layout lives. */
 return new class extends Migration
 {
     public function up(): void

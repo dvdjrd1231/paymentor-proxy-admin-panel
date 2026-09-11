@@ -19,18 +19,7 @@ use Paymenter\Extensions\Others\InvoiceOps\Models\InvoiceRefund;
 use Paymenter\Extensions\Others\InvoiceOps\Models\RefundRequest;
 use Paymenter\Extensions\Others\InvoiceOps\Support\Requests;
 
-/**
- * Refund requests — the customer asks, an administrator answers.
- *
- * This is the shape that makes refunds workable without a gateway API, and it answers what
- * blocked them. Paymenter cannot push money back through Stripe, but the *decision* needs no
- * API: approve here, refund in the gateway's own dashboard, and the approval writes the
- * record the ledger and the Amount Out column read.
- *
- * Approving is two statements rather than one — how much goes back, and whether the service
- * goes with it. A customer asking for money back is not necessarily asking to lose their
- * proxy, and the two have very different consequences.
- */
+/** Refund requests — the customer asks, an administrator answers. */
 class RefundRequestResource extends Resource
 {
     protected static ?string $model = RefundRequest::class;

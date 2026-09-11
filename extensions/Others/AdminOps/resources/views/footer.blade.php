@@ -1,12 +1,5 @@
-{{--
-    WHMCS's footer bar. Core's own renders inside the sidebar, which top navigation moves
-    off-screen, so it is never seen under this skin.
-
-    Two details are the reference's: it spans the whole window, passing under the left rail
-    (hence `panels::body.end`, outside `.fi-layout`, not `panels::footer` inside the content
-    column); and its links are pipe-separated in markup rather than CSS, so the separators
-    stay put when the bar wraps.
---}}
+{{-- WHMCS's footer bar. Core's own renders inside the sidebar, which top navigation moves
+     off-screen, so it is never seen under this skin. --}}
 <footer class="ao-admin-footer">
     <span class="ao-admin-footer-copy">
         Copyright &copy; {{ date('Y') }} {{ config('app.name', 'Paymenter') }}. All Rights Reserved.

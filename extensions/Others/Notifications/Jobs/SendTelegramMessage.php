@@ -10,12 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Queued delivery of a single Telegram message via the Bot API.
- *
- * Queue + retry are the whole point of this job: Telegram (or the network) can be
- * briefly unavailable, so delivery is retried with backoff instead of being lost.
- */
+/** Queued delivery of a single Telegram message via the Bot API. */
 class SendTelegramMessage implements ShouldQueue
 {
     use FoundationQueueable, InteractsWithQueue, Queueable, SerializesModels;

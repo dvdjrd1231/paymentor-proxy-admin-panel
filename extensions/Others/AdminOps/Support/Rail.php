@@ -20,10 +20,6 @@ use Paymenter\Extensions\Others\AdminOps\Admin\Pages\ViewSearchClients;
  * The data behind WHMCS's left rail: Shortcuts, System Information, Advanced Search and
  * Staff Online. Structure only — `rail.blade.php` renders it.
  *
- * Everything is permission-checked and URL-resolved here, for the reason at
- * {@see WhmcsNavigation::resolveUrl()}: this renders on every admin page, so a link that
- * cannot be built must vanish rather than throw.
- *
  * @link docs/02b-admin-area.md
  */
 class Rail
@@ -186,11 +182,6 @@ class Rail
      */
     /**
      * The reference's Setup rail, in its own headings and its own order.
-     *
-     * Only what this deployment actually has appears: a heading whose every entry is
-     * missing is dropped rather than drawn empty, and anything in the Setup menu that no
-     * heading claims falls through to a final "Other" so a new page can never go missing
-     * from the rail entirely.
      *
      * @return array<int, array{label: string, icon: string|\BackedEnum|null, items: array}>
      */
@@ -454,10 +445,6 @@ class Rail
     /**
      * WHMCS's System Information panel.
      *
-     * Its version, licence and expiry lines have no equivalent here and inventing them would
-     * be worse than leaving them out, so this carries what is actually true of this
-     * installation and useful to know before changing anything.
-     *
      * @return array<string, string>
      */
     public static function systemInformation(): array
@@ -595,9 +582,6 @@ class Rail
 
     /**
      * Colleagues signed in right now, the signed-in administrator first.
-     *
-     * WHMCS lists you in your own Staff Online panel, and it is the one entry that proves
-     * the panel is working rather than merely empty.
      *
      * @return array<int, array{name: string, self: bool, seen: ?string}>
      */

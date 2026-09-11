@@ -1,9 +1,5 @@
-{{--
-    The reference's pagination band, above every client-profile list: "N Records Found,
-    Page 1 of 1" on the left and "Jump to Page: [1] Go" on the right.
-
-    Expects $total, $page and $perPage.
---}}
+{{-- The reference's pagination band, above every client-profile list: "N Records Found,
+     Page 1 of 1" on the left and "Jump to Page: [1] Go" on the right. --}}
 @php
     $pages = max(1, (int) ceil($total / max(1, $perPage)));
 @endphp

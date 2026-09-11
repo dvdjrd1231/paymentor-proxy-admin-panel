@@ -1,19 +1,7 @@
-{{--
-    The dashboard's chrome: drag, collapse, refresh, hide — and the menu that brings a
-    hidden panel back. The reference's four behaviours, in the reference's division of
-    where each is remembered: order and hidden per admin in the database, collapsed in the
-    browser.
-
-    This widget draws no panel of its own. It renders the settings menu into the corner the
-    reference puts it in and then decorates its neighbours, which is why it sorts first.
-
-    Plain JS and pointer events, as everywhere else in this extension: `extensions/` is
-    not scanned by the admin theme and there is no build step in the deployment path, so
-    there is nothing here to bundle and nothing to version. The reference uses Packery plus
-    Draggabilly; Filament's dashboard is a CSS grid, which reflows on its own, so what is
-    needed is the ordering and Draggabilly's feel — the panel in hand following the
-    pointer, a dashed box holding its slot — not the layout engine.
---}}
+{{-- The dashboard's chrome: drag, collapse, refresh, hide — and the menu that brings a
+     hidden panel back. The reference's four behaviours, in the reference's division of
+     where each is remembered: order and hidden per admin in the database, collapsed in the
+     browser. --}}
 @php
     $layout = $this->getLayout();
 @endphp

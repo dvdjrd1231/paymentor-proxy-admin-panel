@@ -6,13 +6,7 @@ use App\Models\Gateway;
 use App\Models\Invoice;
 use Paymenter\Extensions\Others\PaymentFees\Models\PaymentFeeRule;
 
-/**
- * Server-side payment-method fee calculation.
- *
- * Everything here runs on the backend — the fee is never trusted from the client.
- * Given a gateway and an invoice, it finds the first matching active rule (by
- * ascending priority) and returns the fee amount for that invoice.
- */
+/** Server-side payment-method fee calculation. */
 class FeeCalculator
 {
     /**

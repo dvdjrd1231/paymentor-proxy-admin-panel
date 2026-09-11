@@ -1,13 +1,4 @@
-{{--
-    One tab of the client profile: one list, of one thing.
-
-    A single file with a switch rather than seven partials, because the tabs differ only in
-    their columns — the empty state, the row limit, the "see all" link out to the core screen
-    and the styling are the same argument seven times over, and seven files would be seven
-    places to change it.
-
-    `$rows` is whatever the page loaded for the showing tab; it is never all of them.
---}}
+{{-- One tab of the client profile: one list, of one thing. --}}
 @php
     $count = $rows->count();
 

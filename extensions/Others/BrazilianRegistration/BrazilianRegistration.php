@@ -17,15 +17,6 @@ use Paymenter\Extensions\Others\BrazilianRegistration\Support\Documents;
 /**
  * Brazilian customer registration.
  *
- * Tax fields on the registration and account forms via Paymenter's Custom Properties, so
- * they render and persist with no core edits. On top of that: CPF/CNPJ checksum validation
- * as `cpf` and `cnpj` rules, encryption at rest for CPF/RG/CNPJ through model events on
- * Property (the form sees plaintext, the database stores ciphertext), input masks via the
- * theme's footer hook, and an admin permission for viewing the documents.
- *
- * Seeded on User: a Person Type selector, CPF and RG for individuals, and Razão Social,
- * Nome Fantasia, CNPJ, Inscrição Estadual and IE Isento for businesses.
- *
  * @see docs/modules/brazilian-registration.md
  */
 #[ExtensionMeta(

@@ -19,45 +19,6 @@ use Throwable;
 /**
  * Fixed-term products: daily and weekly proxies that end when their time is up.
  *
- * ## The problem this exists to fix
- *
- * Paymenter's daily and weekly plans are `one-time`, and `Service::calculateNextDueDate()`
- * returns **null** for a one-time plan — so an activated daily service is stored with
- * `expires_at = NULL`. Every branch of core's cron that would end it is a comparison
- * against that column:
- *
- * ```php
- * Service::where('status', 'active')->where('expires_at', '<', now()->subDays(2))   // suspend
- * Service::where('status', 'suspended')->where('expires_at', '<', now()->subDays(14)) // terminate
- * ```
- *
- * `NULL < anything` is never true in SQL, so **neither ever matches**. A daily proxy runs
- * for ever: the customer pays for one day and keeps it. There is no renewal invoice either,
- * which is correct and is why it went unnoticed — the service simply never ends.
- *
- * On this store that is 10 daily and 10 weekly products.
- *
- * ## What this does instead
- *
- * A clock per service, in hours, kept beside `services` rather than in it — `expires_at` is
- * cast to `date` in core, and a daily product measured to the day runs between one and two
- * days. It starts when the service goes live, not when it was ordered: the brief says
- * "usage hours equivalent to the contracted period", and an order that waited overnight for
- * provisioning has not used any of them.
- *
- * A sweeper runs **every minute** and stops what is due. Core's daily cron is the right
- * cadence for a monthly product and the wrong one for a daily one — swept at midnight, a
- * service bought at 14:00 gets either ten hours too few or fourteen too many.
- *
- * **Non-renewable is by construction, not by rule.** Nothing here writes `expires_at`, so
- * core's invoicing branch still cannot see these services and still creates no renewal
- * invoice. Monthly products are untouched and go on renewing exactly as they do now.
- *
- * Extensions of time are an admin action with a **required reason**, appended to a record
- * that is never edited — the brief allows extra time "based on specific, justifiable needs
- * regarding maintenance or downtime", and an extension nobody can account for afterwards is
- * the thing that record exists to prevent.
- *
  * @link docs/modules/term-limits.md
  */
 #[ExtensionMeta(
@@ -132,16 +93,7 @@ class TermLimits extends Extension
         $this->sweepEveryMinute();
     }
 
-    /**
-     * The clock starts when the service becomes active.
-     *
-     * An Eloquent `updated` hook rather than a domain event: core defines
-     * `App\Events\Service\Updated` but never dispatches it, so listening for it would be
-     * listening for something that does not happen. `saved` covers every path to activation
-     * — first payment, an admin flipping the status, a renewal of a service that had been
-     * suspended — and {@see Terms::open()} is keyed on the service, so being called more
-     * than once for the same service does nothing the second time.
-     */
+    /** The clock starts when the service becomes active. */
     private function startTheClockOnActivation(): void
     {
         Service::saved(function (Service $service): void {
@@ -164,10 +116,6 @@ class TermLimits extends Extension
     /**
      * Registered against the scheduler that already runs every minute on the server, so
      * there is no second cron entry to install or forget.
-     *
-     * `withoutOverlapping` matters more here than in an hourly job: a sweep that takes
-     * longer than a minute — a slow panel, a long queue — would otherwise be joined by the
-     * next one and both would try to terminate the same services.
      */
     private function sweepEveryMinute(): void
     {

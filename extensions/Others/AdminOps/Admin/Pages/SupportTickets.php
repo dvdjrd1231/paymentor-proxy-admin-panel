@@ -14,13 +14,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * WHMCS's Support Tickets, to its screenshots: Search/Filter and Auto Refresh tabs, the
  * With Selected row — Merge, Close, Delete, Block Sender & Delete — the navy grid with
  * the flag column, and the sidebar's status views.
- *
- * ## The reference's eight views on Paymenter's three statuses
- *
- * Paymenter tickets are open, replied or closed, and carry an `assigned_to`. The views map
- * honestly onto that: Flagged is assigned (WHMCS's flag is an assignment), Answered is
- * replied, Customer-Reply is an open ticket whose last word was the customer's, In Progress
- * is assigned-and-not-closed, On Hold has no counterpart and says so by listing nothing.
  */
 class SupportTickets extends Page
 {

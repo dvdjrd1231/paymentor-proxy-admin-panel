@@ -1,15 +1,4 @@
-{{--
-    Products/Services — the catalogue, ordered by dragging.
-
-    Nested lists rather than the reference's one flat table, because Paymenter's categories
-    nest and WHMCS's groups do not. A group is a bordered panel with the reference's grey
-    heading band; its products are the table inside it. It reads as the reference and it can
-    show a child group without pretending the tree is flat.
-
-    Drag-and-drop is written here, in plain JS, for the reason in styles.blade.php: the admin
-    theme does not scan `extensions/`, and there is no build step in the deployment path. It
-    is the HTML5 drag API rather than a library — nothing to bundle, nothing to version.
---}}
+{{-- Products/Services — the catalogue, ordered by dragging. --}}
 <x-filament-panels::page>
     <div class="ao-mu">
         {{-- The reference's three buttons, in its order (issue #35). Each opens its own
