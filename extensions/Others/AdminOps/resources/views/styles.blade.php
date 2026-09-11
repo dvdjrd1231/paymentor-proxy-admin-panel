@@ -5713,6 +5713,10 @@
        gap doing nothing. Killing the margin is the fix; the reference sets them adjacent. */
     .ao-cs-service .ao-cs-cmds { justify-content: flex-start; gap: 0.3rem; }
     .ao-cs-service .ao-cs-cmds .ao-of-go { margin: 0; padding: 0 0.7rem; height: 1.9rem; }
+    /* The reference's Reason is a modest box beside the tick, not a bar across the row —
+       .ao-of-lg's 100% width let it run to the card's edge. */
+    .ao-cs-service .ao-of-check > input[type="text"] { flex: 0 0 20rem; width: 20rem; }
+
     .ao-cs-recalc { display: inline-flex; align-items: center; gap: 0.3rem; white-space: nowrap; font-size: 0.85rem; }
 
     /* The service editor's picker row: the reference's select + Go left, New Addon at
@@ -5766,7 +5770,7 @@
     .ao-of-xl { width: 100%; max-width: 46rem; }
 
     /* The Addons mini-table inside the editor: the navy header even when empty. */
-    .ao-cs-addons { width: 100%; max-width: 46rem; }
+    .ao-cs-addons { width: 100%; max-width: none; }
 
     .ao-cs-addons .ao-mu-none { text-align: left; padding-left: 0.6rem; }
 
