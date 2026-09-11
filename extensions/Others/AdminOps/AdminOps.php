@@ -89,6 +89,8 @@ class AdminOps extends Extension
         $this->retireCoreProductEditor();
         $this->retireCoreServerEditor();
         $this->retireCoreUserSubPages();
+
+        $this->retireRawCoreScreens();
         $this->registerErrorPages();
         $this->applyClientGroupDiscounts();
         $this->creditCancelledServices();
@@ -492,6 +494,44 @@ class AdminOps extends Extension
 
             return redirect()->to(Admin\Pages\PaymentGateways::getUrl());
         })->name('filament.admin.resources.gateways.index');
+    }
+
+    /**
+     * Core's remaining raw resource screens, replaced by their window-standard pages
+     * (Leandro, 2026-09-11). Same rule as above: each redirect carries the route name it
+     * displaces, or core's own getUrl() calls to it 500.
+     *
+     * Notification Templates is not rebuilt — Email Templates is already the reference's
+     * screen over that very model, so the raw list is a second door onto one feature.
+     */
+    private function retireRawCoreScreens(): void
+    {
+        $guarded = function (callable $target): \Closure {
+            return function (...$args) use ($target) {
+                if (!\Illuminate\Support\Facades\Auth::check()) {
+                    return redirect()->guest('/admin/login');
+                }
+
+                return redirect()->to($target(...$args));
+            };
+        };
+
+        $routes = [
+            '/admin/users' => ['filament.admin.resources.users.index', fn (): string => Admin\Pages\Administrators::getUrl()],
+            '/admin/failed-jobs' => ['filament.admin.resources.failed-jobs.index', fn (): string => Admin\Pages\FailedJobs::getUrl()],
+            '/admin/error-logs' => ['filament.admin.resources.error-logs.index', fn (): string => Admin\Pages\ErrorLog::getUrl()],
+            '/admin/notification-templates' => ['filament.admin.resources.notification-templates.index', fn (): string => Admin\Pages\EmailTemplates::getUrl()],
+            '/admin/notification-templates/create' => ['filament.admin.resources.notification-templates.create', fn (): string => Admin\Pages\EmailTemplates::getUrl()],
+        ];
+
+        foreach ($routes as $uri => [$name, $target]) {
+            \Illuminate\Support\Facades\Route::middleware(['web'])->get($uri, $guarded($target))->name($name);
+        }
+
+        \Illuminate\Support\Facades\Route::middleware(['web'])
+            ->get('/admin/notification-templates/{record}/edit', $guarded(
+                fn (string $record): string => Admin\Pages\EditEmailTemplate::getUrl(['record' => $record]),
+            ))->name('filament.admin.resources.notification-templates.edit');
     }
 
     /**

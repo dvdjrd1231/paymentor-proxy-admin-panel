@@ -645,15 +645,18 @@ class WhmcsNavigation
             static::pageLink(SystemCleanup::class, '- System Cleanup'),
             static::pageLink(PhpInfo::class, '- PHP Info'),
             static::pageLink(PhpCompatibility::class, '- PHP Version Compatibility'),
-            static::link(UserResource::class, '- Administrators'),
+            static::pageLink(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\Administrators::class, '- Administrators'),
+            static::markPlaced(UserResource::class),
             // "- Cron Statistics" is gone (user request, 2026-09-04): it opened the same
             // Automation Status the menu already lists two entries up, so it was a
             // duplicate line. Core's raw CronStats chart page stays claimed below so the
             // Addons sweep leaves it be; Automation Status's own header still links it.
             static::markCronStatsPlaced(),
-            static::link(FailedJobResource::class, '- Failed Jobs'),
+            static::pageLink(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\FailedJobs::class, '- Failed Jobs'),
+            static::markPlaced(FailedJobResource::class),
             static::link(AuditResource::class, '- Audit Log'),
-            static::link(ErrorLogResource::class, '- Error Log'),
+            static::pageLink(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ErrorLog::class, '- Error Log'),
+            static::markPlaced(ErrorLogResource::class),
             // Issue #17's "Nothing was modified": this entry pointed at core's raw
             // HttpLogResource, so the WHMCS-shaped page (Billing's Gateway Log) was
             // never what a click here reached. Same page here now; the raw resource
@@ -1113,6 +1116,17 @@ class WhmcsNavigation
     private static function markCronStatsPlaced(): ?NavigationItem
     {
         static::$placed[CronStats::class] = true;
+
+        return null;
+    }
+
+    /**
+     * A core resource whose screen is now one of ours: claimed so the Addons sweep leaves
+     * it alone, but contributing no menu entry of its own.
+     */
+    private static function markPlaced(string $resource): ?NavigationItem
+    {
+        static::$placed[$resource] = true;
 
         return null;
     }

@@ -148,9 +148,10 @@ class ProxyPanel extends Server
                 'name' => 'callback_secret',
                 'label' => 'Callback Secret',
                 'type' => 'password',
-                'description' => 'Optional shared secret, presented as "X-Panel-Secret" or as an '
-                    . 'HMAC-SHA256 of the raw body in "X-Panel-Signature". The panel sends neither '
-                    . 'today, so leave this empty and use Callback IPs instead. Stored encrypted.',
+                'description' => 'Shared secret for the callback. Simplest way to use it: append '
+                    . '"&token=<secret>" to the callback URL configured on the panel. Also accepted '
+                    . 'as an "X-Panel-Secret" header or an HMAC-SHA256 of the body in '
+                    . '"X-Panel-Signature". Stored encrypted.',
                 'required' => false,
                 'encrypted' => true,
             ],
@@ -1256,9 +1257,14 @@ class ProxyPanel extends Server
      * method, because the router answered 405 first.
      *
      * Authentication, any one of:
+     *   ?token=<callback_secret>                                 (works with a URL alone)
      *   X-Panel-Secret: <callback_secret>                        (constant-time compared)
      *   X-Panel-Signature: <hex HMAC-SHA256 of the raw body>
-     *   a source address inside callback_ips                     (what the panel actually uses)
+     *   a source address inside callback_ips
+     *
+     * The token is there because the panel sends no headers and sits behind Cloudflare, so
+     * its origin address cannot be read from DNS — but its callback URL is configurable, and
+     * a secret in that URL is something it can already do today.
      */
     public function callback(Request $request)
     {
@@ -1323,6 +1329,10 @@ class ProxyPanel extends Server
     private function isValidCallback(Request $request, string $secret, array $allowedIps): bool
     {
         if ($secret !== '') {
+            if ($token = $request->input('token')) {
+                return is_string($token) && hash_equals($secret, $token);
+            }
+
             if ($header = $request->header('X-Panel-Secret')) {
                 return hash_equals($secret, (string) $header);
             }
