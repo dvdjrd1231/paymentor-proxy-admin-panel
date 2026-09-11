@@ -4398,6 +4398,19 @@
         overflow-x: auto;
     }
 
+    /* …but a page whose controls open a panel must not be a scroll container at all.
+       Setting overflow on one axis forces the other from `visible` to `auto`, so the rule
+       above quietly made every .ao-mu page scroll vertically too. A dropdown is positioned
+       absolutely and cannot escape a scroll container, so it was clipped at the panel's
+       edge and the panel grew its own bar beside the dropdown's — the two scrollbars
+       Leandro saw on Cross-sells.
+
+       Keyed off the dropdowns themselves rather than a list of page classes, so a screen
+       that gains one later opts out without anyone remembering to add it here. */
+    .ao-mu:has(.ao-xsel, .ao-et-more, .ao-ep-cross, .ao-xsel-list) {
+        overflow: visible;
+    }
+
     /* Actions as the reference's small buttons, not bare links. */
     /* Leandro, 2026-09-07, of Administrator Roles: "Buttons alignment is incorrect."
        The cell mixes two shapes — a bordered box for the edit link, a borderless icon
