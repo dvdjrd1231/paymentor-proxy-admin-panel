@@ -95,6 +95,7 @@ class AdminOps extends Extension
         $this->registerTicketPrintView();
 
         $this->countProductUrlVisits();
+        $this->attachTemplateFiles();
         $this->registerErrorPages();
         $this->applyClientGroupDiscounts();
         $this->creditCancelledServices();
@@ -581,6 +582,57 @@ class AdminOps extends Extension
                 // A counter must never take the storefront down.
                 report($e);
             }
+        });
+    }
+
+    /**
+     * The reference's per-template Attachments, put on the message as it goes out.
+     *
+     * Core's `App\Mail\Mail` is vendored and has no `attachments()` to extend, so this hangs
+     * off MessageSending instead. Laravel builds that event's `data` from the mailable's
+     * public properties, and `Mail` holds the NotificationTemplate on one — which is how the
+     * message can be traced back to the template whose files it should carry.
+     */
+    private static bool $mailListenerRegistered = false;
+
+    private function attachTemplateFiles(): void
+    {
+        // boot() runs more than once in a process — the extension list is walked again on
+        // each bootstrap — and a listener registered twice attaches every file twice. The
+        // test sent one attachment and got three before this guard.
+        if (static::$mailListenerRegistered) {
+            return;
+        }
+
+        static::$mailListenerRegistered = true;
+
+        Event::listen(\Illuminate\Mail\Events\MessageSending::class, function ($event): bool {
+            try {
+                $template = $event->data['emailTemplate'] ?? null;
+
+                if (!$template instanceof \App\Models\NotificationTemplate) {
+                    return true;
+                }
+
+                $files = Models\EmailTemplateAttachment::where('template_id', $template->id)->get();
+
+                foreach ($files as $file) {
+                    $path = $file->absolutePath();
+
+                    // A file removed from disk behind our back must not stop the email.
+                    if (!is_file($path)) {
+                        report(new \RuntimeException('Email template attachment missing: ' . $path));
+
+                        continue;
+                    }
+
+                    $event->message->attachFromPath($path, $file->filename, $file->mime_type ?: null);
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
+
+            return true;
         });
     }
 
