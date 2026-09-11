@@ -7,6 +7,7 @@ use App\Models\NotificationTemplate;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Panel;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
 use Paymenter\Extensions\Others\AdminOps\Models\EmailTemplateAttachment;
@@ -228,7 +229,49 @@ class EditEmailTemplate extends Page
             ->success()->send();
     }
 
-    /** The reference's Available Merge Fields panel, for *this* template. */
+    /**
+     * The objects a template key is handed, from NotificationHelper's own call sites. The
+     * body is rendered with exactly this data and nothing else - notably not `$user`, so
+     * a client's details are reached through the record that belongs to them.
+     *
+     * @var array<string, array<int, string>>
+     */
+    private const CARRIES = [
+        'new_order_created' => ['order', 'items', 'total'],
+        'new_invoice_created' => ['invoice'],
+        'invoice_paid' => ['invoice'],
+        'invoice_reminder' => ['invoice'],
+        'new_server_created' => ['service'],
+        'server_suspended' => ['service'],
+        'server_terminated' => ['service'],
+        'service_cancellation_received' => ['service'],
+        'new_ticket_message' => ['ticketMessage'],
+    ];
+
+    /** What each carried name is, so its fields can be read off its table. */
+    private const MODELS = [
+        'order' => \App\Models\Order::class,
+        'invoice' => \App\Models\Invoice::class,
+        'service' => \App\Models\Service::class,
+        'ticketMessage' => \App\Models\TicketMessage::class,
+        'item' => \App\Models\Service::class,
+        'items' => \App\Models\Service::class,
+    ];
+
+    /** Columns that are plumbing rather than anything to put in an email. */
+    private const HIDDEN = [
+        'password', 'remember_token', 'tfa_secret', 'updated_at', 'deleted_at',
+        'settingable_id', 'settingable_type', 'reference_id', 'reference_type',
+    ];
+
+    /**
+     * The reference's Available Merge Fields panel. It lists everything this template can
+     * resolve rather than only what its current body happens to use, which is the point of
+     * the panel: the reference's Client Signup Email shows the whole client vocabulary
+     * while using four of it (Leandro, 2026-09-11).
+     *
+     * @return array{groups: array<int, array{heading: string, rows: array<int, array{label: string, token: string}>}>, links: array<int, string>}
+     */
     public function mergeFields(): array
     {
         $sources = [$this->body];
@@ -244,48 +287,117 @@ class EditEmailTemplate extends Page
         preg_match_all('/\{\{\s*(.+?)\s*\}\}/s', implode("\n", $sources), $matches);
 
         // `route(...)` calls are links rather than fields to paste, so they are listed
-        // apart — the reference does the same with its conditional and loop examples.
-        $fields = [];
+        // apart - the reference does the same with its conditional and loop examples.
         $links = [];
+        $used = [];
 
         foreach (array_unique($matches[1] ?? []) as $token) {
             if (str_starts_with($token, 'route(')) {
                 $links[] = '{{ ' . $token . ' }}';
             } else {
-                $fields[] = '{{ ' . $token . ' }}';
+                $used[] = '{{ ' . $token . ' }}';
             }
         }
 
-        sort($fields);
         sort($links);
 
-        return ['fields' => $fields, 'links' => $links, 'heading' => $this->mergeHeading($fields)];
+        $carries = self::CARRIES[$this->template->key] ?? [];
+
+        // Nothing mapped: fall back to what the body itself reaches for, which is at least
+        // true of this template even if it is not the whole vocabulary.
+        if ($carries === []) {
+            sort($used);
+
+            return [
+                'groups' => $used === [] ? [] : [['heading' => 'Available Fields', 'rows' => array_map(
+                    fn (string $token): array => ['label' => static::labelFor($token), 'token' => $token],
+                    $used,
+                )]],
+                'links' => $links,
+            ];
+        }
+
+        $groups = [];
+        $clientRoot = null;
+
+        foreach ($carries as $name) {
+            $model = self::MODELS[$name] ?? null;
+
+            if (!$model) {
+                // A scalar the helper passes ready-made, e.g. the order's formatted total.
+                $groups[] = ['heading' => Str::of($name)->headline(), 'rows' => [
+                    ['label' => Str::of($name)->headline(), 'token' => '{{ $' . $name . ' }}'],
+                ]];
+
+                continue;
+            }
+
+            // `items` is a collection - each row is reached inside a @foreach, so the
+            // tokens are written against the loop variable rather than the collection.
+            $variable = $name === 'items' ? 'item' : $name;
+            $rows = static::rowsFor($model, '$' . $variable);
+
+            if ($rows === []) {
+                continue;
+            }
+
+            $groups[] = [
+                'heading' => Str::of($name)->headline() . ' Related',
+                'rows' => $rows,
+            ];
+
+            $clientRoot ??= $variable;
+        }
+
+        // The reference's Client Related block. Nothing hands a template the user, so the
+        // client is reached through the record that belongs to them.
+        if ($clientRoot) {
+            $prefix = '$' . $clientRoot . ($clientRoot === 'ticketMessage' ? '->ticket->user' : '->user');
+            $rows = static::rowsFor(\App\Models\User::class, $prefix);
+
+            if ($rows !== []) {
+                array_unshift($groups, ['heading' => 'Client Related', 'rows' => $rows]);
+            }
+        }
+
+        return ['groups' => $groups, 'links' => $links];
     }
 
     /**
-     * What the left column is called — the reference heads it with the subject the tags
-     * belong to ("Client Related"), so this reads the tags rather than guessing from the
-     * template's name: whichever object most of them hang off names the group.
+     * One row per column the model really has, named the way the reference names them.
      *
-     * @param  array<int, string>  $fields
+     * @return array<int, array{label: string, token: string}>
      */
-    private function mergeHeading(array $fields): string
+    private static function rowsFor(string $model, string $prefix): array
     {
-        $counts = [];
+        try {
+            $columns = Schema::getColumnListing((new $model)->getTable());
+        } catch (\Throwable $e) {
+            return [];
+        }
 
-        foreach ($fields as $token) {
-            if (preg_match('/\{\{\s*\$([a-zA-Z_]+)/', $token, $m)) {
-                $counts[$m[1]] = ($counts[$m[1]] ?? 0) + 1;
+        $rows = [];
+
+        foreach ($columns as $column) {
+            if (in_array($column, self::HIDDEN, true)) {
+                continue;
             }
+
+            $rows[] = [
+                'label' => Str::of($column)->replace('_id', '')->headline(),
+                'token' => '{{ ' . $prefix . '->' . $column . ' }}',
+            ];
         }
 
-        if ($counts === []) {
-            return 'Related Fields';
-        }
+        return $rows;
+    }
 
-        arsort($counts);
+    /** The reference names each tag; the name is read out of the tag itself. */
+    public static function labelFor(string $token): string
+    {
+        preg_match('/([A-Za-z_]+)(?:\(\))?\s*\}\}/', $token, $m);
 
-        return Str::of(array_key_first($counts))->snake()->replace('_', ' ')->title() . ' Related';
+        return Str::of($m[1] ?? trim($token, '{}$ '))->headline();
     }
 
     protected function getViewData(): array
