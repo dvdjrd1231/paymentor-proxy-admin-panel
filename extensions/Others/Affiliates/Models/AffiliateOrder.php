@@ -62,7 +62,9 @@ class AffiliateOrder extends Model
                     if (!isset($earnings[$invoice->currency->name])) {
                         $earnings[$invoice->currency->name] = 0;
                     }
-                    $earnings[$invoice->currency->name] += $invoice->total * $reward_percentage / 100;
+                    // Same sum RewardAffiliate credited, so the page and the credit agree
+                    // once a product carries its own payout.
+                    $earnings[$invoice->currency->name] += \Paymenter\Extensions\Others\Affiliates\Listeners\RewardAffiliate::rewardFor($invoice, (float) $reward_percentage);
                 });
 
                 foreach ($earnings as $currency => $total) {
