@@ -2455,17 +2455,31 @@
 
     .ao-ep-dl-row { align-items: start; }
 
-    .ao-ep-dl { align-items: center; gap: 0.7rem; width: 100%; }
+    /* Three columns — list, the `<->`, list — with the two buttons on a second row centred
+       under the pair rather than across the page, which is where the reference puts them. */
+    .ao-ep-dl {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 0.5rem 0.7rem;
+        width: 100%;
+        max-width: 32rem;
+    }
 
-    .ao-ep-dl-col { flex: 1 1 0; min-width: 0; text-align: center; }
+    .ao-ep-dl-col { min-width: 0; text-align: center; }
 
     .ao-ep-dl-col > b { display: block; margin-bottom: 0.3rem; font-weight: 600; }
 
     .ao-ep-dl-list { max-width: none; text-align: start; }
 
-    .ao-ep-dl-move { flex: none; align-self: center; margin-top: 1.2rem; }
+    .ao-ep-dl-move { align-self: center; margin-top: 1.2rem; }
 
-    .ao-ep-dl-actions { margin: 0.2rem 0 0.6rem; }
+    .ao-ep-dl-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+    }
 
     /* The group screen's Assigned Products box is the tall one in the reference — it runs
        the width of the card rather than sitting in a field-sized column. */
@@ -7425,7 +7439,7 @@
        "Answered" to "Answere" (Leandro's circle, 2026-09-06). */
     .ao-et-status { min-width: 11rem; }
 
-    .ao-et-status, .ao-et-setrow select, .ao-et-canned {
+    .ao-et-status, .ao-et-setrow select {
         padding: 0.3rem 0.5rem;
         border: 1px solid var(--wa-panel-border, #ccc);
         border-radius: var(--wa-radius, 4px);
@@ -7490,9 +7504,153 @@
 
     .ao-et-actions-left, .ao-et-actions-right { display: inline-flex; align-items: center; gap: 0.75rem; }
 
-    .ao-et-attach { position: relative; overflow: hidden; cursor: pointer; }
+    /* The action row's four controls come from two button classes that disagree: .ao-of-go
+       is a centred block (margin: 0.8rem auto 0, height 2rem) and .ao-find-go an inline
+       flex pill of 2.1rem. Dropped into one inline-flex row that left the three buttons
+       sitting 0.8rem low and spread by their own auto margins, against a Reply button a
+       tenth of a rem taller. The row sets one height and one baseline for all of them. */
+    .ao-et-actions-left > .ao-of-go,
+    .ao-et-actions-left .ao-et-more > .ao-of-go {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        margin: 0;
+        height: 2.1rem;
+        flex: none;
+        white-space: nowrap;
+    }
 
-    .ao-et-attach-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .ao-et-actions-left .ao-of-go.ao-on { background: #e4e4e4; border-color: #b5b5b5; }
+
+    .ao-et-actionwrap { position: relative; margin-top: 0.55rem; }
+
+    .ao-et-actionwrap > .ao-et-actionrow { margin-top: 0; }
+
+    /* More options: the dropdown hangs off its own button rather than the row, so it opens
+       under the button the way the reference's does. */
+    .ao-et-more { position: relative; display: inline-flex; }
+
+    .ao-et-more-list { left: 0; right: auto; min-width: 15rem; }
+
+    .ao-et-caret { font-size: 0.7em; }
+
+    /* Attach Files and Insert Predefined Reply open a panel under the row — white on the
+       band's grey, which is how the reference separates them from it. */
+    .ao-et-panel {
+        margin-top: 0.55rem;
+        padding: 0.7rem 0.85rem;
+        border: 1px solid #d5d5d5;
+        border-radius: var(--wa-radius, 4px);
+        background: #fff;
+    }
+
+    .ao-et-panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        min-height: 2rem;
+    }
+
+    .ao-et-panel-title { color: var(--wa-muted, #6b6b6b); }
+
+    .ao-et-panel-search { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+    .ao-et-panel-search input {
+        width: 14rem;
+        height: 2rem;
+        padding: 0 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: var(--wa-input-bg, #fff);
+        font: inherit;
+        font-size: 0.9rem;
+    }
+
+    .ao-et-panel-close {
+        border: 0;
+        background: none;
+        font-size: 1.2rem;
+        line-height: 1;
+        color: var(--wa-muted, #6b6b6b);
+        cursor: pointer;
+    }
+
+    .ao-et-panel-none { margin: 0.4rem 0 0; color: var(--wa-muted, #6b6b6b); }
+
+    .ao-et-canned-list { margin-top: 0.3rem; }
+
+    .ao-et-canned-cat {
+        margin-top: 0.5rem;
+        color: var(--wa-muted, #6b6b6b);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .ao-et-canned-row {
+        display: block;
+        width: 100%;
+        padding: 0.3rem 0.4rem;
+        border: 0;
+        background: none;
+        font: inherit;
+        color: var(--wa-link, #337ab7);
+        text-align: start;
+        cursor: pointer;
+    }
+
+    .ao-et-canned-row:hover { background: #f5f5f5; }
+
+    /* One Choose File per row, the green Add More beside them, and the size the reply is
+       actually validated against underneath — the reference's three parts. */
+    .ao-et-attach-panel { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; }
+
+    .ao-et-attach-rows { display: grid; gap: 0.4rem; }
+
+    .ao-et-attach-file { width: 100%; font-size: 0.9rem; }
+
+    .ao-et-addmore {
+        align-self: start;
+        height: 2.1rem;
+        padding: 0 1.4rem;
+        border: 0;
+        border-radius: var(--wa-radius, 6px);
+        background: #5cb85c;
+        color: #fff;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .ao-et-addmore:hover { background: #4cae4c; }
+
+    .ao-et-attach-max {
+        grid-column: 1 / -1;
+        margin: 0;
+        color: var(--wa-muted, #6b6b6b);
+        font-size: 0.85rem;
+    }
+
+    .ao-et-billing {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: 0.6rem;
+        margin-top: 0.5rem;
+    }
+
+    .ao-et-billing label { display: grid; gap: 0.2rem; font-size: 0.85rem; }
+
+    .ao-et-billing input, .ao-et-billing select {
+        height: 2rem;
+        padding: 0 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: var(--wa-input-bg, #fff);
+        font: inherit;
+        font-size: 0.9rem;
+    }
 
     .ao-et-msg {
         display: grid;

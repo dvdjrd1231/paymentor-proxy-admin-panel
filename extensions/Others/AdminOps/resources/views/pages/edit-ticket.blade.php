@@ -97,23 +97,40 @@
                     </select>
                 </div>
 
+                {{-- The reference's three buttons on the left, the tick and Reply on the
+                     right. Attach Files and Insert Predefined Reply each open a panel below
+                     this row rather than acting at once — Attach Files went straight to the
+                     OS picker and the predefined replies were a bare select, neither of
+                     which is what the target does. More options was missing outright. --}}
+                <div class="ao-et-actionwrap"
+                    x-data="{
+                        attach: false, canned: false, more: false, kb: false, billing: false, q: '',
+                        titles: @js($canned->pluck('title')->values()->all()),
+                        hit(text) { return text.toLowerCase().includes(this.q.trim().toLowerCase()) },
+                        get anyReply() { return this.titles.some((t) => this.hit(t)) },
+                    }"
+                    @click.outside="more = false">
                 <div class="ao-et-actionrow">
                     <span class="ao-et-actions-left">
-                        <label class="ao-of-go ao-et-attach">
-                            Attach Files
-                            <input type="file" multiple wire:model="attachments" class="ao-et-attach-input">
-                        </label>
-                        @if ($canned->isNotEmpty())
-                            <select class="ao-et-canned" wire:change="insertCanned($event.target.value); $event.target.value = ''">
-                                <option value="">Insert Predefined Reply</option>
-                                @foreach ($canned as $response)
-                                    <option value="{{ $response->id }}">{{ $response->title }}</option>
-                                @endforeach
-                            </select>
-                        @endif
-                        @if ($attachments)
-                            <i>{{ count($attachments) }} file(s) ready</i>
-                        @endif
+                        <button type="button" class="ao-of-go" :class="{ 'ao-on': attach }"
+                            @click="attach = !attach">&#128196; Attach Files</button>
+                        <button type="button" class="ao-of-go" :class="{ 'ao-on': canned }"
+                            @click="canned = !canned">&#9999;&#65039; Insert Predefined Reply</button>
+                        <span class="ao-et-more">
+                            <button type="button" class="ao-of-go" :class="{ 'ao-on': more }"
+                                @click="more = !more">&#9881; More options <span class="ao-et-caret">&#9662;</span></button>
+                            <span class="ao-xsel-list ao-et-more-list" x-show="more" x-cloak>
+                                <span class="ao-xsel-opt"
+                                    @click="kb = true; more = false">Insert Knowledgebase Link</span>
+                                @if ($canBill)
+                                    <span class="ao-xsel-opt"
+                                        @click="billing = true; more = false">Add Billing Entry</span>
+                                @else
+                                    <span class="ao-xsel-opt ao-off"
+                                        title="The Billable Items extension is not installed, so there is nowhere to record the charge">Add Billing Entry</span>
+                                @endif
+                            </span>
+                        </span>
                     </span>
                     <span class="ao-et-actions-right">
                         <label class="ao-of-check">
@@ -121,6 +138,95 @@
                         </label>
                         <button type="submit" class="ao-find-go">&#8617; Reply</button>
                     </span>
+                </div>
+
+                    {{-- ── The panels, in the reference's order under the row ───────── --}}
+
+                    {{-- Insert Predefined Reply: the search on the right, the replies under
+                         their category, and the reference's own sentence when a category
+                         holds nothing. Filtering is Alpine's, so typing costs no round trip;
+                         picking one appends its body to the editor. --}}
+                    <div class="ao-et-panel" x-show="canned" x-cloak>
+                        <div class="ao-et-panel-head">
+                            <span class="ao-et-panel-title" x-show="!anyReply">
+                                This category is currently empty
+                            </span>
+                            <span class="ao-et-panel-search">
+                                &#128269; <input type="text" x-model="q" placeholder="Search">
+                            </span>
+                        </div>
+                        <div class="ao-et-canned-list">
+                            @foreach ($canned->groupBy(fn ($r) => $r->department ?: 'General') as $category => $replies)
+                                <div class="ao-et-canned-cat"
+                                    x-show="@js($replies->pluck('title')->values()->all()).some((t) => hit(t))">
+                                    {{ $category }}
+                                </div>
+                                @foreach ($replies as $response)
+                                    <button type="button" class="ao-et-canned-row"
+                                        x-show="hit(@js($response->title))"
+                                        wire:click="insertCanned('{{ $response->id }}')"
+                                        @click="canned = false">{{ $response->title }}</button>
+                                @endforeach
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- Attach Files: one Choose File per row, Add More for the next, and
+                         the size the reply validates against — said once, from the rule. --}}
+                    <div class="ao-et-panel ao-et-attach-panel" x-show="attach" x-cloak>
+                        <div class="ao-et-attach-rows">
+                            @for ($i = 0; $i < $attachSlots; $i++)
+                                <input type="file" wire:model="attachments.{{ $i }}" class="ao-et-attach-file">
+                            @endfor
+                        </div>
+                        <button type="button" class="ao-et-addmore" wire:click="addAttachSlot">&plus; Add More</button>
+                        <p class="ao-et-attach-max">Max file size: {{ $maxAttachmentMb }}MB</p>
+                    </div>
+
+                    {{-- More options → Insert Knowledgebase Link. Only published articles,
+                         pasted as their customer-facing address. --}}
+                    <div class="ao-et-panel" x-show="kb" x-cloak>
+                        <div class="ao-et-panel-head">
+                            <span class="ao-et-panel-title">Insert Knowledgebase Link</span>
+                            <button type="button" class="ao-et-panel-close" @click="kb = false" aria-label="Close">&times;</button>
+                        </div>
+                        @forelse ($kbArticles as $article)
+                            <button type="button" class="ao-et-canned-row"
+                                wire:click="insertKbLink('{{ $article->id }}')"
+                                @click="kb = false">{{ trim(($article->category?->name ? $article->category->name . ' — ' : '') . $article->title) }}</button>
+                        @empty
+                            <p class="ao-et-panel-none">No published knowledgebase article to link to yet.</p>
+                        @endforelse
+                    </div>
+
+                    {{-- More options → Add Billing Entry: a real BillableItems row against
+                         this ticket's client. --}}
+                    @if ($canBill)
+                        <div class="ao-et-panel" x-show="billing" x-cloak>
+                            <div class="ao-et-panel-head">
+                                <span class="ao-et-panel-title">Add Billing Entry</span>
+                                <button type="button" class="ao-et-panel-close" @click="billing = false" aria-label="Close">&times;</button>
+                            </div>
+                            <div class="ao-et-billing">
+                                <label>Description
+                                    <input type="text" wire:model="billing.description"></label>
+                                <label>Amount ({{ $billingCurrency }})
+                                    <input type="text" wire:model="billing.amount"></label>
+                                <label>Qty/Hours
+                                    <input type="text" wire:model="billing.quantity"></label>
+                                <label>Invoice Action
+                                    <select wire:model="billing.action">
+                                        <option value="next_invoice">Add to Client's Next Invoice</option>
+                                        <option value="immediately">Invoice Immediately</option>
+                                        <option value="hold">Don't Invoice for Now</option>
+                                    </select></label>
+                                {{-- Left open deliberately: a rejected amount has to be
+                                     visible to be corrected, and the panel closing would
+                                     take the error message with it. --}}
+                                <button type="button" class="ao-find-go" wire:click="addBillingEntry">Add Entry</button>
+                            </div>
+                        </div>
+                    @endif
                 </div>
                 </div>
 

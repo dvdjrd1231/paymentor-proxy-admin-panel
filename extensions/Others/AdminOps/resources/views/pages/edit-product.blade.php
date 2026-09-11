@@ -373,7 +373,8 @@
 
         {{-- ── Module Settings ─────────────────────────────────────────────────── --}}
         <div x-show="tab === 'module'" x-cloak>
-            <form class="ao-anc-card" wire:submit.prevent="saveModule">
+            <form wire:submit.prevent="saveModule">
+                <div class="ao-anc-card">
                 <label class="ao-anc-row">
                     <span>Module Name</span>
                     <select wire:model.live="form.server_id">
@@ -468,6 +469,8 @@
                     </span>
                 </div>
 
+                </div>
+
                 <div class="ao-pr-center ao-cpg-actions">
                     <button type="submit" class="ao-find-go">Save Changes</button>
                     <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::getUrl(['record' => $product->id]) }}">Cancel Changes</a>
@@ -477,7 +480,8 @@
 
         {{-- ── Configurable Options ────────────────────────────────────────────── --}}
         <div x-show="tab === 'options'" x-cloak>
-            <form class="ao-anc-card" wire:submit.prevent="saveOptions">
+            <form wire:submit.prevent="saveOptions">
+                <div class="ao-anc-card">
                 {{-- The reference's list box, not a column of tick boxes: hold Ctrl or
                      Shift to pick more than one, the same as the target. --}}
                 <div class="ao-anc-row">
@@ -498,6 +502,8 @@
                     </span>
                 </div>
 
+                </div>
+
                 <div class="ao-pr-center ao-cpg-actions">
                     <button type="submit" class="ao-find-go">Save Changes</button>
                     <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::getUrl(['record' => $product->id]) }}">Cancel Changes</a>
@@ -507,7 +513,8 @@
 
         {{-- ── Upgrades ────────────────────────────────────────────────────────── --}}
         <div x-show="tab === 'upgrades'" x-cloak>
-            <form class="ao-anc-card" wire:submit.prevent="saveUpgrades">
+            <form wire:submit.prevent="saveUpgrades">
+                <div class="ao-anc-card">
                 <div class="ao-anc-row">
                     <span title="The products a customer on this one may move to">Packages Upgrades</span>
                     <span class="ao-anc-field">
@@ -543,6 +550,8 @@
                             <option>None</option>
                         </select>
                     </span>
+                </div>
+
                 </div>
 
                 <div class="ao-pr-center ao-cpg-actions">
@@ -595,7 +604,8 @@
 
             <h3 class="ao-sub">Add New Custom Field</h3>
 
-            <form class="ao-anc-card" wire:submit.prevent="saveCustomField">
+            <form wire:submit.prevent="saveCustomField">
+                <div class="ao-anc-card">
                 <label class="ao-anc-row">
                     <span>
                         Field Name
@@ -690,6 +700,8 @@
                     </div>
                 @endif
 
+            </div>
+
                 <div class="ao-pr-center ao-cpg-actions">
                     <button type="submit" class="ao-find-go">Save Changes</button>
                     <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::getUrl(['record' => $product->id]) }}">Cancel Changes</a>
@@ -748,7 +760,8 @@
 
         {{-- ── Cross-sells ─────────────────────────────────────────────────────── --}}
         <div x-show="tab === 'crosssells'" x-cloak>
-            <form class="ao-anc-card" wire:submit.prevent="saveCrossSells">
+            <form wire:submit.prevent="saveCrossSells">
+                <div class="ao-anc-card">
                 <div class="ao-anc-row">
                     <span title="Shown as recommendations on this product's own page">Product Cross-sells</span>
                     {{-- The reference's type-to-search picker: a search box that filters a
@@ -800,6 +813,8 @@
                     </span>
                 </div>
 
+            </div>
+
                 <div class="ao-pr-center ao-cpg-actions">
                     <button type="submit" class="ao-find-go">Save Changes</button>
                     <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::getUrl(['record' => $product->id]) }}">Cancel Changes</a>
@@ -809,7 +824,8 @@
 
         {{-- ── Other ───────────────────────────────────────────────────────────── --}}
         <div x-show="tab === 'other'" x-cloak>
-            <form class="ao-anc-card" wire:submit.prevent="saveOther">
+            <form wire:submit.prevent="saveOther">
+                <div class="ao-anc-card">
                 {{-- The reference's own rows, in its order (issue #35). The inert ones say
                      so on themselves rather than in a paragraph underneath; the three that
                      are real — Associated Downloads, and this platform's own Sort Order and
@@ -894,15 +910,16 @@
                                     </template>
                                 </select>
                             </span>
+                            {{-- The reference's two buttons under the pair, centred on it
+                                 rather than on the page. Both are the Downloads area's own
+                                 jobs, so they go there rather than opening a second
+                                 uploader here. --}}
+                            <span class="ao-ep-dl-actions">
+                                <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin::getUrl() }}">Add Category</a>
+                                <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin::getUrl() }}">Quick Upload</a>
+                            </span>
                         </span>
                     @endif
-                </div>
-
-                {{-- The reference's two buttons under the pair. Both are the Downloads area's
-                     own jobs, so they go there rather than opening a second uploader here. --}}
-                <div class="ao-pr-center ao-ep-dl-actions">
-                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin::getUrl() }}">Add Category</a>
-                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin::getUrl() }}">Quick Upload</a>
                 </div>
 
                 <div class="ao-anc-row ao-gs-off">
@@ -946,6 +963,8 @@
                     </span>
                     <input type="number" min="0" class="ao-w-25" wire:model="form.per_user_limit">
                 </label>
+
+                </div>
 
                 <div class="ao-pr-center ao-cpg-actions">
                     <button type="submit" class="ao-find-go">Save Changes</button>
