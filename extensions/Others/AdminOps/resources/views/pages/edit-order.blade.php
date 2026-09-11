@@ -172,17 +172,17 @@
                          accepting currently always provisions, with no way to say "I set this
                          one up by hand", which is what Run Module Create is for. --}}
                     @if ($service->status === 'pending')
-                        @php
-                            $panelUser = $service->properties->firstWhere('key', 'proxy_username')?->value;
-                            $panelPass = $service->properties->firstWhere('key', 'proxy_password')?->value;
-                        @endphp
                         <tr class="ao-eo-provision">
                             <td colspan="6">
                                 <div class="ao-eo-prov-line">
-                                    <span class="ao-eo-prov-inert" title="{{ $panelUser ? 'The panel account this service runs as' : 'Credentials are issued by the panel when it creates the account, not chosen here' }}">
-                                        Username: <input type="text" readonly value="{{ $panelUser }}">
-                                        Password: <input type="text" readonly value="{{ $panelPass }}">
-                                    </span>
+                                    {{-- Editable, as the reference's are: what these hold is what the
+                                         module is handed when the order is accepted. --}}
+                                    <label class="ao-eo-prov-cred">Username:
+                                        <input type="text" class="ao-eo-prov-user" wire:model="creds.{{ $service->id }}.username"
+                                            @disabled(!$service->product?->server)></label>
+                                    <label class="ao-eo-prov-cred">Password:
+                                        <input type="text" class="ao-eo-prov-pass" wire:model="creds.{{ $service->id }}.password"
+                                            @disabled(!$service->product?->server)></label>
                                     {{-- No Server box: the reference's own order carries none
                                          (Leandro's 3770), and a product names its server, so
                                          there was never a choice to make here. The server is

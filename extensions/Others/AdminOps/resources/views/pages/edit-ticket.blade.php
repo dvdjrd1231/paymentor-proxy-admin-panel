@@ -541,7 +541,8 @@
             </div>
         @endforeach
 
-        <p><button type="button" class="ao-of-go ao-et-print" onclick="window.print()">&#128424; View Printable Version</button></p>
+        <p><a class="ao-of-go ao-et-print" href="{{ route('adminops.ticket.print', ['ticket' => $ticket->id]) }}"
+            target="_blank" rel="noopener">&#128424; View Printable Version</a></p>
 
         @if ($confirmingDelete)
             <div class="ao-mud-overlay" wire:click.self="$set('confirmingDelete', null)">

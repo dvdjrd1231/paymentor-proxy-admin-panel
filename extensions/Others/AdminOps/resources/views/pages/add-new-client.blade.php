@@ -30,12 +30,12 @@
                 @endisset
                 <label class="ao-anc-row">
                     <span>Email Address</span>
-                    <input type="email" wire:model="email" placeholder="user@example.com" required>
+                    <input type="email" class="ao-aw-email" wire:model="email" placeholder="user@example.com" required>
                 </label>
                 <label class="ao-anc-row">
                     <span>Password</span>
                     <span class="ao-anc-field">
-                        <input type="text" wire:model="password" placeholder="Minimum 8 characters" data-ao-password required>
+                        <input type="text" class="ao-aw-sm" wire:model="password" placeholder="Minimum 8 characters" data-ao-password required>
                         <button type="button" class="ao-anc-generate" data-ao-generate>Generate Password</button>
                     </span>
                 </label>
@@ -46,7 +46,7 @@
 
                 <label class="ao-anc-row">
                     <span>Language</span>
-                    <select wire:model="language">
+                    <select class="ao-aw-lang" wire:model="language">
                         <option value="">Default</option>
                         @foreach ($languages as $code => $label)
                             <option value="{{ $code }}">{{ $label }}</option>
@@ -55,11 +55,11 @@
                 </label>
                 <label class="ao-anc-row">
                     <span>Status</span>
-                    <select><option>Active</option></select>
+                    <select class="ao-aw-tiny"><option>Active</option></select>
                 </label>
                 <label class="ao-anc-row">
                     <span>Client Group</span>
-                    <select><option>None</option></select>
+                    <select class="ao-aw-tiny"><option>None</option></select>
                 </label>
             </div>
 
@@ -75,7 +75,7 @@
                                      list would put wrong names in front of the typist.
                                      Keyed by country so the morph re-reads the options. --}}
                                 @if ($key === 'state' && $regions)
-                                    <select wire:model="props.state" wire:key="state-{{ $props['country'] ?? '' }}"
+                                    <select class="ao-aw-state" wire:model="props.state" wire:key="state-{{ $props['country'] ?? '' }}"
                                         @if ($fixed[$key]->required) required @endif>
                                         <option value="">—</option>
                                         @foreach ($regions as $region)
@@ -83,7 +83,8 @@
                                         @endforeach
                                     </select>
                                 @else
-                                    <input type="text" wire:model="props.{{ $key }}" placeholder="{{ $hint }}"
+                                    <input type="text" class="{{ $key === 'zip' ? 'ao-aw-sm' : ($key === 'state' ? 'ao-aw-state' : '') }}"
+                                        wire:model="props.{{ $key }}" placeholder="{{ $hint }}"
                                         @if ($fixed[$key]->required) required @endif>
                                 @endif
                                 @unless ($fixed[$key]->required)
@@ -99,7 +100,7 @@
                         <span>Country</span>
                         {{-- Live: the Brazil-only registry fields below fold in and out
                              with this choice. --}}
-                        <select wire:model.live="props.country" required>
+                        <select class="ao-aw-country" wire:model.live="props.country" required>
                             <option value="">—</option>
                             @foreach ($fixed['country']->allowed_values ?? [] as $value => $label)
                                 <option value="{{ is_int($value) ? $label : $value }}">{{ $label }}</option>
@@ -117,7 +118,7 @@
                             @if ($phoneFlag || $phoneDial)
                                 <i class="ao-anc-dial">{{ $phoneFlag }} {{ $phoneDial }} &#9662;</i>
                             @endif
-                            <input type="text" wire:model="props.phone"
+                            <input type="text" class="ao-aw-phone" wire:model="props.phone"
                                 placeholder="{{ $phoneDial ? '201-555-0123' : '+1 201-555-0123' }}" required>
                         </span>
                     </label>
@@ -125,7 +126,7 @@
 
                 <label class="ao-anc-row">
                     <span>Payment Method</span>
-                    <select wire:model="paymentMethod">
+                    <select class="ao-aw-country" wire:model="paymentMethod">
                         <option value="">Select to Change Default</option>
                         @foreach ($gateways as $gateway)
                             <option value="{{ $gateway }}">{{ $gateway }}</option>
@@ -134,11 +135,11 @@
                 </label>
                 <label class="ao-anc-row">
                     <span>Billing Contact</span>
-                    <select><option>Default</option></select>
+                    <select class="ao-aw-tiny"><option>Default</option></select>
                 </label>
                 <label class="ao-anc-row">
                     <span>Currency</span>
-                    <select wire:model="currency">
+                    <select class="ao-aw-cur" wire:model="currency">
                         @foreach ($currencies as $code)
                             <option value="{{ $code }}">{{ $code }}</option>
                         @endforeach
