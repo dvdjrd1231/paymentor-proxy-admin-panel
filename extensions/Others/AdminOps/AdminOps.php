@@ -110,6 +110,15 @@ class AdminOps extends Extension
                 return;
             }
 
+            // Core hands the panel `config('settings.favicon')` as it stood at boot, and
+            // nothing at all when there is none - and with no tag the browser falls back
+            // to /favicon.ico, an empty file core ships that answers 200, so it goes on
+            // drawing whatever icon it had cached. A removed favicon therefore never
+            // looked removed. Re-set per request: `data:,` is the explicit "no icon", and
+            // the timestamp defeats the same caching when one is replaced, the file name
+            // being fixed. Set here rather than as a second <link> so there is one tag.
+            $panel->favicon(static::faviconUrl());
+
             $panel->userMenuItems([
                 'branding' => \Filament\Actions\Action::make('branding')
                     ->label('Branding')
@@ -120,6 +129,19 @@ class AdminOps extends Extension
                     ->sort(-10),
             ]);
         });
+    }
+
+    /** The favicon to declare right now: the uploaded file, versioned, or "no icon". */
+    public static function faviconUrl(): string
+    {
+        $favicon = (string) config('settings.favicon');
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+
+        if ($favicon === '' || !$disk->exists($favicon)) {
+            return 'data:,';
+        }
+
+        return \Illuminate\Support\Facades\Storage::url($favicon) . '?v=' . $disk->lastModified($favicon);
     }
 
     /** Credit the unused period back when a service is cancelled (Leandro, 2026-09-08). */

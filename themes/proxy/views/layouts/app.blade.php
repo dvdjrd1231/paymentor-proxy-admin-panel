@@ -18,9 +18,19 @@
     @include('layouts.colors')
     @include('layouts.whmcs-css')
 
-    @if (config('settings.favicon'))
-    <link rel="icon" href="{{ Storage::url(config('settings.favicon')) }}">
-    @endif
+    {{-- Always a link, never nothing. With no tag at all the browser falls back to
+         /favicon.ico — an empty file core ships, which answers 200 and leaves whatever
+         icon it already cached on screen, so a favicon removed in Branding went on
+         showing. `data:,` is the explicit "this site has no icon". --}}
+    @php
+        // Versioned by the file's own timestamp: the name does not change when a new
+        // favicon is uploaded, so without this the browser keeps drawing the old one.
+        $favicon = (string) config('settings.favicon');
+        $faviconUrl = $favicon !== '' && Storage::disk('public')->exists($favicon)
+            ? Storage::url($favicon) . '?v=' . Storage::disk('public')->lastModified($favicon)
+            : 'data:,';
+    @endphp
+    <link rel="icon" href="{{ $faviconUrl }}">
     @isset($title)
     <meta content="{{ isset($title) ? config('app.name', 'Paymenter') . ' - ' . $title : config('app.name', 'Paymenter') }}" property="og:title">
     <meta content="{{ isset($title) ? config('app.name', 'Paymenter') . ' - ' . $title : config('app.name', 'Paymenter') }}" name="title">
