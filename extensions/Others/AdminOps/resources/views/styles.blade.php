@@ -2448,6 +2448,29 @@
 
     .ao-ep-list option { padding: 0.2rem 0.35rem; }
 
+    /* A list box has to be as tall as its `size` says. `.ao-anc-row select` pins every
+       select to 2.1rem, which outranks the rule above and collapsed all three of these to
+       a single line — Packages Upgrades, Assigned Option Groups and both halves of
+       Associated Downloads, which is why that pair read as two stubs with the buttons
+       beside them instead of a pair with the buttons underneath. */
+    .ao-anc-row select.ao-ep-list,
+    .ao-anc-row select[multiple] { height: auto; padding: 0.35rem; }
+
+    /* The list and its "Use Ctrl+Click…" note stack, as the reference stacks them. Both
+       classes are one specificity step, and .ao-anc-field is declared further down — so
+       its `align-items: center` wins unless this rule names both and centres the box. */
+    .ao-anc-field.ao-ep-listfield { flex-direction: column; align-items: flex-start; gap: 0.3rem; }
+    .ao-anc-field.ao-ep-listfield > i { flex: none; }
+
+    /* Soft Limits and Overage Costs run label/box/unit along one line. The shared hint rule
+       lets an <i> shrink to nothing, so "Disk Usage" and "Bandwidth" were overrun by the
+       inputs beside them and read as "Disl Usagc" and "Bar". */
+    .ao-anc-field.ao-ep-units > i { flex: 0 0 auto; white-space: nowrap; min-width: max-content; }
+    .ao-anc-field.ao-ep-units > input { flex: 0 0 auto; width: 7rem; }
+    .ao-anc-field.ao-ep-units > select { flex: 0 0 auto; width: 6.5rem; }
+
+    .ao-anc-row select.ao-ep-narrow { width: 12rem; }
+
     /* Other → Associated Downloads: the reference's Available/Selected pair with one
        `<->` between them. The pair runs the width of the card rather than sitting in a
        field-sized column, so .ao-ep-list's 34rem cap is lifted for these two. */
@@ -2457,7 +2480,10 @@
 
     /* Three columns — list, the `<->`, list — with the two buttons on a second row centred
        under the pair rather than across the page, which is where the reference puts them. */
-    .ao-ep-dl {
+    /* Names .ao-anc-field too: that class sets display:flex further down the sheet, so at
+       equal specificity the flex row won and the grid never ran — which is why the two
+       buttons sat beside the lists instead of centred on a second row under them. */
+    .ao-anc-field.ao-ep-dl {
         display: grid;
         grid-template-columns: 1fr auto 1fr;
         align-items: center;

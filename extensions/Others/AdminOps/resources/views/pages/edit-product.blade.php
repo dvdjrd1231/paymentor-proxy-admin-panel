@@ -486,7 +486,7 @@
                      Shift to pick more than one, the same as the target. --}}
                 <div class="ao-anc-row">
                     <span>Assigned Option Groups</span>
-                    <span class="ao-anc-field">
+                    <span class="ao-anc-field ao-ep-listfield">
                         <select class="ao-ep-list" multiple size="10" wire:model="optionIds"
                             title="Ctrl-click or Shift-click to choose more than one">
                             @foreach ($optionGroups as $group)
@@ -517,7 +517,7 @@
                 <div class="ao-anc-card">
                 <div class="ao-anc-row">
                     <span title="The products a customer on this one may move to">Packages Upgrades</span>
-                    <span class="ao-anc-field">
+                    <span class="ao-anc-field ao-ep-listfield">
                         <select class="ao-ep-list" multiple size="10" wire:model="upgradeIds">
                             @foreach ($otherProducts as $other)
                                 <option value="{{ $other->id }}">{{ trim(($other->category?->name ? $other->category->name . ' - ' : '') . $other->name) }}</option>
@@ -546,7 +546,7 @@
                 <div class="ao-anc-row">
                     <span>Upgrade Email</span>
                     <span class="ao-anc-field ao-gs-off">
-                        <select disabled title="Not available: an upgrade amends the running service and raises the difference as an invoice, so the client is told by that invoice rather than by a separate template">
+                        <select class="ao-ep-narrow" disabled title="Not available: an upgrade amends the running service and raises the difference as an invoice, so the client is told by that invoice rather than by a separate template">
                             <option>None</option>
                         </select>
                     </span>
@@ -926,7 +926,7 @@
                 </div>
                 <div class="ao-anc-row ao-gs-off">
                     <span>Soft Limits</span>
-                    <span class="ao-anc-field" title="{{ $hostingOff }}">
+                    <span class="ao-anc-field ao-ep-units" title="{{ $hostingOff }}">
                         <i>Disk Usage</i> <input type="text" class="ao-w-25" value="0" disabled>
                         <select class="ao-ep-unit" disabled><option>MB</option><option>GB</option></select>
                         <i>Bandwidth</i> <input type="text" class="ao-w-25" value="0" disabled>
@@ -935,7 +935,7 @@
                 </div>
                 <div class="ao-anc-row ao-gs-off">
                     <span>Overage Costs</span>
-                    <span class="ao-anc-field" title="{{ $hostingOff }}">
+                    <span class="ao-anc-field ao-ep-units" title="{{ $hostingOff }}">
                         <i>Disk Usage</i> <input type="text" class="ao-w-25" value="0.0000" disabled>
                         <i>Bandwidth</i> <input type="text" class="ao-w-25" value="0.0000" disabled>
                         <i>(Price Per Unit Over Above)</i>
