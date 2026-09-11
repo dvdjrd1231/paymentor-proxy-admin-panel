@@ -8250,6 +8250,11 @@
 
     .ao-mud-wide { width: 20rem; }
 
+    /* A fact on a form row rather than a control: stated, with the place it is changed. */
+    .ao-of-plain { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+
+    .ao-of-plain-go { font-size: 0.8rem; }
+
     .ao-mud-text { padding: 1.1rem 1.5rem 0; }
 
     .ao-mud-text p + p { margin-top: 0.8rem; }
