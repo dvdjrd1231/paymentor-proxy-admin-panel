@@ -5695,14 +5695,17 @@
        Its label columns are wide enough that "First Payment Amount" sits on one
        line; ours wrapped it, which is what made the rows read taller than the
        reference's (issue #53). */
-    .ao-cs-service .ao-of-row { grid-template-columns: 11rem minmax(0, 1fr) 12rem minmax(0, 1fr); }
+    /* 13rem, not 11: "Auto-Terminate End of Cycle" wants 193px and the cell gave it 187,
+       and a right-aligned nowrap label spills the difference out past the panel's left
+       border. Both row shapes move together so the fields stay in one line. */
+    .ao-cs-service .ao-of-row { grid-template-columns: 13rem minmax(0, 1fr) 12rem minmax(0, 1fr); }
     .ao-cs-service .ao-of-row > * { padding: 0.3rem 0.6rem; }
     .ao-cs-service .ao-of-label { white-space: nowrap; }
 
     /* A full-width row keeps its span — the rule above is more specific than
        .ao-of-row-single, so without this the module commands were squeezed into one
        quarter of the form and wrapped onto three lines. */
-    .ao-cs-service .ao-of-row-single { grid-template-columns: 11rem minmax(0, 1fr); }
+    .ao-cs-service .ao-of-row-single { grid-template-columns: 13rem minmax(0, 1fr); }
 
     .ao-cs-service .ao-of-inline { gap: 0.4rem; flex-wrap: wrap; }
 
@@ -5772,7 +5775,14 @@
     /* The Addons mini-table inside the editor: the navy header even when empty. */
     .ao-cs-addons { width: 100%; max-width: none; }
 
-    .ao-cs-addons .ao-mu-none { text-align: left; padding-left: 0.6rem; }
+    /* The reference's Addons table is a compact band: a thin header and one tight line
+       under it. Ours inherited the grid's 13.6px cells and a 17px empty-state, which made
+       the row nearly twice the height it should be. */
+    .ao-cs-addons thead th { padding: 0.3rem 0.6rem; font-size: 0.85rem; }
+    .ao-cs-addons tbody td { padding: 0.3rem 0.6rem; font-size: 0.85rem; }
+    /* .ao-mu-none pads with !important for the full-width empty states elsewhere; this
+       band is one tight line, so it has to say so just as loudly. */
+    .ao-cs-addons tbody td.ao-mu-none { text-align: left; padding: 0.3rem 0.6rem !important; font-size: 0.85rem; }
 
     /* The reference's plain notice band (Predefined Replies' top-level refusal). */
     .ao-pr-notice {
