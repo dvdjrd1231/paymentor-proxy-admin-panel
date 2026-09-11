@@ -773,16 +773,35 @@ class ProxyPanel extends Server
         });
     }
 
-    /** WHMCS SuspendAccount → GET /stop/{id}. */
+    /**
+     * WHMCS SuspendAccount → GET /stop/{id}.
+     *
+     * A service the panel never created has nothing to stop, so this says so rather than
+     * throwing — the same idempotence {@see terminateServer} has always had. Without it,
+     * changing the status of an order whose services were never provisioned queued a job
+     * that could only fail, and the failure landed in Failed Jobs looking like an outage.
+     */
     public function suspendServer(Service $service, $settings, $properties)
     {
-        return $this->withLock($service, 'suspend', fn () => $this->request('get', '/stop/' . $this->requireRemoteId($service)));
+        return $this->withLock($service, 'suspend', function () use ($service) {
+            $remoteId = $this->remoteId($service);
+
+            return $remoteId
+                ? $this->request('get', '/stop/' . $remoteId)
+                : ['status' => 'ok', 'description' => 'nothing to suspend'];
+        });
     }
 
-    /** WHMCS UnsuspendAccount → GET /start/{id}. */
+    /** WHMCS UnsuspendAccount → GET /start/{id}. Idempotent, as suspend is. */
     public function unsuspendServer(Service $service, $settings, $properties)
     {
-        return $this->withLock($service, 'unsuspend', fn () => $this->request('get', '/start/' . $this->requireRemoteId($service)));
+        return $this->withLock($service, 'unsuspend', function () use ($service) {
+            $remoteId = $this->remoteId($service);
+
+            return $remoteId
+                ? $this->request('get', '/start/' . $remoteId)
+                : ['status' => 'ok', 'description' => 'nothing to unsuspend'];
+        });
     }
 
     public function terminateServer(Service $service, $settings, $properties)
@@ -809,6 +828,14 @@ class ProxyPanel extends Server
         $settings = array_merge($settings, $properties);
 
         return $this->withLock($service, 'upgrade', function () use ($service, $settings) {
+            // Nothing provisioned yet: record the new size so the create that follows uses
+            // it, rather than failing on an id the panel was never asked for.
+            if (!$this->remoteId($service)) {
+                $this->setProp($service, self::AMOUNT_KEY, (string) max(1, (int) ($settings['amount'] ?? 1)));
+
+                return ['status' => 'ok', 'description' => 'not provisioned yet — size recorded'];
+            }
+
             $id = $this->requireRemoteId($service);
 
             $current = (int) ($this->prop($service, self::AMOUNT_KEY) ?? 0);

@@ -932,7 +932,11 @@ class ClientSummary extends Page
                     'type' => 'end_of_period',
                     'reason' => trim((string) ($this->svc['autoTerminateReason'] ?? '')) ?: null,
                 ]);
-            } else {
+            } elseif ($service->cancellation) {
+                // Only when one exists. Core's CancellationCreatedListener is queued and
+                // re-fetches the row when it runs, so deleting on every save — including
+                // the saves that never created one — left it hunting a model that had
+                // never been there and failing the job for it.
                 $service->cancellation()->delete();
             }
 
