@@ -792,11 +792,19 @@
                      are real — Associated Downloads, and this platform's own Sort Order and
                      Limit Per Client below — save with the rest. --}}
                 @php
-                    $affiliateOff = 'Commission is set for the whole store by the Affiliates extension, not per product';
-                    $hostingOff = 'Belongs to shared hosting — a proxy service has no disk or bandwidth to meter';
-                    $overagesNote = 'Saved, but nothing bills from it: an overage needs a usage figure and the panel reports none. A bandwidth cap the panel does honour is set on Module Settings as bwlimit.';
+                    // The overage trio is the only inert part of this tab now, and it says
+                    // why on the row rather than only in a tooltip: the panel's service
+                    // endpoint returns rotation counters and endpoints, no bytes and no
+                    // disk (D:	asks\olaf_Leandropi.md, "Get service info"), so there
+                    // is no figure an overage could be worked out from.
+                    $overagesNote = 'No usage to bill from — the panel reports rotations and endpoints, not bytes. A bandwidth cap it does honour is Module Settings → bwlimit.';
                 @endphp
-                <div class="ao-anc-row ao-gs-off">
+                {{-- Live, and honoured: RewardAffiliate::rewardFor() reads this product's
+                     own payout rule per invoice line, and the One Time box below skips the
+                     commission on a renewal. These three used to be greyed with a note
+                     saying commission was store-wide, which stopped being true when the
+                     per-product rule was wired up (Leandro, 2026-09-11). --}}
+                <div class="ao-anc-row">
                     <span>Custom Affiliate Payout</span>
                     <span class="ao-ano-checks">
                         @foreach (['default' => 'Use Default', 'percentage' => 'Percentage',
@@ -805,7 +813,7 @@
                         @endforeach
                     </span>
                 </div>
-                <div class="ao-anc-row ao-gs-off">
+                <div class="ao-anc-row">
                     <span>Affiliate Pay Amount</span>
                     <span class="ao-anc-field">
                         <input type="text" class="ao-w-25" wire:model="affiliateAmount"
@@ -875,13 +883,14 @@
                         </span>
                 </div>
 
-                <div class="ao-anc-row ao-gs-off">
+                <p class="ao-ep-dl-lead">{{ $overagesNote }}</p>
+                <div class="ao-anc-row ao-gs-off" title="{{ $overagesNote }}">
                     <span>Overages Billing</span>
                     <span class="ao-of-check" title="{{ $overagesNote }}">
                         <input type="checkbox" wire:model="overagesBilling"> Check to Enable
                     </span>
                 </div>
-                <div class="ao-anc-row ao-gs-off">
+                <div class="ao-anc-row ao-gs-off" title="{{ $overagesNote }}">
                     <span>Soft Limits</span>
                     <span class="ao-anc-field ao-ep-units" title="{{ $overagesNote }}">
                         <i>Disk Usage</i> <input type="text" class="ao-w-25" wire:model="softLimits.disk">
@@ -890,7 +899,7 @@
                         <select class="ao-ep-unit" wire:model="softLimits.bw_unit"><option>MB</option><option>GB</option></select>
                     </span>
                 </div>
-                <div class="ao-anc-row ao-gs-off">
+                <div class="ao-anc-row ao-gs-off" title="{{ $overagesNote }}">
                     <span>Overage Costs</span>
                     <span class="ao-anc-field ao-ep-units" title="{{ $overagesNote }}">
                         <i>Disk Usage</i> <input type="text" class="ao-w-25" wire:model="overageCosts.disk">
