@@ -2980,6 +2980,10 @@
     .ao-ete .ao-ete-band .ao-of-row { background: #fff; border-bottom: 1px solid #f0f0f0; }
     .ao-ete .ao-ete-band .ao-of-row:last-child { border-bottom: 0; }
 
+    /* The reference's two colour buttons: an A over the colour it applies. */
+    .ao-ete-fore { border-bottom: 3px solid #c0392b; line-height: 1; }
+    .ao-ete-back { background: #f6e58d; padding: 0 2px; line-height: 1; }
+
     .ao-ete-band .ao-of-check { white-space: normal; align-items: flex-start; flex-wrap: wrap; }
 
     /* The reason takes a line of its own under the control rather than sharing one: full
