@@ -2759,6 +2759,35 @@
 
     .ao-ete-box .ao-ete-toolbar { margin-top: 0; border: 0; border-bottom: 1px solid var(--wa-panel-border, #ddd); border-radius: 0; }
 
+    /* The Preview / Source switch, on a strip of its own under the toolbar and padded to
+       the same inset as everything above it. */
+    .ao-ete-modebar {
+        display: flex;
+        align-items: center;
+        padding: 0.3rem 0.5rem;
+        border-bottom: 1px solid var(--wa-panel-border, #ddd);
+        background: #fbfbfb;
+    }
+
+    .ao-ete-modebar .ao-ete-mode {
+        margin-left: 0;
+        padding: 0.2rem 0.6rem;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        background: none;
+        color: var(--wa-link, #337ab7);
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+
+    .ao-ete-modebar .ao-ete-mode:hover { background: #eef4fa; }
+
+    .ao-ete-modebar .ao-ete-mode.ao-on { background: #e7f0f8; border-color: #bcd6ea; }
+
+    /* The checkbox rows sat 12px left of every input above them, because a check span
+       carries no padding where a field does (measured live: 436 against 448). */
+    .ao-ete .ao-of-check { padding-inline-start: 0.75rem; }
+
     /* The reference keeps its source/preview switch in the toolbar, at the right. */
     .ao-ete-mode { margin-left: auto; white-space: nowrap; }
 

@@ -93,8 +93,8 @@
                     <div class="ao-of-row ao-of-row-single">
                         <span class="ao-of-label">Plain-Text</span>
                         <span class="ao-of-check"
-                            title="Not available: each email is sent as HTML with a plain-text part alongside, so a client whose reader refuses HTML already gets the text.">
-                            <input type="checkbox" disabled>
+                            title="The HTML part is dropped at send time and the text taken from it goes out on its own">
+                            <input type="checkbox" wire:model="plainText">
                             Check to send this email in Plain-Text format only
                         </span>
                     </div>
@@ -254,7 +254,10 @@
                     <button type="button" data-ao-act="clearfmt" title="Clear formatting">&#8455;x</button>
                 </div>
 
-                @if ($mode === 'source')
+                {{-- Its own strip under the toolbar, padded like the rows above it: bare
+                     on the box it sat 12px left of every control and read as detached. --}}
+                <div class="ao-ete-modebar">
+                    @if ($mode === 'source')
                         <button type="button" class="ao-ete-mode" wire:click="$set('mode', 'preview')"
                             title="The rendered Markdown; placeholders show as tokens and are filled with the client's real values when the email sends">&#128065; Preview</button>
                     @else

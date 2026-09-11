@@ -797,7 +797,7 @@
                     // endpoint returns rotation counters and endpoints, no bytes and no
                     // disk (D:	asks\olaf_Leandropi.md, "Get service info"), so there
                     // is no figure an overage could be worked out from.
-                    $overagesNote = 'No usage to bill from — the panel reports rotations and endpoints, not bytes. A bandwidth cap it does honour is Module Settings → bwlimit.';
+                    $overagesNote = 'Saved on the product and shown on the service. Nothing bills from them automatically — the panel reports rotations and endpoints, not bytes — so an overage is charged by raising a billable item. The cap the panel does enforce is Module Settings → bwlimit.';
                 @endphp
                 {{-- Live, and honoured: RewardAffiliate::rewardFor() reads this product's
                      own payout rule per invoice line, and the One Time box below skips the
@@ -884,13 +884,13 @@
                 </div>
 
                 <p class="ao-ep-dl-lead">{{ $overagesNote }}</p>
-                <div class="ao-anc-row ao-gs-off" title="{{ $overagesNote }}">
+                <div class="ao-anc-row" title="{{ $overagesNote }}">
                     <span>Overages Billing</span>
                     <span class="ao-of-check" title="{{ $overagesNote }}">
                         <input type="checkbox" wire:model="overagesBilling"> Check to Enable
                     </span>
                 </div>
-                <div class="ao-anc-row ao-gs-off" title="{{ $overagesNote }}">
+                <div class="ao-anc-row" title="{{ $overagesNote }}">
                     <span>Soft Limits</span>
                     <span class="ao-anc-field ao-ep-units" title="{{ $overagesNote }}">
                         <i>Disk Usage</i> <input type="text" class="ao-w-25" wire:model="softLimits.disk">
@@ -899,7 +899,7 @@
                         <select class="ao-ep-unit" wire:model="softLimits.bw_unit"><option>MB</option><option>GB</option></select>
                     </span>
                 </div>
-                <div class="ao-anc-row ao-gs-off" title="{{ $overagesNote }}">
+                <div class="ao-anc-row" title="{{ $overagesNote }}">
                     <span>Overage Costs</span>
                     <span class="ao-anc-field ao-ep-units" title="{{ $overagesNote }}">
                         <i>Disk Usage</i> <input type="text" class="ao-w-25" wire:model="overageCosts.disk">

@@ -575,12 +575,45 @@ class AdminOps extends Extension
 
                     $event->message->attachFromPath($path, $file->filename, $file->mime_type ?: null);
                 }
+
+                // Edit Email Template's Plain-Text box (Leandro, 2026-09-12). Core renders
+                // every notification as HTML; where this template says plain text only,
+                // the HTML part is dropped and the text part — which Symfony has already
+                // derived from it — is what goes out.
+                if (Models\TemplateFlag::isPlainText($template->id)) {
+                    $body = $event->message->getHtmlBody();
+
+                    if ($body !== null) {
+                        $event->message->text(static::htmlToText((string) $body));
+                        $event->message->html(null);
+                    }
+                }
             } catch (\Throwable $e) {
                 report($e);
             }
 
             return true;
         });
+    }
+
+    /** An HTML email as readable text: tags out, entities decoded, blank lines kept. */
+    public static function htmlToText(string $html): string
+    {
+        $text = preg_replace('#<(script|style)[^>]*>.*?</>#si', '', $html) ?? $html;
+        $text = preg_replace('#<(br|/p|/div|/tr|/h[1-6])[^>]*>#i', "
+", $text) ?? $text;
+        $text = strip_tags($text);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // Whatever indentation the HTML carried is noise once the tags are gone.
+        $lines = array_map('trim', explode("
+", $text));
+
+        return trim(preg_replace("/
+{3,}/", "
+
+", implode("
+", $lines)) ?? $text);
     }
 
     /**

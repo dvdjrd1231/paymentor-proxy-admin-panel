@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
 use Paymenter\Extensions\Others\AdminOps\Models\EmailTemplateAttachment;
+use Paymenter\Extensions\Others\AdminOps\Models\TemplateFlag;
 use Paymenter\Extensions\Others\AdminOps\Models\TemplateLocale;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
@@ -50,6 +51,9 @@ class EditEmailTemplate extends Page
     public string $bcc = '';
 
     public bool $disabled = false;
+
+    /** The reference's Plain-Text box, on AdminOps' meta: core has no column for it. */
+    public bool $plainText = false;
 
     public string $body = '';
 
@@ -94,6 +98,7 @@ class EditEmailTemplate extends Page
         $this->cc = implode(', ', (array) $this->template->cc);
         $this->bcc = implode(', ', (array) $this->template->bcc);
         $this->disabled = !$this->template->enabled;
+        $this->plainText = TemplateFlag::isPlainText($this->template->id);
         $this->body = (string) $this->template->body;
 
         // A version per language Manage Languages has switched on. Blank until someone
@@ -223,6 +228,8 @@ class EditEmailTemplate extends Page
         // The reference takes the chosen files with Save Changes rather than on a button
         // of their own, so this is where they land.
         $files = $this->storeQueuedAttachments();
+
+        TemplateFlag::setPlainText($this->template, $this->plainText);
 
         Notification::make()->title('Template saved')
             ->body($files ? $files . ' attachment(s) added.' : null)
