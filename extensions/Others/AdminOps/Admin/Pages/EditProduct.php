@@ -700,15 +700,18 @@ class EditProduct extends Page
      */
     private function urlVisits(): array
     {
-        if (!Schema::hasTable('ext_product_url_visits')) {
+        // Schema::hasTable() asks information_schema, which is a query on every render of
+        // this page. The table is part of the extension's own migrations, so catching its
+        // absence costs nothing until the day it is actually missing.
+        try {
+            return DB::table('ext_product_url_visits')
+                ->where('product_id', $this->product->id)
+                ->pluck('visits', 'path')
+                ->map(fn ($count): int => (int) $count)
+                ->all();
+        } catch (\Throwable $e) {
             return [];
         }
-
-        return DB::table('ext_product_url_visits')
-            ->where('product_id', $this->product->id)
-            ->pluck('visits', 'path')
-            ->map(fn ($count): int => (int) $count)
-            ->all();
     }
 
     /** The visits for one absolute URL, matched on its path. */
