@@ -5,13 +5,7 @@ namespace Paymenter\Extensions\Others\AdminOps\Support;
 use App\Models\Gateway;
 use Paymenter\Extensions\Others\AdminOps\Models\Meta;
 
-/**
- * The admin's drag order for payment gateways, applied wherever gateways are listed.
- *
- * Core's `extensions` table has no sort column, so the position lives in `ext_ao_meta`
- * (key `sort`) — the Payment Gateways page writes it, and `getCheckoutGateways()` reads
- * it back so the checkout offers gateways in the same order the admin arranged them.
- */
+/** The admin's drag order for payment gateways, applied wherever gateways are listed. */
 class GatewayOrder
 {
     /** @param array<int, string|int> $ids gateway ids, first to last */

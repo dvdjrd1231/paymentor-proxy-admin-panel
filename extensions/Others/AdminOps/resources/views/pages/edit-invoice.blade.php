@@ -1,12 +1,6 @@
-{{--
-    The reference's invoice screen (Leandro, 2026-09-07, screenshots of invoices.php): the
-    tab strip over the shared Invoice Items ladder, then Transactions and Transaction
-    History, with View as Client / Download at the top right.
-
-    Refund and the tax-rate fields are absent on purpose — see EditInvoice's docblock for
-    what would have to exist first. Paid is not a status anyone sets by hand: money
-    arriving is what pays an invoice, and Add Payment is how money arrives.
---}}
+{{-- The reference's invoice screen (Leandro, 2026-09-07, screenshots of invoices.php): the
+     tab strip over the shared Invoice Items ladder, then Transactions and Transaction
+     History, with View as Client / Download at the top right. --}}
 <x-filament-panels::page>
     {{-- Tabs switch in the browser — see the note on edit-product for why they no longer
          go to the server. --}}

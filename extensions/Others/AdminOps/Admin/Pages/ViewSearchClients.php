@@ -14,22 +14,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * WHMCS's View/Search Clients, to its screenshot: the search band with its round green
  * glass, the "N Records Found" line with Jump to Page and the Hide Inactive toggle, the
  * navy-headed grid, and With Selected underneath.
- *
- * A page and not a themed UserResource, for the documented reason ({@see docs/02b-admin-area.md}):
- * a resource's `table()` builds its own column array and cannot be reshaped from an
- * extension, and this screen's columns are WHMCS's — ID, names, company, email, services,
- * created, status — not core's. Reading is all it does; every row leads to the core screens
- * that own the record, so there is still exactly one place a customer is edited.
- *
- * ## What a "client" is here, and what "Active" means
- *
- * A client is a user with no admin role — the same split the topbar uses. WHMCS stores a
- * status on the client; Paymenter deliberately has no such column, so status is *derived*:
- * a client with at least one service that is pending, active or suspended is Active, and
- * one with nothing but cancelled history (or nothing at all) is Inactive. Derived means it
- * cannot go stale, which a stored flag can.
- *
- * The Hide Inactive Clients toggle starts ON, as the reference ships it.
  */
 class ViewSearchClients extends Page
 {

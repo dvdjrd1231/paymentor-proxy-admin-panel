@@ -11,24 +11,6 @@ use Illuminate\Support\Str;
 /**
  * Lets a local checkout share the server's database without being redirected to the server.
  *
- * Paymenter takes its canonical URL from the `app_url` **database setting**, which
- * SettingsProvider copies into `config('app.url')` and then pins with
- * `URL::forceRootUrl()`. Point a local install at the shared development database and that
- * value is `https://paymenter-dev.7hoop.net`, so every generated link, form action, asset
- * and redirect leaves the machine — the local site looks up but nothing works, and a login
- * posts to the server instead.
- *
- * Changing the setting is not an option: it is the same row the live site reads.
- *
- * This re-applies a local URL *after* settings have loaded. Extensions boot from
- * AppServiceProvider::boot(), which runs after SettingsProvider, so this is the last word
- * without touching core.
- *
- * Two independent guards, both required, so this can never affect the server:
- *
- *   1. `APP_ENV=local`     — the server runs `production`
- *   2. `LOCAL_APP_URL=…`   — must be set explicitly in the local .env
- *
  * @link docs/04-shared-dev-database.md
  */
 #[ExtensionMeta(

@@ -20,44 +20,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * The reference's invoice screen, to Leandro's screenshots of `invoices.php` (2026-09-07):
  * the tab strip — Summary, Add Payment, Options, Credit, Notes — over the shared Invoice
  * Items ladder, then Transactions and Transaction History.
- *
- * ## What is here, and what is not
- *
- * Every tab on this page does something. The reference has two more that this platform
- * cannot honestly offer, and they are left out rather than drawn dead:
- *
- * - **Gateway refunds.** No gateway extension implements a refund hook, so no money can be
- *   sent back through the card or crypto rail it arrived on. The Refund tab returns credit
- *   instead — see below.
- * - **Tax Rate 1 / 2 and the per-line Taxed box.** `invoices` and `invoice_items` carry no
- *   tax columns; tax is computed from `tax_rates` against the client's country. A pair of
- *   boxes that looked like per-invoice overrides would silently do nothing.
- *
- * The Options tab loses the reference's Payment Method field for the same reason: an
- * invoice has no payment-method column. What paid it is a property of its transactions,
- * and the Summary tab reports it from there.
- *
- * ## What a refund does here
- *
- * Leandro, 2026-09-08: "If client close or finish server service, the credit would be
- * return to client balance." So a refund is credit going back to the customer, not money
- * going back down the gateway — which is also WHMCS's own Credit Only refund type, and the
- * same thing `credits_on_downgrade` already does for downgrades.
- *
- * It deliberately does **not** touch `invoice_transactions`. `Invoice::remaining` is total
- * minus succeeded transactions, so a negative row would reopen the balance on an invoice
- * that was genuinely paid: the client would appear to owe money again and dunning would
- * follow. The service *was* paid for; it ended early and the unused part is being returned
- * as credit. The invoice stays settled, and {@see Refund} records why the balance moved.
- *
- * ## Where the numbers come from
- *
- * Add Payment goes through {@see ExtensionHelper::addPayment} — the same idempotent call
- * every gateway webhook makes, so core's own listener flips the invoice to paid when the
- * balance lands. Credit uses the identical path the client area's own Apply Credit uses
- * (`isCreditTransaction: true`), under a row lock, so admin and client cannot double-spend
- * the same balance. Marking *paid* is still not an option anywhere: paid is what happens
- * when payments cover the total.
  */
 class EditInvoice extends Page
 {
@@ -100,15 +62,7 @@ class EditInvoice extends Page
 
     public ?string $confirming = null;
 
-    /**
-     * The emails this screen can actually send.
-     *
-     * The reference's dropdown offers nineteen templates. These are the three that exist
-     * as enabled `notification_templates` rows on this install — the keys are the real
-     * ones, checked against the table rather than guessed. Listing the other sixteen would
-     * be a menu whose entries quietly send nothing, because sendNotification() returns
-     * early when it cannot find the template.
-     */
+    /** The emails this screen can actually send. */
     public const EMAILS = [
         'new_invoice_created' => 'Invoice Created',
         'invoice_paid' => 'Invoice Payment Confirmation',
@@ -363,14 +317,7 @@ class EditInvoice extends Page
 
     // ── Credit tab ───────────────────────────────────────────────────────────────────
 
-    /**
-     * Apply account credit to this invoice.
-     *
-     * Deliberately the same path the client area's Apply Credit uses, under the same row
-     * lock: both sides are re-read inside the transaction and the amount clamped to what
-     * is genuinely available, so a stale admin form cannot spend credit the client just
-     * spent, nor overpay the invoice.
-     */
+    /** Apply account credit to this invoice. */
     public function addCredit(): void
     {
         $this->validate(['credit.add' => 'required|numeric|min:0.01'], attributes: ['credit.add' => 'amount']);
@@ -412,13 +359,7 @@ class EditInvoice extends Page
         Notification::make()->title('$' . number_format($applied, 2) . ' credit applied')->success()->send();
     }
 
-    /**
-     * Take credit back off the invoice and return it to the client's balance.
-     *
-     * Only credit transactions are unwound — money that arrived through a gateway is not
-     * this button's business, and removing it here would silently contradict the gateway's
-     * own record.
-     */
+    /** Take credit back off the invoice and return it to the client's balance. */
     public function removeCredit(): void
     {
         $this->validate(['credit.remove' => 'required|numeric|min:0.01'], attributes: ['credit.remove' => 'amount']);
@@ -495,13 +436,7 @@ class EditInvoice extends Page
 
     // ── Refund tab ───────────────────────────────────────────────────────────────────
 
-    /**
-     * Return credit to the customer against this invoice.
-     *
-     * Capped at what the invoice actually took in, less anything already refunded: an
-     * invoice cannot give back more than it received, and without the cap a double-click
-     * or a stale form would hand out the amount twice.
-     */
+    /** Return credit to the customer against this invoice. */
     public function issueRefund(): void
     {
         $this->validate([
@@ -568,13 +503,7 @@ class EditInvoice extends Page
             ->success()->send();
     }
 
-    /**
-     * Reload after a refund; the invoice itself is unchanged but the credit figures are not.
-     *
-     * Not named refresh(): Filament's BasePage already declares a public refresh(), and a
-     * private one here is a fatal "must be public" at class-load time — the whole panel
-     * white-screened on deploy until this was renamed.
-     */
+    /** Reload after a refund; the invoice itself is unchanged but the credit figures are not. */
     private function resetRefundForm(): void
     {
         $this->refund = ['amount' => '', 'reason' => '', 'sendEmail' => false];

@@ -19,22 +19,6 @@ use Illuminate\Support\Timebox;
 /**
  * The admin panel's sign-in page, on Paymenter's own auth stack.
  *
- * Paymenter does not authenticate with the session guard alone: `ResolveUserSession` treats
- * the `user_sessions` row as the authority and signs out anyone without one. That row is
- * created only by {@see PaymenterLogin}, which Filament knows nothing about — so
- * the stock page authenticated, redirected, and was undone on the next request, showing a
- * login form that reappears with no error and nothing logged.
- *
- * Keeps Filament's form, validation, rate limiting and events; replaces only the sign-in.
- *
- * Also enforces Paymenter's own `tfa_secret`, which Filament's separate multi-factor system
- * does not know about — without it an admin with 2FA enabled would skip it entirely. The
- * handover matches the client login: stash the user, redirect to `/2fa`, let that component
- * finish through the same action.
- *
- * And it carries the same CAPTCHA as the client login — same setting, same provider, same
- * verification — because the admin sign-in is the more valuable of the two to guess at.
- *
  * @link docs/CORE-TOUCHPOINTS.md — "Admin panel: own login, renameable path"
  */
 class Login extends BaseLogin
@@ -44,11 +28,6 @@ class Login extends BaseLogin
     /**
      * Core's three fields, plus the challenge last — below *Remember me*, immediately above
      * the button, which is where both the client login and the reference put it.
-     *
-     * It is a plain view rather than a field: the token is written straight onto `$captcha`
-     * by the provider's JavaScript, which is what {@see Captchable} reads. Routing it
-     * through form state would put a value the user cannot type into `getState()`, and into
-     * validation that has nothing to say about it.
      */
     public function form(Schema $schema): Schema
     {
@@ -128,15 +107,7 @@ class Login extends BaseLogin
         return app(LoginResponse::class);
     }
 
-    /**
-     * Whether a challenge is both switched on and usable.
-     *
-     * The key check is not belt-and-braces. `Captchable::captcha()` fails a submission with
-     * no token, and with no site key no widget can render one — so enabling the setting
-     * while a key is missing would make the admin panel impossible to sign in to, from a
-     * screen inside the admin panel. It stays open instead, exactly as the client login
-     * stays usable, and Settings already marks both keys required once a provider is picked.
-     */
+    /** Whether a challenge is both switched on and usable. */
     private function captchaEnforced(): bool
     {
         $provider = config('settings.captcha');

@@ -7,13 +7,6 @@ use Illuminate\Support\Facades\Schema;
 /**
  * The reference's client Notes tab: a list of dated notes, each by a named admin, with a
  * sticky one pinned to the top.
- *
- * The profile already had an Admin Notes box, but that is one text field on the client —
- * writing in it overwrites whatever the last person wrote, and nothing records who or when.
- * The reference's tab is a log, so it needs rows.
- *
- * `nullable()` on `admin_id` with `nullOnDelete`: a note outlives the member of staff who
- * wrote it. Losing the note because someone left would be the wrong trade.
  */
 return new class extends Migration
 {

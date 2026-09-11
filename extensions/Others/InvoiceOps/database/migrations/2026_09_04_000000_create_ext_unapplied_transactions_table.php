@@ -9,18 +9,6 @@ use Illuminate\Support\Facades\Schema;
  * what the reference's Add Transaction allows and Paymenter's own schema cannot: core's
  * `invoice_transactions.invoice_id` is a required foreign key, not nullable, and staying
  * off vendored core (golden rule) means that stays true.
- *
- * A nullable column was tried first and reverted before it ever reached a deploy. Core's
- * own `InvoiceTransactionCreatedListener` (app/Listeners) runs on every created/updated
- * InvoiceTransaction and does `$event->invoiceTransaction->invoice->remaining` with no
- * null guard — a row with `invoice_id = null` would throw there synchronously, in-request,
- * the instant one was created. That listener is vendored; not ours to edit. A side table
- * this extension owns entirely sidesteps it — core's own transaction machinery, and that
- * listener, never see one of these rows at all.
- *
- * Deliberately thin: no `applied_at`/`invoice_id` column for "apply this to an invoice
- * later", the reference's own next step for one of these. That is real, wanted work this
- * migration does not pre-empt — the columns here are only what recording one needs today.
  */
 return new class extends Migration
 {

@@ -17,12 +17,6 @@ use Paymenter\Extensions\Others\TermLimits\Support\Terms;
  * actions {@see ServiceTermResource} carried as plain Filament table actions — Extend
  * (a form modal: hours + a required reason) and History (the extensions already
  * granted) — as the reference's own form/list modals instead of Filament's action panel.
- *
- * There is no WHMCS screen this maps to; a fixed-term proxy is Paymenter's own concept
- * (see {@see \Paymenter\Extensions\Others\TermLimits\Support\Terms}). "The new window
- * standard" here means this project's own established shape for a list — the one every
- * other raw-Filament-resource page in this skin (Cancellation Requests, HTTP Log, OAuth
- * Clients) has already been carried to — not a reference screenshot, because none exists.
  */
 class FixedTerms extends Page
 {

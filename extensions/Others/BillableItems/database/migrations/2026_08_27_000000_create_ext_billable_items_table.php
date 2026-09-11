@@ -4,15 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * The reference's **Billable Items**: an ad-hoc charge waiting for an invoice.
- *
- * Everything Paymenter can bill for today has to be a product somebody ordered. There is no
- * way to charge a customer for a one-off — an hour of setup, a manual IP change, a block of
- * addresses outside a plan — without inventing a product for it and pretending they bought
- * one. This is the row that lets you say "add £40 to their next invoice, described like
- * this", which is what the reference's Billable Items are for.
- */
+/** The reference's **Billable Items**: an ad-hoc charge waiting for an invoice. */
 return new class extends Migration
 {
     public function up(): void

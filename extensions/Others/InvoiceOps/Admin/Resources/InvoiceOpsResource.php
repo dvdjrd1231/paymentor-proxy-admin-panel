@@ -24,11 +24,6 @@ use Paymenter\Extensions\Others\InvoiceOps\Support\Refunds;
 /**
  * The three things the reference's invoice page can do that Paymenter's cannot: **publish**
  * a draft, **send** one of the notices by hand, and **record a refund**.
- *
- * A separate screen rather than tabs on core's invoice page, for the reason now documented
- * three times over: a resource's `table()` and `form()` both replace whatever an extension
- * pushes into them. Core's invoice page keeps everything it already does — items, payments,
- * totals — and this adds the operations beside it.
  */
 class InvoiceOpsResource extends Resource
 {

@@ -11,15 +11,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 /**
  * Issue #46 — WHMCS's Currencies screen: the intro, the navy grid, the update buttons,
  * and the Add Additional Currency inline form.
- *
- * Base Conv. Rate is a real stored column since 2026-09-07 (Leandro: "these pages don't
- * have 'Base Conv, Rate' Field. it is basic foundation to update these pages") — see the
- * `add_base_conv_rate_to_currencies` migration. That also splits WHMCS's two buttons into
- * the two different operations they name, which until now were one:
- *
- *  - **Update Exchange Rates** asks the provider for today's rates and stores them.
- *  - **Update Product Prices** rewrites secondary-currency prices from the rates already
- *    stored — including one an admin typed in here by hand.
  */
 class CurrenciesList extends Page
 {
@@ -112,9 +103,6 @@ class CurrenciesList extends Page
      * WHMCS's two update buttons.
      *
      * @param  bool  $fromStoredRates  false — Update Exchange Rates: ask the provider for
-     *                                 today's rates. true — Update Product Prices: rewrite
-     *                                 prices from the Base Conv. Rate already stored, which
-     *                                 is what makes a hand-typed rate take effect.
      */
     public function updateRates(bool $fromStoredRates = false): void
     {

@@ -24,41 +24,6 @@ use Paymenter\Extensions\Others\TermLimits\Models\ProductTerm;
 /**
  * The reference's Edit Product screen, to Leandro's screenshots of
  * `configproducts.php?action=edit` (2026-09-08): the tab strip over one product.
- *
- * ## The tabs that are here
- *
- * Details, Pricing, Module Settings, Configurable Options, Upgrades and Links — every one
- * backed by a real column or relation:
- *
- * - **Details** — `category_id`, `name`, `slug`, `description`, `stock`, `allow_quantity`,
- *   `per_user_limit`, `email_template`, `hidden`. Tagline, short description, colour,
- *   featured and retired have no column, so they live in `ext_ao_meta` alongside the
- *   product type the catalogue already reads.
- * - **Pricing** — `plans` and their `prices`. A Paymenter plan *is* a billing cycle, so the
- *   reference's grid of cycles becomes one row per plan, priced per currency.
- * - **Module Settings** — `server_id`, plus the module's own fields from
- *   `getProductConfig()`, which is the same descriptor shape the gateway editor renders.
- * - **Configurable Options**, **Upgrades**, **Cross-sells**, **Links** —
- *   `config_option_products`, `product_upgrades`, a meta list, and the storefront URLs
- *   derived from the slug.
- * - **Custom Fields** — the reference's per-product field, asked on the order form and
- *   carried onto the service, is a config option here: named, typed, optionally with a
- *   list of choices, and attached to this product alone. Adding one from this tab creates
- *   it and assigns it; removing one detaches it, and deletes it only when no other product
- *   and no live service still hold it.
- *
- * ## The tabs that are not
- *
- * - **Free Domain** — this deployment sells proxies and domains are switched off; see
- *   `docs/10-disable-domains.md`. Every control on that tab would be inert.
- * - **Other** — its affiliate payout overrides, subdomain options and overage billing have
- *   nothing behind them here, so they are drawn inert with a title saying why. Three parts
- *   are real: per-user limit, the product's sort position, and Associated Downloads, which
- *   picks from the files the Downloads area already holds.
- *
- * Where a single control has nothing behind it — Server Group, three of the four auto-setup
- * choices, Upgrade Email, Require Domain, Apply Tax — it is still drawn, disabled, with a
- * title saying why. The tab then reads as the target does without pretending to act.
  */
 class EditProduct extends Page
 {
@@ -82,13 +47,7 @@ class EditProduct extends Page
         'colour' => '', 'featured' => false, 'retired' => false,
     ];
 
-    /**
-     * The reference's billing cycles, as columns of the Pricing grid.
-     *
-     * Each is a Paymenter plan: a type, a period and a unit. Ticking Enable creates the
-     * plan; clearing it removes the plan and its prices. The names and the order are the
-     * reference's own, so the grid reads the same way.
-     */
+    /** The reference's billing cycles, as columns of the Pricing grid. */
     public const CYCLES = [
         'onetime' => ['label' => 'One Time', 'type' => 'one-time', 'period' => 1, 'unit' => 'month'],
         'monthly' => ['label' => 'Monthly', 'type' => 'recurring', 'period' => 1, 'unit' => 'month'],
@@ -108,12 +67,7 @@ class EditProduct extends Page
     /** The reference's Payment Type: free | one-time | recurring. */
     public string $paymentType = 'recurring';
 
-    /**
-     * The reference's Auto Terminate / Fixed Term and Termination Email.
-     *
-     * Both are real here: TermLimits' `ext_term_limit_products` was built for exactly
-     * these two fields — days after activation, and which email announces the end.
-     */
+    /** The reference's Auto Terminate / Fixed Term and Termination Email. */
     public array $term = ['days' => 0, 'termination_email' => ''];
 
     /** Module fields declared by the server extension, as name => value. */
@@ -129,41 +83,21 @@ class EditProduct extends Page
     public array $crossSellIds = [];
 
 
-    /**
-     * The reference's Custom Affiliate Payout, and it is real.
-     *
-     * Affiliates pays a percentage of the whole invoice, taken from the affiliate's own
-     * reward or the store default. These override that for lines selling *this* product:
-     * a percentage of the line, a fixed amount per line, or nothing at all.
-     */
+    /** The reference's Custom Affiliate Payout, and it is real. */
     public string $affiliatePayout = 'default';
 
     public string $affiliateAmount = '0.00';
 
     public bool $affiliateOneTime = false;
 
-    /**
-     * Overages, kept but not acted on.
-     *
-     * Enabled at Leandro's instruction so the rows take a value; nothing bills from them,
-     * because billing an overage needs a usage figure and the panel reports none — api.md
-     * has no traffic or usage field and the module reads none. A product's bandwidth cap
-     * is set on Module Settings as `bwlimit`, which the panel does honour.
-     */
+    /** Overages, kept but not acted on. */
     public bool $overagesBilling = false;
 
     public array $softLimits = ['disk' => '0', 'disk_unit' => 'MB', 'bw' => '0', 'bw_unit' => 'MB'];
 
     public array $overageCosts = ['disk' => '0.0000', 'bw' => '0.0000'];
 
-    /**
-     * Download ids this product grants — the reference's Associated Downloads.
-     *
-     * The files are AdminOps' own (`ext_downloads`, the Downloads admin area), and the one
-     * the reference means by a product download is already flagged there. The association
-     * is a list on the product rather than a column on the file, because one file may be
-     * granted by several products.
-     */
+    /** Download ids this product grants — the reference's Associated Downloads. */
     public array $downloadIds = [];
 
     /**
@@ -173,13 +107,7 @@ class EditProduct extends Page
      */
     public bool $upgradeConfigOptions = false;
 
-    /**
-     * The reference's Add New Custom Field form.
-     *
-     * A per-product field collected on the order form is a config option here: named,
-     * typed, optionally with a list of choices, and attached to this product alone. The
-     * reference's field types map onto core's own list.
-     */
+    /** The reference's Add New Custom Field form. */
     public array $customField = [
         'name' => '', 'type' => 'text', 'description' => '',
         'env_variable' => '', 'allowed_values' => '', 'sort' => 0,
@@ -383,14 +311,7 @@ class EditProduct extends Page
 
     // ── Other ───────────────────────────────────────────────────────────────────────
 
-    /**
-     * The reference's Other tab.
-     *
-     * It used to submit through {@see saveDetails()}, which validates the product's group,
-     * name and URL — fields this tab does not draw. A product whose slug had been taken
-     * meanwhile would fail here with an error the admin could not see, let alone fix. This
-     * validates only what the tab shows.
-     */
+    /** The reference's Other tab. */
     public function saveOther(): void
     {
         $this->validate([
@@ -436,13 +357,7 @@ class EditProduct extends Page
         );
     }
 
-    /**
-     * Write the grid back: a ticked cycle exists with its prices, an unticked one does not.
-     *
-     * Removing a cycle deletes its plan and prices. That is what unticking Enable means on
-     * the reference, and leaving an orphaned plan behind would keep the product orderable
-     * on a cycle the admin has just withdrawn.
-     */
+    /** Write the grid back: a ticked cycle exists with its prices, an unticked one does not. */
     public function savePricing(): void
     {
         $this->validate([
@@ -569,13 +484,7 @@ class EditProduct extends Page
         $this->done('Upgrades saved');
     }
 
-    /**
-     * The reference's Cross-sells: products recommended while ordering this one.
-     *
-     * Stored as a list of ids on the product, and read by the storefront's product page —
-     * so ticking a box here changes what a customer is shown, rather than being remembered
-     * and ignored.
-     */
+    /** The reference's Cross-sells: products recommended while ordering this one. */
 
     public function saveCrossSells(): void
     {
@@ -591,13 +500,7 @@ class EditProduct extends Page
 
     // ── Custom Fields ───────────────────────────────────────────────────────────────
 
-    /**
-     * Add one of the reference's custom fields to this product.
-     *
-     * It becomes a config option attached to this product alone: the same thing the
-     * reference means by a per-product field, asked on the order form and carried onto the
-     * service. A field with choices gets one child option per line.
-     */
+    /** Add one of the reference's custom fields to this product. */
     public function saveCustomField(): void
     {
         $this->validate([
@@ -667,13 +570,7 @@ class EditProduct extends Page
         $this->done('Custom field added');
     }
 
-    /**
-     * Detach a custom field from this product.
-     *
-     * The option itself is only deleted when no other product uses it — another product
-     * sharing the field would lose it, and every service already answering it would lose
-     * the answer with it.
-     */
+    /** Detach a custom field from this product. */
     public function deleteCustomField(int $id): void
     {
         $option = \App\Models\ConfigOption::find($id);
@@ -711,9 +608,6 @@ class EditProduct extends Page
     /**
      * The files the Associated Downloads pair chooses between, named as the Downloads area
      * lists them — "Category — Title", because two categories may hold a "Setup Guide".
-     *
-     * Guarded on the table: AdminOps can be enabled before its migrations have run, and a
-     * missing table must cost this tab its list rather than the whole product screen.
      *
      * @return array<int, array{id: string, title: string}>
      */
@@ -801,9 +695,6 @@ class EditProduct extends Page
 
     /**
      * Hits per storefront path for this product, keyed by path.
-     *
-     * Counted by AdminOps::countProductUrlVisits() on every products.show request. A path
-     * nobody has reached yet simply has no row, which reads as zero.
      *
      * @return array<string, int>
      */

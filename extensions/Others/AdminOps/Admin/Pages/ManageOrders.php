@@ -17,12 +17,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * WHMCS's Manage Orders, to its screenshot: ID, Order #, Date, Client Name, Payment Method,
  * Total, Payment Status, Status, and the red delete dot — one page for List All / Pending /
  * Active / Cancelled, told apart by `?status=`, exactly as the reference's sidebar does it.
- *
- * A Paymenter order is a container of services with no status of its own, so the Status
- * column is derived from what the services are doing ({@see statusOf()}), and Payment
- * Status from whether the order's invoices are settled. The Order # column shows the
- * order's first invoice number — the one number that actually exists; the reference's
- * random ten digits identify nothing here.
  */
 class ManageOrders extends Page
 {

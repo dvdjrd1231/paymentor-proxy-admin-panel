@@ -1,12 +1,4 @@
-{{--
-    The reference's **+** button, at the start of the menu bar.
-
-    Rendered through `panels::topbar.logo.after`, so it sits between the brand and the menus
-    exactly as it does on the reference. Filament's own dropdown component rather than
-    hand-rolled markup: it is already on the page for the menus themselves, so this inherits
-    the same teleporting, positioning and click-away behaviour instead of introducing a second
-    implementation that would have to be kept in step with it.
---}}
+{{-- The reference's **+** button, at the start of the menu bar. --}}
 @php
     use Paymenter\Extensions\Others\AdminOps\Support\Toolbar;
 

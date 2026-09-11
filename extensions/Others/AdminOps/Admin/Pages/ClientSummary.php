@@ -32,24 +32,6 @@ use Paymenter\Extensions\Others\ClientTools\Models\Contact;
 /**
  * The reference's **Client Profile**: one customer, one screen, in tabs.
  *
- * It began as a summary page beside Paymenter's own sub-pages, which was a misreading of the
- * reference — WHMCS has **one** client page and *Summary* is its first tab, not a second
- * screen. Everything else is a tab on the same page: Products/Services, Billable Items,
- * Invoices, Transactions, Tickets, Emails, Log. So this is that page, and Summary is where
- * it opens.
- *
- * Paymenter holds all of it already, spread over six sub-pages, so answering "who is this and
- * what is going on with them" — the first thing support does on every ticket — cost five page
- * loads. Now it costs one, and moving between tabs costs a query rather than a page.
- *
- * **A tab loads only its own data.** The obvious build renders everything and hides the rest
- * with CSS, which is fine for six rows and ruinous for a customer with four hundred invoices
- * — every visit would pay for every tab. `$tab` is a Livewire property and
- * {@see getViewData()} switches on it.
- *
- * Read-only by design: everything editable stays on the core pages that own it, so there is
- * one place a change can be made and one set of validation rules to trust.
- *
  * @link docs/02b-admin-area.md
  */
 class ClientSummary extends Page
@@ -64,24 +46,10 @@ class ClientSummary extends Page
      */
     protected static bool $shouldRegisterNavigation = false;
 
-    /**
-     * The customer being summarised.
-     *
-     * Deliberately *not* called `$record`: Livewire assigns route parameters to public
-     * properties of the same name before `mount()` runs, so a `public User $record` would
-     * be handed the raw `{record}` string from the URL and fail on the type before this
-     * page ever got to resolve it. Public rather than protected so Livewire rehydrates it
-     * from its key on the follow-up request that runs the impersonate action.
-     */
+    /** The customer being summarised. */
     public User $customer;
 
-    /**
-     * Which tab is showing.
-     *
-     * Public and query-stringed so a tab is a URL: support pastes "the Invoices tab of
-     * customer 41" into a ticket and it opens there, which a tab held only in component
-     * state cannot do.
-     */
+    /** Which tab is showing. */
     #[Url]
     public string $tab = 'summary';
 
@@ -149,15 +117,6 @@ class ClientSummary extends Page
     /**
      * The reference's tabs, less the ones Paymenter has nothing behind.
      *
-     * **Users** and **Contacts** are the reference's sub-account model, and ClientTools
-     * turned out to have built exactly it: `ext_ct_contacts` carries a person on the
-     * account, and `is_sub_account` with `permissions` is the reference's Associate User.
-     * So both tabs are here and both write real records.
-     *
-     * Dropped deliberately rather than shown empty: **Domains** — removed from this store
-     * entirely (§10 of the brief), so the tab would never hold a row. A tab that always
-     * says "none" teaches people to stop opening tabs.
-     *
      * @var array<string, string>
      */
     private const TABS = [
@@ -176,12 +135,7 @@ class ClientSummary extends Page
         'log' => 'Log',
     ];
 
-    /**
-     * Which page of the showing tab's list, for the reference's pagination band.
-     *
-     * Query-stringed alongside the tab so page two of someone's invoices is a URL, and reset
-     * whenever the tab changes — page 3 of Invoices means nothing on Emails.
-     */
+    /** Which page of the showing tab's list, for the reference's pagination band. */
     #[Url]
     public int $page = 1;
 
@@ -193,13 +147,7 @@ class ClientSummary extends Page
         $this->page = 1;
     }
 
-    /**
-     * One page of a list, and the total behind it.
-     *
-     * Takes the query rather than a collection so the count is a COUNT and the page is a
-     * LIMIT — a client with four hundred invoices should not load four hundred rows to show
-     * twenty of them.
-     */
+    /** One page of a list, and the total behind it. */
     private function paged($query)
     {
         $this->rowTotal = (clone $query)->count();
@@ -284,14 +232,7 @@ class ClientSummary extends Page
      * page load, which is this screen's equivalent of the catalogue page expanding a row
      * in place.
      */
-    /**
-     * The reference's Export Client Data: everything held on this account, as a file.
-     *
-     * A subject-access request is the point of it, so it is the record rather than the
-     * screen — the profile's own fields, their services, invoices, transactions, tickets
-     * and staff notes. Streamed rather than built in memory: an account with a thousand
-     * invoices should not have to fit in one string first.
-     */
+    /** The reference's Export Client Data: everything held on this account, as a file. */
     public function exportClientData(): StreamedResponse
     {
         Gate::authorize('has-permission', 'admin.users.viewAny');
@@ -1107,14 +1048,7 @@ class ClientSummary extends Page
     }
 
     /** The Profile tab's Save Changes. Everything it writes is readable back on this page. */
-    /**
-     * The reference's Close Client Account.
-     *
-     * Paymenter keeps no status on a user, so "closed" is this extension's own mark in
-     * `ext_ao_meta` plus what closing actually means for the business: every running
-     * service cancelled. {@see \Paymenter\Extensions\Others\AdminOps\AdminOps::boot()}
-     * turns the mark into a refused sign-in.
-     */
+    /** The reference's Close Client Account. */
     public function closeAccount(): void
     {
         abort_unless(UserResource::canEdit($this->customer), 403);
@@ -1277,12 +1211,7 @@ class ClientSummary extends Page
         ];
     }
 
-    /**
-     * Only the showing tab's data.
-     *
-     * The Summary tab keeps its eight-row previews of everything; every other tab is a list
-     * of one thing, longer, and costs a query only when opened.
-     */
+    /** Only the showing tab's data. */
     protected function getViewData(): array
     {
         return [
@@ -1642,11 +1571,6 @@ class ClientSummary extends Page
     /**
      * The reference's Associate User: promote a contact on this account to a sub-account
      * with its own permissions.
-     *
-     * A person has to exist before they can be given access, which is why this picks from
-     * the account's contacts rather than offering a free-text email — the reference invites
-     * a stranger by email, and an invitation this platform has no way to send would be a
-     * button that quietly did nothing.
      */
     public function associate(): void
     {
@@ -1755,9 +1679,6 @@ class ClientSummary extends Page
     /**
      * Links out to the core screens that own each record.
      *
-     * Built once for every tab rather than per tab, because the tab bar is on every one of
-     * them and half of these are what the rows link to.
-     *
      * @return array<string, mixed>
      */
     private function urls(): array
@@ -1793,10 +1714,6 @@ class ClientSummary extends Page
     /**
      * Everything this customer has actually paid, by currency.
      *
-     * Credit transactions are left out: settling an invoice from account credit spends
-     * money that was already counted when the credit was bought, so including both would
-     * report the customer as having paid twice.
-     *
      * @return array<string, float>
      */
     private function lifetimeSpend(): array
@@ -1814,9 +1731,6 @@ class ClientSummary extends Page
 
     /**
      * What this customer still owes, by currency.
-     *
-     * Summed from the loaded invoices rather than in SQL, because an invoice total lives in
-     * its items and `Invoice::$remaining` already nets off part payments.
      *
      * @return array<string, float>
      */
@@ -1858,9 +1772,6 @@ class ClientSummary extends Page
 
     /**
      * Payments and refunds for this customer, newest first.
-     *
-     * The same interleaving as the Transactions report, and for the same reason: a payment
-     * and the refund that partly undid it belong next to each other.
      *
      * @return Collection<int, array<string, mixed>>
      */
@@ -1934,8 +1845,6 @@ class ClientSummary extends Page
     /**
      * What has been sent to this customer — the reference's Emails tab.
      *
-     * Read from core's `notifications`, which is where every message it sends is logged.
-     *
      * @return Collection<int, object>
      */
     private function emailRows()
@@ -1953,9 +1862,6 @@ class ClientSummary extends Page
 
     /**
      * The reference's Log tab: what has been done to this account, and by whom.
-     *
-     * Core already ships `owen-it/laravel-auditing` and audits the models that matter, so
-     * this is a view of something already being recorded rather than new bookkeeping.
      *
      * @return Collection<int, object>
      */

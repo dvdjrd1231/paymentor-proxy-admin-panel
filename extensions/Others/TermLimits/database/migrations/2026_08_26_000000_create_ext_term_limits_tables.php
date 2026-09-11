@@ -4,15 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * The clock on a fixed-term service, and every hand that has moved it.
- *
- * Kept beside `services` rather than in it for two reasons. The column that looks like it
- * would do — `services.expires_at` — is cast to `date` in core, so it cannot hold an hour;
- * and a daily product measured to the day is a product that runs between one and two days.
- * The other is that the extension owns this behaviour: disable it and the table is simply
- * not read.
- */
+/** The clock on a fixed-term service, and every hand that has moved it. */
 return new class extends Migration
 {
     public function up(): void

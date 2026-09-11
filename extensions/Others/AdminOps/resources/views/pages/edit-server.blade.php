@@ -1,12 +1,5 @@
-{{--
-    WHMCS's Add/Edit Server. The reference has a simple view and an advanced one behind a
-    "Go to Advanced Mode" button; both are here, on one page, as a toggle.
-
-    A WHMCS server is a box you own, so it has a hostname, nameservers, a monthly cost and a
-    cap on accounts. A Paymenter server is a module instance — a configured way of talking to
-    a provisioning API — so those have nowhere to live. The module, its settings and whether
-    it is on are real and live; the rest is drawn inert with the reason.
---}}
+{{-- WHMCS's Add/Edit Server. The reference has a simple view and an advanced one behind a
+     "Go to Advanced Mode" button; both are here, on one page, as a toggle. --}}
 <x-filament-panels::page>
     <div class="ao-mu ao-es">
         <div class="ao-es-mode">

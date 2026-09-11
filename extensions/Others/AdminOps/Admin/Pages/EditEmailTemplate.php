@@ -17,13 +17,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * The reference's email-template editor (issue #48, "not 100% implemented"): the
  * settings band — Template Name, Subject, Copy To, Blind Copy To, Disable — over the
  * body with a Source / Preview toggle.
- *
- * Deliberately NOT a WYSIWYG: these bodies are Markdown carrying live Blade
- * placeholders ({{ $ip }}, {{ route(...) }}), and a rich-text editor rewrites markup it
- * does not understand — one save would corrupt every placeholder in the template. The
- * reference itself ships a Source code view for exactly this reason; here that view is
- * the editor, and Preview shows the rendered Markdown with the placeholders highlighted
- * rather than executed (running arbitrary Blade from an editable field would be an RCE).
  */
 class EditEmailTemplate extends Page
 {
@@ -121,9 +114,6 @@ class EditEmailTemplate extends Page
 
     /**
      * Store what the Attachments rows hold against this template.
-     *
-     * Called from save(): the reference takes its files with Save Changes rather than on a
-     * button of their own.
      *
      * @return int how many files were taken
      */
@@ -238,14 +228,7 @@ class EditEmailTemplate extends Page
             ->success()->send();
     }
 
-    /**
-     * The reference's Available Merge Fields panel, for *this* template.
-     *
-     * The placeholders are read out of the body core ships for this key plus whatever the
-     * body currently holds, so the list is what this template can actually resolve rather
-     * than a catalogue of everything the platform has ever sent. A field offered here that
-     * the event does not carry would render empty in a real email.
-     */
+    /** The reference's Available Merge Fields panel, for *this* template. */
     public function mergeFields(): array
     {
         $sources = [$this->body];

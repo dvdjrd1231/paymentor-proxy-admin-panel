@@ -21,10 +21,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * Edit Order, in Add New Order's clothes — Leandro's point: the two screens are the same
  * form, one empty and one filled. Client and date at the top, a product line per service
  * (product, billing cycle, quantity, price, status), lines addable and removable, Save.
- *
- * Removing a line only removes services that never ran (pending or cancelled) — a
- * provisioned service is cancelled from its own page, not silently deleted here. Setting a
- * pending line to Active provisions it exactly the way checkout's zero-total path does.
  */
 class EditOrder extends Page
 {
@@ -40,9 +36,6 @@ class EditOrder extends Page
 
     /**
      * The reference's per-item provisioning ticks, keyed by service id.
-     *
-     * Defaulted in mount() rather than left empty, because a box unticked by absence would
-     * silently stop provisioning for anyone who accepted an order without touching them.
      *
      * @var array<int, bool>
      */
@@ -98,12 +91,6 @@ class EditOrder extends Page
     /**
      * The header's Status select: picking a state moves every one of this order's services to
      * it, running the side effects that state implies.
-     *
-     * Not a straight map onto the buttons below any more. Those are one-way ratchets — Accept
-     * only touches what is pending, Set Back to Pending only what is live — so routing the
-     * select through them left most transitions as silent no-ops: Suspended did nothing at
-     * all, and Cancelled → Active did nothing because no service was pending by then. The
-     * reference's select changes the status from wherever it is, so this does too.
      */
     public function setStatus(string $to): void
     {
@@ -146,11 +133,6 @@ class EditOrder extends Page
 
     /**
      * A pending service's credentials, issued now if it has none.
-     *
-     * The reference has them from the moment the order exists — WHMCS generates them at
-     * order time and shows them here — so the boxes were empty on every unprovisioned
-     * order, which is what read as "generated with a different length": there was nothing
-     * to compare. The module decides the shape; anything without one falls back to 8.
      *
      * @return array{username: string, password: string}
      */
@@ -250,9 +232,6 @@ class EditOrder extends Page
      * home here because Paymenter's Service has no fraud status to set — core defines
      * pending/active/suspended/cancelled and nothing else, and ManageOrders' own "Fraud
      * Orders" filter already says so honestly by matching nothing rather than pretending.
-     *
-     * Each acts on every one of this order's own services at once — the fast path for what
-     * the per-line Status dropdowns above already let you do one at a time.
      */
     public function acceptOrder(): void
     {

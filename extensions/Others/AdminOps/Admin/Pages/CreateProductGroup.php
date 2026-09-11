@@ -17,48 +17,12 @@ use Paymenter\Extensions\Others\GatewayRules\Models\GatewayRule;
  * The reference's Create Group screen (Leandro, 2026-09-07, screenshot of
  * `configproducts.php?action=creategroup`): the group's name, its storefront URL, and the
  * rest of what a group is, saved with Save Changes / Cancel Changes.
- *
- * It edits as well as creates — `/{record}` — and the catalogue's group edit icon comes
- * here rather than to core's category form. That is not tidiness: three of the fields below
- * live in this extension's table and core's form cannot show them, so without an edit route
- * they would be write-once.
- *
- * ## Where the reference's fields are stored
- *
- * `categories` carries only id, slug, name, description, image, parent_id, full_slug and
- * sort. Headline, Tagline and Hidden have no column there, and `Category` does not use core's
- * `HasProperties` trait, so they are stored in this extension's own `ext_ao_meta` table —
- * real storage, read back on edit, rather than controls that forget what you typed.
- *
- * The reference's last two fields are here too, and both act rather than decorate:
- *
- * - **Order Form Template** — WHMCS offers eight cart layouts. Eight names against one
- *   layout would be a menu that changes nothing, so this offers the two the storefront
- *   genuinely draws: standard cards, and a compact one-row-per-product list.
- *   `themes/proxy/views/products/index.blade.php` branches on it.
- * - **Available Payment Gateways** — written as `GatewayRule` rows scoped to this category,
- *   so the choice is enforced by the same engine that already answers `canUseGateway()` at
- *   checkout. It is a real restriction, not a preference nothing consults.
- *
- * **Group Features** is absent for the same reason it is greyed out on the reference until
- * you save: it belongs to a group that already exists.
- *
- * Parent Group is ours rather than the reference's — `parent_id` is core's and the
- * storefront renders nested groups, so a create form that could not set it would make
- * child groups unreachable from this page.
  */
 class CreateProductGroup extends Page
 {
     protected string $view = 'adminops::pages.create-product-group';
 
-    /**
-     * `/admin/create-product-group` creates; `?group=5` edits the same screen.
-     *
-     * The group is a query parameter rather than a path segment because Filament matches a
-     * *required* page parameter (as EditInvoice's `/{record}` shows) but not an optional
-     * one — `/{record?}` registered fine and then 404'd on every id. `#[Url]` is the
-     * pattern already used here for exactly this, on Open New Ticket's `client`.
-     */
+    /** `/admin/create-product-group` creates; `?group=5` edits the same screen. */
     protected static ?string $slug = 'create-product-group';
 
     #[Url(as: 'group')]
@@ -91,11 +55,6 @@ class CreateProductGroup extends Page
 
     /**
      * The reference's Available Payment Gateways.
-     *
-     * Empty means every gateway, which is what a group with no restriction should mean.
-     * Saved as GatewayRule rows scoped to this category, so the choice is enforced by the
-     * same engine that already answers `canUseGateway()` at checkout rather than being a
-     * preference nothing consults.
      *
      * @var array<int, string>
      */
@@ -227,22 +186,7 @@ class CreateProductGroup extends Page
         $this->redirect(Catalogue::getUrl());
     }
 
-    /**
-     * Write the group's payment-gateway restriction as GatewayRule rows.
-     *
-     * Deny rules rather than allow: the engine takes the first matching rule, so a set of
-     * allows would also have to say what happens to everything unlisted. One deny per
-     * gateway that was *not* chosen says exactly what is meant — "not this one, for this
-     * group" — and leaves every other rule in the store untouched.
-     *
-     * Choosing none means no restriction, which is what an empty box should mean; the rows
-     * are cleared and the group falls back to whatever the store allows generally.
-     *
-     * Rules this screen owns carry a generated `name` and are replaced only by matching
-     * both that name and the category, so re-saving a group never disturbs a rule somebody
-     * wrote by hand on the Gateway Rules page. (`gateway_rules` has no `note` column —
-     * `name` is the field it gives you, and it is required.)
-     */
+    /** Write the group's payment-gateway restriction as GatewayRule rows. */
     private function saveGatewayRules(Category $category): void
     {
         if (!class_exists(GatewayRule::class)) {

@@ -12,26 +12,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 /**
  * The reference's Tax Configuration screen, to Leandro's screenshots of
  * `setup/payments/tax` (2026-09-08): four tabs over one page.
- *
- * ## What is real
- *
- * - **Tax Support** and **Taxation Type** — `settings.tax_enabled` and `settings.tax_type`,
- *   which decide whether invoices carry tax at all and whether prices are entered with it
- *   or without.
- * - **Custom Invoice Numbering** — `settings.invoice_number_format`, `invoice_number` and
- *   `invoice_number_padding`. The reference splits these across two tabs; they are all one
- *   scheme here, so they sit together on the first.
- * - **Tax Rules** — the `tax_rates` table: a name, a rate, and the country it applies to.
- *   Quick Add writes a row and the table below lists them.
- *
- * ## What is not, and why it is still drawn
- *
- * A tax rate here is one row per country — `tax_rates.country` is unique and there is no
- * state, no level and no compounding. So Level 2, the state radios, Compound Tax and the
- * per-item Taxed Items choices have nothing behind them, and VAT mode, VAT number
- * validation and proforma numbering are a second scheme this platform does not run.
- * Each is drawn disabled with a title saying why, so the page reads as the target does
- * without pretending to act. Tabs the reference has are kept for the same reason.
  */
 class TaxConfiguration extends Page
 {
@@ -94,13 +74,7 @@ class TaxConfiguration extends Page
         $this->customNumbering = $this->numberFormat !== '';
     }
 
-    /**
-     * Write one store-wide setting.
-     *
-     * Scoped to `settingable_type IS NULL` on purpose: the same table holds every
-     * extension's own settings keyed the same way, and an unscoped `updateOrCreate` on the
-     * key alone would happily overwrite one of those instead of the store's.
-     */
+    /** Write one store-wide setting. */
     private function put(string $key, mixed $value): void
     {
         $row = Setting::whereNull('settingable_type')->where('key', $key)->first();

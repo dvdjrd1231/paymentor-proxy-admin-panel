@@ -4,14 +4,7 @@ namespace Paymenter\Extensions\Others\AdminOps\Support;
 
 use App\Models\Currency;
 
-/**
- * Formats an amount in a store currency, the way the rest of Paymenter does.
- *
- * `App\Classes\Price` is the usual way to render money, but it also resolves tax rates
- * against a user and can answer "Not available in your currency" — behaviour that makes
- * sense for a product price and none at all for a reporting total. This does the one thing
- * the admin widgets need: apply the currency's own prefix/suffix and digit grouping.
- */
+/** Formats an amount in a store currency, the way the rest of Paymenter does. */
 class Money
 {
     /**
@@ -21,13 +14,7 @@ class Money
      */
     private static ?array $currencies = null;
 
-    /**
-     * Render an amount in the given currency code.
-     *
-     * An unknown code falls back to the plain number rather than throwing — a report is
-     * not worth a 500, and a currency row can legitimately be deleted after the
-     * transactions that referenced it were written.
-     */
+    /** Render an amount in the given currency code. */
     public static function format(float|int|null $amount, ?string $code): string
     {
         $amount ??= 0;
@@ -49,11 +36,6 @@ class Money
 
     /**
      * Render a set of per-currency totals as one string.
-     *
-     * Paymenter stores no exchange rate it could convert with, so totals are never summed
-     * across currencies — a store selling in USD and BRL would otherwise show a number
-     * that is neither. Single-currency stores, which is the common case, get exactly what
-     * WHMCS shows.
      *
      * @param  array<string, float>  $totals  amount keyed by currency code
      */

@@ -24,22 +24,6 @@ use Paymenter\Extensions\Others\Notifications\Jobs\SendTelegramMessage;
 /**
  * Centralised notification system — Telegram delivery layer.
  *
- * Paymenter core already delivers **email** and **in-app** notifications for every
- * supported event (payments, tickets, provisioning, suspension, cancellation, …)
- * through App\Helpers\NotificationHelper + admin-editable NotificationTemplates,
- * with per-user preferences. This extension adds the missing **Telegram** channel
- * and admin/critical alerting, WITHOUT modifying core:
- *
- *  - Customer Telegram: every in-app notification core creates is mirrored to the
- *    customer's Telegram (if they saved their chat id), via the Notification\Created
- *    event. This automatically covers all events core notifies on.
- *  - Admin Telegram: key operational + critical events are pushed to a configured
- *    admin chat (new tickets, cancellations, and — via notifyAdmins()/notifyCritical()
- *    helpers other modules can call — provisioning failures, webhook errors, etc.).
- *  - All delivery is queued with automatic retry (see SendTelegramMessage).
- *
- * Credentials are encrypted extension settings; nothing is hard-coded.
- *
  * @link docs/modules/notifications.md
  */
 class Notifications extends Extension
@@ -265,13 +249,7 @@ class Notifications extends Extension
         });
     }
 
-    /**
-     * Report a provisioning failure as a critical alert.
-     *
-     * Called by Others/ProvisioningOps so a panel outage reaches an admin immediately,
-     * rather than waiting to be spotted in the admin list. Safe to call when this
-     * extension is disabled or misconfigured — it never throws.
-     */
+    /** Report a provisioning failure as a critical alert. */
     public static function provisioningFailed(string $extension, int $serviceId, string $error): void
     {
         try {

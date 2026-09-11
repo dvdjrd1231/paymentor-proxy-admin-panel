@@ -23,11 +23,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * Set Assignment / Set Priority / status row, Insert Predefined Reply, attachments,
  * Return to Ticket List — and the message thread beneath, newest first, each entry
  * with its poster and Delete.
- *
- * Everything writes core's own columns and rows: replies are TicketMessages exactly as
- * OpenNewTicket makes them, notes are TicketTools' ticket_notes, the selects hit the
- * ticket's real department/priority/assigned_to/status, and Log reads the audits core
- * already records for this ticket.
  */
 class EditTicket extends Page
 {
@@ -82,13 +77,7 @@ class EditTicket extends Page
     /** @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile> */
     public array $attachments = [];
 
-    /**
-     * How many file rows the Attach Files panel is drawing.
-     *
-     * The reference's panel opens with one Choose File and grows a row each time you press
-     * Add More, rather than asking the OS picker for several at once. One `wire:model` per
-     * row is what makes each row an independent choice, so the count has to live here.
-     */
+    /** How many file rows the Attach Files panel is drawing. */
     public int $attachSlots = 1;
 
     /** Megabytes, from the rule {@see sendReply()} validates with — said once, in one place. */
@@ -174,13 +163,7 @@ class EditTicket extends Page
         }
     }
 
-    /**
-     * Write a subset of the ticket's AdminOps-owned meta columns.
-     *
-     * The Options tab's Save rewrites `cc` and `prevent_closure` wholesale; the rail's
-     * controls each own one column, so they must not carry the others' values along with
-     * them — tagging a ticket should not save a CC list someone is mid-way through typing.
-     */
+    /** Write a subset of the ticket's AdminOps-owned meta columns. */
     private function writeMeta(array $values): void
     {
         if (! Schema::hasTable('ext_ticket_meta')) {
@@ -269,13 +252,7 @@ class EditTicket extends Page
         $this->attachSlots = min(10, $this->attachSlots + 1);
     }
 
-    /**
-     * The reference's More options → Insert Knowledgebase Link.
-     *
-     * The link is the customer-facing address, built from the named route rather than
-     * assembled here — a staff-only admin URL pasted into a reply is a dead end for the
-     * person reading it.
-     */
+    /** The reference's More options → Insert Knowledgebase Link. */
     public function insertKbLink(string $id): void
     {
         if (!ctype_digit($id) || !class_exists(\Paymenter\Extensions\Others\Knowledgebase\Models\KbArticle::class)) {
@@ -298,12 +275,7 @@ class EditTicket extends Page
         $this->reply = trim($this->reply . "\n\n[" . $article->title . '](' . $url . ')');
     }
 
-    /**
-     * The reference's More options → Add Billing Entry.
-     *
-     * A real BillableItems row against this ticket's client, which is the same record the
-     * Billable Items screen makes and the same one the invoice sweeper picks up.
-     */
+    /** The reference's More options → Add Billing Entry. */
     public function addBillingEntry(): void
     {
         $model = \Paymenter\Extensions\Others\BillableItems\Models\BillableItem::class;
@@ -594,12 +566,7 @@ class EditTicket extends Page
         $this->redirect(SupportTickets::getUrl());
     }
 
-    /**
-     * The reference's "me" beside Assigned To: take the ticket in one click.
-     *
-     * Writes only `assigned_to`, not the whole Options form — picking a ticket up should not
-     * quietly save a half-filled subject or a department someone was mid-way through changing.
-     */
+    /** The reference's "me" beside Assigned To: take the ticket in one click. */
     public function assignToMe(): void
     {
         $this->ticket->update(['assigned_to' => Auth::id()]);
@@ -609,14 +576,7 @@ class EditTicket extends Page
         Notification::make()->title('Assigned to you')->success()->send();
     }
 
-    /**
-     * The rail's Department / Assigned To / Priority selects.
-     *
-     * The reference's sidebar sets these on change rather than behind a Save, and they are
-     * the same three fields the Options tab holds — so the two views share the properties
-     * and this writes only those three columns. Options' own Save still needs pressing for
-     * everything else it owns.
-     */
+    /** The rail's Department / Assigned To / Priority selects. */
     public function saveAssignment(): void
     {
         $this->validate(['priority' => 'in:low,medium,high']);
@@ -675,12 +635,7 @@ class EditTicket extends Page
             ->success()->send();
     }
 
-    /**
-     * An audit row as a sentence a human reads, for the Client Log's mixed record types.
-     *
-     * Only scalars are shown and only the first few: an audit of a created Service carries
-     * two dozen columns, and printing them all is how the tab came to be a wall of JSON.
-     */
+    /** An audit row as a sentence a human reads, for the Client Log's mixed record types. */
     private static function describeAudit(object $row): string
     {
         if ($row->event === 'deleted') {

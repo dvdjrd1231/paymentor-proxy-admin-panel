@@ -24,20 +24,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * status, a Product/Service block **per line** — with the reference's "+ Add Another
  * Product", its Configurable Options (including a server's own checkout fields, such as
  * ProxyPanel's Region picker), and the Order Summary card with Submit Order.
- *
- * The creation path is a copy of what checkout does ({@see \App\Livewire\Cart::checkout()}):
- * an Order row, a pending Service per line, and — when Generate Invoice is ticked — one
- * Invoice with an item per service, due in seven days. Same tables, same shapes, so
- * everything downstream (cron, provisioning, the client area) treats an admin-placed order
- * exactly like a customer-placed one.
- *
- * Configurable Options are not a ProxyPanel feature — they are core's own `ConfigOption`
- * model (admin-managed under Configuration → Configurable Options, WHMCS's "Configurable
- * Options" by another name), plus whatever a line's server module adds through
- * `getCheckoutConfig()`. ProxyPanel's Region select is one instance of the latter, not a
- * special case here: {@see Support\ProductConfig} calls both through the same
- * `ExtensionHelper` core's own checkout page uses, so a line offers exactly what a customer
- * placing the same order would see — flags included, when ProxyPanel provides them.
  */
 class AddNewOrder extends Page
 {

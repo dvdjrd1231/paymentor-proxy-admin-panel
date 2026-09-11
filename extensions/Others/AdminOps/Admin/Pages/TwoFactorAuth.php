@@ -12,19 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * WHMCS's Two-Factor Authentication, under Staff Management.
- *
- * The reference's page lists 2FA *modules* to switch on — Time Based Tokens, Duo Security —
- * because WHMCS ships several. Paymenter has exactly one, a TOTP secret on the user
- * (`users.tfa_secret`, checked in `Livewire\Auth\Login`), and every account can already turn
- * it on for themselves from their own Security page. A list of one module with nothing to
- * configure would be a screen that says nothing.
- *
- * So this is the half of the reference's page that has work behind it: **who among the staff
- * actually has it on**, when they last signed in and from where, and the one action an admin
- * genuinely needs — resetting it for a colleague who has lost their phone and is locked out.
- */
+/** WHMCS's Two-Factor Authentication, under Staff Management. */
 class TwoFactorAuth extends Page
 {
     protected string $view = 'adminops::pages.two-factor-auth';
@@ -61,17 +49,7 @@ class TwoFactorAuth extends Page
         return '/' . static::getSlug($panel);
     }
 
-    /**
-     * Turn off a staff member's 2FA so they can sign in and set it up again.
-     *
-     * Named resetTfa, not reset: Livewire\Component::reset(...$properties) already exists, and
-     * a same-name override with a different signature is a fatal that takes the whole panel
-     * down at boot. Same trap as BasePage::refresh().
-     *
-     * Deliberately not "disable for everyone": the reference has a global switch because it
-     * can require 2FA, and this platform cannot, so a bulk action here would only ever be a
-     * way to weaken every account at once.
-     */
+    /** Turn off a staff member's 2FA so they can sign in and set it up again. */
     public function resetTfa(): void
     {
         $id = $this->confirming;

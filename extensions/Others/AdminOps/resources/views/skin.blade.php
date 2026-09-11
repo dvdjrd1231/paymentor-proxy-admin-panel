@@ -1,15 +1,4 @@
-{{--
-    WHMCS "Six" admin skin for the Filament panel.
-
-    Plain CSS at `panels::head.end`, not a theme rebuild: the admin theme does not scan
-    `extensions/`, and a rebuild would put a Vite build in the deploy path (the server has no
-    npm). Loading after the compiled stylesheet wins on equal specificity.
-
-    Restyles Filament's markup rather than replacing it, so the panel keeps every resource,
-    form and table it has. Selectors are Filament 5's — a public surface, but not a stability
-    guarantee: re-check after an upstream major. Worst case it stops applying and stock
-    Filament shows through; nothing here can break the panel functionally.
---}}
+{{-- WHMCS "Six" admin skin for the Filament panel. --}}
 <style>
     /* WHMCS Six's palette, sampled pixel-by-pixel from the reference screenshots rather
        than eyeballed — every value below is the dominant colour of that region in

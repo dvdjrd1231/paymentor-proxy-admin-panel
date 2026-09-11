@@ -15,12 +15,6 @@ use Illuminate\Validation\Rule;
  * both halves of them: core's own `ConfigOption` tree (admin-managed, WHMCS's "Configurable
  * Options"), and whatever a line's server module contributes through `getCheckoutConfig()`
  * (ProxyPanel's Region among them).
- *
- * Every method here mirrors a corresponding piece of {@see \App\Livewire\Products\Checkout}
- * or {@see \App\Livewire\Cart}, parametrised so the admin form can drive several product
- * lines from one Livewire component instead of one per page. The defaulting, pricing,
- * validation and persistence rules are copied rather than reinvented, so an admin-placed
- * order behaves exactly like a customer-placed one downstream — same tables, same shapes.
  */
 class ProductConfig
 {

@@ -15,10 +15,6 @@ use Paymenter\Extensions\Others\SitePages\Livewire\NetworkStatus;
 /**
  * The two public pages the reference portal has in its menu bar.
  *
- * Network Status reuses published announcements as its incident feed, as the reference does;
- * with none published it shows the all-clear. Contact Us routes into the ticket system
- * rather than an unmonitored inbox. Neither needs a table, so there are no migrations.
- *
  * @link docs/modules/site-pages.md
  */
 #[ExtensionMeta(

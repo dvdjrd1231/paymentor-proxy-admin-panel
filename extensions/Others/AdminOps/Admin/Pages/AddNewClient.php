@@ -20,15 +20,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * WHMCS's Add New Client, to its screenshot: the two-column zebra form — names, company,
  * email and password on the left; address, country, phone and currency on the right — with
  * the store's own custom properties (CPF, CNPJ, and the rest) underneath.
- *
- * The property fields are not copied from the screenshot but read from `custom_properties`:
- * the CPF/CNPJ rows in Leandro's screenshot are simply this store's registered User
- * properties, so the form renders whatever is configured and survives the next property
- * being added without an edit here. The reference's Status, Client Group, Payment Method
- * and Billing Contact are rendered with the one honest value Paymenter has for each.
- *
- * Creation is one transaction: the user plus every filled property, then straight to the
- * new client's Summary — where WHMCS lands too.
  */
 class AddNewClient extends Page
 {
@@ -194,15 +185,7 @@ class AddNewClient extends Page
         ];
     }
 
-    /**
-     * The languages a client can be recorded as reading — the reference's list.
-     *
-     * This was the `lang/` directories, which is a different question: that says what the
-     * *interface* is translated into (two languages here), while this is a note about the
-     * client. Reading it off the filesystem meant Manage Languages had almost nothing to
-     * offer and an email could not be translated into a language no client could be set
-     * to. See {@see Languages} for why nothing about the interface changes.
-     */
+    /** The languages a client can be recorded as reading — the reference's list. */
     public static function languages(): array
     {
         return Languages::all();
@@ -294,17 +277,6 @@ class AddNewClient extends Page
     /**
      * Brazil's own requirements, which are not the column's.
      *
-     * A registration is either a citizen or a company, and the document that identifies it
-     * is mandatory: CPF for a Pessoa Física, CNPJ for a Pessoa Jurídica. Everything else is
-     * optional — the RG, the Nome Fantasia, the Inscrição Municipal — with the single
-     * exception of the Inscrição Estadual, which a company must either state or declare
-     * itself exempt from. That pair is checked in {@see create()}, where both halves of it
-     * can be read at once.
-     *
-     * The `cpf` and `cnpj` rules are the checksum validators the Brazilian Registration
-     * extension registers; they are applied only when that extension is providing them, so
-     * the form still works with it switched off.
-     *
      * @return array<string, array<int, string>>
      */
     private function brazilRules(): array
@@ -333,12 +305,6 @@ class AddNewClient extends Page
 
     /**
      * The two checks that need both halves of a pair in hand, run after the field rules pass.
-     *
-     * The checksums go through the Brazilian Registration extension's own helper rather than
-     * its `cpf`/`cnpj` validation rules: the rules only exist while that extension is booted,
-     * and naming one that is not registered throws rather than failing the field. Calling the
-     * helper directly means the form degrades to "required" if the extension is off, instead
-     * of breaking.
      *
      * @return array<string, string> field => message, empty when everything holds
      */

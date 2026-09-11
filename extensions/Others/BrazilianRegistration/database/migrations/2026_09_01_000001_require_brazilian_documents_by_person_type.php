@@ -3,21 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Issue #38: make the client's own registration form demand what Brazil demands.
- *
- * Core builds each property's rules as `nullable|<validation>`, so the `validation` column
- * is the whole hook — no core edit and no per-form code. The four rules named here are
- * registered by the extension and read the sibling answers (country, person type, the
- * Isento tick) off the form being validated, which is the part `required` and `required_if`
- * cannot do: the requirement is conditional on two other fields, and one of the values is
- * an accented label that must stay free to be reworded.
- *
- * Deliberately *not* setting the `required` column: that would demand a CPF of every
- * customer in the world, Brazilian or not.
- *
- * down() restores the plain rules, leaving the fields optional as they were.
- */
+/** Issue #38: make the client's own registration form demand what Brazil demands. */
 return new class extends Migration
 {
     private const MODEL = 'App\\Models\\User';

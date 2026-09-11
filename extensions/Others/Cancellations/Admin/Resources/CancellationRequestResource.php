@@ -15,16 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Paymenter\Extensions\Others\Cancellations\Admin\Resources\CancellationRequestResource\Pages\ListCancellationRequests;
 use Paymenter\Extensions\Others\Cancellations\Support\Requests;
 
-/**
- * Cancellation requests, with the two answers an administrator actually gives.
- *
- * A second resource over core's model rather than actions added to core's list, because a
- * resource's table cannot be extended from an extension: `Table::configureUsing()` runs
- * inside `Table::make()`, and the resource's own `table()` then calls
- * `->recordActions([...])`, which resets the array before repopulating it. The same trap is
- * why AdminOps' Summary link is a core touchpoint. Core's list stays exactly as it is; the
- * WHMCS menu points here.
- */
+/** Cancellation requests, with the two answers an administrator actually gives. */
 class CancellationRequestResource extends Resource
 {
     protected static ?string $model = ServiceCancellation::class;

@@ -19,13 +19,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 /**
  * The WHMCS-style admin: dashboard, per-customer summary, and the panel skin.
  *
- * Entirely additive — disabling this returns the panel to stock Paymenter.
- *
- * Trap: a resource's table cannot be extended from here. `Table::configureUsing()` runs
- * inside `Table::make()`, before the resource's own `table()` resets `recordActions` and
- * `filters`, so anything pushed from an extension is discarded. Hence the Summary link is
- * core touchpoint #10, and the action queue reuses core's filters.
- *
  * @link docs/02b-admin-area.md
  */
 #[ExtensionMeta(
@@ -101,18 +94,7 @@ class AdminOps extends Extension
         $this->creditCancelledServices();
     }
 
-    /**
-     * Credit the unused period back when a service is cancelled (Leandro, 2026-09-08).
-     *
-     * An Eloquent `updated` hook, not `App\Events\Service\Updated`: core defines that event
-     * and never dispatches it, so a listener for it fires exactly never — the same trap
-     * TermLimits documents at `startTheClockOnActivation()`. This was written against the
-     * domain event first and would have been silent dead code.
-     *
-     * The rules it applies — and the several cases where it deliberately pays nothing —
-     * are in {@see Support\CancellationCredit}, which is where anything about this
-     * behaviour should be read or changed.
-     */
+    /** Credit the unused period back when a service is cancelled (Leandro, 2026-09-08). */
     private function creditCancelledServices(): void
     {
         \App\Models\Service::updated(
@@ -123,16 +105,6 @@ class AdminOps extends Extension
     /**
      * Client-group discounts, applied for real (Leandro, 2026-09-07: "these group will
      * this condition as common. this is client group").
-     *
-     * Hooked on the invoice *item*, not on `Invoice\Finalized`. Finalized looks like the
-     * natural place — it fires once, after the response, with every item present — but
-     * core's own mail listener is on that event too, so a discount added there races the
-     * "invoice created" email and can post a total that is already wrong. Recomputing per
-     * item is cheap and always ends correct, because {@see Support\ClientGroup::applyDiscount}
-     * rebuilds the line from scratch each time.
-     *
-     * The guard is not optional: adding the discount line creates an invoice item, which
-     * fires this same event again.
      */
     private function applyClientGroupDiscounts(): void
     {
@@ -162,12 +134,6 @@ class AdminOps extends Extension
      * One error page for the whole platform (Leandro, 2026-09-07: "Every Admin Error page
      * should be updated as WHMCS page standard format. Also, every client error page
      * should have correct alignment").
-     *
-     * Neither core nor the theme ships `resources/views/errors`, so Laravel fell through
-     * to its own bare views: the admin got an unstyled stack of text and the client got
-     * the same text jammed against the theme header with no container — the alignment he
-     * flagged. Prepending a location that contains *only* `errors/` puts ours first
-     * without shadowing anything else core resolves by plain name.
      */
     private function registerErrorPages(): void
     {
@@ -177,11 +143,6 @@ class AdminOps extends Extension
     /**
      * Core's product editor, replaced by the reference's tabbed Edit Product screen
      * (Leandro, 2026-09-08, screenshots of `configproducts.php?action=edit`).
-     *
-     * Named after the route it displaces, for the reason on {@see retireRawProductList}:
-     * the catalogue's own edit icon, the Products list and every breadcrumb resolve
-     * `filament.admin.resources.products.edit`, and a redirect registered at that URI
-     * without the name destroys it.
      */
     private function retireCoreProductEditor(): void
     {
@@ -198,11 +159,6 @@ class AdminOps extends Extension
     /**
      * Core's per-client sub-pages, replaced by the client profile's own tabs (Leandro,
      * 2026-09-09: "/admin/users/3/invoices should not be existed").
-     *
-     * Each is a second, differently-shaped screen for something the profile already shows —
-     * the reference has one client page with tabs, not five pages. Redirecting rather than
-     * removing keeps every existing link and bookmark working, and each route keeps the name
-     * it displaces because core's own UserResource::getUrl() calls resolve these names.
      */
     private function retireCoreUserSubPages(): void
     {
@@ -233,10 +189,6 @@ class AdminOps extends Extension
      * Core's server create/edit form, replaced by the reference's own (Leandro, 2026-09-08
      * sent the WHMCS Add Server screens with "Servers — list and edit. This is where
      * provisioning is configured.").
-     *
-     * Both routes are named after the ones they displace, for the reason on
-     * {@see retireCoreGatewayEditor} — the Servers list builds its Add and Edit links from
-     * ServerResource::getUrl(), so losing either name 500s the list itself.
      */
     private function retireCoreServerEditor(): void
     {
@@ -263,11 +215,6 @@ class AdminOps extends Extension
      * Core's gateway editor, replaced by the reference's own (Leandro, 2026-09-07: it
      * "is working as correctly but page design and styles format should be the WHMCS
      * page standard format").
-     *
-     * Named after the route it displaces, for the reason on {@see retireRawProductList} —
-     * and this one matters more than most: Payment Gateways' own Edit button and the
-     * gateway index breadcrumb both resolve that name, and losing it is what 500'd this
-     * page earlier today.
      */
     private function retireCoreGatewayEditor(): void
     {
@@ -337,24 +284,6 @@ class AdminOps extends Extension
     /**
      * Enabling an extension from the admin area applies its migrations (Leandro,
      * 2026-09-07: "find the solution to fix - install / uninstall extensions").
-     *
-     * Core's enable path — `EditExtension::handleRecordUpdate`, and our own
-     * {@see Admin\Pages\ExtensionsList} which mirrors it — calls only the `enabled()`
-     * hook. Every one of this deployment's seventeen extensions puts its setup in
-     * `installed()` instead, which is the hook the CLI installer calls; exactly one
-     * extension in the tree implements `enabled()`, and it is vendored Stripe. So
-     * enabling an extension whose migrations had never run turned it on with its tables
-     * missing, and the first page that touched one 500'd. That is the install half of his
-     * report, and `docs/CORE-TOUCHPOINTS.md` had it recorded the other way round.
-     *
-     * `installed()` runs `ExtensionHelper::runMigrations`, which is Laravel's migrator: it
-     * skips what the `migrations` table already records, so calling it on every enable is
-     * a no-op for an extension that is already set up.
-     *
-     * **Disable stays non-destructive on purpose.** `uninstalled()` rolls the migrations
-     * *back* — it drops the extension's tables and everything in them — so it must stay
-     * where core put it, on the explicit Uninstall action whose own dialog warns that it
-     * removes all data. Turning an extension off for an afternoon must not cost its data.
      */
     private function keepExtensionMigrationsApplied(): void
     {
@@ -391,11 +320,6 @@ class AdminOps extends Extension
      * Core's Roles resource and our Administrator Roles screen were both reachable, and
      * only ours carries the reference's design — so `/admin/roles` and its create and
      * edit URLs all land on ours now. One screen, reachable from either address.
-     *
-     * `/admin/roles/1/edit` was the "error" in his second point: it answers 403 because
-     * {@see \App\Admin\Resources\RoleResource::canEdit} refuses the full-administrator
-     * group outright. {@see Admin\Pages\RoleGroup} allows it, with a guard on the one
-     * edit that cannot be undone — see that class.
      */
     private function retireCoreRoleScreens(): void
     {
@@ -429,10 +353,6 @@ class AdminOps extends Extension
      * the edit form is the one that matters: it has no Base Conv. Rate, so a currency
      * saved through it silently keeps whatever rate it had (Leandro, 2026-09-07:
      * "these pages don't have 'Base Conv, Rate' Field. it is basic foundation").
-     *
-     * {@see Admin\Pages\EditCurrency} carries every field core's form had plus the rate,
-     * so nothing is lost by sending both URLs there. Same shape as the Products and
-     * Gateways redirects above, including the signed-out guard.
      */
     private function retireCoreCurrencyScreens(): void
     {
@@ -459,12 +379,6 @@ class AdminOps extends Extension
      * he still reached it through the product editor's own "Products" breadcrumb, which
      * this same redirect now lands on the catalogue instead, closing his second point
      * in one move.
-     *
-     * A redirect rather than a 404: the URL is still what core's breadcrumb and any
-     * bookmark point at, and sending someone to the screen that replaced it beats a
-     * dead end. Registered before Filament's own panel routes so it wins the match;
-     * the guard keeps it from firing for a signed-out visitor, who should meet the
-     * login page as usual.
      */
     /**
      * **Every redirect below carries the route name it displaces.** Registering a route at
@@ -473,10 +387,6 @@ class AdminOps extends Extension
      * six others simply stopped existing. Nothing notices until a core page renders a link
      * to one, and then it is a 500: Leandro hit exactly that on 2026-09-07, editing a
      * gateway from Payment Gateways, whose breadcrumb links to the gateways index.
-     *
-     * Naming our redirect after the route it replaced puts the name back, pointing at the
-     * redirect — so every internal link resolves again and lands on the screen that
-     * replaced the old one, which is what the link meant in the first place.
      */
     private function retireRawProductList(): void
     {
@@ -505,9 +415,6 @@ class AdminOps extends Extension
      * Core's remaining raw resource screens, replaced by their window-standard pages
      * (Leandro, 2026-09-11). Same rule as above: each redirect carries the route name it
      * displaces, or core's own getUrl() calls to it 500.
-     *
-     * Notification Templates is not rebuilt — Email Templates is already the reference's
-     * screen over that very model, so the raw list is a second door onto one feature.
      */
     private function retireRawCoreScreens(): void
     {
@@ -543,9 +450,6 @@ class AdminOps extends Extension
      * The Visits figure on Edit Product's Links tab. The reference counts hits per product
      * URL; this counts them the same way, against the path the visitor actually used, so a
      * product reached by two addresses shows two separate figures.
-     *
-     * Bots and prefetches are not filtered — the reference does not either, and a count that
-     * quietly drops traffic is worse than one that says what it saw.
      */
     private function countProductUrlVisits(): void
     {
@@ -585,14 +489,7 @@ class AdminOps extends Extension
         });
     }
 
-    /**
-     * The reference's per-template Attachments, put on the message as it goes out.
-     *
-     * Core's `App\Mail\Mail` is vendored and has no `attachments()` to extend, so this hangs
-     * off MessageSending instead. Laravel builds that event's `data` from the mailable's
-     * public properties, and `Mail` holds the NotificationTemplate on one — which is how the
-     * message can be traced back to the template whose files it should carry.
-     */
+    /** The reference's per-template Attachments, put on the message as it goes out. */
     private static bool $mailListenerRegistered = false;
 
     private function attachTemplateFiles(): void
@@ -673,13 +570,6 @@ class AdminOps extends Extension
     /**
      * A closed account cannot sign in — the half of the reference's Close Client Account
      * that has to live outside the button.
-     *
-     * Paymenter keeps no status on a user, so the mark is this extension's own
-     * (`ext_ao_meta`, key `closed_at`, written by {@see Admin\Pages\ClientSummary::closeAccount()}).
-     * Enforced on the Login event rather than by middleware so no core file is touched:
-     * the credentials are accepted, then the session is thrown away immediately. Staff are
-     * never affected — closing is a client action, and locking an admin out of the panel
-     * from a client screen would be a way to lose the panel.
      */
     private function refuseClosedAccounts(): void
     {
@@ -724,19 +614,7 @@ class AdminOps extends Extension
         });
     }
 
-    /**
-     * `@nofill` — keep browsers and password managers out of a field.
-     *
-     * A search band reading Name / Email / Phone is the exact shape Chrome's address autofill
-     * and every password manager scan for, and each answers by planting its own icon in the
-     * first field. LastPass's is a red square, and on the one machine running it the band came
-     * out short a hundred pixels while every other machine showed it correctly.
-     *
-     * These attributes have to be in the markup, not stamped on afterwards: an extension reads
-     * the field as soon as it appears, so anything applied from a DOMContentLoaded handler is
-     * racing something that has usually already decided. A directive rather than five
-     * attributes repeated across eleven blades — the reason lives here, once.
-     */
+    /** `@nofill` — keep browsers and password managers out of a field. */
     private function registerNoFillDirective(): void
     {
         Blade::directive('nofill', fn (): string => "<?php echo 'autocomplete=\"off\" "
@@ -777,11 +655,6 @@ class AdminOps extends Extension
      * carries our own extension layer on top. Letting that updater run for real risks
      * overwriting files our git history and deploy scripts do not expect touched, on a store
      * that is live.
-     *
-     * Not core's page to be told apart from a real one — core has no signal to give it. The
-     * banner is added from here, scoped to this one route so it never leaks onto a page it
-     * was not written for, and the two buttons are guarded by a confirm() that says what
-     * they would actually try to do before either is allowed to fire.
      */
     private function registerUpdatesNotice(): void
     {
@@ -893,21 +766,7 @@ class AdminOps extends Extension
      * The widgets' CSS, in the panel head rather than inside each widget: a Livewire component
      * needs a single root, and polling would re-send an inline `<style>` on every refresh.
      */
-    /**
-     * The panel is light, whatever the browser prefers.
-     *
-     * Filament stamps `class="dark"` on `<html>` when the OS or browser asks for dark, and
-     * every `dark:` rule in its compiled stylesheet then fires. Our skin repaints the
-     * surfaces it owns, but not Filament's own components — so on a dark-themed Chrome the
-     * login card, the inputs and assorted panels came out dark against a white page. The
-     * reference does not do this: WHMCS renders its own colours and ignores the browser.
-     *
-     * Removing the class is the whole fix — with it gone, not one `dark:` rule matches.
-     * It runs at `head.start`, before Filament's own theme script and before first paint,
-     * so there is no flash of the wrong theme; `theme` is pinned in localStorage so
-     * Filament's script does not put the class back, and the two events cover SPA
-     * navigation, where the document is never reloaded.
-     */
+    /** The panel is light, whatever the browser prefers. */
     private function keepThePanelLight(): void
     {
         FilamentView::registerRenderHook('panels::head.start', fn (): string => <<<'HTML'
@@ -963,30 +822,7 @@ class AdminOps extends Extension
         return $out;
     }
 
-    /**
-     * The two blades' own content, as a short hash.
-     *
-     * Hashed from the bytes, not from mtime and size. The URL this feeds is served
-     * `immutable, max-age=1y` and sits behind Cloudflare, so the hash has one job: never
-     * name two different stylesheets the same. mtime+size did that job badly in both
-     * directions — a `git pull` that rewrote a blade byte-for-byte minted a pointless new
-     * URL, and any edit that happened to preserve the size would have reused an old one.
-     * It also meant a deploy had to remember to `touch` the blades, a ritual that is now
-     * gone.
-     *
-     * Deliberately NOT cached. It used to be wrapped in a one-hour `Cache::remember`, which
-     * quietly broke the one guarantee this function exists to provide. For up to an hour
-     * after a deploy the URL still carried the *previous* hash while the route served the
-     * *new* body under it — one URL, two different stylesheets, exactly what the hash is
-     * supposed to make impossible. Cloudflare then pinned the stale copy under that
-     * `immutable, max-age=1y` URL, so a CSS fix could be live on the server and invisible
-     * in every browser. That is what happened on 2026-09-07 with the Open New Ticket
-     * attachment row: the rules were in the file, served correctly to a request that
-     * skipped the CDN, and absent from the page.
-     *
-     * Two md5_file calls per admin request is the price, and it is a fraction of a
-     * millisecond — far cheaper than a stylesheet that lies about its own identity.
-     */
+    /** The two blades' own content, as a short hash. */
     public static function styleVersion(): string
     {
         $stamp = '';
@@ -1005,13 +841,7 @@ class AdminOps extends Extension
         return url('/admin/adminops-' . static::styleVersion() . '.css');
     }
 
-    /**
-     * Serves both style sheets as one immutable file.
-     *
-     * Public on purpose: it is CSS, it carries no data, and the panel's login page needs it
-     * before anyone is authenticated. The version in the path is a content hash, so the
-     * far-future cache header can never serve a stale skin after a deploy.
-     */
+    /** Serves both style sheets as one immutable file. */
     private function registerSkinStylesheet(): void
     {
         \Illuminate\Support\Facades\Route::get('/admin/adminops-{version}.css', function (string $version) {

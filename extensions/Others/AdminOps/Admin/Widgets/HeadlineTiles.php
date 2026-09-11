@@ -15,21 +15,6 @@ use Paymenter\Extensions\Others\Cancellations\Admin\Resources\CancellationReques
 /**
  * The four tiles across the top of WHMCS's homepage.
  *
- * The client pointed at that screen and asked for it, and these are the part of it people
- * actually recognise: pending orders, tickets waiting, pending cancellations, pending
- * module actions — each a number big enough to read from across a desk, each a link into
- * the list behind it.
- *
- * They overlap with **Needs attention** below, and that is deliberate rather than an
- * oversight. The tiles are a fixed set of four, always in the same place, showing zeroes as
- * zeroes: you learn where "tickets waiting" lives and read it without looking. The queue is
- * the opposite — variable length, ordered by urgency, zero rows omitted — and it carries
- * six more measures the tiles have no room for (failed payments, unpaid invoices,
- * renewals). One is a gauge, the other is a to-do list.
- *
- * "Pending module actions" is our provisioning failure count. WHMCS means the same thing by
- * it: a server module call that did not complete and is waiting on a human.
- *
  * @link docs/02b-admin-area.md
  */
 class HeadlineTiles extends Widget

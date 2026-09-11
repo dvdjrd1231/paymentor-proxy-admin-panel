@@ -1,11 +1,6 @@
-{{--
-    The reference's payment gateway configuration screen: the gateway's name and module,
-    then the module's own settings label-left with the hint beside each, closed by the
-    centred Save / Cancel / Deactivate row.
-
-    Stored values are shown rather than masked — see the page class for why, and for the
-    two guards that stay.
---}}
+{{-- The reference's payment gateway configuration screen: the gateway's name and module,
+     then the module's own settings label-left with the hint beside each, closed by the
+     centred Save / Cancel / Deactivate row. --}}
 <x-filament-panels::page>
     <div class="ao-mu">
         <div class="ao-tx-tabs">

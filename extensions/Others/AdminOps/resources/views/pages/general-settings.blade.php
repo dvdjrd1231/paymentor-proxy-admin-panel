@@ -1,13 +1,6 @@
-{{--
-    General Settings, to the reference's screenshots: the file-folder tab bar over a
-    framed form of label-left rows, each with its inline hint, then Save/Cancel centred
-    under the frame.
-
-    Rows come from Support\SettingsReference, which lists the reference's fields in its
-    order. A row either drives a real Paymenter setting or renders disabled with the
-    reason it cannot — see the page class for how a field gets here rather than
-    quietly dropped.
---}}
+{{-- General Settings, to the reference's screenshots: the file-folder tab bar over a
+     framed form of label-left rows, each with its inline hint, then Save/Cancel centred
+     under the frame. --}}
 <x-filament-panels::page>
     {{-- `tab` lives in Alpine, so a click swaps which panel shows and never asks the
          server. Every tab's rows are below and every value is already bound. --}}

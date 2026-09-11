@@ -18,21 +18,7 @@ use Paymenter\Extensions\Others\TermLimits\Admin\Resources\ProductTermResource\P
 use Paymenter\Extensions\Others\TermLimits\Models\ProductTerm;
 use Paymenter\Extensions\Others\TermLimits\Support\Terms;
 
-/**
- * The reference's **Auto Terminate/Fixed Term** field, one row per product.
- *
- * On WHMCS this is two inputs on the product's Pricing tab. It cannot be there here: a
- * resource's form cannot be extended from an extension for the same reason its table cannot
- * — the resource's own `form()` replaces whatever an extension pushed. So the field gets a
- * screen instead, listing every product with the term it will run for and where that term
- * comes from.
- *
- * That last column is the one worth having, and the reference has no equivalent. Most
- * products here need no setting at all: a daily plan already says one day. Showing
- * **derived** against those, and **set here** against the ones somebody typed, means the
- * screen answers "how long does this product run" for the whole catalogue rather than only
- * for the exceptions.
- */
+/** The reference's **Auto Terminate/Fixed Term** field, one row per product. */
 class ProductTermResource extends Resource
 {
     protected static ?string $model = Product::class;
@@ -162,12 +148,7 @@ class ProductTermResource extends Resource
         return ['index' => ListProductTerms::route('/')];
     }
 
-    /**
-     * The term a *new* service of this product would get, in hours.
-     *
-     * Asked through {@see Terms::length()} on a throwaway unsaved service rather than
-     * reimplemented, so this screen can never disagree with what the sweeper actually does.
-     */
+    /** The term a *new* service of this product would get, in hours. */
     private static function hours(Product $product): ?int
     {
         $service = new Service(['product_id' => $product->id]);

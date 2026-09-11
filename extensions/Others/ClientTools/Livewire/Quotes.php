@@ -8,16 +8,7 @@ use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
 use Paymenter\Extensions\Others\Quotes\Models\Quote;
 
-/**
- * My Quotes.
- *
- * This shipped as an empty state, with a note saying a future quoting extension would only
- * have to fill the collection. `Others/Quotes` is that extension, and this now reads it.
- *
- * The dependency runs one way and softly: if Quotes is not installed the table is absent, the
- * collection is empty, and the page renders exactly the empty state it always did. ClientTools
- * does not require the other extension and never fails because of it.
- */
+/** My Quotes. */
 class Quotes extends Component
 {
     public function render()
@@ -27,9 +18,6 @@ class Quotes extends Component
 
     /**
      * The customer's own quotes, newest first — drafts excluded.
-     *
-     * A draft is a quote still being written. Showing one would be the invoice-draft problem
-     * again: the customer sees a price nobody has agreed to send them.
      *
      * @return Collection<int, Quote>
      */
@@ -47,14 +35,7 @@ class Quotes extends Component
             ->get();
     }
 
-    /**
-     * The customer accepts — which raises a real invoice for the full amount.
-     *
-     * Ownership is checked here and not only in the query, because this takes an id from the
-     * browser: without it, anyone signed in could accept somebody else's quote and create a
-     * debt on their account. The guard inside {@see Quoting::accept()} handles the rest —
-     * two tabs, or two presses, produce one invoice.
-     */
+    /** The customer accepts — which raises a real invoice for the full amount. */
     public function accept(int $id)
     {
         $quote = $this->own($id);

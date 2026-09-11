@@ -6,13 +6,7 @@ use App\Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Paymenter\Extensions\Others\ClientTools\Models\Contact;
 
-/**
- * Contacts — the extra people listed on a customer's account.
- *
- * Every query is scoped to the signed-in user, and an edit re-fetches the row by
- * (id, user_id) rather than trusting the id in the request, so one customer cannot read
- * or overwrite another's contact by editing the form payload.
- */
+/** Contacts — the extra people listed on a customer's account. */
 class Contacts extends Component
 {
     /** Id being edited, or null while adding a new contact. */
@@ -129,12 +123,7 @@ class Contacts extends Component
         $this->resetValidation();
     }
 
-    /**
-     * Fetch a contact that belongs to the signed-in user, or 404.
-     *
-     * Scoping on user_id here (rather than only on the listing query) is what stops an
-     * id swapped into the request from touching someone else's row.
-     */
+    /** Fetch a contact that belongs to the signed-in user, or 404. */
     private function ownedContact(int $id): Contact
     {
         return Contact::where('user_id', Auth::id())->findOrFail($id);
@@ -142,10 +131,6 @@ class Contacts extends Component
 
     /**
      * The country names offered by the Country select.
-     *
-     * Core keys the list by ISO code and puts its own "Select a country" placeholder under
-     * the empty key; that entry is dropped here because the view supplies the reference's
-     * own placeholder.
      *
      * @return array<int, string>
      */

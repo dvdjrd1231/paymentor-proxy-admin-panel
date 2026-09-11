@@ -14,13 +14,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * WHMCS's List All Products/Services, to its screenshot: the Search/Filter tab over the
  * band, the records line with Jump to Page and Hide Inactive, and the navy grid — ID,
  * Product/Service, Domain, Client Name, Price, Billing Cycle, Next Due Date, Status.
- *
- * A page, not a themed ServiceResource — the documented reason as everywhere in this
- * family: a resource's table cannot be reshaped from an extension, and these columns are
- * the reference's. Read-only; every row leads to core's service screen.
- *
- * Domain reads the service's `domain` property when one exists (ProxyPanel writes one for
- * some services) and "(No Domain)" otherwise, as the reference renders a domainless service.
  */
 class ProductsServices extends Page
 {

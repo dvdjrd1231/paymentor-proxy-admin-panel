@@ -4,18 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Refunds, as the reference's Refund tab records them.
- *
- * A table of its own rather than a negative row in `invoice_transactions`, which was the
- * tempting option because it would make income net itself out for free. It would also make
- * `Invoice::$remaining` positive again — core computes what is owed by summing transactions
- * — so a refunded invoice would read as unpaid, and the daily cron would start chasing it
- * and eventually suspend the service it belongs to. A refund is not a debt.
- *
- * The invoice instead moves to `refunded`, which is the reference's own status and which no
- * overdue query matches.
- */
+/** Refunds, as the reference's Refund tab records them. */
 return new class extends Migration
 {
     public function up(): void

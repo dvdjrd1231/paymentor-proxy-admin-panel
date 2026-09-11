@@ -1,11 +1,4 @@
-{{--
-    WHMCS's Promotions on Paymenter's coupons: the grid, and the editor beneath it.
-
-    Every live control here maps to something App\Classes\Cart::validateCoupon or
-    Coupon::calculateDiscount actually checks. The reference's remaining fields are drawn
-    inert with the reason, which is the same convention the product and settings screens use
-    — a control that accepts input and changes nothing is worse than an honest gap.
---}}
+{{-- WHMCS's Promotions on Paymenter's coupons: the grid, and the editor beneath it. --}}
 <x-filament-panels::page>
     <div class="ao-mu">
         @if ($canCreate)

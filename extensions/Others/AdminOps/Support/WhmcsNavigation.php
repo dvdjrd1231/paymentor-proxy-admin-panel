@@ -105,16 +105,6 @@ use Paymenter\Extensions\Others\TicketTools\Admin\Resources\TicketNoteResource;
  * The WHMCS menu bar, rebuilt over Paymenter's resources: grouped by what you are *doing*
  * (Clients, Orders, Billing…) rather than by record type as core groups them.
  *
- * Uses `Panel::navigation()` because a resource's group is a static property on the resource
- * class — regrouping the normal way would mean editing two dozen core files.
- *
- * Taking navigation over makes anything not named here unreachable, so {@see addons()} runs
- * last and sweeps up whatever was not placed. A new extension therefore still appears,
- * landing in Addons until someone files it properly.
- *
- * Every entry is permission-checked: a limited role sees a shorter menu, never a link that
- * answers 403.
- *
  * @link docs/02b-admin-area.md
  */
 class WhmcsNavigation
@@ -133,14 +123,7 @@ class WhmcsNavigation
      */
     private static ?array $groups = null;
 
-    /**
-     * The Setup group, kept aside rather than discarded.
-     *
-     * It is deliberately absent from the topbar — the reference puts setup behind the
-     * wrench — but the rail still has to know a setup page belongs to it, or those pages
-     * show no section at all (Leandro, 2026-09-07: the sidebar on a settings page looked
-     * nothing like the reference's).
-     */
+    /** The Setup group, kept aside rather than discarded. */
     private static ?NavigationGroup $setupGroup = null;
 
     public static function build(NavigationBuilder $builder): NavigationBuilder
@@ -270,12 +253,7 @@ class WhmcsNavigation
         '/admin/client-summary' => 'Clients',
     ];
 
-    /**
-     * Paths whose rail is Setup's, though no Setup menu item links them directly.
-     *
-     * Prefix-matched on a segment boundary, so `/admin/gateway` here cannot swallow
-     * `/admin/gateway-log`, which belongs to Utilities and matches its own item anyway.
-     */
+    /** Paths whose rail is Setup's, though no Setup menu item links them directly. */
     private const SETUP_PREFIXES = [
         '/admin/system-settings',
         '/admin/settings',
@@ -1151,9 +1129,6 @@ class WhmcsNavigation
      * admin down once:** `NavigationItem::url()` accepts a closure, so a bad URL fails while
      * the topbar *renders* — an unhandled 500 on every admin page — not while the menu is
      * assembled. So "the navigation builds" proves nothing; the URLs must resolve too.
-     *
-     * Caught rather than special-cased, because any route taking a parameter has this problem
-     * (the Addons catch-all swept in `ClientSummary`, which needs a customer id).
      */
     private static function resolveUrl(\Closure $url): ?string
     {

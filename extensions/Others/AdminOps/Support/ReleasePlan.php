@@ -9,22 +9,6 @@ use Illuminate\Support\Facades\Http;
  * What updating vendored core to an upstream release would actually change, file by file
  * (Leandro, 2026-09-07: "Fix the updater paymenter function to work as correctly — update
  * only possible and necessary files without changing functions and designs").
- *
- * "Only necessary files" is the whole problem: core's own web updater unpacks a release
- * over the installation wholesale, which on this deployment would overwrite fourteen
- * documented modifications and leave the server's git tree diverged from the repository.
- * So this downloads the release, compares it against what is actually on disk, and sorts
- * every file into one of four buckets:
- *
- *  - **same** — byte-identical, nothing to do. Usually the vast majority.
- *  - **changed** — differs, and no touchpoint is recorded against it. Safe to take.
- *  - **touchpoint** — differs *and* `docs/CORE-TOUCHPOINTS.md` records a modification in
- *    it. Never written automatically: taking upstream's copy is exactly how a customised
- *    behaviour silently disappears, which is the "without changing functions" half.
- *  - **new** — upstream has it, this install does not.
- *
- * Deletions are deliberately not reported as actions. A file upstream dropped may be one
- * this deployment added under the same path, and this class cannot tell the difference.
  */
 class ReleasePlan
 {
@@ -130,19 +114,7 @@ class ReleasePlan
         return false;
     }
 
-    /**
-     * A directory this process can actually write to.
-     *
-     * `storage/app` looks like the obvious home and usually is, but the same code runs
-     * from the web (as the FPM user) and from the CLI (often as root), and whichever goes
-     * first owns the parent directory. A root-owned `adminops-release/` is exactly what
-     * made Update Now answer "mkdir(): Permission denied" for Leandro on 2026-09-07 —
-     * my own earlier CLI run had created it.
-     *
-     * So: try storage, verify by actually writing, and fall back to the system temp
-     * directory, which every process can use. The contents are a throwaway copy of a
-     * public release, so temp is a perfectly good home for them.
-     */
+    /** A directory this process can actually write to. */
     private function workspace(): string
     {
         $unique = $this->version . '-' . bin2hex(random_bytes(4));

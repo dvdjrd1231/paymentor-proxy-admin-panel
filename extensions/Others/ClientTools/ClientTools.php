@@ -19,24 +19,6 @@ use Paymenter\Extensions\Others\ClientTools\Livewire\UserManagement;
 /**
  * The client-area pages the reference portal has that Paymenter does not ship.
  *
- * Five of the seven read data that already exists, so they are real rather than
- * decorative:
- *
- *   Mass Payment    unpaid invoices, settled from account credit oldest-first
- *   Email History   the core `email_logs` table, scoped to the signed-in user
- *   User Management sub-account contacts plus live rows from `user_sessions`
- *   Available Addons  each active service's `product_upgrades`, linked at core's upgrade flow
- *   Contacts        a table of its own (people listed on the account)
- *
- * **Quotes** is the exception. Paymenter has no quoting system — an invoice is only ever
- * pending, paid or cancelled — so the page renders the reference's empty state rather
- * than dressing up real invoices as quotes. The menu entry and the dashboard counter are
- * present and correct at zero; wiring a future quoting extension in means filling one
- * collection in Livewire\Quotes.
- *
- * Also adds the reference's **Apply Credit** panel to an invoice. Core can pay from
- * credit but only all-or-nothing; this lets the customer choose the amount.
- *
  * @link docs/modules/client-tools.md
  */
 #[ExtensionMeta(

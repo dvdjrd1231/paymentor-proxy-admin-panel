@@ -1,8 +1,4 @@
-{{-- RSS 2.0 feed for announcements, behind the reference portal's "View RSS Feed" link.
-
-     Values go through Blade's normal `{{ }}` escaping rather than CDATA. Escaping produces
-     &amp; &lt; &gt; &quot; — all valid XML entities — whereas CDATA would have shown those
-     entities literally and would still break on a `]]>` inside an announcement. --}}
+{{-- RSS 2.0 feed for announcements, behind the reference portal's "View RSS Feed" link. --}}
 <?php echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n"; ?>
 <rss version="2.0">
     <channel>

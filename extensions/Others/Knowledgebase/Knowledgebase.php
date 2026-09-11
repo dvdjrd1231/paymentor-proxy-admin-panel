@@ -17,13 +17,6 @@ use Paymenter\Extensions\Others\Knowledgebase\Models\KbArticle;
  * A searchable knowledgebase, one of the client-area sections the reference portal has and
  * Paymenter does not.
  *
- * Categories hold articles; an article is visible only when it is active *and* has a
- * `published_at` in the past, so staff can write ahead of time. Views are counted so the
- * list can lead with what customers actually read.
- *
- * The menu entry only appears once an article is published — an empty section in the
- * navigation is worse than no section, and it is the same rule Announcements uses.
- *
  * @link docs/modules/knowledgebase.md
  */
 #[ExtensionMeta(

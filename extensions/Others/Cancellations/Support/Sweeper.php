@@ -8,22 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Paymenter\Extensions\Others\Cancellations\Cancellations;
 
-/**
- * The reference's **Cancellation Requests** automation task.
- *
- * WHMCS runs this as one of its daily cron tasks — *"automatically terminate accounts with
- * cancellation requests when due"* — and reports it on Automation Status with a success and
- * a failure count. This is the same task, and it writes to the same `cron_stats` table core
- * uses, so it appears on our Automation Status page beside core's own without that page
- * needing to know this extension exists.
- *
- * Immediate requests are normally already gone by the time this runs: they are acted on as
- * they are made, because a proxy released six hours sooner is six hours of capacity earned,
- * and the reference's once-a-day pass is a limitation of its scheduler rather than a
- * decision. The sweep still picks up any that were missed — a request made while the panel
- * was unreachable, or made in `review` mode and since approved — so there is one path that
- * always catches up.
- */
+/** The reference's **Cancellation Requests** automation task. */
 class Sweeper
 {
     /** The key this task records under. Reads as "Cancellations processed" on the status page. */
@@ -82,11 +67,6 @@ class Sweeper
     /**
      * Everything waiting to be acted on: end-of-period requests that have come due, plus any
      * immediate request still standing.
-     *
-     * In `review` mode only the end-of-period ones are swept. That mirrors the reference,
-     * whose switch governs the automatic termination and not the request itself — an
-     * immediate request is then a decision for a human, which is the whole point of turning
-     * the switch off, while an end-of-period one is a date arriving and needs no decision.
      *
      * @return Collection<int, ServiceCancellation>
      */

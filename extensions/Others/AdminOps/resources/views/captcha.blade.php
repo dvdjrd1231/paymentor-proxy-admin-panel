@@ -1,31 +1,4 @@
-{{--
-    CAPTCHA on the admin sign-in page.
-
-    Same challenge, same settings and the same server-side verification as the client
-    login (`Admin → Settings → Security`, verified by `App\Traits\Captchable`) — there is
-    one provider and one key pair for the whole install, not a second set to configure.
-
-    It is *not* the client theme's `<x-captcha>` component. That one is styled with the
-    portal's `wf-` classes and lives in the theme, which the admin panel does not load;
-    this renders inside Filament's sign-in card instead. The behaviour it does copy is
-    the part that was learned the hard way there:
-
-      1. `wire:ignore` around the widget. A Livewire morph that replaced the iframe would
-         silently drop a solved challenge.
-      2. The widget is reset after any request that *spent* a token — one that called a
-         method, carried a token, and did not redirect away — and the token is cleared on
-         the component at the same time. Without both halves the next submit replays a
-         token the provider has already burned and comes back "invalid".
-      3. Because that means solving it again after a wrong password, the notice below
-         says so. Otherwise the form returns with a blank checkbox and, on the next
-         attempt, a confusing "The CAPTCHA is required."
-      4. Expiry and error clear the token, so a challenge solved and then left for two
-         minutes reports the accurate "required" rather than being submitted dead.
-
-    Deliberately plain `<script>` rather than Livewire's `@@script`/`@@assets`: this is a
-    Blade view embedded in a Filament schema, and those directives make Livewire re-render
-    into the slot.
---}}
+{{-- CAPTCHA on the admin sign-in page. --}}
 @php
     $provider = config('settings.captcha');
     $siteKey = config('settings.captcha_site_key');

@@ -1,12 +1,6 @@
-{{--
-    Contacts, to the reference portal (Leandro, 2026-09-07, screenshot of
-    my.noxproxy.com/account/contacts): a Choose Contact band over one always-visible
-    two-column form, then Email Preferences, closed by Save Changes / Cancel.
-
-    It used to be a list of contact cards with a form that appeared on demand. That is a
-    different interaction — the reference never shows a list, it shows one contact at a
-    time and switches with the selector.
---}}
+{{-- Contacts, to the reference portal (Leandro, 2026-09-07, screenshot of
+     my.noxproxy.com/account/contacts): a Choose Contact band over one always-visible
+     two-column form, then Email Preferences, closed by Save Changes / Cancel. --}}
 <div class="wf-page">
     <div class="wf-title">
         <h1>{{ __('clienttools.contacts') }}</h1>

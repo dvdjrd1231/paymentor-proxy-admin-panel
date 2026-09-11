@@ -5,14 +5,6 @@ namespace Paymenter\Extensions\Servers\ProxyPanel\Support;
 /**
  * Turns a "Country - City" region label into a flag-prefixed one:
  * "United States - Kansas City" -> "🇺🇸  United States - Kansas City".
- *
- * Country names are matched against Paymenter's own ISO-3166 list
- * (`config('app.countries')`) plus the alias table below, so there is no second list to
- * maintain. The flag is two regional-indicator symbols — the only way to get one into a
- * native <select>, which cannot hold images.
- *
- * ⚠ Windows ships no flag glyphs and renders these as the two letters ("US") in every
- * browser. Only an image-based custom dropdown could change that.
  */
 class CountryFlag
 {

@@ -10,20 +10,7 @@ use Filament\Pages\Page;
 use Filament\Panel;
 use Livewire\Attributes\Url;
 
-/**
- * WHMCS's Promotions, on Paymenter's coupons.
- *
- * The sidebar had a Promotions entry, but it fell through to core's own Filament resource —
- * a different screen in a different shape from everything around it. This is the reference's:
- * the grid of promotions, and the editor beneath it on the same page.
- *
- * **Only fields the checkout actually enforces are live here.** `App\Classes\Cart::validateCoupon`
- * is the whole of what this platform checks — code, start date, expiry, max uses, max uses per
- * user, and the product restriction — plus `Coupon::calculateDiscount` for type and what it
- * applies to, and `Service`/`CronJob` for how many cycles it survives. The reference's other
- * fields (Requires, Lifetime Promotion, New Signups Only, Upgrade Config) are shown inert with
- * the reason, rather than offered as controls that would accept input and change nothing.
- */
+/** WHMCS's Promotions, on Paymenter's coupons. */
 class Promotions extends Page
 {
     protected string $view = 'adminops::pages.promotions';
@@ -33,12 +20,7 @@ class Promotions extends Page
     /** Navigation is built by {@see WhmcsNavigation}. */
     protected static bool $shouldRegisterNavigation = false;
 
-    /**
-     * Which promotion is open in the editor: an id, 'new', or '' for none.
-     *
-     * Query-stringed so a promotion is a URL — support can paste "the SUMMER25 promotion"
-     * into a ticket and it opens on it.
-     */
+    /** Which promotion is open in the editor: an id, 'new', or '' for none. */
     #[Url(as: 'promo', keep: false)]
     public string $editing = '';
 
@@ -54,13 +36,7 @@ class Promotions extends Page
 
     public ?int $confirming = null;
 
-    /**
-     * How long the discount lasts, in billing cycles.
-     *
-     * Not free text: `Service::240` treats 0 as "every invoice, forever" and N as "the first
-     * N", and `Cart` treats null and 1 alike as first-cycle-only. Three named choices say
-     * that; a number box would invite someone to type 0 meaning "never".
-     */
+    /** How long the discount lasts, in billing cycles. */
     public const RECURRING = [
         '1' => 'First payment only',
         '0' => 'Every payment, for the life of the service',
@@ -99,13 +75,7 @@ class Promotions extends Page
 
     // ── The editor ──────────────────────────────────────────────────────────────
 
-    /**
-     * Land on a promotion when the URL names one.
-     *
-     * `updatedEditing()` fires on a Livewire update, not on the first render, so without
-     * this `?promo=5` would open the editor with an empty form over promotion 5 — and
-     * saving it would have overwritten that promotion with blanks.
-     */
+    /** Land on a promotion when the URL names one. */
     public function mount(): void
     {
         if ($this->editing !== '') {

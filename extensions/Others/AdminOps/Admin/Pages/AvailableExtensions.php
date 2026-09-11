@@ -18,17 +18,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 /**
  * Available Extensions on the house standard (Leandro, 2026-09-07: "Adjust all Paymenter
  * admin windows to the current standard", of `/admin/extensions/extension?tab=installable`).
- *
- * Core's own screen could not be brought to the standard with CSS. Two of its problems are
- * in the markup: its heading is the raw class name — "Extension" — and it draws a *second
- * sidebar inside the content*, repeating the two entries the left rail already carries.
- * So this is that screen rebuilt, same treatment as Products, Gateways, Currencies and
- * Roles before it, and core's URL redirects here.
- *
- * Everything it does, this does: browse the marketplace, install what is already on disk,
- * and upload a zip. Install and upload go through core's own
- * {@see ExtensionHelper} and {@see UploadExtensionService} rather than reimplementing
- * either — this page is the chrome, not a second installer.
  */
 class AvailableExtensions extends Page
 {

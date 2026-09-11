@@ -8,14 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Paymenter\Extensions\Others\ClientTools\Models\Contact;
 
-/**
- * User Management — who can reach this account.
- *
- * The reference portal lists the account owner plus anyone invited to sign in. Here that
- * second group is the contacts flagged as sub-accounts, so inviting someone and adding a
- * contact create one record rather than two that can drift apart: this page invites and
- * revokes, and the Contacts page edits the same row.
- */
+/** User Management — who can reach this account. */
 class UserManagement extends Component
 {
     public string $inviteEmail = '';
@@ -35,14 +28,7 @@ class UserManagement extends Component
         ];
     }
 
-    /**
-     * Invite someone by creating the sub-account contact they will be matched to.
-     *
-     * No mail is sent: Paymenter has no invitation-token flow, and a message promising
-     * access that nothing can redeem would be worse than none. The record is created and
-     * the operator can share credentials — the page states this rather than implying an
-     * email went out.
-     */
+    /** Invite someone by creating the sub-account contact they will be matched to. */
     public function invite()
     {
         $this->validate();

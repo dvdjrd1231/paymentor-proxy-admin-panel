@@ -14,11 +14,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * WHMCS's Invoices, to its screenshot: the Paid / Unpaid / Overdue totals bar, the navy
  * grid — Invoice #, Client Name, Invoice Date, Due Date, Last Capture Attempt, Total,
  * Payment Method, Status — and one page for every sidebar filter, told apart by `?status=`.
- *
- * The filters map to what Paymenter records: Unpaid is core's `pending`, Overdue is pending
- * past its due date, Payment Pending is an invoice with a transaction still processing.
- * Draft and Refunded exist where the InvoiceOps extension writes those statuses;
- * Collections has no process behind it, so that filter honestly lists nothing.
  */
 class ManageInvoices extends Page
 {
@@ -132,15 +127,7 @@ class ManageInvoices extends Page
             ->get()->all();
     }
 
-    /**
-     * Whether anything is ticked.
-     *
-     * The With Selected buttons are disabled until something is, because the old
-     * behaviour was the complaint (Leandro, 2026-09-07: "are not working at now"): with
-     * nothing ticked, the button still raised its "Are you sure?", you confirmed it, and
-     * then nothing happened but a "0 invoice(s)" toast that is easy to miss. Verified in
-     * a real browser that the actions themselves work once a row is ticked.
-     */
+    /** Whether anything is ticked. */
     public function hasSelection(): bool
     {
         return array_filter($this->selected) !== [];

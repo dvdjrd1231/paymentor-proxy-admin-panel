@@ -2,11 +2,7 @@
 
 namespace Paymenter\Extensions\Others\BrazilianRegistration\Support;
 
-/**
- * CPF / CNPJ helpers: sanitising, checksum validation, and display masking.
- *
- * Pure functions, no framework dependencies — easy to unit test.
- */
+/** CPF / CNPJ helpers: sanitising, checksum validation, and display masking. */
 class Documents
 {
     /** The two kinds of registration, as seeded and as they must read on a tax document. */

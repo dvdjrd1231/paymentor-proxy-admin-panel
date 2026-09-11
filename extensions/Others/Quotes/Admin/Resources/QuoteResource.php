@@ -27,13 +27,7 @@ use Paymenter\Extensions\Others\Quotes\Admin\Resources\QuoteResource\Pages\ListQ
 use Paymenter\Extensions\Others\Quotes\Models\Quote;
 use Paymenter\Extensions\Others\Quotes\Support\Quoting;
 
-/**
- * Billing → Quotes, with the reference's Valid / Expired split and its Create New.
- *
- * A quote is editable only while it is a **draft**. Once sent it is a document the customer
- * is looking at, and changing the price under them is the one thing a quoting system must
- * never do — that is what Duplicate is for.
- */
+/** Billing → Quotes, with the reference's Valid / Expired split and its Create New. */
 class QuoteResource extends Resource
 {
     protected static ?string $model = Quote::class;

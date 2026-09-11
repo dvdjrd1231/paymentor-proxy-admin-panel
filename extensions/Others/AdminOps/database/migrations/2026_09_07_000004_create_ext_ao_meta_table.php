@@ -8,16 +8,6 @@ use Illuminate\Support\Facades\Schema;
  * Extra attributes the reference's Products/Services screens carry that core's own
  * `categories` and `products` tables have no column for (Leandro, 2026-09-07: the catalogue
  * and its sub-pages must match the WHMCS screenshots).
- *
- * A group's headline, tagline and hidden flag; a product's WHMCS-style type. Core's
- * `properties` table would have been the obvious home, but `Category` and `Product` do not
- * use the `HasProperties` trait — only models like Invoice do — and adding the trait means
- * editing vendored core, which this deployment does not do.
- *
- * So: one small key/value table owned by this extension, keyed polymorphically. It holds
- * presentation attributes only. Nothing here decides money, provisioning or access — if it
- * did, it would belong in a real column with a real constraint rather than in a bag of
- * strings.
  */
 return new class extends Migration
 {

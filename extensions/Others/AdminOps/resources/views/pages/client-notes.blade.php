@@ -1,10 +1,5 @@
-{{--
-    The reference's Notes tab: the notes already on the account, then the box that adds
-    another, with Make Sticky beside it.
-
-    The profile's old Admin Notes box was one text field — writing in it overwrote whatever
-    the last person wrote, and nothing recorded who or when. These are rows.
---}}
+{{-- The reference's Notes tab: the notes already on the account, then the box that adds
+     another, with Make Sticky beside it. --}}
 <div class="ao-cn">
     {{-- The reference bands this list like every other one on the profile. It was the only
          tab without it, which is part of why it read as a different screen. --}}

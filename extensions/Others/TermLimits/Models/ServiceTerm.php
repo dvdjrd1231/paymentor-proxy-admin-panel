@@ -12,10 +12,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * The clock on one fixed-term service.
  *
- * `ends_at` is the whole truth: it starts as `started_at` + the contracted hours and moves
- * forward as extensions are granted. Nothing recomputes it from the plan afterwards, so a
- * plan re-timed next month does not change a term somebody has already bought.
- *
  * @property Carbon $started_at
  * @property Carbon $ends_at
  * @property Carbon|null $ended_at
@@ -67,12 +63,7 @@ class ServiceTerm extends Model
         return (int) $this->extensions()->sum('hours');
     }
 
-    /**
-     * What a customer should be told: how long is left, or that it has run out.
-     *
-     * Rounded down to the minute rather than shown to the second — a countdown that ticks
-     * is a promise about precision the once-a-minute sweeper does not keep.
-     */
+    /** What a customer should be told: how long is left, or that it has run out. */
     public function remainingForHumans(): string
     {
         if (!$this->isOpen()) {

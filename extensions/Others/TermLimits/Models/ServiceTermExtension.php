@@ -6,15 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * One grant of extra time, and the reason for it.
- *
- * The brief asks for extensions "based on specific, justifiable needs regarding maintenance
- * or downtime", so the reason is a required column rather than an optional note: an
- * extension nobody can account for later is the thing this record exists to prevent. The
- * rows are append-only — a granted hour is a fact about the past, and taking it back is a
- * new negative grant with its own reason, not an edit.
- */
+/** One grant of extra time, and the reason for it. */
 class ServiceTermExtension extends Model
 {
     protected $table = 'ext_term_limit_extensions';

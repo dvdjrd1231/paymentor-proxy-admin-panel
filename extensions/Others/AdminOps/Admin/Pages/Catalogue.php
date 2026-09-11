@@ -20,34 +20,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 /**
  * WHMCS's Products/Services page: the whole catalogue on one screen, ordered by dragging.
  *
- * Paymenter can already order both — `categories.sort` and `products.sort` are real columns
- * the storefront reads — but the two halves live on different screens and one of them is
- * three clicks deep: categories reorder on their own list, products only inside the Products
- * tab of the category you happen to be editing. The product list itself, which is the screen
- * you would reach for, groups by category and cannot be dragged at all. So "put the Monthly
- * plans above the Daily ones" means editing each category in turn, and there is nowhere to
- * see the resulting shape.
- *
- * This is that shape: every group, its products underneath, a handle on both. It is the one
- * page in this panel whose *purpose* is the order of things, so nothing else here is
- * editable — every row links to the core screen that owns it, and this page writes exactly
- * two columns.
- *
- * ## Scope, and why dragging cannot move a product between groups
- *
- * A drag reorders within its own list: products stay in their category, categories under
- * their parent. Moving a product to another category is a different operation — it changes
- * `category_id`, and with it the storefront URL, the breadcrumb and any link anyone has
- * saved — so it stays on the product's own edit page where it is deliberate and audited.
- * The reference behaves the same way.
- *
- * ## What a save writes
- *
- * The whole list, 1..n, not just the row that moved. `sort` is nullable and every row in
- * this store still holds `NULL`, so a partial write would leave a mix of ordered and
- * unordered rows whose relative order MySQL decides. Renumbering the list ends that on the
- * first drag.
- *
  * @link docs/02b-admin-area.md
  */
 class Catalogue extends Page
@@ -94,14 +66,7 @@ class Catalogue extends Page
     /** Configurable option names per product id, for the Features column. */
     public array $features = [];
 
-    /**
-     * The product whose type is being changed, or null.
-     *
-     * Type is set on Create a New Product and read in the Type column, and core's product
-     * editor cannot show it — it lives in this extension's table. Without this it would be
-     * write-once. It is edited here, where it is read, rather than on a screen of its own
-     * for one presentation field.
-     */
+    /** The product whose type is being changed, or null. */
     public ?int $typingId = null;
 
     /** ['product'|'category', id] awaiting the "Are you sure?" modal, or null. */
@@ -227,10 +192,6 @@ class Catalogue extends Page
     /**
      * Categories nested under their parents.
      *
-     * Flat in this store today, but `categories.parent_id` is core's and the storefront
-     * renders children, so a page claiming to show the catalogue has to show them — and a
-     * child that silently vanished from here would look like a deleted category.
-     *
      * @param  Collection<int, Category>  $categories
      * @return array<int, array{category: Category, children: array}>
      */
@@ -255,10 +216,6 @@ class Catalogue extends Page
      * The reference's Type column: the product's type, then the module it provisions
      * through in brackets — "Other (ProxyPanel)", exactly as Leandro's own WHMCS prints
      * every row of this catalogue.
-     *
-     * The type is stored per product (see {@see Meta}); "Other" is the default and is what
-     * every product on this install genuinely is, which is why the reference screenshots of
-     * this store show "Other" throughout.
      */
     public function typeLabel(Product $product): string
     {
@@ -280,14 +237,7 @@ class Catalogue extends Page
         return $type . ' (' . $module . ')';
     }
 
-    /**
-     * The reference's Features column.
-     *
-     * On WHMCS this reports MarketConnect service status. There is no MarketConnect here,
-     * and the honest reading of "what extra does this product carry" on Paymenter is its
-     * configurable options — the add-on capabilities a customer picks at checkout. A
-     * product with none reads "-", which is what the reference's own row shows.
-     */
+    /** The reference's Features column. */
     public function featuresLabel(Product $product): string
     {
         $names = $this->features[$product->id] ?? [];
@@ -299,14 +249,7 @@ class Catalogue extends Page
         return count($names) === 1 ? $names[0] : count($names) . ' options';
     }
 
-    /**
-     * The reference's Refresh Feature Status button.
-     *
-     * It re-reads what the column reports rather than pretending to reach a service this
-     * install does not have, and says what it found — including the products that would
-     * never provision because they carry no module, which is the thing on this screen most
-     * worth being told about.
-     */
+    /** The reference's Refresh Feature Status button. */
     public function refreshFeatures(): void
     {
         $products = Product::with(['configOptions', 'server'])->get();
@@ -367,13 +310,7 @@ class Catalogue extends Page
             : null;
     }
 
-    /**
-     * The group's own editor — ours, not core's.
-     *
-     * Core's category form cannot show the headline, tagline and hidden flag, because those
-     * live in this extension's own table. Sending the edit icon there would let someone set
-     * them once on creation and never see them again.
-     */
+    /** The group's own editor — ours, not core's. */
     public function categoryUrl(Category $category): ?string
     {
         return CategoryResource::canEdit($category)
@@ -471,10 +408,6 @@ class Catalogue extends Page
      * A silent success is the point — the row is already where it was dropped, and a toast
      * on every drag would be four toasts to dismiss after ordering four products. Only a
      * refusal has something to say.
-     *
-     * The refused drag itself needs no undoing: Livewire re-renders after every action, and
-     * the rows are keyed, so the morph puts the list back the way the database has it. The
-     * screen cannot be left showing an order that was not saved.
      */
     private function refuse(string $message): void
     {

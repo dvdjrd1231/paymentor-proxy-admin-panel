@@ -7,19 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Session;
 
-/**
- * Issue a Paymenter session token for anyone signed in without one.
- *
- * `ResolveUserSession` silently signs out any authenticated request with no `user_sessions`
- * row — no error, no log line, just the login form again — so a sign-in path that does not
- * go through {@see \App\Actions\Auth\Login} looks like it worked and is undone one request
- * later. The admin login page handles this properly, but the panel is *told* to use that page
- * from vendored core, so an upstream merge reverting one line brings the fault back.
- *
- * A no-op in normal operation: both the action and the middleware set the ulid before calling
- * `Auth::login()`, so the token already exists by the time the event fires. This is not a
- * second way to log in — it only records a session the guard has already granted.
- */
+/** Issue a Paymenter session token for anyone signed in without one. */
 class PanelSession
 {
     public static function issueMissingToken(Login $event): void

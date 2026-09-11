@@ -82,17 +82,7 @@ class RewardAffiliate
         }
     }
 
-    /**
-     * What this invoice earns, honouring each product's Custom Affiliate Payout.
-     *
-     * The flat "percentage of the invoice total" is the default, and still applies to every
-     * line whose product says Use Default. A product may instead name its own percentage, a
-     * fixed amount per line, or no commission at all — the reference's four choices on Edit
-     * Product's Other tab.
-     *
-     * Public and static because {@see \Paymenter\Extensions\Others\Affiliates\Models\AffiliateOrder::earnings()}
-     * sums the same invoices for the credits page and has to arrive at the same figure.
-     */
+    /** What this invoice earns, honouring each product's Custom Affiliate Payout. */
     public static function rewardFor($invoice, float $defaultPercentage): float
     {
         $items = $invoice->items ?? collect();

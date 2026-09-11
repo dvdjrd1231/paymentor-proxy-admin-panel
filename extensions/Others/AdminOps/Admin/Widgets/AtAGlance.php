@@ -11,11 +11,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\Money;
 /**
  * WHMCS's Overview panel: the business in four rows and three columns.
  *
- * Paymenter's own dashboard widgets answer "how does this month compare with last month",
- * which is a question you ask occasionally. This answers "how are we doing today", which is
- * the one an operator opens the panel to ask — and it is the panel the client pointed at
- * when they said Paymenter's admin lacks usability.
- *
  * @link docs/02b-admin-area.md
  */
 class AtAGlance extends Widget

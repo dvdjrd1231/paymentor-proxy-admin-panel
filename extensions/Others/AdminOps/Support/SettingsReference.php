@@ -2,39 +2,11 @@
 
 namespace Paymenter\Extensions\Others\AdminOps\Support;
 
-/**
- * WHMCS's General Settings, field by field, tab by tab, in its own order.
- *
- * Taken from Leandro's screenshots of `configgeneral.php` (2026-09-07). Every entry is
- * bound to a real Paymenter setting, and every control on the page saves.
- *
- * An earlier version also listed the reference's fields that this platform has no setting
- * behind, drawn disabled with the reason on each. Leandro saw the result and asked for
- * them gone ("contain too many disabled edit text and fields ... if there is unnecessary,
- * please sort"), and he is right: a screen of greyed boxes is noise, and those reasons
- * belong in documentation rather than in a form. Fifty-two such rows were removed, along
- * with the Affiliates tab, which held nothing else — affiliate settings live on the
- * Affiliates extension.
- *
- * Keeping the list here rather than in the page keeps the page about behaviour and this
- * about content.
- *
- * `label` overrides the core setting's own label where WHMCS words it differently; the
- * point of the screen is that it reads like the reference.
- */
+/** WHMCS's General Settings, field by field, tab by tab, in its own order. */
 class SettingsReference
 {
     /**
      * Settings this extension owns, for fields Paymenter has no setting behind.
-     *
-     * Core's `Setting` rows all land in `config('settings.*')` whether or not core
-     * declares them, so a key added here is readable everywhere a core one is — which is
-     * what lets the client footer render these without a second storage mechanism.
-     *
-     * Only added where the value is actually used. The reference's Social tab also
-     * carries Announcements Tweet / Facebook Recommend / Facebook Comments; those need
-     * third-party embeds on the announcements page, so they are left out rather than
-     * stored and ignored.
      *
      * @return array<string, array<string, mixed>>
      */

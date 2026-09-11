@@ -4,14 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Drop the downloads table.
- *
- * The reference portal has no downloads section, so the page, its model and its admin
- * resource were removed. Dropping the table here rather than editing the migration that
- * created it: that one is already recorded as run, so an edit would never be applied on
- * an installation that has it.
- */
+/** Drop the downloads table. */
 return new class extends Migration
 {
     public function up(): void

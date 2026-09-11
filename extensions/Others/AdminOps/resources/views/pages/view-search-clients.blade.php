@@ -1,11 +1,5 @@
-{{--
-    View/Search Clients, to the reference screenshot: search band, records line with Jump to
-    Page and the Hide Inactive toggle, navy grid, With Selected underneath, page buttons.
-
-    Send Message is real, not scenery: it collects the ticked rows' addresses into a mailto:
-    so the admin's own mail client opens addressed — the one way to "send a message" that
-    needs no backend nobody has built.
---}}
+{{-- View/Search Clients, to the reference screenshot: search band, records line with Jump to
+     Page and the Hide Inactive toggle, navy grid, With Selected underneath, page buttons. --}}
 <x-filament-panels::page>
     <div class="ao-mu">
         {{-- autocomplete="off": these are search filters, not a form anyone signs in with.

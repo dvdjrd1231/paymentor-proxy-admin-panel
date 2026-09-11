@@ -12,17 +12,6 @@ use Illuminate\Support\Facades\Schema;
  * is organised around simply did not exist, and the grid showed a dash where the rate
  * belongs (Leandro, 2026-09-07: "these pages don't have 'Base Conv. Rate' Field. it is
  * basic foundation to update these pages").
- *
- * This adds it for real. What the number then *means* here is the same as in the
- * reference: how many units of this currency one unit of the base currency buys.
- * {@see \Paymenter\Extensions\Others\CurrencyRates\Support\RateSync} writes it on every
- * market sync, and the Currencies screen lets an admin set it by hand and rewrite prices
- * from that value — WHMCS's own two buttons, finally meaning two different things.
- *
- * `currencies` is a core table, so this is a guarded ALTER in the extension that needed
- * the column, exactly like {@see 2026_09_04_000001_add_whmcs_affiliate_fields}. Core never
- * reads or writes the column, so an install that later drops this extension keeps working;
- * `down()` removes it.
  */
 return new class extends Migration
 {

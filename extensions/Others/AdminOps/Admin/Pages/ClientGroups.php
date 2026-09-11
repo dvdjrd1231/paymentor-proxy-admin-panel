@@ -12,21 +12,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * WHMCS's Client Groups screen, to its screenshot (Leandro, 2026-09-07): the intro, the
  * Group Name / Group Colour / % Discount / Suspend-Terminate Exempt / Separate Invoices
  * grid, and the Add Client Group form beneath it.
- *
- * ## What is enforced, and what is not
- *
- * A group is a real record and a client's membership is a real property, so the Client
- * Profile's "Client Group" row finally reads something. Of the three settings a group
- * carries, one is enforced today:
- *
- *  - **Exempt from Suspend & Terminate** — read by {@see Support\ServiceOverrides}, the
- *    hourly sweep that already un-suspends services with an override date. A member's
- *    services are skipped by the same pass.
- *  - **Group Discount %** and **Separate Invoices for Services** are stored and shown but
- *    change nothing yet: the first needs a hook in price calculation and the second in
- *    invoice generation, neither of which exists here. They say so on the screen rather
- *    than looking live — a discount that silently does not apply is worse than one that
- *    is honestly marked pending.
  */
 class ClientGroups extends Page
 {

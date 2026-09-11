@@ -1,17 +1,6 @@
-{{--
-    One group, to issues #35 and #41: the reference's grey band — drag handle at its left,
-    "Group Name: X", edit and delete icons at its right — then the group's products as rows
-    of the one shared grid, each with its own drag/edit/delete icons in the last column.
-
-    Included recursively — a child group is the same thing one level in.
-
-    `$node` is `['category' => Category, 'children' => array]`; everything else
-    (`$canReorderCategories`, `$canReorderProducts`) comes from the parent view.
-
-    `wire:key` on every row that can move: a drag reorders the DOM before the server knows
-    anything about it, so the re-render that follows morphs new HTML onto a list in a
-    different order than it was sent in. Keyed, Livewire matches rows by identity.
---}}
+{{-- One group, to issues #35 and #41: the reference's grey band — drag handle at its left,
+     "Group Name: X", edit and delete icons at its right — then the group's products as rows
+     of the one shared grid, each with its own drag/edit/delete icons in the last column. --}}
 @php
     $category = $node['category'];
     $products = $category->products;

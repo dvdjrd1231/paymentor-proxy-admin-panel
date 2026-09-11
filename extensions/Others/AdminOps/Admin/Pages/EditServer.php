@@ -9,24 +9,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Panel;
 
-/**
- * WHMCS's Add/Edit Server, replacing core's raw Filament form.
- *
- * Leandro sent the reference's screens (2026-09-08) with "Servers — list and edit. This is
- * where provisioning is configured." Core's form was two fields, Name and Server, in the
- * unstyled Filament shell — a different screen in a different shape from the list that links
- * to it.
- *
- * **Where the reference's fields went.** A WHMCS server is a box you own: it has a hostname,
- * an IP, nameservers, a monthly cost and a cap on accounts, because WHMCS creates cPanel
- * accounts *on* it. A Paymenter server is a module instance — a configured way of talking to
- * a provisioning API — so the box's own properties have nowhere to live and nothing that
- * would read them. What is real is the module, its settings, and whether it is switched on;
- * those are live here. The rest is drawn inert with the reason, as elsewhere in this skin.
- *
- * Test Connection is real: the Server contract has `testConfig()` and ProxyPanel implements
- * it, so the button calls the module and reports what it actually said.
- */
+/** WHMCS's Add/Edit Server, replacing core's raw Filament form. */
 class EditServer extends Page
 {
     protected string $view = 'adminops::pages.edit-server';
@@ -105,12 +88,7 @@ class EditServer extends Page
         $this->resetValidation();
     }
 
-    /**
-     * The reference's Test Connection.
-     *
-     * Runs against what is *on screen*, not what is saved, so it answers "will this work"
-     * before committing it — which is the only moment the button is useful.
-     */
+    /** The reference's Test Connection. */
     public function test(): void
     {
         if ($this->extension === '') {
@@ -206,9 +184,6 @@ class EditServer extends Page
 
     /**
      * The chosen module's configuration fields.
-     *
-     * A server whose extension has been removed from disk returns none rather than throwing,
-     * so the screen still opens and the record can be renamed or switched off.
      *
      * @return array<int, array<string, mixed>>
      */

@@ -18,13 +18,7 @@ use Paymenter\Extensions\Others\TermLimits\Admin\Resources\ServiceTermResource\P
 use Paymenter\Extensions\Others\TermLimits\Models\ServiceTerm;
 use Paymenter\Extensions\Others\TermLimits\Support\Terms;
 
-/**
- * Fixed terms, and the one action that changes one.
- *
- * Read-only apart from **Extend**: a term is a record of what was bought and when it
- * started, and the only legitimate change to it is more time, with a reason. Editing
- * `ends_at` directly would be the same act without the account of why.
- */
+/** Fixed terms, and the one action that changes one. */
 class ServiceTermResource extends Resource
 {
     protected static ?string $model = ServiceTerm::class;

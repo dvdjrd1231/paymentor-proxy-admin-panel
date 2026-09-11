@@ -11,14 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Paymenter\Extensions\Others\BillableItems\Models\BillableItem;
 
-/**
- * Putting billable items onto invoices.
- *
- * Two ways in, matching the reference's Invoice Action: **now**, which raises an invoice for
- * the item on its own, and **next invoice**, which waits for one the customer was getting
- * anyway. The second is the one that matters — a £5 charge on its own invoice costs more in
- * payment fees and attention than it collects.
- */
+/** Putting billable items onto invoices. */
 class Items
 {
     /** Reported on Automation Status under the reference's own task name. */
@@ -26,10 +19,6 @@ class Items
 
     /**
      * Add every waiting item for this customer to an invoice, and return it.
-     *
-     * `$invoice` is the one to ride along on. Passing null raises a new one — which is what
-     * "invoice immediately" means, and what the sweeper does for items that have waited
-     * without a renewal turning up.
      *
      * @param  Collection<int, BillableItem>  $items
      */
@@ -82,14 +71,7 @@ class Items
         });
     }
 
-    /**
-     * A recurring item, queued again for its next period.
-     *
-     * A new row rather than resetting the old one, so what was charged in March stays
-     * attached to March's invoice. An item whose history is overwritten every cycle can
-     * answer "what is due" but not "what did we bill them", which is the question that comes
-     * up in a dispute.
-     */
+    /** A recurring item, queued again for its next period. */
     private static function repeat(BillableItem $item): void
     {
         if (blank($item->recur_every)) {
@@ -124,12 +106,6 @@ class Items
 
     /**
      * One pass: raise invoices for everything that should not wait any longer.
-     *
-     * `next_invoice` items are **not** swept here — they are picked up by
-     * {@see attachToNewInvoice()} when a renewal invoice is created, which is the whole point
-     * of that action. They are only forced onto an invoice of their own once they are
-     * genuinely overdue, because a charge that waits for a renewal that never comes — a
-     * customer with no recurring service — would otherwise wait for ever.
      *
      * @return array{invoiced: int, lines: array<int, string>}
      */
@@ -197,14 +173,7 @@ class Items
         return ['invoiced' => $invoiced, 'lines' => $lines];
     }
 
-    /**
-     * Ride along on an invoice that was just created for something else.
-     *
-     * Hooked to `Invoice::created`, which is how "add to the user's next invoice" becomes
-     * true without this module knowing anything about renewals. A draft is left alone: an
-     * invoice nobody has published yet is still being written, and adding lines to it behind
-     * the author's back is exactly the surprise draft status exists to prevent.
-     */
+    /** Ride along on an invoice that was just created for something else. */
     public static function attachToNewInvoice(Invoice $invoice): void
     {
         if ($invoice->status !== Invoice::STATUS_PENDING) {

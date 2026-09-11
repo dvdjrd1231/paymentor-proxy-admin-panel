@@ -15,16 +15,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * `configopenid.php?action=manage&id=1`): Name and Description over the boxed Client API
  * Credentials — Client ID, Client Secret with Reset, Creation Date — then Logo URL and
  * the repeatable Authorized Redirect URIs, closed by Save / Cancel / Delete Credential Set.
- *
- * One page for create and manage, as the reference uses one form for both.
- *
- * ## The secret
- *
- * Passport stores the secret hashed on a hashed install and in clear otherwise; either
- * way it is written once at creation. The reference shows the value in a read-only box,
- * so this does too **when it is readable**, and offers Reset Client Secret — which mints
- * a new one and shows it — when it is not. What it never does is invent a value: an empty
- * box says the secret is not recoverable and points at Reset, which is the truth.
  */
 class OauthClient extends Page
 {

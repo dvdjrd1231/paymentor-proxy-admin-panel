@@ -15,24 +15,6 @@ use Throwable;
 /**
  * The reference's **Billable Items**: charging for something nobody ordered.
  *
- * Everything Paymenter can bill for has to be a product a customer bought. There is no way to
- * charge for a one-off — an hour of setup, a manual IP change, a block of addresses outside a
- * plan, a chargeback fee — without inventing a product for it and pretending they ordered
- * one. The reference's answer is a line you write against a customer, which lands on their
- * next invoice.
- *
- * ## The action that matters
- *
- * *"Add to User's Next Invoice"* is the default here as it is there, and it is the reason the
- * feature is worth having: a £5 charge on an invoice of its own costs more in payment fees
- * and attention than it collects. Hooking `Invoice::created` is what makes it true without
- * this module knowing anything about renewals — the renewal invoice the cron was going to
- * raise anyway simply arrives with an extra line.
- *
- * An item set to wait does not wait for ever. A customer with no recurring service would
- * never get another invoice, so anything that has waited twice the invoice lead time is given
- * one of its own.
- *
  * @link docs/modules/billable-items.md
  */
 #[ExtensionMeta(
@@ -75,12 +57,7 @@ class BillableItems extends Extension
         $this->sweepDaily();
     }
 
-    /**
-     * "Add to the user's next invoice", implemented as the next invoice being created.
-     *
-     * `created` on the model rather than a domain event, for the same reason as everywhere
-     * else here: core defines invoice events and does not dispatch them.
-     */
+    /** "Add to the user's next invoice", implemented as the next invoice being created. */
     private function rideAlongOnNewInvoices(): void
     {
         Invoice::created(fn (Invoice $invoice) => Items::attachToNewInvoice($invoice));

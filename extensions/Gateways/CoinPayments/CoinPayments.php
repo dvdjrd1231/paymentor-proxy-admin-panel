@@ -15,28 +15,6 @@ use Illuminate\Support\Facades\View;
 /**
  * CoinPayments payment gateway for Paymenter.
  *
- * Targets the **current** CoinPayments API (`c-api.coinpayments.net`), which authenticates
- * with a Client ID + Client Secret issued by an API Integration on the new dashboard. This
- * is not the legacy `www.coinpayments.net/api.php` + IPN scheme: that used
- * merchant_id / public_key / private_key / ipn_secret and is not what new accounts get.
- *
- * Requests and webhooks are both signed the same way — HMAC-SHA256, base64, over
- *
- *     U+FEFF + HTTP method + full URL + client id + UTC timestamp + raw body
- *
- * with the client secret as key, sent as `X-CoinPayments-Signature` alongside
- * `X-CoinPayments-Client` and `X-CoinPayments-Timestamp`.
- *
- * Security / robustness:
- *  - Every webhook signature verified in constant time before any state changes.
- *  - Settlement is idempotent: payments are keyed on the CoinPayments invoice id, so a
- *    redelivered notification never double-credits.
- *  - Partial payments are never credited — a half-paid invoice would still provision.
- *  - No secrets in code; everything comes from encrypted extension settings.
- *
- * Verified against the live API on 14 Aug 2026: signing accepted (HTTP 200 on
- * /api/v1/merchant/wallets) and invoice creation returns 201 with a checkout link.
- *
  * @link https://docs.coinpayments.net/api/auth
  */
 #[ExtensionMeta(
@@ -133,12 +111,7 @@ class CoinPayments extends Gateway
         return rtrim((string) ($this->config('api_url') ?: self::DEFAULT_API_URL), '/');
     }
 
-    /**
-     * Build the canonical string CoinPayments signs, and return its base64 HMAC-SHA256.
-     *
-     * The leading U+FEFF and the absence of separators are both required — the signature
-     * is rejected without them.
-     */
+    /** Build the canonical string CoinPayments signs, and return its base64 HMAC-SHA256. */
     private function signature(string $method, string $url, string $timestamp, string $body): string
     {
         $message = "\u{feff}" . $method . $url . (string) $this->config('client_id') . $timestamp . $body;
@@ -184,11 +157,7 @@ class CoinPayments extends Gateway
         return (array) $response->json();
     }
 
-    /**
-     * Map an ISO currency code to the numeric CoinPayments currency id its API expects.
-     *
-     * The list is public and stable, so it is cached rather than fetched per checkout.
-     */
+    /** Map an ISO currency code to the numeric CoinPayments currency id its API expects. */
     private function currencyId(string $code): string
     {
         $map = Cache::remember('coinpayments.currencies', now()->addDay(), function () {
@@ -212,12 +181,7 @@ class CoinPayments extends Gateway
         return $id;
     }
 
-    /**
-     * Create a hosted CoinPayments invoice and send the buyer to its checkout.
-     *
-     * Returning a string makes Paymenter redirect, which is what we want — the checkout is
-     * hosted by CoinPayments and handles coin selection and confirmations itself.
-     */
+    /** Create a hosted CoinPayments invoice and send the buyer to its checkout. */
     public function pay($invoice, $total)
     {
         $amount = number_format((float) $total, 2, '.', '');
@@ -265,12 +229,7 @@ class CoinPayments extends Gateway
         return $created['checkoutLink'];
     }
 
-    /**
-     * Handle a signed CoinPayments notification.
-     *
-     * CoinPayments retries on non-2xx, so anything safely handled — including events we
-     * deliberately ignore — answers 200. Only signature failures return an error.
-     */
+    /** Handle a signed CoinPayments notification. */
     public function webhook(Request $request)
     {
         $raw = $request->getContent();
@@ -358,12 +317,7 @@ class CoinPayments extends Gateway
         return response('OK', 200);
     }
 
-    /**
-     * Verify the notification signature in constant time.
-     *
-     * Webhooks are signed exactly like outbound requests, over the notification URL we
-     * registered — so that URL, not the request's own host, is what must be signed.
-     */
+    /** Verify the notification signature in constant time. */
     private function isValidSignature(Request $request, string $raw): bool
     {
         $signature = $request->header('X-CoinPayments-Signature');

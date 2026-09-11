@@ -7,11 +7,6 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Which service a refund was for, when it came from a cancellation rather than someone
  * pressing Refund on an invoice.
- *
- * It is the guard as much as the record: crediting the unused period happens automatically
- * when a service is cancelled, and an event that fires twice — a retried job, a double save,
- * an admin toggling status back and forth — must not pay out twice. A refund row carrying
- * the service id is what makes "has this service already been credited?" answerable.
  */
 return new class extends Migration
 {

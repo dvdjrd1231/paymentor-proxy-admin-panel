@@ -10,26 +10,13 @@ use Illuminate\Support\Facades\Log;
 use Paymenter\Extensions\Others\Quotes\Models\Quote;
 use Paymenter\Extensions\Others\Quotes\Models\QuoteItem;
 
-/**
- * The life of a quote: sent, answered, and — if accepted — turned into an invoice.
- *
- * Every transition is one-way and guarded on the state it comes from. A quote that has been
- * accepted cannot be declined, an expired one cannot be accepted by a stale browser tab, and
- * none of them can happen twice. Those guards are the whole safety of the feature: an
- * accepted quote creates a real invoice, and creating two is creating a debt that does not
- * exist.
- */
+/** The life of a quote: sent, answered, and — if accepted — turned into an invoice. */
 class Quoting
 {
     /** Reported on Automation Status under its own name. */
     public const STAT_KEY = 'quotes_expired';
 
-    /**
-     * Send it: the customer can now see it and answer.
-     *
-     * Only from draft. Re-sending a quote somebody has already answered would reopen a
-     * closed conversation and, worse, let them accept something already invoiced.
-     */
+    /** Send it: the customer can now see it and answer. */
     public static function send(Quote $quote): bool
     {
         if ($quote->status !== Quote::STATUS_DRAFT) {
@@ -52,18 +39,7 @@ class Quoting
         return true;
     }
 
-    /**
-     * The customer says yes — and the quote becomes an invoice.
-     *
-     * The invoice is created in the same transaction as the acceptance, and the quote keeps
-     * its id. Two presses of the button, or two tabs, therefore produce one invoice: the
-     * second call finds a status that is no longer `sent` and does nothing.
-     *
-     * A **lapsed** quote is still acceptable here. A customer acting at one minute past
-     * midnight on the closing day has done what was asked; losing that sale to a cron
-     * schedule would be a self-inflicted wound. What closes a quote is the sweep, not the
-     * clock — see {@see Quote::isLapsed()}.
-     */
+    /** The customer says yes — and the quote becomes an invoice. */
     public static function accept(Quote $quote): ?Invoice
     {
         if (!$quote->isOpen()) {
@@ -109,13 +85,7 @@ class Quoting
         return true;
     }
 
-    /**
-     * Copy a quote, back to draft.
-     *
-     * The one thing anybody wants from a quoting system after the first month: last
-     * quarter's proposal with two numbers changed. Items are copied too, because a quote
-     * without its lines is a title.
-     */
+    /** Copy a quote, back to draft. */
     public static function duplicate(Quote $quote): Quote
     {
         return DB::transaction(function () use ($quote): Quote {
@@ -145,12 +115,6 @@ class Quoting
 
     /**
      * Close quotes whose date has passed.
-     *
-     * Runs daily rather than every minute: a quote is a document with a *date* on it, not a
-     * clock, and expiring one at 00:04 rather than 00:00 changes nothing for anybody. A quote
-     * with no `valid_until` is never swept — an open-ended offer is a legitimate thing to
-     * make, and expiring it because the column is empty would be inventing a deadline nobody
-     * agreed.
      *
      * @return array{expired: int, lines: array<int, string>}
      */

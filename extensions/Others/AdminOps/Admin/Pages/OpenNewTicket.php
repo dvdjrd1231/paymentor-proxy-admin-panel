@@ -18,10 +18,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * WHMCS's Open New Ticket, to its screenshot: the client picker with the services table
  * beneath it, subject, department and priority, the message box with Insert Knowledgebase
  * Link and Insert Predefined Reply, attachments, and the one blue button.
- *
- * Creating the ticket is core's own flow — a Ticket plus its first TicketMessage authored
- * by the signed-in admin, attachments stored where the client portal stores its own — so a
- * ticket opened here is indistinguishable from one a client opened.
  */
 class OpenNewTicket extends Page
 {

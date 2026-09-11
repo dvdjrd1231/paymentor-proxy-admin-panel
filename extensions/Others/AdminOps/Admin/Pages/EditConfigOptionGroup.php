@@ -14,16 +14,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 /**
  * The reference's Create a New Group / Edit Group screen, to Leandro's screenshots of
  * `configproductoptions.php?action=managegroup` (2026-09-08).
- *
- * Three fields and two buttons: Group Name, Description, an Assigned Products list box, and
- * Save Changes beside Back to Groups List. A Paymenter top-level `ConfigOption` is the
- * reference's group — it carries the values as children and is applied to products through
- * `config_option_products`, which is the same sentence the reference's own intro uses.
- *
- * Editing an existing group also lists its values, because the reference does and because a
- * group with no way to reach its options is a dead end. The values themselves are edited on
- * core's own form, which already has the per-value pricing repeater; this screen links to it
- * rather than rebuilding a price grid that exists and works.
  */
 class EditConfigOptionGroup extends Page
 {

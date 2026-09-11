@@ -8,17 +8,6 @@ use Illuminate\Support\Facades\Schema;
  * Localised versions of an email template — the reference's Manage Languages, which
  * activates a language so a template can carry a translation of its subject and body
  * (Leandro's screenshots, 2026-09-09).
- *
- * Core's `notification_templates` has one subject and one body per template and no locale
- * column, so the translations live here rather than in a column vendored core would have
- * to grow. The default row stays where it is and is still what sends when no translation
- * exists for the reader's language — which is exactly what the reference's "Default
- * Version — used for the English language and any languages where email template
- * translations are not defined" says.
- *
- * Which languages are *active* is one global setting (`adminops_email_locales`), not a
- * table: it is a single list for the whole install, and settings is where the rest of this
- * panel's install-wide choices already live.
  */
 return new class extends Migration
 {

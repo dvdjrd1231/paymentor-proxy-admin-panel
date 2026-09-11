@@ -7,12 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * A person listed on a customer's account.
- *
- * Promoting one to a sub-account is what the reference portal's User Management page
- * lists; the permission set travels with the contact rather than in a second table.
- */
+/** A person listed on a customer's account. */
 class Contact extends Model
 {
     protected $table = 'ext_ct_contacts';

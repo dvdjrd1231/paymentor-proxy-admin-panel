@@ -17,13 +17,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 /**
  * WHMCS's Manage Users, to its screenshot: one search field over ID, names, Two Factor and
  * Last Login Time — the login-account view of the same people the clients screen lists.
- *
- * The columns the reference shows are the columns Paymenter actually records: Two Factor is
- * whether `tfa_secret` is set, and Last Login Time is the newest `user_sessions.last_activity`,
- * the same stamp the Who's Around panel reads. Nothing is invented — an install that has
- * never seen a login for a user shows "Never", which is the truth.
- *
- * A page, not a themed UserResource — same documented reason as {@see ViewSearchClients}.
  */
 class ManageUsers extends Page
 {

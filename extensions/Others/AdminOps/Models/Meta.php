@@ -7,11 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Presentation attributes for core records this extension needs to decorate — a product
  * group's headline, tagline and hidden flag, a product's WHMCS-style type.
- *
- * See the `ext_ao_meta` migration for why this exists rather than core's `properties`
- * table. Read through {@see static::for()} rather than querying directly: it takes the
- * whole bag for one record in a single query, which is what the catalogue needs when it
- * draws a hundred rows.
  */
 class Meta extends Model
 {
@@ -27,13 +22,7 @@ class Meta extends Model
         'other' => 'Other',
     ];
 
-    /**
-     * The reference's Order Form Template, as the layouts this theme actually renders.
-     *
-     * WHMCS offers eight cart templates. Listing eight names against one layout would be a
-     * menu that changes nothing, so this offers the two the storefront genuinely draws —
-     * see `themes/proxy/views/products/index.blade.php`, which branches on this.
-     */
+    /** The reference's Order Form Template, as the layouts this theme actually renders. */
     public const ORDER_FORMS = [
         'cards' => 'Standard Cards — description beside the price',
         'compact' => 'Compact List — one row per product',
@@ -55,9 +44,6 @@ class Meta extends Model
 
     /**
      * Every stored value for a whole collection, as [model_id => [key => value]].
-     *
-     * One query for the page rather than one per row — the catalogue draws every product
-     * in the store, and a per-row lookup here is how a list page quietly becomes an N+1.
      *
      * @param  iterable<int, Model>  $records
      * @return array<int, array<string, string|null>>
@@ -82,10 +68,6 @@ class Meta extends Model
     /**
      * The ids of product groups marked hidden.
      *
-     * The storefront reads this to leave them out of its listings. It is a whole-column
-     * read of a tiny table rather than a per-category lookup, because the caller is a rail
-     * that renders on every shop page.
-     *
      * @return array<int, int>
      */
     public static function hiddenCategoryIds(): array
@@ -101,9 +83,6 @@ class Meta extends Model
 
     /**
      * The slugs of product groups marked hidden.
-     *
-     * The topbar's Store menu is built from core's navigation, which carries a URL and a
-     * name per entry but no id — so filtering it needs the slug rather than the key.
      *
      * @return array<int, string>
      */

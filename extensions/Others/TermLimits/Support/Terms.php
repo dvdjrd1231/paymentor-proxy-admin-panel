@@ -16,12 +16,7 @@ use Paymenter\Extensions\Others\TermLimits\Models\ProductTerm;
 use Paymenter\Extensions\Others\TermLimits\Models\ServiceTerm;
 use Paymenter\Extensions\Others\TermLimits\Models\ServiceTermExtension;
 
-/**
- * Opening, extending and closing the clock on a fixed-term service.
- *
- * Everything that decides how long a service runs is here, so there is one answer to
- * "why did this proxy stop" and one place to change it.
- */
+/** Opening, extending and closing the clock on a fixed-term service. */
 class Terms
 {
     /** Hours in each of core's billing units. A month is not one of them — see {@see length()}. */
@@ -31,18 +26,7 @@ class Terms
         'week' => 168,
     ];
 
-    /**
-     * The contracted length of a service, in hours — or null if it is not fixed-term.
-     *
-     * Fixed-term means a **one-time** plan with a period: that is exactly what a daily or
-     * weekly proxy is, and exactly what a recurring monthly one is not. A `free` plan is
-     * left alone deliberately; whatever a free service is for, cutting it off on a clock
-     * nobody paid for is a decision for whoever set it up, not a default.
-     *
-     * Months are excluded on purpose rather than by omission. The brief makes monthly
-     * products the renewable kind, and "one month in hours" is not a number — 28 days in
-     * February and 31 in March — so a monthly term would be wrong twice a year.
-     */
+    /** The contracted length of a service, in hours — or null if it is not fixed-term. */
     public static function length(Service $service): ?int
     {
         // The product's own **Auto Terminate/Fixed Term** wins, exactly as it does on the
@@ -69,17 +53,7 @@ class Terms
         return ($unit && $period > 0) ? $unit * $period : null;
     }
 
-    /**
-     * Tell the customer their term has ended - the reference's **Termination Email**.
-     *
-     * A fixed-term proxy that simply stops working, with nothing said, is a support ticket
-     * every time. The reference puts a template picker beside the field for this reason, and
-     * this sends the one that product names, falling back to core's `server_terminated`.
-     *
-     * Never allowed to fail the termination. The service is already stopped and the panel has
-     * already released it by the time this runs; an unreachable mail server must not make the
-     * sweeper retry a service it has correctly ended.
-     */
+    /** Tell the customer their term has ended - the reference's **Termination Email**. */
     public static function notify(Service $service): void
     {
         try {
@@ -99,17 +73,7 @@ class Terms
         }
     }
 
-    /**
-     * Start the clock, once, when the service goes live.
-     *
-     * Keyed on the service, so a second call — a re-provision, a status flapping between
-     * pending and active, the sweeper and a webhook arriving together — finds the existing
-     * term and leaves it alone. The clock a customer paid for starts once.
-     *
-     * The start is *now*, not the order date: the brief measures "usage hours equivalent to
-     * the contracted period", and an order that waited a day for provisioning has not used
-     * any of them.
-     */
+    /** Start the clock, once, when the service goes live. */
     public static function open(Service $service): ?ServiceTerm
     {
         $hours = self::length($service);
@@ -132,18 +96,7 @@ class Terms
         ]);
     }
 
-    /**
-     * Grant extra time, with a reason, on the record.
-     *
-     * From `ends_at`, not from now: an outage that cost a customer six hours costs them six
-     * hours wherever in the term it happened, and extending from now would quietly shorten
-     * or lengthen the term depending on when the ticket was answered.
-     *
-     * A term that has already run out can still be extended — that is the common case, since
-     * the customer usually notices when the proxy stops. Reviving the service itself is a
-     * separate, deliberate act, because unsuspending a proxy the panel has already released
-     * is not something to do as a side effect.
-     */
+    /** Grant extra time, with a reason, on the record. */
     public static function extend(ServiceTerm $term, int $hours, string $reason, ?User $admin = null): ServiceTermExtension
     {
         return DB::transaction(function () use ($term, $hours, $reason, $admin): ServiceTermExtension {
@@ -168,19 +121,7 @@ class Terms
         });
     }
 
-    /**
-     * The service's time is up: stop it on the panel and close the term.
-     *
-     * Closing the term and dispatching the job happen together, and the term is closed
-     * *first*. If the panel call fails the job's own retry handles it; if the order were the
-     * other way round a failure between them would leave a term the sweeper picks up again
-     * on its next pass, terminating the same service every minute.
-     *
-     * Suspend or terminate is a setting, and both are defensible: terminating releases the
-     * proxies back to the panel immediately, which is the point of a fixed term, while
-     * suspending keeps the service recoverable if a customer comes back with a good reason
-     * an hour later.
-     */
+    /** The service's time is up: stop it on the panel and close the term. */
     public static function close(ServiceTerm $term, bool $terminate = true): void
     {
         $service = $term->service;
@@ -225,12 +166,6 @@ class Terms
     /**
      * Every open term whose time has run out — including the ones whose service has already
      * stopped for some other reason.
-     *
-     * Those are not filtered out here on purpose. A term on a service that was cancelled by
-     * hand has nothing left to stop, but it does need closing, or it is overdue and open
-     * forever and the sweeper reconsiders it every minute for the rest of the install's
-     * life. {@see EnforceTerms} sorts the
-     * two apart.
      *
      * @return Collection<int, ServiceTerm>
      */

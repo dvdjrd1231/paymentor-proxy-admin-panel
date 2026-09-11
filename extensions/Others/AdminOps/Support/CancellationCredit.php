@@ -12,56 +12,10 @@ use Paymenter\Extensions\Others\AdminOps\Models\Refund;
  * Credit the unused part of a service's paid period back to the customer when the service
  * is cancelled (Leandro, 2026-09-08: "If client close or finish server service, the credit
  * would be return to client balance").
- *
- * This issues money without anyone pressing anything, so every rule it applies is written
- * down here rather than left to be inferred from the arithmetic.
- *
- * ## When it pays
- *
- * 1. The service's status has just become `cancelled`. Nothing else triggers it.
- * 2. The cancellation is **not** `end_of_period`. This is the reference's own logic, and it
- *    is the rule this class was missing: an end-of-period cancellation lets the customer go
- *    on using the service until it expires. They consume exactly what they paid for, so
- *    crediting it as well would hand back the service *and* the money. Only an immediate
- *    cancellation — or an admin ending a service outright, which has no request row —
- *    leaves time paid for and not used.
- * 3. `expires_at` is in the future — there is genuinely unused time. A service cancelled
- *    after its period ran out has nothing left to give back.
- * 3. The plan is recurring. `billingDuration` is 0 for free and one-time plans, and a
- *    one-time purchase has no period to prorate.
- * 4. The service has at least one **paid** invoice. Without that nothing was ever taken,
- *    so there is nothing to return — this is what keeps a service terminated for
- *    non-payment from being rewarded with credit.
- * 5. No refund has been recorded for this service before. The event can fire twice; a
- *    customer must not be paid twice.
- *
- * ## What it pays
- *
- * The recurring price for the unused days, pro rata:
- *
- *     price × quantity × (days remaining ÷ days in the billing period)
- *
- * The period is measured from the service's own dates — `expires_at` back one billing
- * duration — rather than from a nominal month, so a 30-day plan that actually ran 31 days
- * prorates against the 31.
- *
- * Setup fees are not included. They pay for work already done at provisioning time; there
- * is no unused portion of them to return.
- *
- * ## Switching it off
- *
- * `config('settings.credits_on_cancellation')`, on General Settings → Credit. On by
- * request, but a store that settles cancellations by hand can turn it off without touching
- * code.
  */
 class CancellationCredit
 {
-    /**
-     * Called from Eloquent's `updated` hook on Service.
-     *
-     * Not from `App\Events\Service\Updated` — core declares that event and never fires it,
-     * so listening to it would be listening for something that does not happen.
-     */
+    /** Called from Eloquent's `updated` hook on Service. */
     public static function handle(Service $service): void
     {
         try {
@@ -146,13 +100,7 @@ class CancellationCredit
         });
     }
 
-    /**
-     * Did the customer ask to cancel at the end of the period they had already paid for?
-     *
-     * `service_cancellations.type` is `immediate` or `end_of_period`. No request row at all
-     * means an administrator ended the service directly, which stops it now — so that is
-     * treated as immediate and does earn a credit.
-     */
+    /** Did the customer ask to cancel at the end of the period they had already paid for? */
     private static function isEndOfPeriod(Service $service): bool
     {
         try {
@@ -163,13 +111,7 @@ class CancellationCredit
         }
     }
 
-    /**
-     * The unused portion of what the customer paid for the current period.
-     *
-     * Returns 0.0 whenever the answer is not clearly positive — an expired service, a
-     * one-time plan, a missing date. Silence is the right failure here: paying nothing is
-     * recoverable by hand, paying the wrong amount automatically is not.
-     */
+    /** The unused portion of what the customer paid for the current period. */
     public static function unusedAmount(Service $service): float
     {
         $expires = $service->expires_at;

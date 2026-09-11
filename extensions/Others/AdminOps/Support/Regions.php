@@ -8,14 +8,6 @@ use Paymenter\Extensions\Servers\ProxyPanel\Support\CountryFlag;
  * The first-level subdivisions a country is addressed by, so State/Region can be picked
  * from a list rather than typed — the reference's own behaviour (Leandro's screenshot,
  * 2026-09-10: choosing United States lists Alabama, Alaska, Arizona…).
- *
- * Every country is covered. `regions-data.php` beside this file holds all 249 of them and
- * their 4,387 subdivisions, generated from the published ISO 3166-2 dataset rather than
- * typed out here — a hand-kept list is exactly how a wrong subdivision name reaches an
- * invoice. Regenerate it with `scripts/build-regions.php` if the standard moves.
- *
- * A country the standard gives no subdivisions for keeps the free-text box, which is the
- * honest answer for one.
  */
 class Regions
 {

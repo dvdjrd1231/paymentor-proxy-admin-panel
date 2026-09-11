@@ -13,16 +13,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * WHMCS's currency editor (Leandro, 2026-09-07: "currencies-list and currencies/BRL/edit
  * Update these pages to be same as target WHMCS screenshot. Also, these pages don't have
  * 'Base Conv, Rate' Field").
- *
- * Core's own `/admin/currencies/{code}/edit` is a bare Filament resource form with five
- * fields and no rate; this is the reference's field set on the reference's chrome, and
- * that URL now lands here — see {@see \Paymenter\Extensions\Others\AdminOps\AdminOps}.
- * Everything core's form could do, this does too, so nothing is lost by the redirect.
- *
- * The base currency's own row is the one place the reference locks down: its code cannot
- * change (core's EditCurrency refuses the same thing) and its rate is 1 by definition, so
- * both are shown read-only with the reason on them rather than as editable fields that
- * quietly refuse to save.
  */
 class EditCurrency extends Page
 {

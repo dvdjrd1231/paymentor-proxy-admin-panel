@@ -14,11 +14,6 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 /**
  * Issue #15 — WHMCS's Add Transaction / Offline CC Processing: record a payment taken
  * outside the gateways (a bank transfer, cash, a card processed on a terminal).
- *
- * The write goes through core's own {@see ExtensionHelper::addPayment} — the same
- * idempotent path every gateway webhook uses — so the invoice flips to paid when covered,
- * the client is notified, and a repeated transaction id cannot double-pay. Nothing here
- * touches money logic; it only speaks core's language.
  */
 class AddTransaction extends Page
 {

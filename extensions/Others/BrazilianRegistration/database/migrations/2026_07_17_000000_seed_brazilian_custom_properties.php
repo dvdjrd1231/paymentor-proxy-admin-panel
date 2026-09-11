@@ -7,9 +7,6 @@ use Illuminate\Support\Facades\DB;
  * Seed the Brazilian tax fields into Paymenter's Custom Properties (model =
  * User). These render automatically on the registration + account forms via
  * <x-form.properties> and validate server-side using the `validation` column.
- *
- * Reversible: down() removes the field definitions; the FK cascade on
- * properties.custom_property_id removes any stored values with them.
  */
 return new class extends Migration
 {

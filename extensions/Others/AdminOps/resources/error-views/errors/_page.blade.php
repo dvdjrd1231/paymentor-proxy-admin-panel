@@ -1,19 +1,6 @@
-{{--
-    One error page for the whole platform (Leandro, 2026-09-07: "Every Admin Error page
-    should be updated as WHMCS page standard format. Also, every client error page should
-    have correct alignment").
-
-    Laravel was falling through to its own bare views: the admin got an unstyled stack of
-    text, and the client got the same text left-aligned against the theme's header with no
-    container, which is the alignment he flagged.
-
-    Deliberately standalone rather than wrapped in the admin panel's layout. An error page
-    that renders the panel has to boot the panel, and the most common reason to be on this
-    page is that something in that boot threw — an error page that can itself error is
-    worse than a plain one. So it carries its own markup and only the shared stylesheet.
-
-    Expects: $code, $title, $message.
---}}
+{{-- One error page for the whole platform (Leandro, 2026-09-07: "Every Admin Error page
+     should be updated as WHMCS page standard format. Also, every client error page should
+     have correct alignment"). --}}
 @php
     $isAdmin = request()->is(config('app.admin_path', 'admin') . '*');
 @endphp
