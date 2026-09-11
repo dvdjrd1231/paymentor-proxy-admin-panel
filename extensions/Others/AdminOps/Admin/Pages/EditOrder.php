@@ -5,6 +5,8 @@ namespace Paymenter\Extensions\Others\AdminOps\Admin\Pages;
 use App\Admin\Resources\OrderResource;
 use App\Helpers\NotificationHelper;
 use App\Jobs\Server\CreateJob;
+use App\Jobs\Server\SuspendJob;
+use App\Jobs\Server\UnsuspendJob;
 use App\Models\Order;
 use App\Models\Plan;
 use App\Models\Product;
@@ -86,13 +88,20 @@ class EditOrder extends Page
     }
 
     /**
-     * The header's Status select: picking a state runs the matching whole-order action —
-     * the same three the buttons below wire, reached the reference's way.
+     * The header's Status select: picking a state moves every one of this order's services to
+     * it, running the side effects that state implies.
+     *
+     * Not a straight map onto the buttons below any more. Those are one-way ratchets — Accept
+     * only touches what is pending, Set Back to Pending only what is live — so routing the
+     * select through them left most transitions as silent no-ops: Suspended did nothing at
+     * all, and Cancelled → Active did nothing because no service was pending by then. The
+     * reference's select changes the status from wherever it is, so this does too.
      */
     public function setStatus(string $to): void
     {
         match ($to) {
             'active' => $this->acceptOrder(),
+            'suspended' => $this->suspendOrder(),
             'pending' => $this->setOrderPending(),
             'cancelled' => $this->cancelOrder(),
             default => null,
@@ -189,9 +198,33 @@ class EditOrder extends Page
     {
         $count = 0;
         $skipped = 0;
+        $resumed = 0;
+        $gone = 0;
 
-        DB::transaction(function () use (&$count, &$skipped): void {
-            foreach ($this->order->services->where('status', 'pending') as $service) {
+        DB::transaction(function () use (&$count, &$skipped, &$resumed, &$gone): void {
+            foreach ($this->order->services as $service) {
+                // A cancelled service is gone from its panel, so there is nothing here that
+                // could bring it back — counted and reported rather than silently skipped.
+                if ($service->status === 'cancelled') {
+                    $gone++;
+
+                    continue;
+                }
+
+                // Already live: the select re-picking Active is not an instruction to
+                // re-provision anything.
+                if ($service->status === 'active') {
+                    continue;
+                }
+
+                if ($service->status === 'suspended') {
+                    UnsuspendJob::dispatch($service);
+                    $service->update(['status' => 'active']);
+                    $resumed++;
+
+                    continue;
+                }
+
                 // The reference's two per-item ticks. Accepting used to always provision,
                 // which left no way to accept an order you had already set up by hand.
                 $create = (bool) ($this->runModuleCreate[$service->id] ?? true);
@@ -224,9 +257,37 @@ class EditOrder extends Page
         });
 
         $this->refreshOrder();
-        Notification::make()->title($count
-            ? 'Accepted: ' . $count . ' service(s) activated' . ($skipped ? ', ' . $skipped . ' not provisioned' : '')
-            : 'Nothing pending on this order')
+
+        $moved = $count + $resumed;
+        $detail = array_filter([
+            $count ? $count . ' activated' : null,
+            $resumed ? $resumed . ' resumed' : null,
+            $skipped ? $skipped . ' not provisioned' : null,
+            $gone ? $gone . ' already terminated and cannot be revived' : null,
+        ]);
+
+        Notification::make()
+            ->title($moved ? 'Accepted: ' . implode(', ', $detail) : 'Nothing on this order to activate')
+            ->body($moved || !$gone ? null : 'A terminated service no longer exists on its panel — place a new order instead.')
+            ->{$moved ? 'success' : 'warning'}()->send();
+    }
+
+    /** The select's Suspended: stop every live service, the way the service editor's own
+     *  Suspend command does. */
+    public function suspendOrder(): void
+    {
+        $count = 0;
+
+        DB::transaction(function () use (&$count): void {
+            foreach ($this->order->services->where('status', 'active') as $service) {
+                SuspendJob::dispatch($service);
+                $service->update(['status' => 'suspended']);
+                $count++;
+            }
+        });
+
+        $this->refreshOrder();
+        Notification::make()->title($count ? 'Suspended: ' . $count . ' service(s)' : 'Nothing active on this order')
             ->{$count ? 'success' : 'warning'}()->send();
     }
 
@@ -248,11 +309,12 @@ class EditOrder extends Page
      */
     public function setOrderPending(): void
     {
-        $count = $this->order->services->whereIn('status', ['active', 'suspended'])->count();
-        $this->order->services()->whereIn('status', ['active', 'suspended'])->update(['status' => 'pending']);
+        $from = ['active', 'suspended', 'cancelled'];
+        $count = $this->order->services->whereIn('status', $from)->count();
+        $this->order->services()->whereIn('status', $from)->update(['status' => 'pending']);
 
         $this->refreshOrder();
-        Notification::make()->title($count ? 'Set back to pending: ' . $count . ' service(s)' : 'Nothing active or suspended on this order')
+        Notification::make()->title($count ? 'Set back to pending: ' . $count . ' service(s)' : 'This order is already pending')
             ->{$count ? 'success' : 'warning'}()->send();
     }
 

@@ -31,7 +31,7 @@ return [
     'rotate_limit_reached' => 'You have used all :max rotations available this period.',
     'invalid_ip' => '":ip" is not a valid IP address.',
     'too_many_ips' => 'You can authorize at most :max IP addresses.',
-    'password_too_short' => 'The proxy password must be at least 8 characters.',
+    'password_rules' => 'The proxy password must be exactly 8 letters and numbers, with no spaces or symbols.',
     'rotation_change_not_allowed' => 'Changing the rotation interval is not available on this plan.',
     'invalid_rotation_time' => 'The rotation interval must be zero or more minutes.',
 

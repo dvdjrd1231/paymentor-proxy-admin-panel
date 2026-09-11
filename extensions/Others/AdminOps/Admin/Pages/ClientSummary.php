@@ -658,7 +658,10 @@ class ClientSummary extends Page
             // reference's custom fields are. A list, not a key-map: property keys can
             // carry characters wire:model paths cannot.
             'props' => $service->properties
-                ->whereNotIn('key', ['domain', 'dedicated_ip', 'admin_notes', 'proxy_username', 'proxy_password', 'termination_date', 'no_suspend_until', 'proxypanel_service_id', 'proxy_api_key'])
+                // proxy_confirmed_at / proxy_manual_status_at are the provisioning gate's own
+                // bookkeeping, not fields anyone fills in — and editing them by hand changes
+                // whether a service may activate.
+                ->whereNotIn('key', ['domain', 'dedicated_ip', 'admin_notes', 'proxy_username', 'proxy_password', 'termination_date', 'no_suspend_until', 'proxypanel_service_id', 'proxy_api_key', 'proxy_confirmed_at', 'proxy_manual_status_at'])
                 ->map(fn ($property): array => [
                     'key' => (string) $property->key,
                     'name' => (string) ($property->name ?: $property->key),
@@ -1012,7 +1015,15 @@ class ClientSummary extends Page
             // would land in the password parameter). A module without the method throws
             // "Function not found", which the catch turns into an honest refusal.
             $command === 'change_password' && in_array($service->status, ['active', 'suspended'], true) => (function () use ($service): string {
-                $password = str()->random(12);
+                // Length and alphabet are the module's to decide, not ours: the proxy panel
+                // refuses a password longer than 8 characters or carrying a symbol, so the
+                // 12-character mixed-case value this used to generate was being rejected by
+                // the panel every time. Modules that expose a generator get theirs; the rest
+                // keep a general-purpose one.
+                $server = $service->product->server;
+                $password = \App\Helpers\ExtensionHelper::hasFunction($server, 'randomCredential')
+                    ? \App\Helpers\ExtensionHelper::call($server, 'randomCredential')
+                    : str()->random(12);
 
                 try {
                     \App\Helpers\ExtensionHelper::call($service->product->server, 'changePassword', [$service, $password]);

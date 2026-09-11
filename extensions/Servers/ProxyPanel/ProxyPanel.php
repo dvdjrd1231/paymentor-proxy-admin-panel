@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use Paymenter\Extensions\Others\ProvisioningOps\ProvisioningOps;
+use Symfony\Component\HttpFoundation\IpUtils;
 use Paymenter\Extensions\Servers\ProxyPanel\Support\CountryFlag;
 use Paymenter\Extensions\Servers\ProxyPanel\Support\Endpoints;
 
@@ -81,6 +82,18 @@ class ProxyPanel extends Server
     /** Set only once the panel confirms the service is deployed. */
     private const CONFIRMED_KEY = 'proxy_confirmed_at';
 
+    /** Set when an admin sets the status by hand, which overrides the confirmation gate. */
+    private const MANUAL_KEY = 'proxy_manual_status_at';
+
+    /**
+     * Credentials are 8 characters, because that is what the panel accepts: its own password
+     * form refuses anything longer or non-alphanumeric, and WHMCS's Random Usernames — which
+     * the module's readme requires enabling — issues exactly 8.
+     */
+    private const CREDENTIAL_LENGTH = 8;
+
+    private const CREDENTIAL_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
+
     /** The panel accepts at most 3 authorized IPs. */
     private const MAX_AUTH_IPS = 3;
 
@@ -135,11 +148,24 @@ class ProxyPanel extends Server
                 'name' => 'callback_secret',
                 'label' => 'Callback Secret',
                 'type' => 'password',
-                'description' => 'Shared secret the panel must present when calling back into Paymenter, '
-                    . 'as "X-Panel-Secret" or as an HMAC-SHA256 of the raw body in "X-Panel-Signature". '
-                    . 'Leave empty to disable the callback endpoint. Stored encrypted; shown masked.',
+                'description' => 'Optional shared secret, presented as "X-Panel-Secret" or as an '
+                    . 'HMAC-SHA256 of the raw body in "X-Panel-Signature". The panel sends neither '
+                    . 'today, so leave this empty and use Callback IPs instead. Stored encrypted.',
                 'required' => false,
                 'encrypted' => true,
+            ],
+            [
+                'name' => 'callback_ips',
+                'label' => 'Callback IPs',
+                'type' => 'text',
+                // The panel's callback carries no credential of any kind — the WHMCS module's
+                // callback.php accepts a bare id+status from anyone. Since an unauthenticated
+                // endpoint that flips services to Active is not something to ship, the panel's
+                // address is what authenticates it.
+                'description' => 'Comma-separated addresses or CIDR ranges the panel calls back from, '
+                    . 'e.g. "203.0.113.10, 2a10:500::/48". Required unless a Callback Secret is set — '
+                    . 'with neither, the callback endpoint stays closed.',
+                'required' => false,
             ],
             [
                 'name' => 'region_flags',
@@ -213,6 +239,25 @@ class ProxyPanel extends Server
             // Only gate the initial provisioning. Once a service has been confirmed at
             // least once, later suspend/unsuspend cycles activate normally.
             if (!$this->remoteId($service)) {
+                return;
+            }
+
+            // An admin setting the status by hand overrides the gate. The reference lets
+            // staff do exactly that, and the gate's job is to stop *automatic* activation
+            // running ahead of the panel — not to refuse a deliberate instruction. Stamped
+            // rather than merely allowed, so the create job does not undo it a moment later.
+            if ($this->changedByAdmin()) {
+                $this->setProp($service, self::MANUAL_KEY, now()->toDateTimeString());
+
+                $this->log('info', 'Activation set by hand in the admin — panel confirmation gate bypassed', [
+                    'service' => $service->id,
+                    'admin' => auth()->id(),
+                ]);
+
+                return;
+            }
+
+            if ($this->isManuallySet($service)) {
                 return;
             }
 
@@ -663,7 +708,11 @@ class ProxyPanel extends Server
                 return ['status' => 'ok', 'id' => $remoteId, 'description' => 'already provisioned'];
             }
 
-            $username = 'svc' . $service->id;
+            // Both 8 characters, as the reference issues them: the username from WHMCS's
+            // Random Usernames (which this module's readme requires enabling, and which is
+            // 8 either way — random, or the first 8 letters of the domain), the password
+            // from the module's own `substr(sha1(random_bytes(10)), 0, 8)`.
+            $username = $this->randomCredential();
             $password = substr(sha1(random_bytes(10)), 0, 8);
             $amount = max(1, (int) ($settings['amount'] ?? 1));
             $bwlimit = (int) ($settings['bwlimit'] ?? 0);
@@ -900,10 +949,16 @@ class ProxyPanel extends Server
         return $this->updateAuth($service, $ips);
     }
 
+    /**
+     * The panel's own form is the authority on what it will take: it refuses a password of
+     * more than 8 characters and anything outside `[A-Za-z\d]`. The old lower bound of 8 with
+     * no ceiling meant a customer could set something the panel would reject — and that the
+     * admin Change Password command, which generated 12, was being refused outright.
+     */
     public function clientUpdatePassword(Service $service, $settings, $properties, string $password)
     {
-        if (strlen($password) < 8) {
-            throw new \RuntimeException(__('proxypanel.password_too_short'));
+        if (strlen($password) !== self::CREDENTIAL_LENGTH || !ctype_alnum($password)) {
+            throw new \RuntimeException(__('proxypanel.password_rules'));
         }
 
         return $this->changePassword($service, $password);
@@ -1140,6 +1195,12 @@ class ProxyPanel extends Server
      */
     private function awaitPanelConfirmation(Service $service): void
     {
+        // A status an admin chose deliberately outranks the guard — including here, where the
+        // create job runs after the fact and would otherwise quietly undo it.
+        if ($this->isManuallySet($service)) {
+            return;
+        }
+
         $this->clearProp($service, self::CONFIRMED_KEY);
 
         if ($service->status === Service::STATUS_ACTIVE) {
@@ -1147,10 +1208,26 @@ class ProxyPanel extends Server
         }
     }
 
+    /** Is the current request an admin acting in the panel, rather than a job or a customer? */
+    private function changedByAdmin(): bool
+    {
+        return auth()->hasUser() && auth()->user()?->role_id !== null;
+    }
+
+    /** Has an admin pinned this service's status by hand? */
+    private function isManuallySet(Service $service): bool
+    {
+        return $this->prop($service, self::MANUAL_KEY) !== null;
+    }
+
     /** Record that the panel has confirmed the service, and activate it. */
     private function confirmActivation(Service $service, string $via): void
     {
         $this->setProp($service, self::CONFIRMED_KEY, now()->toDateTimeString());
+
+        // The panel has spoken, so the manual pin has served its purpose — drop it and let
+        // later suspend/unsuspend cycles run on the normal path.
+        $this->clearProp($service, self::MANUAL_KEY);
 
         if ($service->status !== Service::STATUS_ACTIVE) {
             $this->forceStatus($service, Service::STATUS_ACTIVE);
@@ -1172,27 +1249,51 @@ class ProxyPanel extends Server
      * Handle a status callback from the panel: resolve the service, apply the status, and
      * record failures so they surface in the admin with a retry.
      *
-     * Authentication (either, constant-time compared):
-     *   X-Panel-Secret: <callback_secret>
-     *   X-Panel-Signature: <hex HMAC-SHA256 of the raw body, keyed with callback_secret>
+     * Shape is the panel's, not ours — the WHMCS module's `callback.php` is the contract it
+     * was written against, and it reads `$_REQUEST['id']` and `$_REQUEST['status']`. That
+     * means GET or POST, form-encoded or query string, with no credential at all. Accepting
+     * only signed JSON POSTs is why nothing ever landed: a GET never even reached this
+     * method, because the router answered 405 first.
+     *
+     * Authentication, any one of:
+     *   X-Panel-Secret: <callback_secret>                        (constant-time compared)
+     *   X-Panel-Signature: <hex HMAC-SHA256 of the raw body>
+     *   a source address inside callback_ips                     (what the panel actually uses)
      */
     public function callback(Request $request)
     {
         $secret = (string) $this->config('callback_secret');
+        $allowedIps = $this->callbackIps();
 
-        if ($secret === '') {
-            $this->log('warning', 'Callback received but no callback secret is configured — rejected');
+        if ($secret === '' && $allowedIps === []) {
+            $this->log('warning', 'Callback rejected — neither a Callback Secret nor Callback IPs are configured', [
+                'ip' => $request->ip(),
+            ]);
 
             return response()->json(['status' => 'error', 'description' => 'Callbacks are not enabled'], 403);
         }
 
-        if (!$this->isValidCallback($request, $secret)) {
-            $this->log('warning', 'Callback rejected: bad secret/signature', ['ip' => $request->ip()]);
+        if (!$this->isValidCallback($request, $secret, $allowedIps)) {
+            $this->log('warning', 'Callback rejected: no valid secret, signature or allowed address', [
+                'ip' => $request->ip(),
+                'method' => $request->method(),
+            ]);
 
-            return response()->json(['status' => 'error', 'description' => 'Invalid signature'], 401);
+            return response()->json(['status' => 'error', 'description' => 'Not authorized'], 401);
         }
 
-        $payload = $request->json()->all() ?: $request->all();
+        // `all()` already merges query, form and JSON bodies, which is the union of every
+        // shape the panel has been seen to use.
+        $payload = $request->all();
+        // Logged before resolution, so a callback that matches nothing still leaves a trace
+        // of having arrived — the absence of one was the only evidence that the endpoint was
+        // never being reached at all.
+        $this->log('info', 'Callback received', [
+            'ip' => $request->ip(),
+            'method' => $request->method(),
+            'payload' => $payload,
+        ]);
+
         $service = $this->resolveServiceFromCallback($payload);
 
         if (!$service) {
@@ -1216,64 +1317,105 @@ class ProxyPanel extends Server
         return response()->json(['status' => 'ok']);
     }
 
-    private function isValidCallback(Request $request, string $secret): bool
+    /**
+     * @param  array<int, string>  $allowedIps
+     */
+    private function isValidCallback(Request $request, string $secret, array $allowedIps): bool
     {
-        if ($header = $request->header('X-Panel-Secret')) {
-            return hash_equals($secret, (string) $header);
+        if ($secret !== '') {
+            if ($header = $request->header('X-Panel-Secret')) {
+                return hash_equals($secret, (string) $header);
+            }
+
+            if ($signature = $request->header('X-Panel-Signature')) {
+                return hash_equals(hash_hmac('sha256', $request->getContent(), $secret), (string) $signature);
+            }
         }
 
-        if ($signature = $request->header('X-Panel-Signature')) {
-            return hash_equals(hash_hmac('sha256', $request->getContent(), $secret), (string) $signature);
-        }
-
-        return false;
+        return $allowedIps !== []
+            && ($ip = $request->ip()) !== null
+            && IpUtils::checkIp($ip, $allowedIps);
     }
 
+    /** @return array<int, string> */
+    private function callbackIps(): array
+    {
+        return array_values(array_filter(
+            array_map('trim', preg_split('/[,\s]+/', (string) $this->config('callback_ips')) ?: []),
+            fn (string $ip): bool => $ip !== '',
+        ));
+    }
+
+    /**
+     * The panel's `id` is ambiguous and has to be tried both ways round.
+     *
+     * `callback.php` looks it up as `tblhosting.id` — the *WHMCS service* id, which the module
+     * sent across as `client_id`. So the panel echoes our own id back to us under the name
+     * `id`. But `/newIpv6` answers with the panel's own id under that same name, and the other
+     * keys (`service_id`, `panel_id`) have been seen carrying it too. Reading `id` as the
+     * panel's id alone is how a callback could resolve to a completely unrelated service whose
+     * remote id happened to equal our service id.
+     *
+     * Our own id wins when both match, because that is the reading `callback.php` codifies.
+     */
     private function resolveServiceFromCallback(array $payload): ?Service
     {
-        // Panel ids are not unique over time — they can be recycled after a cancellation —
-        // so take the most recently provisioned match, preferring one not already cancelled.
-        foreach (['id', 'service_id', 'panel_id'] as $key) {
-            if (!isset($payload[$key])) {
-                continue;
-            }
+        $ids = [];
 
-            $serviceIds = Property::where('key', self::REMOTE_ID_KEY)
-                ->where('value', (string) $payload[$key])
-                ->where('model_type', Service::class)
-                ->orderByDesc('id')
-                ->pluck('model_id');
-
-            if ($serviceIds->isEmpty()) {
-                continue;
-            }
-
-            $candidates = Service::whereIn('id', $serviceIds)
-                ->orderByRaw('CASE WHEN status = ? THEN 1 ELSE 0 END', [Service::STATUS_CANCELLED])
-                ->orderByDesc('id')
-                ->get();
-
-            if ($candidates->count() > 1) {
-                $this->log('warning', 'Callback panel id matches several services — using the most recent', [
-                    'panel_id' => $payload[$key],
-                    'services' => $candidates->pluck('id')->all(),
-                ]);
-            }
-
-            if ($service = $candidates->first()) {
-                return $service;
+        foreach (['id', 'client_id', 'service_id', 'panel_id'] as $key) {
+            if (isset($payload[$key]) && is_scalar($payload[$key])) {
+                $ids[] = (string) $payload[$key];
             }
         }
 
-        // Fall back to our own service id (sent to the panel as client_id).
-        if ($clientId = $payload['client_id'] ?? null) {
-            $service = Service::find($clientId);
+        $ids = array_values(array_unique($ids));
+
+        foreach ($ids as $id) {
+            $service = Service::find($id);
+
             if ($service && $this->isProxyPanelService($service)) {
                 return $service;
             }
         }
 
+        foreach ($ids as $id) {
+            if ($service = $this->serviceByRemoteId($id)) {
+                return $service;
+            }
+        }
+
         return null;
+    }
+
+    /**
+     * Panel ids are not unique over time — they can be recycled after a cancellation — so take
+     * the most recently provisioned match, preferring one not already cancelled.
+     */
+    private function serviceByRemoteId(string $remoteId): ?Service
+    {
+        $serviceIds = Property::where('key', self::REMOTE_ID_KEY)
+            ->where('value', $remoteId)
+            ->where('model_type', Service::class)
+            ->orderByDesc('id')
+            ->pluck('model_id');
+
+        if ($serviceIds->isEmpty()) {
+            return null;
+        }
+
+        $candidates = Service::whereIn('id', $serviceIds)
+            ->orderByRaw('CASE WHEN status = ? THEN 1 ELSE 0 END', [Service::STATUS_CANCELLED])
+            ->orderByDesc('id')
+            ->get();
+
+        if ($candidates->count() > 1) {
+            $this->log('warning', 'Callback panel id matches several services — using the most recent', [
+                'panel_id' => $remoteId,
+                'services' => $candidates->pluck('id')->all(),
+            ]);
+        }
+
+        return $candidates->first();
     }
 
     /**
@@ -1305,16 +1447,19 @@ class ProxyPanel extends Server
         };
 
         if ($target === null) {
-            // Never guess: record it so the admin sees the panel is sending something new.
-            ProvisioningOps::failed(
-                $service,
-                'ProxyPanel',
-                'callback',
-                new \RuntimeException('Unrecognised callback state: "' . $state . '"'),
-                ['payload' => $payload],
-            );
+            // The reference does not read this field at all: callback.php hardcodes 'Active'
+            // for any callback about a service it can find. Treating an unrecognised state as
+            // "not a confirmation" would leave the service pending forever the first time the
+            // panel sends a word we have not seen — which is the failure being fixed here. So
+            // follow the reference, and log loudly enough that a genuinely new state is
+            // noticed rather than absorbed.
+            $this->log('warning', 'Callback state not recognised — treating as a deployment confirmation, as the reference does', [
+                'service' => $service->id,
+                'state' => $state,
+                'payload' => $payload,
+            ]);
 
-            return null;
+            $target = Service::STATUS_ACTIVE;
         }
 
         if ($target === Service::STATUS_ACTIVE) {
@@ -1338,6 +1483,24 @@ class ProxyPanel extends Server
     private function isProxyPanelService(Service $service): bool
     {
         return optional(optional($service->product)->server)->extension === 'ProxyPanel';
+    }
+
+    /**
+     * An 8-character lowercase-alphanumeric credential — the only shape the panel takes.
+     * `Str::random()` is base62 and would fail the panel's own alphanumeric check the moment
+     * its output needed a case-insensitive comparison, so draw the alphabet explicitly.
+     */
+    public function randomCredential(): string
+    {
+        $alphabet = self::CREDENTIAL_ALPHABET;
+        $max = strlen($alphabet) - 1;
+        $out = '';
+
+        for ($i = 0; $i < self::CREDENTIAL_LENGTH; $i++) {
+            $out .= $alphabet[random_int(0, $max)];
+        }
+
+        return $out;
     }
 
     private function truthy($value): bool
