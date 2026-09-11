@@ -134,6 +134,12 @@ class EditOrder extends Page
     /**
      * A pending service's credentials, issued now if it has none.
      *
+     * Two different shapes, as the reference has them. The username is the module's — 8
+     * characters, from WHMCS's Random Usernames — and is what the panel is given. The
+     * password is WHMCS's own service password, longer and mixed, because that is what its
+     * order screen shows before the order is accepted; the module replaces it with its own
+     * 8-character one when it provisions, which is the only shape the panel accepts.
+     *
      * @return array{username: string, password: string}
      */
     private function credentialsFor(Service $service): array
@@ -149,7 +155,7 @@ class EditOrder extends Page
                 : substr(sha1(random_bytes(10)), 0, 8);
 
             $username = $username ?: $issue();
-            $password = $password ?: $issue();
+            $password = $password ?: static::servicePassword();
 
             $service->properties()->updateOrCreate(['key' => 'proxy_username'], ['name' => 'Username', 'value' => $username]);
             $service->properties()->updateOrCreate(['key' => 'proxy_password'], ['name' => 'Password', 'value' => $password]);
@@ -157,6 +163,23 @@ class EditOrder extends Page
         }
 
         return ['username' => $username, 'password' => $password];
+    }
+
+    /**
+     * A service password in WHMCS's shape: 14 characters of mixed case, digits and the
+     * handful of symbols it uses (its own look on the order screen is "CY4@y2H8g@X8dk").
+     */
+    private static function servicePassword(): string
+    {
+        $alphabet = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789@#$%';
+        $max = strlen($alphabet) - 1;
+        $out = '';
+
+        for ($i = 0; $i < 14; $i++) {
+            $out .= $alphabet[random_int(0, $max)];
+        }
+
+        return $out;
     }
 
     /** Persist whatever the per-item boxes hold, so the module is handed exactly that. */
