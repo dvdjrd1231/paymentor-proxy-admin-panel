@@ -177,10 +177,17 @@
                                     <label class="ao-eo-prov-cred">Password:
                                         <input type="text" class="ao-eo-prov-pass" wire:model="creds.{{ $service->id }}.password"
                                             @disabled(!$service->product?->server)></label>
-                                    {{-- No Server box: the reference's own order carries none
-                                         (Leandro's 3770), and a product names its server, so
-                                         there was never a choice to make here. The server is
-                                         on the service editor for anyone who needs it. --}}
+                                    {{-- The reference's Server box, between Password and the
+                                         ticks. It names the server this item provisions on,
+                                         which in Paymenter is the product's — core resolves
+                                         it from `product->server` on every lifecycle call, so
+                                         the list holds that one server and None, not an
+                                         override the panel would then disagree with. --}}
+                                    <label class="ao-eo-prov-cred ao-eo-prov-srv">Server:
+                                        <select class="ao-eo-prov-server"
+                                            title="Set by this item's product — a service's server is the product's in Paymenter">
+                                            <option>{{ $service->product?->server?->name ?? 'None' }}</option>
+                                        </select></label>
                                     <label class="ao-check">
                                         <input type="checkbox" wire:model="runModuleCreate.{{ $service->id }}"
                                             @disabled(!$service->product?->server)>
@@ -222,7 +229,7 @@
         <div class="ao-eo-actions">
             <button type="button" class="ao-eo-accept" wire:click="acceptOrder" @disabled(!$canActivate)
                 title="{{ $canActivate ? 'Activate every service on this order that is not already active' : 'Every service on this order is already active' }}"
-                wire:confirm="Activate every pending service on this order?">&#10004; Accept Order</button>
+                wire:confirm="Activate every pending service on this order?"><svg class="ao-eo-tick" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm140 148L228 324c-6 6-16 6-23 0l-89-89c-6-6-6-16 0-23l23-23c6-6 16-6 23 0l55 55 134-134c6-6 16-6 23 0l23 23c6 6 6 16-1 23z"/></svg> Accept Order</button>
             <button type="button" class="ao-eo-cancel" wire:click="cancelOrder" @disabled(!$hasPending && !$hasLive)
                 title="{{ $hasPending || $hasLive ? 'Cancel every running service on this order' : 'Nothing on this order is running' }}"
                 wire:confirm="Cancel every running service on this order?">Cancel Order</button>

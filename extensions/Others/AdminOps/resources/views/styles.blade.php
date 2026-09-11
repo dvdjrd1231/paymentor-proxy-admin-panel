@@ -2560,6 +2560,19 @@
     .ao-eo-prov-user,
     .ao-eo-prov-pass { width: 8.75rem; }
 
+    /* The reference's Server box is far wider than the two credential boxes — it holds a
+       server name and a group label — and is drawn as a plain select on the band. */
+    .ao-eo-prov-server {
+        width: 15.45rem;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        color: var(--wa-ink, #2b2b2b);
+        font: inherit;
+        font-size: 0.9rem;
+    }
+
     /* The reference draws these white in the band — full-strength boxes carrying real
        values, with the titles explaining what can't change here. */
     .ao-eo-prov-inert { display: inline-flex; align-items: center; gap: 0.35rem; }
@@ -5680,6 +5693,12 @@
     .ao-eo-notes .ao-of-go { margin: 0; }
     .ao-eo-notes-text { margin: 0 0 0.6rem; padding: 0.5rem 0.7rem; background: #fcf8e3; border: 1px solid #faebcc; border-radius: 4px; white-space: pre-wrap; }
 
+    /* The reference sets a facts label against the first line of its value, not against
+       the middle of a value several lines deep — its Order Placed By reads level with the
+       name, with the email under it. The cells still stretch: the label column paints
+       white to the foot of the card, and only the text inside it moves up. */
+    .ao-eo-facts .ao-of-label { align-items: flex-start; }
+
     .ao-eo-total td { background: var(--wa-navy, #1a4d80); color: #fff; font-weight: 700; }
 
     .ao-eo-total .ao-eo-total-value { white-space: nowrap; }
@@ -8163,7 +8182,11 @@
         flex-wrap: wrap;
         gap: 0.6rem;
         margin-top: 1.2rem;
+        justify-content: center;
     }
+
+    /* The reference's Accept Order carries a circled tick, not a bare one. */
+    .ao-eo-tick { width: 0.95em; height: 0.95em; vertical-align: -0.1em; }
 
     .ao-eo-actions button {
         padding: 0.5rem 1.1rem;
