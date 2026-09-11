@@ -82,9 +82,11 @@ class ProxyPanelController
     {
         $service = $this->resolve($service);
 
+        // The panel takes exactly 8 alphanumeric characters and refuses everything else, so
+        // catch it here with a readable message rather than letting the panel answer.
         $validated = $request->validate([
-            'password' => ['required', 'string', 'min:8', 'max:64'],
-        ]);
+            'password' => ['required', 'string', 'size:8', 'alpha_num'],
+        ], ['password.size' => __('proxypanel.password_rules'), 'password.alpha_num' => __('proxypanel.password_rules')]);
 
         return $this->run($service, 'clientUpdatePassword', [$validated['password']], 'proxypanel.password_updated');
     }

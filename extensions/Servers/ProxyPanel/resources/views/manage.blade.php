@@ -107,7 +107,9 @@
                         <div class="wf-field">
                             <label for="proxy_password_new">{{ __('proxypanel.new_password') }}</label>
                             <input class="wf-input" type="text" id="proxy_password_new" name="password"
-                                   minlength="8" maxlength="64" required autocomplete="off">
+                                   minlength="8" maxlength="8" pattern="[A-Za-z0-9]{8}" required autocomplete="off"
+                                   title="{{ __('proxypanel.password_rules') }}">
+                            <small>{{ __('proxypanel.password_rules') }}</small>
                         </div>
                         <div class="wf-actions">
                             <button type="submit" class="wf-btn wf-btn--sm">{{ __('proxypanel.save') }}</button>

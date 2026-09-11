@@ -5,9 +5,13 @@ use Illuminate\Support\Facades\Route;
 use Paymenter\Extensions\Servers\ProxyPanel\Http\ProxyPanelController;
 use Paymenter\Extensions\Servers\ProxyPanel\ProxyPanel;
 
-// Panel → Paymenter. Server-to-server, so no CSRF token; the shared secret / HMAC check
-// inside the handler is what authenticates it.
-Route::post('/extensions/proxypanel/callback', [ProxyPanel::class, 'callback'])
+// Panel → Paymenter. Server-to-server, so no CSRF token; the secret / signature / source
+// address check inside the handler is what authenticates it.
+//
+// GET as well as POST: the panel was written against the WHMCS module's callback.php, which
+// reads `$_REQUEST`, so it may use either. A POST-only route answered a GET with 405 at the
+// router — before the handler, and therefore without a single line in the log to show for it.
+Route::match(['get', 'post'], '/extensions/proxypanel/callback', [ProxyPanel::class, 'callback'])
     ->withoutMiddleware([VerifyCsrfToken::class])
     ->name('extensions.servers.proxypanel.callback');
 

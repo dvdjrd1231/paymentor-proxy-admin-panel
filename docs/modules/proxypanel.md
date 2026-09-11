@@ -115,8 +115,11 @@ it becomes a one-line change.
 ### Module (admin → Servers → ProxyPanel)
 - **Panel API URL** — e.g. `https://<panel-host>/v0/services`
 - **Panel Token** — the `Panel:` header token (encrypted).
-- **Callback Secret** — shared secret the panel must present when calling back into
-  Paymenter (encrypted). Leave blank to disable the callback endpoint entirely.
+- **Callback Secret** — optional shared secret, presented as `X-Panel-Secret` or as an HMAC
+  in `X-Panel-Signature` (encrypted). The panel sends neither today.
+- **Callback IPs** — comma-separated addresses or CIDR ranges the panel calls back from.
+  This is what authorises the real callback. With neither this nor a secret set, the
+  callback endpoint stays closed and services never leave `Pending` on their own.
 
 ### Product (admin → Product → this server)
 
@@ -231,7 +234,12 @@ bare `server_tag`.
 ## Provisioning data stored per service
 
 - `proxypanel_service_id` — the panel's service id (used by every later call)
-- `proxy_username`, `proxy_password` — proxy credentials (changeable via `POST /aa`)
+- `proxy_username`, `proxy_password` — proxy credentials (changeable via `POST /aa`).
+  Both are **8 characters**, which is the only shape the panel takes: its own password form
+  refuses anything longer or non-alphanumeric, and WHMCS issues 8-character usernames via
+  the Random Usernames setting the module's readme requires enabling. The username is random
+  lowercase alphanumeric (it used to be `svc<service id>`, which was 6 characters and grew);
+  the password keeps the module's own `substr(sha1(random_bytes(10)), 0, 8)`.
 - `proxy_api_key` — the panel-issued API key shown to the customer
 - `proxy_amount`, `proxy_auth_ips`, `proxy_rotation_time`
 - `proxy_ips` — `ip:port` endpoints, comma separated
@@ -287,31 +295,51 @@ A service therefore never shows as active to the customer while the panel still 
 queued. `syncStatus()` is the manual fallback if a callback is lost: it activates the
 service once the panel reports proxies assigned.
 
+**An admin setting the status by hand overrides all of this.** The reference lets staff set
+a status whenever they like, and a select that silently refuses to change is worse than no
+select. When the status goes to `active` during an authenticated admin request, the listener
+stamps `proxy_manual_status_at` and stands down instead of reverting; `awaitPanelConfirmation()`
+honours the same stamp, so a create job finishing afterwards does not quietly undo it. The
+stamp is cleared the moment the panel does confirm, and the gate applies as normal from then
+on. The gate's job is to stop *automatic* activation running ahead of the panel — not to
+refuse a deliberate instruction.
+
 ## Panel callback (panel → Paymenter)
 
 ```
-POST https://YOUR-DOMAIN/extensions/proxypanel/callback
+GET|POST https://YOUR-DOMAIN/extensions/proxypanel/callback?id=<service id>&status=<state>
 ```
 
 Route name `extensions.servers.proxypanel.callback`, CSRF-exempt.
 
-**Authentication** — set **Callback Secret** in the module settings (encrypted). The panel
-must send *either*:
+The shape is the panel's, not ours. The WHMCS module's `callback.php` is what the panel was
+written against, and it reads `$_REQUEST['id']` and `$_REQUEST['status']` — so either verb,
+query string or form body, and **no credential of any kind**.
 
-- `X-Panel-Secret: <callback secret>`, or
-- `X-Panel-Signature: <hex HMAC-SHA256 of the raw request body, keyed with the secret>`
+**Authentication** — any one of:
 
-Both are compared in constant time. If no secret is configured the endpoint returns
-**403** — callbacks are opt-in, never open by default. A bad secret/signature returns
-**401**.
+- `X-Panel-Secret: <callback secret>` (constant-time compared), or
+- `X-Panel-Signature: <hex HMAC-SHA256 of the raw request body, keyed with the secret>`, or
+- a source address inside **Callback IPs** — which is what the panel actually uses, since it
+  sends no headers.
 
-**Body** (JSON). The service is resolved by whichever identifier the panel sends:
+With neither a secret nor an IP list configured the endpoint returns **403**: callbacks are
+opt-in and never open by default. Anything else unauthorized returns **401**. Every request
+that gets past authentication is logged at info with its method, address and payload, so a
+callback that resolves to nothing still leaves proof it arrived.
+
+**Body / query.** The service is resolved from whichever identifier the panel sends:
 
 | Field | Meaning |
 |---|---|
-| `service_id` or `client_id` | the Paymenter service id (what we send as `client_id` on create) |
-| `id` or `panel_id` | the panel's own service id (`proxypanel_service_id`) |
+| `id` | **ambiguous** — `callback.php` reads it as `tblhosting.id`, i.e. *our* service id echoed back from `client_id`, but `/newIpv6` answers with the panel's own id under the same name |
+| `client_id` or `service_id` | the Paymenter service id |
+| `panel_id` | the panel's own service id (`proxypanel_service_id`) |
 | `status` or `event` | the new state |
+
+Every id is tried as a Paymenter service id first and as a panel id second, because the
+reference reading is the former. Reading `id` as the panel id alone is how a callback could
+resolve to an unrelated service whose remote id happened to equal our service id.
 
 Recognised states → Paymenter status:
 
@@ -322,17 +350,19 @@ Recognised states → Paymenter status:
 | `cancelled`, `canceled`, `terminated`, `deleted`, `destroyed` | `cancelled` |
 | `error`, `failed`, `failure` | **not activated** — recorded as a provisioning failure with the panel's `description`, mirroring WHMCS's `AfterModuleCreateFailed` |
 
-Anything else is **logged and recorded as a `callback` row in Services → Provisioning**,
-and **not** applied — an unknown state never silently changes a customer's service. Any
-`ips` / `host` in the body are cached onto the service either way.
+Anything else is **logged as a warning and treated as a deployment confirmation**, which is
+what the reference does — `callback.php` never reads the field at all and hardcodes `Active`
+for any callback about a service it can find. Refusing to act on an unrecognised word would
+leave the service pending forever the first time the panel sends one. Any `ips` / `host` in
+the body are cached onto the service either way.
 
 Re-delivering the same callback is a no-op (the status is only written when it differs),
 so the panel can safely retry.
 
-> **Open question for the client:** the outbound API is mapped from the original WHMCS
-> module, but nothing documents what the panel sends *back*. This endpoint is deliberately
-> tolerant about field names. Once the real callback format is known, confirm the field
-> names and state values above — see § Open questions.
+**Setting it up.** Point the panel at the URL above and put its source address in **Callback
+IPs**. Until that is done the service never leaves `Pending`: `createServer()` holds it there
+deliberately (§ Activation gating), and the callback is the only thing that lifts the hold
+automatically. An admin can always override it by setting the status by hand.
 
 ## Robustness (spec item 8)
 

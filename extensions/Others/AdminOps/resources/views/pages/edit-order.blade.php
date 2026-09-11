@@ -220,12 +220,14 @@
             // nothing is pending, Set Back to Pending while everything already is.
             $statuses = $order->services->pluck('status');
             $hasPending = $statuses->contains('pending');
-            $hasLive = $statuses->contains('active') || $statuses->contains('suspended');
+            $hasSuspended = $statuses->contains('suspended');
+            $hasLive = $statuses->contains('active') || $hasSuspended;
+            $canActivate = $hasPending || $hasSuspended;
         @endphp
 
         <div class="ao-eo-actions">
-            <button type="button" class="ao-eo-accept" wire:click="acceptOrder" @disabled(!$hasPending)
-                title="{{ $hasPending ? 'Activate every pending service on this order' : 'Nothing on this order is pending' }}"
+            <button type="button" class="ao-eo-accept" wire:click="acceptOrder" @disabled(!$canActivate)
+                title="{{ $canActivate ? 'Activate every pending service on this order, and resume any suspended one' : 'Nothing on this order is pending or suspended' }}"
                 wire:confirm="Activate every pending service on this order?">&#10004; Accept Order</button>
             <button type="button" class="ao-eo-cancel" wire:click="cancelOrder" @disabled(!$hasPending && !$hasLive)
                 title="{{ $hasPending || $hasLive ? 'Cancel every running service on this order' : 'Nothing on this order is running' }}"
@@ -234,8 +236,8 @@
                 title="Refunds are issued from the invoice screen, where the gateway refund calls are wired" disabled>Cancel &amp; Refund</button>
             <button type="button" class="ao-eo-cancel ao-eo-dead-btn"
                 title="Paymenter services have no fraud status — the Fraud Orders view says so by matching nothing" disabled>Set as Fraud</button>
-            <button type="button" class="ao-eo-pending" wire:click="setOrderPending" @disabled(!$hasLive)
-                title="{{ $hasLive ? 'Put the running services back to pending' : 'Nothing on this order is active or suspended' }}"
+            <button type="button" class="ao-eo-pending" wire:click="setOrderPending" @disabled($statuses->every(fn ($s) => $s === 'pending'))
+                title="{{ $hasLive ? 'Put the running services back to pending' : 'This order is already pending' }}"
                 wire:confirm="Set every active/suspended service on this order back to pending? The service itself keeps running on its panel — this only corrects the record.">Set Back to Pending</button>
             <button type="button" class="ao-eo-delete" wire:click="deleteOrder"
                 wire:confirm="Delete order #{{ $order->id }}? This cannot be undone.">Delete Order</button>
