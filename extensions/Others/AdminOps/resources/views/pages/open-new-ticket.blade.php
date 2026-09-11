@@ -10,6 +10,10 @@
                 <span>Client</span>
                 <select class="ao-w-40" wire:model.live="client" required>
                     <option value="">Start Typing to Search Clients</option>
+                    {{-- The reference's way of opening a ticket for someone who wrote in
+                         before they ever signed up: pick this and type their name and
+                         address below. --}}
+                    <option value="0">— Not a registered client —</option>
                     @foreach ($clients as $row)
                         <option value="{{ $row->id }}">
                             {{ trim($row->first_name . ' ' . $row->last_name) ?: $row->email }} - #{{ $row->id }}
@@ -17,15 +21,26 @@
                     @endforeach
                 </select>
             </label>
+            {{-- Typed when the picker is on "not a registered client", mirrored from the
+                 chosen client otherwise — the reference's own two states for this pair. --}}
             <label class="ao-anc-row">
                 <span>Name</span>
-                <input type="text" class="ao-w-40" value="{{ $selectedUser ? trim($selectedUser->first_name . ' ' . $selectedUser->last_name) : '' }}"
-                    placeholder="Chosen by the client picker" readonly>
+                @if ($this->isGuest())
+                    <input type="text" class="ao-w-40" wire:model="guestName" placeholder="Their full name" required>
+                @else
+                    <input type="text" class="ao-w-40" value="{{ $selectedUser ? trim($selectedUser->first_name . ' ' . $selectedUser->last_name) : '' }}"
+                        placeholder="Chosen by the client picker" readonly>
+                @endif
             </label>
+            @error('guestName') <p class="ao-anc-errors">{{ $message }}</p> @enderror
             <div class="ao-anc-row">
                 <span>Email Address</span>
                 <span class="ao-anc-field">
-                    <input type="text" class="ao-w-40" value="{{ $selectedUser?->email }}" placeholder="Chosen by the client picker" readonly>
+                    @if ($this->isGuest())
+                        <input type="email" class="ao-w-40" wire:model="guestEmail" placeholder="Where the answer should go" required>
+                    @else
+                        <input type="text" class="ao-w-40" value="{{ $selectedUser?->email }}" placeholder="Chosen by the client picker" readonly>
+                    @endif
                     <label class="ao-ont-send"><input type="checkbox" wire:model="sendEmail"> Send Email</label>
                 </span>
             </div>
@@ -37,6 +52,7 @@
                     placeholder="Comma-separated — e.g. billing@example.com, manager@example.com"
                     title="Each address receives a copy of the opening message by email">
             </label>
+            @error('guestEmail') <p class="ao-anc-errors">{{ $message }}</p> @enderror
             @error('ccRecipients') <p class="ao-anc-errors">{{ $message }}</p> @enderror
             <label class="ao-anc-row">
                 <span>Subject</span>

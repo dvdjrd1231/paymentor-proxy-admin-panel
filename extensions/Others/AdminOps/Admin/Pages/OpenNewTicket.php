@@ -30,8 +30,19 @@ class OpenNewTicket extends Page
     /** Navigation is built by {@see WhmcsNavigation}. */
     protected static bool $shouldRegisterNavigation = false;
 
+    /** A real client's id, or {@see self::GUEST} for someone who has no account yet. */
     #[Url]
     public ?int $client = null;
+
+    /**
+     * The client picker's "not a registered client" choice, which the reference offers so
+     * a ticket can be opened for someone who wrote in before they ever signed up.
+     */
+    public const GUEST = 0;
+
+    public string $guestName = '';
+
+    public string $guestEmail = '';
 
     /**
      * The related service the reference's radio column picks — null/'' is its "None".
@@ -82,10 +93,42 @@ class OpenNewTicket extends Page
         $this->service = null;
     }
 
+    /** Whether the picker is on "not a registered client". */
+    public function isGuest(): bool
+    {
+        return $this->client === self::GUEST;
+    }
+
     public function insert(string $text): void
     {
         $this->message = rtrim($this->message) === '' ? $text : rtrim($this->message) . "\n\n" . $text;
         $this->inserting = null;
+    }
+
+    /**
+     * The account behind a "not a registered client" ticket: the one that already holds
+     * this address, or a new one. Never a staff account - a ticket opened against an
+     * admin's own address would land in a client area they cannot see.
+     */
+    private function resolveGuest(): \App\Models\User
+    {
+        $email = strtolower(trim($this->guestEmail));
+
+        if ($existing = \App\Models\User::whereRaw('LOWER(email) = ?', [$email])->whereNull('role_id')->first()) {
+            return $existing;
+        }
+
+        $name = trim($this->guestName);
+        $space = strrpos($name, ' ');
+
+        return \App\Models\User::create([
+            'first_name' => $space === false ? $name : substr($name, 0, $space),
+            'last_name' => $space === false ? '' : substr($name, $space + 1),
+            'email' => $email,
+            // No usable password: they set one through the reset link like any other
+            // client, and until then the account exists only to carry the ticket.
+            'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(40)),
+        ]);
     }
 
     public function create(): void
@@ -98,8 +141,18 @@ class OpenNewTicket extends Page
         // Split before validating, so the rule reads addresses, not one long string.
         $ccList = array_values(array_filter(array_map('trim', explode(',', $this->ccRecipients))));
 
+        // A ticket belongs to a user - core's tickets.user_id is a non-null foreign key,
+        // and every reply, notification and client-area view reads through it. So the
+        // reference's "not a registered client" is honoured by giving the person an
+        // account rather than by leaving the ticket ownerless. The account is made inside
+        // the transaction below, not here: a form that fails on some later field must not
+        // leave a client behind.
+        $guest = $this->isGuest();
+
         $this->validate([
-            'client' => 'required|exists:users,id',
+            'guestName' => $guest ? 'required|string|max:255' : 'nullable',
+            'guestEmail' => $guest ? 'required|email|max:255' : 'nullable',
+            'client' => $guest ? 'present' : 'required|exists:users,id',
             'subject' => 'required|string|max:255',
             'message' => 'required|string',
             'department' => $departments !== [] ? 'required|in:' . implode(',', $departments) : 'nullable',
@@ -111,7 +164,12 @@ class OpenNewTicket extends Page
                 'nullable',
                 \Illuminate\Validation\Rule::exists('services', 'id')->where('user_id', $this->client),
             ],
-        ], attributes: ['client' => 'client', 'service' => 'related service']);
+        ], attributes: [
+            'client' => 'client',
+            'service' => 'related service',
+            'guestName' => 'name',
+            'guestEmail' => 'email address',
+        ]);
 
         foreach ($ccList as $address) {
             if (!filter_var($address, FILTER_VALIDATE_EMAIL)) {
@@ -121,7 +179,11 @@ class OpenNewTicket extends Page
             }
         }
 
-        $ticket = DB::transaction(function (): Ticket {
+        $ticket = DB::transaction(function () use ($guest): Ticket {
+            if ($guest) {
+                $this->client = $this->resolveGuest()->id;
+            }
+
             $ticket = Ticket::create([
                 'subject' => $this->subject,
                 'status' => 'replied',
