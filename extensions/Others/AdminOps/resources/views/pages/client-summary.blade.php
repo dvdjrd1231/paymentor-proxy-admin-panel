@@ -325,7 +325,6 @@
             $bands = [
                 ['title' => 'Products/Services', 'head' => ['ID', 'Product/Service', 'Amount', 'Billing Cycle', 'Signup Date', 'Next Due Date', 'Status'], 'rows' => $services],
                 ['title' => 'Addons', 'head' => ['ID', 'Name', 'Amount', 'Billing Cycle', 'Signup Date', 'Next Due Date', 'Status'], 'rows' => collect()],
-                ['title' => 'Domains', 'head' => ['ID', 'Domain', 'Registrar', 'Registration Date', 'Next Due Date', 'Expiry Date', 'Status'], 'rows' => collect()],
                 ['title' => 'Current Quotes', 'head' => ['ID', 'Subject', 'Date', 'Total', 'Valid Until Date', 'Status'], 'rows' => $quoteRows],
             ];
         @endphp
@@ -587,7 +586,6 @@
                             'invoice' => 'Invoice Emails - New Invoices, Reminders, & Overdue Notices',
                             'support' => 'Support Emails - Receive a copy of all Support Ticket Communications',
                             'product' => 'Product Emails - Welcome Emails, Suspensions & Other Lifecycle Notifications',
-                            'domain' => 'Domain Emails - Registration/Transfer Confirmation & Renewal Notices',
                             'affiliate' => 'Affiliate Emails - Receive Affiliate Notifications',
                         ] as $key => $label)
                             <label><input type="checkbox" wire:model="pfPrefs.{{ $key }}"> {{ $label }}</label>
@@ -836,8 +834,8 @@
                     <span><input id="ao-cs-price" class="ao-of-sm" type="text" inputmode="decimal" wire:model="svc.price"></span>
                 </div>
                 <div class="ao-of-row">
-                    <label class="ao-of-label" for="ao-cs-domain">Domain</label>
-                    <span><input id="ao-cs-domain" class="ao-of-md" type="text" wire:model="svc.domain" placeholder=""></span>
+                    <span class="ao-of-label"></span>
+                    <span></span>
                     {{-- The reference's Recurring Amount and its Recalculate on Save. One
                          figure is charged each cycle here, so this shows what the next
                          renewal takes; ticking Recalculate re-reads the plan's price on
@@ -1046,34 +1044,6 @@
             </div>
         </form>
         @endif
-
-    @elseif ($tab === 'domains')
-        {{-- The reference's Domains tab. Domains are switched off on this store, so it lists
-             nothing — but the reference shows the tab with an empty table, and a tab missing
-             altogether reads as a feature that was forgotten rather than one turned off. --}}
-        @include('adminops::partials.records-band', ['total' => 0, 'page' => 1, 'perPage' => $perPage])
-
-        <div class="ao-cs-band">
-            <h4>Domains</h4>
-            <table class="ao-mu-grid">
-                <thead>
-                    <tr>
-                        <th>ID</th><th>Domain</th><th>Registrar</th>
-                        <th>Registration Date</th><th>Next Due Date</th><th>Expiry Date</th><th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="7" class="ao-mu-none">No Records Found</td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <p class="ao-cp-note">
-            Domain registration is switched off on this deployment, so no domain is ever
-            recorded against an account — see <code>docs/10-disable-domains.md</code>.
-        </p>
-
-        @include('adminops::partials.records-pager', ['total' => 0, 'page' => 1, 'perPage' => $perPage])
 
     @elseif ($tab === 'contacts')
         @include('adminops::pages.client-contacts')

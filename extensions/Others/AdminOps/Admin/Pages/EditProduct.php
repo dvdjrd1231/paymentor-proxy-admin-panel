@@ -128,23 +128,6 @@ class EditProduct extends Page
     /** Product ids recommended alongside this one — the reference's Cross-sells. */
     public array $crossSellIds = [];
 
-    /**
-     * The reference's Free Domain tab, recorded on the product.
-     *
-     * Editable and saved, at Leandro's instruction (2026-09-11), but nothing acts on it:
-     * this store has no registrar, no TLD pricing and no domain field at checkout
-     * (docs/10-disable-domains.md). It holds the intent for a store that later sells
-     * domains; it does not grant one today.
-     */
-    public string $freeDomain = 'none';
-
-    /** @var array<int, string> */
-    public array $freeDomainTerms = [];
-
-    public string $freeDomainTlds = '';
-
-    /** The reference's Subdomain Options — same standing as the rows above. */
-    public string $subdomainOptions = '';
 
     /**
      * The reference's Custom Affiliate Payout, and it is real.
@@ -317,10 +300,6 @@ class EditProduct extends Page
 
         $this->crossSellIds = array_values(array_filter(explode(',', (string) ($meta['cross_sells'] ?? ''))));
 
-        $this->freeDomain = (string) ($meta['free_domain'] ?? 'none');
-        $this->freeDomainTerms = array_values(array_filter(explode(',', (string) ($meta['free_domain_terms'] ?? ''))));
-        $this->freeDomainTlds = (string) ($meta['free_domain_tlds'] ?? '');
-        $this->subdomainOptions = (string) ($meta['subdomain_options'] ?? '');
 
         $this->affiliatePayout = (string) ($meta['affiliate_payout'] ?? 'default');
         $this->affiliateAmount = (string) ($meta['affiliate_amount'] ?? '0.00');
@@ -597,26 +576,6 @@ class EditProduct extends Page
      * so ticking a box here changes what a customer is shown, rather than being remembered
      * and ignored.
      */
-    /**
-     * The Free Domain tab. Nothing downstream reads these — see {@see $freeDomain} — so the
-     * only rule is that what was typed comes back.
-     */
-    public function saveDomain(): void
-    {
-        $this->validate([
-            'freeDomain' => 'required|in:none,registration,registration_renewal',
-            'freeDomainTerms' => 'array',
-            'freeDomainTlds' => 'nullable|string|max:500',
-            'subdomainOptions' => 'nullable|string|max:500',
-        ]);
-
-        Meta::put($this->product, 'free_domain', $this->freeDomain);
-        Meta::put($this->product, 'free_domain_terms', implode(',', $this->freeDomainTerms));
-        Meta::put($this->product, 'free_domain_tlds', trim($this->freeDomainTlds));
-        Meta::put($this->product, 'subdomain_options', trim($this->subdomainOptions));
-
-        $this->done('Free Domain saved');
-    }
 
     public function saveCrossSells(): void
     {

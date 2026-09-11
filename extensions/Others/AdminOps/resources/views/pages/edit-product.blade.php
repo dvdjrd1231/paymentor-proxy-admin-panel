@@ -24,7 +24,6 @@
                     'custom' => 'Custom Fields',
                     'options' => 'Configurable Options',
                     'upgrades' => 'Upgrades',
-                    'domain' => 'Free Domain',
                     'crosssells' => 'Cross-sells',
                     'other' => 'Other',
                     'links' => 'Links',
@@ -718,59 +717,6 @@
         </div>
 
         {{-- ── Free Domain ─────────────────────────────────────────────────────── --}}
-        <div x-show="tab === 'domain'" x-cloak>
-            {{-- The reference's three rows, live at Leandro's instruction (2026-09-11).
-                 They record the intent on the product; nothing grants a domain from them,
-                 because this store has no registrar (docs/10-disable-domains.md). --}}
-            <form wire:submit.prevent="saveDomain">
-                <div class="ao-anc-card">
-                    <div class="ao-anc-row">
-                        <span>Free Domain</span>
-                        <span class="ao-ep-radios">
-                            @foreach ([
-                                'none' => 'None',
-                                'registration' => 'Offer a free domain registration/transfer only (renew as normal)',
-                                'registration_renewal' => 'Offer a free domain registration/transfer and free renewal (if product is renewed)',
-                            ] as $value => $label)
-                                <label class="ao-check">
-                                    <input type="radio" value="{{ $value }}" wire:model="freeDomain">
-                                    <span>{{ $label }}</span>
-                                </label>
-                            @endforeach
-                        </span>
-                    </div>
-                    <div class="ao-anc-row">
-                        <span>Free Domain Payment Terms</span>
-                        <span class="ao-anc-field ao-ep-listfield">
-                            <select class="ao-ep-list" multiple size="6" wire:model="freeDomainTerms">
-                                @foreach (\Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::CYCLES as $cycle)
-                                    <option value="{{ $cycle }}">{{ $cycle }}</option>
-                                @endforeach
-                            </select>
-                            <i>Select the payment term(s) the product must be paid with to receive a free domain</i>
-                        </span>
-                    </div>
-                    <div class="ao-anc-row">
-                        <span>Free Domain TLD's</span>
-                        <span class="ao-anc-field ao-ep-listfield">
-                            {{-- A box rather than the reference's picker: its list comes from
-                                 Domain Pricing, which this store has none of, so an empty
-                                 select would be a control nothing could ever be chosen from. --}}
-                            <input type="text" class="ao-of-lg" wire:model="freeDomainTlds"
-                                placeholder=".com, .net">
-                            <i>Comma separated. No TLD is configured for sale on this store, so
-                                nothing here is offered at checkout yet.</i>
-                        </span>
-                    </div>
-                </div>
-
-                <div class="ao-pr-center ao-cpg-actions">
-                    <button type="submit" class="ao-find-go">Save Changes</button>
-                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct::getUrl(['record' => $product->id]) }}">Cancel Changes</a>
-                </div>
-            </form>
-        </div>
-
         {{-- ── Cross-sells ─────────────────────────────────────────────────────── --}}
         <div x-show="tab === 'crosssells'" x-cloak>
             <form wire:submit.prevent="saveCrossSells">
@@ -882,13 +828,6 @@
                             title="A percentage of the line when Percentage is picked, or an amount in the invoice's currency when Fixed Amount is">
                         <label class="ao-check"><input type="checkbox" wire:model="affiliateOneTime">
                             <span>One Time Payout (Default is Recurring)</span></label>
-                    </span>
-                </div>
-                <div class="ao-anc-row ao-gs-off">
-                    <span>Subdomain Options</span>
-                    <span class="ao-anc-field">
-                        <input type="text" wire:model="subdomainOptions"
-                            placeholder="Enter in the format .example.com (comma separated list supported for multiple options)">
                     </span>
                 </div>
                 {{-- The reference's own sentence, above the pair it explains. --}}
