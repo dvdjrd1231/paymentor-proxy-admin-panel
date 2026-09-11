@@ -6809,7 +6809,20 @@
         font-size: 0.85rem;
     }
 
-    .ao-br-page .ao-br-field { display: flex; align-items: center; gap: 0.9rem; }
+    /* Three controls sit in this column — preview, chooser, Remove — where General
+       Settings' rows hold one, so the column is widened for them. At 24rem the Remove
+       button ran out past the field and printed on top of the hint. */
+    .ao-br-page .ao-gs-row {
+        grid-template-columns: 12rem minmax(0, 30rem) minmax(0, 1fr);
+        padding: 0.5rem 0.6rem;
+    }
+
+    .ao-br-page .ao-br-field {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 0;
+    }
 
     .ao-br-preview {
         display: flex;
@@ -6827,12 +6840,31 @@
 
     .ao-br-empty { color: var(--wa-muted, #6b6b6b); font-size: 0.8rem; }
 
-    .ao-br-controls { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; }
+    .ao-br-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        min-width: 0;
+        font-size: 0.85rem;
+    }
+
+    /* The native chooser, boxed like every other control on the page instead of sitting
+       bare on the row, and never wider than what is left of the column. */
+    .ao-br-controls input[type="file"] {
+        min-width: 0;
+        max-width: 100%;
+        padding: 0.3rem 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        font-size: 0.8rem;
+    }
 
     .ao-br-note { color: var(--wa-muted, #6b6b6b); font-size: 0.8rem; }
 
     .ao-br-clear {
-        padding: 0.25rem 0.7rem;
+        flex: 0 0 auto;
+        padding: 0.3rem 0.75rem;
         border: 1px solid #d43f3a;
         border-radius: 4px;
         background: #d9534f;

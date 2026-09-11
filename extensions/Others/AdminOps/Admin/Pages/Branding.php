@@ -29,27 +29,30 @@ class Branding extends Page
     protected static bool $shouldRegisterNavigation = false;
 
     /**
-     * The three core settings, with the file name core stores each under. Keeping its
-     * names means an upload here and an upload on core's form are the same file.
+     * The three core settings, with the base file name core stores each under. Its own
+     * form renames whatever is uploaded to logo-light.webp / logo-dark.webp / favicon.ico
+     * regardless of what the file actually is, which leaves a PNG sitting in a .ico and a
+     * browser refusing to draw it — so the real extension is kept and the setting records
+     * the full name, which is what core reads back.
      *
      * @var array<string, array{label: string, file: string, accept: string, hint: string}>
      */
     public const IMAGES = [
         'logo' => [
             'label' => 'Logo',
-            'file' => 'logo-light.webp',
+            'file' => 'logo-light',
             'accept' => 'image/*',
             'hint' => 'Shown on light backgrounds, across the admin and the client area.',
         ],
         'logo_dark' => [
             'label' => 'Dark Logo',
-            'file' => 'logo-dark.webp',
+            'file' => 'logo-dark',
             'accept' => 'image/*',
             'hint' => 'Used where the background is dark. Falls back to the logo above.',
         ],
         'favicon' => [
             'label' => 'Favicon',
-            'file' => 'favicon.ico',
+            'file' => 'favicon',
             'accept' => 'image/x-icon,image/png,image/svg+xml',
             'hint' => 'The browser tab icon. A .ico, .png or .svg file.',
         ],
@@ -104,14 +107,28 @@ class Branding extends Page
                 continue;
             }
 
-            // Core's own name for the file, on core's own disk, so whichever form uploaded
-            // it there is only ever one of each.
-            $file->storeAs('', $image['file'], ['disk' => 'public']);
+            $extension = strtolower($file->getClientOriginalExtension() ?: 'png');
+            $name = $image['file'] . '.' . $extension;
+
+            // A second upload in a different format would otherwise leave the first file
+            // behind on the disk with nothing pointing at it.
+            $previous = (string) config('settings.' . $key);
+
+            if ($previous !== '' && $previous !== $name) {
+                Storage::disk('public')->delete($previous);
+            }
+
+            $file->storeAs('', $name, ['disk' => 'public']);
 
             Setting::updateOrCreate(
                 ['key' => $key, 'settingable_id' => null, 'settingable_type' => null],
-                ['value' => $image['file'], 'type' => 'file', 'encrypted' => false],
+                ['value' => $name, 'type' => 'file', 'encrypted' => false],
             );
+
+            // config was read at boot, so flushing the cache alone leaves this request
+            // still holding the old value — the preview would go on showing the picture
+            // that has just been replaced.
+            config(['settings.' . $key => $name]);
 
             $this->uploads[$key] = null;
             $saved++;
@@ -137,11 +154,19 @@ class Branding extends Page
         abort_unless((bool) Auth::user()?->hasPermission('admin.settings.update'), 403);
         abort_unless(array_key_exists($key, self::IMAGES), 404);
 
-        // The row goes, not the file: core reads the setting, and leaving the upload on
-        // disk means a clear can be undone by re-saving without re-uploading.
+        // The file goes with the row. Leaving it behind would mean an orphan on the disk
+        // that nothing points at and nothing ever cleans up.
+        if ($current = (string) config('settings.' . $key)) {
+            Storage::disk('public')->delete($current);
+        }
+
         Setting::where('key', $key)->whereNull('settingable_type')->delete();
 
         CoreSettings::flushCache();
+
+        // Same reason as save(): without this the row reappears with its picture and its
+        // Remove button until the page is loaded again, which reads as "nothing happened".
+        config(['settings.' . $key => null]);
 
         Notification::make()->title(self::IMAGES[$key]['label'] . ' removed')->success()->send();
     }
