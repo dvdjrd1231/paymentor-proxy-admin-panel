@@ -8180,21 +8180,36 @@
     .ao-eo-actions {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.6rem;
+        gap: 0.4rem;
         margin-top: 1.2rem;
         justify-content: center;
     }
 
-    /* The reference's Accept Order carries a circled tick, not a bare one. */
-    .ao-eo-tick { width: 0.95em; height: 0.95em; vertical-align: -0.1em; }
+    /* Delete Order comes from .ao-eo-delete, which the ticket screen also uses and which
+       fixes its own height — in this row that made it 6px shorter than the five beside
+       it. Here it takes the row's chrome like the rest. */
+    .ao-eo-actions .ao-eo-delete {
+        height: auto;
+        padding: 0.35rem 0.85rem;
+    }
+
+    /* The reference's Accept Order carries a circled tick, not a bare one. Inline, against
+       the panel's preflight, which draws every svg as a block — that put the tick on its
+       own line and left the button a head taller than the five beside it. */
+    .ao-eo-tick {
+        display: inline-block;
+        width: 0.95em;
+        height: 0.95em;
+        vertical-align: -0.12em;
+    }
 
     .ao-eo-actions button {
-        padding: 0.5rem 1.1rem;
+        padding: 0.35rem 0.85rem;
         border: 1px solid var(--wa-border, #ccc);
         border-radius: var(--wa-radius, 6px);
         background: #fff;
         color: var(--wa-text, #2b2b2b);
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         cursor: pointer;
     }
 
