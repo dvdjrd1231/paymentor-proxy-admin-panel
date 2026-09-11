@@ -2972,6 +2972,14 @@
     /* .ao-of-check is nowrap everywhere else, which suits a short "Tick to…" caption. The
        inert rows here carry a sentence of reason after the caption, and on one line it ran
        off the panel's right edge instead of wrapping under it. */
+    /* The reference's template card is white, separated by hairlines. `.ao-of-row` carries
+       `background: #efefef` because a *search panel* has to read as field area all the way
+       across (Leandro, 2026-09-09, of Cancellation Requests) — but this is not a search
+       panel, and the grey made every row of it a band the target does not have. Scoped to
+       the band, since .ao-of-row is shared across twenty-odd screens. */
+    .ao-ete .ao-ete-band .ao-of-row { background: #fff; border-bottom: 1px solid #f0f0f0; }
+    .ao-ete .ao-ete-band .ao-of-row:last-child { border-bottom: 0; }
+
     .ao-ete-band .ao-of-check { white-space: normal; align-items: flex-start; flex-wrap: wrap; }
 
     /* The reason takes a line of its own under the control rather than sharing one: full
