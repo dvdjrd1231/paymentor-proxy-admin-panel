@@ -1766,7 +1766,10 @@
         background: #fff;
     }
 
-    .ao-of-row input,
+    /* Not checkboxes: a text field's height stretched them to 13x32 and the browser drew
+       the box at the top of that, so every tick on a facts row rode above its own label.
+       They keep their natural size and are centred by the rules below. */
+    .ao-of-row input:not([type="checkbox"]):not([type="radio"]),
     .ao-of-row select {
         height: 1.9rem;
         padding: 0 0.5rem;
@@ -2786,7 +2789,17 @@
 
     /* The checkbox rows sat 12px left of every input above them, because a check span
        carries no padding where a field does (measured live: 436 against 448). */
-    .ao-ete .ao-of-check { padding-inline-start: 0.75rem; }
+    .ao-ete .ao-of-check {
+        padding-inline-start: 0.75rem;
+        /* And the box rode above its own label: .ao-of-row sizes every input to the
+           height of a text field, which stretched the checkbox to 13x32 and drew its
+           glyph at the top of that, while flex-start pinned the whole thing to the top
+           of a 44px row. Natural size, centred on the line it labels. */
+        align-items: center;
+        gap: 0.45rem;
+    }
+
+    .ao-of-check input[type="checkbox"] { flex: none; margin: 0; }
 
     /* The reference keeps its source/preview switch in the toolbar, at the right. */
     .ao-ete-mode { margin-left: auto; white-space: nowrap; }
@@ -3046,6 +3059,12 @@
     }
 
     .ao-ete-band .ao-of-check { white-space: normal; align-items: flex-start; flex-wrap: wrap; }
+
+    /* Except Plain-Text and Disable, whose caption is one line: flex-start put the box
+       above the words it labels. Named against both classes because this rule and
+       `.ao-ete .ao-of-check` above carry equal specificity, and the later one would win
+       whichever way round they were written. */
+    .ao-ete-band .ao-of-check:has(> input[type="checkbox"]) { align-items: center; }
 
     /* The reason takes a line of its own under the control rather than sharing one: full
        width against a wrapping flex line is what breaks it onto the next row. */
