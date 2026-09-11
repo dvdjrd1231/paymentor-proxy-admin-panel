@@ -5583,8 +5583,15 @@
        quarter of the form and wrapped onto three lines. */
     .ao-cs-service .ao-of-row-single { grid-template-columns: 11rem minmax(0, 1fr); }
 
-    /* The commands sit together as one group, not spread across the row. */
     .ao-cs-service .ao-of-inline { gap: 0.4rem; flex-wrap: wrap; }
+
+    /* The commands sit together as one group, not spread across the row.
+       `gap` alone never achieved that: .ao-of-go carries `margin: 0.8rem auto 0`, and a
+       grid cell blockifies this inline-flex row to the cell's full width — so the auto
+       side margins absorb every pixel of free space and push six buttons apart, with the
+       gap doing nothing. Killing the margin is the fix; the reference sets them adjacent. */
+    .ao-cs-service .ao-cs-cmds { justify-content: flex-start; gap: 0.3rem; }
+    .ao-cs-service .ao-cs-cmds .ao-of-go { margin: 0; padding: 0 0.7rem; height: 1.9rem; }
     .ao-cs-recalc { display: inline-flex; align-items: center; gap: 0.3rem; white-space: nowrap; font-size: 0.85rem; }
 
     /* The service editor's picker row: the reference's select + Go left, New Addon at
