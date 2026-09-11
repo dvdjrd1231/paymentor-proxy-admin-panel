@@ -867,12 +867,9 @@
                      a remembered one. Alpine does the moving; Livewire keeps the ids. --}}
                 <div class="ao-anc-row ao-ep-dl-row">
                     <span>Associated Downloads</span>
-                    @if ($downloadFiles === [])
-                        <span class="ao-cpg-muted">
-                            No files have been uploaded yet — add them on
-                            <a class="ao-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin::getUrl() }}">Downloads</a>.
-                        </span>
-                    @else
+                    {{-- Drawn even with nothing to put in it: the reference shows the pair
+                         empty on a store that has uploaded no files, and a store with none
+                         is exactly when an admin needs Add Category and Quick Upload. --}}
                         <span class="ao-anc-field ao-ep-dl"
                             x-data="{
                                 all: @js($downloadFiles),
@@ -919,7 +916,6 @@
                                 <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\DownloadsAdmin::getUrl() }}">Quick Upload</a>
                             </span>
                         </span>
-                    @endif
                 </div>
 
                 <div class="ao-anc-row ao-gs-off">
