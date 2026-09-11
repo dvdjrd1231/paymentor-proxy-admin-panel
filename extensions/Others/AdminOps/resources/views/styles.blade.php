@@ -2172,15 +2172,19 @@
 
     /* Save is a <button> and Cancel an <a>, which the sheet gives different heights and
        display modes (36px flex against 34px block) — so the pair sat 2px out and the
-       anchor's label did not centre. In this row they are one control drawn twice. */
+       anchor's label did not centre. In this row they are one control drawn twice, at
+       the reference's own size: measured off its editor, ~112x32 rather than ours at
+       147x38, which is what still read as wrong after the heights matched. */
     .ao-of-buttons > .ao-find-go,
     .ao-of-buttons > .ao-of-go,
     .ao-of-buttons > .ao-gs-cancel {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        height: 2.25rem;
+        height: 2rem;
+        padding: 0 0.9rem;
         margin: 0;
+        font-size: 0.9rem;
         line-height: 1;
     }
 
