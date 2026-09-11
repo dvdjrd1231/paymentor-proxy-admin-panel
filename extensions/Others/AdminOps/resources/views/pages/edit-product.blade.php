@@ -765,40 +765,56 @@
                 <div class="ao-anc-row">
                     <span title="Shown as recommendations on this product's own page">Product Cross-sells</span>
                     {{-- The reference's type-to-search picker: a search box that filters a
-                         grouped list, each pick becoming a removable tag. Livewire holds
-                         the ids; Alpine does the searching, so typing costs no round trip. --}}
+                         grouped list, each pick becoming a removable tag.
+
+                         Alpine owns the selection and pushes it to Livewire deferred, so a
+                         pick lands at once and rides to the server with Save Changes. It
+                         used to assign `$wire.crossSellIds` directly and read it back in
+                         `picked`/`groups`, so every pick waited on a round trip before the
+                         list caught up — and it closed the panel each time, so the second
+                         one needed the box clicking again. --}}
                     <span class="ao-anc-field ao-ep-cross"
                         x-data="{
                             open: false,
                             q: '',
+                            chosen: @js(array_map('strval', $this->crossSellIds)),
                             all: @js($otherProducts->map(fn ($p) => [
                                 'id' => (string) $p->id,
                                 'name' => $p->name,
                                 'group' => $p->category?->name ?? 'Ungrouped',
                             ])->values()->all()),
-                            get picked() { return this.all.filter((p) => this.$wire.crossSellIds.map(String).includes(p.id)) },
+                            get picked() { return this.all.filter((p) => this.chosen.includes(p.id)) },
                             get groups() {
                                 const q = this.q.trim().toLowerCase();
                                 const hits = this.all.filter((p) =>
-                                    !this.$wire.crossSellIds.map(String).includes(p.id)
+                                    !this.chosen.includes(p.id)
                                     && (q === '' || p.name.toLowerCase().includes(q) || p.group.toLowerCase().includes(q)));
                                 return hits.reduce((acc, p) => {
                                     (acc[p.group] = acc[p.group] || []).push(p);
                                     return acc;
                                 }, {});
                             },
-                            add(id) { this.$wire.crossSellIds = [...this.$wire.crossSellIds, id]; this.q = ''; this.open = false },
-                            drop(id) { this.$wire.crossSellIds = this.$wire.crossSellIds.filter((v) => String(v) !== String(id)) },
+                            get anyLeft() { return Object.keys(this.groups).length > 0 },
+                            sync() { this.$wire.set('crossSellIds', [...this.chosen], false) },
+                            add(id) {
+                                if (!this.chosen.includes(id)) { this.chosen.push(id); this.sync() }
+                                this.q = '';
+                                this.$refs.search && this.$refs.search.focus();
+                            },
+                            drop(id) { this.chosen = this.chosen.filter((v) => v !== String(id)); this.sync() },
                         }"
-                        @click.outside="open = false">
-                        <span class="ao-ep-cross-box">
+                        @click.outside="open = false"
+                        @keydown.escape.window="open = false">
+                        <span class="ao-ep-cross-box" @click="open = true">
                             <template x-for="p in picked" :key="p.id">
-                                <span class="ao-stf-chip" x-text="p.name">
-                                    <button type="button" @click="drop(p.id)" aria-label="Remove">&times;</button>
+                                <span class="ao-stf-chip">
+                                    <span x-text="p.name"></span>
+                                    <button type="button" @click.stop="drop(p.id)"
+                                        :aria-label="'Remove ' + p.name" title="Remove">&times;</button>
                                 </span>
                             </template>
-                            <input type="text" class="ao-ep-cross-input" x-model="q" @focus="open = true"
-                                placeholder="Start typing to search for products.">
+                            <input type="text" class="ao-ep-cross-input" x-ref="search" x-model="q"
+                                @focus="open = true" placeholder="Start typing to search for products.">
                         </span>
                         <span class="ao-xsel-list ao-ep-cross-list" x-show="open" x-cloak>
                             <template x-for="(items, group) in groups" :key="group">
@@ -809,6 +825,8 @@
                                     </template>
                                 </span>
                             </template>
+                            <span class="ao-xsel-opt ao-off" x-show="!anyLeft"
+                                x-text="q.trim() ? 'No products match.' : 'Every other product is already selected.'"></span>
                         </span>
                     </span>
                 </div>
