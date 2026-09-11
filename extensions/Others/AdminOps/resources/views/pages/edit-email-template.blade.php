@@ -321,18 +321,14 @@
 
         <div class="ao-anc-card ao-ete-merge">
             <div class="ao-ete-merge-col">
-                {{-- The reference names each tag ("Client Name | {$client_name}"); the name
-                     is read out of the tag itself. --}}
-                @php
-                    $labelFor = function (string $token): string {
-                        preg_match('/([A-Za-z_]+)(?:\(\))?\s*\}\}/', $token, $m);
-
-                        return \Illuminate\Support\Str::of($m[1] ?? trim($token, '{}$ '))->snake()->replace('_', ' ')->title();
-                    };
-                @endphp
-                <h4 class="ao-ano-heading">{{ $merge['heading'] }}</h4>
-                @forelse ($merge['fields'] as $field)
-                    <p class="ao-ete-mrow"><span>{{ $labelFor($field) }}</span><code class="ao-ete-token">{{ $field }}</code></p>
+                {{-- The reference groups its tags by what they hang off - Client Related,
+                     then the record the email is about - and lists the whole vocabulary,
+                     not only the tags the current body happens to use. --}}
+                @forelse ($merge['groups'] as $group)
+                    <h4 class="ao-ano-heading">{{ $group['heading'] }}</h4>
+                    @foreach ($group['rows'] as $row)
+                        <p class="ao-ete-mrow"><span>{{ $row['label'] }}</span><code class="ao-ete-token">{{ $row['token'] }}</code></p>
+                    @endforeach
                 @empty
                     <p class="ao-cpg-muted">This template takes no fields.</p>
                 @endforelse
@@ -340,7 +336,7 @@
                 @if ($merge['links'])
                     <h4 class="ao-ano-heading">Links</h4>
                     @foreach ($merge['links'] as $link)
-                        <p class="ao-ete-mrow"><span>{{ $labelFor($link) }}</span><code class="ao-ete-token">{{ $link }}</code></p>
+                        <p class="ao-ete-mrow"><span>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditEmailTemplate::labelFor($link) }}</span><code class="ao-ete-token">{{ $link }}</code></p>
                     @endforeach
                 @endif
             </div>
