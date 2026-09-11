@@ -418,8 +418,18 @@
                     @else
                         <div class="ao-et-msg-text">{!! \Illuminate\Support\Str::markdown(e($message->message)) !!}</div>
                     @endif
+                    {{-- Core already serves the file (tickets.attachments.show, gated by the
+                         attachment policy's view check); the thread only ever printed the name.
+                         The reference makes the name the download, so link it. --}}
                     @foreach ($message->attachments as $attachment)
-                        <p class="ao-et-msg-file">&#128206; {{ $attachment->filename }}</p>
+                        <p class="ao-et-msg-file">
+                            &#128206;
+                            <a class="ao-et-msg-dl" href="{{ route('tickets.attachments.show', $attachment->uuid) }}">
+                                {{ $attachment->filename }}</a>
+                            @if ($attachment->filesize)
+                                <span class="ao-et-msg-size">({{ $this->formatSize($attachment->filesize) }})</span>
+                            @endif
+                        </p>
                     @endforeach
                 </div>
             </div>
