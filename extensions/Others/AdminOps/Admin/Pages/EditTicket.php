@@ -82,6 +82,26 @@ class EditTicket extends Page
     /** @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile> */
     public array $attachments = [];
 
+    /**
+     * How many file rows the Attach Files panel is drawing.
+     *
+     * The reference's panel opens with one Choose File and grows a row each time you press
+     * Add More, rather than asking the OS picker for several at once. One `wire:model` per
+     * row is what makes each row an independent choice, so the count has to live here.
+     */
+    public int $attachSlots = 1;
+
+    /** Megabytes, from the rule {@see sendReply()} validates with — said once, in one place. */
+    public const MAX_ATTACHMENT_KB = 102400;
+
+    /**
+     * The reference's More options → Add Billing Entry: an ad-hoc charge raised from the
+     * ticket that prompted it, against the ticket's own client.
+     */
+    public array $billing = [
+        'description' => '', 'amount' => '', 'quantity' => '1', 'action' => 'next_invoice',
+    ];
+
     public string $note = '';
 
     /** The note tab's own status select — the reference's "- Set Status -". */
@@ -243,12 +263,90 @@ class EditTicket extends Page
         }
     }
 
+    /** The reference's Add More: one more Choose File row, capped so the panel stays a panel. */
+    public function addAttachSlot(): void
+    {
+        $this->attachSlots = min(10, $this->attachSlots + 1);
+    }
+
+    /**
+     * The reference's More options → Insert Knowledgebase Link.
+     *
+     * The link is the customer-facing address, built from the named route rather than
+     * assembled here — a staff-only admin URL pasted into a reply is a dead end for the
+     * person reading it.
+     */
+    public function insertKbLink(string $id): void
+    {
+        if (!ctype_digit($id) || !class_exists(\Paymenter\Extensions\Others\Knowledgebase\Models\KbArticle::class)) {
+            return;
+        }
+
+        $article = \Paymenter\Extensions\Others\Knowledgebase\Models\KbArticle::find((int) $id);
+
+        if (!$article) {
+            return;
+        }
+
+        try {
+            $url = route('knowledgebase.show', $article->slug);
+        } catch (\Throwable $exception) {
+            // The extension's routes are not registered — no address to paste.
+            return;
+        }
+
+        $this->reply = trim($this->reply . "\n\n[" . $article->title . '](' . $url . ')');
+    }
+
+    /**
+     * The reference's More options → Add Billing Entry.
+     *
+     * A real BillableItems row against this ticket's client, which is the same record the
+     * Billable Items screen makes and the same one the invoice sweeper picks up.
+     */
+    public function addBillingEntry(): void
+    {
+        $model = \Paymenter\Extensions\Others\BillableItems\Models\BillableItem::class;
+
+        if (!class_exists($model) || !Schema::hasTable('ext_billable_items')) {
+            Notification::make()->title('Billable Items is not installed')->danger()->send();
+
+            return;
+        }
+
+        $this->validate([
+            'billing.description' => 'required|string|max:255',
+            'billing.amount' => 'required|numeric|min:0',
+            'billing.quantity' => 'required|numeric|min:0.01',
+            'billing.action' => 'required|in:next_invoice,immediately,hold',
+        ], attributes: [
+            'billing.description' => 'description', 'billing.amount' => 'amount',
+            'billing.quantity' => 'quantity', 'billing.action' => 'invoice action',
+        ]);
+
+        $model::create([
+            'user_id' => $this->ticket->user_id,
+            'description' => $this->billing['description'],
+            'quantity' => (float) $this->billing['quantity'],
+            'amount' => (float) $this->billing['amount'],
+            'currency_code' => config('settings.default_currency', 'USD'),
+            'invoice_action' => $this->billing['action'],
+            'admin_id' => Auth::id(),
+        ]);
+
+        $this->billing = [
+            'description' => '', 'amount' => '', 'quantity' => '1', 'action' => 'next_invoice',
+        ];
+
+        Notification::make()->title('Billing entry added')->success()->send();
+    }
+
     public function sendReply(): void
     {
         $this->validate([
             'reply' => 'required|string',
             'replyStatus' => 'in:' . implode(',', array_keys(self::STATUSES)),
-            'attachments.*' => 'file|max:102400',
+            'attachments.*' => 'file|max:' . self::MAX_ATTACHMENT_KB,
         ], attributes: ['reply' => 'message']);
 
         $message = $this->ticket->messages()->create([
@@ -256,7 +354,9 @@ class EditTicket extends Page
             'message' => $this->reply,
         ]);
 
-        foreach ($this->attachments as $attachment) {
+        // One entry per row of the panel, and a row the admin opened but never filled is
+        // null — iterating those straight into getClientOriginalExtension() is a fatal.
+        foreach (array_filter($this->attachments) as $attachment) {
             $name = Str::ulid() . '.' . $attachment->getClientOriginalExtension();
 
             // Facts first, then the move: storeAs() takes the upload out of livewire-tmp,
@@ -300,7 +400,7 @@ class EditTicket extends Page
             }
         }
 
-        $this->reset(['reply', 'attachments']);
+        $this->reset(['reply', 'attachments', 'attachSlots']);
 
         Notification::make()->title('Reply sent')->success()->send();
 
@@ -661,6 +761,18 @@ class EditTicket extends Page
             'canned' => Schema::hasTable('canned_responses')
                 ? \Paymenter\Extensions\Others\TicketTools\Models\CannedResponse::where('active', true)->orderBy('title')->get()
                 : collect(),
+            // The reference's More options → Insert Knowledgebase Link picks from what a
+            // customer can actually read, so a reply never links to an unpublished draft.
+            'kbArticles' => class_exists(\Paymenter\Extensions\Others\Knowledgebase\Models\KbArticle::class)
+                && Schema::hasTable('ext_kb_articles')
+                    ? \Paymenter\Extensions\Others\Knowledgebase\Models\KbArticle::published()
+                        ->with('category:id,name')->orderBy('title')->get(['id', 'category_id', 'title'])
+                    : collect(),
+            // Add Billing Entry is only offered when there is somewhere to put the row.
+            'canBill' => class_exists(\Paymenter\Extensions\Others\BillableItems\Models\BillableItem::class)
+                && Schema::hasTable('ext_billable_items'),
+            'billingCurrency' => config('settings.default_currency', 'USD'),
+            'maxAttachmentMb' => (int) round(self::MAX_ATTACHMENT_KB / 1024),
             'notes' => Schema::hasTable('ticket_notes')
                 ? \Paymenter\Extensions\Others\TicketTools\Models\TicketNote::with('author')
                     ->where('ticket_id', $this->ticket->id)->latest()->get()
