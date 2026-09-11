@@ -190,6 +190,22 @@ class EditTicket extends Page
         return (string) $this->ticket->status;
     }
 
+    /** A stored byte count as the thread prints it beside an attachment's name. */
+    public function formatSize(int|string|null $bytes): string
+    {
+        $bytes = (int) $bytes;
+
+        foreach (['B', 'KB', 'MB', 'GB'] as $unit) {
+            if ($bytes < 1024 || $unit === 'GB') {
+                return ($unit === 'B' ? $bytes : round($bytes, 1)) . ' ' . $unit;
+            }
+
+            $bytes /= 1024;
+        }
+
+        return $bytes . ' B';
+    }
+
     /** A picked status key to the value the column stores — Customer-Reply IS open here. */
     private function storableStatus(string $status): ?string
     {
