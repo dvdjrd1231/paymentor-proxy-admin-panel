@@ -102,6 +102,13 @@ class RewardAffiliate
                 ? \Paymenter\Extensions\Others\AdminOps\Models\Meta::for($product)
                 : [];
 
+            // Edit Product's "One Time Payout (Default is Recurring)". Saved since the tab
+            // was built but never read, so the box did nothing; a line that is this
+            // service's second or later invoice pays no commission when it is ticked.
+            if (($meta['affiliate_one_time'] ?? '') === '1' && static::isRenewal($item)) {
+                continue;
+            }
+
             switch ($meta['affiliate_payout'] ?? 'default') {
                 case 'none':
                     break;
@@ -117,6 +124,22 @@ class RewardAffiliate
         }
 
         return $total;
+    }
+
+    /**
+     * Whether this line is a renewal rather than the sale: an earlier invoice already
+     * carried a line for the same service.
+     */
+    private static function isRenewal($item): bool
+    {
+        if (!$item->reference_type || !$item->reference_id) {
+            return false;
+        }
+
+        return \App\Models\InvoiceItem::where('reference_type', $item->reference_type)
+            ->where('reference_id', $item->reference_id)
+            ->where('id', '<', $item->id)
+            ->exists();
     }
 
     /** The product an invoice line sells, where the line references a service. */
