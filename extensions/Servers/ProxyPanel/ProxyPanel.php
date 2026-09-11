@@ -656,12 +656,14 @@ class ProxyPanel extends Server
                 return ['status' => 'ok', 'id' => $remoteId, 'description' => 'already provisioned'];
             }
 
-            // Whatever the order screen holds wins, which is the reference's contract: WHMCS
-            // hands the module `$params['username']` and `$params['password']` from the
-            // service row, so what an admin sees before accepting is what the panel gets.
-            // Only when nothing was set do we issue them — 8 characters either way.
+            // The reference's split. The username is the order screen's — WHMCS hands the
+            // module `$params['username']` — but the password is the module's own: it calls
+            // ModuleChangePw with `substr(sha1(random_bytes(10)), 0, 8)` and sends that,
+            // ignoring whatever the service row held. It has to, because the panel refuses
+            // anything longer than 8 characters or carrying a symbol, and the password
+            // WHMCS shows before the order is accepted is neither.
             $username = (string) ($this->prop($service, self::USERNAME_KEY) ?: $this->randomCredential());
-            $password = (string) ($this->prop($service, self::PASSWORD_KEY) ?: substr(sha1(random_bytes(10)), 0, 8));
+            $password = substr(sha1(random_bytes(10)), 0, 8);
             $amount = max(1, (int) ($settings['amount'] ?? 1));
             $bwlimit = (int) ($settings['bwlimit'] ?? 0);
 
