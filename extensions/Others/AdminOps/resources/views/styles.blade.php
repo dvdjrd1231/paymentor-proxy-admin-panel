@@ -8187,6 +8187,40 @@
 
     .ao-cs-banner-ic { width: 1.3rem; height: 1.3rem; flex: none; }
 
+    /* The Files panel's rows: the name downloads, the × removes. */
+    .ao-cs-file {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.25rem 0;
+        font-size: 0.85rem;
+    }
+
+    .ao-cs-file-name {
+        overflow: hidden;
+        border: 0;
+        background: none;
+        text-align: start;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .ao-cs-file-x {
+        flex: none;
+        border: 0;
+        background: none;
+        color: #a94442;
+        font-size: 1.05rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .ao-cs-file-add { cursor: pointer; }
+
+    .ao-mud-wide { width: 20rem; }
+
     .ao-mud-text { padding: 1.1rem 1.5rem 0; }
 
     .ao-mud-text p + p { margin-top: 0.8rem; }

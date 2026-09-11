@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Livewire\Attributes\Url;
 use Paymenter\Extensions\Others\AdminOps\Models\ClientNote;
+use Paymenter\Extensions\Others\AdminOps\Models\ClientFile;
 use Paymenter\Extensions\Others\AdminOps\Models\Meta;
 use Paymenter\Extensions\Others\AdminOps\Support\Money;
 use Paymenter\Extensions\Others\ClientTools\Models\Contact;
@@ -36,6 +37,8 @@ use Paymenter\Extensions\Others\ClientTools\Models\Contact;
  */
 class ClientSummary extends Page
 {
+    use \Livewire\WithFileUploads;
+
     protected string $view = 'adminops::pages.client-summary';
 
     protected static ?string $slug = 'client-summary';
@@ -328,6 +331,198 @@ class ClientSummary extends Page
             ->body('The balance is now ' . number_format((float) $credit->amount, 2) . ' ' . $currency . '.')
             ->success()->send();
     }
+
+    /**
+     * The reference's Generate Due Invoices, for this client alone. Core's cron raises
+     * these for the whole store once a day (app:cron-job, "invoices_created"); this is the
+     * same rule run now and scoped to one account, which is what the reference's button
+     * does. Nothing is invoiced twice: a service that already has a pending invoice, or a
+     * cancellation on file, is skipped exactly as the cron skips it.
+     */
+    /**
+     * The reference's Files panel, made real. Core keeps nothing per client, so the file
+     * is AdminOps' own: stored off the public disk and handed back through a download this
+     * page authorises, never by a guessable URL.
+     *
+     * @var \Livewire\Features\SupportFileUploads\TemporaryUploadedFile|null
+     */
+    public $clientFile = null;
+
+    public function updatedClientFile(): void
+    {
+        Gate::authorize('has-permission', 'admin.users.update');
+
+        $this->validate(
+            ['clientFile' => 'required|file|max:102400'],
+            attributes: ['clientFile' => 'file'],
+        );
+
+        $file = $this->clientFile;
+
+        // Read the file's own facts before storing it: storeAs() moves the upload out of
+        // livewire-tmp, and asking afterwards reads a path that no longer exists.
+        $name = $file->getClientOriginalName();
+        $size = $file->getSize();
+        $mime = (string) $file->getMimeType();
+
+        $stored = $file->storeAs(
+            'client-files/' . $this->customer->id,
+            \Illuminate\Support\Str::ulid() . '.' . ($file->getClientOriginalExtension() ?: 'bin'),
+        );
+
+        ClientFile::create([
+            'user_id' => $this->customer->id,
+            'uploaded_by' => Auth::id(),
+            'filename' => $name,
+            'path' => $stored,
+            'filesize' => $size,
+            'mime_type' => $mime,
+        ]);
+
+        $this->clientFile = null;
+
+        Notification::make()->title('File uploaded')->body($name . ' is on this client.')->success()->send();
+    }
+
+    public function downloadClientFile(int $id): StreamedResponse
+    {
+        Gate::authorize('has-permission', 'admin.users.viewAny');
+
+        $file = ClientFile::where('user_id', $this->customer->id)->findOrFail($id);
+
+        abort_unless(is_file($file->absolutePath()), 404);
+
+        return response()->streamDownload(
+            fn () => readfile($file->absolutePath()),
+            $file->filename,
+            ['Content-Type' => $file->mime_type ?: 'application/octet-stream'],
+        );
+    }
+
+    public function deleteClientFile(int $id): void
+    {
+        Gate::authorize('has-permission', 'admin.users.update');
+
+        $file = ClientFile::where('user_id', $this->customer->id)->findOrFail($id);
+
+        if (is_file($file->absolutePath())) {
+            @unlink($file->absolutePath());
+        }
+
+        $file->delete();
+
+        Notification::make()->title('File removed')->success()->send();
+    }
+
+    public function generateDueInvoices(): void
+    {
+        Gate::authorize('has-permission', 'admin.invoices.create');
+
+        $window = (int) config('settings.cronjob_invoice', 7);
+        $made = 0;
+
+        DB::transaction(function () use ($window, &$made): void {
+            $services = Service::where('user_id', $this->customer->id)
+                ->where('status', 'active')
+                ->where('expires_at', '<', now()->addDays($window))
+                ->get();
+
+            foreach ($services as $service) {
+                if ($service->invoices()->where('status', 'pending')->exists() || $service->cancellation()->exists()) {
+                    continue;
+                }
+
+                // A free service has nothing to bill; the cron renews it instead, and that
+                // is a decision for the cron rather than for a button on one client.
+                if ((float) $service->price <= 0) {
+                    continue;
+                }
+
+                $invoice = $service->invoices()->make([
+                    'user_id' => $service->user_id,
+                    'status' => 'pending',
+                    'due_at' => $service->expires_at,
+                    'currency_code' => $service->currency_code,
+                ]);
+
+                $invoice->save();
+
+                $invoice->items()->create([
+                    'reference_id' => $service->id,
+                    'reference_type' => Service::class,
+                    'price' => $service->price,
+                    'quantity' => $service->quantity,
+                    'description' => $service->description,
+                ]);
+
+                $made++;
+            }
+        });
+
+        Notification::make()
+            ->title($made ? $made . ' invoice(s) generated' : 'Nothing due')
+            ->body($made
+                ? 'Raised for every active service falling due within ' . $window . ' days.'
+                : 'No active service of this client falls due within ' . $window . ' days without an invoice already waiting.')
+            ->{$made ? 'success' : 'warning'}()->send();
+    }
+
+    /**
+     * The reference's Merge Clients Accounts: everything this account holds moves to
+     * another, and this one is closed. Core has no merge of its own, so the move is done
+     * row by row over the records that name a user - and only those, so nothing is
+     * silently left pointing at an account that no longer trades.
+     */
+    public string $mergeInto = '';
+
+    public function mergeAccounts(): void
+    {
+        Gate::authorize('has-permission', 'admin.users.update');
+
+        $this->validate(
+            ['mergeInto' => 'required|integer|exists:users,id'],
+            attributes: ['mergeInto' => 'account'],
+        );
+
+        $target = User::findOrFail((int) $this->mergeInto);
+
+        abort_if($target->id === $this->customer->id, 422);
+
+        $moved = DB::transaction(function () use ($target): array {
+            $counts = [];
+
+            foreach (static::MERGEABLE as $table) {
+                if (!Schema::hasTable($table) || !Schema::hasColumn($table, 'user_id')) {
+                    continue;
+                }
+
+                $n = DB::table($table)->where('user_id', $this->customer->id)->update(['user_id' => $target->id]);
+
+                if ($n) {
+                    $counts[$table] = $n;
+                }
+            }
+
+            return $counts;
+        });
+
+        // The emptied account is closed rather than deleted: deleting it would take the
+        // audit trail with it, and the reference leaves the merged-from account in place.
+        Meta::put($this->customer, 'closed_at', now()->toDateTimeString());
+
+        $this->mergeInto = '';
+
+        Notification::make()
+            ->title('Accounts merged')
+            ->body(array_sum($moved) . ' record(s) moved to ' . trim($target->first_name . ' ' . $target->last_name) . ' (#' . $target->id . '). This account is now closed.')
+            ->success()->send();
+    }
+
+    /** The tables that name an owner and so move with a merge. */
+    private const MERGEABLE = [
+        'services', 'invoices', 'orders', 'tickets', 'credits', 'invoice_transactions',
+        'billable_items', 'quotes', 'email_logs', 'ext_client_files',
+    ];
 
     /** The reference's Export Client Data: everything held on this account, as a file. */
     public function exportClientData(): StreamedResponse
@@ -1314,6 +1509,14 @@ class ClientSummary extends Page
         return [
             'user' => $this->customer,
             'tabs' => $this->tabLabels(),
+            // The Files panel, and the accounts a merge could go into — every other
+            // client, nearest name first, so the list is usable without a search box.
+            'clientFiles' => Schema::hasTable('ext_client_files')
+                ? ClientFile::where('user_id', $this->customer->id)->orderByDesc('id')->get()
+                : collect(),
+            'mergeCandidates' => User::whereNull('role_id')
+                ->where('id', '!=', $this->customer->id)
+                ->orderBy('first_name')->limit(500)->get(),
             'clientGroup' => \Paymenter\Extensions\Others\AdminOps\Support\ClientGroup::forUser($this->customer->id),
             'clientGroups' => Schema::hasTable('ext_client_groups')
                 ? DB::table('ext_client_groups')->orderBy('name')->get()
