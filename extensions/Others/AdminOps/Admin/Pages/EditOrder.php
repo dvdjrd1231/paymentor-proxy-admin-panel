@@ -518,6 +518,10 @@ class EditOrder extends Page
         $invoice = $this->order->services->flatMap->invoices->unique('id')->sortBy('id')->first();
 
         return [
+            // What an addon on this order belongs to, read in one query for the whole
+            // table — the same tie the Products/Services list shows.
+            'addonParents' => \Paymenter\Extensions\Others\AdminOps\Models\ServiceAddon::whereIn('service_id', $this->order->services->pluck('id'))
+                ->with('parent.product')->get()->keyBy('service_id'),
             'products' => Product::with('category')->orderBy('name')->get(['id', 'name', 'category_id']),
             'plansByItem' => collect($this->items)->map(fn ($item) => $this->plansFor($item['productId'])),
             'payment' => ManageOrders::paymentOf($this->order),

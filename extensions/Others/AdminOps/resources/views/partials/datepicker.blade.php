@@ -90,10 +90,13 @@
     }"
     x-on:click.outside="open = false"
     x-on:keydown.escape.window="open = false">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"
-        width="13" height="13" aria-hidden="true">
-        <rect x="1.8" y="2.8" width="12.4" height="11.4" rx="1.5" />
-        <path d="M1.8 6.2h12.4M5 1.2v3.2M11 1.2v3.2" />
+    {{-- A filled header band and heavier rings read at this size where the old hairline
+         outline did not (Leandro, 2026-09-12: "Change date icon for better readability").
+         Sized in CSS, so it scales with the field rather than being pinned to 13px. --}}
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <rect x="1.5" y="3" width="13" height="11.5" rx="1.6" />
+        <path d="M1.5 6.6h13" stroke-width="2.2" />
+        <path d="M5 1.5v3M11 1.5v3" stroke-linecap="round" stroke-width="1.8" />
     </svg>
     <input @nofill x-ref="input" id="{{ $id }}" class="{{ $class ?? 'ao-of-lg' }}" type="text"
         wire:model="{{ $model }}" x-on:click="show()" x-on:focus="show()"
