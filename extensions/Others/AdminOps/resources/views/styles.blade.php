@@ -2085,12 +2085,24 @@
         .ao-dr-presets { border-right: 0; border-bottom: 1px solid var(--wa-panel-border, #ddd); }
     }
 
-    .ao-of-date svg { position: absolute; left: 0.5rem; color: #777; pointer-events: none; }
+    /* The icon's inset and the room the text leaves for it are one number now. They used
+       to be two: the icon moved to 1.2rem inside a painted row while the padding stayed
+       at 1.65rem, so the calendar sat on top of the first characters and a date read as
+       scrambled (Leandro, 2026-09-12). Bigger and darker too, for legibility. */
+    .ao-of-date { --ao-date-ic: 0.5rem; }
 
-    /* As a painted cell the wrapper carries padding, so the icon's anchor moves with it. */
-    .ao-of-row > .ao-of-date svg { left: 1.2rem; }
+    .ao-of-row > .ao-of-date { --ao-date-ic: 1.2rem; }
 
-    .ao-of-date input { padding-left: 1.65rem; }
+    .ao-of-date svg {
+        position: absolute;
+        left: var(--ao-date-ic);
+        width: 0.95rem;
+        height: 0.95rem;
+        color: #555;
+        pointer-events: none;
+    }
+
+    .ao-of-date input { padding-left: calc(var(--ao-date-ic) + 1.35rem); }
 
     /* The honestly-dead IP field: readable as a field, unmistakably inert. */
     .ao-of-row input:disabled {
@@ -3502,6 +3514,16 @@
     .ao-mu-left { text-align: left !important; }
 
     .ao-mu-dim { color: var(--wa-muted, #6b6b6b); }
+
+    /* A secondary line under a table cell's main text — "Addon of …" under the product it
+       belongs to. Inline it ran straight on from the name and the two read as one long
+       title (Leandro, 2026-09-12: "No line breaks"). */
+    .ao-mu-sub {
+        display: block;
+        margin-top: 0.15rem;
+        color: var(--wa-muted, #6b6b6b);
+        font-size: 0.8rem;
+    }
 
     .ao-mu-cell-icon {
         width: 1rem;

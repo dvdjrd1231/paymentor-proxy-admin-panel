@@ -154,6 +154,12 @@
                         </td>
                         <td class="ao-mu-left">
                             {{ trim(($service->product?->category?->name ? $service->product->category->name . ' - ' : '') . ($service->product?->name ?? '—')) }}
+                            {{-- The reference's second line: what this line item belongs to.
+                                 An addon read as an ordinary product with nothing to tie it
+                                 to its service (Leandro, 2026-09-12). --}}
+                            @if ($parent = $addonParents->get($service->id)?->parent)
+                                <span class="ao-mu-sub">{{ __('theme.addon_of', ['service' => $parent->product?->name ?? ('#' . $parent->id)]) }}</span>
+                            @endif
                         </td>
                         <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::cycle($service) }}</td>
                         <td>${{ number_format((float) $service->price * max(1, (int) $service->quantity), 2) }} {{ $order->currency_code }}</td>

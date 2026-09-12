@@ -120,7 +120,6 @@
                     <th class="ao-mu-check"><input type="checkbox" data-ao-check-all></th>
                     <th>ID &#9662;</th>
                     <th>Product/Service</th>
-                    <th>Domain</th>
                     <th>Client Name</th>
                     <th>Price</th>
                     <th>Billing Cycle</th>
@@ -158,14 +157,10 @@
                                 @if ($addon?->parent)&#8618; @endif{{ $service->product?->name ?? '—' }}
                             </a>
                             @if ($addon?->parent)
-                                <span class="ao-mu-dim">{{ __('theme.addon_of', ['service' => $addon->parent->product?->name ?? ('#' . $addon->parent->id)]) }}</span>
-                            @endif
-                        </td>
-                        <td>
-                            @if ($serviceDomain = $service->properties->firstWhere('key', 'domain')?->value)
-                                {{ $serviceDomain }}
-                            @else
-                                <span class="ao-mu-dim">(No Domain)</span>
+                                {{-- Its own line under the name, as the reference sets it:
+                                     inline it ran straight on from the product and the two
+                                     read as one long title (Leandro, 2026-09-12). --}}
+                                <span class="ao-mu-sub">{{ __('theme.addon_of', ['service' => $addon->parent->product?->name ?? ('#' . $addon->parent->id)]) }}</span>
                             @endif
                         </td>
                         <td>
@@ -207,7 +202,7 @@
                             $method = $service->invoices->flatMap->transactions->first()?->gateway?->name;
                         @endphp
                         <tr class="ao-ps-detail">
-                            <td colspan="10">
+                            <td colspan="9">
                                 <div class="ao-ps-detail-grid">
                                     <dl>
                                         <dt>Order #</dt><dd>{{ $service->order_id }}</dd>
@@ -239,7 +234,7 @@
                         </tr>
                     @endif
                 @empty
-                    <tr><td colspan="10" class="ao-mu-none">No Records Found</td></tr>
+                    <tr><td colspan="9" class="ao-mu-none">No Records Found</td></tr>
                 @endforelse
             </tbody>
         </table>
