@@ -718,6 +718,12 @@ class ProxyPanel extends Server
                 'remote' => $newId,
             ]);
 
+            // And ask, rather than only waiting to be told: the callback is still what
+            // normally confirms this, but a panel whose operators have not wired the URL
+            // up leaves the service Pending for ever with its proxies already delivered.
+            // {@see Support\ConfirmActivation}
+            Support\ConfirmActivation::schedule($service);
+
             return $res;
         });
     }
