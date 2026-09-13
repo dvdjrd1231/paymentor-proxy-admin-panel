@@ -2533,6 +2533,10 @@
     /* Its fact label columns run ~205px; ours were 161px, which is what pushed the
        values out of line with the reference's. */
     .ao-eo-facts .ao-of-row-single { grid-template-columns: 12rem minmax(0, 1fr); }
+
+    /* A fact wraps rather than forcing its card wider than the column it sits in — an IP
+       row with its Lookup | Filter | Ban links is the long one. */
+    .ao-eo-facts .ao-eo-fact { min-width: 0; overflow-wrap: anywhere; }
     .ao-eo .ao-of-row { grid-template-columns: 12rem minmax(0, 1fr) 12rem minmax(0, 1fr); }
 
     /* The reference sets the item in bold ink; the hop to the service editor stays,
@@ -2994,6 +2998,33 @@
     .ao-ete-merge { max-height: 26rem; overflow-y: auto; }
     .ao-ete-box .ao-ete-source { border: 0; border-radius: 0; }
     .ao-ete-box .ao-ete-preview { border: 0; border-radius: 0; }
+
+    /* The preview reads as the email, not as the source beside it: real headings, real
+       lists, a real table (Leandro, 2026-09-13 — "the preview mode is behaving exactly
+       like the source code, but they need to be different"). */
+    .ao-ete-preview h1 { margin: 0 0 0.6rem; font-size: 1.5rem; font-weight: 700; line-height: 1.25; }
+    .ao-ete-preview h2 { margin: 1rem 0 0.5rem; font-size: 1.25rem; font-weight: 700; }
+    .ao-ete-preview h3 { margin: 0.9rem 0 0.4rem; font-size: 1.05rem; font-weight: 700; }
+    .ao-ete-preview p { margin: 0 0 0.8rem; line-height: 1.5; }
+    .ao-ete-preview strong { font-weight: 700; }
+    .ao-ete-preview em { font-style: italic; }
+    .ao-ete-preview a { color: var(--wa-link, #337ab7); text-decoration: underline; }
+    .ao-ete-preview ul,
+    .ao-ete-preview ol { margin: 0 0 0.8rem 1.4rem; padding: 0; }
+    .ao-ete-preview li { margin-bottom: 0.25rem; list-style: disc; }
+    .ao-ete-preview ol li { list-style: decimal; }
+    .ao-ete-preview hr { margin: 1rem 0; border: 0; border-top: 1px solid var(--wa-panel-border, #ddd); }
+    .ao-ete-preview blockquote {
+        margin: 0 0 0.8rem;
+        padding: 0.4rem 0.9rem;
+        border-left: 3px solid var(--wa-panel-border, #ddd);
+        color: var(--wa-muted, #6b6b6b);
+    }
+
+    .ao-ete-preview table { width: 100%; margin: 0 0 0.9rem; border-collapse: collapse; }
+    .ao-ete-preview th,
+    .ao-ete-preview td { padding: 0.35rem 0.6rem; border: 1px solid var(--wa-panel-border, #ddd); }
+    .ao-ete-preview th { background: #f5f5f5; font-weight: 700; }
 
     /* The reference's word count, on the editor's bottom edge and right-aligned. */
     .ao-ete-count {
@@ -6865,69 +6896,48 @@
     /* Checkbox rows keep their label beside the box. */
     .ao-gs-page .ao-gs-field > input[type="checkbox"] { display: inline-block; width: auto; }
 
-    .ao-gs-hint { color: var(--wa-muted, #6b6b6b); font-size: 0.86rem; line-height: 1.35; }
-
-    .ao-gs-empty { margin: 0.4rem 0; }
-
-    .ao-gs-actions { display: flex; justify-content: center; gap: 0.6rem; margin-top: 1rem; }
-
-    /* ── Branding ────────────────────────────────────────────────────────────
-       Each row shows what is live beside the chooser, so it is obvious which of
-       the three a given picture is. */
-    .ao-gs-errors {
-        margin-bottom: 0.8rem;
-        padding: 0.5rem 0.7rem;
-        border: 1px solid #ebccd1;
-        border-radius: 4px;
-        background: #f2dede;
-        color: #a94442;
-        font-size: 0.85rem;
-    }
-
-    /* Three controls sit in this column — preview, chooser, Remove — where General
-       Settings' rows hold one, so the column is widened for them. At 24rem the Remove
-       button ran out past the field and printed on top of the hint. */
-    .ao-br-page .ao-gs-row {
-        grid-template-columns: 12rem minmax(0, 30rem) minmax(0, 1fr);
-        padding: 0.5rem 0.6rem;
-    }
-
-    .ao-br-page .ao-br-field {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
+    /* Leandro, 2026-09-13: "All fields in each General Settings tab must be the same size."
+       Every control on the page is the width of the field column and one height, whatever
+       kind it is — a select was shrink-to-fit and a textarea brought its own rows. */
+    .ao-gs-page .ao-gs-field > input:not([type="checkbox"]),
+    .ao-gs-page .ao-gs-field > select,
+    .ao-gs-page .ao-gs-field > textarea {
+        box-sizing: border-box;
+        width: 100%;
         min-width: 0;
+        max-width: none;
     }
 
-    .ao-br-preview {
+    .ao-gs-page .ao-gs-field > input:not([type="checkbox"]),
+    .ao-gs-page .ao-gs-field > select { height: 2.1rem; }
+
+    .ao-gs-page .ao-gs-field > textarea { min-height: 5.5rem; }
+
+    /* An image row: what is live, the chooser, and Remove — sized like every other row. */
+    .ao-gs-file { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+
+    .ao-gs-file-prev {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 8rem;
-        height: 3rem;
-        padding: 0.2rem;
+        flex: none;
+        width: 6.5rem;
+        height: 2.1rem;
+        padding: 0.15rem;
         border: 1px solid var(--wa-border, #ccc);
         border-radius: 4px;
         background: #fff;
     }
 
-    .ao-br-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .ao-gs-file-prev img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
-    .ao-br-empty { color: var(--wa-muted, #6b6b6b); font-size: 0.8rem; }
+    .ao-gs-file-prev i { color: var(--wa-muted, #6b6b6b); font-size: 0.75rem; font-style: normal; }
 
-    .ao-br-controls {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
+    .ao-gs-page .ao-gs-field .ao-gs-file input[type="file"] {
+        flex: 1 1 auto;
+        width: auto;
         min-width: 0;
-        font-size: 0.85rem;
-    }
-
-    /* The native chooser, boxed like every other control on the page instead of sitting
-       bare on the row, and never wider than what is left of the column. */
-    .ao-br-controls input[type="file"] {
-        min-width: 0;
-        max-width: 100%;
+        height: 2.1rem;
         padding: 0.3rem 0.5rem;
         border: 1px solid var(--wa-border, #ccc);
         border-radius: 4px;
@@ -6935,11 +6945,9 @@
         font-size: 0.8rem;
     }
 
-    .ao-br-note { color: var(--wa-muted, #6b6b6b); font-size: 0.8rem; }
-
-    .ao-br-clear {
-        flex: 0 0 auto;
-        padding: 0.3rem 0.75rem;
+    .ao-gs-file-x {
+        flex: none;
+        padding: 0.3rem 0.7rem;
         border: 1px solid #d43f3a;
         border-radius: 4px;
         background: #d9534f;
@@ -6948,7 +6956,12 @@
         cursor: pointer;
     }
 
-    .ao-br-clear:hover { background: #c9302c; }
+    .ao-gs-hint { color: var(--wa-muted, #6b6b6b); font-size: 0.86rem; line-height: 1.35; }
+
+    .ao-gs-empty { margin: 0.4rem 0; }
+
+    .ao-gs-actions { display: flex; justify-content: center; gap: 0.6rem; margin-top: 1rem; }
+
 
     .ao-gs-cancel {
         display: inline-flex;

@@ -19,6 +19,8 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  */
 class GeneralSettings extends Page
 {
+    use \Livewire\WithFileUploads;
+
     protected string $view = 'adminops::pages.general-settings';
 
     protected static ?string $slug = 'general-settings';
@@ -45,6 +47,22 @@ class GeneralSettings extends Page
 
     /** @var array<string, mixed> */
     public array $values = [];
+
+    /**
+     * The reference keeps its Logo URL on the General tab, so the three image settings
+     * live here rather than on a screen of their own (Leandro, 2026-09-13). Uploads are
+     * their own property: a file cannot ride in `$values` with the text settings.
+     *
+     * @var array<string, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile|null>
+     */
+    public array $uploads = [];
+
+    /** The base name core stores each image under, and what it will accept. */
+    public const IMAGES = [
+        'logo' => ['file' => 'logo-light', 'accept' => 'image/*'],
+        'logo_dark' => ['file' => 'logo-dark', 'accept' => 'image/*'],
+        'favicon' => ['file' => 'favicon', 'accept' => 'image/x-icon,image/png,image/svg+xml'],
+    ];
 
     public static function canAccess(): bool
     {
@@ -120,13 +138,21 @@ class GeneralSettings extends Page
                 continue;
             }
 
-            // Uploads stay on core's own form: a text box bound to a file setting would
-            // only corrupt it.
-            if (in_array($definition['type'] ?? 'text', ['file', 'placeholder'], true)) {
-                $rows[] = [
+            // A file setting is drawn as a chooser with a preview, not sent elsewhere.
+            if (($definition['type'] ?? 'text') === 'file') {
+                $rows[] = array_merge($definition, [
+                    'type' => 'file',
                     'label' => $row['label'],
-                    'why' => 'This is an uploaded file — set it under Setup → System Settings.',
-                ];
+                    'hint' => $row['hint'] ?? ($definition['description'] ?? null),
+                    'accept' => self::IMAGES[$definition['name']]['accept'] ?? 'image/*',
+                    'current' => $this->currentUrl($definition['name']),
+                ]);
+
+                continue;
+            }
+
+            if (($definition['type'] ?? 'text') === 'placeholder') {
+                $rows[] = ['label' => $row['label'], 'why' => $row['why'] ?? ''];
 
                 continue;
             }
@@ -156,10 +182,93 @@ class GeneralSettings extends Page
             ->merge(SettingsReference::own());
     }
 
+    /** What is on the public disk now for one image setting, as a URL the page can show. */
+    public function currentUrl(string $key): ?string
+    {
+        $value = config('settings.' . $key);
+
+        if (!$value || !\Illuminate\Support\Facades\Storage::disk('public')->exists($value)) {
+            return null;
+        }
+
+        // Cache-busted: the file name does not change between uploads, so a browser that
+        // has seen the old picture would go on showing it.
+        return \Illuminate\Support\Facades\Storage::url($value)
+            . '?v=' . \Illuminate\Support\Facades\Storage::disk('public')->lastModified($value);
+    }
+
+    /** Drop an image back to the default, which is the app name as text. */
+    public function clearImage(string $key): void
+    {
+        Gate::authorize('has-permission', 'admin.settings.update');
+        abort_unless(array_key_exists($key, self::IMAGES), 404);
+
+        // The file goes with the row: an orphan nothing points at is never cleaned up.
+        if ($current = (string) config('settings.' . $key)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($current);
+        }
+
+        Setting::where('key', $key)->whereNull('settingable_type')->delete();
+
+        CoreSettings::flushCache();
+
+        // config was read at boot, so flushing the cache alone leaves this request holding
+        // the old value and the row redraws with the picture still on it.
+        config(['settings.' . $key => null]);
+
+        Notification::make()->title('Image removed')->success()->send();
+    }
+
+    /** Store whichever images were chosen. Called by save(), before the text settings. */
+    private function saveImages(): int
+    {
+        $saved = 0;
+
+        foreach (self::IMAGES as $key => $image) {
+            $file = $this->uploads[$key] ?? null;
+
+            if (!$file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                continue;
+            }
+
+            // Core renames whatever is uploaded to .webp or .ico whatever it actually is,
+            // which leaves a PNG sitting in a .ico that a browser will not draw. The real
+            // extension is kept and the setting records the full name, which is what core
+            // reads back.
+            $name = $image['file'] . '.' . strtolower($file->getClientOriginalExtension() ?: 'png');
+            $previous = (string) config('settings.' . $key);
+
+            if ($previous !== '' && $previous !== $name) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($previous);
+            }
+
+            $file->storeAs('', $name, ['disk' => 'public']);
+
+            Setting::updateOrCreate(
+                ['key' => $key, 'settingable_id' => null, 'settingable_type' => null],
+                ['value' => $name, 'type' => 'file', 'encrypted' => false],
+            );
+
+            config(['settings.' . $key => $name]);
+            $this->uploads[$key] = null;
+            $saved++;
+        }
+
+        return $saved;
+    }
+
     /** Saves core's way: same Setting rows, same change detection, same cache flush. */
     public function save(): void
     {
         Gate::authorize('has-permission', 'admin.settings.update');
+
+        $this->validate(
+            collect(self::IMAGES)->mapWithKeys(fn (array $image, string $key): array => [
+                'uploads.' . $key => ['nullable', 'file', 'max:4096', 'mimetypes:image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon'],
+            ])->all(),
+        );
+
+        $images = $this->saveImages();
 
         $definitions = $this->definitions();
         $stored = Setting::whereNull('settingable_type')
@@ -200,7 +309,9 @@ class GeneralSettings extends Page
 
         CoreSettings::flushCache();
 
-        Notification::make()->title('Saved successfully!')->success()->send();
+        Notification::make()->title('Saved successfully!')
+            ->body($images ? $images . ' image(s) uploaded.' : null)
+            ->success()->send();
     }
 
     protected function getViewData(): array

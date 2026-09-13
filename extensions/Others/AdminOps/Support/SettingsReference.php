@@ -69,6 +69,13 @@ class SettingsReference
                 ['setting' => 'company_name', 'label' => 'Company Name', 'hint' => 'Your Company Name as you want it to appear throughout the system'],
                 ['setting' => 'system_email_address', 'label' => 'Email Address', 'hint' => 'The default sender address used for emails sent by the system'],
                 ['setting' => 'app_url', 'label' => 'Domain', 'hint' => 'The URL to your website homepage'],
+                // The reference keeps its Logo URL on this tab, right here. Ours are
+                // uploads rather than a URL, but they belong in the same place — a
+                // separate Branding screen was one more thing to go and find
+                // (Leandro, 2026-09-13).
+                ['setting' => 'logo', 'label' => 'Logo', 'hint' => 'Shown on light backgrounds, across the admin and the client area'],
+                ['setting' => 'logo_dark', 'label' => 'Dark Logo', 'hint' => 'Used where the background is dark. Falls back to the logo above'],
+                ['setting' => 'favicon', 'label' => 'Favicon', 'hint' => 'The browser tab icon. A .ico, .png or .svg file'],
                 ['setting' => 'bill_to_text', 'label' => 'Pay To Text', 'hint' => 'This text is displayed on the invoice as the Pay To details'],
                 ['setting' => 'theme', 'label' => 'System Theme', 'hint' => 'The theme you want the client area to use'],
                 ['setting' => 'pagination', 'label' => 'Records to Display per Page', 'hint' => 'The number of records shown per page in listings'],
