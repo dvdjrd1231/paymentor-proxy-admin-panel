@@ -66,7 +66,11 @@ class EditEmailTemplate extends Page
     public array $locales = [];
 
     /** source | preview — the reference's rich-text/source toggle, honest version. */
-    public string $mode = 'source';
+    /**
+     * The reference's File ▸ Preview opens the rendered email in a dialog and leaves the
+     * editor where it is; it does not swap one surface for the other.
+     */
+    public bool $previewOpen = false;
 
     public static function getRoutePath(Panel $panel): string
     {

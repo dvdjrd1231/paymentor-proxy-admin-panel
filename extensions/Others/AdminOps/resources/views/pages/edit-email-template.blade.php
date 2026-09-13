@@ -243,37 +243,26 @@
                     <span class="ao-rte-sep"></span>
                     <button type="button" data-ao-act="fullscreen" title="Fullscreen">&#9974;</button>
                     <button type="button" data-ao-act="help" title="Markdown guide">?</button>
-                    {{-- The reference's `<>` - source against rendered. --}}
-                    @if ($mode === 'source')
-                        <button type="button" class="ao-ete-mode" wire:click="$set('mode', 'preview')"
-                            title="The rendered Markdown; placeholders show as tokens and are filled with the client's real values when the email sends">&lt;&gt;</button>
-                    @else
-                        <button type="button" class="ao-ete-mode ao-on" wire:click="$set('mode', 'source')"
-                            title="Back to the Markdown source">&lt;&gt;</button>
-                    @endif
+                    {{-- The reference's `<>` — the same rendered view its File ▸ Preview
+                         opens, which is a dialog over the editor rather than a swap of it. --}}
+                    <button type="button" class="ao-ete-mode" wire:click="$set('previewOpen', true)"
+                        title="See the email as the reader will">&lt;&gt;</button>
                     <button type="button" data-ao-act="clearfmt" title="Clear formatting">&#8455;x</button>
                 </div>
 
-                {{-- Its own strip under the toolbar, padded like the rows above it: bare
-                     on the box it sat 12px left of every control and read as detached. --}}
+                {{-- Its own strip under the toolbar, padded like the rows above it. --}}
                 <div class="ao-ete-modebar">
-                    @if ($mode === 'source')
-                        <button type="button" class="ao-ete-mode" wire:click="$set('mode', 'preview')"
-                            title="The rendered Markdown; placeholders show as tokens and are filled with the client's real values when the email sends">&#128065; Preview</button>
-                    @else
-                        <button type="button" class="ao-ete-mode ao-on" wire:click="$set('mode', 'source')"
-                            title="Back to the Markdown source">&lt;&gt; Source code</button>
-                    @endif
+                    <button type="button" class="ao-ete-mode" wire:click="$set('previewOpen', true)"
+                        title="See the email as the reader will — a dialog over the editor, as the reference's File ▸ Preview opens">&#128065; Preview</button>
                 </div>
 
-                @if ($mode === 'source')
-
-                    <textarea class="ao-ete-source" rows="18" wire:model="body" spellcheck="false"
-                        data-ao-message
-                        title="Markdown with Blade placeholders — @{{ $ip }} and friends are filled in when the email sends. The toolbar writes Markdown into this box; a WYSIWYG surface is not offered because owning the HTML means rewriting those placeholders as plain text and breaking them."></textarea>
-                @else
-                    <div class="ao-ete-preview">{!! $this->previewHtml() !!}</div>
-                @endif
+                {{-- The editor is always the source. Preview used to replace it, so the two
+                     were one surface and switching between them read as the same screen
+                     twice (Leandro, 2026-09-13); the reference keeps its editor in place
+                     and opens the rendered email in a dialog on top. --}}
+                <textarea class="ao-ete-source" rows="18" wire:model="body" spellcheck="false"
+                    data-ao-message
+                    title="Markdown with Blade placeholders — @{{ $ip }} and friends are filled in when the email sends. The toolbar writes Markdown into this box; a WYSIWYG surface is not offered because owning the HTML means rewriting those placeholders as plain text and breaking them."></textarea>
 
                 {{-- The reference closes the editor with a word count along its bottom edge.
                      Counted from the stored body, so it is the real length rather than a
@@ -314,6 +303,25 @@
                 <a class="ao-of-go" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\EmailTemplates::getUrl() }}">Cancel Changes</a>
             </div>
         </form>
+
+        {{-- The reference's File ▸ Preview: the email as the reader will see it, in a
+             dialog over the editor, with the merge tags left standing as tags. --}}
+        @if ($previewOpen)
+            <div class="ao-mud-overlay" wire:click.self="$set('previewOpen', false)">
+                <div class="ao-mud ao-ete-prevmodal" role="dialog" aria-modal="true">
+                    <div class="ao-mud-head">
+                        Preview
+                        <button type="button" wire:click="$set('previewOpen', false)" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="ao-ete-preview">{!! $this->previewHtml() !!}</div>
+                    <div class="ao-mud-foot ao-mud-foot-only-right">
+                        <span class="ao-mud-foot-right">
+                            <button type="button" class="ao-mud-close" wire:click="$set('previewOpen', false)">Close</button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         {{-- The reference's Available Merge Fields panel. These are read from what this
              template can actually resolve, so a field listed here is one the event carries

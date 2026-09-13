@@ -2999,6 +2999,17 @@
     .ao-ete-box .ao-ete-source { border: 0; border-radius: 0; }
     .ao-ete-box .ao-ete-preview { border: 0; border-radius: 0; }
 
+    /* The Preview dialog: the reference's is a tall, scrolling panel over the editor. */
+    .ao-ete-prevmodal { width: 46rem; }
+
+    .ao-ete-prevmodal .ao-ete-preview {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 1.2rem 1.5rem;
+        border: 0;
+        background: #fff;
+    }
+
     /* The preview reads as the email, not as the source beside it: real headings, real
        lists, a real table (Leandro, 2026-09-13 — "the preview mode is behaving exactly
        like the source code, but they need to be different"). */
