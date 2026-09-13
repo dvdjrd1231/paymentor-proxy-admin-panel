@@ -1118,8 +1118,10 @@ class ClientSummary extends Page
             $namedProps = [
                 'dedicated_ip' => ['Dedicated IP', trim((string) $this->svc['dedicatedIp'])],
                 'admin_notes' => ['Admin Notes', trim((string) $this->svc['svcNotes'])],
-                'proxy_username' => ['Username', trim((string) $this->svc['username'])],
-                'proxy_password' => ['Password', trim((string) $this->svc['password'])],
+                // Username and Password are not in this loop: they are the panel's own
+                // credentials, and an emptied box must not delete them. They are written
+                // below under the same rule as Service ID and api-key.
+
                 // The reference's Termination Date — enforced by ServiceOverrides' hourly
                 // sweep, which terminates the service once the date passes.
                 'termination_date' => ['Termination Date', $termDate?->format('Y-m-d') ?? ''],
@@ -1139,8 +1141,12 @@ class ClientSummary extends Page
             // Service ID and api-key — editable corrections, but an emptied box keeps
             // its row: these are the module's provisioning references, and blanking one
             // by accident must not sever the panel link (same rule as the props loop).
-            foreach (['proxypanel_service_id' => ['Service ID', trim((string) ($this->svc['serviceId'] ?? ''))],
-                'proxy_api_key' => ['api-key', trim((string) ($this->svc['apiKey'] ?? ''))]] as $key => [$name, $value]) {
+            foreach ([
+                'proxypanel_service_id' => ['Service ID', trim((string) ($this->svc['serviceId'] ?? ''))],
+                'proxy_api_key' => ['api-key', trim((string) ($this->svc['apiKey'] ?? ''))],
+                'proxy_username' => ['Username', trim((string) ($this->svc['username'] ?? ''))],
+                'proxy_password' => ['Password', trim((string) ($this->svc['password'] ?? ''))],
+            ] as $key => [$name, $value]) {
                 if ($value !== '') {
                     $service->properties()->updateOrCreate(['key' => $key], ['name' => $name, 'value' => $value]);
                 }
