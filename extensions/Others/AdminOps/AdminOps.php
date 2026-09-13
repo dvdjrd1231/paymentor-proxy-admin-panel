@@ -96,17 +96,15 @@ class AdminOps extends Extension
     }
 
     /**
-     * Branding on the account menu (Leandro, 2026-09-11: "Logo / Dark logo template /
-     * Favicon … I think these are existed in User Icon Menu Item on top right menu").
-     * Core builds that menu in its panel provider, which we do not edit; a panel takes
-     * further items at serve time and merges them with its own.
+     * The favicon the panel declares, re-set per request. Core builds the panel in its
+     * provider, which we do not edit; a panel takes further configuration at serve time.
      */
     private function registerAccountMenuItems(): void
     {
         \Filament\Facades\Filament::serving(function (): void {
             $panel = \Filament\Facades\Filament::getPanel('admin', isStrict: false);
 
-            if (!$panel || !Admin\Pages\Branding::canAccess()) {
+            if (!$panel) {
                 return;
             }
 
@@ -119,15 +117,9 @@ class AdminOps extends Extension
             // being fixed. Set here rather than as a second <link> so there is one tag.
             $panel->favicon(static::faviconUrl());
 
-            $panel->userMenuItems([
-                'branding' => \Filament\Actions\Action::make('branding')
-                    ->label('Branding')
-                    ->icon('heroicon-o-photo')
-                    ->url(fn (): string => Admin\Pages\Branding::getUrl())
-                    // Above Exit Admin and Sign out: the menu appends, and the reference
-                    // keeps leaving the admin and logging out at the foot of its own.
-                    ->sort(-10),
-            ]);
+            // No Branding item: Logo, Dark Logo and Favicon live on General Settings'
+            // General tab, where the reference keeps its own Logo URL and where an admin
+            // looking for them will already be (Leandro, 2026-09-13).
         });
     }
 

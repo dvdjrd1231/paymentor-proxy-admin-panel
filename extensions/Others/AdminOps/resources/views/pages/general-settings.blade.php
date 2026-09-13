@@ -25,6 +25,27 @@
                         <label class="ao-gs-label" for="gs-{{ $name }}">{{ $field['label'] ?? $name }}</label>
                         <div class="ao-gs-field">
                             @switch($type)
+                                @case('file')
+                                    {{-- The reference keeps its logo on this tab; ours are
+                                         uploads, so the row shows what is live beside the
+                                         chooser and offers to take it away again. --}}
+                                    <span class="ao-gs-file">
+                                        <span class="ao-gs-file-prev">
+                                            @if ($field['current'] ?? null)
+                                                <img src="{{ $field['current'] }}" alt="{{ $field['label'] ?? $name }}">
+                                            @else
+                                                <i>None set</i>
+                                            @endif
+                                        </span>
+                                        <input type="file" id="gs-{{ $name }}" accept="{{ $field['accept'] ?? 'image/*' }}"
+                                            wire:model="uploads.{{ $name }}">
+                                        @if ($field['current'] ?? null)
+                                            <button type="button" class="ao-gs-file-x" wire:click="clearImage('{{ $name }}')"
+                                                wire:confirm="Remove this image?">Remove</button>
+                                        @endif
+                                    </span>
+                                    @break
+
                                 @case('select')
                                     @php
                                         $options = $field['options'] ?? [];

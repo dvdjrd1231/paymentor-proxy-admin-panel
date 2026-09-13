@@ -421,18 +421,45 @@ class EditEmailTemplate extends Page
      * a highlighted token instead of being executed. `{{ $ip }}` reads as a chip named
      * `$ip`; nothing typed into the body ever runs.
      */
+    /**
+     * The body as the reader will see it: headings, lists, tables and links drawn, with
+     * the merge tags left standing as tags — which is what the reference's own Preview
+     * shows (its "Dear {$client_first_name}," is a paragraph, its Knowledgebase and Submit
+     * a Ticket are links in a bulleted list).
+     *
+     * It used to escape the body before rendering, so the Markdown's own HTML — the
+     * `<div class="table">` these templates wrap their tables in — came out as visible
+     * text and the whole thing read exactly like the source view it is meant to contrast
+     * with (Leandro, 2026-09-13).
+     */
     public function previewHtml(): string
     {
-        $tokenised = preg_replace(
-            '/\{\{\s*(.+?)\s*\}\}/s',
-            '<code class="ao-ete-token">{{ $1 }}</code>',
-            e($this->body),
-        );
+        $body = $this->body;
+
+        // Blade's control directives are plumbing, not content. A loop's body is shown
+        // once, as one row of the table it builds, rather than the directive lines being
+        // printed at the reader.
+        $body = preg_replace('/^[ \t]*@(?:end)?(?:foreach|for|if|else|elseif|unless|isset|empty|php|endphp)\b.*$\R?/mi', '', $body) ?? $body;
+
+        // Tags survive rendering: a placeholder no Markdown parser will touch, restored
+        // as a styled token afterwards.
+        $tags = [];
+        $body = preg_replace_callback('/\{\{\s*(.+?)\s*\}\}/s', function (array $m) use (&$tags): string {
+            $key = "\u{0001}TAG" . count($tags) . "\u{0001}";
+            $tags[$key] = '<code class="ao-ete-token">{{ ' . e($m[1]) . ' }}</code>';
+
+            return $key;
+        }, $body) ?? $body;
 
         try {
-            return Str::markdown($tokenised, ['html_input' => 'allow']);
+            // html_input allow, and no escaping first: a template body is admin-authored
+            // and already renders as Blade when the email is sent, so the HTML in it is
+            // exactly what the reader gets.
+            $html = Str::markdown($body, ['html_input' => 'allow', 'allow_unsafe_links' => false]);
         } catch (\Throwable $e) {
             return '<p>' . e($e->getMessage()) . '</p>';
         }
+
+        return strtr($html, $tags);
     }
 }
