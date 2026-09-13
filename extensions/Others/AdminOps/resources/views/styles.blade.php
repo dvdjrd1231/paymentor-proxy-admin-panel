@@ -1948,7 +1948,7 @@
     }
 
     /* The reference's calendar glyph, inside the left edge of the range field. */
-    .ao-of-date { position: relative; display: inline-flex; align-items: center; }
+    .ao-of-date { position: relative; display: inline-flex; align-items: center; gap: 0.4rem; }
 
     /* ── The Date Range picker ───────────────────────────────────────────────
        The reference's dropdown: presets down the left, two months side by side,
@@ -2085,24 +2085,20 @@
         .ao-dr-presets { border-right: 0; border-bottom: 1px solid var(--wa-panel-border, #ddd); }
     }
 
-    /* The icon's inset and the room the text leaves for it are one number now. They used
-       to be two: the icon moved to 1.2rem inside a painted row while the padding stayed
-       at 1.65rem, so the calendar sat on top of the first characters and a date read as
-       scrambled (Leandro, 2026-09-12). Bigger and darker too, for legibility. */
-    .ao-of-date { --ao-date-ic: 0.5rem; }
-
-    .ao-of-row > .ao-of-date { --ao-date-ic: 1.2rem; }
-
+    /* The calendar sits *beside* the box, not on top of it. It used to be positioned
+       absolutely over the input with the text pushed clear by padding — two numbers that
+       had to agree, and inside a painted row they did not, so the glyph landed on the
+       first characters and a date read as "[icon]/09/2026" (Leandro, 2026-09-12). As an
+       ordinary flex item ahead of the input it cannot overlap the text whatever else the
+       cascade does to either of them. */
     .ao-of-date svg {
-        position: absolute;
-        left: var(--ao-date-ic);
-        width: 0.95rem;
-        height: 0.95rem;
+        flex: none;
+        width: 1rem;
+        height: 1rem;
         color: #555;
-        pointer-events: none;
     }
 
-    .ao-of-date input { padding-left: calc(var(--ao-date-ic) + 1.35rem); }
+    .ao-of-date input { flex: 1 1 auto; min-width: 0; }
 
     /* The honestly-dead IP field: readable as a field, unmistakably inert. */
     .ao-of-row input:disabled {
