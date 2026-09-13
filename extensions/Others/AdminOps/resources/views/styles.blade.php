@@ -2284,12 +2284,21 @@
         font-weight: 700;
         text-align: center;
         border-inline-end: 1px solid rgb(255 255 255 / 0.18);
-        white-space: nowrap;
+        /* Headers wrap. They used to be nowrap, which set each column's minimum width to
+           the width of its label — with nine of them ("Product/Service", "Billing Cycle",
+           "Next Due Date", "Payment Status"…) the table's minimum outgrew the panel, so
+           `.ao-mu`'s overflow-x took over: the grid scrolled sideways, the right-hand
+           column was clipped, and no cell ever had to break onto a second line
+           (Leandro, 2026-09-12: "No line breaks"). */
+        white-space: normal;
     }
 
     .ao-mu-grid td {
         padding: 0.45rem 0.6rem;
         text-align: center;
+        /* A long unbroken run — an email, a URL, a key — breaks rather than widening the
+           column past what the panel can hold. */
+        overflow-wrap: anywhere;
         /* WHMCS's .table-themed td border is exactly #ebebeb. */
         border-bottom: 1px solid #ebebeb;
     }
