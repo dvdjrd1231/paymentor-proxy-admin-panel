@@ -137,9 +137,6 @@
                             ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $service->user_id])
                             : null;
                         $label = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel($service->status);
-                        // Issue #7: the same addon-of tie the client's own service list now
-                        // shows, so an addon does not read as an ordinary product here either.
-                        $addon = $addonParents->get($service->id);
                     @endphp
                     <tr>
                         <td class="ao-mu-check"><input type="checkbox" data-ao-check value="{{ $service->user?->email }}"></td>
@@ -153,15 +150,11 @@
                             @endif
                         </td>
                         <td class="ao-mu-left">
-                            <a href="{{ $edit }}">
-                                @if ($addon?->parent)&#8618; @endif{{ $service->product?->name ?? '—' }}
-                            </a>
-                            @if ($addon?->parent)
-                                {{-- Its own line under the name, as the reference sets it:
-                                     inline it ran straight on from the product and the two
-                                     read as one long title (Leandro, 2026-09-12). --}}
-                                <span class="ao-mu-sub">{{ __('theme.addon_of', ['service' => $addon->parent->product?->name ?? ('#' . $addon->parent->id)]) }}</span>
-                            @endif
+                            {{-- One line, always: every row here is a product in its own
+                                 right now, so there is no addon tie left to spell out
+                                 underneath it (Leandro, 2026-09-14). Addons and the
+                                 products they extend are on Service Addons. --}}
+                            <a href="{{ $edit }}">{{ $service->product?->name ?? '—' }}</a>
                         </td>
                         <td>
                             @if ($summary)

@@ -8,6 +8,7 @@ use App\Models\Server;
 use App\Models\Service;
 use Filament\Pages\Page;
 use Livewire\Attributes\Url;
+use Paymenter\Extensions\Others\AdminOps\Models\ServiceAddon;
 use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 
 /**
@@ -138,10 +139,6 @@ class ProductsServices extends Page
             'products' => \App\Models\Product::orderBy('name')->get(['id', 'name']),
             'gateways' => \App\Models\Gateway::orderBy('name')->get(['id', 'name']),
             'customFields' => \App\Models\ConfigOption::whereNull('parent_id')->orderBy('name')->get(['id', 'name']),
-            // Batched once for the whole page rather than per row — the same tie the
-            // client's own service list reads, {@see themes/proxy/views/services/index.blade.php}.
-            'addonParents' => \Paymenter\Extensions\Others\AdminOps\Models\ServiceAddon::whereIn('service_id', $services->pluck('id'))
-                ->with('parent.product')->get()->keyBy('service_id'),
         ];
     }
 
@@ -179,6 +176,19 @@ class ProductsServices extends Page
     private function filtered(bool $hideInactive)
     {
         $query = Service::query();
+
+        // An addon is not a product, so it is not listed as one (Leandro, 2026-09-14:
+        // "the add-on should not appear as a product, as it is an add-on linked to a
+        // product"). It belongs to the service it extends and is listed, with its parent
+        // and that parent's client, on Service Addons — the reference splits the two
+        // screens the same way, and our rail already carries both.
+        //
+        // Only addons that are actually tied to a parent drop out. One bought on its own
+        // has no product to be listed under, so hiding it here would leave it on no
+        // screen at all; it stays, and reads as the ordinary single-line row it is.
+        $query->whereNotIn('id', ServiceAddon::query()
+            ->whereIn('parent_service_id', Service::query()->select('id'))
+            ->select('service_id'));
 
         if ($this->product !== '') {
             // The panel's select sends the product id; the rail's Advanced Search still
