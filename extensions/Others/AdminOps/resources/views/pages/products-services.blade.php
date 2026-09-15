@@ -11,9 +11,9 @@
             </button>
         </div>
             {{-- The reference's Search/Filter panel, field for field and in its order:
-                 Product Type, Product/Service, Billing Cycle, Domain, Client Name on the
-                 left; Server, Payment Method, Status, Custom Field, Custom Field Value on
-                 the right. --}}
+                 Product Type, Product/Service, Billing Cycle, Client Name on the left;
+                 Server, Payment Method, Status, Custom Field, Custom Field Value on the
+                 right. Its Domain row has no counterpart — we do not sell domains. --}}
             <form class="ao-find ao-of" autocomplete="off" wire:submit.prevent="search" x-show="filter" x-cloak>
                 <div class="ao-of-rows">
                     <div class="ao-of-row">
@@ -66,9 +66,11 @@
                         </select></span>
                     </div>
                     <div class="ao-of-row">
-                        <label class="ao-of-label" for="ao-ps-domain">Domain</label>
-                        <span><input @nofill id="ao-ps-domain" class="ao-of-md" type="text"
-                            wire:model="domain" placeholder="e.g. example.com"></span>
+                        {{-- The reference's Domain filter has no counterpart here: we do not
+                             sell domains, so Client Name moves up into its slot. --}}
+                        <label class="ao-of-label" for="ao-ps-client">Client Name</label>
+                        <span><input @nofill id="ao-ps-client" class="ao-of-lg" type="text"
+                            wire:model="client" placeholder="Client name or email"></span>
                         <label class="ao-of-label" for="ao-ps-cf">Custom Field</label>
                         <span><select @nofill id="ao-ps-cf" class="ao-of-md" wire:model="cfField">
                             <option value="">Any</option>
@@ -78,9 +80,8 @@
                         </select></span>
                     </div>
                     <div class="ao-of-row">
-                        <label class="ao-of-label" for="ao-ps-client">Client Name</label>
-                        <span><input @nofill id="ao-ps-client" class="ao-of-lg" type="text"
-                            wire:model="client" placeholder="Client name or email"></span>
+                        <span class="ao-of-label"></span>
+                        <span></span>
                         <label class="ao-of-label" for="ao-ps-cfv">Custom Field Value</label>
                         <span><input @nofill id="ao-ps-cfv" class="ao-of-lg" type="text"
                             wire:model="cfValue" placeholder="Value within the chosen field"></span>

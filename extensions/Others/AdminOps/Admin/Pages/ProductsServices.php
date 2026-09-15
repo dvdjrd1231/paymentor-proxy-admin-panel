@@ -14,7 +14,7 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
 /**
  * WHMCS's List All Products/Services, to its screenshot: the Search/Filter tab over the
  * band, the records line with Jump to Page and Hide Inactive, and the navy grid — ID,
- * Product/Service, Domain, Client Name, Price, Billing Cycle, Next Due Date, Status.
+ * Product/Service, Client Name, Price, Billing Cycle, Next Due Date, Status.
  */
 class ProductsServices extends Page
 {
@@ -45,9 +45,6 @@ class ProductsServices extends Page
 
     #[Url]
     public string $status = '';
-
-    #[Url]
-    public string $domain = '';
 
     /**
      * Issue #4 — three of the reference's Search/Filter fields the band never exposed:
@@ -227,11 +224,6 @@ class ProductsServices extends Page
             $query->where('status', $this->status);
         } elseif ($hideInactive) {
             $query->whereIn('status', self::OPEN);
-        }
-
-        if ($this->domain !== '') {
-            $query->whereHas('properties', fn ($q) => $q->where('key', 'domain')
-                ->where('value', 'like', '%' . $this->domain . '%'));
         }
 
         if ($this->server !== '' && ctype_digit($this->server)) {
