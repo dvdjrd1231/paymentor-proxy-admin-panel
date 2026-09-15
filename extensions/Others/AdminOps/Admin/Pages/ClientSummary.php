@@ -915,6 +915,12 @@ class ClientSummary extends Page
         $this->addingAddon = !$this->addingAddon;
     }
 
+    /** Recalculate on Save is the reference's Yes/No pill, not a checkbox. */
+    public function toggleRecalculate(): void
+    {
+        $this->svc['recalculate'] = !($this->svc['recalculate'] ?? false);
+    }
+
     /** Prefill the recurring amount from the picked addon product's own plan. */
     public function updatedAddonProductId(): void
     {

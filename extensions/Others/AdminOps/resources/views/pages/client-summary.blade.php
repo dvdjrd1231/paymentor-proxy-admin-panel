@@ -876,10 +876,15 @@
                         <input class="ao-of-sm" type="text" readonly
                             value="{{ number_format((float) $svcModel->price * max(1, (int) $svcModel->quantity), 2) }}"
                             title="The renewal charge — set it through First Payment Amount, or tick Recalculate on Save to take the plan's current price">
-                        <label class="ao-check ao-cs-recalc">
-                            <input type="checkbox" wire:model="svc.recalculate">
-                            <span>Recalculate on Save</span>
-                        </label>
+                        {{-- The reference draws this as a Yes/No pill, not a tick — the
+                             same pill the lists already use for Hide Inactive
+                             (Leandro, 2026-09-05: "Do it exactly like this"). --}}
+                        <button type="button"
+                            class="ao-mu-toggle ao-cs-recalc {{ ($svc['recalculate'] ?? false) ? 'ao-on' : '' }}"
+                            wire:click="toggleRecalculate">
+                            <i>{{ ($svc['recalculate'] ?? false) ? 'YES' : 'NO' }}</i>
+                            Recalculate on Save
+                        </button>
                     </span>
                 </div>
                 <div class="ao-of-row">
