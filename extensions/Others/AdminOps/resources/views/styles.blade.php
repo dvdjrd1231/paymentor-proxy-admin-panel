@@ -2528,12 +2528,23 @@
        and grew past the panel, which `.ao-mu`'s overflow-x then turned into a scrollbar
        with "Send Welcome Email" cut off. Fixed, the band has a real width to fit into. */
     .ao-eo .ao-mu-grid { table-layout: fixed; width: 100%; }
-    .ao-eo .ao-mu-grid th:nth-child(1) { width: 16%; }
-    .ao-eo .ao-mu-grid th:nth-child(2) { width: 35%; }
-    .ao-eo .ao-mu-grid th:nth-child(3) { width: 13%; }
-    .ao-eo .ao-mu-grid th:nth-child(4) { width: 12%; }
+    /* Description carries the widest text on the row — "<category> - <product>", which
+       for these plans runs to 67 characters — so it takes the width the four short
+       columns after it do not need (Leandro, 2026-09-14: "Keep products or services in
+       a single line"). At 35% it held one line only on his own 1900px screen and broke
+       on anything narrower. */
+    .ao-eo .ao-mu-grid th:nth-child(1) { width: 14%; }
+    .ao-eo .ao-mu-grid th:nth-child(2) { width: 44%; }
+    .ao-eo .ao-mu-grid th:nth-child(3) { width: 11%; }
+    .ao-eo .ao-mu-grid th:nth-child(4) { width: 11%; }
     .ao-eo .ao-mu-grid th:nth-child(5) { width: 8%; }
-    .ao-eo .ao-mu-grid th:nth-child(6) { width: 16%; }
+    .ao-eo .ao-mu-grid th:nth-child(6) { width: 12%; }
+
+    /* "Product/Service" is one word to a reader and must not be hyphen-less split down
+       the middle — the list-table rule that breaks long unbroken runs is meant for data
+       like an api-key, not for this label. */
+    .ao-eo .ao-eo-item,
+    .ao-eo .ao-eo-item a { white-space: nowrap; }
 
     /* Its fact label columns run ~205px; ours were 161px, which is what pushed the
        values out of line with the reference's. */
