@@ -5852,6 +5852,7 @@
     .ao-eo-facts .ao-of-label { align-items: flex-start; }
 
     .ao-eo-total td { background: var(--wa-navy, #1a4d80); color: #fff; font-weight: 700; }
+    .ao-eo-total .ao-eo-total-blank { background: #fff; }
 
     .ao-eo-total .ao-eo-total-value { white-space: nowrap; }
 

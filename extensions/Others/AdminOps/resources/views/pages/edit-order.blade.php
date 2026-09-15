@@ -214,7 +214,9 @@
                     <td colspan="2"></td>
                     <td class="ao-eo-total-label">Total Due:</td>
                     <td class="ao-eo-total-value">${{ number_format((float) $order->total, 2) }} {{ $order->currency_code }}</td>
-                    <td colspan="2"></td>
+                    {{-- The reference's bar ends with the amount; Status and Payment
+                         Status stay white beside it (Leandro, 2026-09-05). --}}
+                    <td colspan="2" class="ao-eo-total-blank"></td>
                 </tr>
             </tbody>
         </table>
