@@ -2523,6 +2523,11 @@
     /* Measured off the reference's own order: Item 16%, Description 35%, Billing Cycle
        13%, Amount 12%, Status 8%, Payment Status 16%. Description had been taking 44%,
        which squeezed the four columns after it. */
+    /* Fixed layout so those percentages are what the columns get. Under auto layout the
+       table sized itself to its widest cell's content instead — the provisioning band —
+       and grew past the panel, which `.ao-mu`'s overflow-x then turned into a scrollbar
+       with "Send Welcome Email" cut off. Fixed, the band has a real width to fit into. */
+    .ao-eo .ao-mu-grid { table-layout: fixed; width: 100%; }
     .ao-eo .ao-mu-grid th:nth-child(1) { width: 16%; }
     .ao-eo .ao-mu-grid th:nth-child(2) { width: 35%; }
     .ao-eo .ao-mu-grid th:nth-child(3) { width: 13%; }
@@ -2562,7 +2567,11 @@
        7px before the Password label. */
     .ao-eo-provision .ao-eo-prov-line {
         display: flex;
-        flex-wrap: wrap;
+        /* One line, as the reference's is (Leandro, 2026-09-13: "No line break"). Wrapping
+           plus boxes at fixed widths meant Send Welcome Email dropped under the rest as
+           soon as the panel was narrower than ~1400px — invisible at the width this was
+           built at, plain on his. The boxes give up width now instead of the row breaking. */
+        flex-wrap: nowrap;
         gap: 0.4rem 0.45rem;
         align-items: center;
         justify-content: center;
@@ -2570,7 +2579,9 @@
 
     /* The reference's Username and Password sit on the band as editable boxes of one
        width, each label tight against its own field. */
-    .ao-eo-prov-cred { display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; }
+    /* min-width: 0 so the label may shrink below its box's width — without it a flex item
+       never goes under its content's size and nowrap would overflow the band instead. */
+    .ao-eo-prov-cred { display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; min-width: 0; }
     .ao-eo-prov-cred input {
         padding: 0.25rem 0.5rem;
         border: 1px solid var(--wa-border, #ccc);
@@ -2581,13 +2592,16 @@
         font-size: 0.9rem;
     }
     .ao-eo-prov-cred input:disabled { background: #f5f5f5; color: var(--wa-muted, #6b6b6b); }
+    /* Reference widths, but as a starting size rather than a floor: the credential boxes
+       are what the band gives up first when it is too narrow to hold everything. */
     .ao-eo-prov-user,
-    .ao-eo-prov-pass { width: 8.75rem; }
+    .ao-eo-prov-pass { width: 8.75rem; min-width: 4.5rem; }
 
     /* The reference's Server box is far wider than the two credential boxes — it holds a
        server name and a group label — and is drawn as a plain select on the band. */
     .ao-eo-prov-server {
         width: 15.45rem;
+        min-width: 6rem;
         padding: 0.25rem 0.5rem;
         border: 1px solid var(--wa-border, #ccc);
         border-radius: 4px;
@@ -2595,6 +2609,16 @@
         color: var(--wa-ink, #2b2b2b);
         font: inherit;
         font-size: 0.9rem;
+    }
+
+    /* The ticks keep their width and their labels intact — the boxes to their left are
+       where the row finds the space, not "Run Module Create" broken across two lines. */
+    .ao-eo-provision .ao-check { flex: 0 0 auto; white-space: nowrap; }
+
+    /* Below the band's own minimum there is no width left to give up, so wrapping is
+       better than a row running off the panel. The facts grid folds at the same width. */
+    @media (max-width: 900px) {
+        .ao-eo-provision .ao-eo-prov-line { flex-wrap: wrap; }
     }
 
     /* The reference draws these white in the band — full-strength boxes carrying real
