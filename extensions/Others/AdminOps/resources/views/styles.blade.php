@@ -4140,7 +4140,11 @@
     /* The reference's full-width rows under the columns; Settings and Owner sit on the
        stripe, as its screenshot has them. */
     .ao-anc-row-wide {
-        grid-template-columns: 9.5rem 1fr;
+        /* The same label column as the rows above, so the boundary between label and field
+           is one straight line from the first row to the last — in the reference it runs
+           unbroken down the whole form, and ours stepped inward at the full-width rows
+           because they kept the old 9.5rem (Leandro, 2026-09-16). */
+        grid-template-columns: 12rem 1fr;
         /* Centred, not top-aligned: the reference sits "Email Notifications", "Settings",
            "Owner" and "Admin Notes" in the vertical middle of their bands. */
         align-items: center;
