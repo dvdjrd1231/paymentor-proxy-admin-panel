@@ -3670,7 +3670,8 @@
        the field cell: in most rows the field is a bare <input>, which paints its own white
        background over anything set on it, so colouring "the second child" left those rows
        looking white while the few whose field is wrapped in a <span> went grey — which is
-       the alternation this was meant to remove. */
+       the alternation this was meant to remove.
+
        And the reference's form is a table with `border-spacing: 2px`, so every cell is its
        own tile with a 2px white channel around it — rows do not touch, and the label does
        not touch its field. Drawn as solid contiguous bands, ours read as a different shape
@@ -4137,8 +4138,10 @@
 
     .ao-anc-grey { background: #f0f0f0; }
 
-    /* The blank alignment rows must be as tall as a real one, or they align nothing. */
-    .ao-anc-row[aria-hidden] { min-height: calc(2.1rem + 0.9rem); }
+    /* The blank alignment rows must be as tall as a real one, or they align nothing — and
+       a real one is now the reference's height, so this followed the cells down from
+       0.9rem of padding to 6px. */
+    .ao-anc-row[aria-hidden] { min-height: calc(2.1rem + 6px); }
 
     .ao-anc-checks {
         display: flex;
