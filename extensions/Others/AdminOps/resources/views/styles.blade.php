@@ -3646,9 +3646,11 @@
         border-right: 2px solid #fff;
     }
 
+    /* 12rem, not 9.5rem: the reference's label column measures ~197px and ours ran 162px,
+       which is what put every field start out of step with his (Leandro, 2026-09-16). */
     .ao-anc-row {
         display: grid;
-        grid-template-columns: 9.5rem 1fr;
+        grid-template-columns: 12rem 1fr;
         align-items: center;
     }
 
@@ -3688,9 +3690,17 @@
 
     /* The white channel between a label and its field is the table's border-spacing; as a
        grid it has to be drawn, and a border on the label cell is what does it. */
+    /* The label is a table cell in the reference, so its white fills the row however tall
+       the field beside it grows — the notifications block is six checkboxes deep. Centred
+       in a grid, ours was a short white tile floating in the middle of a grey column, with
+       the emptiness above and below it reading as stray cells (Leandro, 2026-09-16). */
     .ao-anc-row > :first-child {
         background: #fff;
         border-right: 2px solid #fff;
+        align-self: stretch;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
     }
 
     /* A field's explanation, under its control. Long module descriptions used to sit
@@ -4136,7 +4146,7 @@
         align-items: center;
     }
 
-    .ao-anc-grey { background: #f0f0f0; }
+    .ao-anc-grey { background: #efefef; }
 
     /* The blank alignment rows must be as tall as a real one, or they align nothing — and
        a real one is now the reference's height, so this followed the cells down from
