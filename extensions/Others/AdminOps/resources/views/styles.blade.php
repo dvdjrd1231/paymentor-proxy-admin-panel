@@ -3501,15 +3501,36 @@
         margin: 0.9rem 0 0.5rem;
     }
 
+    /* The template picker carries the same hairline every other control on the page does;
+       without it the box read as plain text (Leandro, 2026-09-16). */
+    .ao-ei-send select {
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: var(--wa-radius, 4px);
+        background: #fff;
+        padding: 0.3rem 0.5rem;
+    }
+
     .ao-ei-marks { display: flex; justify-content: center; gap: 0.5rem; }
 
     /* The reference's Publish pair: the plain one beside the amber "and Send Email", which
        is the louder of the two because it also leaves the building. */
-    /* Right-aligned above the status word, where the reference puts them. */
-    .ao-ei-publish { display: flex; justify-content: flex-end; gap: 0.5rem; margin: 0 0 0.6rem; }
+    /* Right-aligned above the status word, where the reference puts them. Stretched so the
+       pair is one height: they were set by their own padding and came out uneven
+       (Leandro, 2026-09-16). */
+    .ao-ei-publish {
+        display: flex;
+        align-items: stretch;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin: 0 0 0.6rem;
+    }
+
+    .ao-ei-publish > * {
+        padding: 0.4rem 0.9rem;
+        line-height: 1.2;
+    }
 
     .ao-ei-publish-mail {
-        padding: 0.35rem 0.9rem;
         border: 1px solid #e0a800;
         border-radius: 4px;
         background: #f0ad4e;
@@ -3590,7 +3611,7 @@
         color: #d9534f;
         background: none;
         border: 0;
-        font-size: 1.1rem;
+        font-size: 1.35rem;
         line-height: 1;
         cursor: pointer;
     }
