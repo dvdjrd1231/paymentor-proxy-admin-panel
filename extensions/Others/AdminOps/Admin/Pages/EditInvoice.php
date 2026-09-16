@@ -150,6 +150,21 @@ class EditInvoice extends Page
         $this->invoice->refresh()->load(['items', 'transactions.gateway', 'user']);
     }
 
+    /**
+     * The subtotal of what is on screen, not of what is saved.
+     *
+     * The ladder totalled `$invoice->total`, so a line typed but not yet saved counted for
+     * nothing and the invoice read $0.00 with three amounts sitting in front of you
+     * (Leandro, 2026-09-16). Quantity times amount, the same arithmetic the save performs.
+     */
+    public function liveSubtotal(): float
+    {
+        return round(array_sum(array_map(
+            fn (array $row): float => (float) ($row['price'] ?? 0) * max(1, (int) ($row['quantity'] ?? 1)),
+            $this->items,
+        )), 2);
+    }
+
     // ── Invoice items ────────────────────────────────────────────────────────────────
 
     /** The reference's empty last row: filling it in and saving adds a line. */
@@ -184,6 +199,12 @@ class EditInvoice extends Page
     /** The reference's "- With Selected -" menu. Delete is the only entry it can honour. */
     public function withSelected(string $action): void
     {
+        if ($action === 'split') {
+            $this->splitToNewInvoice();
+
+            return;
+        }
+
         if ($action !== 'delete' || $this->selected === []) {
             return;
         }
@@ -323,6 +344,57 @@ class EditInvoice extends Page
 
         Notification::make()->title('Invoice published')
             ->body('The client can see it now.')->success()->send();
+    }
+
+    /**
+     * The reference's Split to New Invoice: the ticked lines move to an invoice of their
+     * own, leaving the rest on this one. Raised as a draft, so nothing reaches the client
+     * until someone publishes it — the same rule Create Invoice follows.
+     *
+     * Only saved lines can move; one typed and not yet saved has no row to carry across,
+     * and is left where it is with the reason said out loud rather than silently dropped.
+     */
+    private function splitToNewInvoice(): void
+    {
+        $ticked = array_map('intval', $this->selected);
+        $ids = [];
+        $unsaved = 0;
+
+        foreach ($ticked as $index) {
+            if (!isset($this->items[$index])) {
+                continue;
+            }
+
+            $this->items[$index]['id'] ? $ids[] = $this->items[$index]['id'] : $unsaved++;
+        }
+
+        if ($ids === []) {
+            Notification::make()->title('Nothing to split')
+                ->body($unsaved > 0 ? 'Save the new lines first — they do not exist yet.' : 'Tick the lines to move.')
+                ->warning()->send();
+
+            return;
+        }
+
+        $new = DB::transaction(function () use ($ids): Invoice {
+            $new = Invoice::create([
+                'user_id' => $this->invoice->user_id,
+                'currency_code' => $this->invoice->currency_code,
+                'due_at' => $this->invoice->due_at ?? now()->addDays(14),
+                'status' => 'draft',
+            ]);
+
+            $this->invoice->items()->whereIn('id', $ids)->update(['invoice_id' => $new->id]);
+
+            return $new;
+        });
+
+        Notification::make()->title('Split to invoice #' . $new->id)
+            ->body(count($ids) . ' line(s) moved' . ($unsaved > 0 ? ', ' . $unsaved . ' unsaved line(s) left here' : '') . '.')
+            ->success()->send();
+
+        $this->selected = [];
+        $this->refreshInvoice();
     }
 
     public function setStatus(string $status): void

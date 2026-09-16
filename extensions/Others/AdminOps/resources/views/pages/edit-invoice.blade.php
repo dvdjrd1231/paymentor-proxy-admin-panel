@@ -360,8 +360,8 @@
                                 <input type="text" class="ao-ei-desc" wire:model="items.{{ $index }}.description"
                                     aria-label="Line description">
                             </td>
-                            <td><input type="number" min="1" class="ao-ei-qty-in" wire:model="items.{{ $index }}.quantity" aria-label="Quantity"></td>
-                            <td><input type="text" inputmode="decimal" class="ao-ei-amount-in" wire:model="items.{{ $index }}.price" aria-label="Amount"></td>
+                            <td><input type="number" min="1" class="ao-ei-qty-in" wire:model.live.debounce.500ms="items.{{ $index }}.quantity" aria-label="Quantity"></td>
+                            <td><input type="text" inputmode="decimal" class="ao-ei-amount-in" wire:model.live.debounce.500ms="items.{{ $index }}.price" aria-label="Amount"></td>
                             <td class="ao-ei-del">
                                 {{-- The reference's circled minus. Drawn as an icon rather
                                      than the ⊖ character, whose weight and alignment are
@@ -381,11 +381,13 @@
                             <select class="ao-ei-with" wire:change="withSelected($event.target.value)"
                                 aria-label="With selected">
                                 <option value="">- With Selected -</option>
+                                <option value="split">Split to New Invoice</option>
                                 <option value="delete">Delete</option>
                             </select>
                         </td>
                         <td class="ao-eo-total-label">Sub Total:</td>
-                        <td class="ao-eo-total-value">${{ number_format((float) $invoice->total, 2) }} {{ $invoice->currency_code }}</td>
+                        {{-- What is on screen, saved or not {@see EditInvoice::liveSubtotal}. --}}
+                        <td class="ao-eo-total-value">${{ number_format($this->liveSubtotal(), 2) }} {{ $invoice->currency_code }}</td>
                         <td></td>
                     </tr>
                     <tr class="ao-ei-withrow">
@@ -397,7 +399,10 @@
                     <tr class="ao-eo-total">
                         <td colspan="2"></td>
                         <td class="ao-eo-total-label">Total Due:</td>
-                        <td class="ao-eo-total-value">${{ number_format(max(0, (float) $invoice->remaining), 2) }} {{ $invoice->currency_code }}</td>
+                        {{-- Follows the subtotal on screen, less whatever credit has been
+                             applied, so the ladder adds up while the lines are being typed
+                             rather than only after a save. --}}
+                        <td class="ao-eo-total-value">${{ number_format(max(0, $this->liveSubtotal() - $creditApplied), 2) }} {{ $invoice->currency_code }}</td>
                         <td></td>
                     </tr>
                 </tbody>
