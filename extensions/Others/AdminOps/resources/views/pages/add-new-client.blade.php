@@ -145,12 +145,6 @@
                         @endforeach
                     </select>
                 </label>
-                {{-- The reference builds both halves as one table, so its rows always end
-                     level. Ours carries a Telegram Chat ID the reference has no counterpart
-                     for, which left this half a row short and bare white beside it; a blank
-                     row matches the two again, the same way the left half's own blanks
-                     align it (Leandro, 2026-09-16). --}}
-                <div class="ao-anc-row" aria-hidden="true"><span></span><span></span></div>
             </div>
         </div>
 
@@ -241,9 +235,18 @@
         @endif
 
         @if ($extras->isNotEmpty())
+            {{-- The reference builds both halves as one table, so its rows always end level.
+                 These are split odd/even down two independent columns, so an odd number of
+                 custom fields leaves the right half a row short and bare white beside the
+                 left's last one (Leandro, 2026-09-16). The count decides whether it needs a
+                 blank to match, the same way the fixed fields above use blanks to align. --}}
+            @php
+                $extrasLeft = $extras->values()->filter(fn ($p, $i) => $i % 2 === 0);
+                $extrasRight = $extras->values()->filter(fn ($p, $i) => $i % 2 === 1);
+            @endphp
             <div class="ao-anc-cols">
                 <div class="ao-anc-col">
-                    @foreach ($extras->values()->filter(fn ($p, $i) => $i % 2 === 0) as $property)
+                    @foreach ($extrasLeft as $property)
                         <label class="ao-anc-row">
                             <span>{{ $property->name }}</span>
                             @if ($property->type === 'checkbox')
@@ -255,7 +258,7 @@
                     @endforeach
                 </div>
                 <div class="ao-anc-col">
-                    @foreach ($extras->values()->filter(fn ($p, $i) => $i % 2 === 1) as $property)
+                    @foreach ($extrasRight as $property)
                         <label class="ao-anc-row">
                             <span>{{ $property->name }}</span>
                             @if ($property->type === 'checkbox')
@@ -265,6 +268,9 @@
                             @endif
                         </label>
                     @endforeach
+                    @if ($extrasRight->count() < $extrasLeft->count())
+                        <div class="ao-anc-row" aria-hidden="true"><span></span><span></span></div>
+                    @endif
                 </div>
             </div>
         @endif
