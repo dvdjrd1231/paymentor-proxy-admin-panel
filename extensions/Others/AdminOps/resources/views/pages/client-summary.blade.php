@@ -164,12 +164,12 @@
                              lead to the pages the rest of the menu already leads to for the
                              same records. --}}
                         @if (class_exists(\Paymenter\Extensions\Others\BillableItems\Models\BillableItem::class))
-                            <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\BillableItemsList::getUrl() }}">
+                            <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\BillableItemsList::getUrl(['adding' => true, 'for' => $user->id]) }}">
                                 <x-filament::icon icon="ri-price-tag-3-line" class="ao-cp-ic" /> Add Billable Item
                             </a>
                         @endif
                         @if (class_exists(\Paymenter\Extensions\Others\Quotes\Models\Quote::class))
-                            <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\CreateQuote::getUrl() }}">
+                            <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\CreateQuote::getUrl(['for' => $user->id]) }}">
                                 <x-filament::icon icon="ri-draft-line" class="ao-cp-ic" /> Create New Quote
                             </a>
                         @endif

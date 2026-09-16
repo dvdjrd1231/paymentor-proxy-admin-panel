@@ -58,6 +58,16 @@ class BillableItemsList extends Page
 
     public ?int $userId = null;
 
+    /**
+     * Reached from a client's profile, the charge starts on that client — the reference
+     * carries the client across, where ours dropped it and made staff pick them again
+     * (Leandro, 2026-09-14: "It isn't working the same way WHMCS does").
+     */
+    public function mount(): void
+    {
+        $this->userId = request()->integer('for') ?: null;
+    }
+
     /** The reference's Product/Service: the charge can belong to one of the client's services. */
     public ?int $serviceId = null;
 

@@ -295,6 +295,16 @@ class ClientSummary extends Page
         $this->money = null;
         $this->fundsInvoice = $invoice->id;
 
+        // The banner below sits at the top of the tab, which is off-screen for anyone who
+        // opened this dialog from the panels further down — so the invoice looked like it
+        // had not been raised and got raised twice (Leandro, 2026-09-14: "It's not
+        // working", invoices 274 and 275, eleven seconds apart). A toast says so wherever
+        // the page is scrolled to, as Manage Credits already does.
+        Notification::make()
+            ->title('Add funds invoice created')
+            ->body('Invoice #' . $invoice->id . ' for ' . number_format((float) $this->fundsAmount, 2) . ' ' . $currency . ' is waiting to be paid.')
+            ->success()->send();
+
         $this->dispatch('$refresh');
     }
 

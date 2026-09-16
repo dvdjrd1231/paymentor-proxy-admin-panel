@@ -155,6 +155,9 @@ class CreateQuote extends Page
         if ($record === null) {
             $this->items = [self::blankItem()];
             $this->validUntil = now()->addMonth()->format('Y-m-d');
+            // Opened from a client's profile, the quote starts on that client rather than
+            // asking for them again (Leandro, 2026-09-14).
+            $this->userId = request()->integer('for') ?: null;
 
             return;
         }
