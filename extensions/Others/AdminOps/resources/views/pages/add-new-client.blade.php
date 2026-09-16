@@ -55,12 +55,9 @@
                 </label>
                 <label class="ao-anc-row">
                     <span>Status</span>
-                    {{-- The reference also lists Inactive; nothing here can be set to it.
-                         A client reads Active while they hold a live service and Inactive
-                         when they hold none, so it is arithmetic rather than a state to
-                         choose. Closed is real and is what this writes. --}}
                     <select class="ao-aw-tiny" wire:model="status">
                         <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
                         <option value="closed">Closed</option>
                     </select>
                 </label>

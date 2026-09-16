@@ -271,6 +271,31 @@ class ClientSummary extends Page
      * so one abandoned half-made costs nothing — which is why the reference can afford to
      * create before asking (Leandro, 2026-09-16).
      */
+    /**
+     * The reference's three client states, in the order it decides them.
+     *
+     * Closed wins: it is stamped on the account and refuses it at login. Inactive is a
+     * label staff set and it is stored, because a client can perfectly well be inactive
+     * while still holding a service — the reference lets staff say so. With neither set it
+     * is worked out the way it always was: Active while the client holds a live service.
+     */
+    public static function statusOf(\App\Models\User $user): string
+    {
+        if ((Models\Meta::for($user)['closed_at'] ?? null) !== null) {
+            return 'Closed';
+        }
+
+        $stored = $user->properties->firstWhere('key', 'client_status')?->value;
+
+        if ($stored === 'inactive') {
+            return 'Inactive';
+        }
+
+        return $user->services()->whereIn('status', ['pending', 'active', 'suspended'])->exists()
+            ? 'Active'
+            : 'Inactive';
+    }
+
     public function createInvoice(): void
     {
         Gate::authorize('has-permission', 'admin.invoices.create');
@@ -1732,6 +1757,7 @@ class ClientSummary extends Page
             'lastSeen' => $user->sessions()->orderByDesc('last_activity')->first(),
             'recentEmails' => $this->emailRows()->take(5),
             'isActive' => $user->services()->whereIn('status', ['pending', 'active', 'suspended'])->exists(),
+            'clientStatus' => self::statusOf($user),
             'quoteRows' => $this->quoteRows(),
             'acceptedQuotes' => Schema::hasTable('ext_quotes')
                 ? DB::table('ext_quotes')->where('user_id', $user->id)->where('status', 'accepted')->count()

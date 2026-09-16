@@ -123,12 +123,14 @@ class AddNewClient extends Page
 
     /** The reference's Admin Notes — the same `admin_notes` property the profile edits. */
     /**
-     * The reference's Status. It offers Active, Inactive and Closed; only two of those are
-     * a thing an account can be set to here. "Inactive" is not stored anywhere — the
-     * profile derives it, reading Active while the client holds a live service and
-     * Inactive when they hold none {@see ClientSummary}, so a brand-new client is Inactive
-     * by arithmetic and choosing it would change nothing. Closed is real: it stamps
-     * `closed_at`, which refuses the account at login {@see AdminOps::refuseClosedAccounts}.
+     * The reference's Status, all three of it.
+     *
+     * Closed stamps `closed_at`, which refuses the account at login
+     * {@see AdminOps::refuseClosedAccounts}. Inactive is stored as its own property, so a
+     * client can be marked inactive whether or not they hold services — without it the
+     * profile could only ever derive the word from whether services existed, which is not
+     * a thing staff can set. Active stores nothing and lets that derivation stand.
+     * {@see ClientSummary::statusOf}
      */
     public string $status = 'active';
 
@@ -377,6 +379,7 @@ class AddNewClient extends Page
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', Rule::unique('users', 'email')],
             'password' => ['required', 'string', 'min:8'],
+            'status' => ['required', Rule::in(['active', 'inactive', 'closed'])],
         ];
 
         foreach ($required as $key) {
@@ -456,6 +459,10 @@ class AddNewClient extends Page
 
             if ($this->clientGroup !== '') {
                 $values['client_group_id'] = $this->clientGroup;
+            }
+
+            if ($this->status === 'inactive') {
+                $values['client_status'] = 'inactive';
             }
 
             foreach ($values as $key => $value) {

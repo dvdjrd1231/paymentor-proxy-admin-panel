@@ -183,7 +183,7 @@
                     <h3>Other Information</h3>
                     <div class="ao-cp-body">
                         <table class="ao-cp-kv">
-                            <tr><td>Status</td><td>{{ $isActive ? 'Active' : 'Inactive' }}</td></tr>
+                            <tr><td>Status</td><td>{{ $clientStatus }}</td></tr>
                             <tr><td>Client Group</td><td>{{ $clientGroup?->name ?? 'None' }}</td></tr>
                             <tr><td>Signup Date</td><td>{{ $user->created_at?->format('m/d/Y') }}</td></tr>
                             <tr><td>Client For</td><td>{{ $user->created_at?->diffForHumans(null, true) }}</td></tr>
