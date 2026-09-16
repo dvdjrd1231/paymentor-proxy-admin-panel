@@ -104,6 +104,14 @@ class EditInvoice extends Page
             'quantity' => (int) $item->quantity,
         ])->values()->all();
 
+        // An invoice with no lines opens on an empty one ready to type, as the reference
+        // does — "No Records Found" on an invoice you have just raised to fill in reads as
+        // a fault rather than an invitation (Leandro, 2026-09-16). Save skips a row left
+        // blank, so nothing is stored by merely opening the screen.
+        if ($this->items === []) {
+            $this->items[] = ['id' => null, 'description' => '', 'price' => '0.00', 'quantity' => 1];
+        }
+
         $this->selected = [];
 
         $this->options = [

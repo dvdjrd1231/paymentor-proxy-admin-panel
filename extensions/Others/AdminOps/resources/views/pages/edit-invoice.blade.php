@@ -71,12 +71,9 @@
                 </div>
 
                 <div class="ao-ei-status-block">
-                    <div class="ao-ei-status ao-ei-status--{{ $invoice->status }}">
-                        {{ ['paid' => 'PAID', 'pending' => 'UNPAID', 'cancelled' => 'CANCELLED', 'draft' => 'DRAFT'][$invoice->status] ?? strtoupper($invoice->status) }}
-                    </div>
-
-                    {{-- The reference's Publish pair, shown only while the invoice is a
-                         draft: one makes it visible, the other tells the client as well. --}}
+                    {{-- The reference's Publish pair sits above the status word, at the top
+                         right of the panel — the first thing to do with a draft, before
+                         reading what state it is in (Leandro, 2026-09-16). --}}
                     @if ($invoice->status === 'draft')
                         <div class="ao-ei-publish">
                             <button type="button" class="ao-find-go" wire:click="publish"
@@ -85,6 +82,10 @@
                                 wire:loading.attr="disabled" wire:target="publish">Publish and Send Email</button>
                         </div>
                     @endif
+
+                    <div class="ao-ei-status ao-ei-status--{{ $invoice->status }}">
+                        {{ ['paid' => 'PAID', 'pending' => 'UNPAID', 'cancelled' => 'CANCELLED', 'draft' => 'DRAFT'][$invoice->status] ?? strtoupper($invoice->status) }}
+                    </div>
                     <div class="ao-ei-status-line">
                         Last Capture Attempt: <b>{{ $lastAttempt?->created_at?->format('m/d/Y H:i') ?? 'None' }}</b>
                     </div>

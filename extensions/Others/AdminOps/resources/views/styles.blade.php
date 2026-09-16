@@ -3505,7 +3505,8 @@
 
     /* The reference's Publish pair: the plain one beside the amber "and Send Email", which
        is the louder of the two because it also leaves the building. */
-    .ao-ei-publish { display: flex; justify-content: center; gap: 0.5rem; margin: 0.6rem 0; }
+    /* Right-aligned above the status word, where the reference puts them. */
+    .ao-ei-publish { display: flex; justify-content: flex-end; gap: 0.5rem; margin: 0 0 0.6rem; }
 
     .ao-ei-publish-mail {
         padding: 0.35rem 0.9rem;
