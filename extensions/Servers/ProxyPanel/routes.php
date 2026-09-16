@@ -15,6 +15,17 @@ Route::match(['get', 'post'], '/extensions/proxypanel/callback', [ProxyPanel::cl
     ->withoutMiddleware([VerifyCsrfToken::class])
     ->name('extensions.servers.proxypanel.callback');
 
+// The same handler on the paths the WHMCS module used. The panel is written against that
+// module, so a call aimed at its old URL would 404 at the router — before the handler, and
+// so without a line in the log. Since 2026-09-11 not one callback has arrived on the real
+// route, while adminProxies report sending them (issue #10, three times over); these exist
+// so a call to the wrong address is answered rather than lost, and leaves a trace either
+// way. {@see ProxyPanel::callback}, which logs the path it was reached on.
+foreach (['/modules/servers/proxypanel/callback.php', '/extensions/proxypanel/callback.php'] as $legacy) {
+    Route::match(['get', 'post'], $legacy, [ProxyPanel::class, 'callback'])
+        ->withoutMiddleware([VerifyCsrfToken::class]);
+}
+
 // Country-flag webfont. Windows ships no flag glyphs, so browsers there would render "GB"
 // instead of 🇬🇧. This is a Twemoji subset of the regional-indicator range only, applied by
 // the theme via unicode-range. Served from here because public/ is not bind-mounted into

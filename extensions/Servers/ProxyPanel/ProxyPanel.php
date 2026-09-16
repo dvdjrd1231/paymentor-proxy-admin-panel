@@ -1223,6 +1223,7 @@ class ProxyPanel extends Server
             $this->log('warning', 'Callback rejected: no valid secret, signature or allowed address', [
                 'ip' => $request->ip(),
                 'method' => $request->method(),
+                'path' => $request->path(),
             ]);
 
             return response()->json(['status' => 'error', 'description' => 'Not authorized'], 401);
@@ -1237,6 +1238,7 @@ class ProxyPanel extends Server
         $this->log('info', 'Callback received', [
             'ip' => $request->ip(),
             'method' => $request->method(),
+            'path' => $request->path(),
             'payload' => $payload,
         ]);
 
