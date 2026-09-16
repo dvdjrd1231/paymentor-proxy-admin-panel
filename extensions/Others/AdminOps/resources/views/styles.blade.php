@@ -3045,6 +3045,22 @@
         background: #fff;
     }
 
+    /* Source code, the reference's other View entry: the generated HTML as code, which is
+       the half of that pair we were missing — `<>` opened the rendered dialog too. */
+    .ao-ete-prevmodal .ao-ete-sourceview {
+        max-height: 60vh;
+        overflow: auto;
+        margin: 0;
+        padding: 1.2rem 1.5rem;
+        background: #f7f7f7;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.82rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        color: var(--wa-ink, #2b2b2b);
+    }
+
     /* The preview reads as the email, not as the source beside it: real headings, real
        lists, a real table (Leandro, 2026-09-13 — "the preview mode is behaving exactly
        like the source code, but they need to be different"). */

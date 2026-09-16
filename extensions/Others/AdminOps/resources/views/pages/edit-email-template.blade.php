@@ -243,10 +243,11 @@
                     <span class="ao-rte-sep"></span>
                     <button type="button" data-ao-act="fullscreen" title="Fullscreen">&#9974;</button>
                     <button type="button" data-ao-act="help" title="Markdown guide">?</button>
-                    {{-- The reference's `<>` — the same rendered view its File ▸ Preview
-                         opens, which is a dialog over the editor rather than a swap of it. --}}
-                    <button type="button" class="ao-ete-mode" wire:click="$set('previewOpen', true)"
-                        title="See the email as the reader will">&lt;&gt;</button>
+                    {{-- The reference's `<>` is Source code: the HTML the email is built
+                         from. Preview, beneath, is what the reader sees — two different
+                         views of the same body, as the reference has them. --}}
+                    <button type="button" class="ao-ete-mode" wire:click="$set('sourceOpen', true)"
+                        title="The HTML this email is built from">&lt;&gt;</button>
                     <button type="button" data-ao-act="clearfmt" title="Clear formatting">&#8455;x</button>
                 </div>
 
@@ -317,6 +318,26 @@
                     <div class="ao-mud-foot ao-mud-foot-only-right">
                         <span class="ao-mud-foot-right">
                             <button type="button" class="ao-mud-close" wire:click="$set('previewOpen', false)">Close</button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- The reference's View ▸ Source code: the generated HTML, as code. The editor
+             above holds the Markdown the body is written in; this is what that Markdown
+             becomes, and Preview is what it looks like. Three different things. --}}
+        @if ($sourceOpen)
+            <div class="ao-mud-overlay" wire:click.self="$set('sourceOpen', false)">
+                <div class="ao-mud ao-ete-prevmodal" role="dialog" aria-modal="true">
+                    <div class="ao-mud-head">
+                        Source code
+                        <button type="button" wire:click="$set('sourceOpen', false)" aria-label="Close">&times;</button>
+                    </div>
+                    <pre class="ao-ete-sourceview"><code>{{ $this->previewHtml() }}</code></pre>
+                    <div class="ao-mud-foot ao-mud-foot-only-right">
+                        <span class="ao-mud-foot-right">
+                            <button type="button" class="ao-mud-close" wire:click="$set('sourceOpen', false)">Close</button>
                         </span>
                     </div>
                 </div>
@@ -412,6 +433,10 @@
                 const box = root.querySelector('[data-ao-message]');
                 const act = button.dataset.aoAct;
 
+                {{-- View ▸ Source code and View ▸ Preview were listed in the menu but
+                     reached no handler, so both did nothing at all. --}}
+                if (act === 'source') return @this.set('sourceOpen', true);
+                if (act === 'preview') return @this.set('previewOpen', true);
                 if (act === 'print') return window.print();
                 if (act === 'help') return window.open('https://www.markdownguide.org/basic-syntax/', '_blank', 'noopener');
                 if (act === 'fullscreen') {

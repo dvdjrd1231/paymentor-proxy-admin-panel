@@ -72,6 +72,15 @@ class EditEmailTemplate extends Page
      */
     public bool $previewOpen = false;
 
+    /**
+     * The reference's `<>` is Source code, not a second Preview — it shows the HTML the
+     * email is built from, where Preview shows what the reader sees. Ours opened the same
+     * rendered dialog from both, which is what Leandro reported on 2026-09-11 ("the
+     * preview mode is behaving exactly like the source code, but they need to be
+     * different") and again on 2026-09-14.
+     */
+    public bool $sourceOpen = false;
+
     public static function getRoutePath(Panel $panel): string
     {
         return '/' . static::getSlug($panel) . '/{record}';
