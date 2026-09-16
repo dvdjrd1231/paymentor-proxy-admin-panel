@@ -263,10 +263,20 @@
                     </span>
                 </label>
 
-                <div class="ao-anc-row">
+                {{-- A real picker, as the reference has: credit the balance, record one
+                     sent by hand, or ask the gateway. The gateway option is checked against
+                     the gateway when it is used rather than hidden — none here implements a
+                     refund hook today, and the refusal says which (Leandro, 2026-09-16). --}}
+                <label class="ao-anc-row">
                     <span>Refund Type</span>
-                    <span class="ao-eo-fact">Credit to the client&rsquo;s balance</span>
-                </div>
+                    <span class="ao-anc-field">
+                        <select class="ao-of-lg" wire:model="refund.type">
+                            @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditInvoice::REFUND_TYPES as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </span>
+                </label>
 
                 <label class="ao-anc-row">
                     <span>Amount</span>

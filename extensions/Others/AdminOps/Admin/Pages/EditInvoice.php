@@ -55,7 +55,21 @@ class EditInvoice extends Page
      * The Refund tab — the reference's form, field for field: which transaction, how much, whether to
      * undo what the payment set in motion, and whether to tell the client.
      */
-    public array $refund = ['transaction' => '', 'amount' => '', 'reason' => '', 'reverse' => false, 'sendEmail' => false];
+    public array $refund = ['transaction' => '', 'type' => 'credit', 'amount' => '', 'reason' => '', 'reverse' => false, 'sendEmail' => false];
+
+    /**
+     * The reference's Refund Type, its three kinds.
+     *
+     * Credit is the default rather than the gateway, which is what the reference defaults
+     * to: no gateway here implements a refund hook, so defaulting to it would put the one
+     * choice that cannot work in front of every refund. It is still offered — and checked
+     * for real against the gateway at the moment of use, rather than assumed either way.
+     */
+    public const REFUND_TYPES = [
+        'gateway' => 'Refund through Gateway (If supported by module)',
+        'external' => 'Manual Refund Processed Externally',
+        'credit' => "Add to Client's Credit Balance",
+    ];
 
     /** The Notes tab, stored as a property on the invoice. */
     public string $note = '';
@@ -621,7 +635,23 @@ class EditInvoice extends Page
         $this->validate([
             'refund.amount' => 'required|numeric|min:0.01',
             'refund.reason' => 'nullable|string|max:1000',
-        ], attributes: ['refund.amount' => 'amount', 'refund.reason' => 'reason']);
+            'refund.type' => 'required|in:' . implode(',', array_keys(self::REFUND_TYPES)),
+        ], attributes: ['refund.amount' => 'amount', 'refund.reason' => 'reason', 'refund.type' => 'refund type']);
+
+        // Asked of the gateway rather than assumed: if one ever ships a refund hook this
+        // starts working on its own, and until then the refusal names the gateway.
+        if ($this->refund['type'] === 'gateway') {
+            $gateway = $this->invoice->transactions
+                ->where('status', InvoiceTransactionStatus::Succeeded)->first()?->gateway;
+
+            if (!$gateway || !ExtensionHelper::hasFunction($gateway, 'refund')) {
+                Notification::make()->title('That gateway cannot refund')
+                    ->body(($gateway->name ?? 'The gateway on this invoice') . ' does not implement a refund hook. Use a manual refund or credit the balance.')
+                    ->danger()->send();
+
+                return;
+            }
+        }
 
         $user = $this->invoice->user;
 
@@ -646,11 +676,16 @@ class EditInvoice extends Page
                 return;
             }
 
-            $credit = \App\Models\Credit::firstOrCreate(
-                ['user_id' => $user->id, 'currency_code' => $this->invoice->currency_code],
-                ['amount' => 0],
-            );
-            $credit->increment('amount', $given);
+            // Only crediting the balance puts money back here. A manual refund has already
+            // been sent by hand outside the system, so it is recorded and nothing is added
+            // — crediting it too would pay the client twice.
+            if ($this->refund['type'] === 'credit') {
+                $credit = \App\Models\Credit::firstOrCreate(
+                    ['user_id' => $user->id, 'currency_code' => $this->invoice->currency_code],
+                    ['amount' => 0],
+                );
+                $credit->increment('amount', $given);
+            }
 
             Refund::create([
                 'invoice_id' => $this->invoice->id,
@@ -707,7 +742,7 @@ class EditInvoice extends Page
     /** Reload after a refund; the invoice itself is unchanged but the credit figures are not. */
     private function resetRefundForm(): void
     {
-        $this->refund = ['transaction' => '', 'amount' => '', 'reason' => '', 'reverse' => false, 'sendEmail' => false];
+        $this->refund = ['transaction' => '', 'type' => 'credit', 'amount' => '', 'reason' => '', 'reverse' => false, 'sendEmail' => false];
         $this->refreshInvoice();
     }
 
