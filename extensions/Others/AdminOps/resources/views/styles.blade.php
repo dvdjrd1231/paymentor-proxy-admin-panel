@@ -3622,7 +3622,15 @@
     .ao-ei-remove:hover { color: #b52b27; }
 
     .ao-ei-withrow > td { background: #f0f0f0; }
-    .ao-ei-with { padding: 0.25rem 0.4rem; font: inherit; }
+    /* A real control on the grey footer band: it was unbordered and transparent, so it read
+       as a line of text rather than something to open (Leandro, 2026-09-16). */
+    .ao-ei-with {
+        padding: 0.25rem 0.4rem;
+        font: inherit;
+        border: 1px solid var(--wa-panel-border, #ccc);
+        border-radius: var(--wa-radius, 4px);
+        background: #fff;
+    }
 
     .ao-ei-save { display: flex; justify-content: center; gap: 0.5rem; margin: 1rem 0; }
 

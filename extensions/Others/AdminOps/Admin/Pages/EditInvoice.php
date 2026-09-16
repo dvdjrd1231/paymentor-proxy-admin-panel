@@ -136,6 +136,20 @@ class EditInvoice extends Page
         $this->loadForm();
     }
 
+    /**
+     * The totals and transactions, without rebuilding the item rows.
+     *
+     * {@see refreshInvoice} reloads the form from the database, which throws away every
+     * line added with Add Item and not yet saved — those exist only in this component's
+     * state until Save Changes. Removing one line therefore took all the unsaved ones with
+     * it (Leandro, 2026-09-16: "after add 6 items and click remove button of any row, then
+     * it removes all rows"). Anything that edits the rows in memory refreshes this way.
+     */
+    private function refreshTotals(): void
+    {
+        $this->invoice->refresh()->load(['items', 'transactions.gateway', 'user']);
+    }
+
     // ── Invoice items ────────────────────────────────────────────────────────────────
 
     /** The reference's empty last row: filling it in and saving adds a line. */
@@ -156,7 +170,13 @@ class EditInvoice extends Page
 
         unset($this->items[$index]);
         $this->items = array_values($this->items);
-        $this->refreshInvoice();
+        $this->selected = [];
+
+        if ($this->items === []) {
+            $this->items[] = ['id' => null, 'description' => '', 'price' => '0.00', 'quantity' => 1];
+        }
+
+        $this->refreshTotals();
 
         Notification::make()->title('Line removed')->success()->send();
     }
@@ -179,8 +199,22 @@ class EditInvoice extends Page
             $this->invoice->items()->whereIn('id', $ids)->delete();
         }
 
-        $this->refreshInvoice();
-        Notification::make()->title(count($ids) . ' line(s) removed')->success()->send();
+        // Dropped from the list here rather than by reloading it, so lines typed but not
+        // yet saved survive their neighbours being removed. {@see refreshTotals}
+        $ticked = array_map('intval', $this->selected);
+        $this->items = array_values(array_filter(
+            $this->items,
+            fn ($row, $index) => !in_array($index, $ticked, true),
+            ARRAY_FILTER_USE_BOTH,
+        ));
+        $this->selected = [];
+
+        if ($this->items === []) {
+            $this->items[] = ['id' => null, 'description' => '', 'price' => '0.00', 'quantity' => 1];
+        }
+
+        $this->refreshTotals();
+        Notification::make()->title(count($ticked) . ' line(s) removed')->success()->send();
     }
 
     /** Save Changes under the items table: the lines themselves. */
