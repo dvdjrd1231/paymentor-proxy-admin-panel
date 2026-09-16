@@ -1054,6 +1054,15 @@
         color: var(--wa-ink);
     }
 
+    /* Core's own record forms sit bare on the page, where ours sit inside cards that carry
+       their own padding — so on those screens the first field ran up against the rail with
+       only the layout's 13px between them (Leandro, 2026-09-16, on Create Invoice). Ours
+       are untouched: no page of ours carries a `fi-resource-*-record-page` class. */
+    .fi-resource-create-record-page .fi-page-content,
+    .fi-resource-edit-record-page .fi-page-content {
+        padding-inline: 1rem;
+    }
+
     /* The sub-navigation, as the profile's tab strip rather than a rail down the left.
        Core lays this page out as sidebar-then-content; stacking them puts the strip above
        the form, which is where the profile keeps its tabs and what makes the two screens
