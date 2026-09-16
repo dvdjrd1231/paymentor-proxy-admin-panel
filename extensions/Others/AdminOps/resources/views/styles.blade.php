@@ -3641,20 +3641,38 @@
         display: grid;
         grid-template-columns: 9.5rem 1fr;
         align-items: center;
-        gap: 0.9rem;
+    }
+
+    /* The reference shades a form by COLUMN, not by row. From its own stylesheet
+       (admin/templates/blend/css/style.css):
+
+           table.form td.fieldlabel { background-color: #fff;    text-align: right; }
+           table.form td.fieldarea  { background-color: #efefef; text-align: left;  }
+
+       — so every row reads label-on-white, field-on-grey, all the way down. Ours striped
+       whole rows odd/even instead, which is why the banding never lined up with his no
+       matter how the rows were ordered (Leandro, 2026-09-16, on Add New Client; and
+       "where it is gray, it is white", 2026-09-09).
+
+       The padding moved off the row and onto the cells so each block of colour reaches the
+       row's edges rather than leaving white gutters between them. */
+    .ao-anc-row > * {
         padding: 0.45rem 0.7rem;
     }
 
-    /* The reference stripes alternate rows — both shapes a card comes in: the two-column
-       grid (.ao-anc-col, Add New Client's own layout) and the plain single-column card
-       every other .ao-anc-card form uses (Open New Ticket among fourteen pages). Only the
-       second was ever striped; the first was missed entirely, which is what read as pages
-       whose rows do not "align" with the reference the way Add New Client's do. Wide rows
-       are excluded — they already carry their own explicit background via .ao-anc-grey,
-       and striping on top would fight it depending on which rule happens to win. */
-    .ao-anc-col > .ao-anc-row:nth-child(odd),
-    .ao-anc-card > .ao-anc-row:not(.ao-anc-row-wide):nth-child(odd) {
-        background: #f0f0f0;
+    .ao-anc-row > :first-child {
+        background: #fff;
+    }
+
+    .ao-anc-row > :nth-child(2) {
+        background: #efefef;
+    }
+
+    /* Wide rows carry their own explicit background via .ao-anc-grey; colouring their
+       cells on top would fight it depending on which rule happens to win. */
+    .ao-anc-row-wide > *,
+    .ao-anc-grey > * {
+        background: transparent;
     }
 
     /* A field's explanation, under its control. Long module descriptions used to sit
