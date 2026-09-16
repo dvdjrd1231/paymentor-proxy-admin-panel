@@ -132,8 +132,12 @@ class CreateInvoice extends Page
                 'currency_code' => $this->currencyCode,
             ]);
             // The reference's "Issued At" is core's own created_at — the column its form
-            // edits — and it is not fillable, so it is set directly.
-            $invoice->created_at = $this->issuedAt;
+            // edits — and it is not fillable, so it is set directly. A date box carries no
+            // time, so backdating to today would stamp the invoice midnight and sort it
+            // behind everything raised earlier the same day; today keeps the real clock.
+            if ($this->issuedAt !== now()->format('Y-m-d')) {
+                $invoice->created_at = $this->issuedAt;
+            }
             // Core's own switch for telling the client, set the way its create page sets it.
             $invoice->send_create_email = $this->sendEmail;
             $invoice->save();
