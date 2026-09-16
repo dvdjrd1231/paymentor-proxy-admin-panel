@@ -2526,19 +2526,22 @@
     /* Fixed layout so those percentages are what the columns get. Under auto layout the
        table sized itself to its widest cell's content instead — the provisioning band —
        and grew past the panel, which `.ao-mu`'s overflow-x then turned into a scrollbar
+    /* Scoped away from the invoice screen, whose root carries `ao-eo` too — these
+       percentages were sizing its item grid, giving the tick column 14% and the remove
+       column 8% (Leandro, 2026-09-16). */
        with "Send Welcome Email" cut off. Fixed, the band has a real width to fit into. */
-    .ao-eo .ao-mu-grid { table-layout: fixed; width: 100%; }
+    .ao-eo:not(.ao-ei) .ao-mu-grid { table-layout: fixed; width: 100%; }
     /* Description carries the widest text on the row — "<category> - <product>", which
        for these plans runs to 67 characters — so it takes the width the four short
        columns after it do not need (Leandro, 2026-09-14: "Keep products or services in
        a single line"). At 35% it held one line only on his own 1900px screen and broke
        on anything narrower. */
-    .ao-eo .ao-mu-grid th:nth-child(1) { width: 14%; }
-    .ao-eo .ao-mu-grid th:nth-child(2) { width: 44%; }
-    .ao-eo .ao-mu-grid th:nth-child(3) { width: 11%; }
-    .ao-eo .ao-mu-grid th:nth-child(4) { width: 11%; }
-    .ao-eo .ao-mu-grid th:nth-child(5) { width: 8%; }
-    .ao-eo .ao-mu-grid th:nth-child(6) { width: 12%; }
+    .ao-eo:not(.ao-ei) .ao-mu-grid th:nth-child(1) { width: 14%; }
+    .ao-eo:not(.ao-ei) .ao-mu-grid th:nth-child(2) { width: 44%; }
+    .ao-eo:not(.ao-ei) .ao-mu-grid th:nth-child(3) { width: 11%; }
+    .ao-eo:not(.ao-ei) .ao-mu-grid th:nth-child(4) { width: 11%; }
+    .ao-eo:not(.ao-ei) .ao-mu-grid th:nth-child(5) { width: 8%; }
+    .ao-eo:not(.ao-ei) .ao-mu-grid th:nth-child(6) { width: 12%; }
 
     /* "Product/Service" is one word to a reader and must not be hyphen-less split down
        the middle — the list-table rule that breaks long unbroken runs is meant for data
@@ -3969,7 +3972,7 @@
     .ao-eo .ao-of-label { font-size: 0.82rem; }
     .ao-eo .ao-eo-fact { line-height: 1.5; }
     .ao-eo .ao-of-rows { gap: 1px; padding: 1px; }
-    .ao-eo .ao-mu-grid td { padding: 0.5rem 0.6rem; }
+    .ao-eo:not(.ao-ei) .ao-mu-grid td { padding: 0.5rem 0.6rem; }
     .ao-eo .ao-of-row select { height: 1.7rem; font-size: 0.82rem; }
 
     /* The reference's two side-by-side fact tables. They end level there because its
