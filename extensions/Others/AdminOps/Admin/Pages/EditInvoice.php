@@ -256,6 +256,33 @@ class EditInvoice extends Page
     }
 
     /** The Summary tab's Mark Unpaid / Cancel. */
+    /**
+     * The reference's Publish. An invoice is raised as a draft — the client cannot see it
+     * until this is pressed, which is the whole point of the state — and publishing simply
+     * makes it the unpaid invoice it was always going to be.
+     *
+     * {@see AdminOps::hideDraftInvoicesFromClients()} is what enforces the invisibility.
+     */
+    public function publish(bool $andEmail = false): void
+    {
+        if ($this->invoice->status !== 'draft') {
+            return;
+        }
+
+        $this->invoice->update(['status' => 'pending']);
+        $this->refreshInvoice();
+
+        if ($andEmail) {
+            $this->emailTemplate = 'new_invoice_created';
+            $this->sendEmail();
+
+            return;
+        }
+
+        Notification::make()->title('Invoice published')
+            ->body('The client can see it now.')->success()->send();
+    }
+
     public function setStatus(string $status): void
     {
         if (!in_array($status, ['pending', 'cancelled'], true)) {

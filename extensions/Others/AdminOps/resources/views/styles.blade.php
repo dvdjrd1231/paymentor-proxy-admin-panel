@@ -3503,6 +3503,23 @@
 
     .ao-ei-marks { display: flex; justify-content: center; gap: 0.5rem; }
 
+    /* The reference's Publish pair: the plain one beside the amber "and Send Email", which
+       is the louder of the two because it also leaves the building. */
+    .ao-ei-publish { display: flex; justify-content: center; gap: 0.5rem; margin: 0.6rem 0; }
+
+    .ao-ei-publish-mail {
+        padding: 0.35rem 0.9rem;
+        border: 1px solid #e0a800;
+        border-radius: 4px;
+        background: #f0ad4e;
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .ao-ei-publish-mail:hover { background: #ec971f; }
+
+    .ao-ei-draft-note { margin-bottom: 1rem; }
+
     /* Add Payment and Options: the reference's two columns of labelled rows, with the
        button centred beneath both. */
     .ao-ei-two {

@@ -264,6 +264,27 @@ class ClientSummary extends Page
      * being Credit - that is what turns payment into credit rather than into nothing -
      * so the item is written exactly as the client area's own add-funds writes it.
      */
+    /**
+     * The reference's Create Invoice. It asks nothing first: it raises a draft for this
+     * client and opens the invoice screen, where the lines are typed and Publish makes it
+     * real. A draft is invisible to the client {@see AdminOps::hideDraftInvoicesFromClients},
+     * so one abandoned half-made costs nothing — which is why the reference can afford to
+     * create before asking (Leandro, 2026-09-16).
+     */
+    public function createInvoice(): void
+    {
+        Gate::authorize('has-permission', 'admin.invoices.create');
+
+        $invoice = \App\Models\Invoice::create([
+            'user_id' => $this->customer->id,
+            'currency_code' => $this->customer->currency_code ?: config('settings.default_currency', 'USD'),
+            'due_at' => now()->addDays(14),
+            'status' => 'draft',
+        ]);
+
+        $this->redirect(EditInvoice::getUrl(['record' => $invoice->id]));
+    }
+
     public function createAddFundsInvoice(): void
     {
         Gate::authorize('has-permission', 'admin.invoices.create');

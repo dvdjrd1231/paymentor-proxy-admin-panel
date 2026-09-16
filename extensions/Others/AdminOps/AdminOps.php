@@ -64,6 +64,7 @@ class AdminOps extends Extension
         View::addNamespace('adminops', __DIR__ . '/resources/views');
 
         \Paymenter\Extensions\Others\AdminOps\Support\PrefillInvoiceClient::register();
+        $this->hideDraftInvoicesFromClients();
 
         $this->registerNoFillDirective();
         $this->registerStyles();
@@ -648,6 +649,33 @@ class AdminOps extends Extension
      * A closed account cannot sign in — the half of the reference's Close Client Account
      * that has to live outside the button.
      */
+    /**
+     * A draft invoice is the admin's working copy: the reference says outright that "the
+     * client is not able to see or access this invoice until it is published", and Create
+     * Invoice raises one before a single line is typed, so this is what makes that true.
+     *
+     * A global scope rather than a filter on the client's list, because core's own
+     * `Auth::user()->invoices()` and its InvoicePolicy — which lets an owner view any
+     * invoice of theirs — are both vendored, and the scope covers the direct URL as well
+     * as the listing: the row simply is not found. Admins are exempt, or the invoice
+     * screen could not open the draft it just made.
+     */
+    private function hideDraftInvoicesFromClients(): void
+    {
+        \App\Models\Invoice::addGlobalScope('adminops_hide_drafts', function ($query): void {
+            $user = \Illuminate\Support\Facades\Auth::user();
+
+            // role_id is what separates staff from customers, the same test
+            // {@see refuseClosedAccounts} uses. Nobody signed in is a guest, and a guest
+            // has no business seeing a draft either.
+            if ($user instanceof \App\Models\User && $user->role_id !== null) {
+                return;
+            }
+
+            $query->where($query->getModel()->getTable() . '.status', '!=', 'draft');
+        });
+    }
+
     private function refuseClosedAccounts(): void
     {
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, function ($event): void {

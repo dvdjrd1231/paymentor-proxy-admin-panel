@@ -142,12 +142,12 @@
                             <tr><td>Net Income</td><td>{{ $this->formatTotals($lifetime) }}</td></tr>
                             <tr><td>Credit Balance</td><td><a class="ao-link" href="{{ $urls['credits'] }}">{{ $this->formatTotals($credits) }}</a></td></tr>
                         </table>
-                        {{-- Core's own screen, unchanged — `for` is picked up by
-                             {@see Support\PrefillInvoiceClient} so the client carries
-                             across without the page being rebuilt (Leandro, issue #53). --}}
-                        <a class="ao-cp-link" href="{{ \App\Admin\Resources\InvoiceResource::getUrl('create') }}?for={{ $user->id }}">
+                        {{-- The reference raises a draft and opens it, rather than asking
+                             for the details on a form first (Leandro, 2026-09-16). --}}
+                        <button type="button" class="ao-cp-link" wire:click="createInvoice"
+                            title="Raises a draft invoice for this client and opens it — the client cannot see it until you publish">
                             <x-filament::icon icon="ri-bill-line" class="ao-cp-ic" /> Create Invoice
-                        </a>
+                        </button>
                         <button type="button" class="ao-cp-link" wire:click="openMoney('funds')"
                             title="Raise an invoice the client can pay to put money on their balance">
                             <x-filament::icon icon="ri-money-dollar-circle-line" class="ao-cp-ic" /> Create Add Funds Invoice

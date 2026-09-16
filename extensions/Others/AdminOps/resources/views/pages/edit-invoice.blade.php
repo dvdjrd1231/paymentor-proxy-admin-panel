@@ -32,6 +32,15 @@
             </div>
         </div>
 
+        {{-- The reference's draft notice, above the tabs and on every one of them: the
+             reason the invoice looks unfinished is that the client cannot see it yet. --}}
+        @if ($invoice->status === 'draft')
+            <div class="ao-cs-banner ao-ei-draft-note">
+                <x-filament::icon icon="ri-information-line" class="ao-cs-banner-ic" />
+                <div>This is a Draft Invoice. The client is not able to see or access this invoice until it is published.</div>
+            </div>
+        @endif
+
         {{-- ── Summary ─────────────────────────────────────────────────────────── --}}
         <div x-show="tab === 'summary'" x-cloak>
             <div class="ao-ei-summary">
@@ -63,8 +72,19 @@
 
                 <div class="ao-ei-status-block">
                     <div class="ao-ei-status ao-ei-status--{{ $invoice->status }}">
-                        {{ ['paid' => 'PAID', 'pending' => 'UNPAID', 'cancelled' => 'CANCELLED'][$invoice->status] ?? strtoupper($invoice->status) }}
+                        {{ ['paid' => 'PAID', 'pending' => 'UNPAID', 'cancelled' => 'CANCELLED', 'draft' => 'DRAFT'][$invoice->status] ?? strtoupper($invoice->status) }}
                     </div>
+
+                    {{-- The reference's Publish pair, shown only while the invoice is a
+                         draft: one makes it visible, the other tells the client as well. --}}
+                    @if ($invoice->status === 'draft')
+                        <div class="ao-ei-publish">
+                            <button type="button" class="ao-find-go" wire:click="publish"
+                                wire:loading.attr="disabled" wire:target="publish">Publish</button>
+                            <button type="button" class="ao-ei-publish-mail" wire:click="publish(true)"
+                                wire:loading.attr="disabled" wire:target="publish">Publish and Send Email</button>
+                        </div>
+                    @endif
                     <div class="ao-ei-status-line">
                         Last Capture Attempt: <b>{{ $lastAttempt?->created_at?->format('m/d/Y H:i') ?? 'None' }}</b>
                     </div>
