@@ -111,9 +111,9 @@
             </tbody>
         </table>
 
-        <div class="ao-pr-center">
+        <div class="ao-pr-center ao-ei-save">
             <button type="submit" class="ao-find-go">Create Invoice</button>
-            <a class="ao-of-go" href="{{ $for ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $for]) : \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices::getUrl() }}">Cancel</a>
+            <a class="ao-pg-btn" href="{{ $for ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $for]) : \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices::getUrl() }}">Cancel</a>
         </div>
     </form>
 </x-filament-panels::page>
