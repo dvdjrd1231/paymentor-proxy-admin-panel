@@ -456,13 +456,25 @@ class EditEmailTemplate extends Page
 
         // Tags survive rendering: a placeholder no Markdown parser will touch, restored
         // as a styled token afterwards.
+        // Only tags in the text are styled. One inside a tag — `<a href="{{ route(…) }}">`
+        // — is part of the markup, and wrapping it in <code> broke the anchor and spilled
+        // the href into the visible line ("…}}"> Go to invoice"). Splitting on tags first
+        // keeps attributes intact and leaves them reading as the tags they are.
         $tags = [];
-        $body = preg_replace_callback('/\{\{\s*(.+?)\s*\}\}/s', function (array $m) use (&$tags): string {
-            $key = "\u{0001}TAG" . count($tags) . "\u{0001}";
-            $tags[$key] = '<code class="ao-ete-token">{{ ' . e($m[1]) . ' }}</code>';
+        $tokenise = function (string $text) use (&$tags): string {
+            return preg_replace_callback('/\{\{\s*(.+?)\s*\}\}/s', function (array $m) use (&$tags): string {
+                $key = "\u{0001}TAG" . count($tags) . "\u{0001}";
+                $tags[$key] = '<code class="ao-ete-token">{{ ' . e($m[1]) . ' }}</code>';
 
-            return $key;
-        }, $body) ?? $body;
+                return $key;
+            }, $text) ?? $text;
+        };
+
+        $parts = preg_split('/(<[^>]*>)/s', $body, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [$body];
+        $body = implode('', array_map(
+            fn (string $part): string => str_starts_with($part, '<') ? $part : $tokenise($part),
+            $parts,
+        ));
 
         try {
             // html_input allow, and no escaping first: a template body is admin-authored
