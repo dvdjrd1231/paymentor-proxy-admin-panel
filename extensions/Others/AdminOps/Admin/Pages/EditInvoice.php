@@ -62,11 +62,28 @@ class EditInvoice extends Page
 
     public ?string $confirming = null;
 
-    /** The emails this screen can actually send. */
+    /**
+     * The emails this screen can actually send, in the reference's own order.
+     *
+     * Every key here is a real notification template — the picker names templates rather
+     * than being a list of words, so one without a template would fail on send. The six
+     * after the first three were written for this
+     * ({@see database/migrations/2026_09_16_000000_add_invoice_notification_templates.php}).
+     *
+     * The reference's card and direct-debit entries are absent on purpose: there is no card
+     * vault and no direct debit here, so they would offer to tell a client something that
+     * cannot happen on their account.
+     */
     public const EMAILS = [
         'new_invoice_created' => 'Invoice Created',
+        'invoice_payment_reminder' => 'Invoice Payment Reminder',
+        'invoice_overdue_first' => 'First Invoice Overdue Notice',
+        'invoice_overdue_second' => 'Second Invoice Overdue Notice',
+        'invoice_overdue_third' => 'Third Invoice Overdue Notice',
         'invoice_paid' => 'Invoice Payment Confirmation',
+        'invoice_refund_confirmation' => 'Invoice Refund Confirmation',
         'invoice_payment_failed' => 'Invoice Payment Failed',
+        'invoice_modified' => 'Invoice Modified',
     ];
 
     /** Where the Notes tab's text lives — a property on the invoice row. */

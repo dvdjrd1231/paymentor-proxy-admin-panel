@@ -8751,12 +8751,13 @@
         font-size: 0.8rem;
         line-height: 1;
     }
-</style>
 
-    /* The With Selected select and the Sub Total label at opposite ends of the same cell. */
+    /* The With Selected select and the Sub Total label at opposite ends of the row's left
+       half, so the label sits against its amount rather than trailing the select. */
     .ao-ei-withcell {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 1rem;
     }
+</style>
