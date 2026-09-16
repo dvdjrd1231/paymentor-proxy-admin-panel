@@ -63,6 +63,8 @@ class AdminOps extends Extension
     {
         View::addNamespace('adminops', __DIR__ . '/resources/views');
 
+        \Livewire\Livewire::componentHook(\Paymenter\Extensions\Others\AdminOps\Support\PrefillInvoiceClient::class);
+
         $this->registerNoFillDirective();
         $this->registerStyles();
         $this->registerWhmcsSkin();

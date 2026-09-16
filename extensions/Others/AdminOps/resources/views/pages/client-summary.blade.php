@@ -142,10 +142,10 @@
                             <tr><td>Net Income</td><td>{{ $this->formatTotals($lifetime) }}</td></tr>
                             <tr><td>Credit Balance</td><td><a class="ao-link" href="{{ $urls['credits'] }}">{{ $this->formatTotals($credits) }}</a></td></tr>
                         </table>
-                        {{-- Ours, not core's: its create page arrives with the User box
-                             empty and cannot be pre-filled from the URL, so the client you
-                             started from had to be picked again (Leandro, issue #53). --}}
-                        <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\CreateInvoice::getUrl(['for' => $user->id]) }}">
+                        {{-- Core's own screen, unchanged — `for` is picked up by
+                             {@see Support\PrefillInvoiceClient} so the client carries
+                             across without the page being rebuilt (Leandro, issue #53). --}}
+                        <a class="ao-cp-link" href="{{ \App\Admin\Resources\InvoiceResource::getUrl('create') }}?for={{ $user->id }}">
                             <x-filament::icon icon="ri-bill-line" class="ao-cp-ic" /> Create Invoice
                         </a>
                         <button type="button" class="ao-cp-link" wire:click="openMoney('funds')"
