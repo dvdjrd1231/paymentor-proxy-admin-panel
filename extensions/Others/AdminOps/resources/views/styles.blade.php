@@ -8760,4 +8760,9 @@
         justify-content: space-between;
         gap: 1rem;
     }
+
+    /* Neither may be squeezed: without this the select took the width and "Sub Total:"
+       wrapped to one letter per line. */
+    .ao-ei-withcell > select { flex: 0 0 auto; }
+    .ao-ei-withcell > .ao-eo-total-label { flex: 0 0 auto; white-space: nowrap; }
 </style>
