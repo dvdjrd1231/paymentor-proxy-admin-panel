@@ -16,11 +16,13 @@ use Livewire\ComponentHook;
  * this way rather than building our own screen — leaves the page looking exactly as it
  * does today.
  *
- * Filled at render, after fillForm() has run, or it would be overwritten a moment later.
+ * Filled on mount, after fillForm() has run: Livewire's own lifecycle hook is registered
+ * before this one and is what calls the component's mount(), so by the time this runs the
+ * empty form state is already in place and ours is the last word.
  */
 class PrefillInvoiceClient extends ComponentHook
 {
-    public function render($view, $data): void
+    public function mount($params, $parent = null, $attributes = null): void
     {
         if (!$this->component instanceof CreateInvoice) {
             return;
