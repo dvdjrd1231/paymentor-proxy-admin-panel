@@ -356,10 +356,13 @@
                             <td><input type="number" min="1" class="ao-ei-qty-in" wire:model="items.{{ $index }}.quantity" aria-label="Quantity"></td>
                             <td><input type="text" inputmode="decimal" class="ao-ei-amount-in" wire:model="items.{{ $index }}.price" aria-label="Amount"></td>
                             <td class="ao-ei-del">
-                                {{-- The reference's circled minus, not a dot (Leandro,
-                                     2026-09-16). --}}
+                                {{-- The reference's circled minus. Drawn as an icon rather
+                                     than the ⊖ character, whose weight and alignment are
+                                     whatever the system font happens to give it. --}}
                                 <button type="button" class="ao-ei-remove" wire:click="removeItem({{ $index }})"
-                                    title="Remove this line" aria-label="Remove line">&#8854;</button>
+                                    title="Remove this line" aria-label="Remove line">
+                                    <x-filament::icon icon="ri-indeterminate-circle-fill" class="ao-ei-remove-ic" />
+                                </button>
                             </td>
                         </tr>
                     @empty

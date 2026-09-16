@@ -3513,7 +3513,11 @@
         padding: 0.3rem 0.5rem;
     }
 
+    /* The pair fills the row, so its edges line up with the template picker and Send Email
+       above rather than floating centred inside the same width (Leandro, 2026-09-16). */
     .ao-ei-marks { display: flex; justify-content: center; gap: 0.5rem; }
+
+    .ao-ei-marks > * { flex: 1; }
 
     /* The reference's Publish pair: the plain one beside the amber "and Send Email", which
        is the louder of the two because it also leaves the building. */
@@ -3611,13 +3615,19 @@
 
     /* The reference's red ⊖ at the end of each line. */
     .ao-ei-remove {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         color: #d9534f;
         background: none;
         border: 0;
-        font-size: 1.35rem;
         line-height: 1;
         cursor: pointer;
     }
+
+    .ao-ei-remove:hover { color: #b52b27; }
+
+    .ao-ei-remove-ic { width: 1.15rem; height: 1.15rem; }
 
     .ao-ei-remove:hover { color: #b52b27; }
 
