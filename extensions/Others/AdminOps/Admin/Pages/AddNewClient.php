@@ -191,7 +191,7 @@ class AddNewClient extends Page
             'currencies' => Currency::query()->pluck('code')->all(),
             'languages' => self::languages(),
             'gateways' => \App\Models\Gateway::query()->orderBy('name')->pluck('name')->all(),
-            'clientGroups' => Models\ClientGroup::query()->orderBy('name')->get(['id', 'name']),
+            'clientGroups' => \Paymenter\Extensions\Others\AdminOps\Models\ClientGroup::query()->orderBy('name')->get(['id', 'name']),
             'phoneFlag' => $this->phoneCountry()?->flag,
             'phoneDial' => $this->phoneCountry()?->dial,
             // Empty for a country with no list of ours — the field stays free text there.
@@ -465,7 +465,7 @@ class AddNewClient extends Page
             // Closed is stamped rather than stored as a status: the same mark the profile's
             // own Close Clients Account writes, and what the login check reads.
             if ($this->status === 'closed') {
-                Models\Meta::put($user, 'closed_at', now()->toDateTimeString());
+                \Paymenter\Extensions\Others\AdminOps\Models\Meta::put($user, 'closed_at', now()->toDateTimeString());
             }
 
             return $user;
