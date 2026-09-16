@@ -6037,6 +6037,11 @@
 
     .ao-eo-total .ao-eo-total-label { text-align: right; }
 
+    /* Credit sits on an .ao-ei-withrow, not .ao-eo-total, so it missed that rule and
+       centred itself mid-cell while Sub Total and Total Due sat against their amounts
+       (Leandro, 2026-09-16). */
+    .ao-ei-grid .ao-eo-total-label { text-align: right; }
+
     .ao-eo-dead-btn { opacity: 0.55; cursor: help; }
 
     /* A button this order's state leaves nothing to do, drawn as the reference greys it. */
