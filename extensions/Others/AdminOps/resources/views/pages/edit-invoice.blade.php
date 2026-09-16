@@ -377,14 +377,19 @@
                     <tr class="ao-ei-withrow">
                         {{-- The select and the Sub Total label share the row's left half,
                              as the reference has them: one at each end of it. --}}
-                        <td colspan="2" class="ao-mu-left ao-ei-withcell">
-                            <select class="ao-ei-with" wire:change="withSelected($event.target.value)"
-                                aria-label="With selected">
-                                <option value="">- With Selected -</option>
-                                <option value="split">Split to New Invoice</option>
-                                <option value="delete">Delete</option>
-                            </select>
-                            <span class="ao-eo-total-label">Sub Total:</span>
+                        <td colspan="2" class="ao-mu-left">
+                            {{-- The flex lives on a wrapper, not the cell: a <td> set to
+                                 display:flex stops being a table cell, and the colspan
+                                 quietly stopped spanning. --}}
+                            <div class="ao-ei-withcell">
+                                <select class="ao-ei-with" wire:change="withSelected($event.target.value)"
+                                    aria-label="With selected">
+                                    <option value="">- With Selected -</option>
+                                    <option value="split">Split to New Invoice</option>
+                                    <option value="delete">Delete</option>
+                                </select>
+                                <span class="ao-eo-total-label">Sub Total:</span>
+                            </div>
                         </td>
                         {{-- What is on screen, saved or not {@see EditInvoice::liveSubtotal}. --}}
                         <td class="ao-eo-total-value">${{ number_format($this->liveSubtotal(), 2) }} {{ $invoice->currency_code }}</td>
