@@ -3630,11 +3630,19 @@
     }
 
     /* --- Add New Client: the reference's two-column zebra form --- */
+    /* The reference sets its two halves side by side with a rule between them, not with a
+       gutter: its left field column runs right up to the divider, and the right half's
+       label column starts immediately after it. A 2.5rem gap left a white channel down the
+       middle that its own form does not have (Leandro, 2026-09-16). */
     .ao-anc-cols {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 0 2.5rem;
+        gap: 0;
         align-items: start;
+    }
+
+    .ao-anc-cols > .ao-anc-col:first-child {
+        border-right: 1px solid var(--wa-panel-border, #ddd);
     }
 
     .ao-anc-row {
