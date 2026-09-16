@@ -4094,6 +4094,18 @@
         padding: 0.8rem 1rem;
     }
 
+    /* A card whose rows ARE the form carries no padding of its own: the reference's form
+       fills its box, so every white label cell and grey field cell reaches the border
+       rather than floating inside a white frame (Leandro, 2026-09-16, arrow at the card's
+       top-left corner). Cards holding anything else keep their padding — this only matches
+       the ones built out of rows. overflow: hidden so the cells are clipped by the radius
+       instead of squaring off the corners. */
+    .ao-anc-card:has(> .ao-anc-row),
+    .ao-anc-card:has(> .ao-anc-cols) {
+        padding: 0;
+        overflow: hidden;
+    }
+
     /* The reference's full-width rows under the columns; Settings and Owner sit on the
        stripe, as its screenshot has them. */
     .ao-anc-row-wide {
