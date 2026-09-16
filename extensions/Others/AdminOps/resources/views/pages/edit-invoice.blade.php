@@ -460,7 +460,6 @@
                 <tr><th>Date</th><th>Payment Method</th><th>Transaction ID</th><th>Amount</th><th>Transaction Fees</th></tr>
             </thead>
             <tbody>
-                @php $succeeded = $invoice->transactions->where('status', \App\Enums\InvoiceTransactionStatus::Succeeded); @endphp
                 @forelse ($succeeded as $transaction)
                     <tr>
                         <td>{{ $transaction->created_at?->format('m/d/Y H:i') }}</td>

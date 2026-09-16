@@ -813,6 +813,9 @@ class EditInvoice extends Page
 
         return [
             'gateways' => Gateway::orderBy('name')->get(),
+            // Handed to the view: the Refund tab's Transactions picker needs it near the
+            // top of the page, where the Blade used to define it only further down.
+            'succeeded' => $succeeded,
             'paid' => $succeeded->sum(fn ($transaction) => (float) $transaction->amount),
             'creditApplied' => $creditApplied,
             'availableCredit' => (float) ($this->invoice->user?->credits()
