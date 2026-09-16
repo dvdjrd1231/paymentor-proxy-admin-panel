@@ -3641,13 +3641,13 @@
         align-items: stretch;
     }
 
-    /* The halves rarely hold the same number of rows, and whichever runs shorter left bare
-       white beside the other's last rows (Leandro, 2026-09-16: "Must be grey background",
-       beside Telegram Chat ID). Each half carries the row pattern as its own background —
-       white to the label boundary, grey after — so the leftover reads as more of the same
-       form rather than a hole in it. */
+    /* White behind the halves, because the 2px between rows is the reference's own
+       border-spacing showing through and it is white. Shading the column instead filled
+       those channels with grey and the rows ran together (Leandro, 2026-09-16, arrows at
+       the gaps). A half that is a row short gets a blank row in the markup, as the
+       reference's shared table gives it for free. */
     .ao-anc-cols > .ao-anc-col {
-        background: linear-gradient(to right, #fff 0 12rem, #efefef 12rem);
+        background: #fff;
     }
 
     /* The channel between the halves is the same 2px of white, not a drawn rule. */

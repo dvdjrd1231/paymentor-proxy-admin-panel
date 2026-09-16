@@ -145,6 +145,12 @@
                         @endforeach
                     </select>
                 </label>
+                {{-- The reference builds both halves as one table, so its rows always end
+                     level. Ours carries a Telegram Chat ID the reference has no counterpart
+                     for, which left this half a row short and bare white beside it; a blank
+                     row matches the two again, the same way the left half's own blanks
+                     align it (Leandro, 2026-09-16). --}}
+                <div class="ao-anc-row" aria-hidden="true"><span></span><span></span></div>
             </div>
         </div>
 
