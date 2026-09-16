@@ -3612,6 +3612,14 @@
 
     .ao-ei-items-head .ao-ano-heading { margin-bottom: 0; }
 
+    /* Its own fixed columns, so the merged Sub Total cell spans the full left half and its
+       label lands beside the amount rather than trailing the select. The order screen's
+       percentages are scoped away from this grid, so nothing else sizes it. */
+    .ao-ei-grid { table-layout: fixed; width: 100%; }
+    .ao-ei-grid .ao-ei-check { width: 3rem; }
+    .ao-ei-grid .ao-ei-amount { width: 12rem; }
+    .ao-ei-grid .ao-ei-del { width: 3.5rem; }
+
     .ao-ei-check { width: 2.5rem; }
     .ao-ei-del { width: 3rem; }
 
