@@ -122,6 +122,19 @@ class AddNewClient extends Page
     ];
 
     /** The reference's Admin Notes — the same `admin_notes` property the profile edits. */
+    /**
+     * The reference's Status. It offers Active, Inactive and Closed; only two of those are
+     * a thing an account can be set to here. "Inactive" is not stored anywhere — the
+     * profile derives it, reading Active while the client holds a live service and
+     * Inactive when they hold none {@see ClientSummary}, so a brand-new client is Inactive
+     * by arithmetic and choosing it would change nothing. Closed is real: it stamps
+     * `closed_at`, which refuses the account at login {@see AdminOps::refuseClosedAccounts}.
+     */
+    public string $status = 'active';
+
+    /** The reference's Client Group, stored as the `client_group_id` property. */
+    public string $clientGroup = '';
+
     public string $notes = '';
 
     /** "Check to send a New Account Information Message" — the account email, really sent. */
@@ -178,6 +191,7 @@ class AddNewClient extends Page
             'currencies' => Currency::query()->pluck('code')->all(),
             'languages' => self::languages(),
             'gateways' => \App\Models\Gateway::query()->orderBy('name')->pluck('name')->all(),
+            'clientGroups' => Models\ClientGroup::query()->orderBy('name')->get(['id', 'name']),
             'phoneFlag' => $this->phoneCountry()?->flag,
             'phoneDial' => $this->phoneCountry()?->dial,
             // Empty for a country with no list of ours — the field stays free text there.
@@ -440,8 +454,18 @@ class AddNewClient extends Page
                 $values['admin_notes'] = trim($this->notes);
             }
 
+            if ($this->clientGroup !== '') {
+                $values['client_group_id'] = $this->clientGroup;
+            }
+
             foreach ($values as $key => $value) {
                 $user->properties()->create(['key' => $key, 'value' => $value]);
+            }
+
+            // Closed is stamped rather than stored as a status: the same mark the profile's
+            // own Close Clients Account writes, and what the login check reads.
+            if ($this->status === 'closed') {
+                Models\Meta::put($user, 'closed_at', now()->toDateTimeString());
             }
 
             return $user;

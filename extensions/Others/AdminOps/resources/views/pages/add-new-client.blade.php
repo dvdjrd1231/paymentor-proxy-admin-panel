@@ -55,11 +55,23 @@
                 </label>
                 <label class="ao-anc-row">
                     <span>Status</span>
-                    <select class="ao-aw-tiny"><option>Active</option></select>
+                    {{-- The reference also lists Inactive; nothing here can be set to it.
+                         A client reads Active while they hold a live service and Inactive
+                         when they hold none, so it is arithmetic rather than a state to
+                         choose. Closed is real and is what this writes. --}}
+                    <select class="ao-aw-tiny" wire:model="status">
+                        <option value="active">Active</option>
+                        <option value="closed">Closed</option>
+                    </select>
                 </label>
                 <label class="ao-anc-row">
                     <span>Client Group</span>
-                    <select class="ao-aw-tiny"><option>None</option></select>
+                    <select class="ao-aw-tiny" wire:model="clientGroup">
+                        <option value="">None</option>
+                        @foreach ($clientGroups as $group)
+                            <option value="{{ $group->id }}">{{ $group->name }}</option>
+                        @endforeach
+                    </select>
                 </label>
             </div>
 
