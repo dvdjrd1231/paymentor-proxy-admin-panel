@@ -328,7 +328,14 @@
         {{-- ── Invoice Items, shared under every tab, as the reference has it ──── --}}
         <div class="ao-ei-items-head">
             <h4 class="ao-ano-heading">Invoice Items</h4>
-            <button type="button" class="ao-pg-btn" wire:click="addItem">Add Item</button>
+            {{-- Adding a line is a round trip — Livewire re-renders the whole screen — so
+                 the button says so rather than looking ignored for half a second
+                 (Leandro, 2026-09-16: "Add item feature took a little long time"). --}}
+            <button type="button" class="ao-pg-btn" wire:click="addItem"
+                wire:loading.attr="disabled" wire:target="addItem">
+                <span wire:loading.remove wire:target="addItem">Add Item</span>
+                <span wire:loading wire:target="addItem">Adding&hellip;</span>
+            </button>
         </div>
 
         <form wire:submit.prevent="save">

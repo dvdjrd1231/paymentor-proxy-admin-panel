@@ -688,11 +688,10 @@ class EditInvoice extends Page
             'lastAttempt' => $lastAttempt,
             'refunds' => Refund::with('admin')->where('invoice_id', $this->invoice->id)
                 ->orderByDesc('id')->get(),
-            'refunded' => Refund::totalFor($this->invoice->id),
-            'refundable' => round(
-                $succeeded->sum(fn ($t) => (float) $t->amount) - Refund::totalFor($this->invoice->id),
-                2,
-            ),
+            // Asked once and used twice: this runs on every Livewire round trip, including
+            // the one behind Add Item, and the second call bought nothing.
+            'refunded' => $refunded = Refund::totalFor($this->invoice->id),
+            'refundable' => round($succeeded->sum(fn ($t) => (float) $t->amount) - $refunded, 2),
             'paymentMethod' => $succeeded->first()?->gateway?->name
                 ?? ($creditApplied > 0 ? 'Account credit' : null),
             'clientUrl' => ClientSummary::getUrl(['record' => $this->invoice->user_id]),
