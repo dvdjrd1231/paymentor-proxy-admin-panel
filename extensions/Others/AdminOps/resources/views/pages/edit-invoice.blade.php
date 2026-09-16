@@ -344,7 +344,6 @@
                     <tr>
                         <th class="ao-ei-check"></th>
                         <th>Description</th>
-                        <th class="ao-ei-qty">Quantity</th>
                         <th class="ao-ei-amount">Amount</th>
                         <th class="ao-ei-del"></th>
                     </tr>
@@ -360,7 +359,6 @@
                                 <input type="text" class="ao-ei-desc" wire:model="items.{{ $index }}.description"
                                     aria-label="Line description">
                             </td>
-                            <td><input type="number" min="1" class="ao-ei-qty-in" wire:model.live.debounce.500ms="items.{{ $index }}.quantity" aria-label="Quantity"></td>
                             <td><input type="text" inputmode="decimal" class="ao-ei-amount-in" wire:model.live.debounce.500ms="items.{{ $index }}.price" aria-label="Amount"></td>
                             <td class="ao-ei-del">
                                 {{-- The reference's circled minus. Drawn as an icon rather
@@ -373,32 +371,32 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
+                        <tr><td colspan="4" class="ao-mu-none ao-mu-left">No Records Found</td></tr>
                     @endforelse
 
                     <tr class="ao-ei-withrow">
-                        <td colspan="2" class="ao-mu-left">
+                        {{-- The select and the Sub Total label share the row's left half,
+                             as the reference has them: one at each end of it. --}}
+                        <td colspan="2" class="ao-mu-left ao-ei-withcell">
                             <select class="ao-ei-with" wire:change="withSelected($event.target.value)"
                                 aria-label="With selected">
                                 <option value="">- With Selected -</option>
                                 <option value="split">Split to New Invoice</option>
                                 <option value="delete">Delete</option>
                             </select>
+                            <span class="ao-eo-total-label">Sub Total:</span>
                         </td>
-                        <td class="ao-eo-total-label">Sub Total:</td>
                         {{-- What is on screen, saved or not {@see EditInvoice::liveSubtotal}. --}}
                         <td class="ao-eo-total-value">${{ number_format($this->liveSubtotal(), 2) }} {{ $invoice->currency_code }}</td>
                         <td></td>
                     </tr>
                     <tr class="ao-ei-withrow">
-                        <td colspan="2"></td>
-                        <td class="ao-eo-total-label">Credit:</td>
+                        <td colspan="2" class="ao-eo-total-label">Credit:</td>
                         <td class="ao-eo-total-value">${{ number_format($creditApplied, 2) }} {{ $invoice->currency_code }}</td>
                         <td></td>
                     </tr>
                     <tr class="ao-eo-total">
-                        <td colspan="2"></td>
-                        <td class="ao-eo-total-label">Total Due:</td>
+                        <td colspan="2" class="ao-eo-total-label">Total Due:</td>
                         {{-- Follows the subtotal on screen, less whatever credit has been
                              applied, so the ladder adds up while the lines are being typed
                              rather than only after a save. --}}

@@ -97,11 +97,17 @@ class EditInvoice extends Page
 
     private function loadForm(): void
     {
+        // `price` here is the LINE TOTAL, not the unit price: the reference's ladder has a
+        // single Amount column and no Quantity, so a line of 3 × 70.00 must read 210.00 or
+        // the invoice would appear to be for a third of its value (Leandro, 2026-09-16).
+        // The unit price and quantity are kept alongside so an untouched line saves back
+        // exactly as it was. {@see save}
         $this->items = $this->invoice->items->map(fn ($item): array => [
             'id' => $item->id,
             'description' => (string) $item->description,
-            'price' => number_format((float) $item->price, 2, '.', ''),
+            'price' => number_format((float) $item->price * max(1, (int) $item->quantity), 2, '.', ''),
             'quantity' => (int) $item->quantity,
+            'unit' => number_format((float) $item->price, 2, '.', ''),
         ])->values()->all();
 
         // An invoice with no lines opens on an empty one ready to type, as the reference
@@ -159,8 +165,9 @@ class EditInvoice extends Page
      */
     public function liveSubtotal(): float
     {
+        // Straight sum: each row's Amount is already the line total. {@see loadForm}
         return round(array_sum(array_map(
-            fn (array $row): float => (float) ($row['price'] ?? 0) * max(1, (int) ($row['quantity'] ?? 1)),
+            fn (array $row): float => (float) ($row['price'] ?? 0),
             $this->items,
         )), 2);
     }
@@ -244,8 +251,7 @@ class EditInvoice extends Page
         $this->validate([
             'items.*.description' => 'nullable|string|max:255',
             'items.*.price' => 'required|numeric',
-            'items.*.quantity' => 'required|integer|min:1',
-        ], attributes: ['items.*.price' => 'amount', 'items.*.quantity' => 'quantity']);
+                    ], attributes: ['items.*.price' => 'amount']);
 
         foreach ($this->items as $row) {
             // A blank new row is the reference's "nothing typed here" — skipped rather
@@ -254,11 +260,23 @@ class EditInvoice extends Page
                 continue;
             }
 
+            // Amount on screen is the line total. A line left alone keeps the unit price
+            // and quantity it came in with — 3 × 70.00 stays that way rather than being
+            // flattened on every save. One whose total was edited becomes a single line at
+            // the figure typed, because that is the only reading of "this line costs 210"
+            // the one box can carry.
+            $total = (float) $row['price'];
+            $untouched = isset($row['unit'])
+                && abs($total - (float) $row['unit'] * max(1, (int) $row['quantity'])) < 0.005;
+
+            $price = $untouched ? (float) $row['unit'] : $total;
+            $quantity = $untouched ? max(1, (int) $row['quantity']) : 1;
+
             if ($row['id']) {
                 $this->invoice->items()->where('id', $row['id'])->update([
                     'description' => (string) $row['description'],
-                    'price' => (float) $row['price'],
-                    'quantity' => (int) $row['quantity'],
+                    'price' => $price,
+                    'quantity' => $quantity,
                 ]);
 
                 continue;
@@ -266,8 +284,8 @@ class EditInvoice extends Page
 
             $this->invoice->items()->create([
                 'description' => (string) $row['description'],
-                'price' => (float) $row['price'],
-                'quantity' => (int) $row['quantity'],
+                'price' => $price,
+                'quantity' => $quantity,
             ]);
         }
 

@@ -3515,9 +3515,11 @@
 
     /* The pair fills the row, so its edges line up with the template picker and Send Email
        above rather than floating centred inside the same width (Leandro, 2026-09-16). */
-    .ao-ei-marks { display: flex; justify-content: center; gap: 0.5rem; }
+    /* Both rows the same width, so the pair of buttons lines up with the picker and Send
+       Email above instead of spilling past them (Leandro, 2026-09-16). */
+    .ao-ei-send, .ao-ei-marks { width: 21rem; margin-inline: auto; }
 
-    .ao-ei-marks > * { flex: 1; }
+    .ao-ei-send > select, .ao-ei-marks > * { flex: 1; min-width: 0; }
 
     /* The reference's Publish pair: the plain one beside the amber "and Send Email", which
        is the louder of the two because it also leaves the building. */
@@ -8750,3 +8752,11 @@
         line-height: 1;
     }
 </style>
+
+    /* The With Selected select and the Sub Total label at opposite ends of the same cell. */
+    .ao-ei-withcell {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
