@@ -3663,24 +3663,23 @@
        "where it is gray, it is white", 2026-09-09).
 
        The padding moved off the row and onto the cells so each block of colour reaches the
-       row's edges rather than leaving white gutters between them. */
+       row's edges rather than leaving white gutters between them.
+
+       The grey goes on the ROW and the white on the label cell, rather than the grey on
+       the field cell: in most rows the field is a bare <input>, which paints its own white
+       background over anything set on it, so colouring "the second child" left those rows
+       looking white while the few whose field is wrapped in a <span> went grey — which is
+       the alternation this was meant to remove. */
+    .ao-anc-row {
+        background: #efefef;
+    }
+
     .ao-anc-row > * {
         padding: 0.45rem 0.7rem;
     }
 
     .ao-anc-row > :first-child {
         background: #fff;
-    }
-
-    .ao-anc-row > :nth-child(2) {
-        background: #efefef;
-    }
-
-    /* Wide rows carry their own explicit background via .ao-anc-grey; colouring their
-       cells on top would fight it depending on which rule happens to win. */
-    .ao-anc-row-wide > *,
-    .ao-anc-grey > * {
-        background: transparent;
     }
 
     /* A field's explanation, under its control. Long module descriptions used to sit
