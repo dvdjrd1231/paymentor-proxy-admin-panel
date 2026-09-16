@@ -3638,7 +3638,16 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0;
-        align-items: start;
+        align-items: stretch;
+    }
+
+    /* The halves rarely hold the same number of rows, and whichever runs shorter left bare
+       white beside the other's last rows (Leandro, 2026-09-16: "Must be grey background",
+       beside Telegram Chat ID). Each half carries the row pattern as its own background —
+       white to the label boundary, grey after — so the leftover reads as more of the same
+       form rather than a hole in it. */
+    .ao-anc-cols > .ao-anc-col {
+        background: linear-gradient(to right, #fff 0 12rem, #efefef 12rem);
     }
 
     /* The channel between the halves is the same 2px of white, not a drawn rule. */
@@ -3686,6 +3695,23 @@
 
     .ao-anc-row > * {
         padding: 3px 5px;
+    }
+
+    /* A control sitting straight in the row takes that inset as margin, not padding: its
+       own `padding: 0 0.55rem` outranks the cell rule, so those rows came out 36px while
+       rows whose field is wrapped in a span came out 42px, and the two halves' rows then
+       lined up with nothing (Leandro, 2026-09-16: "Not aligned well"). As margin the inset
+       is outside the control, so every row is the same height and the row's grey shows
+       through the gap exactly as it does around a wrapped field. */
+    .ao-anc-row > input,
+    .ao-anc-row > select,
+    .ao-anc-row > textarea {
+        margin: 3px 5px;
+    }
+
+    /* Admin Notes is a white box on the grey band, as the reference draws it. */
+    .ao-anc-row textarea {
+        background: #fff;
     }
 
     /* The white channel between a label and its field is the table's border-spacing; as a
