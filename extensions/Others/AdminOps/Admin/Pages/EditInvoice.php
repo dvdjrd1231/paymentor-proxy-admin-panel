@@ -51,8 +51,11 @@ class EditInvoice extends Page
     /** The Credit tab's two boxes. */
     public array $credit = ['add' => '', 'remove' => ''];
 
-    /** The Refund tab. */
-    public array $refund = ['amount' => '', 'reason' => '', 'sendEmail' => false];
+    /**
+     * The Refund tab — the reference's form, field for field: which transaction, how much, whether to
+     * undo what the payment set in motion, and whether to tell the client.
+     */
+    public array $refund = ['transaction' => '', 'amount' => '', 'reason' => '', 'reverse' => false, 'sendEmail' => false];
 
     /** The Notes tab, stored as a property on the invoice. */
     public string $note = '';
@@ -667,22 +670,44 @@ class EditInvoice extends Page
             return;
         }
 
+        // The reference's Reverse Payment: undo what the payment set going. Here that is
+        // the services this invoice paid for — a payment activates or unsuspends them, so
+        // reversing it suspends them again. Nothing else on this platform is triggered by a
+        // transaction, which is why the row says "where possible" (Leandro, 2026-09-16).
+        $reversed = 0;
+
+        if ($this->refund['reverse']) {
+            foreach ($this->invoice->items as $item) {
+                if ($item->reference_type !== \App\Models\Service::class) {
+                    continue;
+                }
+
+                $service = $item->reference;
+
+                if ($service && $service->status === \App\Models\Service::STATUS_ACTIVE) {
+                    $service->update(['status' => \App\Models\Service::STATUS_SUSPENDED]);
+                    $reversed++;
+                }
+            }
+        }
+
         if ($this->refund['sendEmail']) {
-            $this->send('invoice_paid');
+            $this->send('invoice_refund_confirmation');
         }
 
         $this->resetRefundForm();
 
         Notification::make()
             ->title('$' . number_format($given, 2) . ' returned to ' . $user->email . '\'s balance')
-            ->body('The invoice stays settled — this is credit for the unused part, not a reversal of its payment.')
+            ->body('The invoice stays settled — this is credit for the unused part, not a reversal of its payment.'
+                . ($reversed > 0 ? ' ' . $reversed . ' service(s) suspended.' : ''))
             ->success()->send();
     }
 
     /** Reload after a refund; the invoice itself is unchanged but the credit figures are not. */
     private function resetRefundForm(): void
     {
-        $this->refund = ['amount' => '', 'reason' => '', 'sendEmail' => false];
+        $this->refund = ['transaction' => '', 'amount' => '', 'reason' => '', 'reverse' => false, 'sendEmail' => false];
         $this->refreshInvoice();
     }
 

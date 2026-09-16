@@ -244,6 +244,25 @@
                      this is the only kind of refund available sits in the note under the
                      card rather than inflating the row to a paragraph (Leandro,
                      2026-09-16). --}}
+                {{-- The reference's first row: which payment is being refunded. Disabled
+                     while there is none, with its own wording (Leandro, 2026-09-16). --}}
+                <label class="ao-anc-row">
+                    <span>Transactions</span>
+                    <span class="ao-anc-field">
+                        <select class="ao-of-lg" wire:model="refund.transaction" @disabled($succeeded->isEmpty())>
+                            @forelse ($succeeded as $transaction)
+                                <option value="{{ $transaction->id }}">
+                                    {{ $transaction->created_at?->format('m/d/Y') }} &mdash;
+                                    ${{ number_format((float) $transaction->amount, 2) }} {{ $invoice->currency_code }}
+                                    @if ($transaction->gateway?->name) ({{ $transaction->gateway->name }}) @endif
+                                </option>
+                            @empty
+                                <option value="">No Transactions Applied To This Invoice Yet</option>
+                            @endforelse
+                        </select>
+                    </span>
+                </label>
+
                 <div class="ao-anc-row">
                     <span>Refund Type</span>
                     <span class="ao-eo-fact">Credit to the client&rsquo;s balance</span>
@@ -273,6 +292,17 @@
                     <span>Reason</span>
                     <input type="text" wire:model="refund.reason"
                         placeholder="eg. Service cancelled early — credit for the unused period">
+                </label>
+
+                {{-- The reference's Reverse Payment. What a payment sets going here is the
+                     services the invoice paid for, so undoing it suspends them again —
+                     hence "where possible", which is its own wording. --}}
+                <label class="ao-anc-row">
+                    <span>Reverse Payment</span>
+                    <span class="ao-anc-field">
+                        <input type="checkbox" wire:model="refund.reverse">
+                        <i>Undo automated actions triggered by this transaction &mdash; suspends the services this invoice paid for, where possible.</i>
+                    </span>
                 </label>
 
                 <label class="ao-anc-row">
