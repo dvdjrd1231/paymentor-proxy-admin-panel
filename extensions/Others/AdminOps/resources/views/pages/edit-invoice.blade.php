@@ -240,16 +240,13 @@
         {{-- ── Refund ──────────────────────────────────────────────────────────── --}}
         <div x-show="tab === 'refund'" x-cloak>
             <form class="ao-anc-card ao-ei-refund" wire:submit.prevent="issueRefund">
+                {{-- One line, as the reference's Refund Type row is: the explanation of why
+                     this is the only kind of refund available sits in the note under the
+                     card rather than inflating the row to a paragraph (Leandro,
+                     2026-09-16). --}}
                 <div class="ao-anc-row">
                     <span>Refund Type</span>
-                    <span class="ao-eo-fact">
-                        Credit to the client's balance
-                        <i class="ao-ei-refund-note">
-                            No gateway here implements a refund hook, so money cannot be sent
-                            back down the card or crypto rail it arrived on. Credit is what
-                            can genuinely be returned — and it is what the client spends here.
-                        </i>
-                    </span>
+                    <span class="ao-eo-fact">Credit to the client&rsquo;s balance</span>
                 </div>
 
                 <label class="ao-anc-row">
@@ -292,9 +289,12 @@
                 </div>
 
                 <p class="ao-cp-note">
-                    The invoice stays settled. This returns credit for a service that ended
-                    early; it is not a reversal of the payment, so nothing here makes the
-                    client appear to owe money again.
+                    No gateway here implements a refund hook, so money cannot be sent back
+                    down the card or crypto rail it arrived on — credit is what can genuinely
+                    be returned, and it is what the client spends here. The invoice stays
+                    settled: this returns credit for a service that ended early, not a
+                    reversal of the payment, so nothing here makes the client appear to owe
+                    money again.
                 </p>
             </form>
 

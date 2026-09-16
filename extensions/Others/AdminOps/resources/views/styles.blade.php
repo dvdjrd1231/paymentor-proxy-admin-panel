@@ -8767,6 +8767,17 @@
 
     /* The With Selected select and the Sub Total label at opposite ends of the row's left
        half, so the label sits against its amount rather than trailing the select. */
+    /* A disabled action reads as one: the reference greys its Refund button when there is
+       nothing to refund, where ours stayed full-strength blue and looked clickable
+       (Leandro, 2026-09-16). */
+    .ao-find-go:disabled,
+    .ao-pg-btn:disabled {
+        background: #d9d9d9;
+        border-color: #cfcfcf;
+        color: #8a8a8a;
+        cursor: not-allowed;
+    }
+
     .ao-ei-withcell {
         display: flex;
         align-items: center;
