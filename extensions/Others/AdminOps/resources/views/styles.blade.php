@@ -3641,8 +3641,9 @@
         align-items: start;
     }
 
+    /* The channel between the halves is the same 2px of white, not a drawn rule. */
     .ao-anc-cols > .ao-anc-col:first-child {
-        border-right: 1px solid var(--wa-panel-border, #ddd);
+        border-right: 2px solid #fff;
     }
 
     .ao-anc-row {
@@ -3670,16 +3671,25 @@
        background over anything set on it, so colouring "the second child" left those rows
        looking white while the few whose field is wrapped in a <span> went grey — which is
        the alternation this was meant to remove. */
+       And the reference's form is a table with `border-spacing: 2px`, so every cell is its
+       own tile with a 2px white channel around it — rows do not touch, and the label does
+       not touch its field. Drawn as solid contiguous bands, ours read as a different shape
+       however the colours fell. Its cells are `padding: 3px 5px` too, half of what we had,
+       which is most of why our rows stood so much taller than his. */
     .ao-anc-row {
         background: #efefef;
+        margin-bottom: 2px;
     }
 
     .ao-anc-row > * {
-        padding: 0.45rem 0.7rem;
+        padding: 3px 5px;
     }
 
+    /* The white channel between a label and its field is the table's border-spacing; as a
+       grid it has to be drawn, and a border on the label cell is what does it. */
     .ao-anc-row > :first-child {
         background: #fff;
+        border-right: 2px solid #fff;
     }
 
     /* A field's explanation, under its control. Long module descriptions used to sit
@@ -4109,7 +4119,10 @@
        instead of squaring off the corners. */
     .ao-anc-card:has(> .ao-anc-row),
     .ao-anc-card:has(> .ao-anc-cols) {
-        padding: 0;
+        /* 2px of padding is the table's border-spacing at its outer edge, and the frame is
+           the reference's own `border: 3px solid #E2E7E9` rather than our 1px hairline. */
+        padding: 2px;
+        border: 3px solid #E2E7E9;
         overflow: hidden;
     }
 
