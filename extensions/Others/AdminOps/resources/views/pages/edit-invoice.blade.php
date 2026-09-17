@@ -194,68 +194,71 @@
         {{-- ── Options ─────────────────────────────────────────────────────────── --}}
         <div x-show="tab === 'options'" x-cloak>
             <form class="ao-anc-card ao-ei-two" wire:submit.prevent="saveOptions">
-                <div class="ao-anc-col">
-                    <label class="ao-anc-row">
-                        <span>Invoice Date</span>
-                        @include('adminops::partials.datepicker', [
-                            'model' => 'options.invoiceDate', 'range' => false, 'id' => 'ao-ei-invdate',
-                            'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
-                        ])
-                    </label>
-                    {{-- The reference's Payment Method: the gateway this invoice is to be
-                         paid through. An invoice row carries no gateway of its own, so it is
-                         kept as a property and pre-selects the client's choice on their
-                         payment page. They may still pick another. --}}
-                    <label class="ao-anc-row">
-                        <span>Payment Method</span>
-                        <select wire:model="options.paymentMethod">
-                            <option value="">- Client chooses -</option>
-                            @foreach ($this->gatewayOptions() as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-                    <label class="ao-anc-row">
-                        <span>Invoice #</span>
-                        <input type="text" wire:model="options.number" placeholder="Blank until issued">
-                    </label>
-                </div>
 
-                <div class="ao-anc-col">
-                    <label class="ao-anc-row">
-                        <span>Due Date</span>
-                        @include('adminops::partials.datepicker', [
-                            'model' => 'options.dueAt', 'range' => false, 'id' => 'ao-ei-duedate',
-                            'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
-                        ])
-                    </label>
-                    {{-- The reference's two numbered rates. Core charges one percentage per
-                         invoice, so both are stored and carried as their combined effective
-                         rate — exact while the reference's Compound Tax setting is off, which
-                         is its default. {@see EditInvoice::TAX2_KEY} --}}
-                    <label class="ao-anc-row">
-                        <span>Tax Rate</span>
-                        <span class="ao-anc-field ao-ei-tax">
-                            <i class="ao-ei-tax-n">1</i>
-                            <input type="text" inputmode="decimal" class="ao-of-tax"
-                                wire:model="options.taxRate" placeholder="0.00">
-                            <i>%</i>
-                            <i class="ao-ei-tax-n">2</i>
-                            <input type="text" inputmode="decimal" class="ao-of-tax"
-                                wire:model="options.taxRate2" placeholder="0.00">
-                            <i>%</i>
-                        </span>
-                    </label>
-                    {{-- The reference's seven, in its order. Collections and Payment Pending
-                         keep the invoice payable and chased; see EditInvoice::STATE_KEY. --}}
-                    <label class="ao-anc-row">
-                        <span>Status</span>
-                        <select wire:model="options.status">
-                            @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditInvoice::STATUSES as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </label>
+                <div class="ao-ei-two-container">
+                    <div class="ao-anc-col">
+                        <label class="ao-anc-row">
+                            <span>Invoice Date</span>
+                            @include('adminops::partials.datepicker', [
+                                'model' => 'options.invoiceDate', 'range' => false, 'id' => 'ao-ei-invdate',
+                                'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                            ])
+                        </label>
+                        {{-- The reference's Payment Method: the gateway this invoice is to be
+                            paid through. An invoice row carries no gateway of its own, so it is
+                            kept as a property and pre-selects the client's choice on their
+                            payment page. They may still pick another. --}}
+                        <label class="ao-anc-row">
+                            <span>Payment Method</span>
+                            <select wire:model="options.paymentMethod">
+                                <option value="">- Client chooses -</option>
+                                @foreach ($this->gatewayOptions() as $id => $name)
+                                    <option value="{{ $id }}">{{ $name }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label class="ao-anc-row">
+                            <span>Invoice #</span>
+                            <input type="text" wire:model="options.number" placeholder="Blank until issued">
+                        </label>
+                    </div>
+
+                    <div class="ao-anc-col">
+                        <label class="ao-anc-row">
+                            <span>Due Date</span>
+                            @include('adminops::partials.datepicker', [
+                                'model' => 'options.dueAt', 'range' => false, 'id' => 'ao-ei-duedate',
+                                'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
+                            ])
+                        </label>
+                        {{-- The reference's two numbered rates. Core charges one percentage per
+                            invoice, so both are stored and carried as their combined effective
+                            rate — exact while the reference's Compound Tax setting is off, which
+                            is its default. {@see EditInvoice::TAX2_KEY} --}}
+                        <label class="ao-anc-row">
+                            <span>Tax Rate</span>
+                            <span class="ao-anc-field ao-ei-tax">
+                                <i class="ao-ei-tax-n">1</i>
+                                <input type="text" inputmode="decimal" class="ao-of-tax"
+                                    wire:model="options.taxRate" placeholder="0.00">
+                                <i>%</i>
+                                <i class="ao-ei-tax-n">2</i>
+                                <input type="text" inputmode="decimal" class="ao-of-tax"
+                                    wire:model="options.taxRate2" placeholder="0.00">
+                                <i>%</i>
+                            </span>
+                        </label>
+                        {{-- The reference's seven, in its order. Collections and Payment Pending
+                            keep the invoice payable and chased; see EditInvoice::STATE_KEY. --}}
+                        <label class="ao-anc-row">
+                            <span>Status</span>
+                            <select wire:model="options.status">
+                                @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditInvoice::STATUSES as $value => $label)
+                                    <option value="{{ $value }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="ao-pr-center ao-ei-wide"><button type="submit" class="ao-find-go">Save Changes</button></div>

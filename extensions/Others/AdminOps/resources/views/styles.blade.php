@@ -3453,9 +3453,11 @@
     /* The invoice tabs' cards take a visible hairline rather than the reference's own
        near-white 3px frame: on a white card that frame reads as no border at all
        (Leandro, 2026-09-16: "No border"). */
-    /* Except the ones that ARE the reference's form table: those keep its own frame. */
-    .ao-mu.ao-ei .ao-anc-card:has(> .ao-anc-col) {
-        border: 3px solid #E2E7E9;
+    /* The Options/Add Payment cards now carry their frame on .ao-ei-two-container instead,
+       so the card itself stays plain rather than drawing a second box around it. */
+    .ao-mu.ao-ei .ao-anc-card:has(.ao-ei-two-container) {
+        border: 0;
+        padding: 0;
     }
 
     .ao-mu.ao-ei .ao-anc-card {
@@ -3629,6 +3631,17 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0 1.5rem;
         margin-top: 1rem;
+    }
+
+    /* Jordan's frame around both halves (2026-09-17). It is a child of the .ao-ei-two grid,
+       so it has to span both tracks and become the two-column grid itself — left as a plain
+       block it took column 1 alone and the two halves stacked down half the card. */
+    .ao-ei-two-container {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 1.5rem;
+        border: 3px solid #efefef;
     }
 
     .ao-ei-wide { grid-column: 1 / -1; }
