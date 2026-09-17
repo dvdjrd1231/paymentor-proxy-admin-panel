@@ -3487,7 +3487,7 @@
     /* Ten tabs have to sit on one line as the reference's do; without this the longer
        labels wrapped inside their own tab and the strip grew to two rows. */
     .ao-ei-tabs .ao-mu-tab { white-space: nowrap; padding-inline: 0.7rem; }
-    .ao-ei-tools { display: flex; gap: 0.4rem; padding-bottom: 0.35rem; }
+    .ao-ei-tools { display: flex; gap: 0.4rem; padding-bottom: 1.35rem; }
 
     /* Summary: the facts card beside the big status block, as the reference splits it. */
     .ao-ei-summary {
@@ -3553,8 +3553,6 @@
         padding: 0.6rem 0.8rem;
         margin-bottom: 1rem;
         background: #f5f5f5;
-        border: 1px solid var(--wa-panel-border, #ddd);
-        border-radius: var(--wa-radius, 4px);
     }
 
     .ao-ei-publishbar > * {

@@ -53,7 +53,7 @@
         </div>
 
         {{-- ── Summary ─────────────────────────────────────────────────────────── --}}
-        <div x-show="tab === 'summary'" x-cloak>
+        <div x-show="tab === 'summary'" x-cloak style="margin-top: -16px;border: 1px solid #e5e5e5;">
             {{-- The reference's own band: a full-width grey strip under the toolbar with
                  the Publish pair at its right, flush with the card beneath it. Ours had the
                  buttons floating unbacked inside the status column (Leandro, 2026-09-17). --}}
