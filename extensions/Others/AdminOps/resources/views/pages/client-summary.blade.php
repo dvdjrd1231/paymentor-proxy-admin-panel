@@ -40,7 +40,7 @@
         @endforeach
     </nav>
 
-    <div class="ao-panel" style="display:flex;flex-direction:column;gap:1.5rem;">
+    <div class="ao-panel" style="display:flex;flex-direction:column;gap:1.5rem; margin-top: -51px;">
 
     @if ($tab === 'summary')
         {{-- The reference's Summary: four columns of panels, then the banded tables. --}}

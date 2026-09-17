@@ -11,7 +11,7 @@
 {{-- The reference heads each of these tabs with its own buttons, and two of them with a
      band of four figures. Everything below is real: the counts are queries, and each
      button goes to the screen that actually does the thing. --}}
-<div class="ao-ct-head @if ($tab === 'billable') ao-ct-head-bare @endif">
+<div class="ao-ct-head @if ($tab === 'billable') ao-ct-head-bare @endif" style="padding: 5px; background: #efefef;">
     @switch($tab)
         @case('invoices')
             <a class="ao-mu-tab" href="{{ $urls['newInvoice'] }}">&#10010; Create Invoice</a>
