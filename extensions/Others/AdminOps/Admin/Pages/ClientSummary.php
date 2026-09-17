@@ -281,7 +281,7 @@ class ClientSummary extends Page
      */
     public static function statusOf(\App\Models\User $user): string
     {
-        if ((Models\Meta::for($user)['closed_at'] ?? null) !== null) {
+        if ((Meta::for($user)['closed_at'] ?? null) !== null) {
             return 'Closed';
         }
 
