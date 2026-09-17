@@ -130,6 +130,20 @@
 
         {{-- ── Add Payment ─────────────────────────────────────────────────────── --}}
         <div x-show="tab === 'payment'" x-cloak>
+            {{-- A draft takes no payment. The reference says so here rather than offering a
+                 form, and it is right: the client cannot see a draft, so money recorded
+                 against one would settle a document that has not been issued — and core
+                 flips an invoice to paid the moment the balance lands, leaving it paid and
+                 invisible at the same time (Leandro, 2026-09-17). {@see addPayment} --}}
+            @if ($invoice->status === 'draft')
+                <div class="ao-cs-banner ao-ei-draft-block">
+                    <x-filament::icon icon="ri-information-line" class="ao-cs-banner-ic" />
+                    <div>
+                        <b>This is a Draft Invoice.</b>
+                        <div>Please Publish first to apply a payment</div>
+                    </div>
+                </div>
+            @else
             <form class="ao-anc-card ao-ei-two" wire:submit.prevent="addPayment">
                 <div class="ao-anc-col">
                     <label class="ao-anc-row">
@@ -174,6 +188,7 @@
 
                 <div class="ao-pr-center ao-ei-wide"><button type="submit" class="ao-find-go">Add Payment</button></div>
             </form>
+            @endif
         </div>
 
         {{-- ── Options ─────────────────────────────────────────────────────────── --}}

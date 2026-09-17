@@ -463,6 +463,17 @@ class EditInvoice extends Page
 
     public function addPayment(): void
     {
+        // Guarded here as well as hidden in the view: a draft has not been issued, and core
+        // marks an invoice paid as soon as the balance lands — which would leave it settled
+        // and still invisible to the client. {@see AdminOps::hideDraftInvoicesFromClients}
+        if ($this->invoice->status === 'draft') {
+            Notification::make()->title('Publish the invoice first')
+                ->body('A draft takes no payment — the client cannot see it yet.')
+                ->warning()->send();
+
+            return;
+        }
+
         $this->validate([
             'pay.amount' => 'required|numeric|min:0.01',
             'pay.fee' => 'nullable|numeric|min:0',
