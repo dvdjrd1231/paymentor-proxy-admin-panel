@@ -3520,6 +3520,14 @@
     .ao-ei-status--pending { color: #d9534f; }
     .ao-ei-status--paid { color: #5cb85c; }
     .ao-ei-status--cancelled { color: var(--wa-muted, #6b6b6b); }
+    /* The reference's tax row: two numbered boxes on one line, each trailed by a %.
+       Named .ao-anc-field too so it beats that class's own flex rules further down. */
+    .ao-anc-field.ao-ei-tax { flex-wrap: nowrap; align-items: center; gap: 0.3rem; }
+    .ao-anc-field.ao-ei-tax > i { flex: 0 0 auto; font-style: normal; white-space: nowrap; }
+    .ao-anc-field.ao-ei-tax > .ao-ei-tax-n { color: var(--wa-muted, #6b6b6b); }
+    .ao-anc-field.ao-ei-tax > input.ao-of-tax { flex: 0 0 auto; width: 4.5rem; text-align: left; }
+    .ao-anc-field.ao-ei-tax > input:disabled { background: #f4f4f4; color: #8a8a8a; cursor: not-allowed; }
+
     .ao-ei-status--refunded { color: var(--wa-muted, #6b6b6b); }
     /* Both are still owed, so they read as unpaid does rather than as a closed state. */
     .ao-ei-status--collections { color: #d9534f; }

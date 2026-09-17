@@ -62,6 +62,18 @@ class EditInvoice extends Page
      */
     public const STATE_KEY = 'adminops_billing_state';
 
+    /**
+     * The Options tab's Tax Rate, kept on the invoice rather than on its snapshot.
+     *
+     * Core only writes a snapshot when an invoice is *paid*
+     * ({@see \App\Listeners\CreateInvoiceSnapshotListener}, which handles Invoice\Paid), so
+     * a draft or unpaid invoice has none — and that is precisely when staff set a rate.
+     * Holding it here means the field works on the screen it appears on; the rate is copied
+     * onto the snapshot when core finally makes one.
+     * {@see Support\ApplyInvoiceTaxRate}
+     */
+    public const TAX_KEY = 'adminops_tax_rate';
+
     /** The reference's status list. Values that core's own column cannot hold map via STATE_KEY. */
     public const STATUSES = [
         'draft' => 'Draft',
@@ -189,7 +201,10 @@ class EditInvoice extends Page
             'number' => (string) ($this->invoice->number ?? ''),
             'status' => $this->billingState(),
             // The reference's Tax Rate, which here is the invoice's own snapshot rate.
-            'taxRate' => number_format((float) ($this->invoice->snapshot?->tax_rate ?? 0), 2, '.', ''),
+            'taxRate' => number_format((float) ($this->invoice->properties()
+                ->where('key', self::TAX_KEY)->value('value')
+                ?? $this->invoice->snapshot?->tax_rate
+                ?? 0), 2, '.', ''),
             'paymentMethod' => (string) ($this->invoice->properties()
                 ->where('key', self::METHOD_KEY)->value('value') ?? ''),
         ];
@@ -432,9 +447,17 @@ class EditInvoice extends Page
             $this->invoice->properties()->where('key', self::STATE_KEY)->delete();
         }
 
-        // The rate lives on the invoice's snapshot — the row core reads tax from — so it is
-        // written there rather than on the invoice itself. A snapshot is only made when
-        // core's invoice_snapshot setting is on; with none there is nothing to carry a rate.
+        // Kept on the invoice so the field works before a snapshot exists, and mirrored onto
+        // the snapshot when there already is one, since that is the row core reads tax from.
+        if ($this->options['taxRate'] === '') {
+            $this->invoice->properties()->where('key', self::TAX_KEY)->delete();
+        } else {
+            $this->invoice->properties()->updateOrCreate(
+                ['key' => self::TAX_KEY],
+                ['name' => 'Tax Rate', 'value' => (string) (float) $this->options['taxRate']],
+            );
+        }
+
         if (($snapshot = $this->invoice->snapshot) && $this->options['taxRate'] !== '') {
             $snapshot->tax_rate = (float) $this->options['taxRate'];
             $snapshot->save();

@@ -229,17 +229,21 @@
                             'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
                         ])
                     </label>
-                    {{-- The reference's Tax Rate. One rate, not its two: an invoice here
-                         carries a single rate on its snapshot, which is the row core reads
-                         tax from (Leandro, 2026-09-17). --}}
+                    {{-- The reference's two numbered rates. Level 2 is shown to keep the row
+                         identical but cannot be applied: core carries one rate per invoice
+                         (tax_rates.country is unique, and Price takes a single tax), so a
+                         second would need core itself changed. --}}
                     <label class="ao-anc-row">
                         <span>Tax Rate</span>
-                        <span class="ao-anc-field">
-                            <input type="text" inputmode="decimal" class="ao-of-sm" wire:model="options.taxRate"
-                                placeholder="0.00" @disabled(!$invoice->snapshot)> <i>%</i>
-                            @unless ($invoice->snapshot)
-                                <i>No snapshot on this invoice — nothing to carry a rate</i>
-                            @endunless
+                        <span class="ao-anc-field ao-ei-tax">
+                            <i class="ao-ei-tax-n">1</i>
+                            <input type="text" inputmode="decimal" class="ao-of-tax"
+                                wire:model="options.taxRate" placeholder="0.00">
+                            <i>%</i>
+                            <i class="ao-ei-tax-n">2</i>
+                            <input type="text" class="ao-of-tax" value="0.00" disabled
+                                title="Level 2 tax is not applied: this platform carries one tax rate per invoice.">
+                            <i>%</i>
                         </span>
                     </label>
                     {{-- The reference's seven, in its order. Collections and Payment Pending
