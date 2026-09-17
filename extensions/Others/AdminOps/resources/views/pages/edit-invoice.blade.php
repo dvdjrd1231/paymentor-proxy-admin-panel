@@ -120,7 +120,7 @@
                         {{-- The reference's Attempt Capture: charge the card on file now.
                              Shown always, as it shows it, but disabled with the reason when
                              there is nothing to charge or nothing to charge it to. --}}
-                        @php ($captureBlocked = $this->captureBlockedReason())
+                        @php $captureBlocked = $this->captureBlockedReason(); @endphp
                         <button type="button" class="ao-pg-btn ao-ei-capture"
                             wire:click="attemptCapture" wire:loading.attr="disabled"
                             wire:target="attemptCapture"
