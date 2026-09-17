@@ -34,20 +34,20 @@
                  the client sees it, the file, and the way back (Leandro, 2026-09-16). --}}
             <div class="ao-ei-tools">
                 <a class="ao-pg-btn" href="{{ route('adminops.invoice-pdf', $invoice->id) }}" target="_blank" rel="noopener">
-                    <x-filament::icon icon="ri-eye-line" class="ao-ei-tool-ic" /> View Invoice
+                    <x-filament::icon icon="ri-eye-fill" class="ao-ei-tool-ic" /> View Invoice
                 </a>
                 <a class="ao-pg-btn" href="{{ url('/invoices/' . $invoice->id) }}" target="_blank" rel="noopener">
-                    <x-filament::icon icon="ri-user-line" class="ao-ei-tool-ic" /> View as Client
+                    <x-filament::icon icon="ri-user-fill" class="ao-ei-tool-ic" /> View as Client
                 </a>
                 {{-- Print, where Back to List used to sit: the reference's four are View
                      Invoice, View as Client, Print and Download, and the way back is the
                      rail's own List All Invoices (Leandro, 2026-09-16). --}}
                 <a class="ao-pg-btn" href="{{ route('adminops.invoice-pdf', $invoice->id) }}?print=1"
                     target="_blank" rel="noopener">
-                    <x-filament::icon icon="ri-printer-line" class="ao-ei-tool-ic" /> Print
+                    <x-filament::icon icon="ri-printer-fill" class="ao-ei-tool-ic" /> Print
                 </a>
                 <button type="button" class="ao-pg-btn" wire:click="downloadPdf">
-                    <x-filament::icon icon="ri-download-line" class="ao-ei-tool-ic" /> Download
+                    <x-filament::icon icon="ri-download-fill" class="ao-ei-tool-ic" /> Download
                 </button>
             </div>
         </div>
@@ -274,6 +274,26 @@
                     </span>
                 </label>
 
+                <label class="ao-anc-row">
+                    <span>Amount</span>
+                    <span class="ao-anc-field">
+                        <input type="text" inputmode="decimal" class="ao-w-25" wire:model="refund.amount"
+                            placeholder="{{ number_format(max(0, $refundable), 2) }}">
+                        {{-- The reference's own wording, and it is honoured: an empty box
+                             refunds everything still refundable (Leandro, 2026-09-16). The
+                             figure follows it so the amount that means is on screen. --}}
+                        @php
+                            $hint = 'Leave blank for full refund — $' . number_format(max(0, $refundable), 2)
+                                . ' ' . $invoice->currency_code . ' refundable';
+
+                            if ($refunded > 0) {
+                                $hint .= ', $' . number_format($refunded, 2) . ' already returned';
+                            }
+                        @endphp
+                        <i>{{ $hint }}</i>
+                    </span>
+                </label>
+                @error('refund.amount') <p class="ao-anc-errors">{{ $message }}</p> @enderror
                 {{-- A real picker, as the reference has: credit the balance, record one
                      sent by hand, or ask the gateway. The gateway option is checked against
                      the gateway when it is used rather than hidden — none here implements a
@@ -289,25 +309,6 @@
                     </span>
                 </label>
 
-                <label class="ao-anc-row">
-                    <span>Amount</span>
-                    <span class="ao-anc-field">
-                        <input type="text" inputmode="decimal" class="ao-w-25" wire:model="refund.amount"
-                            placeholder="{{ number_format(max(0, $refundable), 2) }}">
-                        {{-- Built in PHP rather than with an inline @if: Blade only treats
-                             `@if` as a directive at a non-word boundary, so `refundable@if`
-                             compiled to nothing and printed the directive to the page. --}}
-                        @php
-                            $hint = '$' . number_format(max(0, $refundable), 2) . ' ' . $invoice->currency_code . ' refundable';
-
-                            if ($refunded > 0) {
-                                $hint .= ', $' . number_format($refunded, 2) . ' already returned';
-                            }
-                        @endphp
-                        <i>{{ $hint }}</i>
-                    </span>
-                </label>
-                @error('refund.amount') <p class="ao-anc-errors">{{ $message }}</p> @enderror
 
                 <label class="ao-anc-row">
                     <span>Reason</span>

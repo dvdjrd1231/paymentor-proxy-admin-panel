@@ -633,7 +633,7 @@ class EditInvoice extends Page
     public function issueRefund(): void
     {
         $this->validate([
-            'refund.amount' => 'required|numeric|min:0.01',
+            'refund.amount' => 'nullable|numeric|min:0.01',
             'refund.reason' => 'nullable|string|max:1000',
             'refund.type' => 'required|in:' . implode(',', array_keys(self::REFUND_TYPES)),
         ], attributes: ['refund.amount' => 'amount', 'refund.reason' => 'reason', 'refund.type' => 'refund type']);
@@ -670,7 +670,12 @@ class EditInvoice extends Page
             $alreadyRefunded = Refund::totalFor($this->invoice->id);
             $refundable = round($paid - $alreadyRefunded, 2);
 
-            $given = round(min((float) $this->refund['amount'], $refundable), 2);
+            // Blank means all of it, which is what the box says it means.
+            $asked = trim((string) $this->refund['amount']) === ''
+                ? $refundable
+                : (float) $this->refund['amount'];
+
+            $given = round(min($asked, $refundable), 2);
 
             if ($given <= 0) {
                 return;
