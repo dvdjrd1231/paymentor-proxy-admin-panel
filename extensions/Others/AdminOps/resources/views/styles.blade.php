@@ -3534,6 +3534,15 @@
     .ao-anc-field.ao-ei-tax > .ao-ei-tax-n { color: var(--wa-muted, #6b6b6b); }
     .ao-anc-field.ao-ei-tax > input.ao-of-tax { flex: 0 0 auto; width: 4.5rem; text-align: left; }
 
+    /* The reference's Attempt Capture is its one green action on this screen. */
+    .ao-ei-capture {
+        background: #5cb85c;
+        border-color: #4cae4c;
+        color: #fff;
+    }
+    .ao-ei-capture:hover:not(:disabled) { background: #449d44; border-color: #398439; }
+    .ao-ei-capture:disabled { opacity: 0.65; cursor: not-allowed; }
+
     .ao-ei-status--refunded { color: var(--wa-muted, #6b6b6b); }
     /* Both are still owed, so they read as unpaid does rather than as a closed state. */
     .ao-ei-status--collections { color: #d9534f; }

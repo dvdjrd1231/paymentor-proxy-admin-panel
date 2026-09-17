@@ -420,6 +420,96 @@ class EditInvoice extends Page
         return strtoupper(self::STATUSES[$state] ?? $state);
     }
 
+    /**
+     * The client's saved payment methods that could actually be charged for this invoice.
+     *
+     * Not every gateway can: core's base Gateway declares charge() but throws from it, and
+     * declares supportsBillingAgreements() returning false — so ExtensionHelper::hasFunction()
+     * answers true for every gateway and cannot be used to tell. Asking the extension itself
+     * is the only honest test, and today only Stripe answers yes.
+     */
+    public function captureAgreements()
+    {
+        $usable = collect(\App\Helpers\ExtensionHelper::getBillingAgreementGateways())
+            ->pluck('id');
+
+        return $this->invoice->user
+            ->billingAgreements()
+            ->whereIn('gateway_id', $usable)
+            ->with('gateway')
+            ->get();
+    }
+
+    /** Why the reference's Attempt Capture cannot run, or null when it can. */
+    public function captureBlockedReason(): ?string
+    {
+        if ($this->invoice->status === 'draft') {
+            return 'Publish this invoice before charging a saved payment method.';
+        }
+
+        if ($this->invoice->status !== 'pending') {
+            return 'Only an unpaid invoice can be charged.';
+        }
+
+        if ((float) $this->invoice->remaining <= 0) {
+            return 'Nothing is outstanding on this invoice.';
+        }
+
+        if ($this->captureAgreements()->isEmpty()) {
+            return 'This client has no saved payment method to charge.';
+        }
+
+        return null;
+    }
+
+    /**
+     * The reference's Attempt Capture: charge the client's saved payment method now.
+     *
+     * Core already does exactly this when a client pays an invoice with a stored method
+     * ({@see \App\Livewire\Invoices\Show::payWithSavedMethod}); this is the same call made
+     * by staff instead. The gateway records the payment through its own webhook, so nothing
+     * here writes a transaction — doing so would double-count when the webhook lands.
+     */
+    public function attemptCapture(): void
+    {
+        if ($reason = $this->captureBlockedReason()) {
+            Notification::make()->title('Cannot capture')->body($reason)->warning()->send();
+
+            return;
+        }
+
+        $agreement = $this->captureAgreements()->first();
+
+        try {
+            $charged = \App\Helpers\ExtensionHelper::charge(
+                $agreement->gateway, $this->invoice, $agreement,
+            );
+        } catch (\Throwable $e) {
+            // A gateway that has no off-session charge throws rather than returning false.
+            report($e);
+
+            Notification::make()->title('Capture failed')
+                ->body($agreement->gateway->name . ' could not charge ' . $agreement->name . '.')
+                ->danger()->send();
+
+            return;
+        }
+
+        $this->refreshInvoice();
+
+        if ($charged === true) {
+            Notification::make()->title('Payment captured')
+                ->body('Charged ' . $agreement->name . ' via ' . $agreement->gateway->name . '.')
+                ->success()->send();
+
+            return;
+        }
+
+        Notification::make()->title('Capture declined')
+            ->body($agreement->name . ' was not charged. Try another method or record the payment by hand.')
+            ->warning()->send();
+    }
+
     /** Enabled gateways, for the Options tab's Payment Method. */
     public function gatewayOptions(): array
     {
