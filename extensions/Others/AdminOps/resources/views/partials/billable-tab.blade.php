@@ -62,7 +62,9 @@
 
 <h4 class="ao-bt-h">Invoiced Items</h4>
 
-@include('adminops::partials.records-pager', [
+{{-- The reference's records band sits above this table, and its Previous/Next pair
+     below it. --}}
+@include('adminops::partials.records-band', [
     'total' => $billed->count(), 'page' => 1, 'perPage' => max($billed->count(), 1),
 ])
 
@@ -90,3 +92,7 @@
         @endforelse
     </tbody>
 </table>
+
+@include('adminops::partials.records-pager', [
+    'total' => $billed->count(), 'page' => 1, 'perPage' => max($billed->count(), 1),
+])

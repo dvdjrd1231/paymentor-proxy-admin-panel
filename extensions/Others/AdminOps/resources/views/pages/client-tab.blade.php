@@ -94,9 +94,13 @@
     </div>
 @endif
 
-@include('adminops::partials.records-band', [
-    'total' => $rowTotal(), 'page' => $page, 'perPage' => $perPage,
-])
+{{-- Billable Items carries its own band, above its Invoiced table where the reference
+     puts it, so the shared one would be a second count over the wrong table. --}}
+@unless ($tab === 'billable')
+    @include('adminops::partials.records-band', [
+        'total' => $rowTotal(), 'page' => $page, 'perPage' => $perPage,
+    ])
+@endunless
 
 {{-- No section wrapper, and the panel's own grid rather than `ao-list`: the reference puts
      the navy grid straight under the records band, with no grey heading strip naming the
