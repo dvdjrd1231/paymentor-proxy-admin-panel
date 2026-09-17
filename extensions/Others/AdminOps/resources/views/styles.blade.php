@@ -3502,7 +3502,7 @@
     .ao-ei-sub { margin-inline-start: 0.4rem; font-size: 0.9em; }
     /* Green, as the reference prints a balance (Leandro, 2026-09-17) — it was red, which
        reads as an alarm on an invoice that owes nothing. */
-    .ao-ei-balance { color: #3c763d; font-weight: 700; }
+    .ao-ei-facts .ao-eo-fact.ao-ei-balance { color: #3c763d; font-weight: 700; }
 
     .ao-ei-status-block { text-align: center; padding-top: 0.5rem; }
 
