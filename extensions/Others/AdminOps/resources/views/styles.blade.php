@@ -3551,14 +3551,14 @@
 
     /* The reference's draft notice is an info panel, blue — ours inherited the amber of
        the banner it borrowed its markup from (Leandro, 2026-09-16). */
-    .ao-ei-draft-note {
+    .ao-cs-banner.ao-ei-draft-note {
         margin-bottom: 1rem;
         background: #d9edf7;
         border-color: #bce8f1;
         color: #31708f;
     }
 
-    .ao-ei-draft-note .ao-cs-banner-ic { color: #31708f; }
+    .ao-cs-banner.ao-ei-draft-note .ao-cs-banner-ic { color: #31708f; }
 
     /* Add Payment and Options: the reference's two columns of labelled rows, with the
        button centred beneath both. */
