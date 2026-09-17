@@ -2342,6 +2342,11 @@
 
     /* The reference prints a small grey explanation under the field's label, inside the
        same right-aligned cell. Normal weight so the label stays the emphasis. */
+
+    .ao-anc-card-refund-container {
+        border: 2px solid #9ea6ad;
+        border-radius: 3px;
+    }
     .ao-cp-create .ao-anc-row > span:first-child i,
     .ao-ep .ao-anc-row > span:first-child i,
     .ao-cpg-hint > i,

@@ -257,85 +257,89 @@
                      2026-09-16). --}}
                 {{-- The reference's first row: which payment is being refunded. Disabled
                      while there is none, with its own wording (Leandro, 2026-09-16). --}}
-                <label class="ao-anc-row">
-                    <span>Transactions</span>
-                    <span class="ao-anc-field">
-                        {{-- Not disabled when empty: the reference's opens and shows its single line,
-                             and a control that will not open reads as broken (Leandro, 2026-09-16). --}}
-                        <select class="ao-of-lg" wire:model="refund.transaction">
-                            @forelse ($succeeded as $transaction)
-                                <option value="{{ $transaction->id }}">
-                                    {{ $transaction->created_at?->format('m/d/Y') }} &mdash;
-                                    ${{ number_format((float) $transaction->amount, 2) }} {{ $invoice->currency_code }}
-                                    @if ($transaction->gateway?->name) ({{ $transaction->gateway->name }}) @endif
-                                </option>
-                            @empty
-                                <option value="">No Transactions Applied To This Invoice Yet</option>
-                            @endforelse
-                        </select>
-                    </span>
-                </label>
+                <div class="ao-anc-card-refund-container">
+                    <label class="ao-anc-row">
+                        <span>Transactions</span>
+                        <span class="ao-anc-field">
+                            {{-- Not disabled when empty: the reference's opens and shows its single line,
+                                and a control that will not open reads as broken (Leandro, 2026-09-16). --}}
+                            <select class="ao-of-lg" wire:model="refund.transaction">
+                                @forelse ($succeeded as $transaction)
+                                    <option value="{{ $transaction->id }}">
+                                        {{ $transaction->created_at?->format('m/d/Y') }} &mdash;
+                                        ${{ number_format((float) $transaction->amount, 2) }} {{ $invoice->currency_code }}
+                                        @if ($transaction->gateway?->name) ({{ $transaction->gateway->name }}) @endif
+                                    </option>
+                                @empty
+                                    <option value="">No Transactions Applied To This Invoice Yet</option>
+                                @endforelse
+                            </select>
+                        </span>
+                    </label>
 
-                <label class="ao-anc-row">
-                    <span>Amount</span>
-                    <span class="ao-anc-field">
-                        <input type="text" inputmode="decimal" class="ao-w-25" wire:model="refund.amount"
-                            placeholder="{{ number_format(max(0, $refundable), 2) }}">
-                        {{-- The reference's own wording, and it is honoured: an empty box
-                             refunds everything still refundable (Leandro, 2026-09-16). The
-                             figure follows it so the amount that means is on screen. --}}
-                        @php
-                            $hint = 'Leave blank for full refund — $' . number_format(max(0, $refundable), 2)
-                                . ' ' . $invoice->currency_code . ' refundable';
+                    <label class="ao-anc-row">
+                        <span>Amount</span>
+                        <span class="ao-anc-field">
+                            <input type="text" inputmode="decimal" class="ao-w-25" wire:model="refund.amount"
+                                placeholder="{{ number_format(max(0, $refundable), 2) }}">
+                            {{-- The reference's own wording, and it is honoured: an empty box
+                                refunds everything still refundable (Leandro, 2026-09-16). The
+                                figure follows it so the amount that means is on screen. --}}
+                            @php
+                                $hint = 'Leave blank for full refund — $' . number_format(max(0, $refundable), 2)
+                                    . ' ' . $invoice->currency_code . ' refundable';
 
-                            if ($refunded > 0) {
-                                $hint .= ', $' . number_format($refunded, 2) . ' already returned';
-                            }
-                        @endphp
-                        <i>{{ $hint }}</i>
-                    </span>
-                </label>
-                @error('refund.amount') <p class="ao-anc-errors">{{ $message }}</p> @enderror
-                {{-- A real picker, as the reference has: credit the balance, record one
-                     sent by hand, or ask the gateway. The gateway option is checked against
-                     the gateway when it is used rather than hidden — none here implements a
-                     refund hook today, and the refusal says which (Leandro, 2026-09-16). --}}
-                <label class="ao-anc-row">
-                    <span>Refund Type</span>
-                    <span class="ao-anc-field">
-                        <select class="ao-of-lg" wire:model="refund.type">
-                            @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditInvoice::REFUND_TYPES as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </span>
-                </label>
+                                if ($refunded > 0) {
+                                    $hint .= ', $' . number_format($refunded, 2) . ' already returned';
+                                }
+                            @endphp
+                            <i>{{ $hint }}</i>
+                        </span>
+                    </label>
+                    @error('refund.amount') <p class="ao-anc-errors">{{ $message }}</p> @enderror
+                    {{-- A real picker, as the reference has: credit the balance, record one
+                        sent by hand, or ask the gateway. The gateway option is checked against
+                        the gateway when it is used rather than hidden — none here implements a
+                        refund hook today, and the refusal says which (Leandro, 2026-09-16). --}}
+                    <label class="ao-anc-row">
+                        <span>Refund Type</span>
+                        <span class="ao-anc-field">
+                            <select class="ao-of-lg" wire:model="refund.type">
+                                @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditInvoice::REFUND_TYPES as $value => $label)
+                                    <option value="{{ $value }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </span>
+                    </label>
 
 
-                <label class="ao-anc-row">
-                    <span>Reason</span>
-                    <input type="text" wire:model="refund.reason"
-                        placeholder="eg. Service cancelled early — credit for the unused period">
-                </label>
+                    <label class="ao-anc-row">
+                        <span>Reason</span>
+                        <input type="text" wire:model="refund.reason"
+                            style="width: inherit;"
+                            placeholder="eg. Service cancelled early — credit for the unused period">
+                    </label>
 
-                {{-- The reference's Reverse Payment. What a payment sets going here is the
-                     services the invoice paid for, so undoing it suspends them again —
-                     hence "where possible", which is its own wording. --}}
-                <label class="ao-anc-row">
-                    <span>Reverse Payment</span>
-                    <span class="ao-anc-field">
-                        <input type="checkbox" wire:model="refund.reverse">
-                        <i>Undo automated actions triggered by this transaction &mdash; suspends the services this invoice paid for, where possible.</i>
-                    </span>
-                </label>
+                    {{-- The reference's Reverse Payment. What a payment sets going here is the
+                        services the invoice paid for, so undoing it suspends them again —
+                        hence "where possible", which is its own wording. --}}
+                    <label class="ao-anc-row">
+                        <span>Reverse Payment</span>
+                        <span class="ao-anc-field">
+                            <input type="checkbox" wire:model="refund.reverse">
+                            <i>Undo automated actions triggered by this transaction &mdash; suspends the services this invoice paid for, where possible.</i>
+                        </span>
+                    </label>
 
-                <label class="ao-anc-row">
-                    <span>Send Email</span>
-                    <span class="ao-anc-field">
-                        <input type="checkbox" wire:model="refund.sendEmail">
-                        <i>Check to Send Confirmation Email</i>
-                    </span>
-                </label>
+                    <label class="ao-anc-row">
+                        <span>Send Email</span>
+                        <span class="ao-anc-field">
+                            <input type="checkbox" wire:model="refund.sendEmail">
+                            <i>Check to Send Confirmation Email</i>
+                        </span>
+                    </label>
+
+                </div>
 
                 <div class="ao-pr-center">
                     <button type="submit" class="ao-find-go" @disabled($refundable <= 0)
