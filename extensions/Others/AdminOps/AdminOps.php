@@ -72,6 +72,7 @@ class AdminOps extends Extension
         $this->keepSignInsRecorded();
         $this->keepTheDailyLogWritable();
         $this->registerQuotePdf();
+        $this->registerInvoicePdfView();
         $this->registerUpdatesNotice();
         $this->sweepServiceOverrides();
         $this->refuseClosedAccounts();
@@ -735,6 +736,29 @@ class AdminOps extends Extension
      * permission that reads invoices, checked inside because route middleware cannot know
      * the panel's guard at this point in boot.
      */
+    /**
+     * The reference's View Invoice: the invoice itself, opened rather than downloaded.
+     *
+     * Download already streams the same PDF as an attachment; this is the other half of
+     * that pair, and it is a plain GET so the button can be a link that opens a tab
+     * (Leandro, 2026-09-16). Livewire actions cannot open one.
+     */
+    private function registerInvoicePdfView(): void
+    {
+        \Illuminate\Support\Facades\Route::middleware(['web'])->get('/admin/invoice-pdf/{invoice}', function (int $invoice) {
+            abort_unless((bool) \Illuminate\Support\Facades\Auth::user()?->hasPermission('admin.invoices.viewAny'), 403);
+
+            $record = \App\Models\Invoice::with(['items', 'user'])->findOrFail($invoice);
+            $pdf = \App\Classes\PDF::generateInvoice($record);
+            $name = 'invoice-' . ($record->number ?: $record->id) . '.pdf';
+
+            return response($pdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $name . '"',
+            ]);
+        })->name('adminops.invoice-pdf');
+    }
+
     private function registerQuotePdf(): void
     {
         \Illuminate\Support\Facades\Route::middleware(['web'])->get('/admin/quote-pdf/{quote}', function (int $quote) {

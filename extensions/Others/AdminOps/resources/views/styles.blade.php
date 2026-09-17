@@ -8778,6 +8778,15 @@
         cursor: not-allowed;
     }
 
+    /* The toolbar's icons sit with their labels rather than above them. */
+    .ao-ei-tools .ao-pg-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .ao-ei-tool-ic { width: 1rem; height: 1rem; }
+
     .ao-ei-withcell {
         display: flex;
         align-items: center;

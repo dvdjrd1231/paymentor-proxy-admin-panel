@@ -5,6 +5,15 @@
     {{-- Tabs switch in the browser — see the note on edit-product for why they no longer
          go to the server. --}}
     <div class="ao-mu ao-eo ao-ei" x-data="{ tab: @js($tab) }">
+        {{-- The reference's draft notice, between the title and the tabs and on every one of them: the
+             reason the invoice looks unfinished is that the client cannot see it yet. --}}
+        @if ($invoice->status === 'draft')
+            <div class="ao-cs-banner ao-ei-draft-note">
+                <x-filament::icon icon="ri-information-line" class="ao-cs-banner-ic" />
+                <div>This is a Draft Invoice. The client is not able to see or access this invoice until it is published.</div>
+            </div>
+        @endif
+
         <div class="ao-ei-top">
             <div class="ao-tx-tabs ao-ei-tabs">
                 @foreach ([
@@ -21,25 +30,23 @@
                 @endforeach
             </div>
 
+            {{-- The reference's four, each with its icon: the invoice itself, the invoice as
+                 the client sees it, the file, and the way back (Leandro, 2026-09-16). --}}
             <div class="ao-ei-tools">
-                <a class="ao-pg-btn" href="{{ url('/invoices/' . $invoice->id) }}" target="_blank" rel="noopener">
-                    View as Client
+                <a class="ao-pg-btn" href="{{ route('adminops.invoice-pdf', $invoice->id) }}" target="_blank" rel="noopener">
+                    <x-filament::icon icon="ri-eye-line" class="ao-ei-tool-ic" /> View Invoice
                 </a>
-                <button type="button" class="ao-pg-btn" wire:click="downloadPdf">Download</button>
+                <a class="ao-pg-btn" href="{{ url('/invoices/' . $invoice->id) }}" target="_blank" rel="noopener">
+                    <x-filament::icon icon="ri-user-line" class="ao-ei-tool-ic" /> View as Client
+                </a>
+                <button type="button" class="ao-pg-btn" wire:click="downloadPdf">
+                    <x-filament::icon icon="ri-download-line" class="ao-ei-tool-ic" /> Download
+                </button>
                 <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices::getUrl() }}">
-                    &laquo; Back to List
+                    <x-filament::icon icon="ri-arrow-left-line" class="ao-ei-tool-ic" /> Back to List
                 </a>
             </div>
         </div>
-
-        {{-- The reference's draft notice, above the tabs and on every one of them: the
-             reason the invoice looks unfinished is that the client cannot see it yet. --}}
-        @if ($invoice->status === 'draft')
-            <div class="ao-cs-banner ao-ei-draft-note">
-                <x-filament::icon icon="ri-information-line" class="ao-cs-banner-ic" />
-                <div>This is a Draft Invoice. The client is not able to see or access this invoice until it is published.</div>
-            </div>
-        @endif
 
         {{-- ── Summary ─────────────────────────────────────────────────────────── --}}
         <div x-show="tab === 'summary'" x-cloak>
