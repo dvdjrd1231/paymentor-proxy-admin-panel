@@ -24,16 +24,20 @@ class ApplyInvoiceTaxRate
         Event::listen(Paid::class, function (Paid $event): void {
             $invoice = $event->invoice;
 
-            $rate = Property::where('model_type', $invoice->getMorphClass())
+            $rates = Property::where('model_type', $invoice->getMorphClass())
                 ->where('model_id', $invoice->id)
-                ->where('key', EditInvoice::TAX_KEY)
-                ->value('value');
+                ->whereIn('key', [EditInvoice::TAX_KEY, EditInvoice::TAX2_KEY])
+                ->pluck('value', 'key');
 
-            if ($rate === null || !($snapshot = $invoice->fresh()->snapshot)) {
+            if ($rates->isEmpty() || !($snapshot = $invoice->fresh()->snapshot)) {
                 return;
             }
 
-            $snapshot->tax_rate = (float) $rate;
+            // Both levels as the one percentage core charges. {@see EditInvoice::TAX2_KEY}
+            $snapshot->tax_rate = EditInvoice::combinedTaxRate(
+                (float) ($rates[EditInvoice::TAX_KEY] ?? 0),
+                (float) ($rates[EditInvoice::TAX2_KEY] ?? 0),
+            );
 
             // Core leaves tax_name empty when the store has no rate for the client's
             // country, and Invoice::tax() reads the snapshot only when tax_name is set —

@@ -3526,7 +3526,6 @@
     .ao-anc-field.ao-ei-tax > i { flex: 0 0 auto; font-style: normal; white-space: nowrap; }
     .ao-anc-field.ao-ei-tax > .ao-ei-tax-n { color: var(--wa-muted, #6b6b6b); }
     .ao-anc-field.ao-ei-tax > input.ao-of-tax { flex: 0 0 auto; width: 4.5rem; text-align: left; }
-    .ao-anc-field.ao-ei-tax > input:disabled { background: #f4f4f4; color: #8a8a8a; cursor: not-allowed; }
 
     .ao-ei-status--refunded { color: var(--wa-muted, #6b6b6b); }
     /* Both are still owed, so they read as unpaid does rather than as a closed state. */

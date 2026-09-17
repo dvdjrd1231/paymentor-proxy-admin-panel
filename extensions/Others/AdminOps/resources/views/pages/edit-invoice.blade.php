@@ -229,10 +229,10 @@
                             'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
                         ])
                     </label>
-                    {{-- The reference's two numbered rates. Level 2 is shown to keep the row
-                         identical but cannot be applied: core carries one rate per invoice
-                         (tax_rates.country is unique, and Price takes a single tax), so a
-                         second would need core itself changed. --}}
+                    {{-- The reference's two numbered rates. Core charges one percentage per
+                         invoice, so both are stored and carried as their combined effective
+                         rate — exact while the reference's Compound Tax setting is off, which
+                         is its default. {@see EditInvoice::TAX2_KEY} --}}
                     <label class="ao-anc-row">
                         <span>Tax Rate</span>
                         <span class="ao-anc-field ao-ei-tax">
@@ -241,8 +241,8 @@
                                 wire:model="options.taxRate" placeholder="0.00">
                             <i>%</i>
                             <i class="ao-ei-tax-n">2</i>
-                            <input type="text" class="ao-of-tax" value="0.00" disabled
-                                title="Level 2 tax is not applied: this platform carries one tax rate per invoice.">
+                            <input type="text" inputmode="decimal" class="ao-of-tax"
+                                wire:model="options.taxRate2" placeholder="0.00">
                             <i>%</i>
                         </span>
                     </label>

@@ -44,7 +44,7 @@ class EditInvoice extends Page
 
     /** The Options tab. */
     /** The Options tab. taxRate is the invoice snapshot's own rate. */
-    public array $options = ['invoiceDate' => '', 'dueAt' => '', 'number' => '', 'status' => '', 'taxRate' => '', 'paymentMethod' => ''];
+    public array $options = ['invoiceDate' => '', 'dueAt' => '', 'number' => '', 'status' => '', 'taxRate' => '', 'taxRate2' => '', 'paymentMethod' => ''];
 
     /** Where the Options tab's Payment Method is kept — a property on the invoice row. */
     public const METHOD_KEY = 'adminops_payment_method';
@@ -73,6 +73,24 @@ class EditInvoice extends Page
      * {@see Support\ApplyInvoiceTaxRate}
      */
     public const TAX_KEY = 'adminops_tax_rate';
+
+    /**
+     * The reference's level 2 rate.
+     *
+     * Core charges one percentage per invoice ({@see \App\Classes\Price}, which applies a
+     * single `$tax->rate`), so both levels are carried as their combined effective rate.
+     * That is exact for the reference's default: its Compound Tax setting — "enable level 2
+     * taxes being applied to level 1 taxes" — is off, so level 2 is charged on the same base
+     * as level 1 and the two simply add. The only visible difference is that the invoice
+     * shows one tax line rather than two, which is all core has ever rendered.
+     */
+    public const TAX2_KEY = 'adminops_tax_rate_2';
+
+    /** Both levels as the single percentage core charges. */
+    public static function combinedTaxRate(float $level1, float $level2): float
+    {
+        return round($level1 + $level2, 4);
+    }
 
     /** The reference's status list. Values that core's own column cannot hold map via STATE_KEY. */
     public const STATUSES = [
@@ -205,6 +223,8 @@ class EditInvoice extends Page
                 ->where('key', self::TAX_KEY)->value('value')
                 ?? $this->invoice->snapshot?->tax_rate
                 ?? 0), 2, '.', ''),
+            'taxRate2' => number_format((float) ($this->invoice->properties()
+                ->where('key', self::TAX2_KEY)->value('value') ?? 0), 2, '.', ''),
             'paymentMethod' => (string) ($this->invoice->properties()
                 ->where('key', self::METHOD_KEY)->value('value') ?? ''),
         ];
@@ -413,11 +433,13 @@ class EditInvoice extends Page
             'options.number' => 'nullable|string|max:255',
             'options.status' => 'required|in:' . implode(',', array_keys(self::STATUSES)),
             'options.taxRate' => 'nullable|numeric|min:0|max:100',
+            'options.taxRate2' => 'nullable|numeric|min:0|max:100',
             'options.paymentMethod' => 'nullable|exists:gateways,id',
         ], attributes: [
             'options.number' => 'invoice number',
             'options.status' => 'status',
             'options.taxRate' => 'tax rate',
+            'options.taxRate2' => 'level 2 tax rate',
         ]);
 
         $this->invoice->number = trim($this->options['number']) ?: null;
@@ -449,17 +471,30 @@ class EditInvoice extends Page
 
         // Kept on the invoice so the field works before a snapshot exists, and mirrored onto
         // the snapshot when there already is one, since that is the row core reads tax from.
-        if ($this->options['taxRate'] === '') {
-            $this->invoice->properties()->where('key', self::TAX_KEY)->delete();
-        } else {
+        foreach ([[self::TAX_KEY, 'taxRate', 'Tax Rate'], [self::TAX2_KEY, 'taxRate2', 'Tax Rate 2']] as [$key, $field, $name]) {
+            if ($this->options[$field] === '' || (float) $this->options[$field] === 0.0) {
+                $this->invoice->properties()->where('key', $key)->delete();
+
+                continue;
+            }
+
             $this->invoice->properties()->updateOrCreate(
-                ['key' => self::TAX_KEY],
-                ['name' => 'Tax Rate', 'value' => (string) (float) $this->options['taxRate']],
+                ['key' => $key],
+                ['name' => $name, 'value' => (string) (float) $this->options[$field]],
             );
         }
 
-        if (($snapshot = $this->invoice->snapshot) && $this->options['taxRate'] !== '') {
-            $snapshot->tax_rate = (float) $this->options['taxRate'];
+        // Core charges one percentage, so the snapshot carries both levels combined.
+        if ($snapshot = $this->invoice->snapshot) {
+            $snapshot->tax_rate = self::combinedTaxRate(
+                (float) $this->options['taxRate'],
+                (float) $this->options['taxRate2'],
+            );
+
+            if (!$snapshot->tax_name) {
+                $snapshot->tax_name = 'Tax';
+            }
+
             $snapshot->save();
         }
 
