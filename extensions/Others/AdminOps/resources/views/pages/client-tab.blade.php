@@ -11,7 +11,7 @@
 {{-- The reference heads each of these tabs with its own buttons, and two of them with a
      band of four figures. Everything below is real: the counts are queries, and each
      button goes to the screen that actually does the thing. --}}
-<div class="ao-ct-head">
+<div class="ao-ct-head @if ($tab === 'billable') ao-ct-head-bare @endif">
     @switch($tab)
         @case('invoices')
             <a class="ao-mu-tab" href="{{ $urls['newInvoice'] }}">&#10010; Create Invoice</a>
@@ -25,7 +25,11 @@
             <a class="ao-mu-tab" href="{{ $urls['newTicket'] }}">&#10010; Open New Ticket</a>
             @break
         @case('billable')
-            <a class="ao-mu-tab" href="{{ $urls['billable'] }}">&#10010; Add Billable Item</a>
+            {{-- The reference's pair. Time billing is this same form asked in hours:
+                 a time entry is hours at a rate, which is the row the other button
+                 writes as a quantity at an amount. {@see BillableItemsList::$time} --}}
+            <a class="ao-mu-tab" href="{{ $urls['billableTime'] }}">Add Time Billing Entries</a>
+            <a class="ao-mu-tab ao-bt-primary" href="{{ $urls['billable'] }}">&#10010; Add Billable Item</a>
             @break
     @endswitch
 </div>

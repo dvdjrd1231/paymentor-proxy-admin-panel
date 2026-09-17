@@ -74,12 +74,12 @@
                             placeholder="e.g. Setup assistance, 2 hours" required></span>
                     </div>
                     <div class="ao-of-row ao-of-row-single">
-                        <label class="ao-of-label" for="ao-bi-qty">Hours/Qty</label>
+                        <label class="ao-of-label" for="ao-bi-qty">{{ $this->quantityLabel() }}</label>
                         <span><input id="ao-bi-qty" class="ao-of-sm" type="number" step="0.01" min="0.01"
                             wire:model="quantity" required></span>
                     </div>
                     <div class="ao-of-row ao-of-row-single">
-                        <label class="ao-of-label" for="ao-bi-amt">Amount</label>
+                        <label class="ao-of-label" for="ao-bi-amt">{{ $this->amountLabel() }}</label>
                         <span><input id="ao-bi-amt" class="ao-of-sm" type="text" inputmode="decimal"
                             wire:model="amount" placeholder="0.00" required></span>
                     </div>

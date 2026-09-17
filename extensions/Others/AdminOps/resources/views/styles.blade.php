@@ -3534,6 +3534,24 @@
     .ao-anc-field.ao-ei-tax > .ao-ei-tax-n { color: var(--wa-muted, #6b6b6b); }
     .ao-anc-field.ao-ei-tax > input.ao-of-tax { flex: 0 0 auto; width: 4.5rem; text-align: left; }
 
+    /* Billable Items heads with its buttons alone — the reference draws no grey strip
+       behind them there, and ours read as a tall empty band above the tables
+       (Leandro, 2026-09-17). */
+    .ao-ct-head.ao-ct-head-bare:not(:empty) {
+        padding: 0 0 0.5rem;
+        border: 0;
+        background: none;
+        align-items: center;
+    }
+
+    /* Its "+ Add Billable Item" is the primary of the pair. */
+    .ao-bt-primary {
+        background: #337ab7;
+        border-color: #2e6da4;
+        color: #fff;
+    }
+    .ao-bt-primary:hover { background: #286090; border-color: #204d74; color: #fff; }
+
     /* --- Billable Items: the reference's two tables, waiting then billed --- */
     .ao-bt-head { margin: 0.6rem 0 0.4rem; }
     .ao-bt-total { font-size: 1.05rem; color: var(--wa-ink, #333); }

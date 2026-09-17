@@ -59,6 +59,16 @@ class BillableItemsList extends Page
     public ?int $userId = null;
 
     /**
+     * The reference's "Add Time Billing Entries", which is this same form asked a different
+     * way: a time entry is hours at a rate, and a billable item is a quantity at an amount —
+     * the same row, and the same table. So rather than a second screen writing the same
+     * record, the button opens this one in hours framing: Quantity reads Hours, Amount reads
+     * Hourly Rate, and the two multiply into the charge exactly as they always did.
+     */
+    #[Url]
+    public bool $time = false;
+
+    /**
      * Reached from a client's profile, the charge starts on that client — the reference
      * carries the client across, where ours dropped it and made staff pick them again
      * (Leandro, 2026-09-14: "It isn't working the same way WHMCS does").
@@ -66,6 +76,24 @@ class BillableItemsList extends Page
     public function mount(): void
     {
         $this->userId = request()->integer('for') ?: null;
+
+        // Both buttons land on the form itself, as the reference's do, rather than on the
+        // list with the form still folded away.
+        if ($this->time) {
+            $this->adding = true;
+        }
+    }
+
+    /** What the reference calls the quantity field in each framing. */
+    public function quantityLabel(): string
+    {
+        return $this->time ? 'Hours' : 'Quantity';
+    }
+
+    /** And the per-unit price. */
+    public function amountLabel(): string
+    {
+        return $this->time ? 'Hourly Rate' : 'Amount';
     }
 
     /** The reference's Product/Service: the charge can belong to one of the client's services. */
@@ -97,7 +125,7 @@ class BillableItemsList extends Page
 
     public function getTitle(): string
     {
-        return 'Billable Items';
+        return $this->time ? 'Add Time Billing Entry' : 'Billable Items';
     }
 
     public function toggleAdding(): void

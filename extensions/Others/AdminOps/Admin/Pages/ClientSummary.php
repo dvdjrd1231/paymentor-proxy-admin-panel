@@ -2080,7 +2080,8 @@ class ClientSummary extends Page
             'newQuote' => class_exists(CreateQuote::class) ? CreateQuote::getUrl() : ManageInvoices::getUrl(),
             'newTransaction' => AddTransaction::getUrl(),
             'newTicket' => OpenNewTicket::getUrl(),
-            'billable' => BillableItemsList::getUrl(),
+            'billable' => BillableItemsList::getUrl(['for' => $this->customer->id, 'adding' => true]),
+            'billableTime' => BillableItemsList::getUrl(['for' => $this->customer->id, 'time' => true]),
         ];
     }
 
