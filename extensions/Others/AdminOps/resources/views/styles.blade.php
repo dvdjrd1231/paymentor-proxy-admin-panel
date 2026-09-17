@@ -3439,7 +3439,9 @@
     }
 
     /* Edit Invoice (user request, 2026-09-04): editable line items in the navy grid. */
-    .ao-ei-desc { width: 100%; resize: vertical; min-height: 3rem; font: inherit; }
+    /* Starts at exactly a single-line box's height and grows only if dragged — the
+       reference's is the same height as the Amount box beside it (Leandro, 2026-09-16). */
+    .ao-ei-desc { width: 100%; resize: vertical; height: 2.1rem; min-height: 2.1rem; font: inherit; }
 
     /* The invoice tabs' cards take a visible hairline rather than the reference's own
        near-white 3px frame: on a white card that frame reads as no border at all
