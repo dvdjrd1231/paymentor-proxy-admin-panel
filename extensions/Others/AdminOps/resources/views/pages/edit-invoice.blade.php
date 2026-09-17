@@ -37,7 +37,7 @@
                     <x-filament::icon icon="ri-eye-fill" class="ao-ei-tool-ic" /> View Invoice
                 </a>
                 <a class="ao-pg-btn" href="{{ url('/invoices/' . $invoice->id) }}" target="_blank" rel="noopener">
-                    <x-filament::icon icon="ri-user-fill" class="ao-ei-tool-ic" /> View as Client
+                    <x-filament::icon icon="ri-account-box-fill" class="ao-ei-tool-ic" /> View as Client
                 </a>
                 {{-- Print, where Back to List used to sit: the reference's four are View
                      Invoice, View as Client, Print and Download, and the way back is the
@@ -260,7 +260,9 @@
                 <label class="ao-anc-row">
                     <span>Transactions</span>
                     <span class="ao-anc-field">
-                        <select class="ao-of-lg" wire:model="refund.transaction" @disabled($succeeded->isEmpty())>
+                        {{-- Not disabled when empty: the reference's opens and shows its single line,
+                             and a control that will not open reads as broken (Leandro, 2026-09-16). --}}
+                        <select class="ao-of-lg" wire:model="refund.transaction">
                             @forelse ($succeeded as $transaction)
                                 <option value="{{ $transaction->id }}">
                                     {{ $transaction->created_at?->format('m/d/Y') }} &mdash;
