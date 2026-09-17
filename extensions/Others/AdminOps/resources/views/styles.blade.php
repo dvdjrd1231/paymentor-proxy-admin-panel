@@ -3439,7 +3439,15 @@
     }
 
     /* Edit Invoice (user request, 2026-09-04): editable line items in the navy grid. */
-    .ao-ei-desc { width: 100%; }
+    .ao-ei-desc { width: 100%; resize: vertical; min-height: 3rem; font: inherit; }
+
+    /* The invoice tabs' cards take a visible hairline rather than the reference's own
+       near-white 3px frame: on a white card that frame reads as no border at all
+       (Leandro, 2026-09-16: "No border"). */
+    .ao-ei .ao-anc-card {
+        border-width: 1px;
+        border-color: var(--wa-panel-border, #ccc);
+    }
     .ao-ei-qty, .ao-ei-qty-in { width: 6rem; }
     .ao-ei-amount, .ao-ei-amount-in { width: 9rem; }
 

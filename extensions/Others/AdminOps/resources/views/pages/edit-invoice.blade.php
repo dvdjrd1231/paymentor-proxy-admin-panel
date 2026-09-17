@@ -410,8 +410,11 @@
                                     aria-label="Select line {{ $index + 1 }}">
                             </td>
                             <td class="ao-mu-left">
-                                <input type="text" class="ao-ei-desc" wire:model="items.{{ $index }}.description"
-                                    aria-label="Line description">
+                                {{-- A textarea, as the reference's is: a line's description
+                                     runs to more than one line often enough that a single
+                                     line box hides the rest (Leandro, 2026-09-16). --}}
+                                <textarea class="ao-ei-desc" rows="2" wire:model="items.{{ $index }}.description"
+                                    aria-label="Line description"></textarea>
                             </td>
                             <td><input type="text" inputmode="decimal" class="ao-ei-amount-in" wire:model.live.debounce.500ms="items.{{ $index }}.price" aria-label="Amount"></td>
                             <td class="ao-ei-del">
