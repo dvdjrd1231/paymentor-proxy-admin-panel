@@ -3520,6 +3520,10 @@
     .ao-ei-status--pending { color: #d9534f; }
     .ao-ei-status--paid { color: #5cb85c; }
     .ao-ei-status--cancelled { color: var(--wa-muted, #6b6b6b); }
+    .ao-ei-status--refunded { color: var(--wa-muted, #6b6b6b); }
+    /* Both are still owed, so they read as unpaid does rather than as a closed state. */
+    .ao-ei-status--collections { color: #d9534f; }
+    .ao-ei-status--payment_pending { color: #d9534f; }
 
     .ao-ei-status-line { font-size: 0.95rem; margin-bottom: 0.15rem; }
 

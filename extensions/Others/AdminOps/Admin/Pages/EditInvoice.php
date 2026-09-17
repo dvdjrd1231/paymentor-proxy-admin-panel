@@ -49,6 +49,33 @@ class EditInvoice extends Page
     /** Where the Options tab's Payment Method is kept — a property on the invoice row. */
     public const METHOD_KEY = 'adminops_payment_method';
 
+    /**
+     * Collections and Payment Pending are kept here rather than in `invoices.status`.
+     *
+     * Both mean "still owed, still payable" in the reference — collections is an escalated
+     * overdue invoice, payment pending one whose payment is awaiting confirmation. But core
+     * gates paying on `status === 'pending'` exactly (Livewire\Invoices\Show::processPayment),
+     * and its cron only raises reminders and cancels against 'pending' too. Writing either
+     * word into that column would therefore make the invoice unpayable and stop it being
+     * chased — the opposite of what both states mean. So the column stays 'pending' and the
+     * escalation rides alongside it.
+     */
+    public const STATE_KEY = 'adminops_billing_state';
+
+    /** The reference's status list. Values that core's own column cannot hold map via STATE_KEY. */
+    public const STATUSES = [
+        'draft' => 'Draft',
+        'pending' => 'Unpaid',
+        'paid' => 'Paid',
+        'cancelled' => 'Cancelled',
+        'refunded' => 'Refunded',
+        'collections' => 'Collections',
+        'payment_pending' => 'Payment Pending',
+    ];
+
+    /** The two that ride alongside 'pending' rather than replacing it. */
+    public const OVERLAY_STATUSES = ['collections', 'payment_pending'];
+
     /** The Add Payment tab. */
     public array $pay = ['date' => '', 'amount' => '', 'fee' => '', 'transactionId' => '', 'gateway' => '', 'sendEmail' => true];
 
@@ -160,7 +187,7 @@ class EditInvoice extends Page
             'invoiceDate' => $this->invoice->created_at?->format('m/d/Y') ?? '',
             'dueAt' => $this->invoice->due_at?->format('m/d/Y') ?? '',
             'number' => (string) ($this->invoice->number ?? ''),
-            'status' => $this->invoice->status,
+            'status' => $this->billingState(),
             // The reference's Tax Rate, which here is the invoice's own snapshot rate.
             'taxRate' => number_format((float) ($this->invoice->snapshot?->tax_rate ?? 0), 2, '.', ''),
             'paymentMethod' => (string) ($this->invoice->properties()
@@ -335,6 +362,29 @@ class EditInvoice extends Page
 
     // ── Options tab ──────────────────────────────────────────────────────────────────
 
+    /**
+     * The invoice's status as the reference states it: the column, unless an escalation is
+     * recorded beside it. {@see self::STATE_KEY}
+     */
+    public function billingState(): string
+    {
+        if ($this->invoice->status !== 'pending') {
+            return $this->invoice->status;
+        }
+
+        $state = $this->invoice->properties()->where('key', self::STATE_KEY)->value('value');
+
+        return in_array($state, self::OVERLAY_STATUSES, true) ? $state : 'pending';
+    }
+
+    /** That status as a label, for the pill above the invoice. */
+    public function billingStateLabel(): string
+    {
+        $state = $this->billingState();
+
+        return strtoupper(self::STATUSES[$state] ?? $state);
+    }
+
     /** Enabled gateways, for the Options tab's Payment Method. */
     public function gatewayOptions(): array
     {
@@ -346,7 +396,7 @@ class EditInvoice extends Page
     {
         $this->validate([
             'options.number' => 'nullable|string|max:255',
-            'options.status' => 'required|in:draft,pending,paid,cancelled,refunded',
+            'options.status' => 'required|in:' . implode(',', array_keys(self::STATUSES)),
             'options.taxRate' => 'nullable|numeric|min:0|max:100',
             'options.paymentMethod' => 'nullable|exists:gateways,id',
         ], attributes: [
@@ -365,13 +415,22 @@ class EditInvoice extends Page
             }
         }
 
-        // Status is writable here because the reference's Options tab writes it, but paid
-        // still is not offered by hand — see the class docblock.
-        if (in_array($this->options['status'], ['draft', 'pending', 'cancelled'], true)) {
-            $this->invoice->status = $this->options['status'];
-        }
+        // Collections and Payment Pending leave the column on 'pending' and are recorded
+        // beside it, so the invoice stays payable and stays chased. {@see self::STATE_KEY}
+        $chosen = $this->options['status'];
+        $overlay = in_array($chosen, self::OVERLAY_STATUSES, true);
 
+        $this->invoice->status = $overlay ? 'pending' : $chosen;
         $this->invoice->save();
+
+        if ($overlay) {
+            $this->invoice->properties()->updateOrCreate(
+                ['key' => self::STATE_KEY],
+                ['name' => 'Billing State', 'value' => $chosen],
+            );
+        } else {
+            $this->invoice->properties()->where('key', self::STATE_KEY)->delete();
+        }
 
         // The rate lives on the invoice's snapshot — the row core reads tax from — so it is
         // written there rather than on the invoice itself. A snapshot is only made when

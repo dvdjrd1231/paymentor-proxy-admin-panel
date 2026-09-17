@@ -94,8 +94,8 @@
                 </div>
 
                 <div class="ao-ei-status-block">
-                    <div class="ao-ei-status ao-ei-status--{{ $invoice->status }}">
-                        {{ ['paid' => 'PAID', 'pending' => 'UNPAID', 'cancelled' => 'CANCELLED', 'draft' => 'DRAFT'][$invoice->status] ?? strtoupper($invoice->status) }}
+                    <div class="ao-ei-status ao-ei-status--{{ $this->billingState() }}">
+                        {{ $this->billingStateLabel() }}
                     </div>
                     {{-- One line under the status word, as the reference has: the method,
                          or its own wording when nothing has been paid against the invoice
@@ -242,18 +242,14 @@
                             @endunless
                         </span>
                     </label>
-                    {{-- Paid is absent by design: it is the consequence of payments covering
-                         the total, not a state to assert. Add Payment is how money arrives.
-                         Draft is offered, since an invoice can be put back to one. --}}
+                    {{-- The reference's seven, in its order. Collections and Payment Pending
+                         keep the invoice payable and chased; see EditInvoice::STATE_KEY. --}}
                     <label class="ao-anc-row">
                         <span>Status</span>
                         <select wire:model="options.status">
-                            <option value="draft">Draft</option>
-                            <option value="pending">Unpaid</option>
-                            <option value="cancelled">Cancelled</option>
-                            @if ($invoice->status === 'paid')
-                                <option value="paid" disabled>Paid — set by recording a payment</option>
-                            @endif
+                            @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditInvoice::STATUSES as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
                         </select>
                     </label>
                 </div>
