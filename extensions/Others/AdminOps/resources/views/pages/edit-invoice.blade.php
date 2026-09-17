@@ -67,7 +67,7 @@
             @endif
 
             <div class="ao-ei-summary">
-                <div class="ao-anc-card ao-ei-facts">
+                <div class="ao-anc-card ao-ei-facts" style="margin-left: 10px;">
                     <div class="ao-anc-row">
                         <span>Client Name</span>
                         <span class="ao-eo-fact">
@@ -97,11 +97,13 @@
                     <div class="ao-ei-status ao-ei-status--{{ $invoice->status }}">
                         {{ ['paid' => 'PAID', 'pending' => 'UNPAID', 'cancelled' => 'CANCELLED', 'draft' => 'DRAFT'][$invoice->status] ?? strtoupper($invoice->status) }}
                     </div>
+                    {{-- One line under the status word, as the reference has: the method,
+                         or its own wording when nothing has been paid against the invoice
+                         yet. Last Capture Attempt was ours and is gone — it only ever said
+                         "None" here, since nothing captures against a card
+                         (Leandro, 2026-09-17). --}}
                     <div class="ao-ei-status-line">
-                        Last Capture Attempt: <b>{{ $lastAttempt?->created_at?->format('m/d/Y H:i') ?? 'None' }}</b>
-                    </div>
-                    <div class="ao-ei-status-line">
-                        Payment Method: <b>{{ $paymentMethod ?? '—' }}</b>
+                        Payment Method: <b>{{ $paymentMethod ?: 'No Transactions Applied' }}</b>
                     </div>
 
                     <div class="ao-ei-send">

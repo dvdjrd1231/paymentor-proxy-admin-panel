@@ -3454,11 +3454,11 @@
        near-white 3px frame: on a white card that frame reads as no border at all
        (Leandro, 2026-09-16: "No border"). */
     .ao-mu.ao-ei .ao-anc-card {
-        border-width: 1px;
+        border-width: 2px;
         /* Darker than the panel hairline: at #ddd on white the box read as no boundary at
            all, and the reference's refund fields are plainly wrapped (Leandro, 2026-09-16,
            twice). */
-        border-color: #b9b9b9;
+        border-color: #efefef;
     }
     .ao-ei-qty, .ao-ei-qty-in { width: 6rem; }
     .ao-ei-amount, .ao-ei-amount-in { width: 9rem; }
@@ -3500,7 +3500,9 @@
 
     .ao-ei-facts { margin: 0; }
     .ao-ei-sub { margin-inline-start: 0.4rem; font-size: 0.9em; }
-    .ao-ei-balance { color: #d9534f; font-weight: 700; }
+    /* Green, as the reference prints a balance (Leandro, 2026-09-17) — it was red, which
+       reads as an alarm on an invoice that owes nothing. */
+    .ao-ei-balance { color: #3c763d; font-weight: 700; }
 
     .ao-ei-status-block { text-align: center; padding-top: 0.5rem; }
 
