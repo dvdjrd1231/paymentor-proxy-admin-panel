@@ -3504,7 +3504,11 @@
        reads as an alarm on an invoice that owes nothing. */
     .ao-ei-facts .ao-eo-fact.ao-ei-balance { color: #3c763d; font-weight: 700; }
 
-    .ao-ei-status-block { text-align: center; padding-top: 0.5rem; }
+    .ao-ei-status-block {
+        text-align: center;
+        /* padding-top: 0.5rem;  */
+        margin-bottom: 10px;
+    }
 
     .ao-ei-status {
         font-size: 1.7rem;

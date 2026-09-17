@@ -539,29 +539,5 @@
             </tbody>
         </table>
 
-        <div class="ao-eo-actions">
-            <button type="button" class="ao-eo-delete" wire:click="$set('confirming', 'delete')">Delete Invoice</button>
-        </div>
-
-        @if ($confirming)
-            <div class="ao-mud-overlay" wire:click.self="$set('confirming', null)">
-                <div class="ao-mud ao-mud-sm" role="alertdialog" aria-modal="true">
-                    <div class="ao-mud-head">
-                        Are you sure?
-                        <button type="button" wire:click="$set('confirming', null)" aria-label="Close">&times;</button>
-                    </div>
-                    <div class="ao-mud-text">
-                        <p>Delete invoice #{{ $invoice->number ?: $invoice->id }}?</p>
-                        <p>Its line items go with it. Payments already recorded stay in the ledger.</p>
-                    </div>
-                    <div class="ao-mud-foot ao-mud-foot-only-right">
-                        <span class="ao-mud-foot-right">
-                            <button type="button" class="ao-mud-close" wire:click="$set('confirming', null)">Cancel</button>
-                            <button type="button" class="ao-mud-delete" wire:click="runDelete">Delete</button>
-                        </span>
-                    </div>
-                </div>
-            </div>
-        @endif
     </div>
 </x-filament-panels::page>

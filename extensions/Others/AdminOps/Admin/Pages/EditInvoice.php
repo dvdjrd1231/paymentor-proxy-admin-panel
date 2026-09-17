@@ -77,8 +77,6 @@ class EditInvoice extends Page
     /** Which notification the Summary tab's Send Email button would send. */
     public string $emailTemplate = 'new_invoice_created';
 
-    public ?string $confirming = null;
-
     /**
      * The emails this screen can actually send, in the reference's own order.
      *
@@ -821,23 +819,6 @@ class EditInvoice extends Page
         return response()->streamDownload(fn () => print($pdf->output()), $name);
     }
 
-    public function runDelete(): void
-    {
-        $this->reset('confirming');
-
-        if (!InvoiceResource::canDelete($this->invoice)) {
-            Notification::make()->title('Not allowed')->danger()->send();
-
-            return;
-        }
-
-        $id = $this->invoice->id;
-        $this->invoice->items()->delete();
-        $this->invoice->delete();
-
-        Notification::make()->title("Invoice #{$id} deleted")->success()->send();
-        $this->redirect(ManageInvoices::getUrl());
-    }
 
     protected function getViewData(): array
     {
