@@ -39,12 +39,16 @@
                 <a class="ao-pg-btn" href="{{ url('/invoices/' . $invoice->id) }}" target="_blank" rel="noopener">
                     <x-filament::icon icon="ri-user-line" class="ao-ei-tool-ic" /> View as Client
                 </a>
+                {{-- Print, where Back to List used to sit: the reference's four are View
+                     Invoice, View as Client, Print and Download, and the way back is the
+                     rail's own List All Invoices (Leandro, 2026-09-16). --}}
+                <a class="ao-pg-btn" href="{{ route('adminops.invoice-pdf', $invoice->id) }}?print=1"
+                    target="_blank" rel="noopener">
+                    <x-filament::icon icon="ri-printer-line" class="ao-ei-tool-ic" /> Print
+                </a>
                 <button type="button" class="ao-pg-btn" wire:click="downloadPdf">
                     <x-filament::icon icon="ri-download-line" class="ao-ei-tool-ic" /> Download
                 </button>
-                <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageInvoices::getUrl() }}">
-                    <x-filament::icon icon="ri-arrow-left-line" class="ao-ei-tool-ic" /> Back to List
-                </a>
             </div>
         </div>
 
