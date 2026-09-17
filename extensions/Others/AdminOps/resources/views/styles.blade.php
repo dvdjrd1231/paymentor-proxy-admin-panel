@@ -3652,7 +3652,9 @@
     .ao-ei-two .ao-anc-row > input,
     .ao-ei-two .ao-anc-row > select,
     .ao-ei-two .ao-anc-row input[type="text"],
-    .ao-ei-two .ao-anc-row select { width: auto; }
+    .ao-ei-two .ao-anc-row select {
+        /* width: auto; */
+    }
 
     .ao-ei-two .ao-anc-row > input[type="text"] { width: 11rem; }
     .ao-ei-two .ao-anc-row > select { min-width: 10rem; max-width: 100%; }
@@ -3923,7 +3925,7 @@
     .ao-anc-row input[type="email"],
     .ao-anc-row input[type="number"],
     .ao-anc-row select {
-        width: 100%;
+        /* width: 100%; */
         height: 2.1rem;
         padding: 0 0.55rem;
         border: 1px solid var(--wa-border, #ccc);
