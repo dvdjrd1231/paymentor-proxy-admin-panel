@@ -3444,7 +3444,7 @@
     /* The invoice tabs' cards take a visible hairline rather than the reference's own
        near-white 3px frame: on a white card that frame reads as no border at all
        (Leandro, 2026-09-16: "No border"). */
-    .ao-ei .ao-anc-card {
+    .ao-mu.ao-ei .ao-anc-card {
         border-width: 1px;
         border-color: var(--wa-panel-border, #ccc);
     }
