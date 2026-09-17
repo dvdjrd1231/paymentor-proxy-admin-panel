@@ -3453,6 +3453,11 @@
     /* The invoice tabs' cards take a visible hairline rather than the reference's own
        near-white 3px frame: on a white card that frame reads as no border at all
        (Leandro, 2026-09-16: "No border"). */
+    /* Except the ones that ARE the reference's form table: those keep its own frame. */
+    .ao-mu.ao-ei .ao-anc-card:has(> .ao-anc-col) {
+        border: 3px solid #E2E7E9;
+    }
+
     .ao-mu.ao-ei .ao-anc-card {
         border-width: 2px;
         /* Darker than the panel hairline: at #ddd on white the box read as no boundary at
@@ -3627,6 +3632,24 @@
     }
 
     .ao-ei-wide { grid-column: 1 / -1; }
+
+    /* The reference's fields are their own width — a date is a date's width — rather than
+       stretched to the column. Ours filled the cell, so an Invoice # box ran 250px against
+       its 115 and the two panels read as different shapes (Leandro, 2026-09-17). */
+    .ao-ei-two .ao-anc-row > input,
+    .ao-ei-two .ao-anc-row > select,
+    .ao-ei-two .ao-anc-row input[type="text"],
+    .ao-ei-two .ao-anc-row select { width: auto; }
+
+    .ao-ei-two .ao-anc-row > input[type="text"] { width: 11rem; }
+    .ao-ei-two .ao-anc-row > select { min-width: 10rem; max-width: 100%; }
+    .ao-ei-two .ao-of-date .ao-of-md { width: 9.5rem; }
+
+    /* The field cell's grey then has to fill what the control no longer does. */
+    .ao-ei-two .ao-anc-row { align-items: stretch; }
+    .ao-ei-two .ao-anc-row > input,
+    .ao-ei-two .ao-anc-row > select { align-self: center; }
+
 
     .ao-ei-credit {
         display: grid;
@@ -4291,7 +4314,11 @@
        the ones built out of rows. overflow: hidden so the cells are clipped by the radius
        instead of squaring off the corners. */
     .ao-anc-card:has(> .ao-anc-row),
-    .ao-anc-card:has(> .ao-anc-cols) {
+    .ao-anc-card:has(> .ao-anc-cols),
+    /* Options and Add Payment lay their rows out in two columns, so their rows are a level
+       down and the two selectors above missed them: those cards kept the 1px hairline while
+       every other form card carried the reference's 3px frame (Leandro, 2026-09-17). */
+    .ao-anc-card:has(> .ao-anc-col) {
         /* 2px of padding is the table's border-spacing at its outer edge, and the frame is
            the reference's own `border: 3px solid #E2E7E9` rather than our 1px hairline. */
         padding: 2px;
