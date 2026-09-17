@@ -54,6 +54,18 @@
 
         {{-- ── Summary ─────────────────────────────────────────────────────────── --}}
         <div x-show="tab === 'summary'" x-cloak>
+            {{-- The reference's own band: a full-width grey strip under the toolbar with
+                 the Publish pair at its right, flush with the card beneath it. Ours had the
+                 buttons floating unbacked inside the status column (Leandro, 2026-09-17). --}}
+            @if ($invoice->status === 'draft')
+                <div class="ao-ei-publishbar">
+                    <button type="button" class="ao-find-go" wire:click="publish"
+                        wire:loading.attr="disabled" wire:target="publish">Publish</button>
+                    <button type="button" class="ao-ei-publish-mail" wire:click="publish(true)"
+                        wire:loading.attr="disabled" wire:target="publish">Publish and Send Email</button>
+                </div>
+            @endif
+
             <div class="ao-ei-summary">
                 <div class="ao-anc-card ao-ei-facts">
                     <div class="ao-anc-row">
@@ -82,18 +94,6 @@
                 </div>
 
                 <div class="ao-ei-status-block">
-                    {{-- The reference's Publish pair sits above the status word, at the top
-                         right of the panel — the first thing to do with a draft, before
-                         reading what state it is in (Leandro, 2026-09-16). --}}
-                    @if ($invoice->status === 'draft')
-                        <div class="ao-ei-publish">
-                            <button type="button" class="ao-find-go" wire:click="publish"
-                                wire:loading.attr="disabled" wire:target="publish">Publish</button>
-                            <button type="button" class="ao-ei-publish-mail" wire:click="publish(true)"
-                                wire:loading.attr="disabled" wire:target="publish">Publish and Send Email</button>
-                        </div>
-                    @endif
-
                     <div class="ao-ei-status ao-ei-status--{{ $invoice->status }}">
                         {{ ['paid' => 'PAID', 'pending' => 'UNPAID', 'cancelled' => 'CANCELLED', 'draft' => 'DRAFT'][$invoice->status] ?? strtoupper($invoice->status) }}
                     </div>

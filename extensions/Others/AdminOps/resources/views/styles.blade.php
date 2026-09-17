@@ -2344,8 +2344,10 @@
        same right-aligned cell. Normal weight so the label stays the emphasis. */
 
     .ao-anc-card-refund-container {
-        border: 2px solid #9ea6ad;
+        border: 2px solid #f0f0f0;
         border-radius: 3px;
+        padding-top: 1px;
+        padding-right: 1px;
     }
     .ao-cp-create .ao-anc-row > span:first-child i,
     .ao-ep .ao-anc-row > span:first-child i,
@@ -3541,6 +3543,25 @@
 
     /* The reference's Publish pair: the plain one beside the amber "and Send Email", which
        is the louder of the two because it also leaves the building. */
+    /* The reference's grey band across the tab panel, its buttons at the right and its
+       edges flush with the card below (Leandro, 2026-09-17). */
+    .ao-ei-publishbar {
+        display: flex;
+        align-items: stretch;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding: 0.6rem 0.8rem;
+        margin-bottom: 1rem;
+        background: #f5f5f5;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-radius: var(--wa-radius, 4px);
+    }
+
+    .ao-ei-publishbar > * {
+        padding: 0.4rem 0.9rem;
+        line-height: 1.2;
+    }
+
     /* Right-aligned above the status word, where the reference puts them. Stretched so the
        pair is one height: they were set by their own padding and came out uneven
        (Leandro, 2026-09-16). */
