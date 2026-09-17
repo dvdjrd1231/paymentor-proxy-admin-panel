@@ -202,6 +202,19 @@
                             'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
                         ])
                     </label>
+                    {{-- The reference's Payment Method: the gateway this invoice is to be
+                         paid through. An invoice row carries no gateway of its own, so it is
+                         kept as a property and pre-selects the client's choice on their
+                         payment page. They may still pick another. --}}
+                    <label class="ao-anc-row">
+                        <span>Payment Method</span>
+                        <select wire:model="options.paymentMethod">
+                            <option value="">- Client chooses -</option>
+                            @foreach ($this->gatewayOptions() as $id => $name)
+                                <option value="{{ $id }}">{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </label>
                     <label class="ao-anc-row">
                         <span>Invoice #</span>
                         <input type="text" wire:model="options.number" placeholder="Blank until issued">

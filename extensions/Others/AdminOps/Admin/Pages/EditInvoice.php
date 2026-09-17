@@ -44,7 +44,10 @@ class EditInvoice extends Page
 
     /** The Options tab. */
     /** The Options tab. taxRate is the invoice snapshot's own rate. */
-    public array $options = ['invoiceDate' => '', 'dueAt' => '', 'number' => '', 'status' => '', 'taxRate' => ''];
+    public array $options = ['invoiceDate' => '', 'dueAt' => '', 'number' => '', 'status' => '', 'taxRate' => '', 'paymentMethod' => ''];
+
+    /** Where the Options tab's Payment Method is kept — a property on the invoice row. */
+    public const METHOD_KEY = 'adminops_payment_method';
 
     /** The Add Payment tab. */
     public array $pay = ['date' => '', 'amount' => '', 'fee' => '', 'transactionId' => '', 'gateway' => '', 'sendEmail' => true];
@@ -160,6 +163,8 @@ class EditInvoice extends Page
             'status' => $this->invoice->status,
             // The reference's Tax Rate, which here is the invoice's own snapshot rate.
             'taxRate' => number_format((float) ($this->invoice->snapshot?->tax_rate ?? 0), 2, '.', ''),
+            'paymentMethod' => (string) ($this->invoice->properties()
+                ->where('key', self::METHOD_KEY)->value('value') ?? ''),
         ];
 
         $this->pay['date'] = now()->format('m/d/Y');
@@ -330,12 +335,20 @@ class EditInvoice extends Page
 
     // ── Options tab ──────────────────────────────────────────────────────────────────
 
+    /** Enabled gateways, for the Options tab's Payment Method. */
+    public function gatewayOptions(): array
+    {
+        return \App\Models\Gateway::where('enabled', true)
+            ->orderBy('name')->pluck('name', 'id')->all();
+    }
+
     public function saveOptions(): void
     {
         $this->validate([
             'options.number' => 'nullable|string|max:255',
             'options.status' => 'required|in:draft,pending,paid,cancelled,refunded',
             'options.taxRate' => 'nullable|numeric|min:0|max:100',
+            'options.paymentMethod' => 'nullable|exists:gateways,id',
         ], attributes: [
             'options.number' => 'invoice number',
             'options.status' => 'status',
@@ -366,6 +379,19 @@ class EditInvoice extends Page
         if (($snapshot = $this->invoice->snapshot) && $this->options['taxRate'] !== '') {
             $snapshot->tax_rate = (float) $this->options['taxRate'];
             $snapshot->save();
+        }
+
+        // The reference's Payment Method: which gateway this invoice is to be paid through.
+        // An invoice row has no gateway of its own — the client picks one at payment time —
+        // so it is stored here and used to pre-select theirs.
+        // {@see Support\PreselectInvoiceGateway}
+        if ($this->options['paymentMethod'] === '') {
+            $this->invoice->properties()->where('key', self::METHOD_KEY)->delete();
+        } else {
+            $this->invoice->properties()->updateOrCreate(
+                ['key' => self::METHOD_KEY],
+                ['name' => 'Payment Method', 'value' => $this->options['paymentMethod']],
+            );
         }
         $this->refreshInvoice();
 

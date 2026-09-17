@@ -64,6 +64,7 @@ class AdminOps extends Extension
         View::addNamespace('adminops', __DIR__ . '/resources/views');
 
         \Paymenter\Extensions\Others\AdminOps\Support\PrefillInvoiceClient::register();
+        \Paymenter\Extensions\Others\AdminOps\Support\PreselectInvoiceGateway::register();
         $this->hideDraftInvoicesFromClients();
 
         $this->registerNoFillDirective();
