@@ -3534,6 +3534,24 @@
     .ao-anc-field.ao-ei-tax > .ao-ei-tax-n { color: var(--wa-muted, #6b6b6b); }
     .ao-anc-field.ao-ei-tax > input.ao-of-tax { flex: 0 0 auto; width: 4.5rem; text-align: left; }
 
+    /* --- Billable Items: the reference's two tables, waiting then billed --- */
+    .ao-bt-head { margin: 0.6rem 0 0.4rem; }
+    .ao-bt-total { font-size: 1.05rem; color: var(--wa-ink, #333); }
+    .ao-bt-total b { color: #d9534f; }
+    .ao-bt-grid { width: 100%; }
+    .ao-bt-tick { width: 2.2rem; text-align: center; }
+    .ao-bt-with {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.6rem 0 1.4rem;
+    }
+    .ao-bt-with > span { font-weight: 600; }
+    .ao-bt-del { background: #d9534f; border-color: #d43f3a; color: #fff; }
+    .ao-bt-del:hover:not(:disabled) { background: #c9302c; border-color: #ac2925; }
+    .ao-bt-with button:disabled { opacity: 0.65; cursor: not-allowed; }
+    .ao-bt-h { font-size: 1.05rem; font-weight: 600; margin: 0 0 0.4rem; }
+
     /* The reference's Attempt Capture is its one green action on this screen. */
     .ao-ei-capture {
         background: #5cb85c;

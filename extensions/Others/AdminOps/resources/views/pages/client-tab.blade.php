@@ -103,6 +103,11 @@
      tab you already clicked. Every list tab comes through here, so this is what made most
      of them read as a different table from the rest of the panel (Leandro, 2026-09-10:
      "some tabs are different with the WHMCS client profile page tabs content"). --}}
+@if ($tab === 'billable')
+    <div class="ao-ct-list">
+        @include('adminops::partials.billable-tab')
+    </div>
+@else
 <div class="ao-ct-list">
     @if ($count === 0)
         <table class="ao-mu-grid">
@@ -250,3 +255,4 @@
 @include('adminops::partials.records-pager', [
     'total' => $rowTotal(), 'page' => $page, 'perPage' => $perPage,
 ])
+@endif

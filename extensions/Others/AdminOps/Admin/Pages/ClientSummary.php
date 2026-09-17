@@ -1633,7 +1633,11 @@ class ClientSummary extends Page
                         ...($this->service ? $this->serviceEditorData() : ['svcModel' => null]),
                     ];
                 })(),
-                'billable' => ['rows' => $this->billableItems()],
+                'billable' => [
+                'rows' => $this->billableItems(),
+                'uninvoiced' => $this->billableItems(false),
+                'invoiced' => $this->billableItems(true),
+            ],
                 'invoices' => ['rows' => $this->paged($this->customer->invoices()->with(['items', 'transactions'])->latest())],
                 // The reference heads both of these with a band of four figures.
                 'transactions' => (function (): array {
@@ -2126,17 +2130,102 @@ class ClientSummary extends Page
     /**
      * @return Collection<int, object>
      */
-    private function billableItems()
+    /**
+     * This client's billable items.
+     *
+     * The reference splits them into what is still waiting to be billed and what has
+     * already gone onto an invoice, because only the first can be acted on. Pass null for
+     * both, or true/false to take one side.
+     */
+    private function billableItems(?bool $invoiced = null)
     {
         if (!Schema::hasTable('ext_billable_items')) {
             return collect();
         }
 
-        return $this->paged(
-            DB::table('ext_billable_items')
-                ->where('user_id', $this->customer->id)
-                ->orderByDesc('id')
-        );
+        $query = DB::table('ext_billable_items')
+            ->where('user_id', $this->customer->id)
+            ->orderByDesc('id');
+
+        if ($invoiced === true) {
+            $query->whereNotNull('invoice_id');
+        } elseif ($invoiced === false) {
+            $query->whereNull('invoice_id');
+        }
+
+        return $this->paged($query);
+    }
+
+    /** Ticked rows in the reference's Uninvoiced Items table. */
+    public array $billableChosen = [];
+
+    /** Its "Invoice Selected Items": raise one invoice carrying them. */
+    public function invoiceChosenBillable(): void
+    {
+        $items = $this->chosenBillableItems();
+
+        if ($items->isEmpty()) {
+            Notification::make()->title('Nothing selected')
+                ->body('Tick the items to invoice first.')->warning()->send();
+
+            return;
+        }
+
+        // One invoice per currency: Paymenter stores no exchange rate, so a mixed-currency
+        // invoice would total to a number in no currency at all. {@see Items::invoice}
+        $raised = $items->groupBy('currency_code')->map(
+            fn ($group) => \Paymenter\Extensions\Others\BillableItems\Support\Items::invoice(
+                $this->customer, $group,
+            )
+        )->filter();
+
+        $this->billableChosen = [];
+
+        Notification::make()->title($raised->count() === 1 ? 'Invoice raised' : 'Invoices raised')
+            ->body('Invoiced ' . $items->count() . ' item' . ($items->count() === 1 ? '' : 's')
+                . ' as ' . $raised->map(fn ($i) => '#' . ($i->number ?: $i->id))->implode(', ') . '.')
+            ->success()->send();
+    }
+
+    /** Its Delete, beside that button. Only ever an uninvoiced row. */
+    public function deleteChosenBillable(): void
+    {
+        $items = $this->chosenBillableItems();
+
+        if ($items->isEmpty()) {
+            Notification::make()->title('Nothing selected')
+                ->body('Tick the items to delete first.')->warning()->send();
+
+            return;
+        }
+
+        $count = $items->count();
+        \Paymenter\Extensions\Others\BillableItems\Models\BillableItem::whereKey($items->pluck('id'))->delete();
+        $this->billableChosen = [];
+
+        Notification::make()->title('Deleted')
+            ->body($count . ' billable item' . ($count === 1 ? '' : 's') . ' removed.')->success()->send();
+    }
+
+    /**
+     * The ticked rows, narrowed to this client's own uninvoiced items.
+     *
+     * The ids arrive from the browser, so they are re-checked here rather than trusted:
+     * an id belonging to another client, or one already invoiced, must not be actionable.
+     */
+    private function chosenBillableItems()
+    {
+        $ids = array_filter(array_map('intval', $this->billableChosen));
+
+        if (!$ids || !Schema::hasTable('ext_billable_items')) {
+            return collect();
+        }
+
+        return \Paymenter\Extensions\Others\BillableItems\Models\BillableItem::query()
+            ->whereKey($ids)
+            ->where('user_id', $this->customer->id)
+            ->whereNull('invoice_id')
+            ->get();
     }
 
     /**
