@@ -5,13 +5,22 @@
     $waiting = $uninvoiced ?? collect();
     $billed = $invoiced ?? collect();
     $waitingTotal = $waiting->sum(fn ($r) => (float) $r->amount * (float) $r->quantity);
-    $currency = $waiting->first()->currency_code ?? $billed->first()->currency_code ?? '';
+
+    // With no rows there is no currency to read off one, and the reference still prints a
+    // currency there. A user row carries none of its own, so the store's default is the
+    // honest fallback.
+    $code = $waiting->first()->currency_code
+        ?? $billed->first()->currency_code
+        ?? config('settings.default_currency', 'USD');
+
+    $currencyRow = \App\Models\Currency::find($code);
 @endphp
 
 <div class="ao-bt-head">
     <span class="ao-bt-total">
-        Uninvoiced Items &mdash;
-        <b>{{ number_format($waitingTotal, 2) }} {{ $currency }}</b> ({{ $waiting->count() }})
+        Uninvoiced Items -
+        <b>{{ $currencyRow?->prefix }}{{ number_format($waitingTotal, 2) }}{{ $currencyRow?->suffix }} {{ $code }}</b>
+        ({{ $waiting->count() }})
     </span>
 </div>
 

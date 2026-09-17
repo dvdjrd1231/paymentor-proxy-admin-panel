@@ -28,8 +28,8 @@
             {{-- The reference's pair. Time billing is this same form asked in hours:
                  a time entry is hours at a rate, which is the row the other button
                  writes as a quantity at an amount. {@see BillableItemsList::$time} --}}
-            <a class="ao-mu-tab" href="{{ $urls['billableTime'] }}">Add Time Billing Entries</a>
-            <a class="ao-mu-tab ao-bt-primary" href="{{ $urls['billable'] }}">&#10010; Add Billable Item</a>
+            <a class="ao-mu-tab ao-bt-head-btn" href="{{ $urls['billableTime'] }}">Add Time Billing Entries</a>
+            <a class="ao-mu-tab ao-bt-head-btn ao-bt-primary" href="{{ $urls['billable'] }}">&#10010; Add Billable Item</a>
             @break
     @endswitch
 </div>

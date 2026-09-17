@@ -3538,19 +3538,33 @@
        behind them there, and ours read as a tall empty band above the tables
        (Leandro, 2026-09-17). */
     .ao-ct-head.ao-ct-head-bare:not(:empty) {
-        padding: 0 0 0.5rem;
+        padding: 0 0 0.6rem;
         border: 0;
         background: none;
         align-items: center;
+        min-height: 0;
     }
 
+    /* These two are buttons, not tabs. .ao-mu-tab draws a tab — square-bottomed, pulled
+       down a pixel to meet a strip that is not there on this screen — and it is declared
+       further down the sheet, so a bare .ao-bt-* class lost the background to it every
+       time. Naming .ao-mu-tab here wins the tie and undoes the tab shaping. */
+    .ao-mu-tab.ao-bt-head-btn {
+        margin-bottom: 0;
+        border-radius: 4px;
+        padding: 0.35rem 0.8rem;
+        background: #fff;
+        border-color: #ccc;
+    }
+    .ao-mu-tab.ao-bt-head-btn:hover { background: #ebebeb; }
+
     /* Its "+ Add Billable Item" is the primary of the pair. */
-    .ao-bt-primary {
+    .ao-mu-tab.ao-bt-primary {
         background: #337ab7;
         border-color: #2e6da4;
         color: #fff;
     }
-    .ao-bt-primary:hover { background: #286090; border-color: #204d74; color: #fff; }
+    .ao-mu-tab.ao-bt-primary:hover { background: #286090; border-color: #204d74; color: #fff; }
 
     /* --- Billable Items: the reference's two tables, waiting then billed --- */
     .ao-bt-head { margin: 0.6rem 0 0.4rem; }
