@@ -216,11 +216,26 @@
                             'placeholder' => 'MM/DD/YYYY', 'class' => 'ao-of-md',
                         ])
                     </label>
+                    {{-- The reference's Tax Rate. One rate, not its two: an invoice here
+                         carries a single rate on its snapshot, which is the row core reads
+                         tax from (Leandro, 2026-09-17). --}}
+                    <label class="ao-anc-row">
+                        <span>Tax Rate</span>
+                        <span class="ao-anc-field">
+                            <input type="text" inputmode="decimal" class="ao-of-sm" wire:model="options.taxRate"
+                                placeholder="0.00" @disabled(!$invoice->snapshot)> <i>%</i>
+                            @unless ($invoice->snapshot)
+                                <i>No snapshot on this invoice — nothing to carry a rate</i>
+                            @endunless
+                        </span>
+                    </label>
                     {{-- Paid is absent by design: it is the consequence of payments covering
-                         the total, not a state to assert. Add Payment is how money arrives. --}}
+                         the total, not a state to assert. Add Payment is how money arrives.
+                         Draft is offered, since an invoice can be put back to one. --}}
                     <label class="ao-anc-row">
                         <span>Status</span>
                         <select wire:model="options.status">
+                            <option value="draft">Draft</option>
                             <option value="pending">Unpaid</option>
                             <option value="cancelled">Cancelled</option>
                             @if ($invoice->status === 'paid')

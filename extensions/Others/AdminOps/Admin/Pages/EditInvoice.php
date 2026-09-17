@@ -43,7 +43,8 @@ class EditInvoice extends Page
     public array $selected = [];
 
     /** The Options tab. */
-    public array $options = ['invoiceDate' => '', 'dueAt' => '', 'number' => '', 'status' => ''];
+    /** The Options tab. taxRate is the invoice snapshot's own rate. */
+    public array $options = ['invoiceDate' => '', 'dueAt' => '', 'number' => '', 'status' => '', 'taxRate' => ''];
 
     /** The Add Payment tab. */
     public array $pay = ['date' => '', 'amount' => '', 'fee' => '', 'transactionId' => '', 'gateway' => '', 'sendEmail' => true];
@@ -157,6 +158,8 @@ class EditInvoice extends Page
             'dueAt' => $this->invoice->due_at?->format('m/d/Y') ?? '',
             'number' => (string) ($this->invoice->number ?? ''),
             'status' => $this->invoice->status,
+            // The reference's Tax Rate, which here is the invoice's own snapshot rate.
+            'taxRate' => number_format((float) ($this->invoice->snapshot?->tax_rate ?? 0), 2, '.', ''),
         ];
 
         $this->pay['date'] = now()->format('m/d/Y');
@@ -331,8 +334,13 @@ class EditInvoice extends Page
     {
         $this->validate([
             'options.number' => 'nullable|string|max:255',
-            'options.status' => 'required|in:pending,paid,cancelled,refunded',
-        ], attributes: ['options.number' => 'invoice number', 'options.status' => 'status']);
+            'options.status' => 'required|in:draft,pending,paid,cancelled,refunded',
+            'options.taxRate' => 'nullable|numeric|min:0|max:100',
+        ], attributes: [
+            'options.number' => 'invoice number',
+            'options.status' => 'status',
+            'options.taxRate' => 'tax rate',
+        ]);
 
         $this->invoice->number = trim($this->options['number']) ?: null;
 
@@ -346,11 +354,19 @@ class EditInvoice extends Page
 
         // Status is writable here because the reference's Options tab writes it, but paid
         // still is not offered by hand — see the class docblock.
-        if (in_array($this->options['status'], ['pending', 'cancelled'], true)) {
+        if (in_array($this->options['status'], ['draft', 'pending', 'cancelled'], true)) {
             $this->invoice->status = $this->options['status'];
         }
 
         $this->invoice->save();
+
+        // The rate lives on the invoice's snapshot — the row core reads tax from — so it is
+        // written there rather than on the invoice itself. A snapshot is only made when
+        // core's invoice_snapshot setting is on; with none there is nothing to carry a rate.
+        if (($snapshot = $this->invoice->snapshot) && $this->options['taxRate'] !== '') {
+            $snapshot->tax_rate = (float) $this->options['taxRate'];
+            $snapshot->save();
+        }
         $this->refreshInvoice();
 
         Notification::make()->title('Invoice updated')->success()->send();
