@@ -3,6 +3,8 @@
      identifiers, its right column of money. --}}
 <x-filament-panels::page>
     <form class="ao-mu" wire:submit.prevent="create">
+        @include('adminops::partials.validation-alert')
+
         <h4 class="ao-bt-h">Add New Transaction</h4>
 
         <div class="ao-anc-card ao-ei-two">
@@ -81,12 +83,6 @@
                 </label>
             </div>
         </div>
-
-        @if ($errors->any())
-            <ul class="ao-anc-errors">
-                @foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach
-            </ul>
-        @endif
 
         <div class="ao-pr-center">
             <button type="submit" class="ao-pg-btn">Add Transaction</button>

@@ -1,6 +1,8 @@
 {{-- The reference's Add New Transaction, drawn in the tab body rather than on a page of its
      own: it keeps the profile header and tab strip and swaps only this panel
      (Leandro, 2026-09-18). Its left column of identifiers, its right column of money. --}}
+@include('adminops::partials.validation-alert')
+
 <h4 class="ao-bt-h">Add New Transaction</h4>
 
 <div class="ao-anc-card ao-ei-two">
@@ -72,12 +74,6 @@
         </label>
     </div>
 </div>
-
-@if ($errors->any())
-    <ul class="ao-anc-errors">
-        @foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach
-    </ul>
-@endif
 
 <div class="ao-bt-save">
     <button type="button" class="ao-pg-btn" wire:click="saveTransaction"

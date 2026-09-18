@@ -380,6 +380,10 @@ class ClientSummary extends Page
     public function saveTransaction(): void
     {
         $this->validate([
+            // The reference accepts an invoice OR a description, because it can record a
+            // transaction against no invoice at all. A transaction row here must carry one
+            // — core reads the invoice's currency straight off it — so the alternative is
+            // the credit box, which writes to the balance instead. {@see AddTransaction}
             'txInvoiceId' => ($this->txToCredit ? 'nullable' : 'required') . '|exists:invoices,id',
             'txAmountIn' => 'nullable|numeric|min:0',
             'txAmountOut' => 'nullable|numeric|min:0',
@@ -390,14 +394,17 @@ class ClientSummary extends Page
         ], attributes: [
             'txInvoiceId' => 'invoice', 'txAmountIn' => 'amount in',
             'txAmountOut' => 'amount out', 'txFees' => 'fees',
+        ], messages: [
+            'txInvoiceId.required' => "Invoice ID is required — or tick Add to Client's Credit Balance.",
         ]);
 
         $in = (float) ($this->txAmountIn ?: 0);
         $out = (float) ($this->txAmountOut ?: 0);
 
-        if ($in <= 0 && $out <= 0) {
-            Notification::make()->title('Nothing to record')
-                ->body('Enter an amount in or an amount out.')->warning()->send();
+        // The reference's own rule, in its words: a fee alone is a real record — a gateway
+        // charge on a payment taken elsewhere.
+        if ($in <= 0 && $out <= 0 && (float) ($this->txFees ?: 0) <= 0) {
+            $this->addError('txAmountIn', 'Amount In, Amount Out or Fee is required.');
 
             return;
         }

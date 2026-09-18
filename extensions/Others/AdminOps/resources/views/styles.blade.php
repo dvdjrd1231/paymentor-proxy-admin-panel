@@ -3619,6 +3619,25 @@
     .ao-anc-row.ao-inv-total { align-items: stretch; }
     .ao-inv-search-go { margin: 0 0 1rem; }
 
+    /* The reference's validation alert: a bordered red panel above the form, with its
+       circled cross and a line per problem. Ours was a bare pink strip below the form,
+       which on a long form sat under the fold (Leandro, 2026-09-18). */
+    .ao-valert {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.7rem;
+        margin: 0 0 1rem;
+        padding: 0.9rem 1rem;
+        border: 1px solid #ebccd1;
+        border-radius: 4px;
+        background: #f2dede;
+        color: #a94442;
+    }
+    .ao-valert-ic { width: 1.6rem; height: 1.6rem; flex: none; color: #d9534f; }
+    .ao-valert-title { display: block; font-size: 1.05rem; margin-bottom: 0.2rem; }
+    .ao-valert-body ul { margin: 0; padding-left: 1.1rem; list-style: disc; }
+    .ao-valert-body li { line-height: 1.5; }
+
     /* --- Add Billable Item, drawn in the tab body --- */
     .ao-of-xs { width: 4rem; }
     .ao-anc-field.ao-bt-unit { display: flex; align-items: center; gap: 0.7rem; flex-wrap: nowrap; }
