@@ -3595,6 +3595,12 @@
 
     .ao-inv-with { margin: 0.6rem 0 0.2rem; flex-wrap: wrap; }
 
+    /* The reference's search panel sits above the list, framed like its other form tables. */
+    .ao-inv-search { margin-bottom: 0.2rem; }
+    .ao-anc-field.ao-inv-range { display: flex; align-items: center; gap: 0.4rem; flex-wrap: nowrap; }
+    .ao-anc-field.ao-inv-range > i { font-style: normal; white-space: nowrap; }
+    .ao-inv-search-go { margin: 0 0 1rem; }
+
     /* --- Add Billable Item, drawn in the tab body --- */
     .ao-of-xs { width: 4rem; }
     .ao-anc-field.ao-bt-unit { display: flex; align-items: center; gap: 0.7rem; flex-wrap: nowrap; }

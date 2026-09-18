@@ -107,6 +107,10 @@
 
 {{-- Billable Items carries its own band, above its Invoiced table where the reference
      puts it, so the shared one would be a second count over the wrong table. --}}
+@if ($tab === 'invoices' && $invoiceSearch)
+    @include('adminops::partials.invoice-search')
+@endif
+
 @unless ($tab === 'billable')
     @include('adminops::partials.records-band', [
         'total' => $rowTotal(), 'page' => $page, 'perPage' => $perPage,

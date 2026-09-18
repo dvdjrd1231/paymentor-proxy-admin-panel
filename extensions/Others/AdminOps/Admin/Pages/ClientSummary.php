@@ -317,6 +317,136 @@ class ClientSummary extends Page
     #[\Livewire\Attributes\Url]
     public bool $invoiceSearch = false;
 
+    /**
+     * The reference's invoice Search panel, field for field.
+     *
+     * Two of its eleven have nothing behind them on this platform and are not offered:
+     * Last Capture Attempt (no capture is logged — Attempt Capture hands off to the gateway
+     * and the webhook answers) and Date Cancelled (an invoice row records no cancellation
+     * date). Adding either means recording it from now on, which would filter nothing for
+     * every invoice raised before today, so it waits on Leandro rather than shipping a box
+     * that quietly matches nothing.
+     *
+     * @var array<string, string>
+     */
+    public array $invoiceFilter = [
+        'number' => '',
+        'line' => '',
+        'method' => '',
+        'status' => '',
+        'dueFrom' => '',
+        'dueTo' => '',
+        'invoiceDate' => '',
+        'dueDate' => '',
+        'datePaid' => '',
+        'dateRefunded' => '',
+    ];
+
+    public function applyInvoiceFilter(): void
+    {
+        $this->page = 1;
+    }
+
+    public function clearInvoiceFilter(): void
+    {
+        $this->invoiceFilter = array_map(fn () => '', $this->invoiceFilter);
+        $this->page = 1;
+    }
+
+    /** True while any box is filled, so the list can say it is filtered. */
+    public function invoiceFilterActive(): bool
+    {
+        return (bool) array_filter($this->invoiceFilter, fn ($v) => trim((string) $v) !== '');
+    }
+
+    /** A date box holds MM/DD/YYYY; null when it is empty or unreadable. */
+    private function filterDate(string $key): ?\Carbon\Carbon
+    {
+        $raw = trim((string) ($this->invoiceFilter[$key] ?? ''));
+
+        if ($raw === '') {
+            return null;
+        }
+
+        try {
+            return \Carbon\Carbon::createFromFormat('m/d/Y', $raw)->startOfDay();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /** This client's invoices, narrowed by whatever the panel is carrying. */
+    private function invoiceRows()
+    {
+        $query = $this->customer->invoices()->with(['items', 'transactions.gateway'])->latest();
+        $f = $this->invoiceFilter;
+
+        if (trim($f['number']) !== '') {
+            $needle = trim($f['number']);
+            $query->where(fn ($q) => $q->where('number', 'like', "%{$needle}%")
+                ->orWhere('id', ltrim($needle, '#')));
+        }
+
+        if (trim($f['line']) !== '') {
+            $needle = trim($f['line']);
+            $query->whereHas('items', fn ($q) => $q->where('description', 'like', "%{$needle}%"));
+        }
+
+        if (trim($f['status']) !== '') {
+            $query->where('status', $f['status']);
+        }
+
+        if (trim($f['method']) !== '') {
+            // The method is whatever gateway actually took money for it.
+            $query->whereHas('transactions', fn ($q) => $q
+                ->where('gateway_id', (int) $f['method'])
+                ->where('status', \App\Enums\InvoiceTransactionStatus::Succeeded));
+        }
+
+        foreach ([['invoiceDate', 'created_at'], ['dueDate', 'due_at']] as [$key, $column]) {
+            if ($on = $this->filterDate($key)) {
+                $query->whereDate($column, $on->toDateString());
+            }
+        }
+
+        if ($paid = $this->filterDate('datePaid')) {
+            $query->whereHas('transactions', fn ($q) => $q
+                ->where('status', \App\Enums\InvoiceTransactionStatus::Succeeded)
+                ->whereDate('created_at', $paid->toDateString()));
+        }
+
+        if ($refunded = $this->filterDate('dateRefunded')) {
+            $query->whereHas('transactions', fn ($q) => $q
+                ->where('amount', '<', 0)
+                ->whereDate('created_at', $refunded->toDateString()));
+        }
+
+        // Total Due is the sum of the invoice's lines rather than a column, so the range is
+        // applied to the assembled rows. The list is one client's invoices, so this stays
+        // small; the global list is the place for a SQL-side total.
+        $from = trim($f['dueFrom']) !== '' ? (float) $f['dueFrom'] : null;
+        $to = trim($f['dueTo']) !== '' ? (float) $f['dueTo'] : null;
+
+        if ($from === null && $to === null) {
+            return $this->paged($query);
+        }
+
+        $rows = $query->get()->filter(function ($invoice) use ($from, $to): bool {
+            $total = (float) $invoice->total;
+
+            return ($from === null || $total >= $from) && ($to === null || $total <= $to);
+        })->values();
+
+        return $this->pagedCollection($rows);
+    }
+
+    /** Enabled gateways, for the panel's Payment Method box. */
+    public function gatewayChoices(): array
+    {
+        return \App\Models\Gateway::where('enabled', true)
+            ->orderBy('name')->pluck('name', 'id')->all();
+    }
+
     public function toggleInvoiceSearch(): void
     {
         $this->invoiceSearch = !$this->invoiceSearch;
@@ -1748,7 +1878,7 @@ class ClientSummary extends Page
                 'uninvoiced' => $this->billableItems(false),
                 'invoiced' => $this->billableItems(true),
             ],
-                'invoices' => ['rows' => $this->paged($this->customer->invoices()->with(['items', 'transactions'])->latest())],
+                'invoices' => ['rows' => $this->invoiceRows()],
                 // The reference heads both of these with a band of four figures.
                 'transactions' => (function (): array {
                     $rows = $this->transactionRows();
