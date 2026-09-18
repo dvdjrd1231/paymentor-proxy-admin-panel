@@ -3704,6 +3704,12 @@
     .ao-sm-merge-grid > thead th:first-child { width: 50%; }
     .ao-sm-merge-list { vertical-align: top; padding: 0 !important; }
     .ao-sm-merge-inner { width: 100%; border-collapse: collapse; }
+    /* Every cell reads left, as the reference's does. The inner table sits inside .ao-mu-grid,
+       which centres its cells — so a rule naming these specifically is what undoes it
+       (Leandro, 2026-09-18). */
+    .ao-sm-merge-grid th,
+    .ao-sm-merge-grid td,
+    .ao-sm-merge-inner td { text-align: left; }
     .ao-sm-merge-inner td { padding: 0.3rem 0.7rem; border-bottom: 1px solid #ededed; }
     .ao-sm-merge-inner td:first-child { width: 45%; }
     .ao-sm-merge-docs { vertical-align: top; padding: 0.7rem 0.9rem; line-height: 1.5; }
