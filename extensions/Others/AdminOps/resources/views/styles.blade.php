@@ -3625,8 +3625,21 @@
         margin: 0.6rem 0 1.4rem;
     }
     .ao-bt-with > span { font-weight: 600; }
-    .ao-bt-del { background: #d9534f; border-color: #d43f3a; color: #fff; }
-    .ao-bt-del:hover:not(:disabled) { background: #c9302c; border-color: #ac2925; }
+    /* Named button.ao-pg-btn as well: that rule is a type+class selector and outranks a bare
+       class from anywhere in the sheet, so `.ao-bt-del` alone lost the red to it and the
+       button rendered white — the same tie that swallowed the green one (2026-09-17). */
+    button.ao-pg-btn.ao-bt-del,
+    a.ao-pg-btn.ao-bt-del {
+        background: #d9534f;
+        border-color: #d43f3a;
+        color: #fff;
+    }
+
+    button.ao-pg-btn.ao-bt-del:hover:not(:disabled),
+    a.ao-pg-btn.ao-bt-del:hover {
+        background: #c9302c;
+        border-color: #ac2925;
+    }
     .ao-bt-with button:disabled { opacity: 0.65; cursor: not-allowed; }
     .ao-bt-h { font-size: 1.05rem; font-weight: 600; margin: 0 0 0.4rem; }
 

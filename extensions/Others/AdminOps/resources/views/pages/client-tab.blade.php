@@ -289,6 +289,8 @@
                 <button type="button" class="ao-pg-btn" wire:click="markChosenInvoices('cancelled')">Mark Cancelled</button>
                 <button type="button" class="ao-pg-btn" wire:click="duplicateChosenInvoices">Duplicate Invoice</button>
                 <button type="button" class="ao-pg-btn" wire:click="remindChosenInvoices">Send Reminder</button>
+                <button type="button" class="ao-pg-btn ao-bt-del" wire:click="deleteChosenInvoices"
+                    wire:confirm="Delete the selected invoices permanently? This cannot be undone. Invoices that have taken a payment are kept.">Delete</button>
             </div>
         @endif
 

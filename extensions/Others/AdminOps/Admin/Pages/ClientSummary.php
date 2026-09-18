@@ -607,6 +607,50 @@ class ClientSummary extends Page
             ->success()->send();
     }
 
+    /**
+     * Its Delete: remove the selected invoices.
+     *
+     * Permanent — invoices do not soft-delete here, and `invoice_transactions` cascades on
+     * delete, so removing an invoice that took money destroys the record of that money with
+     * it. So an invoice carrying a successful transaction is skipped and named rather than
+     * deleted; cancel it if it should not stand. Everything else goes.
+     */
+    public function deleteChosenInvoices(): void
+    {
+        Gate::authorize('has-permission', 'admin.invoices.delete');
+
+        $invoices = $this->chosenInvoices()->load('transactions');
+
+        if ($invoices->isEmpty()) {
+            Notification::make()->title('Nothing selected')
+                ->body('Tick the invoices to delete first.')->warning()->send();
+
+            return;
+        }
+
+        [$kept, $goes] = $invoices->partition(fn ($invoice) => $invoice->transactions
+            ->contains(fn ($t) => $t->status === \App\Enums\InvoiceTransactionStatus::Succeeded));
+
+        \App\Models\Invoice::whereKey($goes->pluck('id'))->delete();
+        $this->invoiceChosen = [];
+
+        if ($goes->isEmpty()) {
+            Notification::make()->title('Nothing deleted')
+                ->body('Every selected invoice has taken a payment. Cancel them instead — deleting would destroy the payment record.')
+                ->warning()->send();
+
+            return;
+        }
+
+        Notification::make()
+            ->title($goes->count() . ' ' . \Illuminate\Support\Str::plural('invoice', $goes->count()) . ' deleted')
+            ->body($kept->isNotEmpty()
+                ? 'Kept ' . $kept->map(fn ($i) => '#' . ($i->number ?: $i->id))->implode(', ')
+                    . ' — they have taken payments, which deleting would destroy.'
+                : '')
+            ->success()->send();
+    }
+
     /** Its Duplicate Invoice: the same lines, raised again as a fresh draft. */
     public function duplicateChosenInvoices(): void
     {
