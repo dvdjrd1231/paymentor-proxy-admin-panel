@@ -3593,6 +3593,21 @@
     .ao-bt-time th:nth-child(3), .ao-bt-time td:nth-child(3) { width: 6rem; }
     .ao-bt-time th:nth-child(4), .ao-bt-time td:nth-child(4) { width: 7rem; }
 
+    /* The reference's per-row icon buttons on the Emails tab. */
+    .ao-em-acts { width: 4.5rem; white-space: nowrap; text-align: right; }
+    .ao-em-act {
+        background: none;
+        border: 0;
+        padding: 0.15rem 0.2rem;
+        cursor: pointer;
+        color: var(--wa-link, #337ab7);
+        vertical-align: middle;
+    }
+    .ao-em-act:hover:not(:disabled) { color: #23527c; }
+    .ao-em-act:disabled { opacity: 0.5; cursor: not-allowed; }
+    .ao-em-act.ao-em-act-del { color: #d9534f; }
+    .ao-em-act.ao-em-act-del:hover { color: #a94442; }
+
     .ao-inv-with { margin: 0.6rem 0 0.2rem; flex-wrap: wrap; }
 
     /* The reference's search panel sits above the list, framed like its other form tables. */

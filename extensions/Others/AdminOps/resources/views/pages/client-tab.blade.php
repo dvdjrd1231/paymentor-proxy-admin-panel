@@ -24,10 +24,12 @@
             @break
         {{-- Quotes is not here: it has its own branch on the page, with its own button. --}}
         @case('transactions')
-            <a class="ao-mu-tab" href="{{ $urls['newTransaction'] }}">&#10010; Add New Transaction</a>
+            <a class="ao-mu-tab ao-bt-head-btn ao-bt-primary" href="{{ $urls['newTransaction'] }}">&#10010; Add New Transaction</a>
             @break
         @case('tickets')
-            <a class="ao-mu-tab" href="{{ $urls['newTicket'] }}">&#10010; Open New Ticket</a>
+            {{-- The reference heads this tab with a Search beside Open New Ticket. --}}
+            <a class="ao-mu-tab ao-bt-head-btn" href="{{ $urls['tickets'] }}">&#128269; Search</a>
+            <a class="ao-mu-tab ao-bt-head-btn ao-bt-primary" href="{{ $urls['newTicket'] }}">&#10010; Open New Ticket</a>
             @break
         @case('billable')
             {{-- The reference's pair. Time billing is this same form asked in hours:
@@ -167,7 +169,7 @@
                             <th>ID</th><th>Subject</th><th>Status</th><th>Opened</th>
                             @break
                         @case('emails')
-                            <th>Date</th><th>Subject</th>
+                            <th>Date</th><th class="ao-mu-left">Subject</th><th class="ao-em-acts"></th>
                             @break
                         @case('log')
                             <th>Date</th><th>Log Entry</th><th>User</th><th>IP Address</th>
@@ -255,6 +257,20 @@
                             @case('emails')
                                 <td>{{ \Carbon\Carbon::parse($row->created_at)->format('d/m/Y H:i') }}</td>
                                 <td>{{ $row->subject ?? $row->title ?? '—' }}</td>
+                                {{-- The reference's two row actions: send it again, or drop
+                                     it from the log. --}}
+                                <td class="ao-em-acts">
+                                    <button type="button" class="ao-em-act" title="Resend this message"
+                                        wire:click="resendEmail({{ $row->id }})"
+                                        wire:loading.attr="disabled" wire:target="resendEmail({{ $row->id }})">
+                                        <x-filament::icon icon="ri-mail-send-fill" class="ao-mu-cell-icon" />
+                                    </button>
+                                    <button type="button" class="ao-em-act ao-em-act-del" title="Remove from the log"
+                                        wire:click="deleteEmail({{ $row->id }})"
+                                        wire:confirm="Remove this message from the log? The email itself was already delivered.">
+                                        <x-filament::icon icon="ri-close-circle-fill" class="ao-mu-cell-icon" />
+                                    </button>
+                                </td>
                                 @break
 
 

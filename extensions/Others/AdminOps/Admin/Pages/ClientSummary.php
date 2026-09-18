@@ -2952,6 +2952,59 @@ class ClientSummary extends Page
      *
      * @return Collection<int, object>
      */
+    /**
+     * The reference's per-row actions on the Emails tab: resend the message, or remove it
+     * from the log. The row is a `notifications` record — what was sent, not a draft — so
+     * resending re-delivers that stored message rather than rebuilding it.
+     */
+    public function resendEmail(int $id): void
+    {
+        $row = DB::table('notifications')
+            ->where('id', $id)->where('user_id', $this->customer->id)->first();
+
+        if (!$row) {
+            Notification::make()->title('No such message')->danger()->send();
+
+            return;
+        }
+
+        $to = $this->customer->email;
+
+        if (!$to) {
+            Notification::make()->title('This client has no email address')->danger()->send();
+
+            return;
+        }
+
+        try {
+            // `notifications` stores title and body — there is no rendered-HTML column, so
+            // what goes back out is the text that was recorded.
+            \Illuminate\Support\Facades\Mail::html(
+                nl2br(e((string) $row->body)),
+                fn ($mail) => $mail->to($to)->subject((string) $row->title),
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            Notification::make()->title('Could not resend')->body($e->getMessage())->danger()->send();
+
+            return;
+        }
+
+        Notification::make()->title('Resent to ' . $to)->success()->send();
+    }
+
+    /** Remove one message from the log. The message itself was already delivered. */
+    public function deleteEmail(int $id): void
+    {
+        $gone = DB::table('notifications')
+            ->where('id', $id)->where('user_id', $this->customer->id)->delete();
+
+        Notification::make()
+            ->title($gone ? 'Removed from the log' : 'No such message')
+            ->{$gone ? 'success' : 'danger'}()->send();
+    }
+
     private function emailRows()
     {
         if (!Schema::hasTable('notifications')) {
