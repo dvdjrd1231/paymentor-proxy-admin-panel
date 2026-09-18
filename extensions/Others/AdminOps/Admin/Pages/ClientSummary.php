@@ -310,6 +310,171 @@ class ClientSummary extends Page
         $this->redirect(EditInvoice::getUrl(['record' => $invoice->id]));
     }
 
+    /**
+     * The reference records a transaction *inside* this tab, keeping the profile's header
+     * and tab strip and swapping only the tab's body (Leandro, 2026-09-18). Ours navigated
+     * away to the standalone Add Transaction screen, which lost the client around it.
+     *
+     * The standalone screen stays — the reference has that too, reached from its Billing
+     * menu — and both write through the same helper.
+     */
+    #[\Livewire\Attributes\Url]
+    public bool $addTransaction = false;
+
+    public string $txDate = '';
+
+    public string $txDescription = '';
+
+    public string $txTransactionId = '';
+
+    public ?int $txInvoiceId = null;
+
+    public string $txGateway = '';
+
+    public string $txAmountIn = '';
+
+    public string $txFees = '';
+
+    public string $txAmountOut = '';
+
+    public bool $txToCredit = false;
+
+    public function openAddTransaction(): void
+    {
+        $this->addTransaction = true;
+        $this->resetTransactionForm();
+    }
+
+    public function cancelAddTransaction(): void
+    {
+        $this->addTransaction = false;
+        $this->resetTransactionForm();
+    }
+
+    private function resetTransactionForm(): void
+    {
+        $this->txDate = now()->format('m/d/Y');
+        $this->txDescription = '';
+        $this->txTransactionId = '';
+        $this->txInvoiceId = null;
+        $this->txGateway = '';
+        $this->txAmountIn = '';
+        $this->txFees = '';
+        $this->txAmountOut = '';
+        $this->txToCredit = false;
+    }
+
+    /** This client's unpaid invoices, for the form's Invoice ID box. */
+    public function transactionInvoices()
+    {
+        return $this->customer->invoices()->where('status', 'pending')->latest('id')->get();
+    }
+
+    /** The gateways that could have taken the money. */
+    public function transactionGateways(): array
+    {
+        return \App\Models\Gateway::pluck('extension', 'extension')->all();
+    }
+
+    /** The reference's Add Transaction, written through core's own idempotent path. */
+    public function saveTransaction(): void
+    {
+        $this->validate([
+            'txInvoiceId' => ($this->txToCredit ? 'nullable' : 'required') . '|exists:invoices,id',
+            'txAmountIn' => 'nullable|numeric|min:0',
+            'txAmountOut' => 'nullable|numeric|min:0',
+            'txFees' => 'nullable|numeric|min:0',
+            'txTransactionId' => 'nullable|string|max:255',
+            'txDescription' => 'nullable|string|max:255',
+            'txDate' => 'nullable|date_format:m/d/Y',
+        ], attributes: [
+            'txInvoiceId' => 'invoice', 'txAmountIn' => 'amount in',
+            'txAmountOut' => 'amount out', 'txFees' => 'fees',
+        ]);
+
+        $in = (float) ($this->txAmountIn ?: 0);
+        $out = (float) ($this->txAmountOut ?: 0);
+
+        if ($in <= 0 && $out <= 0) {
+            Notification::make()->title('Nothing to record')
+                ->body('Enter an amount in or an amount out.')->warning()->send();
+
+            return;
+        }
+
+        // Money against the client rather than an invoice is their credit balance: a
+        // transaction row must carry an invoice here, since core reads the invoice's
+        // currency straight off it. {@see AddTransaction}
+        if ($this->txToCredit) {
+            $currency = config('settings.default_currency', 'USD');
+            $credit = \App\Models\Credit::firstOrNew([
+                'user_id' => $this->customer->id, 'currency_code' => $currency,
+            ]);
+            $credit->amount = (float) ($credit->amount ?? 0) + ($in - $out);
+            $credit->save();
+
+            $this->addTransaction = false;
+            $this->resetTransactionForm();
+
+            Notification::make()->title('Credit balance updated')
+                ->body('Now holding ' . number_format((float) $credit->amount, 2) . ' ' . $currency . '.')
+                ->success()->send();
+
+            return;
+        }
+
+        // The invoice must be this client's — the box is filled from their own, but the id
+        // posts from the browser.
+        if (!$this->customer->invoices()->whereKey($this->txInvoiceId)->exists()) {
+            Notification::make()->title('That invoice is not this client\'s')->danger()->send();
+
+            return;
+        }
+
+        try {
+            \App\Helpers\ExtensionHelper::addPayment(
+                $this->txInvoiceId,
+                $this->txGateway ?: null,
+                $in > 0 ? $in : -$out,
+                $this->txFees !== '' ? (float) $this->txFees : null,
+                $this->txTransactionId ?: null,
+            );
+        } catch (\Throwable $e) {
+            Notification::make()->title('Payment not recorded')->body($e->getMessage())->danger()->send();
+
+            return;
+        }
+
+        // addPayment takes neither a description nor a date, and it is the only idempotent
+        // way in, so the row it wrote is finished off here.
+        $row = \App\Models\InvoiceTransaction::where('invoice_id', $this->txInvoiceId)
+            ->latest('id')->first();
+
+        if ($row) {
+            if (trim($this->txDescription) !== ''
+                && Schema::hasColumn('invoice_transactions', 'description')) {
+                $row->description = trim($this->txDescription);
+            }
+
+            try {
+                $row->created_at = \Carbon\Carbon::createFromFormat('m/d/Y', trim($this->txDate));
+            } catch (\Throwable) {
+                // Leave the row's own timestamp when the box cannot be read.
+            }
+
+            $row->save();
+        }
+
+        $invoice = \App\Models\Invoice::find($this->txInvoiceId);
+
+        $this->addTransaction = false;
+        $this->resetTransactionForm();
+
+        Notification::make()->title('Transaction recorded')
+            ->body('Invoice ' . ($invoice->number ?? $invoice->id) . ' is now ' . $invoice->status . '.')
+            ->success()->send();
+    }
+
     /** Ticked rows in the reference's invoice list. */
     public array $invoiceChosen = [];
 
@@ -1218,6 +1383,7 @@ class ClientSummary extends Page
 
         // The time grid always draws its ten rows, including on a deep link to ?addTimeEntries=1.
         $this->resetTimeRows();
+        $this->resetTransactionForm();
 
         $prop = fn (string $key): string => (string) $this->customer->properties->firstWhere('key', $key)?->value;
 
@@ -2613,8 +2779,10 @@ class ClientSummary extends Page
         $this->tab = $key;
         $this->addBillable = false;
         $this->addTimeEntries = false;
+        $this->addTransaction = false;
         $this->resetBillableForm();
         $this->resetTimeRows();
+        $this->resetTransactionForm();
     }
 
     public function cancelTimeEntries(): void

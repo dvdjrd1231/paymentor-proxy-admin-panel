@@ -24,7 +24,8 @@
             @break
         {{-- Quotes is not here: it has its own branch on the page, with its own button. --}}
         @case('transactions')
-            <a class="ao-mu-tab ao-bt-head-btn ao-bt-primary" href="{{ $urls['newTransaction'] }}">&#10010; Add New Transaction</a>
+            <button type="button" class="ao-mu-tab ao-bt-head-btn ao-bt-primary"
+                wire:click="openAddTransaction">&#10010; Add New Transaction</button>
             @break
         @case('tickets')
             {{-- The reference heads this tab with a Search beside Open New Ticket. --}}
@@ -53,6 +54,10 @@
         @endforeach
     </div>
 @endif
+
+@if ($tab === 'transactions' && $addTransaction)
+    @include('adminops::partials.transaction-add')
+@else
 
 @if ($tab === 'transactions' && $totals)
     <div class="ao-ct-cards">
@@ -324,4 +329,5 @@
 @include('adminops::partials.records-pager', [
     'total' => $rowTotal(), 'page' => $page, 'perPage' => $perPage,
 ])
+@endif
 @endif
