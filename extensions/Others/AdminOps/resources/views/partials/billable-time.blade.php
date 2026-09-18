@@ -41,8 +41,9 @@
     </tbody>
 </table>
 
+{{-- The reference has no Cancel here: its tab strip is the way out, and ours now closes
+     the form on a tab click too. Its button is a plain one, not the primary. --}}
 <div class="ao-bt-save">
-    <button type="button" class="ao-find-go" wire:click="saveTimeEntries"
+    <button type="button" class="ao-pg-btn" wire:click="saveTimeEntries"
         wire:loading.attr="disabled" wire:target="saveTimeEntries">Add Entries</button>
-    <button type="button" class="ao-pg-btn" wire:click="cancelTimeEntries">Cancel</button>
 </div>

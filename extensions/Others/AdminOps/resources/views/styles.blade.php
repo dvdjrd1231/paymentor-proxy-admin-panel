@@ -3569,7 +3569,26 @@
     /* The reference's time grid: every cell is a control, so the row padding is tight and
        the description takes whatever the fixed columns leave. */
     .ao-bt-time td { padding: 0.25rem 0.35rem; }
-    .ao-bt-time td > select { width: 100%; min-width: 9rem; }
+
+    /* Every control in the grid needs its border drawn: the admin ships Tailwind's preflight,
+       which sets `border-width: 0` on every element, so a control we do not style ourselves
+       renders as flat text with no box at all (Leandro, 2026-09-17: "not at all in our app").
+       The rest of the sheet's fields have theirs for the same reason. */
+    .ao-bt-time td > select,
+    .ao-bt-time td > input {
+        width: 100%;
+        height: 2.1rem;
+        padding: 0 0.5rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: var(--wa-radius, 4px);
+        background: #fff;
+        color: var(--wa-text, #2b2b2b);
+        font: inherit;
+    }
+
+    .ao-bt-time td > select { min-width: 9rem; }
+    .ao-bt-time td > input:focus,
+    .ao-bt-time td > select:focus { outline: 2px solid #337ab7; outline-offset: -1px; }
     .ao-bt-time-desc { width: 100%; }
     .ao-bt-time th:nth-child(3), .ao-bt-time td:nth-child(3) { width: 6rem; }
     .ao-bt-time th:nth-child(4), .ao-bt-time td:nth-child(4) { width: 7rem; }

@@ -34,7 +34,7 @@
                 class="ao-tab {{ $tab === $key ? 'ao-tab-active' : '' }}"
                 role="tab"
                 aria-selected="{{ $tab === $key ? 'true' : 'false' }}"
-                wire:click="$set('tab', '{{ $key }}')">
+                wire:click="switchTab('{{ $key }}')">
                 {{ $label }}
             </button>
         @endforeach

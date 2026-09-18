@@ -2220,6 +2220,22 @@ class ClientSummary extends Page
         $this->resetTimeRows();
     }
 
+    /**
+     * Switching tab closes whichever form is open.
+     *
+     * The reference has no Cancel on these forms because its tab links are plain URLs —
+     * clicking the tab you are on reloads it empty. Ours are Livewire setters, so the flag
+     * survived the click and the form could not be left without one (Leandro, 2026-09-17).
+     */
+    public function switchTab(string $key): void
+    {
+        $this->tab = $key;
+        $this->addBillable = false;
+        $this->addTimeEntries = false;
+        $this->resetBillableForm();
+        $this->resetTimeRows();
+    }
+
     public function cancelTimeEntries(): void
     {
         $this->addTimeEntries = false;

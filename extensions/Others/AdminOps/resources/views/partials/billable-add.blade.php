@@ -91,5 +91,4 @@
 <div class="ao-pr-center ao-bt-save">
     <button type="button" class="ao-find-go" wire:click="saveBillable"
         wire:loading.attr="disabled" wire:target="saveBillable">Save Changes</button>
-    <button type="button" class="ao-pg-btn" wire:click="cancelAddBillable">Cancel</button>
 </div>
