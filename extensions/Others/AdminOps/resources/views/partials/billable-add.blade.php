@@ -83,8 +83,8 @@
 
     <label class="ao-anc-row">
         <span>Invoice Count</span>
-        <input type="number" min="0" class="ao-of-sm" wire:model="billableInvoiceCount" disabled
-            title="How many times this item has been invoiced — counted by the system, not set here.">
+        <input type="number" min="0" class="ao-of-sm" wire:model="billableInvoiceCount"
+            title="How many times this item has already been invoiced. The reference counts &quot;for N Times&quot; against this, so setting it back to 0 restarts the cycle.">
     </label>
 </form>
 

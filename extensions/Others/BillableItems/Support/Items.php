@@ -71,10 +71,22 @@ class Items
         });
     }
 
-    /** A recurring item, queued again for its next period. */
+    /**
+     * A recurring item, queued again for its next period — unless it has run its course.
+     *
+     * The reference stops after "for N Times", counting what it has already invoiced. With
+     * no limit recorded the item recurs forever, which is what every row did before the
+     * count existed, so null keeps that behaviour rather than silently ending them.
+     */
     private static function repeat(BillableItem $item): void
     {
         if (blank($item->recur_every)) {
+            return;
+        }
+
+        $done = (int) $item->invoice_count + 1;
+
+        if ($item->recur_times !== null && $done >= (int) $item->recur_times) {
             return;
         }
 
@@ -99,6 +111,10 @@ class Items
             'currency_code' => $item->currency_code,
             'invoice_action' => $item->invoice_action,
             'recur_every' => $item->recur_every,
+            'recur_times' => $item->recur_times,
+            // Carried forward, so the limit is counted across the whole run rather than
+            // restarting at zero on every copy.
+            'invoice_count' => $done,
             'next_due_at' => $next->toDateString(),
             'admin_id' => $item->admin_id,
         ]);

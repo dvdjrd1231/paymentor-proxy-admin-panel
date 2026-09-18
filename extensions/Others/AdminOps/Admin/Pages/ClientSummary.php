@@ -2234,6 +2234,8 @@ class ClientSummary extends Page
                 $item::ACTION_HOLD, $item::ACTION_IMMEDIATELY, $item::ACTION_NEXT_INVOICE,
             ]),
             'billableRecurEvery' => 'nullable|in:week,month,quarter,year',
+            'billableRecurTimes' => 'nullable|integer|min:0|max:9999',
+            'billableInvoiceCount' => 'nullable|integer|min:0|max:9999',
             'billableDueDate' => 'nullable|date_format:m/d/Y',
             'billableServiceId' => 'nullable|exists:services,id',
         ], attributes: [
@@ -2261,6 +2263,11 @@ class ClientSummary extends Page
             'currency_code' => config('settings.default_currency', 'USD'),
             'invoice_action' => $this->billableAction,
             'recur_every' => $this->billableRecurEvery ?: null,
+            // Blank means the reference's "forever"; a count only bites with a period set.
+            'recur_times' => $this->billableRecurEvery && trim($this->billableRecurTimes) !== ''
+                ? (int) $this->billableRecurTimes
+                : null,
+            'invoice_count' => (int) ($this->billableInvoiceCount ?: 0),
             'next_due_at' => $this->parseBillableDate($this->billableDueDate),
             'admin_id' => Auth::id(),
         ]);
