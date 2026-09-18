@@ -326,12 +326,10 @@ class ClientSummary extends Page
     /**
      * The reference's invoice Search panel, field for field.
      *
-     * Two of its eleven have nothing behind them on this platform and are not offered:
-     * Last Capture Attempt (no capture is logged — Attempt Capture hands off to the gateway
-     * and the webhook answers) and Date Cancelled (an invoice row records no cancellation
-     * date). Adding either means recording it from now on, which would filter nothing for
-     * every invoice raised before today, so it waits on Leandro rather than shipping a box
-     * that quietly matches nothing.
+     * Two of its eleven have no column on this platform — an invoice row records neither a
+     * cancellation date nor a capture attempt — so both are recorded as properties from the
+     * moment they happen and filtered from there. Nothing was recorded before 2026-09-17, so
+     * those two boxes match nothing older than that (Leandro, 2026-09-17).
      *
      * @var array<string, string>
      */
@@ -346,7 +344,14 @@ class ClientSummary extends Page
         'dueDate' => '',
         'datePaid' => '',
         'dateRefunded' => '',
+        'lastCapture' => '',
+        'dateCancelled' => '',
     ];
+
+    /** Where the two dates core does not keep are recorded. */
+    public const CANCELLED_KEY = 'adminops_cancelled_at';
+
+    public const CAPTURE_KEY = 'adminops_last_capture_at';
 
     /**
      * Any box changing narrows the list at once — the reference's panel carries no Search
@@ -423,6 +428,16 @@ class ClientSummary extends Page
             $query->whereHas('transactions', fn ($q) => $q
                 ->where('status', \App\Enums\InvoiceTransactionStatus::Succeeded)
                 ->whereDate('created_at', $paid->toDateString()));
+        }
+
+        foreach ([['lastCapture', self::CAPTURE_KEY], ['dateCancelled', self::CANCELLED_KEY]] as [$key, $prop]) {
+            if (!($on = $this->filterDate($key))) {
+                continue;
+            }
+
+            $query->whereHas('properties', fn ($q) => $q
+                ->where('key', $prop)
+                ->whereDate('value', $on->toDateString()));
         }
 
         if ($refunded = $this->filterDate('dateRefunded')) {
@@ -506,6 +521,19 @@ class ClientSummary extends Page
 
         \App\Models\Invoice::whereKey($changed->pluck('id'))->update(['status' => $status]);
 
+        // An invoice row keeps no cancellation date, so it is recorded here — it is what the
+        // reference's Date Cancelled box searches. {@see self::CANCELLED_KEY}
+        foreach ($changed as $invoice) {
+            if ($status === 'cancelled') {
+                $invoice->properties()->updateOrCreate(
+                    ['key' => self::CANCELLED_KEY],
+                    ['name' => 'Cancelled At', 'value' => now()->toDateTimeString()],
+                );
+            } else {
+                $invoice->properties()->where('key', self::CANCELLED_KEY)->delete();
+            }
+        }
+
         $this->invoiceChosen = [];
 
         $skipped = $invoices->count() - $changed->count();
@@ -514,6 +542,68 @@ class ClientSummary extends Page
             ->title($changed->count() . ' ' . \Illuminate\Support\Str::plural('invoice', $changed->count())
                 . ' marked ' . ($status === 'pending' ? 'unpaid' : 'cancelled'))
             ->body($skipped ? $skipped . ' already paid and left as they are.' : '')
+            ->success()->send();
+    }
+
+    /**
+     * Its Mark Paid.
+     *
+     * This settles the invoice without a transaction behind it, which is what the reference
+     * does and what core's own invoice form allows. It is for money that arrived outside the
+     * gateways — a bank transfer, cash. Where a real payment exists, Add Payment on the
+     * invoice records it properly and sets this by itself.
+     */
+    public function markChosenPaid(): void
+    {
+        $invoices = $this->chosenInvoices()->reject(fn ($i) => $i->status === 'paid');
+
+        if ($invoices->isEmpty()) {
+            Notification::make()->title('Nothing to mark')
+                ->body('Tick some unpaid invoices first.')->warning()->send();
+
+            return;
+        }
+
+        \App\Models\Invoice::whereKey($invoices->pluck('id'))->update(['status' => 'paid']);
+        $this->invoiceChosen = [];
+
+        Notification::make()->title($invoices->count() . ' marked paid')
+            ->body('No transaction was recorded — use Add Payment where money actually arrived.')
+            ->success()->send();
+    }
+
+    /** Its Send Reminder: core's own payment-reminder mail, per invoice. */
+    public function remindChosenInvoices(): void
+    {
+        $invoices = $this->chosenInvoices()->filter(fn ($i) => $i->status === 'pending');
+
+        if ($invoices->isEmpty()) {
+            Notification::make()->title('Nothing to remind about')
+                ->body('Reminders go to unpaid invoices only.')->warning()->send();
+
+            return;
+        }
+
+        $sent = 0;
+
+        foreach ($invoices as $invoice) {
+            try {
+                // Argument order is (User, Invoice) — the helper reads user-first.
+                \App\Helpers\NotificationHelper::invoiceNotification(
+                    $this->customer, $invoice, 'invoice_payment_reminder',
+                );
+                $sent++;
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        $this->invoiceChosen = [];
+
+        Notification::make()
+            ->title($sent . ' ' . \Illuminate\Support\Str::plural('reminder', $sent) . ' sent')
+            ->body($sent < $invoices->count()
+                ? ($invoices->count() - $sent) . ' could not be sent — see the log.' : '')
             ->success()->send();
     }
 

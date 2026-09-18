@@ -283,9 +283,12 @@
         @if ($tab === 'invoices' && $count > 0)
             <div class="ao-bt-with ao-inv-with">
                 <span>With Selected:</span>
+                <button type="button" class="ao-pg-btn btn-success" wire:click="markChosenPaid"
+                    wire:confirm="Mark the selected invoices paid? No transaction is recorded, so use this only for money that arrived outside the gateways.">Mark Paid</button>
                 <button type="button" class="ao-pg-btn" wire:click="markChosenInvoices('pending')">Mark Unpaid</button>
                 <button type="button" class="ao-pg-btn" wire:click="markChosenInvoices('cancelled')">Mark Cancelled</button>
                 <button type="button" class="ao-pg-btn" wire:click="duplicateChosenInvoices">Duplicate Invoice</button>
+                <button type="button" class="ao-pg-btn" wire:click="remindChosenInvoices">Send Reminder</button>
             </div>
         @endif
 

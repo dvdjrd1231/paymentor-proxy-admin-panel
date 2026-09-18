@@ -480,6 +480,14 @@ class EditInvoice extends Page
 
         $agreement = $this->captureAgreements()->first();
 
+        // Recorded before the call, not after: the gateway answers through its webhook, so
+        // an attempt that never returns still has to show as attempted. It is what the
+        // client profile's Last Capture Attempt box searches.
+        $this->invoice->properties()->updateOrCreate(
+            ['key' => \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::CAPTURE_KEY],
+            ['name' => 'Last Capture Attempt', 'value' => now()->toDateTimeString()],
+        );
+
         try {
             $charged = \App\Helpers\ExtensionHelper::charge(
                 $agreement->gateway, $this->invoice, $agreement,
@@ -704,6 +712,17 @@ class EditInvoice extends Page
 
         $this->invoice->update(['status' => $status]);
         $this->refreshInvoice();
+
+        if ($status === 'cancelled') {
+            $this->invoice->properties()->updateOrCreate(
+                ['key' => \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::CANCELLED_KEY],
+                ['name' => 'Cancelled At', 'value' => now()->toDateTimeString()],
+            );
+        } else {
+            $this->invoice->properties()
+                ->where('key', \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::CANCELLED_KEY)
+                ->delete();
+        }
 
         Notification::make()->title($status === 'pending' ? 'Marked unpaid' : 'Invoice cancelled')->success()->send();
     }

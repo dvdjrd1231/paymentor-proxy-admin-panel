@@ -48,7 +48,9 @@
             'invoiceDate' => 'Invoice Date',
             'dueDate' => 'Due Date',
             'datePaid' => 'Date Paid',
+            'lastCapture' => 'Last Capture Attempt',
             'dateRefunded' => 'Date Refunded',
+            'dateCancelled' => 'Date Cancelled',
         ] as $key => $label)
             <label class="ao-anc-row">
                 <span>{{ $label }}</span>
