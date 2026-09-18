@@ -47,8 +47,23 @@ class SendEmailMessage extends Page
 
     public string $bcc = '';
 
-    /** @var array<int, mixed> */
+    /**
+     * One file per row, as the reference stacks them: a Choose File with an Add More beneath
+     * that opens the next (Leandro, 2026-09-18). A single multi-select box asked for all of
+     * them in one go, which is not how its screen works.
+     *
+     * @var array<int, mixed>
+     */
     public array $attachments = [];
+
+    /** How many Choose File rows are showing. */
+    public int $attachmentRows = 1;
+
+    public function addAttachmentRow(): void
+    {
+        // Capped so a stuck key cannot grow the form without end.
+        $this->attachmentRows = min($this->attachmentRows + 1, 10);
+    }
 
     public bool $preview = false;
 
@@ -227,7 +242,7 @@ class SendEmailMessage extends Page
             'body' => 'required|string',
             'cc' => 'nullable|string',
             'bcc' => 'nullable|string',
-            'attachments.*' => 'file|max:102400',
+            'attachments.*' => 'nullable|file|max:102400',
             'saveName' => 'required_if:saveMessage,true|nullable|string|max:255',
         ], attributes: ['client' => 'recipient', 'saveName' => 'save name']);
 
@@ -263,7 +278,9 @@ class SendEmailMessage extends Page
         }
 
         $body = $this->merge($this->body, $user);
-        $files = $this->attachments;
+
+        // Empty rows are skipped: the reference leaves a spare Choose File sitting there.
+        $files = array_values(array_filter($this->attachments));
 
         try {
             // Rich text is already HTML; plain text needs its line breaks turned into it.

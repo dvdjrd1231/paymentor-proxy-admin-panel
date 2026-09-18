@@ -132,14 +132,26 @@
         @endif
 
         <div class="ao-anc-card">
-            <label class="ao-anc-row">
+            {{-- The reference stacks one Choose File per attachment, with Add More opening
+                 the next row beneath the first. --}}
+            <div class="ao-anc-row">
                 <span>Attachments</span>
-                <span class="ao-anc-field">
-                    <input type="file" wire:model="attachments" multiple>
-                    <i class="ao-anc-hint">Choose more than one at a time to add several. Up to 100 MB each.</i>
+                <span class="ao-anc-field ao-sm-att">
+                    @for ($i = 0; $i < $attachmentRows; $i++)
+                        <span class="ao-sm-att-row">
+                            <input type="file" wire:model="attachments.{{ $i }}">
+                            @if ($i === 0)
+                                <button type="button" class="ao-sm-addmore" wire:click="addAttachmentRow">
+                                    <x-filament::icon icon="ri-add-circle-fill" class="ao-sm-addmore-ic" />
+                                    Add More
+                                </button>
+                            @endif
+                        </span>
+                    @endfor
                     <span wire:loading wire:target="attachments" class="ao-anc-hint">Uploading…</span>
+                    <i class="ao-anc-hint">Up to 100 MB each.</i>
                 </span>
-            </label>
+            </div>
 
             <label class="ao-anc-row">
                 <span>Save Message</span>
@@ -148,7 +160,9 @@
                         <input type="checkbox" wire:model.live="saveMessage">
                         Check to save and enter save name:
                     </label>
-                    <input type="text" wire:model="saveName" @disabled(!$saveMessage)>
+                    {{-- Enabled and white, as the reference draws it: staff type the name
+                         first and tick afterwards as often as the other way round. --}}
+                    <input type="text" class="ao-sm-savename" wire:model="saveName">
                 </span>
             </label>
         </div>

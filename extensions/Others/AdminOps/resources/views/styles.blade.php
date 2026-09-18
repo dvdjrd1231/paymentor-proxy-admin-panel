@@ -3648,6 +3648,29 @@
     .ao-sm-pane a { color: var(--wa-link, #337ab7); text-decoration: underline; }
 
     .ao-sm-underbar { display: flex; justify-content: space-between; gap: 0.5rem; margin-bottom: 1rem; }
+    /* Attachments stack one per row, with Add More under the first — the reference's green
+       plus link rather than a button. */
+    .ao-anc-field.ao-sm-att { display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; }
+    .ao-sm-att-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+    .ao-sm-addmore {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0;
+        border: 0;
+        background: none;
+        cursor: pointer;
+        color: #3c763d;
+        font: inherit;
+        text-decoration: underline;
+    }
+    .ao-sm-addmore:hover { color: #2b542c; }
+    .ao-sm-addmore-ic { width: 0.95rem; height: 0.95rem; color: #5cb85c; }
+
+    /* The save name box is an ordinary white field, and stays usable whether or not the
+       tick is on — staff type the name first as often as the other way round. */
+    .ao-sm-savename { background: #fff; }
+
     .ao-anc-field.ao-sm-save { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
     .ao-anc-field.ao-sm-save > input[type="text"] { flex: 1 1 14rem; }
     .ao-sm-send { margin: 1rem 0 1.5rem; }
