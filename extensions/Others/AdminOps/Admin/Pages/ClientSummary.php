@@ -2634,9 +2634,15 @@ class ClientSummary extends Page
             // the thing, with this client already chosen where the screen accepts one.
             'edit' => UserResource::getUrl('edit', ['record' => $user]),
             'newInvoice' => ManageInvoices::getUrl(),
-            'newQuote' => class_exists(CreateQuote::class) ? CreateQuote::getUrl() : ManageInvoices::getUrl(),
+            // CreateQuote reads `for` in its own mount(); the tab's button simply was not
+            // passing it, so a quote raised from a profile lost the client (2026-09-18).
+            'newQuote' => class_exists(CreateQuote::class)
+                ? CreateQuote::getUrl(['for' => $user->id])
+                : ManageInvoices::getUrl(),
             'newTransaction' => AddTransaction::getUrl(['for' => $user->id]),
-            'newTicket' => OpenNewTicket::getUrl(),
+            // Opened from a profile, the ticket starts on that client — its picker binds
+            // `client` to the URL, so naming it here is all that is needed.
+            'newTicket' => OpenNewTicket::getUrl(['client' => $user->id]),
             'billable' => BillableItemsList::getUrl(['for' => $this->customer->id, 'adding' => true]),
             'billableTime' => BillableItemsList::getUrl(['for' => $this->customer->id, 'time' => true]),
         ];
