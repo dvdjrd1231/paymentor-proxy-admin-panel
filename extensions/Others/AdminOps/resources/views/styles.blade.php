@@ -4419,6 +4419,15 @@
         overflow: hidden;
     }
 
+    /* Except when the card holds a date field. The calendar is positioned absolutely inside
+       its row, so `overflow: hidden` above cropped it to the card's edge and left only the
+       month header showing — the days could not be reached at all (Leandro, 2026-09-17).
+       Same weight as the rules above, placed after them so it wins the tie. The corners
+       give up their clipping in exchange, which costs a pixel of radius on those cards. */
+    .ao-anc-card:has(.ao-of-date) {
+        overflow: visible;
+    }
+
     /* The reference's full-width rows under the columns; Settings and Owner sit on the
        stripe, as its screenshot has them. */
     .ao-anc-row-wide {
