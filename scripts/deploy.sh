@@ -51,4 +51,11 @@ run php artisan view:cache
 echo "==> Applying any new migrations"
 run php artisan migrate --force
 
+echo "==> Applying any new extension migrations"
+# `migrate` only knows database/migrations. Extensions keep their own and core applies those
+# from installed(), which fires when an extension is *enabled* — never on deploy. Without
+# this, a migration added to an extension stays unapplied while the deploy reports "Nothing
+# to migrate", and the column it adds is simply missing (2026-09-17 and -18, twice).
+run php artisan tinker scripts/apply-extension-migrations.php
+
 echo "==> Deployed: $(git log --oneline -1)"
