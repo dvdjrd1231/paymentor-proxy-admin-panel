@@ -6886,6 +6886,17 @@
     .ao-cp-body .ao-cp-link:nth-of-type(5n+4) .ao-cp-ic { color: #9b59b6; }
     .ao-cp-body .ao-cp-link:nth-of-type(5n+5) .ao-cp-ic { color: #5bc0de; }
 
+    /* The Invoices/Billing actions take the reference's own colours instead of that cycle:
+       there each icon means something — a green badge to add, gold coins for credit, a
+       paper for anything that produces a document — and the cycling palette gave the same
+       three links a different colour depending only on where they sat in the list
+       (Leandro, 2026-09-17). Written at the same weight as the cycle above and placed
+       after it, so it wins the tie on order. */
+    .ao-cp-body .ao-cp-link .ao-cp-ic.ao-cp-ic-doc { color: #337ab7; }
+    .ao-cp-body .ao-cp-link .ao-cp-ic.ao-cp-ic-cash { color: #5cb85c; }
+    .ao-cp-body .ao-cp-link .ao-cp-ic.ao-cp-ic-add { color: #5cb85c; }
+    .ao-cp-body .ao-cp-link .ao-cp-ic.ao-cp-ic-coin { color: #e0a800; }
+
     .ao-cp-link.ao-cp-danger .ao-cp-ic,
     .ao-mo-delete .ao-mu-cell-icon,
     .ao-mu-icon-red { color: #d9534f; }

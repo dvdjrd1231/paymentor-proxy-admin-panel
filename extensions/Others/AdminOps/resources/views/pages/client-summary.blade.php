@@ -146,34 +146,36 @@
                              for the details on a form first (Leandro, 2026-09-16). --}}
                         <button type="button" class="ao-cp-link" wire:click="createInvoice"
                             title="Raises a draft invoice for this client and opens it — the client cannot see it until you publish">
-                            <x-filament::icon icon="ri-bill-line" class="ao-cp-ic" /> Create Invoice
+                            <x-filament::icon icon="ri-file-edit-fill" class="ao-cp-ic ao-cp-ic-doc" /> Create Invoice
                         </button>
                         <button type="button" class="ao-cp-link" wire:click="openMoney('funds')"
                             title="Raise an invoice the client can pay to put money on their balance">
-                            <x-filament::icon icon="ri-money-dollar-circle-line" class="ao-cp-ic" /> Create Add Funds Invoice
+                            <x-filament::icon icon="ri-money-dollar-box-fill" class="ao-cp-ic ao-cp-ic-cash" /> Create Add Funds Invoice
                         </button>
                         <button type="button" class="ao-cp-link" wire:click="generateDueInvoices"
                             wire:confirm="Raise invoices now for every active service of this client falling due soon?"
                             title="Runs the daily cron's own rule against this client alone">
-                            <x-filament::icon icon="ri-refresh-line" class="ao-cp-ic" /> Generate Due Invoices
-                        </button>
-                        <button type="button" class="ao-cp-link" wire:click="openMoney('credits')"
-                            title="Move this account's balance by hand, up or down">
-                            <x-filament::icon icon="ri-coins-line" class="ao-cp-ic" /> Manage Credits
+                            <x-filament::icon icon="ri-file-list-2-fill" class="ao-cp-ic ao-cp-ic-doc" /> Generate Due Invoices
                         </button>
                         {{-- Both used to point at core's own resource — Billable Items at
                              its bare list-plus-modal, Quotes at an index with no create
                              route at all (the button did not even open a form). Both now
                              lead to the pages the rest of the menu already leads to for the
                              same records. --}}
+                        {{-- Add Billable Item sits above Manage Credits, as the reference
+                             orders them (clientssummary.tpl lines 148-150). --}}
                         @if (class_exists(\Paymenter\Extensions\Others\BillableItems\Models\BillableItem::class))
                             <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\BillableItemsList::getUrl(['adding' => true, 'for' => $user->id]) }}">
-                                <x-filament::icon icon="ri-price-tag-3-line" class="ao-cp-ic" /> Add Billable Item
+                                <x-filament::icon icon="ri-add-circle-fill" class="ao-cp-ic ao-cp-ic-add" /> Add Billable Item
                             </a>
                         @endif
+                        <button type="button" class="ao-cp-link" wire:click="openMoney('credits')"
+                            title="Move this account's balance by hand, up or down">
+                            <x-filament::icon icon="ri-coins-fill" class="ao-cp-ic ao-cp-ic-coin" /> Manage Credits
+                        </button>
                         @if (class_exists(\Paymenter\Extensions\Others\Quotes\Models\Quote::class))
                             <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\CreateQuote::getUrl(['for' => $user->id]) }}">
-                                <x-filament::icon icon="ri-draft-line" class="ao-cp-ic" /> Create New Quote
+                                <x-filament::icon icon="ri-file-text-fill" class="ao-cp-ic ao-cp-ic-doc" /> Create New Quote
                             </a>
                         @endif
                     </div>
