@@ -3275,7 +3275,16 @@
     .ao-cu-remove { color: var(--wa-danger, #c0392b); font-weight: 600; }
 
     /* Notes: the box that adds one, with its controls to the right. */
-    .ao-cn-add { display: grid; grid-template-columns: 1fr auto; gap: 1rem; margin-top: 1rem; align-items: start; }
+    .ao-cn-add {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 1rem;
+        margin-top: 1rem;
+        align-items: start;
+        border: 3px solid #e2e7e9;
+        border-radius: 3px;
+        padding: 5px;
+    }
     /* The reference frames the whole editor as one box — toolbar, writing area and the
        status line inside a single border, on white — rather than a loose strip above a
        floating textarea (Leandro, 2026-09-18). */
@@ -3361,7 +3370,14 @@
         color: var(--wa-muted, #6b6b6b);
         text-align: end;
     }
-    .ao-cn-side { display: flex; flex-direction: column; gap: 0.6rem; }
+    .ao-cn-side {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+    }
     .ao-cn-sticky > td { background: var(--wa-warning-bg, rgba(240, 173, 78, 0.12)); }
 
     @media (max-width: 60rem) {
