@@ -3695,10 +3695,61 @@
     .ao-anc-field.ao-sm-save { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
     .ao-anc-field.ao-sm-save > input[type="text"] { flex: 1 1 14rem; }
     .ao-sm-send { margin: 1rem 0 1.5rem; }
-    .ao-sm-merge code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.85rem; }
-    .ao-sm-merge { max-height: 22rem; overflow-y: auto; padding: 0; }
-    .ao-anc-field.ao-sm-loadrow { display: flex; align-items: center; gap: 0.5rem; }
+    .ao-sm-merge code, .ao-sm-merge pre { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.85rem; }
+    .ao-sm-merge { max-height: 24rem; overflow-y: auto; padding: 0; }
+
+    /* The reference's three columns: the field and its tag on the left, its conditional
+       documentation on the right. */
+    .ao-sm-merge-grid { width: 100%; table-layout: fixed; }
+    .ao-sm-merge-grid > thead th:first-child { width: 50%; }
+    .ao-sm-merge-list { vertical-align: top; padding: 0 !important; }
+    .ao-sm-merge-inner { width: 100%; border-collapse: collapse; }
+    .ao-sm-merge-inner td { padding: 0.3rem 0.7rem; border-bottom: 1px solid #ededed; }
+    .ao-sm-merge-inner td:first-child { width: 45%; }
+    .ao-sm-merge-docs { vertical-align: top; padding: 0.7rem 0.9rem; line-height: 1.5; }
+    .ao-sm-merge-docs p { margin: 0 0 0.5rem; }
+    .ao-sm-merge-docs b { display: block; margin: 0.9rem 0 0.3rem; }
+    .ao-sm-merge-docs pre {
+        margin: 0 0 0.7rem;
+        padding: 0.5rem 0.7rem;
+        background: #f7f7f7;
+        border: 1px solid #ededed;
+        border-radius: 3px;
+        white-space: pre-wrap;
+    }
+
+    /* The reference centres the send button and the load row under the form. */
     .ao-sm-load { margin-top: 1rem; }
+    .ao-anc-field.ao-sm-loadrow { display: flex; align-items: center; gap: 0.5rem; }
+    .ao-sm-load .ao-anc-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        background: none;
+    }
+    .ao-sm-load .ao-anc-row > :first-child {
+        background: none;
+        border-right: 0;
+        display: inline-flex;
+        align-self: center;
+        justify-content: flex-end;
+    }
+
+    /* Named button.ao-pg-btn because that rule is a type+class selector and outranks a bare
+       class anywhere in the sheet — the same tie that swallowed the green and red buttons. */
+    button.ao-pg-btn.ao-bt-primary,
+    a.ao-pg-btn.ao-bt-primary {
+        background: #337ab7;
+        border-color: #2e6da4;
+        color: #fff;
+    }
+
+    button.ao-pg-btn.ao-bt-primary:hover:not(:disabled),
+    a.ao-pg-btn.ao-bt-primary:hover {
+        background: #286090;
+        border-color: #204d74;
+    }
     .ao-sm-preview { margin-top: 1rem; }
     .ao-sm-preview-body { margin-top: 0.5rem; line-height: 1.6; }
 

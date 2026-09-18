@@ -200,6 +200,56 @@ class SendEmailMessage extends Page
      */
     public function merge(string $text, ?User $user): string
     {
+        $text = $this->resolveConditionals($text, $this->tokenValues($user));
+
+        foreach ($this->tokenValues($user) as $token => $value) {
+            $text = str_replace(['{$' . $token . '}', '{' . $token . '}'], $value, $text);
+        }
+
+        return $text;
+    }
+
+    /**
+     * The reference's Conditional Display: {if $token}…{else}…{/if}, with an optional
+     * `eq "value"`. Resolved before the tokens are filled, so a branch that is not taken
+     * never reaches the client.
+     *
+     * @param  array<string, string>  $values
+     */
+    private function resolveConditionals(string $text, array $values): string
+    {
+        $pattern = '/\{if\s+\$(\w+)(?:\s+eq\s+"([^"]*)")?\}(.*?)(?:\{else\}(.*?))?\{\/if\}/s';
+
+        // Nested conditionals resolve from the inside out, so the pass repeats while it
+        // still finds one. Capped rather than `while (true)`: a malformed message must not
+        // spin here.
+        for ($pass = 0; $pass < 10; $pass++) {
+            $replaced = preg_replace_callback($pattern, function (array $m) use ($values): string {
+                $actual = $values[$m[1]] ?? '';
+                $matches = ($m[2] ?? '') !== ''
+                    ? strcasecmp($actual, $m[2]) === 0
+                    : trim($actual) !== '';
+
+                return $matches ? $m[3] : ($m[4] ?? '');
+            }, $text, -1, $count);
+
+            if ($replaced === null || $count === 0) {
+                break;
+            }
+
+            $text = $replaced;
+        }
+
+        return $text;
+    }
+
+    /**
+     * Every merge token's value for this client.
+     *
+     * @return array<string, string>
+     */
+    private function tokenValues(?User $user): array
+    {
         $property = fn (string $key): string => (string) ($user?->properties
             ->firstWhere('key', $key)?->value ?? '');
 
@@ -221,11 +271,7 @@ class SendEmailMessage extends Page
             'client_area_url' => (string) config('app.url'),
         ];
 
-        foreach ($values as $token => $value) {
-            $text = str_replace(['{$' . $token . '}', '{' . $token . '}'], $value, $text);
-        }
-
-        return $text;
+        return $values;
     }
 
     /** What the client will actually receive, tokens filled in. */

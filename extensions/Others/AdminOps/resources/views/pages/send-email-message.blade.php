@@ -178,17 +178,48 @@
         <h4 class="ao-bt-h">Available Merge Fields</h4>
 
         <div class="ao-anc-card ao-sm-merge">
-            <table class="ao-mu-grid">
+            <table class="ao-mu-grid ao-sm-merge-grid">
                 <thead>
-                    <tr><th class="ao-mu-left">Client Related</th><th class="ao-mu-left">Tag</th></tr>
+                    <tr>
+                        <th class="ao-mu-left" colspan="2">Client Related</th>
+                        <th class="ao-mu-left">Conditional Display</th>
+                    </tr>
                 </thead>
                 <tbody>
-                    @foreach (\Paymenter\Extensions\Others\AdminOps\Admin\Pages\SendEmailMessage::MERGE_FIELDS as $token => $label)
-                        <tr>
-                            <td class="ao-mu-left">{{ $label }}</td>
-                            <td class="ao-mu-left"><code>{{ '{$' . $token . '}' }}</code></td>
-                        </tr>
-                    @endforeach
+                    @php
+                        $fields = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\SendEmailMessage::MERGE_FIELDS;
+                    @endphp
+                    <tr>
+                        <td class="ao-mu-left ao-sm-merge-list" colspan="2">
+                            <table class="ao-sm-merge-inner">
+                                @foreach ($fields as $token => $label)
+                                    <tr>
+                                        <td>{{ $label }}</td>
+                                        <td><code>{{ '{$' . $token . '}' }}</code></td>
+                                    </tr>
+                                @endforeach
+                            </table>
+                        </td>
+                        <td class="ao-mu-left ao-sm-merge-docs">
+                            <p>You can use conditionals to display text based on other values
+                                &mdash; for example:</p>
+                            <pre>{{ '{if $client_company_name}' }}
+Thanks for your order, {{ '{$client_company_name}' }}.
+{{ '{else}' }}
+Thanks for your order.
+{{ '{/if}' }}</pre>
+                            <p>An <code>eq</code> test compares a value:</p>
+                            <pre>{{ '{if $client_country eq "BR"}' }}
+Prices include Brazilian tax.
+{{ '{/if}' }}</pre>
+
+                            <b>Looping through data</b>
+                            <p>The reference loops over list data such as invoice items
+                                (<code>{{ '{foreach}' }}</code>). A message written here carries
+                                one client and no list, so there is nothing to loop over &mdash;
+                                use an invoice email template for per-item text.</p>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
