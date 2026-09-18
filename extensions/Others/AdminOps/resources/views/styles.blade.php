@@ -3652,6 +3652,27 @@
        plus link rather than a button. */
     .ao-anc-field.ao-sm-att { display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; }
     .ao-sm-att-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+
+    /* The Choose File button draws no border of its own — Tailwind's preflight zeroes it,
+       as it does every other control on this admin. The reference's carries a plain black
+       hairline (Leandro, 2026-09-18). ::-webkit-file-upload-button is named too so Safari
+       and older WebKit get the same. */
+    .ao-sm-att-row input[type="file"]::file-selector-button,
+    .ao-sm-att-row input[type="file"]::-webkit-file-upload-button {
+        margin-right: 0.5rem;
+        padding: 0.2rem 0.6rem;
+        border: 1px solid #000;
+        border-radius: 3px;
+        background: #f2f2f2;
+        color: var(--wa-text, #2b2b2b);
+        font: inherit;
+        cursor: pointer;
+    }
+
+    .ao-sm-att-row input[type="file"]::file-selector-button:hover,
+    .ao-sm-att-row input[type="file"]::-webkit-file-upload-button:hover {
+        background: #e4e4e4;
+    }
     .ao-sm-addmore {
         display: inline-flex;
         align-items: center;
