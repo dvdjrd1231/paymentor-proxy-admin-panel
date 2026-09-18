@@ -3607,12 +3607,71 @@
     }
     .ao-sm-box b { display: block; font-weight: 600; }
     .ao-sm-body { width: 100%; font: inherit; padding: 0.5rem; }
+    .ao-anc-field.ao-sm-cc { display: flex; align-items: center; gap: 0.6rem; }
+    .ao-anc-field.ao-sm-cc > input { flex: 1 1 auto; }
+    .ao-anc-field.ao-sm-cc > i { flex: 0 0 auto; }
+
+    /* The editor: a toolbar strip over a writing pane, framed as one box. */
+    .ao-sm-editor { margin: 0.6rem 0; }
+    .ao-sm-toolbar { border: 1px solid var(--wa-border, #ccc); border-radius: 4px; background: #fff; }
+    .ao-sm-tools {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.2rem;
+        padding: 0.35rem 0.4rem;
+        border-bottom: 1px solid var(--wa-border, #ccc);
+        background: #f7f7f7;
+    }
+    .ao-sm-tools button {
+        min-width: 2rem;
+        padding: 0.2rem 0.45rem;
+        border: 1px solid transparent;
+        border-radius: 3px;
+        background: none;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: var(--wa-text, #2b2b2b);
+    }
+    .ao-sm-tools button:hover { background: #e6e6e6; border-color: #d4d4d4; }
+    .ao-sm-tools select { height: 1.9rem; padding: 0 0.35rem; border: 1px solid #ccc; border-radius: 3px; background: #fff; }
+    .ao-sm-sep { width: 1px; height: 1.2rem; background: #d4d4d4; margin: 0 0.25rem; }
+    .ao-sm-pane {
+        min-height: 20rem;
+        padding: 0.8rem 1rem;
+        line-height: 1.6;
+        overflow-y: auto;
+        outline: none;
+    }
+    .ao-sm-pane:focus { box-shadow: inset 0 0 0 2px rgba(51, 122, 183, 0.25); }
+    .ao-sm-pane ul, .ao-sm-pane ol { margin: 0.5rem 0 0.5rem 1.4rem; list-style: revert; }
+    .ao-sm-pane a { color: var(--wa-link, #337ab7); text-decoration: underline; }
+
+    .ao-sm-underbar { display: flex; justify-content: space-between; gap: 0.5rem; margin-bottom: 1rem; }
+    .ao-anc-field.ao-sm-save { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+    .ao-anc-field.ao-sm-save > input[type="text"] { flex: 1 1 14rem; }
+    .ao-sm-send { margin: 1rem 0 1.5rem; }
+    .ao-sm-merge code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.85rem; }
+    .ao-sm-merge { max-height: 22rem; overflow-y: auto; padding: 0; }
+    .ao-anc-field.ao-sm-loadrow { display: flex; align-items: center; gap: 0.5rem; }
+    .ao-sm-load { margin-top: 1rem; }
     .ao-sm-preview { margin-top: 1rem; }
     .ao-sm-preview-body { margin-top: 0.5rem; line-height: 1.6; }
 
     /* The reference's per-row icon buttons on the Emails tab. */
-    .ao-em-acts { width: 4.5rem; white-space: nowrap; text-align: right; }
+    /* Both icons on one line. The resend one became an <a> when it started opening the
+       composer, and an inline anchor wrapping an svg split the pair across two rows — so the
+       cell lays them out as a nowrap row rather than relying on inline flow. */
+    .ao-em-acts { width: 5rem; white-space: nowrap; text-align: right; }
+    td.ao-em-acts {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.35rem;
+    }
     .ao-em-act {
+        display: inline-flex;
+        align-items: center;
         background: none;
         border: 0;
         padding: 0.15rem 0.2rem;
