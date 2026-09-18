@@ -55,16 +55,47 @@
                 <button type="button" data-md="**" title="Bold"><b>B</b></button>
                 <button type="button" data-md="*" title="Italic"><i>I</i></button>
                 <button type="button" data-md-line="# " title="Heading"><b>H</b></button>
-                <button type="button" data-md-line="[Link](https://)" title="Link">&#128279;</button>
-                <button type="button" data-md-line="- " title="Bullet list">&#8226;&#8226;</button>
-                <button type="button" data-md-line="1. " title="Numbered list">1.</button>
-                <button type="button" data-md-line="> " title="Quote">&#10078;</button>
+                <button type="button" data-md-line="[Link](https://)" title="Link">
+                    <x-filament::icon icon="ri-link" class="ao-cn-ic" /></button>
+                <button type="button" data-md-line="![Image](https://)" title="Image">
+                    <x-filament::icon icon="ri-image-line" class="ao-cn-ic" /></button>
+                <button type="button" data-md-line="- " title="Bullet list">
+                    <x-filament::icon icon="ri-list-unordered" class="ao-cn-ic" /></button>
+                <button type="button" data-md="`" title="Code">
+                    <x-filament::icon icon="ri-terminal-box-line" class="ao-cn-ic" /></button>
+                <button type="button" data-md-line="> " title="Quote">
+                    <x-filament::icon icon="ri-chat-quote-line" class="ao-cn-ic" /></button>
+
+                {{-- The reference's blue Preview and its help, both live: preview renders the
+                     markdown the bar writes, help says what the bar understands. --}}
+                <button type="button" class="ao-cn-preview-btn {{ $notePreview ? 'ao-on' : '' }}"
+                    wire:click="toggleNotePreview">
+                    <x-filament::icon icon="ri-search-line" class="ao-cn-ic" /> Preview
+                </button>
+                <button type="button" class="ao-cn-help-btn" wire:click="toggleNoteHelp"
+                    title="What the formatting bar writes">?</button>
             </div>
 
-            <textarea rows="8" wire:model="newNote" data-ao-message
-                placeholder="Notes for staff only — the client never sees these"></textarea>
+            @if ($noteHelp)
+                <div class="ao-cn-help">
+                    <b>**bold**</b> &middot; <i>*italic*</i> &middot; <code># Heading</code> &middot;
+                    <code>[Link](https://…)</code> &middot; <code>- bullet</code> &middot;
+                    <code>&gt; quote</code> &middot; <code>`code`</code>
+                </div>
+            @endif
+
+            @if ($notePreview)
+                <div class="ao-cn-pane">{!! $this->renderedNote() !!}</div>
+            @else
+                <textarea rows="8" wire:model.live.debounce.400ms="newNote" data-ao-message
+                    placeholder="Notes for staff only — the client never sees these"></textarea>
+            @endif
+
+            {{-- The reference's status line, bottom right of the box. --}}
             <p class="ao-cn-count">
-                {{ str_word_count($newNote) }} words &middot; {{ strlen($newNote) }} characters
+                lines: {{ $newNote === '' ? 0 : substr_count($newNote, "\n") + 1 }} &nbsp;
+                words: {{ str_word_count($newNote) }} &nbsp;
+                {{ trim($newNote) === '' ? '' : 'unsaved' }}
             </p>
         </div>
 

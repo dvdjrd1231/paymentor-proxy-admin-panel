@@ -482,6 +482,64 @@ class ClientSummary extends Page
             ->success()->send();
     }
 
+    /** The reference's Preview on the Notes editor, and its help. */
+    public bool $notePreview = false;
+
+    public bool $noteHelp = false;
+
+    public function toggleNotePreview(): void
+    {
+        $this->notePreview = !$this->notePreview;
+    }
+
+    public function toggleNoteHelp(): void
+    {
+        $this->noteHelp = !$this->noteHelp;
+    }
+
+    /**
+     * The note as its formatting bar means it to read.
+     *
+     * Deliberately a small, closed subset — exactly what the bar writes and nothing more.
+     * The text is escaped first, so a note containing markup is shown, never run.
+     */
+    public function renderedNote(): string
+    {
+        $text = e($this->newNote);
+
+        // Fenced pieces first, so their contents are not then treated as formatting.
+        $text = preg_replace('/`([^`]+)`/', '<code>$1</code>', $text);
+
+        $text = preg_replace('/\*\*([^*]+)\*\*/', '<strong>$1</strong>', $text);
+        $text = preg_replace('/(?<!\*)\*([^*\n]+)\*(?!\*)/', '<em>$1</em>', $text);
+
+        // Only http(s) links are linked; anything else stays as written.
+        $text = preg_replace(
+            '/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/',
+            '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+            $text,
+        );
+
+        $lines = [];
+
+        foreach (explode("\n", $text) as $line) {
+            if (preg_match('/^#\s+(.*)$/', $line, $m)) {
+                $lines[] = '<h4>' . $m[1] . '</h4>';
+            } elseif (preg_match('/^&gt;\s?(.*)$/', $line, $m)) {
+                $lines[] = '<blockquote>' . $m[1] . '</blockquote>';
+            } elseif (preg_match('/^-\s+(.*)$/', $line, $m)) {
+                $lines[] = '<li>' . $m[1] . '</li>';
+            } else {
+                $lines[] = $line === '' ? '' : '<p>' . $line . '</p>';
+            }
+        }
+
+        $html = implode("\n", $lines);
+
+        // Consecutive bullets become one list rather than loose items.
+        return preg_replace('/(<li>.*<\/li>\n?)+/s', '<ul>$0</ul>', $html) ?? $html;
+    }
+
     /** Ticked rows in the reference's invoice list. */
     public array $invoiceChosen = [];
 

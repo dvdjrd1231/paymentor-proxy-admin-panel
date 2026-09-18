@@ -3276,8 +3276,91 @@
 
     /* Notes: the box that adds one, with its controls to the right. */
     .ao-cn-add { display: grid; grid-template-columns: 1fr auto; gap: 1rem; margin-top: 1rem; align-items: start; }
-    .ao-cn-editor textarea { width: 100%; }
-    .ao-cn-count { margin: 0.3rem 0 0; font-size: 0.78rem; opacity: 0.65; text-align: end; }
+    /* The reference frames the whole editor as one box — toolbar, writing area and the
+       status line inside a single border, on white — rather than a loose strip above a
+       floating textarea (Leandro, 2026-09-18). */
+    .ao-cn-editor {
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        overflow: hidden;
+    }
+    .ao-cn-editor textarea {
+        width: 100%;
+        min-height: 9rem;
+        border: 0;
+        border-radius: 0;
+        background: #fff;
+        padding: 0.7rem 0.9rem;
+        font: inherit;
+        resize: vertical;
+        display: block;
+    }
+    .ao-cn-editor textarea:focus { outline: none; }
+
+    /* Its toolbar buttons are bordered tiles on white, not bare glyphs. */
+    .ao-cn-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.4rem 0.5rem;
+        background: #fff;
+        border-bottom: 1px solid #e2e2e2;
+    }
+    .ao-cn-toolbar button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        min-width: 2rem;
+        height: 1.9rem;
+        padding: 0 0.45rem;
+        border: 1px solid #d4d4d4;
+        border-radius: 3px;
+        background: #fff;
+        cursor: pointer;
+        color: var(--wa-text, #2b2b2b);
+        font-size: 0.85rem;
+    }
+    .ao-cn-toolbar button:hover { background: #efefef; }
+    .ao-cn-ic { width: 0.95rem; height: 0.95rem; }
+
+    /* Preview is the reference's one blue control on this bar. */
+    .ao-cn-toolbar button.ao-cn-preview-btn {
+        margin-left: 0.4rem;
+        background: #337ab7;
+        border-color: #2e6da4;
+        color: #fff;
+    }
+    .ao-cn-toolbar button.ao-cn-preview-btn:hover { background: #286090; }
+    .ao-cn-toolbar button.ao-cn-preview-btn.ao-on { background: #204d74; }
+    .ao-cn-toolbar button.ao-cn-help-btn { font-weight: 700; }
+
+    .ao-cn-help {
+        padding: 0.5rem 0.9rem;
+        border-bottom: 1px solid #e2e2e2;
+        background: #fbfbe6;
+        font-size: 0.85rem;
+    }
+    .ao-cn-help code { font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+    .ao-cn-pane { min-height: 9rem; padding: 0.7rem 0.9rem; line-height: 1.6; }
+    .ao-cn-pane h4 { font-weight: 700; margin: 0.4rem 0; }
+    .ao-cn-pane ul { margin: 0.4rem 0 0.4rem 1.3rem; list-style: disc; }
+    .ao-cn-pane blockquote { margin: 0.4rem 0; padding-left: 0.8rem; border-left: 3px solid #ddd; color: #555; }
+    .ao-cn-pane p { margin: 0 0 0.4rem; }
+    .ao-cn-pane code { font-family: ui-monospace, Menlo, Consolas, monospace; background: #f3f3f3; padding: 0 0.2rem; }
+
+    /* Its status line sits inside the frame, bottom right. */
+    .ao-cn-count {
+        margin: 0;
+        padding: 0.3rem 0.7rem;
+        border-top: 1px solid #e2e2e2;
+        background: #fafafa;
+        font-size: 0.78rem;
+        color: var(--wa-muted, #6b6b6b);
+        text-align: end;
+    }
     .ao-cn-side { display: flex; flex-direction: column; gap: 0.6rem; }
     .ao-cn-sticky > td { background: var(--wa-warning-bg, rgba(240, 173, 78, 0.12)); }
 
@@ -7186,8 +7269,7 @@
     .ao-mu-icon-red { color: #d9534f; }
 
     /* The Notes toolbar sits on its box, as the reference draws them joined. */
-    .ao-cn-toolbar { border-radius: 4px 4px 0 0; }
-    .ao-cn-toolbar + textarea { border-radius: 0 0 4px 4px; }
+    /* The frame now lives on .ao-cn-editor, so these no longer round anything. */
 
     /* Filter Log: the reference hangs its button off the right of the band above the panel
        it opens. */
