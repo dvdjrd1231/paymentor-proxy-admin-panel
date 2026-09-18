@@ -313,9 +313,15 @@ class ClientSummary extends Page
     /** Ticked rows in the reference's invoice list. */
     public array $invoiceChosen = [];
 
-    /** Its Search panel, folded away until asked for. */
+    /**
+     * Its Search panel, open on arrival.
+     *
+     * It started folded away behind the Search button, which meant the tab looked as though
+     * it had no search at all (Leandro, 2026-09-17). The reference shows the panel with the
+     * list; the button still folds it away for anyone who wants the rows alone.
+     */
     #[\Livewire\Attributes\Url]
-    public bool $invoiceSearch = false;
+    public bool $invoiceSearch = true;
 
     /**
      * The reference's invoice Search panel, field for field.
