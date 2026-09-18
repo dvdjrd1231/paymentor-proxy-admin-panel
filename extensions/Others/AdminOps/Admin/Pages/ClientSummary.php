@@ -835,6 +835,9 @@ class ClientSummary extends Page
         $this->adminNotes = (string) $this->customer->properties
             ->firstWhere('key', 'admin_notes')?->value;
 
+        // The time grid always draws its ten rows, including on a deep link to ?addTimeEntries=1.
+        $this->resetTimeRows();
+
         $prop = fn (string $key): string => (string) $this->customer->properties->firstWhere('key', $key)?->value;
 
         $this->pf = [
@@ -2191,8 +2194,113 @@ class ClientSummary extends Page
     /** Open the reference's form in the tab body. */
     public function openAddBillable(string $unit = 'qty'): void
     {
+        $this->addTimeEntries = false;
         $this->addBillable = true;
         $this->billableUnit = $unit === 'hours' ? 'hours' : 'qty';
+    }
+
+    /**
+     * The reference's Add Time Billing Entries is its own screen, not this form asked in
+     * hours: a grid of ten blank rows — Item, Description, Hours, Rate — logged in one go
+     * (Leandro, 2026-09-17). Each row it saves is still a billable item; the difference is
+     * that ten are entered at once and priced as hours at a rate.
+     */
+    #[\Livewire\Attributes\Url]
+    public bool $addTimeEntries = false;
+
+    public const TIME_ROWS = 10;
+
+    /** @var array<int, array<string, string|null>> */
+    public array $timeRows = [];
+
+    public function openTimeEntries(): void
+    {
+        $this->addBillable = false;
+        $this->addTimeEntries = true;
+        $this->resetTimeRows();
+    }
+
+    public function cancelTimeEntries(): void
+    {
+        $this->addTimeEntries = false;
+        $this->resetTimeRows();
+    }
+
+    private function resetTimeRows(): void
+    {
+        $this->timeRows = array_fill(0, self::TIME_ROWS, [
+            'service_id' => '',
+            'description' => '',
+            'hours' => '0',
+            'rate' => '0.00',
+        ]);
+    }
+
+    /**
+     * Its "Add Entries": every row carrying hours and a description becomes an item.
+     *
+     * Blank rows are skipped rather than rejected — the grid always shows ten and is meant
+     * to be filled in part.
+     */
+    public function saveTimeEntries(): void
+    {
+        $item = \Paymenter\Extensions\Others\BillableItems\Models\BillableItem::class;
+        $mine = $this->customer->services()->pluck('id')->all();
+
+        $made = 0;
+
+        foreach ($this->timeRows as $i => $row) {
+            $hours = (float) ($row['hours'] ?? 0);
+            $description = trim((string) ($row['description'] ?? ''));
+
+            if ($hours <= 0 && $description === '') {
+                continue;
+            }
+
+            if ($description === '' || $hours <= 0) {
+                Notification::make()->title('Row ' . ($i + 1) . ' is incomplete')
+                    ->body('A time entry needs both a description and hours.')->warning()->send();
+
+                return;
+            }
+
+            // The select is filled from this client's services, but the id posts from the
+            // browser, so a row naming someone else's service is refused rather than saved.
+            $serviceId = $row['service_id'] !== '' ? (int) $row['service_id'] : null;
+
+            if ($serviceId !== null && !in_array($serviceId, $mine, true)) {
+                Notification::make()->title('Row ' . ($i + 1) . ' names another client\'s service')
+                    ->danger()->send();
+
+                return;
+            }
+
+            $item::create([
+                'user_id' => $this->customer->id,
+                'service_id' => $serviceId,
+                'description' => $description,
+                'quantity' => $hours,
+                'amount' => (float) ($row['rate'] ?? 0),
+                'currency_code' => config('settings.default_currency', 'USD'),
+                'invoice_action' => $item::ACTION_HOLD,
+                'admin_id' => Auth::id(),
+            ]);
+
+            $made++;
+        }
+
+        if ($made === 0) {
+            Notification::make()->title('Nothing to add')
+                ->body('Fill in at least one row.')->warning()->send();
+
+            return;
+        }
+
+        $this->addTimeEntries = false;
+        $this->resetTimeRows();
+
+        Notification::make()->title($made . ' time ' . \Illuminate\Support\Str::plural('entry', $made) . ' added')
+            ->success()->send();
     }
 
     /** The same, from the Invoices/Billing panel, which has to switch tab as well. */

@@ -3566,6 +3566,14 @@
     }
     .ao-mu-tab.ao-bt-primary:hover { background: #286090; border-color: #204d74; color: #fff; }
 
+    /* The reference's time grid: every cell is a control, so the row padding is tight and
+       the description takes whatever the fixed columns leave. */
+    .ao-bt-time td { padding: 0.25rem 0.35rem; }
+    .ao-bt-time td > select { width: 100%; min-width: 9rem; }
+    .ao-bt-time-desc { width: 100%; }
+    .ao-bt-time th:nth-child(3), .ao-bt-time td:nth-child(3) { width: 6rem; }
+    .ao-bt-time th:nth-child(4), .ao-bt-time td:nth-child(4) { width: 7rem; }
+
     /* --- Add Billable Item, drawn in the tab body --- */
     .ao-of-xs { width: 4rem; }
     .ao-anc-field.ao-bt-unit { display: flex; align-items: center; gap: 0.7rem; flex-wrap: nowrap; }

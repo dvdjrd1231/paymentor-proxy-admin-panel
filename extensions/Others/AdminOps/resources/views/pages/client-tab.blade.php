@@ -29,7 +29,7 @@
                  a time entry is hours at a rate, which is the row the other button
                  writes as a quantity at an amount. {@see BillableItemsList::$time} --}}
             <button type="button" class="ao-mu-tab ao-bt-head-btn"
-                wire:click="openAddBillable('hours')">Add Time Billing Entries</button>
+                wire:click="openTimeEntries">Add Time Billing Entries</button>
             <button type="button" class="ao-mu-tab ao-bt-head-btn ao-bt-primary"
                 wire:click="openAddBillable('qty')">&#10010; Add Billable Item</button>
             @break

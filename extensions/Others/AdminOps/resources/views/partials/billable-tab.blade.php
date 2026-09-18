@@ -1,4 +1,6 @@
-@if ($addBillable)
+@if ($addTimeEntries)
+    @include('adminops::partials.billable-time')
+@elseif ($addBillable)
     @include('adminops::partials.billable-add')
 @else
 {{-- The reference's Billable Items tab: what is still waiting to be billed, then what has
