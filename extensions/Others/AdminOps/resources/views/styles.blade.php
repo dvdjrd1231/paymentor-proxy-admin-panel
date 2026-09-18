@@ -3721,19 +3721,24 @@
     /* The reference centres the send button and the load row under the form. */
     .ao-sm-load { margin-top: 1rem; }
     .ao-anc-field.ao-sm-loadrow { display: flex; align-items: center; gap: 0.5rem; }
+    /* The reference sits this row on the same grey its form cells use, not on white — I had
+       cleared the row's background when centring it (Leandro, 2026-09-18). */
+    .ao-sm-load { background: #efefef; padding: 0.7rem 1rem; }
     .ao-sm-load .ao-anc-row {
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 0.6rem;
-        background: none;
+        background: transparent;
+        margin-bottom: 0;
     }
     .ao-sm-load .ao-anc-row > :first-child {
-        background: none;
+        background: transparent;
         border-right: 0;
         display: inline-flex;
         align-self: center;
         justify-content: flex-end;
+        padding: 0;
     }
 
     /* Named button.ao-pg-btn because that rule is a type+class selector and outranks a bare
