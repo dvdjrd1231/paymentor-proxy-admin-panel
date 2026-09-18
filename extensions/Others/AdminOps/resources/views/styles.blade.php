@@ -4790,7 +4790,13 @@
        month header showing — the days could not be reached at all (Leandro, 2026-09-17).
        Same weight as the rules above, placed after them so it wins the tie. The corners
        give up their clipping in exchange, which costs a pixel of radius on those cards. */
-    .ao-anc-card:has(.ao-of-date) {
+    /* …or a dropdown. .ao-xsel-list is positioned absolutely under its button, so the card's
+       `overflow: hidden` cropped it to the card's edge — the Client, Order Status and Region
+       pickers on Add New Order all opened into nothing (Leandro, 2026-09-18). Naming the
+       control rather than the screen, because every form card built from these rows carries
+       the same risk. */
+    .ao-anc-card:has(.ao-of-date),
+    .ao-anc-card:has(.ao-xsel) {
         overflow: visible;
     }
 
