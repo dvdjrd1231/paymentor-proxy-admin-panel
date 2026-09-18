@@ -3593,6 +3593,23 @@
     .ao-bt-time th:nth-child(3), .ao-bt-time td:nth-child(3) { width: 6rem; }
     .ao-bt-time th:nth-child(4), .ao-bt-time td:nth-child(4) { width: 7rem; }
 
+    /* Send Email Message: From on one line, and the recipients stated in a bordered box
+       as the reference states them. */
+    .ao-anc-field.ao-sm-from { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .ao-anc-field.ao-sm-from input:disabled { background: #f4f4f4; color: #6b6b6b; }
+    .ao-sm-box {
+        display: block;
+        padding: 0.5rem 0.7rem;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        min-height: 4rem;
+    }
+    .ao-sm-box b { display: block; font-weight: 600; }
+    .ao-sm-body { width: 100%; font: inherit; padding: 0.5rem; }
+    .ao-sm-preview { margin-top: 1rem; }
+    .ao-sm-preview-body { margin-top: 0.5rem; line-height: 1.6; }
+
     /* The reference's per-row icon buttons on the Emails tab. */
     .ao-em-acts { width: 4.5rem; white-space: nowrap; text-align: right; }
     .ao-em-act {

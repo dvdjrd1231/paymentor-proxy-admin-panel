@@ -265,11 +265,13 @@
                                 {{-- The reference's two row actions: send it again, or drop
                                      it from the log. --}}
                                 <td class="ao-em-acts">
-                                    <button type="button" class="ao-em-act" title="Resend this message"
-                                        wire:click="resendEmail({{ $row->id }})"
-                                        wire:loading.attr="disabled" wire:target="resendEmail({{ $row->id }})">
+                                    {{-- The reference opens its composer rather than sending
+                                         again straight away, so the message can be amended
+                                         — and stopped — before it goes. --}}
+                                    <a class="ao-em-act" title="Resend this message"
+                                        href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\SendEmailMessage::getUrl(['resend' => $row->id]) }}">
                                         <x-filament::icon icon="ri-mail-send-fill" class="ao-mu-cell-icon" />
-                                    </button>
+                                    </a>
                                     <button type="button" class="ao-em-act ao-em-act-del" title="Remove from the log"
                                         wire:click="deleteEmail({{ $row->id }})"
                                         wire:confirm="Remove this message from the log? The email itself was already delivered.">
