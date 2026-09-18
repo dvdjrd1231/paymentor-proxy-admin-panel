@@ -681,7 +681,8 @@
 
     @elseif ($tab === 'quotes')
         <div class="ao-ct-head">
-            <a class="ao-mu-tab" href="{{ $urls['newQuote'] }}">&#10010; Create New Quote</a>
+            {{-- The reference's primary blue, as on its other tab heads. --}}
+            <a class="ao-mu-tab ao-bt-head-btn ao-bt-primary" href="{{ $urls['newQuote'] }}">&#10010; Create New Quote</a>
         </div>
 
         @include('adminops::partials.records-band', [
