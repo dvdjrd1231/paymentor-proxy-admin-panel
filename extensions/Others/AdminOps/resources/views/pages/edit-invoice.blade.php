@@ -121,7 +121,7 @@
                              Shown always, as it shows it, but disabled with the reason when
                              there is nothing to charge or nothing to charge it to. --}}
                         @php $captureBlocked = $this->captureBlockedReason(); @endphp
-                        <button type="button" class="ao-pg-btn ao-ei-capture"
+                        <button type="button" class="ao-pg-btn ao-ei-capture btn-success"
                             wire:click="attemptCapture" wire:loading.attr="disabled"
                             wire:target="attemptCapture"
                             @disabled($captureBlocked)

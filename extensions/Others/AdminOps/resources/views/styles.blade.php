@@ -3584,13 +3584,8 @@
     .ao-bt-with button:disabled { opacity: 0.65; cursor: not-allowed; }
     .ao-bt-h { font-size: 1.05rem; font-weight: 600; margin: 0 0 0.4rem; }
 
-    /* The reference's Attempt Capture is its one green action on this screen. */
-    .ao-ei-capture {
-        background: #5cb85c;
-        border-color: #4cae4c;
-        color: #fff;
-    }
-    .ao-ei-capture:hover:not(:disabled) { background: #449d44; border-color: #398439; }
+    /* The reference's Attempt Capture is its one green action on this screen. Its green
+       comes from .btn-success further down; this carries only the disabled state. */
     .ao-ei-capture:disabled { opacity: 0.65; cursor: not-allowed; }
 
     .ao-ei-status--refunded { color: var(--wa-muted, #6b6b6b); }
@@ -3940,6 +3935,22 @@
     .ao-anc-row > select,
     .ao-anc-row > textarea {
         margin: 3px 5px;
+    }
+
+    /* Jordan's green (2026-09-17). Named button.ao-pg-btn too, because that rule is a
+       type+class selector — it outranks any bare class wherever it sits in the sheet, so
+       `.btn-success` alone lost the white background to it and the button stayed grey. */
+    button.ao-pg-btn.btn-success,
+    a.ao-pg-btn.btn-success {
+        color: #fff;
+        background-color: #5cb85c;
+        border-color: #4cae4c;
+    }
+
+    button.ao-pg-btn.btn-success:hover:not(:disabled),
+    a.ao-pg-btn.btn-success:hover {
+        background-color: #449d44;
+        border-color: #398439;
     }
 
     /* Admin Notes is a white box on the grey band, as the reference draws it. */
