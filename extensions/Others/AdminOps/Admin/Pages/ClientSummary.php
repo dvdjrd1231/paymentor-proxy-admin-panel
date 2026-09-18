@@ -2462,7 +2462,7 @@ class ClientSummary extends Page
             'edit' => UserResource::getUrl('edit', ['record' => $user]),
             'newInvoice' => ManageInvoices::getUrl(),
             'newQuote' => class_exists(CreateQuote::class) ? CreateQuote::getUrl() : ManageInvoices::getUrl(),
-            'newTransaction' => AddTransaction::getUrl(),
+            'newTransaction' => AddTransaction::getUrl(['for' => $user->id]),
             'newTicket' => OpenNewTicket::getUrl(),
             'billable' => BillableItemsList::getUrl(['for' => $this->customer->id, 'adding' => true]),
             'billableTime' => BillableItemsList::getUrl(['for' => $this->customer->id, 'time' => true]),
