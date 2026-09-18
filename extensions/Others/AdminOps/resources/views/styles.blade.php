@@ -3593,6 +3593,8 @@
     .ao-bt-time th:nth-child(3), .ao-bt-time td:nth-child(3) { width: 6rem; }
     .ao-bt-time th:nth-child(4), .ao-bt-time td:nth-child(4) { width: 7rem; }
 
+    .ao-inv-with { margin: 0.6rem 0 0.2rem; flex-wrap: wrap; }
+
     /* --- Add Billable Item, drawn in the tab body --- */
     .ao-of-xs { width: 4rem; }
     .ao-anc-field.ao-bt-unit { display: flex; align-items: center; gap: 0.7rem; flex-wrap: nowrap; }

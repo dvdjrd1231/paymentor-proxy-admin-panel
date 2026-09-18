@@ -14,8 +14,13 @@
 <div class="ao-ct-head @if ($tab === 'billable') ao-ct-head-bare @endif" style="padding: 5px; background: #efefef;">
     @switch($tab)
         @case('invoices')
-            <a class="ao-mu-tab" href="{{ $urls['newInvoice'] }}">&#10010; Create Invoice</a>
-            <a class="ao-mu-tab" href="{{ $urls['invoices'] }}">&#128269; Search</a>
+            {{-- It pointed at the global invoice list, which carried no client and created
+                 nothing (Leandro, 2026-09-17). It now raises this client's draft and opens
+                 it, exactly as the Summary panel's Create Invoice already did. --}}
+            <button type="button" class="ao-mu-tab ao-bt-head-btn" wire:click="toggleInvoiceSearch">
+                &#128269; Search</button>
+            <button type="button" class="ao-mu-tab ao-bt-head-btn ao-bt-primary" wire:click="createInvoice">
+                &#10010; Create Invoice</button>
             @break
         {{-- Quotes is not here: it has its own branch on the page, with its own button. --}}
         @case('transactions')
@@ -145,7 +150,10 @@
                             <th>Description</th><th class="ao-num">Amount</th><th>Invoice</th><th>Added</th>
                             @break
                         @case('invoices')
-                            <th>ID</th><th>Status</th><th class="ao-num">Total</th><th>Due</th>
+                            <th class="ao-bt-tick"><input type="checkbox" aria-label="Select all"
+                                x-on:change="$root.querySelectorAll('.ao-inv-tick').forEach(b => { b.checked = $event.target.checked; b.dispatchEvent(new Event('input')) })"></th>
+                            <th>Invoice #</th><th>Invoice Date</th><th>Due Date</th><th>Date Paid</th>
+                            <th class="ao-num">Total</th><th>Payment Method</th><th>Status</th>
                             @break
                         @case('transactions')
                             <th>Date</th><th>Method</th><th>Description</th>
@@ -205,10 +213,23 @@
                                 @break
 
                             @case('invoices')
+                                @php
+                                    // Paid date and method both come from the transaction that
+                                    // settled it: an invoice row carries neither.
+                                    $settled = $row->transactions
+                                        ->firstWhere('status', \App\Enums\InvoiceTransactionStatus::Succeeded);
+                                @endphp
+                                <td class="ao-bt-tick">
+                                    <input class="ao-inv-tick" type="checkbox"
+                                        value="{{ $row->id }}" wire:model.live="invoiceChosen">
+                                </td>
                                 <td><a class="ao-link" href="{{ $urls['invoice']($row->id) }}">#{{ $row->number ?: $row->id }}</a></td>
-                                <td><span class="ao-tag {{ $statusTone($row->status) }}">{{ $row->status }}</span></td>
+                                <td>{{ $row->created_at?->format('d/m/Y') ?? '—' }}</td>
+                                <td>{{ $row->due_at?->format('d/m/Y') ?? '—' }}</td>
+                                <td>{{ $settled?->created_at?->format('d/m/Y') ?? '-' }}</td>
                                 <td class="ao-num">{{ number_format((float) $row->total, 2) }} {{ $row->currency_code }}</td>
-                                <td>{{ $row->due_at?->format('j M Y') ?? '—' }}</td>
+                                <td>{{ $settled?->gateway?->name ?? '—' }}</td>
+                                <td><span class="ao-tag {{ $statusTone($row->status) }}">{{ $row->status }}</span></td>
                                 @break
 
                             @case('transactions')
@@ -250,6 +271,19 @@
                 @endforeach
             </tbody>
         </table>
+
+        {{-- The reference's With Selected bar, under its invoice list. Mark Paid, Merge and
+             Mass Pay are not here: the first would settle invoices no payment covers, and
+             the other two need decisions from Leandro before they move money. Delete is out
+             by his own instruction on the invoice screen (2026-09-16). --}}
+        @if ($tab === 'invoices' && $count > 0)
+            <div class="ao-bt-with ao-inv-with">
+                <span>With Selected:</span>
+                <button type="button" class="ao-pg-btn" wire:click="markChosenInvoices('pending')">Mark Unpaid</button>
+                <button type="button" class="ao-pg-btn" wire:click="markChosenInvoices('cancelled')">Mark Cancelled</button>
+                <button type="button" class="ao-pg-btn" wire:click="duplicateChosenInvoices">Duplicate Invoice</button>
+            </div>
+        @endif
 
         {{-- The reference's "see all" out to the full list, under the rows. --}}
         <p class="ao-catalogue-count">

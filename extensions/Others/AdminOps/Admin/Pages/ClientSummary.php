@@ -310,6 +310,113 @@ class ClientSummary extends Page
         $this->redirect(EditInvoice::getUrl(['record' => $invoice->id]));
     }
 
+    /** Ticked rows in the reference's invoice list. */
+    public array $invoiceChosen = [];
+
+    /** Its Search panel, folded away until asked for. */
+    #[\Livewire\Attributes\Url]
+    public bool $invoiceSearch = false;
+
+    public function toggleInvoiceSearch(): void
+    {
+        $this->invoiceSearch = !$this->invoiceSearch;
+    }
+
+    /**
+     * The ticked invoices, narrowed to this client's own.
+     *
+     * The ids post from the browser, so they are re-checked here: a crafted id belonging to
+     * another client must not be actionable from this profile.
+     */
+    private function chosenInvoices()
+    {
+        $ids = array_filter(array_map('intval', $this->invoiceChosen));
+
+        if (!$ids) {
+            return collect();
+        }
+
+        return $this->customer->invoices()->whereKey($ids)->get();
+    }
+
+    /**
+     * The reference's With Selected bar.
+     *
+     * Paid is not offered among these: it is the consequence of money arriving, and marking
+     * an invoice paid in bulk would settle documents no payment covers. Add Payment on the
+     * invoice itself is how money is recorded. {@see EditInvoice}
+     */
+    public function markChosenInvoices(string $status): void
+    {
+        if (!in_array($status, ['pending', 'cancelled'], true)) {
+            return;
+        }
+
+        $invoices = $this->chosenInvoices();
+
+        if ($invoices->isEmpty()) {
+            Notification::make()->title('Nothing selected')
+                ->body('Tick the invoices first.')->warning()->send();
+
+            return;
+        }
+
+        // A paid invoice is left alone: unpaying one would contradict its transactions.
+        $changed = $invoices->reject(fn ($i) => $i->status === 'paid');
+
+        \App\Models\Invoice::whereKey($changed->pluck('id'))->update(['status' => $status]);
+
+        $this->invoiceChosen = [];
+
+        $skipped = $invoices->count() - $changed->count();
+
+        Notification::make()
+            ->title($changed->count() . ' ' . \Illuminate\Support\Str::plural('invoice', $changed->count())
+                . ' marked ' . ($status === 'pending' ? 'unpaid' : 'cancelled'))
+            ->body($skipped ? $skipped . ' already paid and left as they are.' : '')
+            ->success()->send();
+    }
+
+    /** Its Duplicate Invoice: the same lines, raised again as a fresh draft. */
+    public function duplicateChosenInvoices(): void
+    {
+        $invoices = $this->chosenInvoices()->load('items');
+
+        if ($invoices->isEmpty()) {
+            Notification::make()->title('Nothing selected')
+                ->body('Tick the invoices first.')->warning()->send();
+
+            return;
+        }
+
+        $made = [];
+
+        foreach ($invoices as $invoice) {
+            $copy = \App\Models\Invoice::create([
+                'user_id' => $this->customer->id,
+                'currency_code' => $invoice->currency_code,
+                'due_at' => now()->addDays(14),
+                'status' => 'draft',
+            ]);
+
+            foreach ($invoice->items as $line) {
+                $copy->items()->create([
+                    'price' => $line->price,
+                    'quantity' => $line->quantity,
+                    'description' => $line->description,
+                ]);
+            }
+
+            $made[] = '#' . ($copy->number ?: $copy->id);
+        }
+
+        $this->invoiceChosen = [];
+
+        Notification::make()->title('Duplicated as ' . implode(', ', $made))
+            ->body('Each copy is a draft, so the client cannot see it until you publish.')
+            ->success()->send();
+    }
+
     public function createAddFundsInvoice(): void
     {
         Gate::authorize('has-permission', 'admin.invoices.create');
