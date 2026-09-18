@@ -2157,6 +2157,140 @@ class ClientSummary extends Page
         return $this->paged($query);
     }
 
+    /**
+     * The reference adds a billable item *inside* this tab rather than on a screen of its
+     * own: clientsbillableitems.php keeps the client profile's header and tab strip and
+     * swaps the tab's body for the form (Leandro, 2026-09-17). Ours navigated away to the
+     * standalone Billable Items page, which lost the profile around it.
+     */
+    #[\Livewire\Attributes\Url]
+    public bool $addBillable = false;
+
+    /** Its Hours/Qty pair: the same number, labelled by which radio is on. */
+    #[\Livewire\Attributes\Url]
+    public string $billableUnit = 'hours';
+
+    public ?int $billableServiceId = null;
+
+    public string $billableDescription = '';
+
+    public string $billableQuantity = '0';
+
+    public string $billableAmount = '0.00';
+
+    public string $billableAction = \Paymenter\Extensions\Others\BillableItems\Models\BillableItem::ACTION_HOLD;
+
+    public string $billableRecurEvery = '';
+
+    public string $billableRecurTimes = '';
+
+    public string $billableDueDate = '';
+
+    public string $billableInvoiceCount = '0';
+
+    /** Open the reference's form in the tab body. */
+    public function openAddBillable(string $unit = 'qty'): void
+    {
+        $this->addBillable = true;
+        $this->billableUnit = $unit === 'hours' ? 'hours' : 'qty';
+    }
+
+    /** The same, from the Invoices/Billing panel, which has to switch tab as well. */
+    public function openAddBillableFromSummary(): void
+    {
+        $this->tab = 'billable';
+        $this->openAddBillable('qty');
+    }
+
+    public function cancelAddBillable(): void
+    {
+        $this->addBillable = false;
+        $this->resetBillableForm();
+    }
+
+    private function resetBillableForm(): void
+    {
+        $this->billableServiceId = null;
+        $this->billableDescription = '';
+        $this->billableQuantity = '0';
+        $this->billableAmount = '0.00';
+        $this->billableAction = \Paymenter\Extensions\Others\BillableItems\Models\BillableItem::ACTION_HOLD;
+        $this->billableRecurEvery = '';
+        $this->billableRecurTimes = '';
+        $this->billableDueDate = '';
+        $this->billableInvoiceCount = '0';
+    }
+
+    /** The reference's Save Changes on that form. */
+    public function saveBillable(): void
+    {
+        $item = \Paymenter\Extensions\Others\BillableItems\Models\BillableItem::class;
+
+        $this->validate([
+            'billableDescription' => 'required|string|max:255',
+            'billableQuantity' => 'required|numeric|min:0.01',
+            'billableAmount' => 'required|numeric|min:0',
+            'billableAction' => 'required|in:' . implode(',', [
+                $item::ACTION_HOLD, $item::ACTION_IMMEDIATELY, $item::ACTION_NEXT_INVOICE,
+            ]),
+            'billableRecurEvery' => 'nullable|in:week,month,quarter,year',
+            'billableDueDate' => 'nullable|date_format:m/d/Y',
+            'billableServiceId' => 'nullable|exists:services,id',
+        ], attributes: [
+            'billableDescription' => 'description',
+            'billableQuantity' => $this->billableUnit === 'hours' ? 'hours' : 'quantity',
+            'billableAmount' => 'amount',
+            'billableAction' => 'invoice action',
+        ]);
+
+        // A service must belong to this client — the select is filled from their own, but
+        // the id posts from the browser, so it is checked rather than trusted.
+        if ($this->billableServiceId
+            && !$this->customer->services()->whereKey($this->billableServiceId)->exists()) {
+            Notification::make()->title('That service is not this client\'s')->danger()->send();
+
+            return;
+        }
+
+        $item::create([
+            'user_id' => $this->customer->id,
+            'service_id' => $this->billableServiceId,
+            'description' => $this->billableDescription,
+            'quantity' => (float) $this->billableQuantity,
+            'amount' => (float) $this->billableAmount,
+            'currency_code' => config('settings.default_currency', 'USD'),
+            'invoice_action' => $this->billableAction,
+            'recur_every' => $this->billableRecurEvery ?: null,
+            'next_due_at' => $this->parseBillableDate($this->billableDueDate),
+            'admin_id' => Auth::id(),
+        ]);
+
+        $this->addBillable = false;
+        $this->resetBillableForm();
+
+        Notification::make()->title('Billable item added')->success()->send();
+    }
+
+    /** The form's date arrives as MM/DD/YYYY, as the reference writes it. */
+    private function parseBillableDate(string $value): ?string
+    {
+        if (trim($value) === '') {
+            return null;
+        }
+
+        try {
+            return \Carbon\Carbon::createFromFormat('m/d/Y', trim($value))->toDateString();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /** This client's services, for the form's Product/Service box. */
+    public function billableServices()
+    {
+        return $this->customer->services()->with('product')->get();
+    }
+
     /** Ticked rows in the reference's Uninvoiced Items table. */
     public array $billableChosen = [];
 

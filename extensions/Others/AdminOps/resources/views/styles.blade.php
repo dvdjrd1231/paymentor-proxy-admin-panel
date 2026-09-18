@@ -3566,6 +3566,14 @@
     }
     .ao-mu-tab.ao-bt-primary:hover { background: #286090; border-color: #204d74; color: #fff; }
 
+    /* --- Add Billable Item, drawn in the tab body --- */
+    .ao-of-xs { width: 4rem; }
+    .ao-anc-field.ao-bt-unit { display: flex; align-items: center; gap: 0.7rem; flex-wrap: nowrap; }
+    .ao-anc-field.ao-bt-unit > input { flex: 0 0 auto; }
+    .ao-anc-field.ao-bt-unit .ao-of-check { white-space: nowrap; }
+    .ao-bt-recur { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+    .ao-bt-save { display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.8rem; }
+
     /* --- Billable Items: the reference's two tables, waiting then billed --- */
     .ao-bt-head { margin: 0.6rem 0 0.4rem; }
     .ao-bt-total { font-size: 1.05rem; color: var(--wa-ink, #333); }

@@ -165,9 +165,11 @@
                         {{-- Add Billable Item sits above Manage Credits, as the reference
                              orders them (clientssummary.tpl lines 148-150). --}}
                         @if (class_exists(\Paymenter\Extensions\Others\BillableItems\Models\BillableItem::class))
-                            <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\BillableItemsList::getUrl(['adding' => true, 'for' => $user->id]) }}">
+                            {{-- Into this profile's own Billable Items tab with the form
+                                 open, as the reference does — not away to the global list. --}}
+                            <button type="button" class="ao-cp-link" wire:click="openAddBillableFromSummary">
                                 <x-filament::icon icon="ri-add-circle-fill" class="ao-cp-ic ao-cp-ic-add" /> Add Billable Item
-                            </a>
+                            </button>
                         @endif
                         <button type="button" class="ao-cp-link" wire:click="openMoney('credits')"
                             title="Move this account's balance by hand, up or down">

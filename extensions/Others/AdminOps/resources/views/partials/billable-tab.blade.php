@@ -1,3 +1,6 @@
+@if ($addBillable)
+    @include('adminops::partials.billable-add')
+@else
 {{-- The reference's Billable Items tab: what is still waiting to be billed, then what has
      already gone onto an invoice. It splits them because only the first can be acted on —
      an item already on an invoice cannot be invoiced again or quietly deleted. --}}
@@ -105,3 +108,4 @@
 @include('adminops::partials.records-pager', [
     'total' => $billed->count(), 'page' => 1, 'perPage' => max($billed->count(), 1),
 ])
+@endif
