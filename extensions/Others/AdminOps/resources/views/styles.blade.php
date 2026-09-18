@@ -3597,8 +3597,11 @@
 
     /* The reference's search panel sits above the list, framed like its other form tables. */
     .ao-inv-search { margin-bottom: 0.2rem; }
-    .ao-anc-field.ao-inv-range { display: flex; align-items: center; gap: 0.4rem; flex-wrap: nowrap; }
-    .ao-anc-field.ao-inv-range > i { font-style: normal; white-space: nowrap; }
+    /* The reference stacks From over To rather than running them along one line. */
+    .ao-anc-field.ao-inv-range { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+    .ao-anc-field.ao-inv-range > label { display: flex; align-items: center; gap: 0.4rem; }
+    .ao-anc-field.ao-inv-range i { font-style: normal; white-space: nowrap; min-width: 3rem; }
+    .ao-anc-row.ao-inv-total { align-items: stretch; }
     .ao-inv-search-go { margin: 0 0 1rem; }
 
     /* --- Add Billable Item, drawn in the tab body --- */

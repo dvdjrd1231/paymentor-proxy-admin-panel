@@ -348,7 +348,11 @@ class ClientSummary extends Page
         'dateRefunded' => '',
     ];
 
-    public function applyInvoiceFilter(): void
+    /**
+     * Any box changing narrows the list at once — the reference's panel carries no Search
+     * button because its boxes do the filtering themselves (Leandro, 2026-09-17).
+     */
+    public function updatedInvoiceFilter(): void
     {
         $this->page = 1;
     }
