@@ -5276,6 +5276,22 @@
     }
     .ao-tabs-more-list button:hover { background: #eff2f9; }
 
+    /* The tab being viewed reads as selected in the menu, and the caret itself shows as
+       active while that tab lives in there — otherwise nothing on the bar looks selected
+       (Leandro, 2026-09-19). */
+    .ao-tabs-more-list button.ao-on,
+    .ao-tabs-more-list button.ao-on:hover {
+        background: var(--wa-link, #337ab7);
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .ao-tabs-more-btn.ao-on {
+        background: #fff;
+        color: var(--wa-link, #337ab7);
+        font-weight: 700;
+    }
+
     .ao-tabs {
         display: flex;
         gap: 0.2rem;

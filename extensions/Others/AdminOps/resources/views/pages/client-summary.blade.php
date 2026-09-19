@@ -33,6 +33,7 @@
          Measured in the browser because only the browser knows how wide a label renders. --}}
     <div class="ao-tabsbar" x-data="{
             hidden: [],
+            current: '',
             fit() {
                 const strip = this.$refs.strip;
                 if (!strip) return;
@@ -40,6 +41,7 @@
                 const tabs = Array.from(strip.querySelectorAll('.ao-tab'));
                 tabs.forEach(t => t.classList.remove('ao-tab-hidden'));
                 this.hidden = [];
+                this.current = strip.querySelector('.ao-tab-active')?.dataset.tab ?? '';
 
                 // Room for the caret only once something is actually going to overflow.
                 const total = tabs.reduce((w, t) => w + t.offsetWidth, 0);
@@ -50,12 +52,17 @@
 
                 tabs.forEach(tab => {
                     used += tab.offsetWidth;
-                    // The tab in use is never hidden — it would look like nothing is selected.
-                    if (used > room && !tab.classList.contains('ao-tab-active')) {
+
+                    if (used > room) {
                         tab.classList.add('ao-tab-hidden');
                         this.hidden.push({ key: tab.dataset.tab, label: tab.textContent.trim() });
                     }
                 });
+            },
+            // True when the tab being viewed is one of the ones in the menu, so the caret
+            // itself can show as active — otherwise nothing on the bar looks selected.
+            currentIsHidden() {
+                return this.hidden.some(i => i.key === this.current);
             },
             init() {
                 this.$nextTick(() => this.fit());
@@ -78,12 +85,19 @@
 
         <div class="ao-tabs-more" x-show="hidden.length" x-cloak
             x-data="{ open: false }" x-on:click.outside="open = false">
-            <button type="button" class="ao-tabs-more-btn" x-on:click="open = !open"
+            {{-- fit() on open as well as on resize: switching tab re-renders the strip
+                 under Alpine, so the list has to be read again or it answers with what was
+                 overflowing before the switch (Leandro, 2026-09-19). --}}
+            <button type="button" class="ao-tabs-more-btn"
+                :class="currentIsHidden() ? 'ao-on' : ''"
+                x-on:click="fit(); open = !open"
                 :aria-expanded="open ? 'true' : 'false'" aria-label="More tabs">&#9662;</button>
             <ul class="ao-tabs-more-list" x-show="open" x-cloak>
                 <template x-for="item in hidden" :key="item.key">
                     <li>
                         <button type="button" x-text="item.label"
+                            :class="item.key === current ? 'ao-on' : ''"
+                            :aria-current="item.key === current ? 'true' : 'false'"
                             x-on:click="open = false; $wire.switchTab(item.key)"></button>
                     </li>
                 </template>
