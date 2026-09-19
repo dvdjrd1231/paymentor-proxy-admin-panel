@@ -100,7 +100,10 @@
                 <label class="ao-mu-jump">
                     Jump to Page:
                 </label>
-                <button type="button" class="ao-mu-toggle {{ $hideInactive ? 'ao-on' : '' }}"
+                <button type="button" class="ao-mu-toggle"
+                    x-data="{ on: {{ $hideInactive ? 'true' : 'false' }} }"
+                    :class="on ? 'ao-on' : ''"
+                    x-on:click="on = !on"
                     wire:click="toggleInactive">
                     <b class="ao-sw-on">ON</b>
                     <b class="ao-sw-lab">Hide Inactive Clients ({{ number_format($hiddenCount) }})</b>

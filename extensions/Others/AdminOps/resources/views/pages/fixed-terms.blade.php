@@ -49,7 +49,11 @@
             <span class="ao-mu-line-right">
                 {{-- Where the reference's own "Still running ×" filter chip sat — the
                      same default-on filter, our own pill. --}}
-                <button type="button" class="ao-mu-toggle {{ $openOnly ? 'ao-on' : '' }}" wire:click="toggleOpenOnly">
+                <button type="button" class="ao-mu-toggle"
+                    x-data="{ on: {{ $openOnly ? 'true' : 'false' }} }"
+                    :class="on ? 'ao-on' : ''"
+                    x-on:click="on = !on"
+                    wire:click="toggleOpenOnly">
                     <b class="ao-sw-on">ON</b>
                     <b class="ao-sw-lab">Still Running</b>
                     <b class="ao-sw-off">OFF</b>

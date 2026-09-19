@@ -953,7 +953,10 @@
                              same pill the lists already use for Hide Inactive
                              (Leandro, 2026-09-05: "Do it exactly like this"). --}}
                         <button type="button"
-                            class="ao-mu-toggle ao-cs-recalc {{ ($svc['recalculate'] ?? false) ? 'ao-on' : '' }}"
+                            class="ao-mu-toggle ao-cs-recalc"
+                            x-data="{ on: {{ ($svc['recalculate'] ?? false) ? 'true' : 'false' }} }"
+                            :class="on ? 'ao-on' : ''"
+                            x-on:click="on = !on"
                             wire:click="toggleRecalculate">
                             <b class="ao-sw-on">YES</b>
                             <b class="ao-sw-lab">Recalculate on Save</b>

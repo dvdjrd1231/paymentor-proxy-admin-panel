@@ -2305,6 +2305,10 @@
     /* Off: the blue word is pulled out past the left edge, leaving label then grey word. */
     .ao-mu-toggle:not(.ao-on) > .ao-sw-on { margin-inline-start: -2.7rem; }
 
+    /* The list behind it is still loading while the switch has already moved, so the
+       control dims rather than pretending nothing is happening. */
+    .ao-mu-toggle[wire\:loading] { opacity: 0.75; }
+
     @media (prefers-reduced-motion: reduce) {
         .ao-mu-toggle > b { transition: none; }
     }
