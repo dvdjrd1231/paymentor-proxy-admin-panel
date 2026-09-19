@@ -5215,6 +5215,67 @@
 
     /* The reference's tab strip: boxed buttons in a row, the active one white and joined to
        the content below it — not the underline style Filament favours. */
+    /* One row: what does not fit goes to the caret menu instead of onto a second line
+       (Leandro, issue #4). nowrap here, and the bar below holds the caret. */
+    .ao-tabsbar {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+        border-bottom: 1px solid var(--wa-panel-border, #ddd);
+        margin-bottom: 1rem;
+    }
+
+    .ao-tabsbar > .ao-tabs {
+        flex: 1 1 auto;
+        min-width: 0;
+        flex-wrap: nowrap;
+        overflow: hidden;
+        border-bottom: 0;
+        margin-bottom: 0;
+    }
+
+    .ao-tab-hidden { display: none !important; }
+
+    .ao-tabs-more { position: relative; flex: 0 0 auto; display: flex; align-items: stretch; }
+
+    .ao-tabs-more-btn {
+        padding: 0 0.7rem;
+        border: 1px solid var(--wa-panel-border, #ddd);
+        border-bottom: 0;
+        border-radius: 4px 4px 0 0;
+        background: #f0f0f0;
+        cursor: pointer;
+        color: var(--wa-text, #2b2b2b);
+    }
+    .ao-tabs-more-btn:hover { background: #e2e2e2; }
+
+    .ao-tabs-more-list {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        z-index: 40;
+        min-width: 11rem;
+        margin: 2px 0 0;
+        padding: 0.25rem 0;
+        list-style: none;
+        border: 1px solid #d0d0d0;
+        border-radius: 4px;
+        background: #fff;
+        box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+    }
+    .ao-tabs-more-list button {
+        display: block;
+        width: 100%;
+        padding: 0.4rem 0.9rem;
+        border: 0;
+        background: none;
+        cursor: pointer;
+        text-align: start;
+        font: inherit;
+        color: var(--wa-text, #2b2b2b);
+    }
+    .ao-tabs-more-list button:hover { background: #eff2f9; }
+
     .ao-tabs {
         display: flex;
         gap: 0.2rem;

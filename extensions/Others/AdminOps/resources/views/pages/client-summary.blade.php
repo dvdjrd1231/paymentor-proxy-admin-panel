@@ -28,17 +28,68 @@
 
     {{-- The tab bar. `wire:click` rather than links: the page is a Livewire component, so
          switching costs one round trip and one query instead of a full page load. --}}
-    <nav class="ao-tabs" role="tablist">
-        @foreach ($tabs as $key => $label)
-            <button type="button"
-                class="ao-tab {{ $tab === $key ? 'ao-tab-active' : '' }}"
-                role="tab"
-                aria-selected="{{ $tab === $key ? 'true' : 'false' }}"
-                wire:click="switchTab('{{ $key }}')">
-                {{ $label }}
-            </button>
-        @endforeach
-    </nav>
+    {{-- One row, always. What will not fit moves into the caret menu at the end, as the
+         reference does it — ours wrapped onto a second line instead (Leandro, issue #4).
+         Measured in the browser because only the browser knows how wide a label renders. --}}
+    <div class="ao-tabsbar" x-data="{
+            hidden: [],
+            fit() {
+                const strip = this.$refs.strip;
+                if (!strip) return;
+
+                const tabs = Array.from(strip.querySelectorAll('.ao-tab'));
+                tabs.forEach(t => t.classList.remove('ao-tab-hidden'));
+                this.hidden = [];
+
+                // Room for the caret only once something is actually going to overflow.
+                const total = tabs.reduce((w, t) => w + t.offsetWidth, 0);
+                if (total <= strip.clientWidth) return;
+
+                const room = strip.clientWidth - 44;
+                let used = 0;
+
+                tabs.forEach(tab => {
+                    used += tab.offsetWidth;
+                    // The tab in use is never hidden — it would look like nothing is selected.
+                    if (used > room && !tab.classList.contains('ao-tab-active')) {
+                        tab.classList.add('ao-tab-hidden');
+                        this.hidden.push({ key: tab.dataset.tab, label: tab.textContent.trim() });
+                    }
+                });
+            },
+            init() {
+                this.$nextTick(() => this.fit());
+                // Width is the only thing that changes the answer; the tab set never does.
+                new ResizeObserver(() => this.fit()).observe(this.$refs.strip);
+            },
+        }">
+        <nav class="ao-tabs" role="tablist" x-ref="strip">
+            @foreach ($tabs as $key => $label)
+                <button type="button"
+                    class="ao-tab {{ $tab === $key ? 'ao-tab-active' : '' }}"
+                    role="tab"
+                    data-tab="{{ $key }}"
+                    aria-selected="{{ $tab === $key ? 'true' : 'false' }}"
+                    wire:click="switchTab('{{ $key }}')">
+                    {{ $label }}
+                </button>
+            @endforeach
+        </nav>
+
+        <div class="ao-tabs-more" x-show="hidden.length" x-cloak
+            x-data="{ open: false }" x-on:click.outside="open = false">
+            <button type="button" class="ao-tabs-more-btn" x-on:click="open = !open"
+                :aria-expanded="open ? 'true' : 'false'" aria-label="More tabs">&#9662;</button>
+            <ul class="ao-tabs-more-list" x-show="open" x-cloak>
+                <template x-for="item in hidden" :key="item.key">
+                    <li>
+                        <button type="button" x-text="item.label"
+                            x-on:click="open = false; $wire.switchTab(item.key)"></button>
+                    </li>
+                </template>
+            </ul>
+        </div>
+    </div>
 
     <div class="ao-panel" style="display:flex;flex-direction:column;gap:1.5rem; margin-top: -51px;">
 
