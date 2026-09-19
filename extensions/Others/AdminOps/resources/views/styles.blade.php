@@ -2245,56 +2245,68 @@
         color: inherit;
     }
 
-    /* A switch that actually moves: the knob slides and the word swaps sides, as the
-       reference's does. It used to be a pill that only changed colour and label, which
-       reads as a badge rather than a control (Leandro, 2026-09-19).
+    /* The reference's switch: a strip of three panes — the word for on, the label, the
+       word for off — inside a box that only shows two of them. Toggling slides the strip,
+       so one word travels out of view while the other arrives (Leandro, 2026-09-19, with
+       both states side by side).
 
-       The markup is shared by six screens, so the whole thing is done here — <i> is the
-       track, its ::after is the knob. */
-    .ao-mu-toggle i {
-        position: relative;
+       The slide is a negative margin on whichever end pane is hidden, animated. That needs
+       no fixed overall width, so a label of any length still works — which matters, since
+       these read "Hide Inactive Clients (16)", "Still Running" and "Recalculate on Save".
+
+       Shared by five screens. */
+    .ao-mu-toggle {
+        display: inline-flex;
+        align-items: stretch;
+        overflow: hidden;
+        padding: 0;
+        border: 1px solid var(--wa-border, #ccc);
+        border-radius: 4px;
+        background: #fff;
+        cursor: pointer;
+        color: inherit;
+        line-height: 1;
+    }
+
+    .ao-mu-toggle > b {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         box-sizing: border-box;
-        width: 3.5rem;
-        height: 1.35rem;
-        /* Room for the word beside the knob, never under it. */
-        padding-inline: 0.4rem 1.45rem;
-        justify-content: flex-start;
-        border-radius: 999px;
-        background: #b6b6b6;
-        color: #fff;
-        font-style: normal;
-        font-size: 0.66rem;
+        padding: 0.3rem 0.6rem;
+        white-space: nowrap;
+        font-size: 0.72rem;
+        transition: margin 0.2s ease;
+    }
+
+    .ao-mu-toggle > .ao-sw-on,
+    .ao-mu-toggle > .ao-sw-off {
+        flex: 0 0 auto;
+        width: 2.7rem;
         font-weight: 700;
-        line-height: 1;
-        transition: background 0.15s ease;
+        color: #fff;
     }
 
-    .ao-mu-toggle i::after {
-        content: "";
-        position: absolute;
-        top: 2px;
-        left: 2px;
-        width: calc(1.35rem - 4px);
-        height: calc(1.35rem - 4px);
-        border-radius: 50%;
+    .ao-mu-toggle > .ao-sw-on { background: var(--wa-link, #337ab7); }
+    .ao-mu-toggle > .ao-sw-off { background: #b6b6b6; }
+
+    .ao-mu-toggle > .ao-sw-lab {
+        flex: 0 1 auto;
         background: #fff;
-        box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
-        transition: transform 0.15s ease;
+        color: var(--wa-text, #2b2b2b);
+        font-weight: 400;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    /* Off: the knob sits left and the word reads on the right. */
-    .ao-mu-toggle:not(.ao-on) i { padding-inline: 1.45rem 0.4rem; justify-content: flex-end; }
+    /* On: the label sits after the blue word, and "off" is pulled out past the right edge. */
+    .ao-mu-toggle.ao-on > .ao-sw-off { margin-inline-end: -2.7rem; }
 
-    /* On: the track colours and the knob travels to the far side. */
-    .ao-mu-toggle.ao-on i { background: var(--wa-link, #337ab7); }
-    .ao-mu-toggle.ao-on i::after { transform: translateX(2.15rem); }
+    /* Off: the blue word is pulled out past the left edge, leaving label then grey word. */
+    .ao-mu-toggle:not(.ao-on) > .ao-sw-on { margin-inline-start: -2.7rem; }
 
-    /* Someone who has asked for less motion gets the state without the slide. */
     @media (prefers-reduced-motion: reduce) {
-        .ao-mu-toggle i,
-        .ao-mu-toggle i::after { transition: none; }
+        .ao-mu-toggle > b { transition: none; }
     }
 
     .ao-mu-grid {

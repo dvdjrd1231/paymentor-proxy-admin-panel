@@ -955,8 +955,9 @@
                         <button type="button"
                             class="ao-mu-toggle ao-cs-recalc {{ ($svc['recalculate'] ?? false) ? 'ao-on' : '' }}"
                             wire:click="toggleRecalculate">
-                            <i>{{ ($svc['recalculate'] ?? false) ? 'YES' : 'NO' }}</i>
-                            Recalculate on Save
+                            <b class="ao-sw-on">YES</b>
+                            <b class="ao-sw-lab">Recalculate on Save</b>
+                            <b class="ao-sw-off">NO</b>
                         </button>
                     </span>
                 </div>

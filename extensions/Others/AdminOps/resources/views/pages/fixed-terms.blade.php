@@ -50,8 +50,9 @@
                 {{-- Where the reference's own "Still running ×" filter chip sat — the
                      same default-on filter, our own pill. --}}
                 <button type="button" class="ao-mu-toggle {{ $openOnly ? 'ao-on' : '' }}" wire:click="toggleOpenOnly">
-                    <i>{{ $openOnly ? 'ON' : 'OFF' }}</i>
-                    Still Running
+                    <b class="ao-sw-on">ON</b>
+                    <b class="ao-sw-lab">Still Running</b>
+                    <b class="ao-sw-off">OFF</b>
                 </button>
                 <label class="ao-mu-jump">
                     Jump to Page:

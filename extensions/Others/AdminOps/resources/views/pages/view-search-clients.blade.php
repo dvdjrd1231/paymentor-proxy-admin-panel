@@ -92,8 +92,9 @@
             <span class="ao-mu-line-right">
                 <button type="button" class="ao-mu-toggle {{ $hideInactive ? 'ao-on' : '' }}"
                     wire:click="toggleInactive">
-                    <i>{{ $hideInactive ? 'ON' : 'OFF' }}</i>
-                    Hide Inactive Clients ({{ number_format($hiddenCount) }})
+                    <b class="ao-sw-on">ON</b>
+                    <b class="ao-sw-lab">Hide Inactive Clients ({{ number_format($hiddenCount) }})</b>
+                    <b class="ao-sw-off">OFF</b>
                 </button>
                 <label class="ao-mu-jump">
                     Jump to Page:
