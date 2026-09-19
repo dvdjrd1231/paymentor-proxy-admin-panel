@@ -303,6 +303,66 @@ class ManageOrders extends Page
     }
 
     /**
+     * The reference's sortable columns.
+     *
+     * Its headers carry a caret that actually sorts; ours carried a painted-on one and a
+     * fixed `orderByDesc('id')` — the arrow implied a control that did nothing (issue #8).
+     *
+     * Four of these exist only in PHP: the order number is derived from the id, the total is
+     * an accessor over the services, and both status columns are read from the services and
+     * their invoices. Sorting those means assembling the rows first, which `paginated()`
+     * already does whenever a PHP-only filter is set.
+     */
+    public const SORTS = [
+        'id' => 'sql',
+        'onum' => 'php',
+        'date' => 'sql',
+        'client' => 'sql',
+        'method' => 'php',
+        'total' => 'php',
+        'pay' => 'php',
+        'status' => 'php',
+    ];
+
+    #[Url]
+    public string $sortBy = 'id';
+
+    #[Url]
+    public string $sortDir = 'desc';
+
+    /** Clicking a header sorts by it; clicking the one already sorted turns it around. */
+    public function sort(string $column): void
+    {
+        if (!array_key_exists($column, self::SORTS)) {
+            return;
+        }
+
+        if ($this->sortBy === $column) {
+            $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $column;
+            // A new column starts ascending, except the two that read most usefully newest
+            // first — which is how the reference opens them.
+            $this->sortDir = in_array($column, ['id', 'date'], true) ? 'desc' : 'asc';
+        }
+
+        $this->page = 1;
+    }
+
+    /** What one row sorts by, for the columns SQL cannot reach. */
+    private function sortValue(Order $order): mixed
+    {
+        return match ($this->sortBy) {
+            'onum' => (int) preg_replace('/\D/', '', static::numberOf($order)),
+            'total' => (float) $order->total,
+            'method' => static::paymentOf($order)['method'],
+            'pay' => static::paymentOf($order)['label'],
+            'status' => static::statusOf($order)[0],
+            default => $order->id,
+        };
+    }
+
+    /**
      * Order #, Amount and Payment Status exist only in PHP — the number is derived from the
      * id, the total is an accessor over services, and payment state reads the invoices — so
      * when any of them is set the SQL-filtered set is filtered here and paged by hand. The
@@ -310,7 +370,9 @@ class ManageOrders extends Page
      */
     private function paginated(): LengthAwarePaginator
     {
-        if ($this->onum === '' && $this->amount === '' && $this->pay === '') {
+        $sortedInPhp = (self::SORTS[$this->sortBy] ?? 'sql') === 'php';
+
+        if (!$sortedInPhp && $this->onum === '' && $this->amount === '' && $this->pay === '') {
             return $this->query()->paginate(self::PER_PAGE, page: $this->page);
         }
 
@@ -341,6 +403,12 @@ class ManageOrders extends Page
             })
             ->values();
 
+        if ($sortedInPhp) {
+            $all = $this->sortDir === 'asc'
+                ? $all->sortBy(fn (Order $order) => $this->sortValue($order), SORT_NATURAL | SORT_FLAG_CASE)->values()
+                : $all->sortByDesc(fn (Order $order) => $this->sortValue($order), SORT_NATURAL | SORT_FLAG_CASE)->values();
+        }
+
         return new LengthAwarePaginator(
             $all->forPage($this->page, self::PER_PAGE)->values(),
             $all->count(),
@@ -352,8 +420,21 @@ class ManageOrders extends Page
     private function query()
     {
         $query = Order::query()
-            ->with(['user', 'currency', 'services.product', 'services.invoices.transactions.gateway'])
-            ->orderByDesc('id');
+            ->with(['user', 'currency', 'services.product', 'services.invoices.transactions.gateway']);
+
+        $direction = $this->sortDir === 'asc' ? 'asc' : 'desc';
+
+        match ((self::SORTS[$this->sortBy] ?? 'sql') === 'sql' ? $this->sortBy : 'php') {
+            'date' => $query->orderBy('created_at', $direction)->orderBy('id', $direction),
+            // Sorting by the client's name needs their row, not the foreign key.
+            'client' => $query->orderBy(
+                User::select('first_name')->whereColumn('users.id', 'orders.user_id'),
+                $direction,
+            )->orderBy('id', $direction),
+            // A PHP-sorted column still needs a stable base order under it.
+            'php' => $query->orderByDesc('id'),
+            default => $query->orderBy('id', $direction),
+        };
 
         match ($this->status) {
             'pending' => $query->whereHas('services', fn ($q) => $q->where('status', 'pending')),

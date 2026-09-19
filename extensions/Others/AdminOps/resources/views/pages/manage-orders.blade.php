@@ -88,14 +88,23 @@
             <thead>
                 <tr>
                     <th class="ao-mu-check"><input type="checkbox" data-ao-check-all></th>
-                    <th>ID &#9662;</th>
-                    <th>Order #</th>
-                    <th>Date</th>
-                    <th>Client Name</th>
-                    <th>Payment Method</th>
-                    <th>Total</th>
-                    <th>Payment Status</th>
-                    <th>Status</th>
+                    {{-- The reference's headers sort. Ours carried a painted-on caret over a
+                         fixed order — the arrow implied a control that did nothing (#8). --}}
+                    @foreach ([
+                        'id' => 'ID', 'onum' => 'Order #', 'date' => 'Date',
+                        'client' => 'Client Name', 'method' => 'Payment Method',
+                        'total' => 'Total', 'pay' => 'Payment Status', 'status' => 'Status',
+                    ] as $key => $label)
+                        <th class="ao-mu-sortable {{ $sortBy === $key ? 'ao-mu-sorted' : '' }}">
+                            <button type="button" wire:click="sort('{{ $key }}')"
+                                title="Sort by {{ $label }}">
+                                {{ $label }}
+                                <span class="ao-mu-caret" aria-hidden="true">{!! $sortBy === $key
+                                    ? ($sortDir === 'asc' ? '&#9652;' : '&#9662;')
+                                    : '&#9662;' !!}</span>
+                            </button>
+                        </th>
+                    @endforeach
                     <th></th>
                 </tr>
             </thead>

@@ -2300,7 +2300,33 @@
     }
 
     /* WHMCS's .table-themed row hover is exactly #eff2f9. */
+    /* The reference bands its lists white / #f8f8f8 — Leandro: "notice the difference in the
+       color transition between white and gray" (issue #8). Ours had only a hover colour, so
+       the eye had nothing to track a row by. Declared before :hover so hover still wins. */
+    .ao-mu-grid tbody tr:nth-child(even) { background: #f8f8f8; }
+
     .ao-mu-grid tbody tr:hover { background: #eff2f9; }
+
+    /* A sortable header is a button filling the cell, with the reference's caret after it.
+       The caret only darkens on the column actually in use. */
+    .ao-mu-grid th.ao-mu-sortable { padding: 0; }
+    .ao-mu-grid th.ao-mu-sortable > button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        width: 100%;
+        padding: 0.55rem 0.6rem;
+        border: 0;
+        background: none;
+        color: inherit;
+        font: inherit;
+        font-weight: inherit;
+        cursor: pointer;
+        text-align: inherit;
+    }
+    .ao-mu-grid th.ao-mu-sortable > button:hover { background: rgba(255, 255, 255, 0.12); }
+    .ao-mu-caret { opacity: 0.35; font-size: 0.8em; }
+    .ao-mu-grid th.ao-mu-sorted .ao-mu-caret { opacity: 1; }
 
     .ao-mu-grid a {
         color: var(--wa-link, #337ab7);
