@@ -2245,17 +2245,57 @@
         color: inherit;
     }
 
+    /* A switch that actually moves: the knob slides and the word swaps sides, as the
+       reference's does. It used to be a pill that only changed colour and label, which
+       reads as a badge rather than a control (Leandro, 2026-09-19).
+
+       The markup is shared by six screens, so the whole thing is done here — <i> is the
+       track, its ::after is the knob. */
     .ao-mu-toggle i {
-        font-style: normal;
-        font-size: 0.66rem;
-        font-weight: 700;
-        padding: 0.1rem 0.45rem;
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        box-sizing: border-box;
+        width: 3.5rem;
+        height: 1.35rem;
+        /* Room for the word beside the knob, never under it. */
+        padding-inline: 0.4rem 1.45rem;
+        justify-content: flex-start;
         border-radius: 999px;
         background: #b6b6b6;
         color: #fff;
+        font-style: normal;
+        font-size: 0.66rem;
+        font-weight: 700;
+        line-height: 1;
+        transition: background 0.15s ease;
     }
 
+    .ao-mu-toggle i::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: calc(1.35rem - 4px);
+        height: calc(1.35rem - 4px);
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+        transition: transform 0.15s ease;
+    }
+
+    /* Off: the knob sits left and the word reads on the right. */
+    .ao-mu-toggle:not(.ao-on) i { padding-inline: 1.45rem 0.4rem; justify-content: flex-end; }
+
+    /* On: the track colours and the knob travels to the far side. */
     .ao-mu-toggle.ao-on i { background: var(--wa-link, #337ab7); }
+    .ao-mu-toggle.ao-on i::after { transform: translateX(2.15rem); }
+
+    /* Someone who has asked for less motion gets the state without the slide. */
+    @media (prefers-reduced-motion: reduce) {
+        .ao-mu-toggle i,
+        .ao-mu-toggle i::after { transition: none; }
+    }
 
     .ao-mu-grid {
         width: 100%;
