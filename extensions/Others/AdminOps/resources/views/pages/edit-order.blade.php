@@ -214,8 +214,8 @@
                     <td colspan="2"></td>
                     <td class="ao-eo-total-label">Total Due:</td>
                     <td class="ao-eo-total-value">${{ number_format((float) $order->total, 2) }} {{ $order->currency_code }}</td>
-                    {{-- The reference's bar ends with the amount; Status and Payment
-                         Status stay white beside it (Leandro, 2026-09-05). --}}
+                    {{-- The bar runs the full width. It ended at the amount until
+                         2026-09-18, leaving these two white; see .ao-eo-total-blank. --}}
                     <td colspan="2" class="ao-eo-total-blank"></td>
                 </tr>
             </tbody>
