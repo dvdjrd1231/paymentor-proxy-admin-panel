@@ -6624,7 +6624,20 @@
     .ao-eo-facts .ao-of-label { align-items: flex-start; }
 
     .ao-eo-total td { background: var(--wa-navy, #1a4d80); color: #fff; font-weight: 700; }
-    .ao-eo-total .ao-eo-total-blank { background: #fff; }
+    /* Leandro asked for these two to stay white beside the bar (2026-09-05), and they do.
+       They were a raw gap though — no border, no radius — so the navy read as cut off short
+       rather than deliberately ending at the amount (Jordan, 2026-09-18). Bordered like any
+       other empty cell, and carrying the grid's bottom-right radius, it reads as the table
+       finishing rather than the bar failing. */
+    .ao-eo-total .ao-eo-total-blank {
+        background: #fff;
+        border-top: 1px solid var(--wa-panel-border, #e4e7ea);
+        border-inline-end: 1px solid var(--wa-panel-border, #e4e7ea);
+        border-bottom: 1px solid var(--wa-panel-border, #e4e7ea);
+    }
+
+    .ao-eo-total .ao-eo-total-value { border-end-start-radius: 0; }
+    .ao-eo-total:last-child .ao-eo-total-blank { border-end-end-radius: var(--wa-radius, 6px); }
 
     .ao-eo-total .ao-eo-total-value { white-space: nowrap; }
 
