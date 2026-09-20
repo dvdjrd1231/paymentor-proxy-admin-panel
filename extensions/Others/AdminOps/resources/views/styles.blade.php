@@ -2638,11 +2638,24 @@
     .ao-eo .ao-eo-item,
     .ao-eo .ao-eo-item a { white-space: nowrap; }
 
-    /* The product name reads on one line rather than folding mid-phrase
-       (Jordan, 2026-09-20). Its "addon of …" line is a block of its own and keeps wrapping,
-       so a long parent name still fits. */
-    .ao-eo-desc { white-space: nowrap; }
+    /* The product name reads on one line, cut with an ellipsis rather than folding
+       mid-phrase or shoving the columns beside it into wrapping (Jordan, 2026-09-20).
+       The full text is on the cell's title, so nothing is lost — hovering shows it.
+
+       max-width is what makes the ellipsis work in a table: without a width to overflow,
+       the cell just grows and the text never truncates. It is a cap, not a fixed size — a
+       short name still uses only the room it needs. */
+    .ao-eo-desc {
+        max-width: 26rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
     .ao-eo-desc .ao-mu-sub { white-space: normal; }
+
+    /* Both state columns keep their word whole — "Terminated" was breaking across lines. */
+    .ao-eo-state { white-space: nowrap; }
 
     /* Its fact label columns run ~205px; ours were 161px, which is what pushed the
        values out of line with the reference's. */

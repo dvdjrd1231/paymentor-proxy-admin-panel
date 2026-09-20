@@ -152,8 +152,13 @@
                                 Product/Service
                             </a>
                         </td>
-                        <td class="ao-mu-left ao-eo-desc">
-                            {{ trim(($service->product?->category?->name ? $service->product->category->name . ' - ' : '') . ($service->product?->name ?? '—')) }}
+                        @php
+                            $description = trim(($service->product?->category?->name
+                                ? $service->product->category->name . ' - ' : '')
+                                . ($service->product?->name ?? '—'));
+                        @endphp
+                        <td class="ao-mu-left ao-eo-desc" title="{{ $description }}">
+                            {{ $description }}
                             {{-- The reference's second line: what this line item belongs to.
                                  An addon read as an ordinary product with nothing to tie it
                                  to its service (Leandro, 2026-09-12). --}}
@@ -163,8 +168,8 @@
                         </td>
                         <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::cycle($service) }}</td>
                         <td>${{ number_format((float) $service->price * max(1, (int) $service->quantity), 2) }} {{ $order->currency_code }}</td>
-                        <td>{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel((string) $service->status) }}</td>
-                        <td><span class="{{ $payClass }}">{{ $payLabel }}</span></td>
+                        <td class="ao-eo-state">{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ProductsServices::statusLabel((string) $service->status) }}</td>
+                        <td class="ao-eo-state"><span class="{{ $payClass }}">{{ $payLabel }}</span></td>
                     </tr>
 
                     {{-- The reference's provisioning row under each item: what happens when
