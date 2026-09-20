@@ -6549,7 +6549,7 @@
     }
 
     .ao-ps-st-active { background: #3c763d; }
-    .ao-ps-st-pending { background: #b8860b; }
+    .ao-ps-st-pending { background: #f89407; }
     .ao-ps-st-suspended { background: #8a6d3b; }
     .ao-ps-st-cancelled { background: #b52b27; }
     .ao-st-closed { color: #6b6b6b; }
