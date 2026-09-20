@@ -6548,7 +6548,7 @@
         background: var(--wa-muted, #6b6b6b);
     }
 
-    .ao-ps-st-active { background: #3c763d; }
+    .ao-ps-st-active { background: #47a647; }
     .ao-ps-st-pending { background: #f89407; }
     .ao-ps-st-suspended { background: #8a6d3b; }
     .ao-ps-st-cancelled { background: #b52b27; }
