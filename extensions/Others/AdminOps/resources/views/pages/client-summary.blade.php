@@ -236,10 +236,17 @@
                                 <x-filament::icon icon="ri-add-circle-fill" class="ao-cp-ic ao-cp-ic-add" /> Add Billable Item
                             </button>
                         @endif
-                        {{-- The reference's Credit Management is its own screen with the
-                             adjustment log on it, not a one-field dialog. --}}
+                        {{-- The reference opens Credit Management in a window of its own —
+                             `window.open(… 'width=800,height=350,scrollbars=yes')` in its
+                             clientssummary.tpl — not in the tab you came from
+                             (Leandro, 2026-09-20). A blocker only stops a popup the user did
+                             not ask for; this one is a click, so it opens. If one refuses
+                             anyway, window.open returns null and the href takes over. --}}
                         <a class="ao-cp-link"
-                            href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageCredits::getUrl(['client' => $user->id]) }}"
+                            href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageCredits::getUrl(['client' => $user->id, 'popup' => 1]) }}"
+                            x-on:click.prevent="window.open($el.href, 'ao-credits-{{ $user->id }}',
+                                'width=900,height=620,scrollbars=yes,resizable=yes')
+                                || (window.location = $el.href)"
                             title="Add to or take from this balance, with the reason recorded">
                             <x-filament::icon icon="ri-coins-fill" class="ao-cp-ic ao-cp-ic-coin" /> Manage Credits
                         </a>

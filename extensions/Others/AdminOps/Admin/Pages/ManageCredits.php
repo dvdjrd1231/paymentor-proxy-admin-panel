@@ -20,8 +20,10 @@ use Paymenter\Extensions\Others\AdminOps\Support\WhmcsNavigation;
  * was one Amount field in a modal — the money moved and nothing recorded why
  * (Leandro, 2026-09-20).
  *
- * The reference opens this in a second browser window. A page is the same thing without
- * the popup, which browsers block as often as not.
+ * Opened in a window of its own, as the reference opens it — its clientssummary.tpl calls
+ * `window.open(… 'width=800,height=350,scrollbars=yes')`. A blocker only stops a popup the
+ * user did not ask for, and this one is a click; where one refuses anyway, the link falls
+ * back to opening here.
  */
 class ManageCredits extends Page
 {
@@ -38,6 +40,13 @@ class ManageCredits extends Page
     /** '' | add | remove — which of its two forms is open. */
     #[Url]
     public string $action = '';
+
+    /**
+     * Opened in a window of its own, as the reference opens it. The page then closes that
+     * window rather than offering a way back into a tab it is not part of.
+     */
+    #[Url]
+    public bool $popup = false;
 
     public string $entryDate = '';
 

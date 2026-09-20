@@ -99,9 +99,19 @@
             </table>
 
             <div class="ao-pr-center ao-cr-close">
-                <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $who->id]) }}">
-                    Back to Client
-                </a>
+                @if ($popup)
+                    {{-- The reference's Close Window. window.close() only works on a window
+                         script opened, which this one was — and if it refuses, the link
+                         behind it still goes somewhere sensible. --}}
+                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $who->id]) }}"
+                        x-on:click.prevent="window.close(); setTimeout(() => window.location = $el.href, 150)">
+                        Close Window
+                    </a>
+                @else
+                    <a class="ao-pg-btn" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ClientSummary::getUrl(['record' => $who->id]) }}">
+                        Back to Client
+                    </a>
+                @endif
             </div>
         @endif
     </div>
