@@ -6,6 +6,7 @@ use App\Models\Credit;
 use App\Models\User;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Support\Enums\Width;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -62,6 +63,30 @@ class ManageCredits extends Page
     public function getTitle(): string
     {
         return 'Credit Management';
+    }
+
+    /**
+     * In its own window the panel's chrome is noise: the reference's popup is the screen
+     * and nothing else — no sidebar, no top bar, no footer (Leandro, 2026-09-20). Filament's
+     * simple layout is that, and is what its own login screen uses.
+     */
+    public function getLayout(): string
+    {
+        return $this->popup
+            ? 'filament-panels::components.layout.simple'
+            : parent::getLayout();
+    }
+
+    /** The log needs the width; the simple layout defaults to a narrow card. */
+    public function getMaxContentWidth(): Width|string|null
+    {
+        return $this->popup ? Width::FiveExtraLarge : parent::getMaxContentWidth();
+    }
+
+    /** Its own heading is in the page, so the layout must not print a second one. */
+    public function getHeading(): string
+    {
+        return $this->popup ? '' : parent::getHeading();
     }
 
     public function mount(): void

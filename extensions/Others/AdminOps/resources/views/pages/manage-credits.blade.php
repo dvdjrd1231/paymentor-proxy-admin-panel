@@ -9,7 +9,11 @@
         @if (! $who)
             <p class="ao-mu-none">Open this from a client profile.</p>
         @else
-            <h4 class="ao-bt-h">Credit Management</h4>
+            {{-- In a window of its own the layout prints no heading, so this is the only
+                 one; on the full page the layout's title serves and this stays hidden. --}}
+            @if ($popup)
+                <h4 class="ao-bt-h">Credit Management</h4>
+            @endif
 
             <p class="ao-cr-note">
                 You can manage a client's credit balance from here. Every credit adjustment,
