@@ -954,7 +954,8 @@
                              (Leandro, 2026-09-05: "Do it exactly like this"). --}}
                         <button type="button"
                             class="ao-mu-toggle ao-cs-recalc"
-                            x-data="{ on: {{ ($svc['recalculate'] ?? false) ? 'true' : 'false' }} }"
+                            x-data="{ on: !! $wire.svc?.recalculate }"
+                            x-effect="on = !! $wire.svc?.recalculate"
                             :class="on ? 'ao-on' : ''"
                             x-on:click="on = !on"
                             wire:click="toggleRecalculate">

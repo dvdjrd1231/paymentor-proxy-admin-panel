@@ -101,7 +101,8 @@
                     Jump to Page:
                 </label>
                 <button type="button" class="ao-mu-toggle"
-                    x-data="{ on: {{ $hideInactive ? 'true' : 'false' }} }"
+                    x-data="{ on: $wire.hideInactive }"
+                    x-effect="on = $wire.hideInactive"
                     :class="on ? 'ao-on' : ''"
                     x-on:click="on = !on"
                     wire:click="toggleInactive">

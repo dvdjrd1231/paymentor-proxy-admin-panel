@@ -50,7 +50,8 @@
                 {{-- Where the reference's own "Still running ×" filter chip sat — the
                      same default-on filter, our own pill. --}}
                 <button type="button" class="ao-mu-toggle"
-                    x-data="{ on: {{ $openOnly ? 'true' : 'false' }} }"
+                    x-data="{ on: $wire.openOnly }"
+                    x-effect="on = $wire.openOnly"
                     :class="on ? 'ao-on' : ''"
                     x-on:click="on = !on"
                     wire:click="toggleOpenOnly">
