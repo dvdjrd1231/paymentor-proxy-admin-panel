@@ -152,7 +152,7 @@
                                 Product/Service
                             </a>
                         </td>
-                        <td class="ao-mu-left">
+                        <td class="ao-mu-left ao-eo-desc">
                             {{ trim(($service->product?->category?->name ? $service->product->category->name . ' - ' : '') . ($service->product?->name ?? '—')) }}
                             {{-- The reference's second line: what this line item belongs to.
                                  An addon read as an ordinary product with nothing to tie it

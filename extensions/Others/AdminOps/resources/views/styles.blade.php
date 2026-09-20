@@ -2638,6 +2638,12 @@
     .ao-eo .ao-eo-item,
     .ao-eo .ao-eo-item a { white-space: nowrap; }
 
+    /* The product name reads on one line rather than folding mid-phrase
+       (Jordan, 2026-09-20). Its "addon of …" line is a block of its own and keeps wrapping,
+       so a long parent name still fits. */
+    .ao-eo-desc { white-space: nowrap; }
+    .ao-eo-desc .ao-mu-sub { white-space: normal; }
+
     /* Its fact label columns run ~205px; ours were 161px, which is what pushed the
        values out of line with the reference's. */
     .ao-eo-facts .ao-of-row-single { grid-template-columns: 12rem minmax(0, 1fr); }
