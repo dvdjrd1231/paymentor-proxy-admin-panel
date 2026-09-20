@@ -43,6 +43,16 @@ class ProductsServices extends Page
     #[Url]
     public string $client = '';
 
+    /**
+     * The reference's Domain filter.
+     *
+     * It was left out as "we do not sell domains" — but a service does carry one: Add New
+     * Order writes it as a `domain` property, and the order form asks for it. So the field
+     * is real, and matches nothing only while nothing has a domain set (Leandro, 2026-09-19).
+     */
+    #[Url]
+    public string $domain = '';
+
     #[Url]
     public string $status = '';
 
@@ -224,6 +234,13 @@ class ProductsServices extends Page
             $query->where('status', $this->status);
         } elseif ($hideInactive) {
             $query->whereIn('status', self::OPEN);
+        }
+
+        if (trim($this->domain) !== '') {
+            $needle = trim($this->domain);
+            $query->whereHas('properties', fn ($q) => $q
+                ->where('key', 'domain')
+                ->where('value', 'like', '%' . $needle . '%'));
         }
 
         if ($this->server !== '' && ctype_digit($this->server)) {

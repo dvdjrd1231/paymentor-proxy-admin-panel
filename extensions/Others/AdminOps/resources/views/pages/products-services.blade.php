@@ -65,9 +65,16 @@
                             <option value="cancelled">Terminated</option>
                         </select></span>
                     </div>
+                    {{-- The reference's Domain row, in its place above Client Name. A
+                         service's domain is a `domain` property, written by Add New Order. --}}
                     <div class="ao-of-row">
-                        {{-- The reference's Domain filter has no counterpart here: we do not
-                             sell domains, so Client Name moves up into its slot. --}}
+                        <label class="ao-of-label" for="ao-ps-domain">Domain</label>
+                        <span><input @nofill id="ao-ps-domain" class="ao-of-lg" type="text"
+                            wire:model="domain" placeholder="example.com"></span>
+                        <span class="ao-of-label"></span>
+                        <span></span>
+                    </div>
+                    <div class="ao-of-row">
                         <label class="ao-of-label" for="ao-ps-client">Client Name</label>
                         <span><input @nofill id="ao-ps-client" class="ao-of-lg" type="text"
                             wire:model="client" placeholder="Client name or email"></span>
