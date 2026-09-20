@@ -236,10 +236,13 @@
                                 <x-filament::icon icon="ri-add-circle-fill" class="ao-cp-ic ao-cp-ic-add" /> Add Billable Item
                             </button>
                         @endif
-                        <button type="button" class="ao-cp-link" wire:click="openMoney('credits')"
-                            title="Move this account's balance by hand, up or down">
+                        {{-- The reference's Credit Management is its own screen with the
+                             adjustment log on it, not a one-field dialog. --}}
+                        <a class="ao-cp-link"
+                            href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageCredits::getUrl(['client' => $user->id]) }}"
+                            title="Add to or take from this balance, with the reason recorded">
                             <x-filament::icon icon="ri-coins-fill" class="ao-cp-ic ao-cp-ic-coin" /> Manage Credits
-                        </button>
+                        </a>
                         @if (class_exists(\Paymenter\Extensions\Others\Quotes\Models\Quote::class))
                             <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\CreateQuote::getUrl(['for' => $user->id]) }}">
                                 <x-filament::icon icon="ri-file-text-fill" class="ao-cp-ic ao-cp-ic-doc" /> Create New Quote

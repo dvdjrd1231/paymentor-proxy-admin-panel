@@ -4020,6 +4020,18 @@
     .ao-valert-body ul { margin: 0; padding-left: 1.1rem; list-style: disc; }
     .ao-valert-body li { line-height: 1.5; }
 
+    /* --- Credit Management --- */
+    .ao-cr-note { margin: 0 0 0.8rem; max-width: 52rem; line-height: 1.5; }
+    .ao-cr-client { margin: 0 0 1rem; font-weight: 600; }
+    .ao-cr-actions { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; }
+    .ao-cr-sub { font-size: 1rem; font-weight: 600; margin: 0 0 0.5rem; }
+    .ao-cr-grid { margin-top: 1.2rem; }
+    .ao-cr-grid textarea, .ao-anc-row textarea { width: 100%; }
+    /* A removal reads as one: red and signed, against the green of an addition. */
+    .ao-cr-in { color: #3c763d; font-weight: 600; }
+    .ao-cr-out { color: #b52b27; font-weight: 600; }
+    .ao-cr-close { margin-top: 1rem; }
+
     /* --- Add Billable Item, drawn in the tab body --- */
     .ao-of-xs { width: 4rem; }
     .ao-anc-field.ao-bt-unit { display: flex; align-items: center; gap: 0.7rem; flex-wrap: nowrap; }
