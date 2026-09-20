@@ -862,19 +862,19 @@ class AdminOps extends Extension
         // The `+` sits between brand and menus; the utility icons after the search field.
         FilamentView::registerRenderHook(
             'panels::topbar.logo.after',
-            fn (): string => Blade::render('@include(\'adminops::quick-create\')'),
+            fn (): string => static::inPopup() ? '' : Blade::render('@include(\'adminops::quick-create\')'),
         );
 
         FilamentView::registerRenderHook(
             'panels::global-search.after',
-            fn (): string => Blade::render('@include(\'adminops::toolbar\')'),
+            fn (): string => static::inPopup() ? '' : Blade::render('@include(\'adminops::toolbar\')'),
         );
 
         // First child of `.fi-layout`, so the rail becomes the page's left column rather than
         // a second one beside Filament's own (which top navigation moves off-screen).
         FilamentView::registerRenderHook(
             'panels::layout.start',
-            fn (): string => Blade::render('@include(\'adminops::rail\')'),
+            fn (): string => static::inPopup() ? '' : Blade::render('@include(\'adminops::rail\')'),
         );
 
         // `body.end`, not `panels::footer`: that hook fires inside the content column, so the
@@ -882,7 +882,7 @@ class AdminOps extends Extension
         // page, whose layout is a centred column, it rendered as a short floating bar.
         FilamentView::registerRenderHook(
             'panels::body.end',
-            fn (): string => Blade::render('@include(\'adminops::footer\')'),
+            fn (): string => static::inPopup() ? '' : Blade::render('@include(\'adminops::footer\')'),
         );
 
         // Via `Filament::serving()` because the panel does not exist yet when extensions boot.
@@ -1034,4 +1034,16 @@ class AdminOps extends Extension
             config(['logging.channels.daily.permission' => 0666]);
         }
     }
+
+    /**
+     * A screen opened in a window of its own — the reference's Credit Management and the
+     * like. The panel's chrome does not belong there: no rail, no toolbar, no footer, just
+     * the screen (Leandro, 2026-09-20). Read from the request, because these hooks render
+     * before there is any page object to ask.
+     */
+    private static function inPopup(): bool
+    {
+        return request()->boolean('popup');
+    }
+
 }
