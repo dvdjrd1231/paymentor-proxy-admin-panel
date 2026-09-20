@@ -6531,11 +6531,27 @@
 
     /* Products/Services statuses read as coloured words, the same way the Invoices
        list states Paid / Unpaid / Overdue. */
-    .ao-ps-status { font-weight: 600; }
-    .ao-ps-st-active { color: #3c763d; }
-    .ao-ps-st-pending { color: #b8860b; }
-    .ao-ps-st-suspended { color: #8a6d3b; }
-    .ao-ps-st-cancelled { color: #b52b27; }
+    /* Status as a pill rather than coloured words: the colour each state already carried
+       becomes the fill, and the lettering goes white (Jordan, 2026-09-20). Shaped like
+       .ao-mu-status, which is how status reads everywhere else on the panel. */
+    .ao-ps-status {
+        display: inline-block;
+        min-width: 5.5rem;
+        padding: 0.15rem 0.65rem;
+        border-radius: var(--wa-radius, 6px);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        text-align: center;
+        color: #fff;
+        background: var(--wa-muted, #6b6b6b);
+    }
+
+    .ao-ps-st-active { background: #3c763d; }
+    .ao-ps-st-pending { background: #b8860b; }
+    .ao-ps-st-suspended { background: #8a6d3b; }
+    .ao-ps-st-cancelled { background: #b52b27; }
     .ao-st-closed { color: #6b6b6b; }
 
     .ao-st-operator {
