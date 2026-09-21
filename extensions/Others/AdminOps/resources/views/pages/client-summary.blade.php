@@ -244,9 +244,17 @@
                              anyway, window.open returns null and the href takes over. --}}
                         <a class="ao-cp-link"
                             href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageCredits::getUrl(['client' => $user->id, 'popup' => 1]) }}"
-                            x-on:click.prevent="window.open($el.href, 'ao-credits-{{ $user->id }}',
-                                'width=900,height=430,scrollbars=yes,resizable=yes')
-                                || (window.location = $el.href)"
+                            x-on:click.prevent="
+                                const w = window.open($el.href, 'ao-credits-{{ $user->id }}',
+                                    'width=900,height=430,scrollbars=yes,resizable=yes');
+                                if (w) { w.focus(); }
+                                else {
+                                    // Silently falling back to this tab looked like the popup
+                                    // had simply stopped working (Leandro, 2026-09-21). A
+                                    // blocked popup says so, then still opens the screen.
+                                    window.alert('Your browser blocked the popup. Allow pop-ups for this site to open Credit Management in its own window — opening here instead.');
+                                    window.location = $el.href;
+                                }"
                             title="Add to or take from this balance, with the reason recorded">
                             <x-filament::icon icon="ri-coins-fill" class="ao-cp-ic ao-cp-ic-coin" /> Manage Credits
                         </a>
