@@ -1,6 +1,27 @@
 {{-- WHMCS's Credit Management: the client and their balance, its note about log entries,
      the two coloured buttons, and the log itself. --}}
 <x-filament-panels::page>
+    @if ($popup)
+        {{-- Filament's simple layout is built for a sign-in box: a narrow card centred on
+             the page. In a window of its own the screen should fill it, as the reference's
+             does (Leandro, 2026-09-20). Scoped to the popup, so the ordinary page keeps the
+             panel's own spacing. --}}
+        <style>
+            .fi-simple-layout { padding: 0 !important; }
+            .fi-simple-main-ctn { width: 100% !important; max-width: none !important; }
+            .fi-simple-main {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 1.25rem 1.5rem !important;
+                border: 0 !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                background: transparent !important;
+            }
+        </style>
+    @endif
+
     <div class="ao-mu ao-cr">
         @include('adminops::partials.validation-alert')
 
