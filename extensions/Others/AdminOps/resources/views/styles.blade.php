@@ -4154,7 +4154,7 @@
     /* The reference's draft notice is an info panel, blue — ours inherited the amber of
        the banner it borrowed its markup from (Leandro, 2026-09-16). */
     /* The draft notice on Add Payment stays amber — it is a refusal, not information. */
-    .ao-cs-banner.ao-ei-draft-block { margin-top: 1rem; margin-bottom: 1rem; }
+    .ao-cs-banner.ao-ei-draft-block { margin-bottom: 1rem; }
 
     .ao-cs-banner.ao-ei-draft-note {
         margin-bottom: 1rem;
@@ -9284,6 +9284,7 @@
         display: flex;
         align-items: flex-start;
         gap: 0.7rem;
+        margin-top: 10px;
         margin-bottom: 1rem;
         padding: 0.8rem 1rem;
         border: 1px solid #faebcc;
