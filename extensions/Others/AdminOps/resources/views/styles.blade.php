@@ -9293,7 +9293,22 @@
         font-size: 0.9rem;
     }
 
-    .ao-cs-banner-ic { width: 1.3rem; height: 1.3rem; flex: none; }
+    /* The reference's is a solid amber disc with the i knocked out of it, not a thin
+       outline — it carries at a glance where the outline did not (Leandro, 2026-09-20). */
+    .ao-cs-banner-ic {
+        width: 1.45rem;
+        height: 1.45rem;
+        flex: none;
+        color: #f0ad4e;
+    }
+
+    /* Its heading reads lighter than the body text, in the same amber family. */
+    .ao-cs-banner > div > b {
+        display: block;
+        margin-bottom: 0.15rem;
+        color: #c09853;
+        font-weight: 700;
+    }
 
     /* The Files panel's rows: the name downloads, the × removes. */
     .ao-cs-file {

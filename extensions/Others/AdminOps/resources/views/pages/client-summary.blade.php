@@ -116,7 +116,7 @@
              it made as a link. --}}
         @if ($fundsInvoice)
             <div class="ao-cs-banner">
-                <x-filament::icon icon="ri-information-line" class="ao-cs-banner-ic" />
+                <x-filament::icon icon="ri-information-fill" class="ao-cs-banner-ic" />
                 <div>
                     <b>Create Add Funds Invoice</b>
                     <div>The add funds invoice was created successfully! -
