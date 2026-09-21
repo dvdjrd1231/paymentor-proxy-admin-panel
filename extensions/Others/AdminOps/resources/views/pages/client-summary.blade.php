@@ -245,7 +245,7 @@
                         <a class="ao-cp-link"
                             href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageCredits::getUrl(['client' => $user->id, 'popup' => 1]) }}"
                             x-on:click.prevent="window.open($el.href, 'ao-credits-{{ $user->id }}',
-                                'width=900,height=620,scrollbars=yes,resizable=yes')
+                                'width=900,height=430,scrollbars=yes,resizable=yes')
                                 || (window.location = $el.href)"
                             title="Add to or take from this balance, with the reason recorded">
                             <x-filament::icon icon="ri-coins-fill" class="ao-cp-ic ao-cp-ic-coin" /> Manage Credits

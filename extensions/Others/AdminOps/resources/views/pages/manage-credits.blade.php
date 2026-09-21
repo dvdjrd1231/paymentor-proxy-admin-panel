@@ -7,8 +7,22 @@
              does (Leandro, 2026-09-20). Scoped to the popup, so the ordinary page keeps the
              panel's own spacing. --}}
         <style>
-            .fi-simple-layout { padding: 0 !important; }
-            .fi-simple-main-ctn { width: 100% !important; max-width: none !important; }
+            /* The layout centres its card in the viewport, which in a short window leaves a
+               band of empty space above the content and pushes it down the screen
+               (Leandro, 2026-09-21). In a popup it should start at the top. */
+            .fi-simple-layout {
+                padding: 0 !important;
+                display: block !important;
+                min-height: 0 !important;
+            }
+            .fi-simple-main-ctn {
+                width: 100% !important;
+                max-width: none !important;
+                display: block !important;
+                min-height: 0 !important;
+                align-items: flex-start !important;
+                justify-content: flex-start !important;
+            }
             .fi-simple-main {
                 width: 100% !important;
                 max-width: none !important;
