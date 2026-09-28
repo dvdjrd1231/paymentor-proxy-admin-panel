@@ -7498,6 +7498,14 @@
     .ao-cp-body .ao-cp-link .ao-cp-ic.ao-cp-ic-add { color: #5cb85c; }
     .ao-cp-body .ao-cp-link .ao-cp-ic.ao-cp-ic-coin { color: #e0a800; }
 
+    /* The reference's orders.png is a plain trolley; ordersadd.png is the same trolley with
+       a green plus on it. One glyph, two colours, so the pair reads as a pair (issue #53). */
+    .ao-cp-body .ao-cp-link .ao-cp-ic.ao-cp-ic-cart { color: #5b6b7a; }
+    .ao-cp-body .ao-cp-link .ao-cp-ic.ao-cp-ic-cartadd { color: #5cb85c; }
+
+    /* clients.png is a group of people, not a merge symbol. */
+    .ao-cp-body .ao-cp-link .ao-cp-ic.ao-cp-ic-people { color: #337ab7; }
+
     .ao-cp-link.ao-cp-danger .ao-cp-ic,
     .ao-mo-delete .ao-mu-cell-icon,
     .ao-mu-icon-red { color: #d9534f; }
