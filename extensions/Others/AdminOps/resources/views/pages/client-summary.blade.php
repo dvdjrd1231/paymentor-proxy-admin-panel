@@ -311,14 +311,10 @@
                              Manage Orders' free-text search takes the client's email just
                              as well as a dedicated filter would. --}}
                         <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageOrders::getUrl(['q' => $user->email]) }}">
-                            <x-filament::icon icon="ri-shopping-cart-2-fill" class="ao-cp-ic ao-cp-ic-cart" /> View Orders
+                            <i class="ao-cp-png ao-cp-png-cart" aria-hidden="true"></i> View Orders
                         </a>
                         <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\AddNewOrder::getUrl() }}">
-                            {{-- The reference's ordersadd.png is this same trolley carrying a
-                                 green plus. Remix has no cart-with-plus, so the trolley keeps
-                                 the pairing with View Orders and the green carries the "add"
-                                 (Leandro, issue #53). --}}
-                            <x-filament::icon icon="ri-shopping-cart-2-fill" class="ao-cp-ic ao-cp-ic-cartadd" /> Add New Order
+                            <i class="ao-cp-png ao-cp-png-cartadd" aria-hidden="true"></i> Add New Order
                         </a>
                     </div>
                 </div>
@@ -388,10 +384,8 @@
                         </a>
                         <button type="button" class="ao-cp-link" wire:click="$set('money', 'merge')"
                             title="Move everything this account holds to another, and close this one">
-                            {{-- The reference uses clients.png here — a group of people. A
-                                 git-merge glyph named the mechanism rather than the thing
-                                 being merged (Leandro, issue #53). --}}
-                            <x-filament::icon icon="ri-group-fill" class="ao-cp-ic ao-cp-ic-people" /> Merge Clients Accounts
+                            {{-- The reference's clients.png itself, inlined — see .ao-cp-png. --}}
+                            <i class="ao-cp-png ao-cp-png-people" aria-hidden="true"></i> Merge Clients Accounts
                         </button>
                         {{-- The reference's Close Client Account, made real. Paymenter has
                              no status column on a user, so closing is this extension's own

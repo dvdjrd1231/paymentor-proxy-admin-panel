@@ -7498,13 +7498,27 @@
     .ao-cp-body .ao-cp-link .ao-cp-ic.ao-cp-ic-add { color: #5cb85c; }
     .ao-cp-body .ao-cp-link .ao-cp-ic.ao-cp-ic-coin { color: #e0a800; }
 
-    /* The reference's orders.png is a plain trolley; ordersadd.png is the same trolley with
-       a green plus on it. One glyph, two colours, so the pair reads as a pair (issue #53). */
-    .ao-cp-body .ao-cp-link .ao-cp-ic.ao-cp-ic-cart { color: #5b6b7a; }
-    .ao-cp-body .ao-cp-link .ao-cp-ic.ao-cp-ic-cartadd { color: #5cb85c; }
+    /* The reference's own icon files, inlined.
+       Remix has no cart-with-plus and its group glyph is not the reference's, so these three
+       are WHMCS's actual 16px PNGs rather than a near-match from an icon set
+       (Leandro, issue #53: "just use same icon exactly"). Base64 because they total under
+       2 KB — cheaper than three requests, and they version with the extension. */
+    .ao-cp-png {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        flex: none;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 16px 16px;
+    }
 
-    /* clients.png is a group of people, not a merge symbol. */
-    .ao-cp-body .ao-cp-link .ao-cp-ic.ao-cp-ic-people { color: #337ab7; }
+    .ao-cp-png-people { background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAKDSURBVDjLjdFNTNJxHAZw69CWHjp16O2AZB3S1ovOObaI8NBYuuZAhqjIQkzJoSIZBmSCpVuK/sE/WimU6N9SDM0R66IHbabie1hrg0MK3Zo5a8vwidgym8w8PKffvp89e35RAKJ2ipp7WDxvjltZ6jwCr5W2bpHHtqUnx+77877jsZxzlO3roAWXuw5ha1pl9MZdAW2ig8RyXyL8rnx8G6uH387AMnUMC2b6l10BJPdAfWDGhZVREuszT7D6hsTStBNDurO+XQEZnEypx1a28XW2F8HFPqwtOBAYJlCde9EeEZCy4sTN4ksrRA4LZB57vZCfMElUyH4E7Ap86r+LwIAGIy03cDr/lDNJGR/zDyBiHGc3i1ODjUIWtqbdIIexVY86kwZ3HijR/86GmqFqJGhPWs8oTkRvAgb+uZGHhVfRV3UNni41OhU8EDlstBSkwjKjhnmqAg3uUtS6y9Dzvg0ljmKkFCaRm4CJT+/5OERtG4yqZMEwdQt1biV0EyW4PVEE1dsiiMk8eMn0/w9Wp+PCNK1CQ6iBYeommkIpH5Qhy5AF/6Mrf4G955tUJlXxtsHieeWQ2LJxvVuAAkoASUcmLugZPqW0qsprEQjDx3sY3ZIMhXt1+DNw77kdmnYKSsKKx+PfoTQtYX9KtzWG2Rod6aujaJwWHk8+uDawGITeA+SPA7nDQOYgwKcAYhQQajyIY9eQEYE5feLPyV4jFC8CELkAkWMDQmoDPGsQaWYgzRjEU8vL8GARAV8T099bUwqBdgzS14D4VaiBA8gZALJ/t6j1Qqu4Hx4sIvChoyDFWZ1RmcyzORJLJsDSzoUyD5Z6FsxKN+iXn/mM5ZLwYJGAX0F/sgCQt3xBAAAAAElFTkSuQmCC'); }
+
+    .ao-cp-png-cart { background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAE3SURBVCjPhZFfK4NxGIZ/R458Dz7B7wv4Go5WpJW8819mSw3bos202DsTNpT3FTbCRs0YkYPFasvKJhw5kpVEu5y8W0uZ7sPnup+e+34EorH+HIRZQsXfLtKkOSPJCXEOiLGNxgarpPniGW9WnPPN5y+9E3p5I4+n6DaLFHmeuOSRFEUSFNgjj04WDVcbQiCOuWBfnrIlE0RkjKDU8ck1VBytCIE45JYkD8QpECOHTpYIGVzYmo0UO5Q5IiyjqFLDKyNMyUVs1GJq1mvuiZJjkzvCZAhyw3ClrocVQiwwhwc3E4xjZ5f+SoOihpr66Hk1gOWWYGAeHzM4cWBnlEF6QZjLBqBaEbPKdMmpVP0WpbtkVjo/DMBv9aJzxTo2RhjAQoA0fkyFuhsmGWestqFL6cDEP9+s6gcdbFPqiEGjeAAAAABJRU5ErkJggg=='); }
+
+    .ao-cp-png-cartadd { background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAJZSURBVDjLpVJda5JhGPYH9Ac66bSdFHTydtDhIAiCiA6CEbGiL1bUTgaO9pHk1+y11ymyNT/wYypMxzanqa8Km9PJxg5EJcWBJq7OzUHIRlfP/VQyKWLRCzcP78113dd1X8+jAKD4n/pngtfrhdPpxMLCAqxW6x1FLpcD1dbWFjY2NpBOpyHLMmKxGNbX17GysoJgMIhAIACPx8OxR0dHODg4gMlkKiuy2SyOj4/R7Xb/Wp1OBw6H41O73Ua1WoUkSQ2DwTCiyGQyvNFqtZDP59FsNkG9RqOBZDKJ/f19RCIRjgmFQiiXy9zRzMzMYC+DVCqF7e1tRKNRYXNzE8vLywKRFxcXBVrDZrMJRDabzYLP5+P7q9Xqgd6AeDyOYrHIM6jX6zwDUiZypVLpKbOBKBQKpI6pqakzfbewurqKw8NDJBIJsKSFcDhMSgLZZWEJRNbpdILdbicyfrtGBpzY3d1FrVYDkUl5aWkJpVKJBnJltgr29vagVCq//fEduN1uShrz8/OwWCyUNFjS0Gg0UBqe44VlCI/e3sDQ60FcU16cOPVDeiLdfKUK3kOkbEXhswwpOYLb0gVcfnpW5ACXy3We2Xs3NzdHScNoNEKv11PSmJ6exl3dVayVTFj7YKbdIaYeQko9pgFf+QAWFrczOzs7KoriR0YePeng+stLeF+24+QXLlppwA8Ae9MTLGl+XTs7O/D7/Tzp8fFxjI2N4cqzc3gj34dOHuZkXWK438Gv0mq1UKlUmJyc7HPAgOpb4gCM8gOuTCf99zI4TTGwntUXsv3z1FP/O6UL4ZoSeea0AAAAAElFTkSuQmCC'); }
+
 
     .ao-cp-link.ao-cp-danger .ao-cp-ic,
     .ao-mo-delete .ao-mu-cell-icon,
