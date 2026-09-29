@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Livewire\Attributes\Url;
 use Paymenter\Extensions\Others\AdminOps\Models\ClientNote;
@@ -188,6 +189,14 @@ class ClientSummary extends Page
 
     public bool $associating = false;
 
+    /**
+     * What staff have typed. The reference searches as you type — "Start Typing to Search
+     * Users" — across every user, and takes an email address it does not recognise
+     * (Leandro, 2026-09-23: the picker was empty and would not submit).
+     */
+    public string $associateSearch = '';
+
+    /** The chosen match: `contact:<id>`, `user:<id>`, or '' while only an email is typed. */
     public string $associateContact = '';
 
     /** @var array<int, string> */
@@ -2557,33 +2566,139 @@ class ClientSummary extends Page
     // ── Users ───────────────────────────────────────────────────────────────────
 
     /**
-     * The reference's Associate User: promote a contact on this account to a sub-account
-     * with its own permissions.
+     * Who the typed text matches, for the reference's type-to-search picker.
+     *
+     * It searches every user, not only this account's contacts, so staff are never left with
+     * an empty list on an account that has no spare contact to promote. Contacts on this
+     * account come first because promoting one is the common case.
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    public function associateMatches(): array
+    {
+        $term = trim($this->associateSearch);
+
+        if (mb_strlen($term) < 2) {
+            return [];
+        }
+
+        $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $term) . '%';
+        $out = [];
+
+        if ($this->hasContacts()) {
+            $contacts = Contact::where('user_id', $this->customer->id)
+                ->where('is_sub_account', false)
+                ->where(fn ($q) => $q->where('first_name', 'like', $like)
+                    ->orWhere('last_name', 'like', $like)->orWhere('email', 'like', $like))
+                ->orderBy('first_name')->limit(10)->get();
+
+            foreach ($contacts as $row) {
+                $out[] = ['value' => 'contact:' . $row->id, 'label' => $row->name . ' - ' . $row->email];
+            }
+        }
+
+        // Everyone else on the system. The account's owner is skipped — they already have it.
+        $users = User::where('id', '!=', $this->customer->id)
+            ->where(fn ($q) => $q->where('first_name', 'like', $like)
+                ->orWhere('last_name', 'like', $like)->orWhere('email', 'like', $like))
+            ->orderBy('first_name')->limit(10)->get();
+
+        foreach ($users as $row) {
+            $out[] = [
+                'value' => 'user:' . $row->id,
+                'label' => trim($row->first_name . ' ' . $row->last_name) . ' - ' . $row->email,
+            ];
+        }
+
+        return $out;
+    }
+
+    /** Whether what is typed is an email address we could take on its own. */
+    public function associateIsNewEmail(): bool
+    {
+        return $this->associateContact === ''
+            && filter_var(trim($this->associateSearch), FILTER_VALIDATE_EMAIL) !== false;
+    }
+
+    /**
+     * The reference's Associate or Invite User.
+     *
+     * It takes a user picked from the search or an email address typed in full, and grants
+     * that person sign-in access to this account with the permissions ticked. Where ours had
+     * only a list of this account's own contacts, an account with none offered nothing to
+     * choose and refused to submit (Leandro, 2026-09-23).
+     *
+     * A person who is not already a contact here becomes one, since a sub-account in this
+     * deployment *is* a contact with `is_sub_account` set. The reference would email an
+     * invitation for an unknown address and wait for it to be accepted; there is no invite
+     * flow here, so access is granted directly and the notice says so.
      */
     public function associate(): void
     {
         abort_unless($this->hasContacts(), 404);
 
-        $this->validate(
-            ['associateContact' => 'required|integer'],
-            attributes: ['associateContact' => 'contact'],
-        );
+        $email = trim($this->associateSearch);
 
-        $row = Contact::find((int) $this->associateContact);
-
-        if (!$row || $row->user_id !== $this->customer->id) {
-            abort(403);
-        }
-
-        $row->update([
-            'is_sub_account' => true,
-            'permissions' => array_values(array_intersect($this->associatePermissions, Contact::PERMISSIONS)),
+        $this->validate([
+            // One or the other: a match from the list, or an address typed in full.
+            'associateContact' => [
+                'nullable', 'string',
+                function ($attribute, $value, $fail) use ($email): void {
+                    if (!$value && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                        $fail('Select an existing user or enter an email address.');
+                    }
+                },
+            ],
+            // The reference: "At least one permission is required".
+            'associatePermissions' => 'required|array|min:1',
+        ], [
+            'associatePermissions.required' => 'At least one permission is required.',
+            'associatePermissions.min' => 'At least one permission is required.',
         ]);
 
-        $this->reset(['associating', 'associateContact', 'associatePermissions']);
+        $permissions = array_values(array_intersect($this->associatePermissions, Contact::PERMISSIONS));
+        [$kind, $id] = array_pad(explode(':', $this->associateContact, 2), 2, null);
 
-        Notification::make()->title('User associated')
-            ->body($row->name . ' can now sign in to this account.')->success()->send();
+        if ($kind === 'contact') {
+            $row = Contact::find((int) $id);
+
+            if (!$row || $row->user_id !== $this->customer->id) {
+                abort(403);
+            }
+
+            $row->update(['is_sub_account' => true, 'permissions' => $permissions]);
+        } else {
+            // A user from elsewhere, or an address typed in full: their details seed a
+            // contact on this account, which is what carries the access.
+            $source = $kind === 'user' ? User::find((int) $id) : null;
+
+            if ($kind === 'user' && !$source) {
+                abort(404);
+            }
+
+            $address = $source?->email ?? $email;
+
+            if (Contact::where('user_id', $this->customer->id)->where('email', $address)->exists()) {
+                $this->addError('associateContact', 'User is already associated with client.');
+
+                return;
+            }
+
+            $row = Contact::create([
+                'user_id' => $this->customer->id,
+                'first_name' => $source?->first_name ?: Str::before($address, '@'),
+                'last_name' => $source?->last_name ?: '',
+                'email' => $address,
+                'is_sub_account' => true,
+                'permissions' => $permissions,
+            ]);
+        }
+
+        $this->reset(['associating', 'associateSearch', 'associateContact', 'associatePermissions']);
+
+        Notification::make()->title('User successfully associated to client')
+            ->body(trim($row->name ?: $row->email) . ' can now sign in to this account.')
+            ->success()->send();
     }
 
     /** The reference's Remove: the person stays a contact, the sign-in goes. */

@@ -9625,4 +9625,31 @@
        wrapped to one letter per line. */
     .ao-ei-withcell > select { flex: 0 0 auto; }
     .ao-ei-withcell > .ao-eo-total-label { flex: 0 0 auto; white-space: nowrap; }
+    /* Associate User's type-to-search picker. The matches sit in normal flow rather than
+       floating over the dialog, so no ancestor's overflow can clip them. */
+    .ao-au-pick { position: relative; }
+    .ao-au-list {
+        display: block;
+        margin-top: 0.25rem;
+        max-height: 11rem;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        background: #fff;
+    }
+    .ao-au-opt {
+        display: block;
+        width: 100%;
+        padding: 0.35rem 0.6rem;
+        border: 0;
+        border-bottom: 1px solid #eee;
+        background: #fff;
+        text-align: start;
+        font-size: 0.8125rem;
+        color: #333;
+        cursor: pointer;
+    }
+    .ao-au-opt:last-child { border-bottom: 0; }
+    .ao-au-opt:hover { background: #eff2f9; }
+    .ao-au-opt.ao-on { background: #337ab7; color: #fff; }
 </style>

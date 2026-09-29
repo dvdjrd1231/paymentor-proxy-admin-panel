@@ -68,19 +68,38 @@
                 <button type="button" wire:click="$set('associating', false)" aria-label="Close">&times;</button>
             </div>
             <div class="ao-mud-text">
-                <label class="ao-mud-field">
+                {{-- The reference searches as you type across every user — "Start Typing to
+                     Search Users" — and takes an email address it does not recognise. A
+                     dropdown of this account's own contacts left staff with nothing to pick
+                     whenever the account had none (Leandro, 2026-09-23). --}}
+                <label class="ao-mud-field ao-au-pick">
                     <span>Select User</span>
-                    <select wire:model="associateContact">
-                        <option value="">Choose a contact on this account</option>
-                        @foreach ($rows->where('is_sub_account', false) as $row)
-                            <option value="{{ $row->id }}">{{ $row->name }} - {{ $row->email }}</option>
-                        @endforeach
-                    </select>
+                    <input type="text" autocomplete="off" placeholder="Start typing to search users"
+                        wire:model.live.debounce.300ms="associateSearch">
+                    <i class="ao-anc-hint">Select an existing user or enter an email address.</i>
+
+                    @php ($matches = $this->associateMatches())
+
+                    @if ($matches)
+                        <span class="ao-au-list">
+                            @foreach ($matches as $match)
+                                <button type="button"
+                                    class="ao-au-opt @if ($associateContact === $match['value']) ao-on @endif"
+                                    wire:click="$set('associateContact', '{{ $match['value'] }}')">
+                                    {{ $match['label'] }}
+                                </button>
+                            @endforeach
+                        </span>
+                    @endif
                 </label>
-                @if ($rows->where('is_sub_account', false)->isEmpty())
+
+                @if ($this->associateIsNewEmail())
+                    {{-- The reference would email an invitation here and wait for it to be
+                         accepted; there is no invite flow in this deployment, so the access
+                         is granted straight away and this says so. --}}
                     <p class="ao-gs-empty">
-                        Everyone on this account already has access, or there are no contacts yet.
-                        Add one on the Contacts tab first.
+                        No existing user matches <b>{{ trim($associateSearch) }}</b>.
+                        Saving adds them to this account with the permissions below.
                     </p>
                 @endif
 
@@ -117,6 +136,7 @@
                 </div>
 
                 @error('associateContact') <p class="ao-anc-errors">{{ $message }}</p> @enderror
+                @error('associatePermissions') <p class="ao-anc-errors">{{ $message }}</p> @enderror
             </div>
             <div class="ao-mud-foot ao-mud-foot-only-right">
                 <span class="ao-mud-foot-right">
