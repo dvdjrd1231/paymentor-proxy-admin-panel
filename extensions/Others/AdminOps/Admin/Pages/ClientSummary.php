@@ -2563,6 +2563,45 @@ class ClientSummary extends Page
         Notification::make()->title('Contact deleted')->success()->send();
     }
 
+    // ── Login as Owner ──────────────────────────────────────────────────────────
+
+    /**
+     * The reference's second Login as Owner link, the one that opens a window of its own.
+     *
+     * Impersonation is a session flag rather than a URL, so the window cannot simply be a
+     * link — the flag is set here and the window opened afterwards. The admin panel stays
+     * where it is; {@see Support\EndImpersonationInAdmin} keeps its own requests from being
+     * caught by the flag this sets.
+     */
+    public function impersonateInNewWindow(): void
+    {
+        abort_unless(
+            Auth::user()?->hasPermission('admin.users.impersonate')
+                && Auth::id() !== $this->customer->id,
+            403,
+        );
+
+        session()->put('impersonating', $this->customer->id);
+
+        $this->js(<<<'JS'
+            const opened = window.open('/dashboard', '_blank');
+
+            if (!opened) {
+                $wire.call('newWindowBlocked');
+            }
+        JS);
+    }
+
+    /** Say so rather than leaving the click looking like it did nothing. */
+    public function newWindowBlocked(): void
+    {
+        session()->forget('impersonating');
+
+        Notification::make()->title('The window was blocked')
+            ->body('Allow popups for this site, or use Login as Owner to stay in this tab.')
+            ->warning()->send();
+    }
+
     // ── Users ───────────────────────────────────────────────────────────────────
 
     /**

@@ -9652,4 +9652,8 @@
     .ao-au-opt:last-child { border-bottom: 0; }
     .ao-au-opt:hover { background: #eff2f9; }
     .ao-au-opt.ao-on { background: #337ab7; color: #fff; }
+
+    /* Login as Owner pairs a text link with a new-window one, as the reference does. */
+    .ao-cp-loginas { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .ao-cp-neww { padding-inline: 0.2rem; }
 </style>

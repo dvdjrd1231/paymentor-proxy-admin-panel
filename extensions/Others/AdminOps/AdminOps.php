@@ -68,6 +68,8 @@ class AdminOps extends Extension
         \Paymenter\Extensions\Others\AdminOps\Support\ApplyInvoiceTaxRate::register();
         $this->hideDraftInvoicesFromClients();
 
+        $this->guardAdminAgainstImpersonation();
+
         $this->registerNoFillDirective();
         $this->registerStyles();
         $this->registerWhmcsSkin();
@@ -723,6 +725,24 @@ class AdminOps extends Extension
     }
 
     /** `@nofill` — keep browsers and password managers out of a field. */
+    /**
+     * Stop impersonation leaking into the admin panel's own Livewire requests.
+     *
+     * Prepended so it runs before core's ImpersonateMiddleware, which would otherwise have
+     * already switched the request to the customer. See {@see EndImpersonationInAdmin}.
+     */
+    private function guardAdminAgainstImpersonation(): void
+    {
+        $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
+
+        if (method_exists($kernel, 'prependMiddlewareToGroup')) {
+            $kernel->prependMiddlewareToGroup(
+                'web',
+                \Paymenter\Extensions\Others\AdminOps\Support\EndImpersonationInAdmin::class,
+            );
+        }
+    }
+
     private function registerNoFillDirective(): void
     {
         Blade::directive('nofill', fn (): string => "<?php echo 'autocomplete=\"off\" "
