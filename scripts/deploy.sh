@@ -48,6 +48,11 @@ run php artisan route:cache
 run php artisan event:cache
 run php artisan view:cache
 
+echo "==> Checking every Blade view compiles to valid PHP"
+# view:cache does not verify the PHP it generates, so a broken view caches without
+# complaint and only fails when a page is opened.
+run php artisan tinker scripts/lint-compiled-views.php
+
 echo "==> Applying any new migrations"
 run php artisan migrate --force
 
