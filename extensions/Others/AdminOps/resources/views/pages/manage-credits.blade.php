@@ -50,6 +50,22 @@
                 <h4 class="ao-bt-h">Credit Management</h4>
             @endif
 
+            @php ($drift = $this->drift())
+
+            @if ($drift !== null)
+                {{-- The balance and its log disagree. Stated rather than left to be noticed,
+                     and not corrected here: which of the two is right is a decision about
+                     real money, not something this screen should make on its own. --}}
+                <p class="ao-cr-drift">
+                    <b>This balance does not match its log.</b>
+                    The entries below come to {{ number_format($this->loggedTotal(), 2) }}
+                    {{ $this->currency() }}, but the balance is
+                    {{ number_format($this->balance(), 2) }} {{ $this->currency() }} —
+                    a difference of {{ number_format($drift, 2) }}.
+                    Check the account before adjusting it further.
+                </p>
+            @endif
+
             <p class="ao-cr-note">
                 You can manage a client's credit balance from here. Every credit adjustment,
                 either addition or removal, requires a log entry, and the descriptions you

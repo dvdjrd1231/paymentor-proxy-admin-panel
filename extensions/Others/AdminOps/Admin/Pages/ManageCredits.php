@@ -128,6 +128,45 @@ class ManageCredits extends Page
             ]);
     }
 
+    /**
+     * What the log says the balance should be, in the currency on screen.
+     *
+     * Every entry records the amount actually applied, so they sum to the balance — unless
+     * something moved the balance without writing an entry, or removed the balance row and
+     * left its entries behind.
+     */
+    public function loggedTotal(): float
+    {
+        if (!$this->client || !\Illuminate\Support\Facades\Schema::hasTable('ext_credit_entries')) {
+            return 0.0;
+        }
+
+        return round((float) DB::table('ext_credit_entries')
+            ->where('user_id', $this->client)
+            ->where('currency_code', $this->currency())
+            ->sum('amount'), 2);
+    }
+
+    /**
+     * How far the balance has drifted from its log, or null when they agree.
+     *
+     * Client 5 was found with five entries and no balance row at all — the screen showed
+     * 0.00 beside a log of five adjustments and said nothing was wrong (Leandro, 2026-09-23:
+     * "the credits are not being counted"). A disagreement between the money and its record
+     * is exactly what this screen exists to prevent, so it is now stated rather than hidden.
+     * Nothing is corrected automatically: which of the two is right is not ours to decide.
+     */
+    public function drift(): ?float
+    {
+        if (!$this->client || !$this->entries()->count()) {
+            return null;
+        }
+
+        $difference = round($this->balance() - $this->loggedTotal(), 2);
+
+        return $difference === 0.0 ? null : $difference;
+    }
+
     public function open(string $action): void
     {
         $this->action = in_array($action, ['add', 'remove'], true) ? $action : '';

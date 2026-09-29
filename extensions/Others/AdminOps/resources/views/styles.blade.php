@@ -9656,4 +9656,15 @@
     /* Login as Owner pairs a text link with a new-window one, as the reference does. */
     .ao-cp-loginas { display: inline-flex; align-items: center; gap: 0.35rem; }
     .ao-cp-neww { padding-inline: 0.2rem; }
+
+    /* A balance that disagrees with its log — the reference's warning colours. */
+    .ao-cr-drift {
+        margin: 0 0 0.6rem;
+        padding: 0.55rem 0.75rem;
+        border: 1px solid #faebcc;
+        border-radius: 3px;
+        background: #fcf8e3;
+        color: #8a6d3b;
+        font-size: 0.8125rem;
+    }
 </style>

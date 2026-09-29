@@ -384,13 +384,30 @@
                             <x-filament::icon icon="ri-customer-service-line" class="ao-cp-ic" /> View all Support Tickets
                         </button>
                         @if (class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::class))
-                            <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::getUrl() }}">
-                                <x-filament::icon icon="ri-share-forward-line" class="ao-cp-ic" /> Manage Affiliate
-                            </a>
+                            {{-- The reference's link is two: an affiliate goes to their own
+                                 record, everyone else is offered one (clientssummary.tpl:245).
+                                 Ours went to the whole list, which is why it looked like it
+                                 did nothing (Leandro, 2026-09-23). --}}
+                            @php ($affiliate = $this->affiliateRecord())
+
+                            @if ($affiliate)
+                                <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::getUrl(['affiliate' => $affiliate->id]) }}">
+                                    <x-filament::icon icon="ri-share-forward-line" class="ao-cp-ic" /> View Affiliate Details
+                                </a>
+                            @else
+                                <button type="button" class="ao-cp-link" wire:click="activateAffiliate"
+                                    wire:confirm="Activate this client as an affiliate?">
+                                    <x-filament::icon icon="ri-share-forward-line" class="ao-cp-ic" /> Activate as Affiliate
+                                </button>
+                            @endif
                         @endif
-                        <a class="ao-cp-link" href="{{ \App\Admin\Resources\UserResource::getUrl('edit', ['record' => $user->id]) }}">
+                        {{-- The reference edits a client on the summary's own Profile tab —
+                             its Other Actions has no Edit Client at all. Ours led to core's
+                             raw user form, a different screen whose breadcrumbs go back to
+                             Administrators (Leandro, 2026-09-23). --}}
+                        <button type="button" class="ao-cp-link" wire:click="switchTab('profile')">
                             <x-filament::icon icon="ri-user-settings-line" class="ao-cp-ic" /> Edit Client
-                        </a>
+                        </button>
                         <button type="button" class="ao-cp-link" wire:click="$set('money', 'merge')"
                             title="Move everything this account holds to another, and close this one">
                             {{-- The reference's clients.png itself, inlined — see .ao-cp-png. --}}

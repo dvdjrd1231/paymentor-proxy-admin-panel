@@ -30,6 +30,7 @@ use Paymenter\Extensions\Others\AdminOps\Models\ClientFile;
 use Paymenter\Extensions\Others\AdminOps\Models\Meta;
 use Paymenter\Extensions\Others\AdminOps\Support\Money;
 use Paymenter\Extensions\Others\ClientTools\Models\Contact;
+use Paymenter\Extensions\Others\Affiliates\Models\Affiliate;
 
 /**
  * The reference's **Client Profile**: one customer, one screen, in tabs.
@@ -2561,6 +2562,56 @@ class ClientSummary extends Page
         $this->updatedContact();
 
         Notification::make()->title('Contact deleted')->success()->send();
+    }
+
+    // ── Affiliate ───────────────────────────────────────────────────────────────
+
+    /** This client's affiliate record, or null when they are not one. */
+    public function affiliateRecord(): ?Affiliate
+    {
+        if (!class_exists(Affiliate::class) || !Schema::hasTable('ext_affiliates')) {
+            return null;
+        }
+
+        return Affiliate::where('user_id', $this->customer->id)->first();
+    }
+
+    /**
+     * The reference's Activate as Affiliate.
+     *
+     * Its link is two links in one: an affiliate goes to their own record, and everyone
+     * else is offered one (clientssummary.tpl:245). Ours went to the whole affiliate list
+     * with no notion of which client you came from (Leandro, 2026-09-23).
+     */
+    public function activateAffiliate(): void
+    {
+        Gate::authorize('has-permission', 'admin.users.update');
+
+        if (!class_exists(Affiliate::class) || !Schema::hasTable('ext_affiliates')) {
+            return;
+        }
+
+        if ($existing = $this->affiliateRecord()) {
+            $this->redirect(ManageAffiliates::getUrl(['affiliate' => $existing->id]));
+
+            return;
+        }
+
+        // The code is what referral links carry, so it has to be unique and readable.
+        do {
+            $code = Str::lower(Str::random(8));
+        } while (Affiliate::where('code', $code)->exists());
+
+        $affiliate = Affiliate::create([
+            'user_id' => $this->customer->id,
+            'code' => $code,
+            'visitors' => 0,
+        ]);
+
+        Notification::make()->title('Activated as an affiliate')
+            ->body('Their referral code is ' . $code . '.')->success()->send();
+
+        $this->redirect(ManageAffiliates::getUrl(['affiliate' => $affiliate->id]));
     }
 
     // ── Login as Owner ──────────────────────────────────────────────────────────
