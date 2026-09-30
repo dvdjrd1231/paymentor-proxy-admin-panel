@@ -201,21 +201,31 @@ class ManageCredits extends Page
         $magnitude = round((float) $this->amount, 2);
         $delta = $this->action === 'remove' ? -$magnitude : $magnitude;
 
-        $credit = Credit::firstOrCreate(
+        // Not created yet: a refused transaction must leave nothing behind, including an
+        // empty balance row for a client who never had one. Saved below, once it stands.
+        $credit = Credit::firstOrNew(
             ['user_id' => $this->client, 'currency_code' => $currency],
             ['amount' => 0],
         );
 
-        // Never below zero: core has no notion of spending a negative balance. Removing
-        // more than is there empties it rather than going under, and the entry records
-        // what actually came off.
         $before = (float) $credit->amount;
-        $after = max(0, $before + $delta);
+        $after = round($before + $delta, 2);
+
+        // The reference refuses a removal that would overdraw the balance rather than
+        // taking what it can — its own wording, from credit.nonegativebalance. Ours used
+        // to clamp to zero and log the part it managed to take, which left the log saying
+        // one thing and the amount typed saying another.
+        if ($after < 0) {
+            $this->addError('amount', 'This transaction would result in a negative credit balance.');
+
+            return;
+        }
+
         $applied = round($after - $before, 2);
 
         if ($applied === 0.0) {
-            Notification::make()->title('Nothing to remove')
-                ->body('This balance is already empty.')->warning()->send();
+            Notification::make()->title('Nothing to change')
+                ->body('That would leave the balance exactly as it is.')->warning()->send();
 
             return;
         }
