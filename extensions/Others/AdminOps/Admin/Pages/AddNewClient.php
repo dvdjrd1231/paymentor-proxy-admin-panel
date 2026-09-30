@@ -217,7 +217,8 @@ class AddNewClient extends Page
         }
 
         return (object) [
-            'flag' => \Paymenter\Extensions\Servers\ProxyPanel\Support\CountryFlag::emoji($iso2),
+            // The readable marker, not the flag emoji — see CountryFlag::marker().
+            'flag' => \Paymenter\Extensions\Servers\ProxyPanel\Support\CountryFlag::marker($iso2),
             'dial' => \Paymenter\Extensions\Others\AdminOps\Support\DialCodes::for($iso2),
         ];
     }

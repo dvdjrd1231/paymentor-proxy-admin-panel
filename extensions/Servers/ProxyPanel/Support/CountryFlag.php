@@ -58,8 +58,7 @@ class CountryFlag
     {
         $flag = self::forLabel($label);
 
-        // Two spaces: the flag glyph is visually wide.
-        return $flag ? $flag . '  ' . $label : $label;
+        return $flag ? $flag . ' ' . $label : $label;
     }
 
     /** The flag emoji for a "Country - City" label, or null if not recognised. */
@@ -74,7 +73,7 @@ class CountryFlag
 
         $code = self::codeFor($country);
 
-        return $code ? self::emoji($code) : null;
+        return $code ? self::marker($code) : null;
     }
 
     /** ISO-3166 alpha-2 for a country name, or null. */
@@ -89,6 +88,26 @@ class CountryFlag
         return self::nameIndex()[$key] ?? null;
     }
 
+    /**
+     * The country marker shown before a region's name.
+     *
+     * Plain uppercase letters, not the flag emoji {@see emoji()} builds. Windows ships no
+     * glyphs for regional indicators, so a browser there falls back to drawing the two
+     * letters in whatever font it can find — tiny small-capitals against the label beside
+     * them. That is what "ɪᴅ Indonesia - Jakarta" was, and why Leandro reported the region
+     * list as not legible twice (#10, 2026-09-02 and 2026-09-03). The same two letters in
+     * the page's own font are the same information and readable on every platform.
+     *
+     * A real flag needs artwork — an image or a font carrying the glyphs — and the region
+     * picker renders labels as text with no markup allowed through, so that is a change of
+     * shape rather than of spelling.
+     */
+    public static function marker(string $iso2): string
+    {
+        $iso2 = strtoupper(trim($iso2));
+
+        return preg_match('/^[A-Z]{2}$/', $iso2) ? $iso2 : '';
+    }
     /** Each letter becomes its REGIONAL INDICATOR SYMBOL (U+1F1E6 = 'A'); the pair renders as one flag. */
     public static function emoji(string $iso2): string
     {
