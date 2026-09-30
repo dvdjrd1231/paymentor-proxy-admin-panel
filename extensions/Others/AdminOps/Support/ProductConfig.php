@@ -72,11 +72,21 @@ class ProductConfig
         };
     }
 
-    /** The reference's Billing Cycle list, in its order. */
-    public const CYCLES = [
-        'Free', 'One Time', 'Monthly', 'Quarterly', 'Semi-Annually',
-        'Annually', 'Biennially', 'Triennially',
-    ];
+    /**
+     * The Billing Cycle list, in the catalogue's own order.
+     *
+     * Derived from {@see EditProduct::CYCLES} rather than written out again: this used to
+     * be a second hand-kept list, and when Daily and Weekly were added to the catalogue
+     * they were missing here — so plans that now label as "Daily" matched no row and
+     * dropped out of the Billing Cycle box entirely (Leandro, 2026-09-30). One list, so
+     * the two cannot disagree again.
+     *
+     * @return array<int, string>
+     */
+    public static function cycleNames(): array
+    {
+        return ['Free', ...array_values(array_unique(array_column(EditProduct::CYCLES, 'label')))];
+    }
 
     /** Core's Configurable Options for a product, with their priced children preloaded. */
     public static function configOptions(?int $productId): Collection

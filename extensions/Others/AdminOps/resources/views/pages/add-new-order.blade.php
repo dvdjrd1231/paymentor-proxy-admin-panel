@@ -142,7 +142,7 @@
                                 // Every cycle is pickable, as the reference draws them. One
                                 // with no price for this product carries an "x:" value, so
                                 // the row below can say so rather than failing silently.
-                                foreach (\Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::CYCLES as $cycle) {
+                                foreach (\Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::cycleNames() as $cycle) {
                                     $planOptions[] = [
                                         'value' => $byCycle[$cycle]->id ?? 'x:' . $cycle,
                                         'label' => $cycle,
@@ -152,7 +152,7 @@
                                 // Anything this product prices that the reference's list
                                 // does not name (Daily, 2 Weeks) still belongs here.
                                 foreach ($byCycle as $cycle => $plan) {
-                                    if (!in_array($cycle, \Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::CYCLES, true)) {
+                                    if (!in_array($cycle, \Paymenter\Extensions\Others\AdminOps\Support\ProductConfig::cycleNames(), true)) {
                                         $planOptions[] = ['value' => $plan->id, 'label' => $cycle, 'group' => false];
                                     }
                                 }
