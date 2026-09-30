@@ -22,13 +22,6 @@ foreach ($files as $file) {
     }
 
     $source = file_get_contents($file->getPathname());
-
-    // An XML view opens with `<?xml version=...`, which php -l reads as a short open tag
-    // and rejects. Nothing to do with the template being wrong.
-    if (str_starts_with(ltrim($source), '<?xml')) {
-        continue;
-    }
-
     $checked++;
     $tmp = tempnam(sys_get_temp_dir(), 'bladelint') . '.php';
 
@@ -41,8 +34,11 @@ foreach ($files as $file) {
         continue;
     }
 
+    // short_open_tag off: an RSS or sitemap view emits a literal `<?xml version=...`, which
+    // the linter would otherwise read as an opening tag and reject. Laravel itself runs with
+    // it off, so this lints the file the way the app will execute it.
     $output = [];
-    exec('php -l ' . escapeshellarg($tmp) . ' 2>&1', $output, $code);
+    exec('php -d short_open_tag=0 -l ' . escapeshellarg($tmp) . ' 2>&1', $output, $code);
 
     if ($code !== 0) {
         // Report against the source, not the throwaway compiled path.
