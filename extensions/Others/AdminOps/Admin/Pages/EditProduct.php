@@ -47,10 +47,27 @@ class EditProduct extends Page
         'colour' => '', 'featured' => false, 'retired' => false,
     ];
 
-    /** The reference's billing cycles, as columns of the Pricing grid. */
+    /**
+     * The billing cycles this catalogue sells, as columns of the Pricing grid.
+     *
+     * Daily, Weekly and Monthly are counted in **hours**, not in calendar days or months,
+     * at Leandro's request (#10): "I would like the billing cycles to be based on hours
+     * because sometimes, in WHMCS, a service with a daily or weekly billing cycle is
+     * terminated either before or after the exact expected time. When the cycle is based
+     * on hours, it will always be terminated at the correct time." A calendar day drifts
+     * across a daylight-saving change and a calendar month is 28–31 days; an hour count
+     * lands on the same moment every time.
+     *
+     * The lengths are his: 25 hours for Daily and 169 for Weekly — a day and a week each
+     * with an hour of grace — and 30 × 24 for Monthly. Daily and Weekly are one-time, so
+     * they do not renew; {@see \Paymenter\Extensions\Others\TermLimits\Support\Terms}
+     * reads the same plan and ends them on the hour they are due.
+     */
     public const CYCLES = [
         'onetime' => ['label' => 'One Time', 'type' => 'one-time', 'period' => 1, 'unit' => 'month'],
-        'monthly' => ['label' => 'Monthly', 'type' => 'recurring', 'period' => 1, 'unit' => 'month'],
+        'daily' => ['label' => 'Daily', 'type' => 'one-time', 'period' => 25, 'unit' => 'hour'],
+        'weekly' => ['label' => 'Weekly', 'type' => 'one-time', 'period' => 169, 'unit' => 'hour'],
+        'monthly' => ['label' => 'Monthly', 'type' => 'recurring', 'period' => 720, 'unit' => 'hour'],
         'quarterly' => ['label' => 'Quarterly', 'type' => 'recurring', 'period' => 3, 'unit' => 'month'],
         'semiannually' => ['label' => 'Semi-Annually', 'type' => 'recurring', 'period' => 6, 'unit' => 'month'],
         'annually' => ['label' => 'Annually', 'type' => 'recurring', 'period' => 1, 'unit' => 'year'],

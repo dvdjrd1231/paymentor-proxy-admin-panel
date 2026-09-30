@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Service;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
+use Paymenter\Extensions\Others\AdminOps\Admin\Pages\EditProduct;
 
 /**
  * Everything Add New Order needs to offer, price and save a line's Configurable Options —
@@ -26,12 +27,28 @@ class ProductConfig
      */
     public static function cycleLabel(?Plan $plan): string
     {
-        if (!$plan || $plan->type === 'one-time') {
+        if (!$plan) {
             return 'One Time';
         }
 
         if ($plan->type === 'free') {
             return 'Free';
+        }
+
+        // A cycle the catalogue itself defines wins, and is checked before anything else:
+        // Daily, Weekly and Monthly are counted in hours (#10), and Daily and Weekly are
+        // one-time plans, so the one-time shortcut below would otherwise have called them
+        // "One Time" — which is what the admin saw for every proxy sold by the day.
+        foreach (EditProduct::CYCLES as $cycle) {
+            if ($plan->type === $cycle['type']
+                && (int) $plan->billing_period === $cycle['period']
+                && $plan->billing_unit === $cycle['unit']) {
+                return $cycle['label'];
+            }
+        }
+
+        if ($plan->type === 'one-time') {
+            return 'One Time';
         }
 
         // The reference names the standard periods rather than counting them —
@@ -50,6 +67,7 @@ class ProductConfig
             $plan->billing_unit === 'week' => $plan->billing_period . ' Weeks',
             $plan->billing_unit === 'month' => $plan->billing_period . ' Months',
             $plan->billing_unit === 'year' => $plan->billing_period . ' Years',
+            $plan->billing_unit === 'hour' => $plan->billing_period . ' Hours',
             default => ucfirst((string) $plan->type),
         };
     }
