@@ -21,11 +21,19 @@ foreach ($files as $file) {
         continue;
     }
 
+    $source = file_get_contents($file->getPathname());
+
+    // An XML view opens with `<?xml version=...`, which php -l reads as a short open tag
+    // and rejects. Nothing to do with the template being wrong.
+    if (str_starts_with(ltrim($source), '<?xml')) {
+        continue;
+    }
+
     $checked++;
     $tmp = tempnam(sys_get_temp_dir(), 'bladelint') . '.php';
 
     try {
-        file_put_contents($tmp, app('blade.compiler')->compileString(file_get_contents($file->getPathname())));
+        file_put_contents($tmp, app('blade.compiler')->compileString($source));
     } catch (Throwable $e) {
         $failed[] = $file->getPathname() . ' — ' . $e->getMessage();
         @unlink($tmp);

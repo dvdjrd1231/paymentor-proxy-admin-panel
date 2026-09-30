@@ -388,10 +388,10 @@
                                  record, everyone else is offered one (clientssummary.tpl:245).
                                  Ours went to the whole list, which is why it looked like it
                                  did nothing (Leandro, 2026-09-23). --}}
-                            {{-- Assigned in the condition rather than an inline @php: this
-                                 file has @endphp blocks below, and Blade's raw-block regex
-                                 pairs an inline @php with the next one, swallowing
-                                 everything between. --}}
+                            {{-- Assigned in the condition rather than a one-line raw PHP
+                                 directive: this file has raw PHP blocks below, and Blade
+                                 pairs an opener with the next closer anywhere in the file —
+                                 comments included — swallowing the markup between. --}}
                             @if ($affiliate = $this->affiliateRecord())
                                 <a class="ao-cp-link" href="{{ \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ManageAffiliates::getUrl(['affiliate' => $affiliate->id]) }}">
                                     <x-filament::icon icon="ri-share-forward-line" class="ao-cp-ic" /> View Affiliate Details
