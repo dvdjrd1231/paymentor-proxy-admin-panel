@@ -719,6 +719,44 @@
                         </label>
                         <label class="ao-anc-row"><span>Phone Number</span><input type="text" wire:model="pf.phone" placeholder="+1 201-555-0123"></label>
                         <label class="ao-anc-row"><span>Currency</span><input type="text" wire:model="pf.currency" placeholder="USD"></label>
+
+                        {{-- The registry fields the client was registered with. Add New
+                             Client collects these and the profile showed none of them, so
+                             a CPF or CNPJ could be entered once and never read back
+                             (Leandro, #53). Shown under the same rules the registration
+                             form uses: Brazil only, and the chosen person type's own set. --}}
+                        @php
+                            $pfRegistry = $this->pfRegistryFields();
+                            $pfRegistryProps = $pfRegistry ? $this->pfRegistryProperties() : collect();
+                        @endphp
+
+                        @foreach ($pfRegistry as $key)
+                            @continue (! isset($pfRegistryProps[$key]))
+                            @php ($prop = $pfRegistryProps[$key])
+
+                            @if ($prop->type === 'select')
+                                <label class="ao-anc-row">
+                                    <span>{{ $prop->name }}</span>
+                                    <select wire:model.live="pf.{{ $key }}">
+                                        <option value="">—</option>
+                                        @foreach ($prop->allowed_values ?? [] as $value => $label)
+                                            <option value="{{ is_int($value) ? $label : $value }}">{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
+                            @elseif ($prop->type === 'checkbox')
+                                <label class="ao-anc-row">
+                                    <span>{{ $prop->name }}</span>
+                                    <span class="ao-anc-field"><input type="checkbox" wire:model="pf.{{ $key }}"></span>
+                                </label>
+                            @else
+                                <label class="ao-anc-row">
+                                    <span>{{ $prop->name }}</span>
+                                    <input type="text" wire:model="pf.{{ $key }}"
+                                        placeholder="{{ $key === 'cpf' ? '000.000.000-00' : ($key === 'cnpj' ? '00.000.000/0000-00' : $prop->name) }}">
+                                </label>
+                            @endif
+                        @endforeach
                     </div>
                 </div>
 

@@ -115,6 +115,18 @@ class ClientSummary extends Page
     /** The property keys the Profile form edits besides the user's own columns. */
     private const PF_PROPS = ['company_name', 'address', 'address2', 'city', 'state', 'zip', 'country', 'phone', 'currency'];
 
+    /**
+     * The registry fields Add New Client collects, so the profile can show and correct
+     * them too.
+     *
+     * Registering a client captures these — a CPF for a person, a CNPJ and the state
+     * registrations for a company — and the profile carried none of them, so once a
+     * client existed there was no way to read back or fix what had been entered
+     * (Leandro, #53: "Not all registration data options are displayed"). Same keys as
+     * {@see AddNewClient::BRAZIL_ONLY}, and shown under the same rules.
+     */
+    private const PF_REGISTRY = AddNewClient::BRAZIL_ONLY;
+
     private const PREF_KEYS = ['general', 'invoice', 'support', 'product', 'domain', 'affiliate'];
 
     private const SETTING_KEYS = ['late_fees', 'overdue_notices', 'tax_exempt', 'separate_invoices', 'disable_cc', 'marketing_optin', 'status_update', 'single_sign_on'];
@@ -1525,6 +1537,7 @@ class ClientSummary extends Page
             'last_name' => (string) $this->customer->last_name,
             'email' => $this->customer->email,
             ...collect(self::PF_PROPS)->mapWithKeys(fn ($key) => [$key => $prop($key)])->all(),
+            ...collect(self::PF_REGISTRY)->mapWithKeys(fn ($key) => [$key => $prop($key)])->all(),
         ];
 
         foreach (self::PREF_KEYS as $key) {
@@ -2126,6 +2139,41 @@ class ClientSummary extends Page
             ->success()->send();
     }
 
+    /**
+     * The registry fields' own definitions — their labels, and person_type's choices.
+     *
+     * @return \Illuminate\Support\Collection<string, \App\Models\CustomProperty>
+     */
+    public function pfRegistryProperties()
+    {
+        return \App\Models\CustomProperty::query()
+            ->where('model', User::class)
+            ->whereIn('key', self::PF_REGISTRY)
+            ->get()
+            ->toBase()
+            ->keyBy('key');
+    }
+    /**
+     * Which registry fields this client's profile shows: none outside Brazil, the person
+     * type alone until it is chosen, then that type's own fields. The rules live in
+     * {@see AddNewClient} so registering a client and editing one agree.
+     *
+     * @return array<int, string>
+     */
+    public function pfRegistryFields(): array
+    {
+        if (!AddNewClient::isBrazil($this->pf['country'] ?? null)) {
+            return [];
+        }
+
+        $type = (string) ($this->pf['person_type'] ?? '');
+
+        return match (true) {
+            AddNewClient::isCompany($type) => ['person_type', ...AddNewClient::COMPANY_FIELDS],
+            AddNewClient::isIndividual($type) => ['person_type', ...AddNewClient::INDIVIDUAL_FIELDS],
+            default => ['person_type'],
+        };
+    }
     public function saveProfile(): void
     {
         $this->validate([
@@ -2143,6 +2191,17 @@ class ClientSummary extends Page
 
             foreach (self::PF_PROPS as $key) {
                 $value = trim((string) ($this->pf[$key] ?? ''));
+
+                if ($value !== '') {
+                    $this->customer->properties()->updateOrCreate(['key' => $key], ['value' => $value]);
+                }
+            }
+
+            // The registry fields, and only the ones on show: a company's CNPJ must not
+            // be written for a client who has since been marked an individual.
+            foreach ($this->pfRegistryFields() as $key) {
+                $value = $this->pf[$key] ?? '';
+                $value = is_bool($value) ? ($value ? '1' : '0') : trim((string) $value);
 
                 if ($value !== '') {
                     $this->customer->properties()->updateOrCreate(['key' => $key], ['value' => $value]);
