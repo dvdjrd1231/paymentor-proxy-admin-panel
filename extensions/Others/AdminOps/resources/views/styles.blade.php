@@ -1,5 +1,21 @@
 {{-- Styling for the AdminOps dashboard widgets and the client summary. --}}
 <style>
+    /*
+     * The admin's base text size, in one place.
+     *
+     * Leandro, #10 (2026-08-29): "The global font size in Paymenter is too small, making
+     * it difficult to read." Nearly every size in this sheet is in `rem`, so they all key
+     * off the root — one figure here moves the lot together, and the proportions the
+     * screens were tuned to are kept. This sheet is served into the Filament panel only,
+     * so the client area is untouched.
+     *
+     * 106.25% of the browser's 16px default is 17px. Raise or lower this one number to
+     * taste; nothing else needs to change.
+     */
+    html {
+        font-size: 106.25%;
+    }
+
     .ao-panel {
         color: hsl(var(--color-base));
         font-size: 1rem;
