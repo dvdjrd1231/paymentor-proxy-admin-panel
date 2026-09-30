@@ -732,7 +732,9 @@
 
                         @foreach ($pfRegistry as $key)
                             @continue (! isset($pfRegistryProps[$key]))
-                            @php ($prop = $pfRegistryProps[$key])
+                            {{-- Block form, not inline: this file has @endphp below, and
+                                 Blade pairs an inline @php with the next one. --}}
+                            @php $prop = $pfRegistryProps[$key]; @endphp
 
                             @if ($prop->type === 'select')
                                 <label class="ao-anc-row">
