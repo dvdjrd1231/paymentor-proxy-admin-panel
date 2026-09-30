@@ -496,11 +496,15 @@ class EditEmailTemplate extends Page
     }
 
     /**
-     * Put the merge tags back, in the form each position can carry.
+     * Put the merge tags back, as the text they are.
      *
-     * A tag in the text becomes a styled chip, as the reference shows them. One that landed
-     * inside markup — an `href`, say — has to go back as plain text, because a `<code>`
-     * element inside an attribute would break the element it sits in.
+     * The reference's Preview prints them inline and unadorned — its "Dear
+     * {$client_first_name}," is an ordinary sentence, and {$whmcs_link} and {$signature}
+     * read as plain text in the paragraphs around them. Ours wrapped every tag in a styled
+     * `<code>` chip, which made the preview look like markup rather than like the email,
+     * and is part of why it read like the source view (Leandro, #48). Plain text also means
+     * a tag inside an attribute — `<a href="{{ route(…) }}">` — stays valid, where an
+     * element there would have broken the anchor.
      *
      * @param  array<string, string>  $tags
      */
@@ -510,26 +514,12 @@ class EditEmailTemplate extends Page
             return $html;
         }
 
-        $parts = preg_split('/(<[^>]*>)/s', $html, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [$html];
+        $replacements = [];
 
-        return implode('', array_map(function (string $part) use ($tags): string {
-            $inMarkup = str_starts_with($part, '<');
+        foreach ($tags as $key => $expression) {
+            $replacements[$key] = e('{{ ' . $expression . ' }}');
+        }
 
-            foreach ($tags as $key => $expression) {
-                if (!str_contains($part, $key)) {
-                    continue;
-                }
-
-                $tag = e('{{ ' . $expression . ' }}');
-
-                $part = str_replace(
-                    $key,
-                    $inMarkup ? $tag : '<code class="ao-ete-token">' . $tag . '</code>',
-                    $part,
-                );
-            }
-
-            return $part;
-        }, $parts));
+        return strtr($html, $replacements);
     }
 }
