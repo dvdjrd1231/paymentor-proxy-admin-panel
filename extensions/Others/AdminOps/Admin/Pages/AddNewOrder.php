@@ -147,9 +147,25 @@ class AddNewOrder extends Page
         // ProductConfig's signatures are typed ?int — passing the raw value 500'd every
         // product pick as an "Error while loading page" toast (Leandro's log, 2026-09-04).
         $productId = ctype_digit((string) $value) ? (int) $value : null;
+        $this->items[$index]['productId'] = $productId;
         $this->items[$index]['planId'] = $this->plansFor($productId)->first()?->id;
         $this->items[$index]['configOptions'] = ProductConfig::defaultConfigOptions(ProductConfig::configOptions($productId), []);
         $this->items[$index]['checkoutConfig'] = ProductConfig::defaultCheckoutConfig(ProductConfig::checkoutConfig($productId), []);
+    }
+
+    /**
+     * A line's product as an id, or null for None.
+     *
+     * The picker entangles strings — '' for None, '31' for a product — and every
+     * ProductConfig signature is typed ?int, so the '' went in raw and threw
+     * "must be of type ?int, string given". The page then rendered as the reference's
+     * "Error while loading page" toast, which is what picking None did every time
+     * (Leandro, #10: "It returns an error"). An earlier fix cast only the local copy
+     * inside updatedItems(), leaving the stored value a string for this to trip over.
+     */
+    private static function productIdOf(array $item): ?int
+    {
+        return ctype_digit((string) ($item['productId'] ?? '')) ? (int) $item['productId'] : null;
     }
 
     public function plansFor($productId)
@@ -475,9 +491,9 @@ class AddNewOrder extends Page
             'gateways' => \Paymenter\Extensions\Others\AdminOps\Support\GatewayOrder::sort(Gateway::where('enabled', true)->get(['id', 'name'])),
             'coupons' => Coupon::query()->orderBy('code')->limit(100)->get(['id', 'code']),
             'products' => Product::with('category')->orderBy('name')->get(['id', 'name', 'category_id']),
-            'plansByItem' => collect($this->items)->map(fn ($item) => $this->plansFor($item['productId'])),
-            'optionsByItem' => collect($this->items)->map(fn ($item) => ProductConfig::configOptions($item['productId'])),
-            'checkoutFieldsByItem' => collect($this->items)->map(fn ($item) => ProductConfig::checkoutConfig($item['productId'], $item['checkoutConfig'])),
+            'plansByItem' => collect($this->items)->map(fn ($item) => $this->plansFor(static::productIdOf($item))),
+            'optionsByItem' => collect($this->items)->map(fn ($item) => ProductConfig::configOptions(static::productIdOf($item))),
+            'checkoutFieldsByItem' => collect($this->items)->map(fn ($item) => ProductConfig::checkoutConfig(static::productIdOf($item), $item['checkoutConfig'])),
             'customFields' => static::customFields(),
             'summary' => $this->summary(),
         ];
