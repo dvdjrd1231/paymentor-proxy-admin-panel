@@ -243,11 +243,18 @@ class AddNewOrder extends Page
             'total' => $total,
             'recurring' => $recurring,
             'creditBalance' => $credit,
-            // Only offered when it fully covers the order, matching the one shape the
-            // reference itself shows: "Apply $X … No further payment will be due." A partial
-            // balance is never silently part-applied — the admin sees no offer rather than
-            // one that would leave the invoice still owing something the form did not say.
-            'creditEligible' => $this->generateInvoice && $total > 0 && $credit >= $total,
+            // Any balance at all is offered, as the reference does. It carries two wordings
+            // for this — "Apply :amount … No further payment will be due." when the balance
+            // covers the order, and "Apply :amount … and client will pay the remaining
+            // amount via the selected payment method." when it does not
+            // (orders.applyCreditAmountNoFurtherPayment / orders.applyCreditAmount). Ours
+            // required full cover and so showed a client with some credit no option at all,
+            // which read as the choice having been taken away (Leandro, #10). Placing the
+            // order already applies whichever is smaller, so the partial case was supported
+            // everywhere except on the form.
+            'creditEligible' => $this->generateInvoice && $total > 0 && $credit > 0,
+            'creditApplicable' => min($credit, $total),
+            'creditCoversTotal' => $credit >= $total,
         ];
     }
 

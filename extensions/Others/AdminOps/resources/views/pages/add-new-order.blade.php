@@ -425,16 +425,18 @@
                 @endforeach
             </div>
 
-            {{-- The reference's credit-balance choice. Offered only when the client's own
-                 balance fully covers this order — a partial one is never silently part-
-                 applied, so there is nothing here to misread as "this order is paid" when
-                 it would not quite be. --}}
+            {{-- The reference's credit-balance choice, offered whenever there is a balance.
+                 Its own two wordings: the order is covered, or the rest is still to pay. --}}
             @if ($summary['creditEligible'])
                 <div class="ao-ano-credit">
                     <p>Clients available credit balance is ${{ number_format($summary['creditBalance'], 2) }} {{ $summary['currency'] }}.</p>
                     <label class="ao-ano-credit-opt">
                         <input type="radio" name="ao-ano-credit" value="1" wire:model="applyCredit">
-                        Apply <strong>${{ number_format($summary['total'], 2) }} {{ $summary['currency'] }}</strong> from clients credit balance to this order. No further payment will be due.
+                        @if ($summary['creditCoversTotal'])
+                            Apply <strong>${{ number_format($summary['creditApplicable'], 2) }} {{ $summary['currency'] }}</strong> from clients credit balance to this order. No further payment will be due.
+                        @else
+                            Apply <strong>${{ number_format($summary['creditApplicable'], 2) }} {{ $summary['currency'] }}</strong> from clients credit balance to this order and client will pay the remaining amount via the selected payment method.
+                        @endif
                     </label>
                     <label class="ao-ano-credit-opt">
                         <input type="radio" name="ao-ano-credit" value="0" wire:model="applyCredit">
