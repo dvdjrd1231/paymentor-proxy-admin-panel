@@ -81,6 +81,14 @@ class EditEmailTemplate extends Page
      */
     public bool $sourceOpen = false;
 
+    /**
+     * Stand-ins for merge tags while Markdown runs. Letters and digits only: anything with
+     * a control character is percent-encoded inside a link destination and never comes back.
+     */
+    private const TAG_SENTINEL = 'aoMergeTag';
+
+    private const TAG_SENTINEL_END = 'endAoMergeTag';
+
     public static function getRoutePath(Panel $panel): string
     {
         return '/' . static::getSlug($panel) . '/{record}';
@@ -454,17 +462,16 @@ class EditEmailTemplate extends Page
         // printed at the reader.
         $body = preg_replace('/^[ \t]*@(?:end)?(?:foreach|for|if|else|elseif|unless|isset|empty|php|endphp)\b.*$\R?/mi', '', $body) ?? $body;
 
-        // Tags survive rendering: a placeholder no Markdown parser will touch, restored
-        // as a styled token afterwards.
-        // Only tags in the text are styled. One inside a tag — `<a href="{{ route(…) }}">`
-        // — is part of the markup, and wrapping it in <code> broke the anchor and spilled
-        // the href into the visible line ("…}}"> Go to invoice"). Splitting on tags first
-        // keeps attributes intact and leaves them reading as the tags they are.
+        // Tags have to survive Markdown untouched and come back afterwards. The stand-in is
+        // plain letters and digits on purpose: a `\x01`-delimited one was percent-encoded
+        // the moment a tag sat in a link destination — `[here]({{ route(…) }})` rendered as
+        // `<a href="%01TAG3%01">` and no longer matched anything to restore, so the preview
+        // showed a broken link (Leandro, #48: the preview is still not right).
         $tags = [];
         $tokenise = function (string $text) use (&$tags): string {
             return preg_replace_callback('/\{\{\s*(.+?)\s*\}\}/s', function (array $m) use (&$tags): string {
-                $key = "\u{0001}TAG" . count($tags) . "\u{0001}";
-                $tags[$key] = '<code class="ao-ete-token">{{ ' . e($m[1]) . ' }}</code>';
+                $key = self::TAG_SENTINEL . count($tags) . self::TAG_SENTINEL_END;
+                $tags[$key] = $m[1];
 
                 return $key;
             }, $text) ?? $text;
@@ -485,6 +492,44 @@ class EditEmailTemplate extends Page
             return '<p>' . e($e->getMessage()) . '</p>';
         }
 
-        return strtr($html, $tags);
+        return $this->restoreTags($html, $tags);
+    }
+
+    /**
+     * Put the merge tags back, in the form each position can carry.
+     *
+     * A tag in the text becomes a styled chip, as the reference shows them. One that landed
+     * inside markup — an `href`, say — has to go back as plain text, because a `<code>`
+     * element inside an attribute would break the element it sits in.
+     *
+     * @param  array<string, string>  $tags
+     */
+    private function restoreTags(string $html, array $tags): string
+    {
+        if ($tags === []) {
+            return $html;
+        }
+
+        $parts = preg_split('/(<[^>]*>)/s', $html, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [$html];
+
+        return implode('', array_map(function (string $part) use ($tags): string {
+            $inMarkup = str_starts_with($part, '<');
+
+            foreach ($tags as $key => $expression) {
+                if (!str_contains($part, $key)) {
+                    continue;
+                }
+
+                $tag = e('{{ ' . $expression . ' }}');
+
+                $part = str_replace(
+                    $key,
+                    $inMarkup ? $tag : '<code class="ao-ete-token">' . $tag . '</code>',
+                    $part,
+                );
+            }
+
+            return $part;
+        }, $parts));
     }
 }

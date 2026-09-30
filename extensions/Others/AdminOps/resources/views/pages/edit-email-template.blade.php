@@ -324,9 +324,13 @@
             </div>
         @endif
 
-        {{-- The reference's View ▸ Source code: the generated HTML, as code. The editor
-             above holds the Markdown the body is written in; this is what that Markdown
-             becomes, and Preview is what it looks like. Three different things. --}}
+        {{-- The reference's View ▸ Source code: what the template is actually written in,
+             as code. It used to show the rendered HTML instead — the same string Preview
+             draws, only escaped — so the two dialogs carried identical content and the
+             "source" was full of our own chip markup rather than anything an admin typed
+             (Leandro, #48: "the preview mode is behaving exactly like the source code, but
+             they need to be different"). The editor's content is the source; Preview is
+             what it looks like. --}}
         @if ($sourceOpen)
             <div class="ao-mud-overlay" wire:click.self="$set('sourceOpen', false)">
                 <div class="ao-mud ao-ete-prevmodal" role="dialog" aria-modal="true">
@@ -334,7 +338,7 @@
                         Source code
                         <button type="button" wire:click="$set('sourceOpen', false)" aria-label="Close">&times;</button>
                     </div>
-                    <pre class="ao-ete-sourceview"><code>{{ $this->previewHtml() }}</code></pre>
+                    <pre class="ao-ete-sourceview"><code>{{ $body }}</code></pre>
                     <div class="ao-mud-foot ao-mud-foot-only-right">
                         <span class="ao-mud-foot-right">
                             <button type="button" class="ao-mud-close" wire:click="$set('sourceOpen', false)">Close</button>
