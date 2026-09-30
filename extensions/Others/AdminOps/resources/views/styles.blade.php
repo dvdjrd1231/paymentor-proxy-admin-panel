@@ -5965,6 +5965,17 @@
         font-weight: 700;
     }
 
+    /* Configurable Options and Custom Fields head their own group inside the product
+       they belong to, as the reference heads each of its blocks. Ruled off above so the
+       group reads as a group rather than as more rows of the form. */
+    .ao-ano-subheading {
+        margin: 0;
+        padding: 0.6rem 0.9rem 0.45rem;
+        border-top: 1px solid var(--wa-panel-border, #ddd);
+        background: var(--wa-panel-head, #f5f5f5);
+        font-size: 0.95rem;
+    }
+
     .ao-ano-checks {
         display: flex;
         gap: 1.2rem;

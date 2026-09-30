@@ -195,10 +195,16 @@
                          among them, flags included. Both come through the same
                          ExtensionHelper call the storefront's own checkout uses, so this
                          offers exactly what a customer placing the same order would see.
-                         Leandro (issue #10): no "Configurable Options" heading — Paymenter
-                         does not present these as WHMCS's configurable-options concept, so
-                         the fields sit directly under the product they belong to. --}}
+
+                         Under the reference's own heading. It was dropped on Leandro's
+                         2026-09-02 note ("Remove Configurable Options; Paymenter handles
+                         this differently"), which was about the mechanism — Paymenter does
+                         not pass these as query parameters — not about the group the admin
+                         reads. Losing the heading left the fields loose under the product
+                         and the screen no longer matched (Leandro, 2026-09-23: "it isn't
+                         displaying the same way as WHMCS"). --}}
                     @if ($optionsByItem[$index]->isNotEmpty() || $checkoutFieldsByItem[$index] !== [])
+                        <h4 class="ao-ano-heading ao-ano-subheading">Configurable Options</h4>
                         <div class="ao-ano-configs">
 
                             @foreach ($optionsByItem[$index] as $option)
@@ -295,6 +301,56 @@
                                             <input type="{{ $field['type'] === 'number' ? 'number' : 'text' }}"
                                                 wire:model.live="items.{{ $index }}.checkoutConfig.{{ $field['name'] }}"
                                                 @if (!empty($field['description'])) title="{{ $field['description'] }}" @endif>
+                                    @endswitch
+                                </label>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    {{-- The reference's Custom Fields block, in its place between the
+                         configurable options and Add Another Product. Built from the custom
+                         properties scoped to a service, which is Paymenter's equivalent of
+                         the product custom fields the reference draws here; an install that
+                         has defined none shows nothing, as the reference does for a product
+                         without any. --}}
+                    @if ($customFields->isNotEmpty())
+                        <h4 class="ao-ano-heading ao-ano-subheading">Custom Fields</h4>
+                        <div class="ao-ano-configs">
+                            @foreach ($customFields as $field)
+                                <label class="ao-anc-row">
+                                    <span>{{ $field->name }}</span>
+                                    @switch($field->type)
+                                        @case('checkbox')
+                                            <span class="ao-anc-field">
+                                                <input type="checkbox"
+                                                    wire:model="items.{{ $index }}.customFields.{{ $field->key }}">
+                                                @if ($field->description) <i>{{ $field->description }}</i> @endif
+                                            </span>
+                                            @break
+
+                                        @case('text')
+                                            <span class="ao-anc-field">
+                                                <textarea rows="3"
+                                                    wire:model="items.{{ $index }}.customFields.{{ $field->key }}"></textarea>
+                                                @if ($field->description) <i>{{ $field->description }}</i> @endif
+                                            </span>
+                                            @break
+
+                                        @case('select')
+                                            @include('adminops::partials.select', [
+                                                'model' => "items.{$index}.customFields.{$field->key}",
+                                                'options' => collect($field->allowed_values ?? [])
+                                                    ->map(fn ($v) => ['value' => $v, 'label' => $v, 'group' => false])->all(),
+                                            ])
+                                            @break
+
+                                        @default
+                                            <span class="ao-anc-field">
+                                                <input type="text"
+                                                    wire:model="items.{{ $index }}.customFields.{{ $field->key }}"
+                                                    @if ($field->required) required @endif>
+                                                @if ($field->description) <i>{{ $field->description }}</i> @endif
+                                            </span>
                                     @endswitch
                                 </label>
                             @endforeach

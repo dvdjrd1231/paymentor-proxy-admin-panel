@@ -47,7 +47,7 @@ class AddNewOrder extends Page
      * {@see \Paymenter\Extensions\Others\AdminOps\Support\ProductConfig} can share its logic
      * with checkout instead of duplicating it.
      *
-     * @var array<int, array{productId: int|string|null, planId: int|string|null, quantity: int|string, priceOverride: string, domain: string, configOptions: array<int, mixed>, checkoutConfig: array<string, mixed>}>
+     * @var array<int, array{productId: int|string|null, planId: int|string|null, quantity: int|string, priceOverride: string, domain: string, configOptions: array<int, mixed>, checkoutConfig: array<string, mixed>, customFields: array<string, mixed>}>
      */
     public array $items = [];
 
@@ -116,7 +116,7 @@ class AddNewOrder extends Page
     {
         return [
             'productId' => null, 'planId' => null, 'quantity' => 1, 'priceOverride' => '', 'domain' => '',
-            'configOptions' => [], 'checkoutConfig' => [],
+            'configOptions' => [], 'checkoutConfig' => [], 'customFields' => [],
         ];
     }
 
@@ -157,6 +157,30 @@ class AddNewOrder extends Page
         return $productId
             ? Plan::where('priceable_type', Product::class)->where('priceable_id', $productId)->get()
             : collect();
+    }
+
+    /**
+     * The reference's Custom Fields block: the fields an admin fills in on the order itself.
+     *
+     * WHMCS drives these from the product's own custom fields; Paymenter's equivalent is a
+     * custom property scoped to Service, so the block is built from those rather than from
+     * a hard-coded list. An install that has defined none shows no block, which is why this
+     * screen has none today — all seventeen properties here are scoped to User.
+     *
+     * Deliberately not the module's own storage: ProxyPanel keeps the remote service id,
+     * the api key and the endpoints as service properties it writes during provisioning.
+     * Offering those three as inputs, as the reference's proxy module does, would let an
+     * admin type a value that provisioning then overwrites — or point a service at someone
+     * else's remote proxy.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Models\CustomProperty>
+     */
+    public static function customFields()
+    {
+        return \App\Models\CustomProperty::query()
+            ->where('model', Service::class)
+            ->where('non_editable', false)
+            ->get();
     }
 
     /**
@@ -358,6 +382,21 @@ class AddNewOrder extends Page
 
                 ProductConfig::persist($service, $line['options'], $item['configOptions'], $line['checkoutFields'], $item['checkoutConfig']);
 
+                // The reference's Custom Fields, stored on the service they were entered
+                // for. A blank one writes nothing rather than an empty property.
+                foreach (static::customFields() as $field) {
+                    $value = $item['customFields'][$field->key] ?? null;
+
+                    if ($value === null || $value === '') {
+                        continue;
+                    }
+
+                    $service->properties()->updateOrCreate(
+                        ['key' => $field->key],
+                        ['name' => $field->name, 'value' => is_bool($value) ? (int) $value : $value],
+                    );
+                }
+
                 // Order Status: Active. The same path a free checkout takes in
                 // App\Livewire\Cart::checkout() — provision now, skip Pending. This is for
                 // payment collected outside the system (bank transfer, cash): the invoice
@@ -439,6 +478,7 @@ class AddNewOrder extends Page
             'plansByItem' => collect($this->items)->map(fn ($item) => $this->plansFor($item['productId'])),
             'optionsByItem' => collect($this->items)->map(fn ($item) => ProductConfig::configOptions($item['productId'])),
             'checkoutFieldsByItem' => collect($this->items)->map(fn ($item) => ProductConfig::checkoutConfig($item['productId'], $item['checkoutConfig'])),
+            'customFields' => static::customFields(),
             'summary' => $this->summary(),
         ];
     }
