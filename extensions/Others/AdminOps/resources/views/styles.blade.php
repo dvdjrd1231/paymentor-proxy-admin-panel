@@ -2372,10 +2372,14 @@
     }
 
     /* WHMCS's .table-themed row hover is exactly #eff2f9. */
-    /* The reference bands its lists white / #f8f8f8 — Leandro: "notice the difference in the
-       color transition between white and gray" (issue #8). Ours had only a hover colour, so
-       the eye had nothing to track a row by. Declared before :hover so hover still wins. */
-    .ao-mu-grid tbody tr:nth-child(even) { background: #f8f8f8; }
+    /* Banded to the reference's own rule, read from its stylesheet:
+       `.table-striped > tbody > tr:nth-of-type(odd) { background-color: #f9f9f9 }`.
+
+       Ours banded the even rows, so the first row was white where the reference's is grey
+       and every row after it disagreed too — "notice the difference in the color transition
+       between white and gray, where it is gray, it is white" (Leandro, #53 and #8).
+       Declared before :hover so hover still wins. */
+    .ao-mu-grid tbody tr:nth-child(odd) { background: #f9f9f9; }
 
     .ao-mu-grid tbody tr:hover { background: #eff2f9; }
 
