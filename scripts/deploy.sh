@@ -46,12 +46,14 @@ echo "==> Rebuilding compiled caches"
 run php artisan config:cache
 run php artisan route:cache
 run php artisan event:cache
-run php artisan view:cache
-
 echo "==> Checking every Blade view compiles to valid PHP"
-# view:cache does not verify the PHP it generates, so a broken view caches without
-# complaint and only fails when a page is opened.
+# Before view:cache, not after. view:cache does not verify the PHP it generates, so a
+# broken view caches without complaint and the site serves it until someone opens the
+# page. Checking first means a bad view stops the deploy with the old cache still in
+# place, rather than replacing it with one that cannot run.
 run php artisan tinker scripts/lint-compiled-views.php
+
+run php artisan view:cache
 
 echo "==> Applying any new migrations"
 run php artisan migrate --force
