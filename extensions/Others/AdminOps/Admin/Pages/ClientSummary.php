@@ -1180,7 +1180,9 @@ class ClientSummary extends Page
                 }
             }
 
-            return $counts;
+            $counts['credits'] = $this->mergeCredits($target);
+
+            return array_filter($counts);
         });
 
         // The emptied account is closed rather than deleted: deleting it would take the
@@ -1195,9 +1197,65 @@ class ClientSummary extends Page
             ->success()->send();
     }
 
-    /** The tables that name an owner and so move with a merge. */
+    /**
+     * Move a balance onto the target by adding to it, and take its log along.
+     *
+     * A balance cannot be moved by re-pointing its row. The reference keeps the balance in a
+     * column on the client (`tblclients.credit`), so merging adds the one to the other and
+     * the client is always left holding a balance. Re-pointing our row instead gave the
+     * target a second row for a currency it already had — and `balance()` reads the first,
+     * so the other went uncounted — while `ext_credit_entries` stayed behind, leaving the
+     * source with a log of adjustments and no balance beside it (Leandro, 2026-09-23:
+     * "the credits are not being counted").
+     */
+    private function mergeCredits(User $target): int
+    {
+        if (!Schema::hasTable('credits')) {
+            return 0;
+        }
+
+        $moved = 0;
+
+        foreach (DB::table('credits')->where('user_id', $this->customer->id)->get() as $row) {
+            $existing = DB::table('credits')
+                ->where('user_id', $target->id)
+                ->where('currency_code', $row->currency_code)
+                ->first();
+
+            if ($existing) {
+                DB::table('credits')->where('id', $existing->id)
+                    ->update([
+                        'amount' => round((float) $existing->amount + (float) $row->amount, 2),
+                        'updated_at' => now(),
+                    ]);
+
+                DB::table('credits')->where('id', $row->id)->delete();
+            } else {
+                DB::table('credits')->where('id', $row->id)
+                    ->update(['user_id' => $target->id, 'updated_at' => now()]);
+            }
+
+            $moved++;
+        }
+
+        // The log follows the money, or the source keeps entries explaining a balance that
+        // is no longer theirs and the target holds a balance with nothing behind it.
+        if (Schema::hasTable('ext_credit_entries')) {
+            DB::table('ext_credit_entries')->where('user_id', $this->customer->id)
+                ->update(['user_id' => $target->id, 'updated_at' => now()]);
+        }
+
+        return $moved;
+    }
+
+    /**
+     * The tables that name an owner and so move with a merge.
+     *
+     * `credits` is not among them: a balance is summed onto the target rather than
+     * re-pointed. {@see mergeCredits}.
+     */
     private const MERGEABLE = [
-        'services', 'invoices', 'orders', 'tickets', 'credits', 'invoice_transactions',
+        'services', 'invoices', 'orders', 'tickets', 'invoice_transactions',
         'billable_items', 'quotes', 'email_logs', 'ext_client_files',
     ];
 
