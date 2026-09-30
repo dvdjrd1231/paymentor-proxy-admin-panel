@@ -732,8 +732,11 @@
 
                         @foreach ($pfRegistry as $key)
                             @continue (! isset($pfRegistryProps[$key]))
-                            {{-- Block form, not inline: this file has @endphp below, and
-                                 Blade pairs an inline @php with the next one. --}}
+                            {{-- Opened and closed on one line. The inline form is unsafe in
+                                 this file: Blade pairs a raw block with the next closing
+                                 directive anywhere below, comments included, and swallows
+                                 everything between. Naming those directives here would do
+                                 it too, which is why this sentence spells out none of them. --}}
                             @php $prop = $pfRegistryProps[$key]; @endphp
 
                             @if ($prop->type === 'select')
