@@ -3158,17 +3158,24 @@
 
     /* Source code, the reference's other View entry: the generated HTML as code, which is
        the half of that pair we were missing — `<>` opened the rendered dialog too. */
+    /* A textarea, not a block of text: the reference's Source code dialog is edited in
+       place and applied with Ok. */
     .ao-ete-prevmodal .ao-ete-sourceview {
-        max-height: 60vh;
-        overflow: auto;
-        margin: 0;
-        padding: 1.2rem 1.5rem;
-        background: #f7f7f7;
+        display: block;
+        width: calc(100% - 3rem);
+        height: 55vh;
+        margin: 1.2rem 1.5rem;
+        padding: 0.6rem 0.7rem;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        background: #fff;
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         font-size: 0.82rem;
         line-height: 1.5;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
+        overflow: auto;
+        resize: vertical;
         color: var(--wa-ink, #2b2b2b);
     }
 

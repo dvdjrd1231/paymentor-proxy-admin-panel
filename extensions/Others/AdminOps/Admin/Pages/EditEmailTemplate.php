@@ -82,12 +82,35 @@ class EditEmailTemplate extends Page
     public bool $sourceOpen = false;
 
     /**
+     * What the Source code dialog is editing.
+     *
+     * The reference's `<>` opens the template in a textarea with Ok and Cancel, and Ok
+     * applies what was typed back into the editor — it is a way to edit the body as code,
+     * not a read-only look at it. Held apart from $body so Cancel really cancels.
+     */
+    public string $sourceDraft = '';
+
+    /**
      * Stand-ins for merge tags while Markdown runs. Letters and digits only: anything with
      * a control character is percent-encoded inside a link destination and never comes back.
      */
     private const TAG_SENTINEL = 'aoMergeTag';
 
     private const TAG_SENTINEL_END = 'endAoMergeTag';
+
+    /** Open Source code on the body as it stands. */
+    public function openSource(): void
+    {
+        $this->sourceDraft = $this->body;
+        $this->sourceOpen = true;
+    }
+
+    /** The reference's Ok: what was typed becomes the body. Saving is still a separate step. */
+    public function applySource(): void
+    {
+        $this->body = $this->sourceDraft;
+        $this->sourceOpen = false;
+    }
 
     public static function getRoutePath(Panel $panel): string
     {

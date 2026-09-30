@@ -246,7 +246,7 @@
                     {{-- The reference's `<>` is Source code: the HTML the email is built
                          from. Preview, beneath, is what the reader sees — two different
                          views of the same body, as the reference has them. --}}
-                    <button type="button" class="ao-ete-mode" wire:click="$set('sourceOpen', true)"
+                    <button type="button" class="ao-ete-mode" wire:click="openSource"
                         title="The HTML this email is built from">&lt;&gt;</button>
                     <button type="button" data-ao-act="clearfmt" title="Clear formatting">&#8455;x</button>
                 </div>
@@ -338,10 +338,15 @@
                         Source code
                         <button type="button" wire:click="$set('sourceOpen', false)" aria-label="Close">&times;</button>
                     </div>
-                    <pre class="ao-ete-sourceview"><code>{{ $body }}</code></pre>
+                    {{-- Editable, as the reference's is: its dialog is a textarea over the
+                         template with Ok and Cancel, and Ok applies what was typed back
+                         into the editor. Ours only showed the body, so there was no way to
+                         edit as code at all. --}}
+                    <textarea class="ao-ete-sourceview" wire:model="sourceDraft" spellcheck="false"></textarea>
                     <div class="ao-mud-foot ao-mud-foot-only-right">
                         <span class="ao-mud-foot-right">
-                            <button type="button" class="ao-mud-close" wire:click="$set('sourceOpen', false)">Close</button>
+                            <button type="button" class="ao-find-go" wire:click="applySource">Ok</button>
+                            <button type="button" class="ao-mud-close" wire:click="$set('sourceOpen', false)">Cancel</button>
                         </span>
                     </div>
                 </div>
@@ -439,7 +444,7 @@
 
                 {{-- View ▸ Source code and View ▸ Preview were listed in the menu but
                      reached no handler, so both did nothing at all. --}}
-                if (act === 'source') return @this.set('sourceOpen', true);
+                if (act === 'source') return @this.call('openSource');
                 if (act === 'preview') return @this.set('previewOpen', true);
                 if (act === 'print') return window.print();
                 if (act === 'help') return window.open('https://www.markdownguide.org/basic-syntax/', '_blank', 'noopener');
