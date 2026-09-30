@@ -4662,7 +4662,11 @@
 
     /* The reference's density on the two order screens: a narrower label column and
        tighter rows than the generic forms. */
-    .ao-ano .ao-anc-row { grid-template-columns: 8.5rem 1fr; gap: 0.6rem; padding: 0.35rem 0.6rem; }
+    .ao-ano .ao-anc-row {
+        grid-template-columns: 8.5rem 1fr;
+        gap: 0.6rem;
+        /* padding: 0.35rem 0.6rem;  */
+    }
     /* Measured against the reference: its fact rows run ~29px, ours were ~38px. */
     .ao-eo .ao-of-row > * { padding: 0.25rem 0.6rem; font-size: 0.82rem; }
     .ao-eo .ao-of-label { font-size: 0.82rem; }
