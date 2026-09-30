@@ -122,7 +122,12 @@
 
                         <p class="ao-ml-head">Choose language to add</p>
                         @if ($addableLocales)
+                            {{-- The reference's "Choose one..." sits first. Without it the
+                                 box showed the first language while nothing was actually
+                                 picked, so Activate answered with a validation error on a
+                                 language the admin could see named in front of them. --}}
                             <select wire:model="newLocale">
+                                <option value="">Choose one...</option>
                                 @foreach ($addableLocales as $code => $label)
                                     <option value="{{ $code }}">{{ $label }}</option>
                                 @endforeach

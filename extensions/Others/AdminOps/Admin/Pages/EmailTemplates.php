@@ -116,7 +116,12 @@ class EmailTemplates extends Page
 
         TemplateLocale::setActive([...TemplateLocale::active(), $this->newLocale]);
 
-        $this->reset(['modal', 'newLocale']);
+        // The dialog stays open, as Deactivate already leaves it, so the language just
+        // added appears under Currently Active Languages while you are still looking at
+        // it. Closing instead put the list page back unchanged — nothing on it reflects an
+        // active language — and the whole thing read as having done nothing at all
+        // (Leandro, #48: selecting a language produces no changes).
+        $this->reset(['newLocale']);
 
         Notification::make()
             ->title($label . ' activated')
