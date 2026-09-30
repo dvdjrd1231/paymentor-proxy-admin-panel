@@ -98,18 +98,71 @@ class EditEmailTemplate extends Page
 
     private const TAG_SENTINEL_END = 'endAoMergeTag';
 
-    /** Open Source code on the body as it stands. */
-    public function openSource(): void
+    /**
+     * Which body Source code and Preview are working on: `body`, or
+     * `locales.<code>.body` for a translation. Every version has its own editor, so both
+     * dialogs have to follow the one they were opened from.
+     */
+    public string $sourceTarget = 'body';
+
+    public string $previewTarget = 'body';
+
+    /** Open Source code on one version's body as it stands. */
+    public function openSource(string $target = 'body'): void
     {
-        $this->sourceDraft = $this->body;
+        $this->sourceTarget = $target;
+        $this->sourceDraft = $this->bodyFor($target);
         $this->sourceOpen = true;
     }
 
-    /** The reference's Ok: what was typed becomes the body. Saving is still a separate step. */
+    /** The reference's Ok: what was typed becomes that body. Saving is still a separate step. */
     public function applySource(): void
     {
-        $this->body = $this->sourceDraft;
+        $this->setBodyFor($this->sourceTarget, $this->sourceDraft);
         $this->sourceOpen = false;
+    }
+
+    public function openPreview(string $target = 'body'): void
+    {
+        $this->previewTarget = $target;
+        $this->previewOpen = true;
+    }
+
+    /** One version's body. Spelt out rather than reached through data_get, which would
+     *  happily accept any property name the page sent it. */
+    private function bodyFor(string $target): string
+    {
+        if ($target === 'body') {
+            return $this->body;
+        }
+
+        $code = $this->localeOf($target);
+
+        return $code === null ? '' : (string) ($this->locales[$code]['body'] ?? '');
+    }
+
+    private function setBodyFor(string $target, string $value): void
+    {
+        if ($target === 'body') {
+            $this->body = $value;
+
+            return;
+        }
+
+        if ($code = $this->localeOf($target)) {
+            $this->locales[$code]['body'] = $value;
+        }
+    }
+
+    /** The language in `locales.<code>.body`, or null if that is not what was sent. */
+    private function localeOf(string $target): ?string
+    {
+        $parts = explode('.', $target);
+
+        return (count($parts) === 3 && $parts[0] === 'locales' && $parts[2] === 'body'
+            && array_key_exists($parts[1], $this->locales))
+            ? $parts[1]
+            : null;
     }
 
     public static function getRoutePath(Panel $panel): string
@@ -149,7 +202,11 @@ class EditEmailTemplate extends Page
         // writes one, and a blank one is not sent — see TemplateLocale::resolve().
         $stored = TemplateLocale::where('notification_template_id', $this->template->id)->get()->keyBy('locale');
 
-        foreach (TemplateLocale::active() as $locale) {
+        // Not the default language: the Default Version above already is that language's
+        // version, so a second box for it could never be sent. {@see EmailTemplates::defaultLocale}
+        $translated = array_diff(TemplateLocale::active(), [EmailTemplates::defaultLocale()]);
+
+        foreach ($translated as $locale) {
             $this->locales[$locale] = [
                 'subject' => (string) ($stored[$locale]->subject ?? ''),
                 'body' => (string) ($stored[$locale]->body ?? ''),
@@ -478,7 +535,7 @@ class EditEmailTemplate extends Page
      */
     public function previewHtml(): string
     {
-        $body = $this->body;
+        $body = $this->bodyFor($this->previewTarget);
 
         // Blade's control directives are plumbing, not content. A loop's body is shown
         // once, as one row of the table it builds, rather than the directive lines being

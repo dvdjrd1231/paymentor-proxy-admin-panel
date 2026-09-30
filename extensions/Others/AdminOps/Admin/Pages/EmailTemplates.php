@@ -161,9 +161,24 @@ class EmailTemplates extends Page
      */
     private function availableLocales(): array
     {
-        // The reference lists English too — activating the store's own default is a
-        // harmless no-op for sending, and leaving it out read as a missing language.
-        return array_diff_key($this->allLocales(), array_flip(TemplateLocale::active()));
+        return array_diff_key(
+            $this->allLocales(),
+            array_flip([...TemplateLocale::active(), static::defaultLocale()]),
+        );
+    }
+
+    /**
+     * The language the Default Version already covers.
+     *
+     * The reference says so on the editor itself — "Used for the English language and any
+     * languages where email template translations are not defined" — which makes a version
+     * in that same language unreachable: it could never be chosen over the default. It was
+     * offered anyway, and activating it drew an English Version box that does nothing
+     * (Leandro, 2026-09-30).
+     */
+    public static function defaultLocale(): string
+    {
+        return (string) config('app.locale', 'en');
     }
 
     public function getTitle(): string
@@ -201,7 +216,10 @@ class EmailTemplates extends Page
         }
 
         $all = $this->allLocales();
-        $active = TemplateLocale::active();
+
+        // The default language is the Default Version, not a translation of it. An install
+        // that activated it before this was so keeps the row; it simply stops being listed.
+        $active = array_values(array_diff(TemplateLocale::active(), [static::defaultLocale()]));
 
         return [
             'sections' => $sections->filter(fn ($rows) => $rows->isNotEmpty()),
