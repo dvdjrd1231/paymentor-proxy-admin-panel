@@ -56,6 +56,12 @@ class ProxyPanel extends Server
 
     private const SYNCED_KEY = 'proxy_synced_at';
 
+    /**
+     * The most endpoints we will expand a port range into — a guard against a malformed
+     * range, not a product limit, so it sits well above anything the catalogue sells.
+     */
+    private const MAX_ENDPOINTS = 10000;
+
     /** Set only once the panel confirms the service is deployed. */
     private const CONFIRMED_KEY = 'proxy_confirmed_at';
 
@@ -984,7 +990,15 @@ class ProxyPanel extends Server
             return false;
         }
 
-        return !empty($payload['ips']);
+        // Deployed means the panel handed us somewhere to connect. This asks the one place
+        // that knows every shape the panel answers in rather than naming a key: the live
+        // panel returns a host plus a `first`..`last` port range and no `ips` at all, so a
+        // test for `ips` was false for every real service. Service 113 had its 1000
+        // endpoints read and stored and still sat pending, because only a callback could
+        // clear the gate and none arrive (Leandro, 2026-09-23 on #4: "this service should
+        // be active", and "it receives the information correctly, but the status does not
+        // change").
+        return $this->endpointsFrom($payload) !== [];
     }
 
     /**
@@ -1476,8 +1490,19 @@ class ProxyPanel extends Server
         $last = $payload['last'] ?? null;
 
         if ($host && is_numeric($first) && is_numeric($last) && (int) $last >= (int) $first) {
-            // Guard against a nonsense range returning an enormous list.
-            $count = min((int) $last - (int) $first + 1, 1000);
+            // Guard against a nonsense range returning an enormous list. The ceiling has to
+            // clear what the catalogue actually sells: service 113 was sold 1500 and the
+            // panel returned ports 10000..11499, so a cap of 1000 quietly dropped 500 the
+            // customer had paid for. Truncation is logged rather than silent.
+            $available = (int) $last - (int) $first + 1;
+            $count = min($available, self::MAX_ENDPOINTS);
+
+            if ($count < $available) {
+                $this->log('warning', 'ProxyPanel returned more endpoints than we list', [
+                    'returned' => $available,
+                    'listed' => $count,
+                ]);
+            }
             $out = [];
             for ($i = 0; $i < $count; $i++) {
                 $out[] = $this->formatEndpoint((string) $host, (int) $first + $i);
