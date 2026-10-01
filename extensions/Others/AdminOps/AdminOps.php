@@ -725,13 +725,6 @@ class AdminOps extends Extension
         });
     }
 
-    /** `@nofill` — keep browsers and password managers out of a field. */
-    /**
-     * Stop impersonation leaking into the admin panel's own Livewire requests.
-     *
-     * Prepended so it runs before core's ImpersonateMiddleware, which would otherwise have
-     * already switched the request to the customer. See {@see EndImpersonationInAdmin}.
-     */
     /**
      * The URL Login as Owner opens in its own tab.
      *
@@ -769,18 +762,26 @@ class AdminOps extends Extension
             })
             ->name('adminops.impersonate.start');
     }
+    /**
+     * Stop impersonation leaking into the admin panel's own Livewire requests.
+     *
+     * Appended so it runs after core's ImpersonateMiddleware and puts the real admin back
+     * for that one request. Prepending put it ahead of StartSession, where there was no
+     * session to read and it did nothing at all. See {@see EndImpersonationInAdmin}.
+     */
     private function guardAdminAgainstImpersonation(): void
     {
         $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
 
-        if (method_exists($kernel, 'prependMiddlewareToGroup')) {
-            $kernel->prependMiddlewareToGroup(
+        if (method_exists($kernel, 'appendMiddlewareToGroup')) {
+            $kernel->appendMiddlewareToGroup(
                 'web',
                 \Paymenter\Extensions\Others\AdminOps\Support\EndImpersonationInAdmin::class,
             );
         }
     }
 
+    /** `@nofill` — keep browsers and password managers out of a field. */
     private function registerNoFillDirective(): void
     {
         Blade::directive('nofill', fn (): string => "<?php echo 'autocomplete=\"off\" "
