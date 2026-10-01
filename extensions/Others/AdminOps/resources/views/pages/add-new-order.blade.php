@@ -111,7 +111,7 @@
                                 }
                             @endphp
                             @include('adminops::partials.select', [
-                                'model' => "items.{$index}.productId", 'live' => true, 'class' => 'ao-xw-md',
+                                'model' => "items.{$index}.productId", 'live' => true, 'class' => 'ao-xw-lg',
                                 'options' => $productOptions, 'placeholder' => 'None',
                             ])
                             @if (count($items) > 1)

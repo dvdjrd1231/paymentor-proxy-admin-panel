@@ -4771,6 +4771,12 @@
     .ao-xsel.ao-xw-xs, .ao-anc-row .ao-xw-xs { width: 8.5rem; }
     .ao-xsel.ao-xw-sm, .ao-anc-row .ao-xw-sm { width: 11rem; }
     .ao-xsel.ao-xw-md, .ao-anc-row .ao-xw-md { width: 15rem; }
+
+    /* Long product names — "IPv6 Residential Amethyst - HTTP Proxy - D" — ran past the
+       15rem box and were cut off in the picker (Leandro, #10: "aumentar tamanho do
+       campo"). Wide enough for the catalogue's longest name, and still inside the
+       column on a narrow screen. */
+    .ao-xsel.ao-xw-lg, .ao-anc-row .ao-xw-lg { width: min(26rem, 100%); }
     .ao-anc-row input.ao-ano-dom { width: 20rem; }
 
     /* The type-to-search variant: the frame is the span, the input inside is bare. */

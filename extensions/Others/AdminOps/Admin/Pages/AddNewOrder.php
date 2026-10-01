@@ -490,7 +490,20 @@ class AddNewOrder extends Page
                 ->with('properties')->get(['id', 'first_name', 'last_name', 'email']),
             'gateways' => \Paymenter\Extensions\Others\AdminOps\Support\GatewayOrder::sort(Gateway::where('enabled', true)->get(['id', 'name'])),
             'coupons' => Coupon::query()->orderBy('code')->limit(100)->get(['id', 'code']),
-            'products' => Product::with('category')->orderBy('name')->get(['id', 'name', 'category_id']),
+            // In the catalogue's own order, not alphabetically: category by its sort then
+            // its name, each product by the same, which is exactly how the rail lists them
+            // (Leandro, #10: "ajustar ordenacao dos itens similar a organizacao do
+            // cadastro"). Sorted here rather than in SQL so the category's own ordering is
+            // read from the relation instead of a join that would have to alias both names.
+            'products' => Product::with('category')->get(['id', 'name', 'category_id', 'sort'])
+                ->sortBy(fn (Product $product): string => sprintf(
+                    '%03d%s|%03d%s',
+                    $product->category?->sort ?? 255,
+                    $product->category?->name ?? '~',
+                    $product->sort ?? 255,
+                    $product->name,
+                ))
+                ->values(),
             'plansByItem' => collect($this->items)->map(fn ($item) => $this->plansFor(static::productIdOf($item))),
             'optionsByItem' => collect($this->items)->map(fn ($item) => ProductConfig::configOptions(static::productIdOf($item))),
             'checkoutFieldsByItem' => collect($this->items)->map(fn ($item) => ProductConfig::checkoutConfig(static::productIdOf($item), $item['checkoutConfig'])),
