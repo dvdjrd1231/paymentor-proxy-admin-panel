@@ -164,7 +164,9 @@
                         <button type="button" class="ao-cp-link ao-cp-loginas"
                             title="Opens the client area in a new tab"
                             wire:click="impersonateInNewWindow">
-                            <x-filament::icon icon="ri-login-circle-line" class="ao-cp-ic" /> Login as Owner
+                            {{-- The same icon Merge Clients Accounts carries: the reference's
+                                 own clients.png, inlined — see .ao-cp-png (Leandro, 2026-10-01). --}}
+                            <i class="ao-cp-png ao-cp-png-people" aria-hidden="true"></i> Login as Owner
                         </button>
                     </div>
                 </div>
