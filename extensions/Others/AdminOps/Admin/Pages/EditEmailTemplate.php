@@ -588,6 +588,40 @@ class EditEmailTemplate extends Page
      *
      * @param  array<string, string>  $tags
      */
+    /**
+     * A merge tag as the reader of a preview should see it.
+     *
+     * The bodies are Blade, so a tag in them is a real expression — `{{ $item->product->name }}`,
+     * `{{ $invoice->due_at?->format('d/m/Y') }}`. Printed as-is in the preview that reads as
+     * source code rather than as an email, which is what Leandro reported against the
+     * reference's own `{$client_name}` (#48, 2026-10-01). This flattens the expression to
+     * the same shape: `{$item_product_name}`, `{$invoice_due_at}`.
+     *
+     * Preview only. The editor and the Source view keep the real Blade, because that is
+     * what is saved and what has to run when the email is sent; and the Available Merge
+     * Fields panel keeps it too, since those are there to be copied into a template.
+     */
+    public static function tokenFor(string $expression): string
+    {
+        $expr = trim($expression);
+
+        // route('invoices.show', $invoice) reads as a link, so name it one.
+        if (preg_match('/^route\(\s*[\'\"]([^\'\"]+)/', $expr, $m)) {
+            return '{$' . str_replace('.', '_', $m[1]) . '_url}';
+        }
+
+        // A nullsafe hop is the same path, and a trailing ->format(…) is presentation,
+        // not part of what the field is called.
+        $expr = str_replace('?->', '->', $expr);
+        $expr = preg_replace('/->\w+\([^)]*\)\s*$/', '', $expr) ?? $expr;
+
+        $expr = str_replace('->', '_', ltrim($expr, '$'));
+        $expr = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $expr) ?? $expr);
+        $expr = preg_replace('/[^a-z0-9_]/', '', $expr) ?? $expr;
+
+        // Nothing recognisable left: show the expression rather than an empty brace.
+        return $expr === '' ? '{{ ' . trim($expression) . ' }}' : '{$' . $expr . '}';
+    }
     private function restoreTags(string $html, array $tags): string
     {
         if ($tags === []) {
@@ -597,7 +631,7 @@ class EditEmailTemplate extends Page
         $replacements = [];
 
         foreach ($tags as $key => $expression) {
-            $replacements[$key] = e('{{ ' . $expression . ' }}');
+            $replacements[$key] = e(static::tokenFor($expression));
         }
 
         return strtr($html, $replacements);
