@@ -69,6 +69,7 @@ class AdminOps extends Extension
         $this->hideDraftInvoicesFromClients();
 
         $this->guardAdminAgainstImpersonation();
+        $this->registerImpersonationStart();
 
         $this->registerNoFillDirective();
         $this->registerStyles();
@@ -731,6 +732,43 @@ class AdminOps extends Extension
      * Prepended so it runs before core's ImpersonateMiddleware, which would otherwise have
      * already switched the request to the customer. See {@see EndImpersonationInAdmin}.
      */
+    /**
+     * The URL Login as Owner opens in its own tab.
+     *
+     * Impersonation is a session flag, and core's ImpersonateMiddleware drops it on any
+     * request under the admin path. Setting the flag in the admin tab and *then* opening
+     * a second tab left a gap: anything the admin tab asked for in between — a poll, an
+     * asset, a click — cleared it, so the new tab arrived unimpersonated and the client
+     * area answered 403. Intermittent by nature, and a retry usually won (Leandro,
+     * 2026-10-01).
+     *
+     * Opening this instead closes the gap: the middleware clears whatever was there, this
+     * sets a fresh flag afterwards, and the redirect it returns is the very next request —
+     * all inside the tab that is going to use it.
+     */
+    private function registerImpersonationStart(): void
+    {
+        \Illuminate\Support\Facades\Route::middleware(['web'])
+            ->get('/admin/impersonate/{record}', function (string $record) {
+                $admin = \Illuminate\Support\Facades\Auth::user();
+
+                if (!$admin) {
+                    return redirect()->guest('/admin/login');
+                }
+
+                abort_unless($admin->hasPermission('admin.users.impersonate'), 403);
+
+                $target = \App\Models\User::findOrFail((int) $record);
+
+                // Impersonating yourself would only take the admin out of their own panel.
+                abort_if($target->id === $admin->id, 403);
+
+                session()->put('impersonating', $target->id);
+
+                return redirect()->to('/dashboard');
+            })
+            ->name('adminops.impersonate.start');
+    }
     private function guardAdminAgainstImpersonation(): void
     {
         $kernel = app(\Illuminate\Contracts\Http\Kernel::class);

@@ -161,13 +161,17 @@
                              broke across three lines, and a staff member wants the client
                              area beside the profile rather than instead of it
                              (Leandro, 2026-10-01). --}}
-                        <button type="button" class="ao-cp-link ao-cp-loginas"
-                            title="Opens the client area in a new tab"
-                            wire:click="impersonateInNewWindow">
+                        {{-- An ordinary link, not a scripted window: the tab it opens sets the
+                             impersonation itself, so nothing the admin tab does in between can
+                             clear it first, and no popup blocker is involved. --}}
+                        <a class="ao-cp-link ao-cp-loginas"
+                            href="{{ route('adminops.impersonate.start', ['record' => $user->id]) }}"
+                            target="_blank" rel="noopener"
+                            title="Opens the client area in a new tab">
                             {{-- The same icon Merge Clients Accounts carries: the reference's
                                  own clients.png, inlined — see .ao-cp-png (Leandro, 2026-10-01). --}}
                             <i class="ao-cp-png ao-cp-png-people" aria-hidden="true"></i> Login as Owner
-                        </button>
+                        </a>
                     </div>
                 </div>
 
