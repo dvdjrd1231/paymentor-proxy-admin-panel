@@ -9696,8 +9696,9 @@
     .ao-au-opt.ao-on { background: #337ab7; color: #fff; }
 
     /* Login as Owner pairs a text link with a new-window one, as the reference does. */
-    .ao-cp-loginas { display: inline-flex; align-items: center; gap: 0.35rem; }
-    .ao-cp-neww { padding-inline: 0.2rem; }
+    /* Never broken across lines: the label is three short words and the panel column is
+       narrow, so without this it wrapped to "Login / as / Owner" (Leandro, 2026-10-01). */
+    .ao-cp-loginas { white-space: nowrap; }
 
     /* A balance that disagrees with its log — the reference's warning colours. */
     .ao-cr-drift {

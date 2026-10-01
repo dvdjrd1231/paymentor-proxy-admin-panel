@@ -155,15 +155,17 @@
                              text link with a second one that opens the client area in a
                              window of its own (clientssummary.tpl:66-69, data-new-window
                              0 then 1), which we were missing (Leandro, 2026-09-23). --}}
-                        <span class="ao-cp-loginas">
-                            <button type="button" class="ao-cp-link" wire:click="mountAction('impersonate')">
-                                <x-filament::icon icon="ri-login-circle-line" class="ao-cp-ic" /> Login as Owner
-                            </button>
-                            <button type="button" class="ao-cp-link ao-cp-neww" title="Open in new window"
-                                wire:click="impersonateInNewWindow">
-                                <x-filament::icon icon="ri-window-2-line" class="ao-cp-ic" />
-                            </button>
-                        </span>
+                        {{-- One link, opening a window of its own. The reference pairs a
+                             same-tab link with a second new-window one, but two full-width
+                             rows side by side squeezed each other until "Login as Owner"
+                             broke across three lines, and a staff member wants the client
+                             area beside the profile rather than instead of it
+                             (Leandro, 2026-10-01). --}}
+                        <button type="button" class="ao-cp-link ao-cp-loginas"
+                            title="Opens the client area in a new tab"
+                            wire:click="impersonateInNewWindow">
+                            <x-filament::icon icon="ri-login-circle-line" class="ao-cp-ic" /> Login as Owner
+                        </button>
                     </div>
                 </div>
 
