@@ -98,6 +98,17 @@ return [
         'year' => 'Annually',
         'one_time' => 'One Time',
         'every' => 'Every :period :unit',
+
+        // Spelled-out units for the 'every' fallback. Kept here rather than read from
+        // core's services.billing_cycles, which has no 'hour' — and a key core does not
+        // have renders as the key itself, in front of the customer.
+        'units' => [
+            'hour' => 'hour|hours',
+            'day' => 'day|days',
+            'week' => 'week|weeks',
+            'month' => 'month|months',
+            'year' => 'year|years',
+        ],
     ],
 
     // Cart / checkout — the reference portal's wording
