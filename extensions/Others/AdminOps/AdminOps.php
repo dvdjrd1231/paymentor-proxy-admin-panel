@@ -66,6 +66,7 @@ class AdminOps extends Extension
         \Paymenter\Extensions\Others\AdminOps\Support\PrefillInvoiceClient::register();
         \Paymenter\Extensions\Others\AdminOps\Support\PreselectInvoiceGateway::register();
         \Paymenter\Extensions\Others\AdminOps\Support\ApplyInvoiceTaxRate::register();
+        \Paymenter\Extensions\Others\AdminOps\Support\AddonFollowsParent::register();
         $this->hideDraftInvoicesFromClients();
 
         $this->guardAdminAgainstImpersonation();
