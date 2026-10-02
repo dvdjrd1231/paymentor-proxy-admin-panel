@@ -35,7 +35,7 @@ return new class extends Migration
             ->where('type', 'one-time')
             ->where('billing_unit', 'hour')
             ->whereIn('billing_period', self::HOURLY_PERIODS)
-            ->update(['type' => 'recurring', 'updated_at' => now()]);
+            ->update(['type' => 'recurring']);
     }
 
     public function down(): void
@@ -44,6 +44,6 @@ return new class extends Migration
             ->where('type', 'recurring')
             ->where('billing_unit', 'hour')
             ->whereIn('billing_period', self::HOURLY_PERIODS)
-            ->update(['type' => 'one-time', 'updated_at' => now()]);
+            ->update(['type' => 'one-time']);
     }
 };
