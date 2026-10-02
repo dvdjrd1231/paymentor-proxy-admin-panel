@@ -109,23 +109,34 @@ class Terms
         // Re-activation therefore starts a fresh full term, which is what the backfill does
         // for an already-running service and for the same reason: the customer did not
         // consume the time they were not given.
-        $existing = ServiceTerm::query()
-            ->where('service_id', $service->id)
-            ->whereNull('ended_at')
-            ->first();
+        $existing = ServiceTerm::firstWhere('service_id', $service->id);
+        $startedAt = now();
+        $endsAt = $startedAt->copy()->addHours($hours)->addMinutes(self::graceMinutes($service));
 
-        if ($existing) {
+        if ($existing && $existing->isOpen()) {
             return $existing;
         }
 
-        $startedAt = now();
+        // The row is restarted rather than replaced: service_id is unique on this table,
+        // one clock per service by design, so a second row cannot exist.
+        if ($existing) {
+            $existing->update([
+                'hours' => $hours,
+                'started_at' => $startedAt,
+                'ends_at' => $endsAt,
+                'ended_at' => null,
+                'outcome' => null,
+            ]);
+
+            return $existing;
+        }
 
         return ServiceTerm::create([
             'service_id' => $service->id,
             'hours' => $hours,
             'started_at' => $startedAt,
             // hours is what was sold; ends_at is when it actually stops, grace included.
-            'ends_at' => $startedAt->copy()->addHours($hours)->addMinutes(self::graceMinutes($service)),
+            'ends_at' => $endsAt,
         ]);
     }
 
