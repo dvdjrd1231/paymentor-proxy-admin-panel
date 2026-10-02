@@ -95,7 +95,24 @@ class Terms
             return null;
         }
 
-        $existing = ServiceTerm::firstWhere('service_id', $service->id);
+        // An *open* term, not merely any term. A closed one must not stand in for a live
+        // clock: the sweeper only ever looks at terms with no ended_at, so a service that
+        // went active again after its term was closed would keep running with nothing left
+        // to stop it.
+        //
+        // That is not hypothetical — it is how services #109 and #113 came to be active
+        // with no clock. Their provisioning failed, so they were not active when their time
+        // ran out; the sweeper released the term rather than terminating a service that was
+        // not running; the retry later brought them up, and this guard handed back the
+        // closed row. They have been unmetered ever since.
+        //
+        // Re-activation therefore starts a fresh full term, which is what the backfill does
+        // for an already-running service and for the same reason: the customer did not
+        // consume the time they were not given.
+        $existing = ServiceTerm::query()
+            ->where('service_id', $service->id)
+            ->whereNull('ended_at')
+            ->first();
 
         if ($existing) {
             return $existing;
