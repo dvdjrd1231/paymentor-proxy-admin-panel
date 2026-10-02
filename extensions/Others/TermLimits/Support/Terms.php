@@ -26,6 +26,19 @@ class Terms
         'week' => 168,
     ];
 
+    /**
+     * The grace added to a term derived from the plan, in minutes.
+     *
+     * Leandro, 2026-10-02: a daily service ends "após 24:30 (vinte quatro horas e trinta
+     * minutos) após estar ativo", a weekly one after 168:30. The contracted length is a
+     * round 24 or 168 hours; this is the half-hour on top, so a customer whose service went
+     * live at 09:00 is not cut off at 08:59:58 the next morning by clock drift.
+     *
+     * It is not applied to a product's own Auto Terminate override: an admin who types
+     * "3 days" means three days, not three days and half an hour.
+     */
+    private const GRACE_MINUTES = 30;
+
     /** The contracted length of a service, in hours — or null if it is not fixed-term. */
     public static function length(Service $service): ?int
     {
@@ -88,12 +101,25 @@ class Terms
             return $existing;
         }
 
+        $startedAt = now();
+
         return ServiceTerm::create([
             'service_id' => $service->id,
             'hours' => $hours,
-            'started_at' => now(),
-            'ends_at' => now()->addHours($hours),
+            'started_at' => $startedAt,
+            // hours is what was sold; ends_at is when it actually stops, grace included.
+            'ends_at' => $startedAt->copy()->addHours($hours)->addMinutes(self::graceMinutes($service)),
         ]);
+    }
+
+    /** The grace this service's term gets: the half-hour, unless its length was set by hand. */
+    public static function graceMinutes(Service $service): int
+    {
+        $override = $service->product_id
+            ? ProductTerm::firstWhere('product_id', $service->product_id)?->hours()
+            : null;
+
+        return $override === null ? self::GRACE_MINUTES : 0;
     }
 
     /** Grant extra time, with a reason, on the record. */

@@ -65,13 +65,17 @@ class EditProduct extends Page
      */
     public const CYCLES = [
         'onetime' => ['label' => 'One Time', 'type' => 'one-time', 'period' => 1, 'unit' => 'month'],
-        // Recurring, not one-time. Service::calculateNextDueDate() returns null for a
-        // one-time plan, so expires_at was never set — and invoicing, suspension and
-        // termination all filter on expires_at, which left a daily proxy running for ever
-        // (Leandro, 2026-10-02: "the active services are not being terminated
-        // automatically"). Daily and Weekly are recurring cycles in the reference too.
-        'daily' => ['label' => 'Daily', 'type' => 'recurring', 'period' => 25, 'unit' => 'hour'],
-        'weekly' => ['label' => 'Weekly', 'type' => 'recurring', 'period' => 169, 'unit' => 'hour'],
+        // One-time on purpose, and it must stay that way. These do not renew (Leandro,
+        // 2026-10-02: "o serviço diario, não possuem renovação automatica") — they run for
+        // their contracted hours and then stop. Others/TermLimits is what stops them, and
+        // Terms::length() only recognises a one-time plan; typing these recurring both
+        // raises renewal invoices nobody asked for and silently switches that off.
+        //
+        // The hours here are the contracted length. The half-hour of grace Leandro asked
+        // for ("Finalizar após 24:30") is added by TermLimits when it opens the term, not
+        // baked in here, so the figure a customer is sold stays the figure they see.
+        'daily' => ['label' => 'Daily', 'type' => 'one-time', 'period' => 24, 'unit' => 'hour'],
+        'weekly' => ['label' => 'Weekly', 'type' => 'one-time', 'period' => 168, 'unit' => 'hour'],
         'monthly' => ['label' => 'Monthly', 'type' => 'recurring', 'period' => 720, 'unit' => 'hour'],
         'quarterly' => ['label' => 'Quarterly', 'type' => 'recurring', 'period' => 3, 'unit' => 'month'],
         'semiannually' => ['label' => 'Semi-Annually', 'type' => 'recurring', 'period' => 6, 'unit' => 'month'],
