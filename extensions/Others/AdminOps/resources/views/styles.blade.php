@@ -9716,4 +9716,28 @@
         color: #8a6d3b;
         font-size: 0.8125rem;
     }
+    /* ---- Module Queue: nine columns in one window -------------------------------
+       Every short column was wrapping mid-word -- "ProxyPan el", "Suspen d", a
+       "RESOLVE D" badge -- because .ao-mu-grid td carries overflow-wrap:anywhere for
+       the long ones, and nine columns left the short ones no room to say no (Leandro,
+       #43: "o design esta quebrando (quebra de linha, perca de alinhamento)").
+
+       So: nothing wraps except the two columns that are genuinely prose -- the
+       customer email and the error -- which also gives the rest their natural width
+       back and puts the cells into line again. */
+    .ao-pq-grid th,
+    .ao-pq-grid td { white-space: nowrap; }
+
+    .ao-pq-grid td:nth-child(2),
+    .ao-pq-grid td:nth-child(7) {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    /* The error is the one column that should absorb the slack, not the email. */
+    .ao-pq-grid td:nth-child(2) { min-width: 13rem; }
+    .ao-pq-grid td:nth-child(7) { width: 100%; }
+
+    /* A status pill reads as one word wherever it is used. */
+    .ao-mu-status { white-space: nowrap; }
 </style>

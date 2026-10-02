@@ -44,7 +44,7 @@
 
         <div class="ao-mu-line"><span>{{ number_format($rows->count()) }} Records Found, Page 1 of 1</span></div>
 
-        <table class="ao-mu-grid">
+        <table class="ao-mu-grid ao-pq-grid">
             <thead>
                 <tr>
                     <th>Service</th>

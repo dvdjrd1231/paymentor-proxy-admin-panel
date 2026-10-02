@@ -73,7 +73,12 @@ class CountryFlag
 
         $code = self::codeFor($country);
 
-        return $code ? self::marker($code) : null;
+        // The flag itself, not the letter pair {@see marker()}. Windows ships no glyphs for
+        // the regional indicators, which is why this returned letters for a while; the
+        // vendored Twemoji Country Flags webfont now covers exactly that range and is first
+        // in the stack for select, input and button, so the flag draws there too (Leandro,
+        // #10: "exibir bandeira do país antes do nome da geo localização").
+        return $code ? self::emoji($code) : null;
     }
 
     /** ISO-3166 alpha-2 for a country name, or null. */
@@ -91,16 +96,16 @@ class CountryFlag
     /**
      * The country marker shown before a region's name.
      *
-     * Plain uppercase letters, not the flag emoji {@see emoji()} builds. Windows ships no
-     * glyphs for regional indicators, so a browser there falls back to drawing the two
-     * letters in whatever font it can find — tiny small-capitals against the label beside
-     * them. That is what "ɪᴅ Indonesia - Jakarta" was, and why Leandro reported the region
-     * list as not legible twice (#10, 2026-09-02 and 2026-09-03). The same two letters in
-     * the page's own font are the same information and readable on every platform.
+     * Plain uppercase letters, not the flag emoji {@see emoji()} builds. Kept for the places
+     * that want a readable code rather than artwork — a client's country on their profile.
      *
-     * A real flag needs artwork — an image or a font carrying the glyphs — and the region
-     * picker renders labels as text with no markup allowed through, so that is a change of
-     * shape rather than of spelling.
+     * The region picker used this too, once. Windows ships no glyphs for the regional
+     * indicators, so a browser there drew the two letters in whatever font it could find —
+     * tiny small-capitals against the label beside them, which is what "ɪᴅ Indonesia -
+     * Jakarta" was and why Leandro reported the list as illegible twice (#10, 2026-09-02
+     * and -03). The answer then was to spell the code out. The answer now is the vendored
+     * Twemoji Country Flags webfont, which carries that range and nothing else, so
+     * {@see forLabel()} draws real flags on every platform.
      */
     public static function marker(string $iso2): string
     {
