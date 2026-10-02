@@ -79,7 +79,9 @@
                                 #{{ $row->service_id }}
                             @endif
                         </td>
-                        <td class="ao-mu-left">{{ $row->service?->user?->email ?: '—' }}</td>
+                        {{-- Cut with an ellipsis rather than wrapped; the whole address is
+                             on the title, as the error beside it is. --}}
+                        <td class="ao-mu-left" title="{{ $row->service?->user?->email }}">{{ $row->service?->user?->email ?: '—' }}</td>
                         <td>{{ $row->extension }}</td>
                         <td>{{ $actions[$row->action] ?? ucfirst($row->action) }}</td>
                         <td>

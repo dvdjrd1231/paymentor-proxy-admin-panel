@@ -9728,15 +9728,26 @@
     .ao-pq-grid th,
     .ao-pq-grid td { white-space: nowrap; }
 
-    .ao-pq-grid td:nth-child(2),
+    /* The error is the one column that should absorb the slack. */
     .ao-pq-grid td:nth-child(7) {
         white-space: normal;
         overflow-wrap: anywhere;
+        width: 100%;
     }
 
-    /* The error is the one column that should absorb the slack, not the email. */
-    .ao-pq-grid td:nth-child(2) { min-width: 13rem; }
-    .ao-pq-grid td:nth-child(7) { width: 100%; }
+    /* An address long enough to break the column is cut with an ellipsis instead, the whole
+       of it on the cell's title (Leandro, #43: "mail field is broken line yet, make ellipsis
+       for it"). text-overflow needs a bounded box to clip against, hence max-width. */
+    .ao-pq-grid td:nth-child(2) {
+        max-width: 14rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* The last cell holds Retry plus a bin, or a bin alone. Centred, the lone bin sat where
+       the pair's middle was and the column looked ragged; against the right edge every bin
+       lines up with every other (Leandro, #43: "trashbin icon must be right aligned"). */
+    .ao-pq-grid td.ao-mu-actions { text-align: right; }
 
     /* A status pill reads as one word wherever it is used. */
     .ao-mu-status { white-space: nowrap; }
