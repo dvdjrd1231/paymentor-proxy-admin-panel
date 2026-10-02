@@ -72,6 +72,14 @@ return [
     'status_terminated' => 'Terminated',
     'status_cancelled' => 'Cancelled',
     'place_new_order' => 'Place a New Order',
+    'view_available_addons' => 'View Available Addons',
+
+    // The reference's own column headings on My Products & Services. "Next Due Date", not
+    // "Renews on": a daily proxy is one-time and never renews, so the renewal wording was
+    // both off-reference and wrong (Leandro's client-area walkthrough, 2026-10-02).
+    'product_service' => 'Product/Service',
+    'pricing' => 'Pricing',
+    'next_due_date' => 'Next Due Date',
 
     // Store
     'categories' => 'Categories',

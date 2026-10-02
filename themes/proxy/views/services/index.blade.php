@@ -23,6 +23,23 @@
         ? \Paymenter\Extensions\Others\AdminOps\Models\ServiceAddon::whereIn('service_id', $services->pluck('id'))
             ->with('parent.product')->get()->keyBy('service_id')
         : collect();
+
+    // The reference's "View Available Addons" beside "Place a New Order". Read here for the
+    // same reason as above — core's Services\Index knows nothing about the addon catalogue.
+    // Null unless the category exists and has something to sell, so the link is never a
+    // door onto an empty room.
+    $addonCategory = null;
+
+    if (class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServiceAddons::class)) {
+        $candidate = \App\Models\Category::where(
+            'name',
+            \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServiceAddons::CATEGORY,
+        )->first();
+
+        $addonCategory = ($candidate && $candidate->slug && $candidate->products()->count() > 0)
+            ? $candidate
+            : null;
+    }
 @endphp
 
 <div class="wf-page">
@@ -79,6 +96,17 @@
                             <span class="wf-head-icon"><x-ri-shopping-cart-2-fill /></span>
                         </a>
                     </li>
+                    {{-- The reference's second action here. Only offered when the addon
+                         catalogue actually has something in it, so the link never leads to
+                         an empty shelf. --}}
+                    @if ($addonCategory)
+                        <li>
+                            <a href="{{ route('category.show', $addonCategory->slug) }}" wire:navigate>
+                                <span>{{ __('theme.view_available_addons') }}</span>
+                                <span class="wf-head-icon"><x-ri-puzzle-fill /></span>
+                            </a>
+                        </li>
+                    @endif
                 </ul>
             </div>
         </div>
@@ -91,8 +119,9 @@
             <table class="wf-table">
                 <thead>
                     <tr>
-                        <th>{{ __('navigation.services') }}</th>
-                        <th>{{ __('services.renews_on') ?? 'Renews' }}</th>
+                        <th>{{ __('theme.product_service') }}</th>
+                        <th>{{ __('theme.pricing') }}</th>
+                        <th>{{ __('theme.next_due_date') }}</th>
                         <th style="text-align:end">{{ __('invoices.status') ?? 'Status' }}</th>
                     </tr>
                 </thead>
@@ -113,7 +142,10 @@
                                     <span class="wf-list-title">
                                         {{-- The reference nests an addon under the service it
                                              extends rather than listing it as its own thing. --}}
-                                        @if ($addon?->parent)&#8618; @endif{{ $service->label }}
+                                        {{-- The reference prefixes the service's own id,
+                                             "4238 | IPv6 Residential Amethyst", so a
+                                             customer can quote it in a ticket. --}}
+                                        @if ($addon?->parent)&#8618; @endif{{ $service->id }} | {{ $service->label }}
                                     </span>
                                 </a>
                                 <span class="wf-list-sub">
@@ -124,11 +156,19 @@
                                     @endif
                                 </span>
                             </td>
-                            <td>{{ $service->expires_at ? $service->expires_at->format('M d, Y') : '—' }}</td>
+                            {{-- Price over cycle, as the reference stacks them: "$4.00 USD"
+                                 then "One Time". --}}
+                            <td>
+                                <span class="wf-list-title">{{ $service->formattedPrice }}</span>
+                                <span class="wf-list-sub"><x-cycle :plan="$service->plan" /></span>
+                            </td>
+                            {{-- A dash when there is nothing due, which is what the reference
+                                 shows for a one-time service: it never renews. --}}
+                            <td>{{ $service->expires_at ? $service->expires_at->format('M d, Y') : '-' }}</td>
                             <td style="text-align:end"><span class="wf-label {{ $tone }}">{{ ucfirst($service->status) }}</span></td>
                         </tr>
                     @empty
-                        <tr><td colspan="3"><div class="wf-empty">{{ __('services.no_services') }}</div></td></tr>
+                        <tr><td colspan="4"><div class="wf-empty">{{ __('services.no_services') }}</div></td></tr>
                     @endforelse
                 </tbody>
             </table>
