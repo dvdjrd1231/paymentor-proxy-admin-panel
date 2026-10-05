@@ -487,6 +487,11 @@
         padding-inline-end: 15px;
     }
     .wf-shortcut-logout .wf-logout { flex: 1; min-width: 0; }
+    /* The row's icon is a sibling of the logout button, not inside a link, so the
+       ".wf-list a … .wf-head-icon svg" rule above never reaches it and the glyph rendered
+       at its intrinsic size. Same size and colour as the link row above it. */
+    .wf-shortcut-logout .wf-head-icon { display: inline-flex; }
+    .wf-shortcut-logout .wf-head-icon svg { width: 1rem; height: 1rem; color: var(--brand); }
     .wf-shortcut-logout button {
         display: block; width: 100%; text-align: left;
         padding: 7px 15px; font-size: 13.5px; font-family: inherit;

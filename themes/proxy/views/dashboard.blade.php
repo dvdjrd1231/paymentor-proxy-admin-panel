@@ -128,9 +128,14 @@
                 </div>
             @endif
 
-            <div class="wf-panel">
+            {{-- Brand heading with a chevron, like every other panel in this rail. It was
+                 the one left plain, which is why it read as a different kind of thing from
+                 Your Info and Contacts above it (Leandro, 2026-10-05: "different shortcuts
+                 section UI"). The reference marks it with a bookmark, not a chain link. --}}
+            <div class="wf-panel wf-panel--brand">
                 <div class="wf-panel-heading">
-                    <span><span class="wf-head-icon"><x-ri-links-fill /></span>{{ __('dashboard.shortcuts') }}</span>
+                    <span><span class="wf-head-icon"><x-ri-bookmark-fill /></span>{{ __('dashboard.shortcuts') }}</span>
+                    <span class="wf-chevron">&#9650;</span>
                 </div>
                 {{-- Two entries, each with its icon at the end of the row, as the reference
                      has them: ordering, and the way out. Services and Invoices are already
@@ -168,7 +173,7 @@
                 <a class="wf-stat" href="{{ route('services') }}" wire:navigate>
                     <div class="wf-stat-head">
                         <span class="wf-stat-num">{{ $activeServices }}</span>
-                        <span class="wf-stat-icon"><x-ri-archive-stack-fill /></span>
+                        <span class="wf-stat-icon"><x-ri-box-3-fill /></span>
                     </div>
                     <div class="wf-stat-label">{{ __('theme.services_short') }}</div>
                 </a>
@@ -179,7 +184,7 @@
                     <a class="wf-stat" href="{{ route('quotes') }}" wire:navigate>
                         <div class="wf-stat-head">
                             <span class="wf-stat-num">{{ $quotes }}</span>
-                            <span class="wf-stat-icon"><x-ri-file-list-3-fill /></span>
+                            <span class="wf-stat-icon"><x-ri-file-text-fill /></span>
                         </div>
                         <div class="wf-stat-label">{{ __('clienttools.quotes_short') }}</div>
                     </a>
@@ -192,7 +197,7 @@
                     <a class="wf-stat" href="{{ route('tickets') }}" wire:navigate>
                         <div class="wf-stat-head">
                             <span class="wf-stat-num">{{ $openTickets }}</span>
-                            <span class="wf-stat-icon"><x-ri-customer-service-fill /></span>
+                            <span class="wf-stat-icon"><x-ri-chat-3-fill /></span>
                         </div>
                         <div class="wf-stat-label">{{ __('theme.tickets_short') }}</div>
                     </a>
@@ -200,7 +205,7 @@
                 <a class="wf-stat" href="{{ route('invoices') }}" wire:navigate>
                     <div class="wf-stat-head">
                         <span class="wf-stat-num">{{ $totalInvoices }}</span>
-                        <span class="wf-stat-icon"><x-ri-bank-card-fill /></span>
+                        <span class="wf-stat-icon"><x-ri-bank-card-2-fill /></span>
                     </div>
                     <div class="wf-stat-label">{{ __('theme.invoices_short') }}</div>
                 </a>
