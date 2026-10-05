@@ -29,16 +29,39 @@
     // Null unless the category exists and has something to sell, so the link is never a
     // door onto an empty room.
     $addonCategory = null;
+    $addonCategoryName = null;
 
     if (class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServiceAddons::class)) {
-        $candidate = \App\Models\Category::where(
-            'name',
-            \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServiceAddons::CATEGORY,
-        )->first();
+        $addonCategoryName = \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServiceAddons::CATEGORY;
+        $candidate = \App\Models\Category::where('name', $addonCategoryName)->first();
 
         $addonCategory = ($candidate && $candidate->slug && $candidate->products()->count() > 0)
             ? $candidate
             : null;
+    }
+
+    // "Place a New Order" opens the catalogue's first category, as the reference does, not
+    // the storefront hero — the same dead end the dashboard's shortcut had.
+    $orderUrl = route('home');
+
+    try {
+        $hiddenCategories = class_exists(\Paymenter\Extensions\Others\AdminOps\Models\Meta::class)
+            ? (array) \Paymenter\Extensions\Others\AdminOps\Models\Meta::hiddenCategoryIds()
+            : [];
+
+        $firstCategory = \App\Models\Category::query()
+            ->whereNull('parent_id')
+            ->whereNotIn('id', $hiddenCategories ?: [0])
+            ->when($addonCategoryName, fn ($q) => $q->where('name', '!=', $addonCategoryName))
+            ->whereHas('products')
+            ->orderBy('sort')->orderBy('name')
+            ->first();
+
+        if ($firstCategory?->slug) {
+            $orderUrl = route('category.show', $firstCategory->slug);
+        }
+    } catch (\Throwable $e) {
+        // The storefront fallback stands.
     }
 @endphp
 
@@ -91,7 +114,7 @@
                 <div class="wf-panel-heading">+ {{ __('theme.actions') }}</div>
                 <ul class="wf-list">
                     <li>
-                        <a href="{{ route('home') }}" wire:navigate>
+                        <a href="{{ $orderUrl }}" wire:navigate>
                             <span>{{ __('theme.place_new_order') }}</span>
                             <span class="wf-head-icon"><x-ri-shopping-cart-2-fill /></span>
                         </a>

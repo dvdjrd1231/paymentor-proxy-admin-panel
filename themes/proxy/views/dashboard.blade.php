@@ -36,6 +36,40 @@
         }
     }
 
+    // "Order New Services" opens the catalogue's first category, which is where the
+    // reference lands ("/store/ipv6-proxy-monthly-plans"). It used to point at the portal
+    // home, which is a hero and a row of category tiles — one more click before anything
+    // can be bought (Leandro, 2026-10-05).
+    //
+    // Addons are excluded: they attach to an existing service and have their own entry on
+    // the services page. A category with nothing to sell is skipped, and if that leaves
+    // nothing at all the link falls back to the storefront rather than breaking.
+    $orderUrl = route('home');
+
+    try {
+        $hiddenCategories = class_exists(\Paymenter\Extensions\Others\AdminOps\Models\Meta::class)
+            ? (array) \Paymenter\Extensions\Others\AdminOps\Models\Meta::hiddenCategoryIds()
+            : [];
+
+        $addonCategoryName = class_exists(\Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServiceAddons::class)
+            ? \Paymenter\Extensions\Others\AdminOps\Admin\Pages\ServiceAddons::CATEGORY
+            : null;
+
+        $firstCategory = \App\Models\Category::query()
+            ->whereNull('parent_id')
+            ->whereNotIn('id', $hiddenCategories ?: [0])
+            ->when($addonCategoryName, fn ($q) => $q->where('name', '!=', $addonCategoryName))
+            ->whereHas('products')
+            ->orderBy('sort')->orderBy('name')
+            ->first();
+
+        if ($firstCategory?->slug) {
+            $orderUrl = route('category.show', $firstCategory->slug);
+        }
+    } catch (\Throwable $e) {
+        // Keep the storefront fallback; a dashboard must not fail over a shortcut.
+    }
+
     // Balance in the currency the customer is browsing in, falling back to the default.
     $currency = session('currency', config('settings.default_currency'));
     $credit = $creditsEnabled
@@ -143,7 +177,7 @@
                      ours, not the reference's (Leandro, 2026-10-05). --}}
                 <ul class="wf-list">
                     <li>
-                        <a href="{{ route('home') }}" wire:navigate>
+                        <a href="{{ $orderUrl }}" wire:navigate>
                             <span>{{ __('dashboard.order_new_services') }}</span>
                             <span class="wf-head-icon"><x-ri-shopping-cart-2-fill /></span>
                         </a>
