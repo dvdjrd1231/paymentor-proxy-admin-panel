@@ -132,13 +132,21 @@
                 <div class="wf-panel-heading">
                     <span><span class="wf-head-icon"><x-ri-links-fill /></span>{{ __('dashboard.shortcuts') }}</span>
                 </div>
+                {{-- Two entries, each with its icon at the end of the row, as the reference
+                     has them: ordering, and the way out. Services and Invoices are already
+                     in the top menu and in the counters above, so repeating them here was
+                     ours, not the reference's (Leandro, 2026-10-05). --}}
                 <ul class="wf-list">
-                    <li><a href="{{ route('home') }}" wire:navigate>{{ __('dashboard.order_new_services') }}</a></li>
-                    <li><a href="{{ route('services') }}" wire:navigate>{{ __('navigation.services') }}</a></li>
-                    <li><a href="{{ route('invoices') }}" wire:navigate>{{ __('navigation.invoices') }}</a></li>
-                    @if ($ticketsEnabled)
-                        <li><a href="{{ route('tickets.create') }}" wire:navigate>{{ __('ticket.create_ticket') }}</a></li>
-                    @endif
+                    <li>
+                        <a href="{{ route('home') }}" wire:navigate>
+                            <span>{{ __('dashboard.order_new_services') }}</span>
+                            <span class="wf-head-icon"><x-ri-shopping-cart-2-fill /></span>
+                        </a>
+                    </li>
+                    <li class="wf-shortcut-logout">
+                        <livewire:auth.logout />
+                        <span class="wf-head-icon"><x-ri-arrow-left-line /></span>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -176,13 +184,10 @@
                         <div class="wf-stat-label">{{ __('clienttools.quotes_short') }}</div>
                     </a>
                 @endif
-                <a class="wf-stat" href="{{ route('invoices') }}" wire:navigate>
-                    <div class="wf-stat-head">
-                        <span class="wf-stat-num">{{ $unpaidInvoices }}</span>
-                        <span class="wf-stat-icon"><x-ri-receipt-fill /></span>
-                    </div>
-                    <div class="wf-stat-label">{{ __('theme.overdue_invoices') }}</div>
-                </a>
+                {{-- No Overdue Invoices tile. The reference counts four — Services, Quotes,
+                     Tickets, Invoices — and overdue ones already have their own panel lower
+                     down, where the reference puts them too (Leandro, 2026-10-05, comparing
+                     the two dashboards side by side). --}}
                 @if ($ticketsEnabled)
                     <a class="wf-stat" href="{{ route('tickets') }}" wire:navigate>
                         <div class="wf-stat-head">
@@ -262,7 +267,13 @@
                 @endif
             </div>
 
-            {!! hook('pages.dashboard') !!}
+            {{-- In the grid's first column, so Recent News sits under Overdue Invoices as
+                 it does on the reference, rather than spanning the full width below both.
+                 The empty second cell holds the column open. --}}
+            <div class="wf-grid">
+                <div>{!! hook('pages.dashboard') !!}</div>
+                <div></div>
+            </div>
         </div>
     </div>
 </div>

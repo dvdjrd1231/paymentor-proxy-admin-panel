@@ -478,6 +478,23 @@
        above it is already brand-coloured, and brand-on-brand loses the row entirely. */
     .wf-list a.is-active:not(.wf-btn) { background: #3d434d; color: #fff; }
     .wf-list a.is-active:not(.wf-btn):hover { background: #333840; color: #fff; }
+    /* Logout as a Shortcuts row. The control is a Livewire component shared with the header,
+       so it arrives as a bare <button> and the look belongs to whoever placed it — here, a
+       plain row like the link above it, with the icon pushed to the end (the reference's
+       Shortcuts panel: Order New Services, then Logout). */
+    .wf-shortcut-logout {
+        display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+        padding-inline-end: 15px;
+    }
+    .wf-shortcut-logout .wf-logout { flex: 1; min-width: 0; }
+    .wf-shortcut-logout button {
+        display: block; width: 100%; text-align: left;
+        padding: 7px 15px; font-size: 13.5px; font-family: inherit;
+        color: var(--wf-text); background: transparent; border: 0; cursor: pointer;
+    }
+    .wf-shortcut-logout:hover { background: var(--wf-section); }
+    .wf-shortcut-logout:hover button { color: var(--brand); }
+
     .wf-list-title { font-weight: 600; }
     /* Panel footer — the reference portal's "View More…" strip under a list */
     .wf-panel-foot {
