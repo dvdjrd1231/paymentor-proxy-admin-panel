@@ -77,6 +77,9 @@ return [
     // The reference calls the dashboard's announcement panel "Recent News".
     'recent_news' => 'Recent News',
 
+    // Order summary rows, worded as the reference words them (trailing colon included).
+    'setup_fees' => 'Setup Fees:',
+
     // The reference's own column headings on My Products & Services. "Next Due Date", not
     // "Renews on": a daily proxy is one-time and never renews, so the renewal wording was
     // both off-reference and wrong (Leandro's client-area walkthrough, 2026-10-02).

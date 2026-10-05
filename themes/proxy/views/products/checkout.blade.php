@@ -13,9 +13,13 @@
         <div class="wf-layout wf-layout--reverse">
         {{-- ── Configuration ───────────────────────────────────────────── --}}
         <div>
-            <div class="wf-panel">
-                <div class="wf-panel-heading">{{ __('theme.configure') }} &mdash; {{ $product->name }}</div>
-                <div class="wf-panel-body">
+            {{-- No panel box here. The reference sets the product's own name as the heading
+                 and lets the form run down the page under it; ours boxed the whole thing and
+                 titled the box "Configure — <product>", repeating the page heading directly
+                 above it (Leandro, 2026-10-05). --}}
+            <div class="wf-configure">
+                <h2 class="wf-configure-title">{{ $product->name }}</h2>
+                <div>
                     @if ($product->image || $product->description)
                         <div class="wf-product-intro">
                             @if ($product->image)
@@ -148,10 +152,40 @@
                         </div>
                     @endforeach
 
+                    {{-- The server module's own checkout fields — ProxyPanel's Region among
+                         them — are not $product->configOptions and so were itemised nowhere,
+                         which is why the summary said nothing about the region being bought
+                         while the reference lists "» Region: ..." (Leandro, 2026-10-05).
+                         They carry no price of their own; the line is there to confirm the
+                         choice, exactly as on the reference. --}}
+                    @foreach ($this->getCheckoutConfig() as $moduleOption)
+                        @php
+                            $moduleOption = (object) $moduleOption;
+                            $chosenKey = $checkoutConfig[$moduleOption->name] ?? null;
+                            $options = (array) ($moduleOption->options ?? []);
+                            $chosenLabel = ($chosenKey !== null && $chosenKey !== '' && isset($options[$chosenKey]))
+                                ? $options[$chosenKey]
+                                : ($options[''] ?? __('theme.not_selected'));
+                        @endphp
+                        <div class="wf-total-row wf-total-row--opt">
+                            <span>&raquo; {{ $moduleOption->label ?? $moduleOption->name }}: {{ $chosenLabel }}</span>
+                            <span>{{ $total->format(0) }}</span>
+                        </div>
+                    @endforeach
+
                     <div class="wf-total-row">
-                        <span>{{ __('product.setup_fee') }}</span>
+                        <span>{{ __('theme.setup_fees') }}</span>
                         <span>{{ $total->format($total->setup_fee ?? 0) }}</span>
                     </div>
+
+                    {{-- What recurs, labelled by its cycle: the reference's "Monthly: $70.00
+                         USD" under the setup fees. --}}
+                    @if ($plan->type === 'recurring')
+                        <div class="wf-total-row">
+                            <span><x-cycle :plan="$plan" />:</span>
+                            <span>{{ $total->format($total->price) }}</span>
+                        </div>
+                    @endif
 
                     @if ($total->total_tax > 0)
                         <div class="wf-total-row">
@@ -176,18 +210,21 @@
                         </div>
                     @endif
 
-                    @if (($product->stock > 0 || !$product->stock) && $product->price()->available)
-                        <button type="button" class="wf-btn wf-btn--checkout" style="margin-top:.9rem"
-                            wire:click="checkout" wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="checkout">{{ __('theme.continue') }} &rarr;</span>
-                            <span wire:loading wire:target="checkout">…</span>
-                        </button>
-                    @else
-                        <p class="wf-section-note" style="margin-top:.75rem">{{ __('product.out_of_stock') ?? 'Currently unavailable.' }}</p>
-                    @endif
                 </div>
-                <div class="wf-summary-foot"><a href="{{ route('home') }}" wire:navigate>{{ __('theme.continue_shopping') }}</a></div>
             </div>
+
+            {{-- Outside the summary panel and on its own, as the reference has it: one
+                 button under the totals, and no "Continue Shopping" beside it — the
+                 Categories rail on the left is already the way back to the catalogue. --}}
+            @if (($product->stock > 0 || !$product->stock) && $product->price()->available)
+                <button type="button" class="wf-btn wf-btn--checkout wf-checkout-go"
+                    wire:click="checkout" wire:loading.attr="disabled">
+                    <span wire:loading.remove wire:target="checkout">{{ __('theme.continue') }} &rarr;</span>
+                    <span wire:loading wire:target="checkout">…</span>
+                </button>
+            @else
+                <p class="wf-section-note" style="margin-top:.75rem">{{ __('product.out_of_stock') ?? 'Currently unavailable.' }}</p>
+            @endif
         </div>
         </div>
     </div>
