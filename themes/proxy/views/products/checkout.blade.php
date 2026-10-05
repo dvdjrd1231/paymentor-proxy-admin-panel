@@ -2,15 +2,20 @@
      right. All Livewire bindings (plan_id, configOptions, checkoutConfig, checkout) and
      the shared x-form.* components are unchanged from the default theme. --}}
 <div class="wf-page">
-    <div class="wf-pagehead">
-        <h1>{{ __('theme.configure') }}</h1>
-        <p>{{ __('theme.configure_intro') }}</p>
-    </div>
-
     <div class="wf-layout">
         <x-store-rail :active="$product->category" />
 
-        <div class="wf-layout wf-layout--reverse">
+        {{-- The heading belongs beside the rail, not above it. Ours ran the full width of
+             the page with its rule starting at the page edge, so the rail began underneath
+             it; on the reference the rail starts at the top and "Configure" sits in the
+             column to its right (Leandro, 2026-10-05). --}}
+        <div>
+            <div class="wf-pagehead">
+                <h1>{{ __('theme.configure') }}</h1>
+                <p>{{ __('theme.configure_intro') }}</p>
+            </div>
+
+            <div class="wf-layout wf-layout--reverse">
         {{-- ── Configuration ───────────────────────────────────────────── --}}
         <div>
             {{-- No panel box here. The reference sets the product's own name as the heading
@@ -225,7 +230,8 @@
             @else
                 <p class="wf-section-note" style="margin-top:.75rem">{{ __('product.out_of_stock') ?? 'Currently unavailable.' }}</p>
             @endif
-        </div>
+            </div>
+            </div>
         </div>
     </div>
 </div>
