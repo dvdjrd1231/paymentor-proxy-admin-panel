@@ -28,8 +28,10 @@
                         </span>
                     </span>
                 </span>
-                <a class="wf-btn wf-btn--sm" href="{{ route('services.show', $service) }}" wire:navigate>
-                    {{ __('services.view') }}
+                {{-- "View Details", and outlined rather than solid: the reference's own
+                     button on this row (Leandro, 2026-10-06). --}}
+                <a class="wf-btn wf-btn--sm wf-btn--outline" href="{{ route('services.show', $service) }}" wire:navigate>
+                    {{ __('services.view_details') }}
                 </a>
             </div>
         </li>

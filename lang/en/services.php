@@ -8,6 +8,8 @@ return [
     'name' => 'Name',
     'actions' => 'Actions',
     'view' => 'View',
+    // The reference labels the per-service button on the dashboard "View Details".
+    'view_details' => 'View Details',
 
     'product_details' => 'Product Details',
     'billing_cycle' => 'Billing Cycle',
