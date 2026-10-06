@@ -86,6 +86,7 @@ return [
     'product_service' => 'Product/Service',
     'pricing' => 'Pricing',
     'next_due_date' => 'Next Due Date',
+    'my_products_services' => 'My Products & Services',
 
     // Store
     'categories' => 'Categories',

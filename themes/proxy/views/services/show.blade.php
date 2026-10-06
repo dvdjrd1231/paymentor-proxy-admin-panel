@@ -1,6 +1,34 @@
-{{-- Service detail — WHMCS "Six" style. Product summary on the left, actions on the
-     right, and the provisioning module's own fields (proxy credentials, addresses,
-     status) rendered from $fields. All Livewire bindings match the default theme. --}}
+{{-- Manage Product — the reference portal's service page (Leandro, 2026-10-06).
+
+     Rail on the left: credit balance, Overview, and every action the provisioning module
+     offers as its own row. Main column: the product as a card with its status under it,
+     the billing facts beside it, and the module's fields under a Configurable Options
+     heading.
+
+     All Livewire bindings are unchanged — goto() for a module button, changeView() for a
+     module view, $set('showCancel') and the cancel modal. --}}
+@php
+    $creditsEnabled = (bool) config('settings.credits_enabled', false);
+    $currency = session('currency', config('settings.default_currency'));
+    $credit = $creditsEnabled ? Auth::user()->credits()->where('currency_code', $currency)->first() : null;
+
+    $statusTone = match ($service->status) {
+        'active' => 'wf-prod-status--active',
+        'cancelled' => 'wf-prod-status--danger',
+        default => 'wf-prod-status--warning',
+    };
+
+    // The gateway the service was actually paid through, which is what the reference shows
+    // as Payment Method. Nothing is invented when it has never been paid.
+    $paymentMethod = null;
+
+    try {
+        $paymentMethod = $service->invoices->flatMap->transactions->first()?->gateway?->name;
+    } catch (\Throwable $e) {
+        $paymentMethod = null;
+    }
+@endphp
+
 <div class="wf-page">
     @if($invoice = $service->invoices()->where('status', 'pending')->first())
         <div class="wf-alert">
@@ -9,30 +37,14 @@
         </div>
     @endif
 
-    <div class="wf-pagehead">
-        <h1>{{ $service->label ?? $service->product?->name }}</h1>
-    </div>
-
-    <div class="wf-crumb">
-        <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a>
-        <span>/</span><a href="{{ route('dashboard') }}" wire:navigate>{{ __('theme.client_area') }}</a>
-        <span>/</span><a href="{{ route('services') }}" wire:navigate>{{ __('navigation.services') }}</a>
-        <span>/</span>{{ $service->label ?? $service->product?->name }}
-    </div>
-
-    @php
-        $creditsEnabled = (bool) config('settings.credits_enabled', false);
-        $currency = session('currency', config('settings.default_currency'));
-        $credit = $creditsEnabled ? Auth::user()->credits()->where('currency_code', $currency)->first() : null;
-    @endphp
-
     <div class="wf-layout">
-        @if ($creditsEnabled)
-            <div>
+        {{-- ── Rail ────────────────────────────────────────────────────── --}}
+        <div>
+            @if ($creditsEnabled)
                 <div class="wf-panel wf-panel--brand">
                     <div class="wf-panel-heading">
                         <span>{{ __('dashboard.credit_balance') }}</span>
-                        <span class="wf-chevron">▲</span>
+                        <span class="wf-chevron">&#9650;</span>
                     </div>
                     <div class="wf-panel-body" style="text-align:center">
                         <div class="wf-stat-num">{{ $credit?->formatted_amount ?? __('dashboard.no_credit') }}</div>
@@ -40,153 +52,197 @@
                            href="{{ route('account.credits') }}" wire:navigate>{{ __('dashboard.add_funds') }}</a>
                     </div>
                 </div>
-                <div class="wf-panel">
-                    <div class="wf-panel-heading">{{ __('services.actions') }}</div>
-                    <ul class="wf-list">
-                        <li><a href="{{ route('services') }}" wire:navigate>{{ __('navigation.services') }}</a></li>
-                        <li><a href="{{ route('home') }}" wire:navigate>{{ __('theme.place_new_order') }}</a></li>
-                    </ul>
+            @endif
+
+            {{-- Overview, with the page you are on marked — the reference's own rail. --}}
+            <div class="wf-panel wf-panel--brand">
+                <div class="wf-panel-heading">
+                    <span><span class="wf-head-icon"><x-ri-star-fill /></span>{{ __('theme.overview') }}</span>
+                    <span class="wf-chevron">&#9650;</span>
                 </div>
+                <ul class="wf-list">
+                    <li>
+                        <a class="is-active" href="{{ route('services.show', $service) }}" wire:navigate>
+                            <span>{{ __('theme.information') }}</span>
+                        </a>
+                    </li>
+                </ul>
             </div>
-        @endif
 
-        <div class="wf-grid">
-        {{-- ── Details ─────────────────────────────────────────────────── --}}
-        <div class="wf-panel">
-            <div class="wf-panel-heading">{{ __('services.product_details') }}</div>
-            <div class="wf-panel-body">
-                <table class="wf-table wf-table--kv">
-                    <tbody>
-                        <tr>
-                            <th>{{ __('services.price') }}</th>
-                            <td>{{ $service->formattedPrice }}</td>
-                        </tr>
-                        @if($service->plan?->type == 'recurring')
-                            <tr>
-                                <th>{{ __('services.billing_cycle') }}</th>
-                                <td>
-                                    {{ __('services.every_period', [
-                                        'period' => $service->plan->billing_period > 1 ? $service->plan->billing_period : '',
-                                        'unit' => trans_choice(__('services.billing_cycles.' . $service->plan->billing_unit), $service->plan->billing_period),
-                                    ]) }}
-                                </td>
-                            </tr>
-                            @if($service->expires_at)
-                                <tr>
-                                    <th>{{ __('services.renews_on') }}</th>
-                                    <td>{{ $service->expires_at->format('M d, Y') }}</td>
-                                </tr>
-                            @endif
-                        @endif
-                        <tr>
-                            <th>{{ __('services.status') }}</th>
-                            <td>
-                                @if($service->cancellation && $service->status == 'active')
-                                    <span class="wf-label wf-label--warning">{{ __('services.statuses.cancellation_pending') }}</span>
-                                @else
-                                    @php
-                                        $tone = match ($service->status) {
-                                            'active' => 'wf-label--success',
-                                            'cancelled' => 'wf-label--danger',
-                                            default => 'wf-label--warning',
-                                        };
-                                    @endphp
-                                    <span class="wf-label {{ $tone }}">{{ __('services.statuses.' . $service->status) }}</span>
-                                @endif
-                            </td>
-                        </tr>
-
-                        {{-- Fields supplied by the provisioning module (ProxyPanel):
-                             proxy username/password, addresses, host, panel status. --}}
-                        @foreach ($fields as $field)
-                            <tr>
-                                <th>{{ $field['label'] }}</th>
-                                <td class="wf-kv-value">{{ $field['text'] }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-
-                @include('services.partials.billing-agreement')
-            </div>
-        </div>
-
-        {{-- ── Actions ─────────────────────────────────────────────────── --}}
-        @if($service->cancellable || $service->upgradable || count($buttons) > 0)
-            <div class="wf-panel">
-                <div class="wf-panel-heading">{{ __('services.actions') }}</div>
-                <div class="wf-panel-body">
-                    <div class="wf-actions">
+            {{-- Every module action as a row of its own, rather than a strip of buttons in
+                 the main column. --}}
+            @if($service->cancellable || $service->upgradable || count($buttons) > 0)
+                <div class="wf-panel wf-panel--brand">
+                    <div class="wf-panel-heading">
+                        <span><span class="wf-head-icon"><x-ri-tools-fill /></span>{{ __('services.actions') }}</span>
+                        <span class="wf-chevron">&#9650;</span>
+                    </div>
+                    <ul class="wf-list">
                         @if($service->upgradable)
-                            <a class="wf-btn" href="{{ route('services.upgrade', $service->id) }}">{{ __('services.upgrade') }}</a>
+                            <li>
+                                <a href="{{ route('services.upgrade', $service->id) }}">
+                                    <span>{{ __('services.upgrade') }}</span>
+                                </a>
+                            </li>
                         @endif
 
                         @if($service->upgrade()->where('status', 'pending')->exists())
-                            <button type="button" class="wf-btn wf-btn--ghost"
-                                @click="Alpine.store('notifications').addNotification([{message: '{{ __('services.upgrade_pending') }}', type: 'error'}])">
-                                {{ __('services.upgrade') }}
-                            </button>
+                            <li class="wf-rowaction">
+                                <button type="button"
+                                    @click="Alpine.store('notifications').addNotification([{message: '{{ __('services.upgrade_pending') }}', type: 'error'}])">
+                                    {{ __('services.upgrade') }}
+                                </button>
+                            </li>
                         @endif
 
                         @foreach ($buttons as $button)
                             @if (isset($button['function']))
-                                <button type="button" class="wf-btn wf-btn--ghost" wire:click="goto('{{ $button['function'] }}')">
-                                    <span wire:loading.remove wire:target="goto('{{ $button['function'] }}')">{{ $button['label'] }}</span>
-                                    <span wire:loading wire:target="goto('{{ $button['function'] }}')">…</span>
-                                </button>
+                                <li class="wf-rowaction">
+                                    <button type="button" wire:click="goto('{{ $button['function'] }}')">
+                                        <span wire:loading.remove wire:target="goto('{{ $button['function'] }}')">{{ $button['label'] }}</span>
+                                        <span wire:loading wire:target="goto('{{ $button['function'] }}')">…</span>
+                                    </button>
+                                </li>
                             @else
-                                <a class="wf-btn wf-btn--ghost" href="{{ $button['url'] }}"
-                                    @if(!empty($button['target'])) target="{{ $button['target'] }}" @endif
-                                    @if(($button['target'] ?? null) === '_blank') rel="noopener noreferrer" @endif>
-                                    {{ $button['label'] }}
-                                </a>
+                                <li>
+                                    <a href="{{ $button['url'] }}"
+                                        @if(!empty($button['target'])) target="{{ $button['target'] }}" @endif
+                                        @if(($button['target'] ?? null) === '_blank') rel="noopener noreferrer" @endif>
+                                        <span>{{ $button['label'] }}</span>
+                                    </a>
+                                </li>
                             @endif
                         @endforeach
 
                         @if($service->cancellable)
-                            <button type="button" class="wf-btn wf-btn--danger" wire:click="$set('showCancel', true)">
-                                {{ __('services.cancel') }}
-                            </button>
-                        @endif
-                    </div>
-
-                    @if($showCancel)
-                        <x-modal open="true"
-                            title="{{ __('services.cancellation', ['service' => $service->product->name]) }}"
-                            width="max-w-3xl">
-                            <livewire:services.cancel :service="$service" />
-                            <x-slot name="closeTrigger">
-                                <button wire:click="$set('showCancel', false)" @click="open = false" class="text-primary-100">
-                                    <x-ri-close-fill class="size-6" />
+                            <li class="wf-rowaction">
+                                <button type="button" wire:click="$set('showCancel', true)">
+                                    {{ __('services.request_cancellation') }}
                                 </button>
-                            </x-slot>
-                        </x-modal>
-                    @endif
-                </div>
-            </div>
-        @endif
-        </div>
-    </div>
-
-    {{-- ── Module-provided views (tabs) ─────────────────────────────────── --}}
-    @if (count($views) > 0)
-        <div class="wf-panel">
-            @if (count($views) > 1)
-                <div class="wf-panel-heading wf-tabs">
-                    @foreach ($views as $view)
-                        <button type="button" wire:click="changeView('{{ $view['name'] }}')"
-                            class="wf-tab {{ $view['name'] == $currentView ? 'wf-tab--active' : '' }}">
-                            {{ $view['label'] }}
-                        </button>
-                    @endforeach
+                            </li>
+                        @endif
+                    </ul>
                 </div>
             @endif
-            <div class="wf-panel-body">
-                <x-loading target="changeView" />
-                <div wire:loading.remove wire:target="changeView">
-                    {!! $extensionView !!}
+        </div>
+
+        {{-- ── Main ────────────────────────────────────────────────────── --}}
+        <div>
+            <div class="wf-title">
+                <h1>{{ __('theme.manage_product') }}</h1>
+            </div>
+            <hr class="wf-title-rule">
+
+            <div class="wf-crumb">
+                <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a>
+                <span>/</span><a href="{{ route('dashboard') }}" wire:navigate>{{ __('theme.client_area') }}</a>
+                <span>/</span><a href="{{ route('services') }}" wire:navigate>{{ __('theme.my_products_services') }}</a>
+                <span>/</span>{{ __('services.product_details') }}
+            </div>
+
+            <div class="wf-grid">
+                {{-- The product as the reference shows it: an icon over its name, the group
+                     it came from, and the status as a bar across the foot of the card. --}}
+                <div class="wf-prodcard">
+                    <div class="wf-prodcard-body">
+                        <span class="wf-prodcard-icon"><x-ri-archive-2-fill /></span>
+                        <div class="wf-prodcard-name">{{ $service->product?->name ?? $service->label }}</div>
+                        @if ($service->product?->category)
+                            <div class="wf-prodcard-cat">{{ $service->product->category->name }}</div>
+                        @endif
+                    </div>
+                    <div class="wf-prod-status {{ $statusTone }}">
+                        @if($service->cancellation && $service->status == 'active')
+                            {{ __('services.statuses.cancellation_pending') }}
+                        @else
+                            {{ __('services.statuses.' . $service->status) }}
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Billing facts, each a label over its value, centred as the reference
+                     centres them. A dash where there is nothing to state. --}}
+                <div class="wf-facts">
+                    <div class="wf-fact">
+                        <span class="wf-fact-label">{{ __('theme.registration_date') }}</span>
+                        <span class="wf-fact-value">{{ $service->created_at?->format('l, F jS, Y') ?: '-' }}</span>
+                    </div>
+                    <div class="wf-fact">
+                        <span class="wf-fact-label">{{ __('theme.first_payment_amount') }}</span>
+                        <span class="wf-fact-value">{{ $service->formattedPrice }}</span>
+                    </div>
+                    <div class="wf-fact">
+                        <span class="wf-fact-label">{{ __('theme.billing_cycle') }}</span>
+                        <span class="wf-fact-value"><x-cycle :plan="$service->plan" /></span>
+                    </div>
+                    <div class="wf-fact">
+                        <span class="wf-fact-label">{{ __('theme.next_due_date') }}</span>
+                        <span class="wf-fact-value">{{ $service->expires_at?->format('M d, Y') ?: '-' }}</span>
+                    </div>
+                    <div class="wf-fact">
+                        <span class="wf-fact-label">{{ __('theme.payment_method') }}</span>
+                        <span class="wf-fact-value">{{ $paymentMethod ?: '-' }}</span>
+                    </div>
                 </div>
             </div>
+
+            {{-- The module's own fields, under the heading the reference gives them. --}}
+            @if (count($fields) > 0)
+                <div class="wf-panel" style="margin-top:1.25rem">
+                    <div class="wf-panel-heading wf-tabs">
+                        <span class="wf-tab wf-tab--active">{{ __('theme.configurable_options') }}</span>
+                    </div>
+                    <div class="wf-panel-body">
+                        <table class="wf-table wf-table--kv wf-table--conf">
+                            <tbody>
+                                @foreach ($fields as $field)
+                                    <tr>
+                                        <th>{{ $field['label'] }}</th>
+                                        <td class="wf-kv-value">{{ $field['text'] }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+
+            @include('services.partials.billing-agreement')
+
+            {{-- ── Module-provided views (tabs) ─────────────────────────── --}}
+            @if (count($views) > 0)
+                <div class="wf-panel" style="margin-top:1.25rem">
+                    @if (count($views) > 1)
+                        <div class="wf-panel-heading wf-tabs">
+                            @foreach ($views as $view)
+                                <button type="button" wire:click="changeView('{{ $view['name'] }}')"
+                                    class="wf-tab {{ $view['name'] == $currentView ? 'wf-tab--active' : '' }}">
+                                    {{ $view['label'] }}
+                                </button>
+                            @endforeach
+                        </div>
+                    @endif
+                    <div class="wf-panel-body">
+                        <x-loading target="changeView" />
+                        <div wire:loading.remove wire:target="changeView">
+                            {!! $extensionView !!}
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            @if($showCancel)
+                <x-modal open="true"
+                    title="{{ __('services.cancellation', ['service' => $service->product->name]) }}"
+                    width="max-w-3xl">
+                    <livewire:services.cancel :service="$service" />
+                    <x-slot name="closeTrigger">
+                        <button wire:click="$set('showCancel', false)" @click="open = false" class="text-primary-100">
+                            <x-ri-close-fill class="size-6" />
+                        </button>
+                    </x-slot>
+                </x-modal>
+            @endif
         </div>
-    @endif
+    </div>
 </div>

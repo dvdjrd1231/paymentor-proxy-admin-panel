@@ -11,6 +11,10 @@ return [
     // The reference labels the per-service button on the dashboard "View Details".
     'view_details' => 'View Details',
 
+    // The reference's wording for cancelling from the service page. The rest of the Manage
+    // Product wording already lives in theme.php and is used from there.
+    'request_cancellation' => 'Request Cancellation',
+
     'product_details' => 'Product Details',
     'billing_cycle' => 'Billing Cycle',
     'cancel' => 'Cancel',

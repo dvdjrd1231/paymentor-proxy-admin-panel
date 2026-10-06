@@ -319,6 +319,47 @@
     .wf-btn--ghost { background: transparent; color: var(--brand); }
     .wf-btn--ghost:hover { background: color-mix(in srgb, var(--brand) 10%, transparent); color: var(--brand); }
     .wf-btn--block { width: 100%; text-align: center; }
+
+    /* ── Manage Product ──────────────────────────────────────────────────
+       The product as the reference presents it: a plate with its icon and name, and the
+       status as a solid bar across the foot rather than a pill in a table row. */
+    .wf-prodcard { border-radius: var(--wf-radius); overflow: hidden; background: var(--wf-section); }
+    .wf-prodcard-body { padding: 1.75rem 1.25rem 1.5rem; text-align: center; }
+    .wf-prodcard-icon {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 7rem; height: 7rem; margin-bottom: 1.25rem;
+        border-radius: 50%; background: var(--brand); color: var(--brand-contrast);
+    }
+    .wf-prodcard-icon svg { width: 3.25rem; height: 3.25rem; }
+    .wf-prodcard-name { color: var(--brand); font-size: 1.35rem; line-height: 1.35; }
+    .wf-prodcard-cat { color: var(--brand); font-size: 1rem; margin-top: .35rem; }
+    .wf-prod-status {
+        padding: .55rem 1rem; text-align: center;
+        color: #fff; font-size: .95rem; letter-spacing: .04em; text-transform: uppercase;
+    }
+    .wf-prod-status--active { background: #5cb85c; }
+    .wf-prod-status--warning { background: #f0ad4e; }
+    .wf-prod-status--danger { background: #d9534f; }
+
+    /* Billing facts: a label over its value, both centred and brand-coloured. */
+    .wf-facts { text-align: center; padding-top: .5rem; }
+    .wf-fact { margin-bottom: 1.1rem; }
+    .wf-fact-label { display: block; color: var(--brand); font-size: 1.05rem; }
+    .wf-fact-value { display: block; color: var(--brand); font-size: .9rem; margin-top: .2rem; }
+
+    /* A module action as a rail row: the control is a <button> because it is wired to
+       Livewire, but it has to read as the links above it. */
+    .wf-rowaction button {
+        display: flex; align-items: center; width: 100%;
+        padding: 7px 15px; font-size: 13.5px; font-family: inherit; text-align: left;
+        color: var(--wf-text); background: transparent; border: 0; cursor: pointer;
+    }
+    .wf-rowaction:hover { background: var(--wf-section); }
+    .wf-rowaction:hover button { color: var(--brand); }
+
+    /* The configurable-options table: labels right against their values, both brand. */
+    .wf-table--conf th, .wf-table--conf td { color: var(--brand); border: 0; padding: .3rem .75rem; }
+    .wf-table--conf th { text-align: end; width: 40%; font-weight: 700; }
     /* A quiet row action: white with a grey edge, not a solid brand block. The reference
        uses it for "View Details" beside each service, where a filled button in every row
        made the list read as a column of calls to action. */
