@@ -356,6 +356,12 @@
     }
     .wf-rowaction:hover { background: var(--wf-section); }
     .wf-rowaction:hover button { color: var(--brand); }
+    /* The page being shown, marked as the link rows are: slate, not brand, because the
+       panel heading above is already brand and brand-on-brand loses the row. */
+    .wf-rowaction.is-active { background: #3d434d; }
+    .wf-rowaction.is-active button,
+    .wf-rowaction.is-active:hover button { color: #fff; }
+    .wf-rowaction.is-active:hover { background: #333840; }
 
     /* The configurable-options table: labels right against their values, both brand. */
     .wf-table--conf th, .wf-table--conf td { color: var(--brand); border: 0; padding: .3rem .75rem; }

@@ -24,15 +24,16 @@
 @endphp
 
 <div class="wf-page">
-    <div class="wf-title">
-        <h1>{{ __('theme.review_checkout') }}</h1>
-    </div>
-    <hr class="wf-title-rule">
-
     <div class="wf-layout">
         <x-store-rail />
 
         <div>
+            {{-- Beside the rail, not above it — the same placement as the Configure and
+                 category pages, which is where the reference puts every store heading. --}}
+            <div class="wf-title">
+                <h1>{{ __('theme.review_checkout') }}</h1>
+            </div>
+            <hr class="wf-title-rule">
             @if ($items->count() === 0)
                 <div class="wf-layout wf-layout--reverse" style="align-items:start">
                     <div>

@@ -95,6 +95,18 @@
                             </li>
                         @endif
 
+                        {{-- Each module page as its own row, the one being shown marked —
+                             the reference's sidebar, rather than a strip of tabs over the
+                             content. --}}
+                        @foreach ($views as $view)
+                            <li class="wf-rowaction {{ $view['name'] == $currentView ? 'is-active' : '' }}">
+                                <button type="button" wire:click="changeView('{{ $view['name'] }}')">
+                                    <span wire:loading.remove wire:target="changeView('{{ $view['name'] }}')">{{ $view['label'] }}</span>
+                                    <span wire:loading wire:target="changeView('{{ $view['name'] }}')">…</span>
+                                </button>
+                            </li>
+                        @endforeach
+
                         @foreach ($buttons as $button)
                             @if (isset($button['function']))
                                 <li class="wf-rowaction">
@@ -211,22 +223,11 @@
 
             {{-- ── Module-provided views (tabs) ─────────────────────────── --}}
             @if (count($views) > 0)
-                <div class="wf-panel" style="margin-top:1.25rem">
-                    @if (count($views) > 1)
-                        <div class="wf-panel-heading wf-tabs">
-                            @foreach ($views as $view)
-                                <button type="button" wire:click="changeView('{{ $view['name'] }}')"
-                                    class="wf-tab {{ $view['name'] == $currentView ? 'wf-tab--active' : '' }}">
-                                    {{ $view['label'] }}
-                                </button>
-                            @endforeach
-                        </div>
-                    @endif
-                    <div class="wf-panel-body">
-                        <x-loading target="changeView" />
-                        <div wire:loading.remove wire:target="changeView">
-                            {!! $extensionView !!}
-                        </div>
+                {{-- No tab strip: the rail is what selects the page now. --}}
+                <div style="margin-top:1.25rem">
+                    <x-loading target="changeView" />
+                    <div wire:loading.remove wire:target="changeView">
+                        {!! $extensionView !!}
                     </div>
                 </div>
             @endif

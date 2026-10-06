@@ -94,6 +94,15 @@ class ProxyPanel extends Server
     /** Endpoints listed on the management page before it defers to the export. */
     private const MANAGE_PREVIEW = 100;
 
+    /**
+     * The customer-facing management pages, each a sidebar entry on the service page and a
+     * blade of the same name under resources/views. The first is the default, which is what
+     * core falls back to when no view has been chosen.
+     *
+     * @var list<string>
+     */
+    private const VIEWS = ['proxies', 'authips', 'rotation', 'password'];
+
     private const LOG_CHANNEL = 'stack';
 
     // ── Module configuration (Admin → Servers → ProxyPanel) ──────────────────
@@ -831,16 +840,23 @@ class ProxyPanel extends Server
             }
         }
 
-        $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_sync'), 'function' => 'syncStatus'];
+        // In the reference's order: the proxy list, rotate, the two settings pages, the
+        // password, then reboot. Each view is its own sidebar entry rather than a tab on a
+        // single combined screen (Leandro, 2026-10-06).
+        $actions[] = ['type' => 'view', 'name' => 'proxies', 'label' => __('proxypanel.proxy_list')];
 
         if ($this->truthy($settings['allow_rotation'] ?? false)) {
             $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_rotate'), 'function' => 'rotate'];
         }
 
+        $actions[] = ['type' => 'view', 'name' => 'authips', 'label' => __('proxypanel.auth_ips')];
+        $actions[] = ['type' => 'view', 'name' => 'rotation', 'label' => __('proxypanel.rotation')];
+        $actions[] = ['type' => 'view', 'name' => 'password', 'label' => __('proxypanel.change_password')];
         $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_reboot'), 'function' => 'reboot'];
 
-        // The management panel (proxy list, export, auth IPs, rotation, password).
-        $actions[] = ['type' => 'view', 'name' => 'manage', 'label' => __('proxypanel.manage_title')];
+        // Not on the reference, and kept anyway: it is the only way for a customer to pull
+        // fresh state from the panel when provisioning has lagged.
+        $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_sync'), 'function' => 'syncStatus'];
 
         return $actions;
     }
@@ -882,7 +898,12 @@ class ProxyPanel extends Server
     {
         $settings = array_merge($settings, $properties);
 
-        return view('servers.proxypanel::manage', [
+        // One page per sidebar entry, as the reference has them (Leandro, 2026-10-06), in
+        // place of the single combined screen this used to render. An unknown name falls
+        // back to the proxy list, which is the first entry and what core defaults to.
+        $page = in_array($view, self::VIEWS, true) ? $view : self::VIEWS[0];
+
+        return view('servers.proxypanel::' . $page, [
             'service' => $service,
             'endpoints' => $this->endpointList($service),
             // The table shows at most MANAGE_PREVIEW rows; the total is what tells the
