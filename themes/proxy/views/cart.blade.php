@@ -9,8 +9,9 @@
     "Checkout →" — the reference's separate cart.php?a=checkout step (Choose Account /
     Payment Details / credit / Complete Order) is that invoice page.
 
-    Every Livewire binding (updateQuantity, removeProduct, coupon, applyCoupon,
-    removeCoupon, tos, checkout) is unchanged from the default theme.
+    Every Livewire binding (removeProduct, coupon, applyCoupon, removeCoupon, tos,
+    checkout) is unchanged from the default theme. updateQuantity is deliberately
+    not bound: the reference's cart has no quantity control.
 --}}
 @php
     $items = Cart::items();
@@ -85,10 +86,9 @@
                                 <thead>
                                     <tr>
                                         {{-- Two columns, as the reference has them: Product/Options
-                                             and Price/Cycle. Quantity is not a column of its own
-                                             there; the stepper sits under the product it belongs
-                                             to, which also stops the row widening for the many
-                                             products that are sold one at a time. --}}
+                                             and Price/Cycle. Quantity is neither a column nor a
+                                             control — the reference's cart has no way to change
+                                             it — so a line reads as the one thing it is. --}}
                                         <th>{{ __('theme.product_options') }}</th>
                                         <th style="text-align:end">{{ __('theme.price_cycle') }}</th>
                                         <th></th>
@@ -109,19 +109,13 @@
                                                     <span class="wf-cart-opt">&raquo; {{ $option['option_name'] }}: {{ $option['value_name'] }}</span>
                                                 @endforeach
 
-                                                {{-- Quantity lives with its product rather than in a
-                                                     column of its own, so the stepper only appears
-                                                     for the items that can actually be bought in
-                                                     multiples. --}}
-                                                @if ($item->product->allow_quantity == 'combined')
-                                                    <div class="wf-qty">
-                                                        <button type="button" class="wf-btn wf-btn--ghost wf-btn--sm"
-                                                            wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})">−</button>
-                                                        <span class="wf-qty-value">{{ $item->quantity }}</span>
-                                                        <button type="button" class="wf-btn wf-btn--ghost wf-btn--sm"
-                                                            wire:click="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})">+</button>
-                                                    </div>
-                                                @elseif ($item->quantity > 1)
+                                                {{-- No quantity stepper: the reference's cart offers no
+                                                     way to change a line's quantity, and ours sat on
+                                                     top of the category and region lines (Leandro,
+                                                     2026-10-06). A quantity above one is still shown,
+                                                     since an order placed for the customer by an admin
+                                                     can carry one and it must not be invisible. --}}
+                                                @if ($item->quantity > 1)
                                                     <span class="wf-cart-opt">&times; {{ $item->quantity }}</span>
                                                 @endif
                                             </td>

@@ -744,8 +744,6 @@
     .wf-hero a, .wf-page article a { color: var(--brand); }
 
     /* Cart quantity stepper + coupon row */
-    .wf-qty { display: inline-flex; align-items: center; gap: .4rem; }
-    .wf-qty-value { min-width: 2rem; text-align: center; font-weight: 600; }
     .wf-coupon { display: flex; align-items: flex-end; gap: .5rem; margin-bottom: .5rem; }
     .wf-coupon > :first-child { flex: 1; min-width: 0; }
 
