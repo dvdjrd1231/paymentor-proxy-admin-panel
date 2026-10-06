@@ -843,15 +843,15 @@ class ProxyPanel extends Server
         // In the reference's order: the proxy list, rotate, the two settings pages, the
         // password, then reboot. Each view is its own sidebar entry rather than a tab on a
         // single combined screen (Leandro, 2026-10-06).
-        $actions[] = ['type' => 'view', 'name' => 'proxies', 'label' => __('proxypanel.proxy_list')];
+        $actions[] = ['type' => 'view', 'name' => 'proxies', 'label' => __('proxypanel.menu_proxy_list')];
 
         if ($this->truthy($settings['allow_rotation'] ?? false)) {
             $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_rotate'), 'function' => 'rotate'];
         }
 
-        $actions[] = ['type' => 'view', 'name' => 'authips', 'label' => __('proxypanel.auth_ips')];
-        $actions[] = ['type' => 'view', 'name' => 'rotation', 'label' => __('proxypanel.rotation')];
-        $actions[] = ['type' => 'view', 'name' => 'password', 'label' => __('proxypanel.change_password')];
+        $actions[] = ['type' => 'view', 'name' => 'authips', 'label' => __('proxypanel.menu_auth_ips')];
+        $actions[] = ['type' => 'view', 'name' => 'rotation', 'label' => __('proxypanel.menu_rotation')];
+        $actions[] = ['type' => 'view', 'name' => 'password', 'label' => __('proxypanel.menu_password')];
         $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_reboot'), 'function' => 'reboot'];
 
         // Not on the reference, and kept anyway: it is the only way for a customer to pull

@@ -12,8 +12,8 @@ return [
     'proxy_count' => 'Proxies',
     // A count, not the addresses themselves — a service can hold tens of thousands.
     'proxy_endpoints' => 'Proxy addresses assigned',
-    'auth_ips' => 'Authorized IPs',
-    'rotation_time' => 'Rotation interval (minutes)',
+    'auth_ips' => 'Change IP Authorization',
+    'rotation_time' => 'Rotate Interval Minutes',
     'rotations_used' => 'Rotations used',
     'api_key' => 'API key',
     'panel_expiration' => 'Expires on panel',
@@ -21,8 +21,16 @@ return [
     'last_synced' => 'Last updated',
 
     // Client-area action buttons
+    // The rail entries, worded as the reference words them. They differ from the page
+    // headings above on purpose: its sidebar says "Proxy List (download)" over a page
+    // headed "ProxyList".
+    'menu_proxy_list' => 'Proxy List (download)',
+    'menu_auth_ips' => 'Set IP Authorization',
+    'menu_rotation' => 'Set IP Rotation time',
+    'menu_password' => 'Set new password!',
+
     'action_sync' => 'Sync status',
-    'action_rotate' => 'Rotate proxies now',
+    'action_rotate' => 'Rotate NOW!',
     'action_reboot' => 'Reboot',
     'action_export' => 'Export proxy list',
 
@@ -37,16 +45,16 @@ return [
 
     // Management panel on the service page
     'manage_title' => 'Manage proxies',
-    'proxy_list' => 'Your proxies',
+    'proxy_list' => 'ProxyList',
     'endpoint' => 'Address',
     'no_proxies' => 'No proxies have been assigned yet. Use "Sync status" to refresh.',
     // Shown under the proxy table when a service holds more than the page lists.
     'showing_preview' => 'Showing the first :shown of :total proxies. Download the full list:',
     'auth_ips_hint' => 'Allow connections from up to :max IP addresses. Leave blank to disable IP authorization and use username/password only.',
     'ip_number' => 'IP :number',
-    'change_password' => 'Proxy password',
-    'new_password' => 'New password',
-    'rotation' => 'Rotation',
+    'change_password' => 'Change Your Password',
+    'new_password' => 'Password',
+    'rotation' => 'Set IP Rotation Time',
     'rotation_time_hint' => 'Minutes between automatic rotations. Zero disables automatic rotation.',
     'save' => 'Save',
     'out_of_stock' => '(Out of stock)',
