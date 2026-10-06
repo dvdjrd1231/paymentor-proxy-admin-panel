@@ -719,6 +719,11 @@
     .wf-card-img { width: 100%; height: auto; border-radius: var(--wf-radius); margin-bottom: .6rem; display: block; }
     .wf-product-intro { display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1rem; }
     .wf-product-intro img { max-width: 140px; height: auto; border-radius: var(--wf-radius); }
+    /* The feature list on the order form is brand-coloured on the reference, not body text.
+       Scoped to the configure column: the same description shown on a product page or in
+       the store cards stays readable black. */
+    .wf-configure .wf-product-intro article,
+    .wf-configure .wf-product-intro article :is(p, li, strong) { color: var(--brand); }
     @media (max-width: 620px) { .wf-product-intro { flex-direction: column; } }
 
     /* Order summary follows the form on long config pages */
@@ -880,7 +885,13 @@
     .wf-summary-item { padding-bottom: .5rem; margin-bottom: .5rem; border-bottom: 1px solid var(--wf-panel-border); }
     .wf-summary-item-name { display: block; color: var(--brand); font-weight: 700; }
     .wf-summary-item-cat { display: block; color: var(--brand); font-style: italic; font-size: .8rem; }
-    .wf-total-row--opt { font-size: .8rem; color: var(--wf-muted); }
+    /* Every line of the summary is brand-coloured on the reference — the item, the
+       configured option, the fees and the total alike — where ours was body text with the
+       option line greyed out (Leandro, 2026-10-05: "fontcolor is not matched"). Scoped to
+       the summary, so the same .wf-total-row in the cart and on an invoice is untouched. */
+    .wf-summary-body .wf-total-row { color: var(--brand); }
+    .wf-total-row--opt { font-size: .8rem; }
+    .wf-summary-body .wf-total-row--opt { color: var(--brand); }
     .wf-total-row--opt span:first-child { padding-inline-start: .25rem; }
 
     /* Sales-help note under the configure column, as on the reference: a pale amber band
@@ -903,7 +914,7 @@
     }
     .wf-summary-body { padding: 1rem; }
     .wf-summary-total { text-align: center; margin: .9rem 0 .25rem; }
-    .wf-summary-total strong { display: block; font-size: 1.7rem; font-weight: 400; color: var(--wf-text); }
+    .wf-summary-total strong { display: block; font-size: 1.7rem; font-weight: 400; color: var(--brand); }
     .wf-summary-total span { font-size: .8rem; color: var(--wf-muted); }
     .wf-summary-body .wf-btn--checkout { width: 100%; justify-content: center; font-size: 1.05rem; padding: .8rem 1rem; }
 
