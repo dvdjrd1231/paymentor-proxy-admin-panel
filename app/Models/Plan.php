@@ -73,6 +73,13 @@ class Plan extends Model implements Auditable
             return Attribute::make(get: fn () => 0);
         }
         $diffInDays = match ($this->billing_unit) {
+            // The billing_unit enum is ('hour','day','week','month','year') but this match
+            // covered only four of them, so a recurring hour-priced plan threw
+            // UnhandledMatchError. Laravel calls every Attribute method just to discover
+            // accessors, so it fired on any serialisation of the model — every Livewire
+            // round-trip — and checkout 500'd on every Monthly product.
+            // See docs/CORE-TOUCHPOINTS.md.
+            'hour' => 1 / 24,
             'day' => 1,
             'week' => 7,
             'month' => 30,

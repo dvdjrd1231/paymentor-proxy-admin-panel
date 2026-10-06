@@ -519,4 +519,37 @@ notice.
 
 ---
 
+## 12. `billing_unit` of `hour` in `Plan::billingDuration()` (**applied**)
+
+**Why:** the `plans.billing_unit` column is `enum('hour','day','week','month','year')`, but
+the `match` in `billingDuration()` covers only the last four. Billing cycles here are priced
+in hours (Leandro, #10: "I would like the billing cycles to be based on hours ... it will
+always be terminated at the correct time"), so a recurring hour-priced plan — every Monthly
+product — made it throw `UnhandledMatchError`.
+
+It is worse than a wrong figure. Laravel invokes **every** `Attribute` method to work out
+which attributes have accessors (`cacheMutatedAttributes()`), and the `match` sits in the
+method body rather than inside the closure, so it ran on any serialisation of the model.
+Every Livewire round-trip carrying a plan threw, and **Continue on the order form returned
+500 on all Monthly products** (Leandro, 2026-10-06).
+
+**File:** `app/Models/Plan.php`, method `billingDuration()`.
+
+**Change:** add the missing case as the first arm of the match:
+
+```php
+'hour' => 1 / 24,
+```
+
+**Notes:**
+- Makes the match total over the enum, so no `default` is needed and a genuinely unknown
+  unit still fails loudly rather than silently returning zero.
+- `720 hours * 1/24 = 30` days, which is what a Monthly plan is sold as.
+- The only consumer is `CancellationCredit::unusedAmount()`, which casts to `int` and
+  returns early on anything `<= 0`, so the fractional value is safe there.
+- Impact if not re-applied after an upgrade: **checkout 500s on every recurring
+  hour-priced product.** This one breaks the shop, so re-apply it first.
+
+---
+
 _(Everything else is implemented via extensions, themes, events, or configuration.)_
