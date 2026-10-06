@@ -105,7 +105,10 @@ return [
     'addons' => 'Available Addons',
     'addons_short' => 'Product Addons',
     'addons_subtitle' => 'Extend the services you already have',
-    'addons_empty' => 'There are no addons available for your services.',
+    // Worded as the reference words it, and it is a statement of fact rather than a
+    // warning, so it is shown in amber rather than the brand's pink.
+    'addons_empty' => 'No Addons Available for your Products & Services',
+    'addons_return' => 'Return to Client Area',
     'addons_order' => 'Order Now',
     'addons_service' => 'Service',
 
