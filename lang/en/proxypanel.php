@@ -30,6 +30,7 @@ return [
     'menu_password' => 'Set new password!',
 
     'action_sync' => 'Sync status',
+    'action_done' => 'Done.',
     'action_rotate' => 'Rotate NOW!',
     'action_reboot' => 'Reboot',
     'action_export' => 'Export proxy list',

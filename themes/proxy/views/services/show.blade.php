@@ -42,6 +42,15 @@
          stacking it underneath (Leandro, 2026-10-06). Client-side, because both panes
          are already on the page; only the module pane's innards come from the server,
          and changeView() replaces those without touching this element. --}}
+    {{-- What the last action said. The rail's buttons can fail on the panel's side, and
+         without this the page simply re-rendered as though nothing had happened. --}}
+    @if (session('success'))
+        <div class="wf-alert wf-alert--success">{{ session('success') }}</div>
+    @endif
+    @if (session('error'))
+        <div class="wf-alert wf-alert--danger">{{ session('error') }}</div>
+    @endif
+
     <div class="wf-layout" x-data="{ pane: 'info' }">
         {{-- ── Rail ────────────────────────────────────────────────────── --}}
         <div>

@@ -846,17 +846,17 @@ class ProxyPanel extends Server
         $actions[] = ['type' => 'view', 'name' => 'proxies', 'label' => __('proxypanel.menu_proxy_list')];
 
         if ($this->truthy($settings['allow_rotation'] ?? false)) {
-            $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_rotate'), 'function' => 'rotate'];
+            $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_rotate'), 'function' => 'clientRotate'];
         }
 
         $actions[] = ['type' => 'view', 'name' => 'authips', 'label' => __('proxypanel.menu_auth_ips')];
         $actions[] = ['type' => 'view', 'name' => 'rotation', 'label' => __('proxypanel.menu_rotation')];
         $actions[] = ['type' => 'view', 'name' => 'password', 'label' => __('proxypanel.menu_password')];
-        $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_reboot'), 'function' => 'reboot'];
+        $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_reboot'), 'function' => 'clientReboot'];
 
         // Not on the reference, and kept anyway: it is the only way for a customer to pull
         // fresh state from the panel when provisioning has lagged.
-        $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_sync'), 'function' => 'syncStatus'];
+        $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_sync'), 'function' => 'clientSync'];
 
         return $actions;
     }
@@ -981,6 +981,49 @@ class ProxyPanel extends Server
     }
 
     /** Pull service info from the panel and cache it (scope §7 "Synchronization"). */
+    /**
+     * The customer-facing wrappers around the three panel actions.
+     *
+     * core's Services\Show::goto() calls them with no try/catch, so anything the panel
+     * refuses -- "This node is not configured", "This service can't be restarted" -- left
+     * the extension as an exception and reached the customer as a 500 error page (Leandro,
+     * 2026-10-07). The panel's own words are what they need to read, so the failure is
+     * flashed and the service page renders it.
+     *
+     * The methods below still throw, because an admin action and the queue want the
+     * exception; only the client path is wrapped.
+     */
+    public function clientRotate(Service $service, $settings = [], $properties = [])
+    {
+        return $this->withoutBlowingUp(fn () => $this->rotate($service, $settings, $properties));
+    }
+
+    public function clientReboot(Service $service, $settings = [], $properties = [])
+    {
+        return $this->withoutBlowingUp(fn () => $this->reboot($service, $settings, $properties));
+    }
+
+    public function clientSync(Service $service, $settings = [], $properties = [])
+    {
+        return $this->withoutBlowingUp(fn () => $this->syncStatus($service, $settings, $properties));
+    }
+
+    /** @param  callable():mixed  $action */
+    private function withoutBlowingUp(callable $action)
+    {
+        try {
+            $result = $action();
+
+            session()->flash('success', __('proxypanel.action_done'));
+
+            return is_string($result) ? $result : null;
+        } catch (\Throwable $exception) {
+            session()->flash('error', $exception->getMessage());
+
+            return null;
+        }
+    }
+
     public function syncStatus(Service $service, $settings = [], $properties = [])
     {
         $data = $this->request('get', '/' . $this->requireRemoteId($service));

@@ -58,6 +58,19 @@ class ProxyPanelController
     {
         $service = $this->resolve($service);
 
+        // The form is one field with an address per line (Leandro, 2026-10-07). Split here,
+        // before validation, so "max:3" and the per-address ip rule still do the work — the
+        // field shape changed, the rules did not.
+        if ($request->has('ips_text')) {
+            $request->merge([
+                'ips' => collect(preg_split('/\R/', (string) $request->input('ips_text')))
+                    ->map(fn ($line) => trim($line))
+                    ->filter()
+                    ->values()
+                    ->all(),
+            ]);
+        }
+
         $validated = $request->validate([
             'ips' => ['array', 'max:3'],
             'ips.*' => ['nullable', 'string', 'ip'],

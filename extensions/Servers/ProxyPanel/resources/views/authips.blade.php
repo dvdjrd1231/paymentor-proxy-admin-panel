@@ -9,14 +9,15 @@
 
     <form method="POST" action="{{ route('extensions.servers.proxypanel.auth-ips', $service) }}">
         @csrf
-        @for ($i = 0; $i < $maxAuthIps; $i++)
-            <div class="wf-field">
-                <label for="ip{{ $i }}">{{ __('proxypanel.ip_number', ['number' => $i + 1]) }}</label>
-                <input class="wf-input wf-input--block" type="text" id="ip{{ $i }}" name="ips[]"
-                       value="{{ old('ips.' . $i, $authIps[$i] ?? '') }}"
-                       placeholder="203.0.113.10">
-            </div>
-        @endfor
+        {{-- One field, an address per line, which is how the reference takes them
+             (Leandro, 2026-10-07: "utilizar campo de texto unico, cada IP deve estar em uma
+             nova linha"). The controller still receives ips[] -- the lines are split on
+             submit -- so the server-side limit and validation are untouched. --}}
+        <div class="wf-field">
+            <textarea class="wf-input wf-input--block" id="auth_ips" name="ips_text" rows="{{ max(3, $maxAuthIps) }}"
+                      placeholder="203.0.113.10&#10;198.51.100.24">{{ old('ips_text', implode("
+", $authIps)) }}</textarea>
+        </div>
         <button type="submit" class="wf-btn wf-btn--block wf-action-go">{{ __('proxypanel.save') }}</button>
     </form>
 </div>
