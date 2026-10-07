@@ -199,25 +199,49 @@
             </div>
 
             {{-- The module's own fields, under the heading the reference gives them. --}}
-            @if (count($fields) > 0)
-                <div class="wf-panel" style="margin-top:1.25rem">
-                    <div class="wf-panel-heading wf-tabs">
-                        <span class="wf-tab wf-tab--active">{{ __('theme.configurable_options') }}</span>
-                    </div>
-                    <div class="wf-panel-body">
-                        <table class="wf-table wf-table--kv wf-table--conf">
-                            <tbody>
-                                @foreach ($fields as $field)
-                                    <tr>
-                                        <th>{{ $field['label'] }}</th>
-                                        <td class="wf-kv-value">{{ $field['text'] }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+            {{-- Two tabs over one panel, as the reference has them. The configured options
+                 the customer chose at checkout come first — "Region: United States - Kansas
+                 City" — then the module's own fields, which is the order the reference lists
+                 them in. Switching is client-side: both panes are already on the page. --}}
+            <div x-data="{ tab: 'config' }" style="margin-top:1.25rem">
+                <div class="wf-navtabs" role="tablist">
+                    <button type="button" class="wf-navtab" role="tab"
+                        :class="{ 'wf-navtab--active': tab === 'config' }" @click="tab = 'config'">
+                        <x-ri-settings-3-fill />{{ __('theme.configurable_options') }}
+                    </button>
+                    <button type="button" class="wf-navtab" role="tab"
+                        :class="{ 'wf-navtab--active': tab === 'info' }" @click="tab = 'info'">
+                        <x-ri-information-fill />{{ __('theme.additional_information') }}
+                    </button>
                 </div>
-            @endif
+
+                <div class="wf-tabpanel" x-show="tab === 'config'" role="tabpanel">
+                    <table class="wf-table wf-table--kv wf-table--conf">
+                        <tbody>
+                            @foreach ($service->configs as $config)
+                                <tr>
+                                    <th>{{ $config->configOption?->name }}</th>
+                                    <td class="wf-kv-value">{{ $config->configValue?->name ?? $config->value }}</td>
+                                </tr>
+                            @endforeach
+                            @foreach ($fields as $field)
+                                <tr>
+                                    <th>{{ $field['label'] }}</th>
+                                    <td class="wf-kv-value">{{ $field['text'] }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="wf-tabpanel" x-show="tab === 'info'" x-cloak role="tabpanel">
+                    @if (filled($service->product?->description))
+                        <article class="prose dark:prose-invert prose-sm">{!! $service->product->description !!}</article>
+                    @else
+                        <div class="wf-empty">{{ __('services.no_additional_information') }}</div>
+                    @endif
+                </div>
+            </div>
 
             @include('services.partials.billing-agreement')
 

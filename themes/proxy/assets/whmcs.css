@@ -323,7 +323,15 @@
     /* ── Manage Product ──────────────────────────────────────────────────
        The product as the reference presents it: a plate with its icon and name, and the
        status as a solid bar across the foot rather than a pill in a table row. */
-    .wf-prodcard { border-radius: var(--wf-radius); overflow: hidden; background: var(--wf-section); }
+    /* A bordered, rounded plate — the reference's card is clearly edged, where ours was a
+       flat grey rectangle running to square corners (Leandro, 2026-10-06). The radius is
+       set here rather than taken from --wf-radius because the card reads as a plate, not as
+       one more panel. overflow:hidden is what rounds the status bar's bottom corners with
+       it. */
+    .wf-prodcard {
+        border: 1px solid #e3e3e3; border-radius: 8px; overflow: hidden;
+        background: var(--wf-section);
+    }
     .wf-prodcard-body { padding: 1.75rem 1.25rem 1.5rem; text-align: center; }
     .wf-prodcard-icon {
         display: inline-flex; align-items: center; justify-content: center;
@@ -713,6 +721,30 @@
     }
     .wf-tab:hover { color: var(--brand); }
     .wf-tab--active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+
+    /* Tabs as the reference draws them: each one a tab shape sitting on the edge of the
+       panel below, the open one white and joined to it by covering the strip's border. The
+       underline style above is a different thing and is left alone for the pages using it. */
+    .wf-navtabs {
+        display: flex; flex-wrap: wrap; gap: 2px;
+        margin: 0; padding: 0 0 0 .3rem; list-style: none;
+        border-bottom: 1px solid #ddd;
+    }
+    .wf-navtab {
+        display: inline-flex; align-items: center; gap: .4rem;
+        margin-bottom: -1px; padding: .55rem 1rem;
+        border: 1px solid transparent; border-radius: 4px 4px 0 0;
+        background: transparent; color: var(--wf-muted);
+        font: inherit; font-size: .9rem; cursor: pointer;
+    }
+    .wf-navtab:hover { background: #eee; color: var(--brand); }
+    .wf-navtab--active,
+    .wf-navtab--active:hover {
+        background: #fff; border-color: #ddd; border-bottom-color: #fff;
+        color: var(--wf-text);
+    }
+    .wf-navtab svg { width: .95rem; height: .95rem; }
+    .wf-tabpanel { padding: 1.5rem 1.25rem; background: #fff; border: 1px solid #ddd; border-top: 0; }
 
     /* Product / order cards */
     .wf-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }

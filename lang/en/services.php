@@ -14,6 +14,7 @@ return [
     // The reference's wording for cancelling from the service page. The rest of the Manage
     // Product wording already lives in theme.php and is used from there.
     'request_cancellation' => 'Request Cancellation',
+    'no_additional_information' => 'No additional information for this product.',
 
     'product_details' => 'Product Details',
     'billing_cycle' => 'Billing Cycle',
