@@ -711,6 +711,13 @@
     .wf-inv-back a:hover { text-decoration: underline; }
 
     /* The payee's address sits flush right against the customer's, as on a printed bill. */
+    /* An invoice stands alone on the reference: no header, no menu bar, and the sheet on
+       the page's grey rather than on the white that every other page runs (Leandro,
+       2026-10-07). Keyed off the page's own class with :has(), so nothing else moves. */
+    body:has(.wf-inv-page) .wf-header,
+    body:has(.wf-inv-page) .wf-menubar { display: none; }
+    body:has(.wf-inv-page) main.grow { background: var(--wf-page-bg); }
+
     .wf-inv-brand { margin-bottom: 1.25rem; }
     .wf-inv-logo { max-height: 2.6rem; width: auto; }
     .wf-inv-balance { margin-top: 1rem; }

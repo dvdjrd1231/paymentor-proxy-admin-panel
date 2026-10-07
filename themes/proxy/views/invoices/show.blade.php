@@ -175,6 +175,25 @@
                         <p class="wf-inv-hint">{{ __('invoices.select_method_to_pay') }}</p>
                     @endunless
                 </div>
+            @else
+                {{-- Once it is settled the question is no longer "how will you pay" but "how
+                     was it paid", which the reference states here. Read from the transaction
+                     that actually settled it, so it is never a guess (Leandro, 2026-10-07). --}}
+                @php
+                    $settledWith = $invoice->transactions
+                        ->where('status', \App\Enums\InvoiceTransactionStatus::Succeeded)
+                        ->last();
+                @endphp
+                @if ($settledWith)
+                    <div class="wf-inv-meta-right">
+                        <div class="wf-inv-label">{{ __('invoices.payment_method') }}</div>
+                        <p>
+                            {{ $settledWith->is_credit_transaction
+                                ? __('invoices.paid_with_credits')
+                                : ($settledWith->gateway?->name ?? '—') }}
+                        </p>
+                    </div>
+                @endif
             @endif
         </div>
 
