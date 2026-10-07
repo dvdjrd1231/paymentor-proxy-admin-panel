@@ -366,15 +366,6 @@
     /* The configurable-options table: labels right against their values, both brand. */
     .wf-table--conf th, .wf-table--conf td { color: var(--brand); border: 0; padding: .3rem .75rem; }
     .wf-table--conf th { text-align: end; width: 40%; font-weight: 700; }
-    /* A quiet row action: white with a grey edge, not a solid brand block. The reference
-       uses it for "View Details" beside each service, where a filled button in every row
-       made the list read as a column of calls to action. */
-    .wf-btn--outline {
-        background: #fff; color: var(--wf-text); border-color: var(--wf-border);
-    }
-    .wf-btn--outline:hover {
-        background: var(--wf-section); color: var(--wf-text); border-color: #c9c9c9;
-    }
 
     .wf-alt { margin-top: 1.25rem; font-size: .9rem; color: var(--wf-muted); text-align: center; }
     .wf-alt a { color: var(--brand); text-decoration: none; }
