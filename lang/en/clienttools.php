@@ -28,6 +28,13 @@ return [
     // ── Mass Payment ──────────────────────────────────────────────────────────────
     'mass_payment' => 'Mass Payment',
     'mass_payment_subtitle' => 'Settle several invoices at once',
+    // Mass Payment table, worded as the reference words it.
+    'mass_description' => 'Description',
+    'mass_amount' => 'Amount',
+    'mass_invoice_number' => 'Invoice # :number',
+    'mass_total_due' => 'Total Due:',
+    'mass_pay_heading' => 'Select Mass Payment Method',
+
     'mass_nothing_due' => 'You have no unpaid invoices.',
     'mass_unpaid_invoices' => 'Unpaid Invoices',
     'mass_toggle_all' => 'Select / deselect all',

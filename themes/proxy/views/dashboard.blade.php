@@ -286,7 +286,14 @@
                 <div class="wf-panel wf-panel--top">
                     <div class="wf-panel-heading">
                         <span><span class="wf-head-icon"><x-ri-receipt-fill /></span>{{ __('theme.overdue_invoices') }}</span>
-                        <a class="wf-btn wf-btn--sm" href="{{ route('invoices') }}" wire:navigate>
+                        {{-- Pay Now goes to Mass Payment, which settles everything
+                             outstanding in one step, as it does on the reference. It pointed
+                             at the invoice list, leaving the customer to open each one
+                             (Leandro, 2026-10-07). Falls back to the list if Client Tools,
+                             which owns that page, is disabled. --}}
+                        <a class="wf-btn wf-btn--sm"
+                           href="{{ Route::has('mass-payment') ? route('mass-payment') : route('invoices') }}"
+                           wire:navigate>
                             &rarr; {{ __('theme.pay_now') }}
                         </a>
                     </div>

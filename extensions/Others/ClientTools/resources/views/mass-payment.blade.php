@@ -1,5 +1,9 @@
-{{-- Mass Payment — tick the unpaid invoices to settle, see the running total, and put
-     account credit against them in one action. --}}
+{{-- Mass Payment — settle everything outstanding in one step.
+
+     Laid out as the reference lays it out (Leandro, 2026-10-07): one Description/Amount
+     table, each invoice a banded heading over its own line items, then Sub Total and Total
+     Due. No per-invoice tick boxes — the reference offers none, and the page exists to pay
+     the lot. --}}
 <div class="wf-page">
     <div class="wf-title">
         <h1>{{ __('clienttools.mass_payment') }}</h1>
@@ -9,6 +13,7 @@
 
     <div class="wf-crumb">
         <a href="{{ route('home') }}" wire:navigate>{{ __('theme.portal_home') }}</a>
+        <span>/</span><a href="{{ route('dashboard') }}" wire:navigate>{{ __('theme.client_area') }}</a>
         <span>/</span>{{ __('clienttools.mass_payment') }}
     </div>
 
@@ -17,56 +22,45 @@
             {{ __('clienttools.mass_nothing_due') }}
         </div>
     @else
-        <div class="wf-panel">
-            <div class="wf-panel-heading">
-                <span>{{ __('clienttools.mass_unpaid_invoices') }}</span>
-                <button type="button" class="wf-btn wf-btn--sm" wire:click="toggleAll">
-                    {{ __('clienttools.mass_toggle_all') }}
-                </button>
-            </div>
-
-            <div class="wf-table-wrap">
-                <table class="wf-table">
-                    <thead>
-                        <tr>
-                            <th style="width:2.5rem"></th>
-                            <th>{{ __('invoices.invoice') }}</th>
-                            <th>{{ __('invoices.due_date') }}</th>
-                            <th style="text-align:end">{{ __('invoices.total') }}</th>
+        <div class="wf-table-wrap">
+            <table class="wf-table wf-masspay">
+                <thead>
+                    <tr>
+                        <th>{{ __('clienttools.mass_description') }}</th>
+                        <th style="text-align:end">{{ __('clienttools.mass_amount') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($invoices as $invoice)
+                        <tr class="wf-masspay-head">
+                            <td colspan="2">{{ __('clienttools.mass_invoice_number', ['number' => $invoice->number ?? $invoice->id]) }}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($invoices as $invoice)
+                        @foreach ($invoice->items as $item)
                             <tr>
-                                <td>
-                                    <label class="wf-check">
-                                        <input type="checkbox" value="{{ $invoice->id }}" wire:model.live="selected">
-                                        <span class="sr-only">#{{ $invoice->id }}</span>
-                                    </label>
-                                </td>
-                                <td>
-                                    <a href="{{ route('invoices.show', $invoice) }}" wire:navigate>#{{ $invoice->id }}</a>
-                                </td>
-                                <td>{{ $invoice->due_at?->format('d/m/Y') ?? '—' }}</td>
-                                <td style="text-align:end">{{ $invoice->formatted_remaining ?? $invoice->remaining }}</td>
+                                <td>{{ $item->description }}</td>
+                                <td style="text-align:end">{{ $invoice->currency_code }} {{ number_format($item->price * $item->quantity, 2) }}</td>
                             </tr>
                         @endforeach
-                    </tbody>
-                </table>
-            </div>
+                    @endforeach
 
-            <div class="wf-panel-foot">
-                <div class="wf-total-row wf-total-row--grand">
-                    <span>{{ __('clienttools.mass_selected_total') }}</span>
-                    <span>{{ number_format($selectedTotal, 2) }} {{ $currency }}</span>
-                </div>
-            </div>
+                    <tr class="wf-masspay-total">
+                        <td>{{ __('invoices.subtotal') }}</td>
+                        <td style="text-align:end">{{ number_format($selectedTotal, 2) }} {{ $currency }}</td>
+                    </tr>
+                    <tr class="wf-masspay-total">
+                        <td>{{ __('clienttools.mass_total_due') }}</td>
+                        <td style="text-align:end">{{ number_format($selectedTotal, 2) }} {{ $currency }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
-        <div class="wf-panel wf-panel--brand">
-            <div class="wf-panel-heading">
-                <span><span class="wf-head-icon"><x-ri-wallet-3-fill /></span>{{ __('dashboard.credit_balance') }}</span>
-            </div>
+        {{-- The reference closes with a gateway box. Ours offers the account's credit, which
+             is the one way this page can settle several invoices at once today — paying a
+             batch through a gateway is not something Paymenter does, and inventing it here
+             would be a payment flow with no backing. --}}
+        <div class="wf-panel wf-masspay-pay">
+            <div class="wf-panel-heading">{{ __('clienttools.mass_pay_heading') }}</div>
             <div class="wf-panel-body">
                 <p>
                     {{ __('clienttools.mass_credit_balance', [
@@ -75,12 +69,11 @@
                 </p>
                 <p class="wf-list-sub">{{ __('clienttools.mass_credit_note') }}</p>
 
-                <div class="wf-actions">
-                    <button type="button" class="wf-btn" wire:click="payWithCredit"
-                            wire:loading.attr="disabled" @disabled(!$credit || $credit->amount <= 0)>
-                        {{ __('clienttools.mass_pay_with_credit') }}
-                    </button>
-                </div>
+                <button type="button" class="wf-btn wf-btn--block" wire:click="payWithCredit"
+                        wire:loading.attr="disabled" @disabled(!$credit || $credit->amount <= 0)>
+                    <span wire:loading.remove wire:target="payWithCredit">{{ __('clienttools.mass_pay_with_credit') }}</span>
+                    <span wire:loading wire:target="payWithCredit">…</span>
+                </button>
             </div>
         </div>
     @endif
