@@ -349,6 +349,11 @@
     .wf-prod-status {
         padding: .55rem 1rem; text-align: center;
         color: #fff; font-size: .95rem; letter-spacing: .04em; text-transform: uppercase;
+        /* Square where it meets the grey, curved only where it follows the card's bottom
+           edge — 7px because the card's 8px radius is measured outside its 1px border.
+           Stated here rather than left to the card's overflow clipping, which rounded the
+           corners that should be sharp (Leandro, 2026-10-06). */
+        border-radius: 0 0 7px 7px;
     }
     .wf-prod-status--active { background: #5cb85c; }
     .wf-prod-status--warning { background: #f0ad4e; }
