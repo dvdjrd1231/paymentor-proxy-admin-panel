@@ -432,6 +432,9 @@
        (Leandro, 2026-10-07). The reference sets this text flush left. */
     .wf-alert.wf-action-note { margin-bottom: 1rem; white-space: pre-line; text-align: left; }
     .wf-input--block { width: 100%; }
+    /* The IP list is data, not prose: a fixed-width face lines the addresses up and makes a
+       typo visible, and it stays resizable because three short lines is a guess. */
+    .wf-ips { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; line-height: 1.7; resize: vertical; }
     .wf-action-go { width: 100%; margin-top: .75rem; text-align: center; text-transform: uppercase; }
 
     /* Overview's row is a button too, so switching panes never leaves the page. Same shape

@@ -53,6 +53,7 @@ return [
     'showing_preview' => 'Showing the first :shown of :total proxies. Download the full list:',
     'auth_ips_hint' => 'Allow connections from up to :max IP addresses. Leave blank to disable IP authorization and use username/password only.',
     'ip_number' => 'IP :number',
+    'auth_ips_label' => 'Authorized IP addresses — one per line, up to :max',
     'change_password' => 'Change Your Password',
     'new_password' => 'Password',
     'rotation' => 'Set IP Rotation Time',
