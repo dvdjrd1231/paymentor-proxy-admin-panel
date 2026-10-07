@@ -71,6 +71,14 @@ return [
     'status_suspended' => 'Suspended',
     'status_terminated' => 'Terminated',
     'status_cancelled' => 'Cancelled',
+
+    // Billing rail — the reference's own wording beside Mass Payment and the invoice list.
+    'status_paid' => 'Paid',
+    'status_unpaid' => 'Unpaid',
+    'status_refunded' => 'Refunded',
+    'pay_all' => 'Pay All',
+    'invoices_due' => ':count Invoice Due|:count Invoices Due',
+    'invoices_due_note' => 'You have :count invoice currently unpaid with a total balance of :amount|You have :count invoice(s) currently unpaid with a total balance of :amount',
     'place_new_order' => 'Place a New Order',
     'view_available_addons' => 'View Available Addons',
 

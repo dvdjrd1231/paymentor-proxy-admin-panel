@@ -5,6 +5,10 @@
      Due. No per-invoice tick boxes — the reference offers none, and the page exists to pay
      the lot. --}}
 <div class="wf-page">
+    <div class="wf-layout">
+        <x-billing-rail active="mass-payment" />
+
+        <div>
     <div class="wf-title">
         <h1>{{ __('clienttools.mass_payment') }}</h1>
         <span>{{ __('clienttools.mass_payment_subtitle') }}</span>
@@ -77,4 +81,6 @@
             </div>
         </div>
     @endif
+        </div>
+    </div>
 </div>
