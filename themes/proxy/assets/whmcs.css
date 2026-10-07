@@ -394,7 +394,10 @@
         margin: 0 0 .9rem; color: var(--brand);
         font-size: 1.45rem; font-weight: 400; text-transform: uppercase; line-height: 1.3;
     }
-    .wf-action-note { margin-bottom: 1rem; white-space: pre-line; text-align: left; }
+    /* Two classes, so this beats .wf-alert--notice's centring further down the file — it is
+       declared later and at the same weight, which is why the explanation came out centred
+       (Leandro, 2026-10-07). The reference sets this text flush left. */
+    .wf-alert.wf-action-note { margin-bottom: 1rem; white-space: pre-line; text-align: left; }
     .wf-input--block { width: 100%; }
     .wf-action-go { width: 100%; margin-top: .75rem; text-align: center; text-transform: uppercase; }
 
