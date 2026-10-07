@@ -42,10 +42,11 @@
              The reference portal's invoice head: number on the left, and on the right a
              large status word, the due date under it, and the pay action. --}}
         {{-- The brand mark heads the sheet on the reference, with the status opposite it. --}}
-        <div class="wf-inv-brand">
-            <img src="{{ theme('logo') ? Storage::url(theme('logo')) : asset('logo.png') }}"
-                 alt="{{ config('app.name') }}" class="wf-inv-logo">
-        </div>
+        @if (config('settings.logo') || config('settings.logo_dark'))
+            <div class="wf-inv-brand">
+                <x-logo class="wf-inv-logo" />
+            </div>
+        @endif
 
         <div class="wf-inv-head">
             <h1 class="wf-inv-number">
