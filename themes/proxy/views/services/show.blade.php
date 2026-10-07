@@ -37,7 +37,12 @@
         </div>
     @endif
 
-    <div class="wf-layout">
+    {{-- Which pane the main column shows. The reference swaps the content out when an
+         action is chosen — the card and its tabs give way to that page — rather than
+         stacking it underneath (Leandro, 2026-10-06). Client-side, because both panes
+         are already on the page; only the module pane's innards come from the server,
+         and changeView() replaces those without touching this element. --}}
+    <div class="wf-layout" x-data="{ pane: 'info' }">
         {{-- ── Rail ────────────────────────────────────────────────────── --}}
         <div>
             @if ($creditsEnabled)
@@ -62,9 +67,10 @@
                 </div>
                 <ul class="wf-list">
                     <li>
-                        <a class="is-active" href="{{ route('services.show', $service) }}" wire:navigate>
-                            <span>{{ __('theme.information') }}</span>
-                        </a>
+                        <button type="button" class="wf-rowbtn"
+                            :class="{ 'is-active': pane === 'info' }" @click="pane = 'info'">
+                            {{ __('theme.information') }}
+                        </button>
                     </li>
                 </ul>
             </div>
@@ -99,8 +105,10 @@
                              the reference's sidebar, rather than a strip of tabs over the
                              content. --}}
                         @foreach ($views as $view)
-                            <li class="wf-rowaction {{ $view['name'] == $currentView ? 'is-active' : '' }}">
-                                <button type="button" wire:click="changeView('{{ $view['name'] }}')">
+                            <li class="wf-rowaction"
+                                :class="{ 'is-active': pane === 'module' && @js($view['name']) === @js($currentView) }">
+                                <button type="button" wire:click="changeView('{{ $view['name'] }}')"
+                                    @click="pane = 'module'">
                                     <span wire:loading.remove wire:target="changeView('{{ $view['name'] }}')">{{ $view['label'] }}</span>
                                     <span wire:loading wire:target="changeView('{{ $view['name'] }}')">…</span>
                                 </button>
@@ -152,6 +160,10 @@
                 <span>/</span>{{ __('services.product_details') }}
             </div>
 
+            {{-- The card, the facts and the tabs are one pane; an action page is the
+                 other. The title and breadcrumb above stay put, as they do on the
+                 reference. --}}
+            <div x-show="pane === 'info'">
             <div class="wf-grid">
                 {{-- The product as the reference shows it: an icon over its name, the group
                      it came from, and the status as a bar across the foot of the card. --}}
@@ -242,18 +254,20 @@
                     @endif
                 </div>
             </div>
+            </div>{{-- /info pane --}}
+
+            <div x-show="pane === 'module'" x-cloak>
+                <x-loading target="changeView" />
+                <div wire:loading.remove wire:target="changeView">
+                    {!! $extensionView !!}
+                </div>
+            </div>
 
             @include('services.partials.billing-agreement')
 
             {{-- ── Module-provided views (tabs) ─────────────────────────── --}}
             @if (count($views) > 0)
-                {{-- No tab strip: the rail is what selects the page now. --}}
-                <div style="margin-top:1.25rem">
-                    <x-loading target="changeView" />
-                    <div wire:loading.remove wire:target="changeView">
-                        {!! $extensionView !!}
-                    </div>
-                </div>
+
             @endif
 
             @if($showCancel)
