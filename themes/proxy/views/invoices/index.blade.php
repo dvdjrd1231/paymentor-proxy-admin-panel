@@ -65,12 +65,6 @@
                 <tbody>
                     @forelse ($invRows as $invoice)
                         @php
-                            $tone = match ($invoice->status) {
-                                'paid' => 'wf-label--success',
-                                'cancelled' => 'wf-label--info',
-                                'pending' => 'wf-label--warning',
-                                default => '',
-                            };
                             $label = !$invoice->number && config('settings.invoice_proforma', false)
                                 ? __('invoices.proforma_invoice', ['id' => $invoice->id])
                                 : __('invoices.invoice', ['id' => $invoice->number]);
@@ -83,7 +77,7 @@
                                  it was the one thing in the row that looked clickable and
                                  was not (Leandro, 2026-10-07). --}}
                             <td style="text-align:end">
-                                <a class="wf-label {{ $tone }}" href="{{ route('invoices.show', $invoice) }}" wire:navigate>
+                                <a class="wf-label wf-label--plain" href="{{ route('invoices.show', $invoice) }}" wire:navigate>
                                     {{ ucfirst($invoice->status) }}
                                 </a>
                             </td>

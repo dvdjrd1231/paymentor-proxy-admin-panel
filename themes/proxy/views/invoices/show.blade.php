@@ -1,6 +1,7 @@
 {{-- Invoice detail — WHMCS "Six" style. Same Livewire bindings as the default theme
      (pay modal, payment polling, PDF download); only the chrome is restyled. --}}
-<div class="wf-page">
+<div class="wf-page wf-inv-page">
+    <div class="wf-inv-doc">
     @php
         /**
          * Is a payment attempt genuinely still in flight?
@@ -119,22 +120,20 @@
         @endif
 
         {{-- ── Parties + dates ─────────────────────────────────────────── --}}
-        <div class="wf-grid">
-            <div class="wf-panel">
-                <div class="wf-panel-heading">{{ __('invoices.issued_to') }}</div>
-                <div class="wf-panel-body">
-                    <p>{{ $invoice->user_name }}</p>
-                    @foreach($invoice->user_properties as $property)
-                        <p>{{ $property }}</p>
-                    @endforeach
-                </div>
+        {{-- Plain columns, not bordered panels: the reference prints the two addresses as
+             an invoice would, the payee's flush right (Leandro, 2026-10-07). --}}
+        <div class="wf-grid wf-inv-parties">
+            <div>
+                <div class="wf-inv-label">{{ __('invoices.issued_to') }}</div>
+                <p>{{ $invoice->user_name }}</p>
+                @foreach($invoice->user_properties as $property)
+                    <p>{{ $property }}</p>
+                @endforeach
             </div>
 
-            <div class="wf-panel">
-                <div class="wf-panel-heading">{{ __('invoices.bill_to') }}</div>
-                <div class="wf-panel-body">
-                    <p>{!! nl2br(e($invoice->bill_to)) !!}</p>
-                </div>
+            <div class="wf-inv-payee">
+                <div class="wf-inv-label">{{ __('invoices.bill_to') }}</div>
+                <p>{!! nl2br(e($invoice->bill_to)) !!}</p>
             </div>
         </div>
 
@@ -311,5 +310,10 @@
                 </div>
             </div>
         @endif
+    </div>
+    </div>
+
+    <div class="wf-inv-back">
+        <a href="{{ route('dashboard') }}" wire:navigate>&laquo; {{ __('clienttools.addons_return') }}</a>
     </div>
 </div>
