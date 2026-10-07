@@ -267,7 +267,17 @@
 
             <div x-show="pane === 'module'" x-cloak>
                 <x-loading target="changeView" />
-                <div wire:loading.remove wire:target="changeView">
+                {{-- wire:ignore, and keyed on the page being shown.
+
+                     This is the module's own HTML, injected whole. Livewire knows nothing
+                     about the fields inside it, so on any re-render it morphed the subtree
+                     back to what the server last sent and threw away whatever had been
+                     typed — the authorized IP box emptied itself as you used it (Leandro,
+                     2026-10-07). Ignored, the subtree is left alone; the key still swaps it
+                     when another action is chosen, because a changed key replaces the
+                     element outright rather than morphing it. --}}
+                <div wire:ignore wire:key="module-view-{{ $currentView }}"
+                     wire:loading.remove wire:target="changeView">
                     {!! $extensionView !!}
                 </div>
             </div>
