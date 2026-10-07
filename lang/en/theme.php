@@ -147,6 +147,14 @@ return [
     'showing_entries' => 'Showing :from to :to of :total entries',
     'filtered_from' => '(filtered from :total total entries)',
     'my_invoices_subtitle' => 'Your invoice history with us',
+
+    // Invoice document — the reference's own wording on viewinvoice.
+    'invoice_items' => 'Invoice Items',
+    'inv_description' => 'Description',
+    'transaction_date' => 'Transaction Date',
+    'no_related_transactions' => 'No Related Transactions Found',
+    'balance' => 'Balance',
+    'print' => 'Print',
     'search' => 'Search',
 
     // Dashboard knowledgebase search band

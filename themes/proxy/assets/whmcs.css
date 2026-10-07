@@ -711,6 +711,16 @@
     .wf-inv-back a:hover { text-decoration: underline; }
 
     /* The payee's address sits flush right against the customer's, as on a printed bill. */
+    .wf-inv-brand { margin-bottom: 1.25rem; }
+    .wf-inv-logo { max-height: 2.6rem; width: auto; }
+    .wf-inv-balance { margin-top: 1rem; }
+    .wf-inv-tools { justify-content: flex-end; margin-top: 1.25rem; }
+    /* The sheet is the whole document when printed: the portal's chrome is not. */
+    @media print {
+        .wf-menubar, .wf-header, .wf-inv-back, .wf-inv-tools { display: none !important; }
+        .wf-inv-doc { border: 0; max-width: none; padding: 0; }
+    }
+
     .wf-inv-parties { margin-bottom: 1.5rem; }
     .wf-inv-payee { text-align: end; }
     .wf-inv-parties p { margin: 0; line-height: 1.5; }

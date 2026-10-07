@@ -41,6 +41,12 @@
         {{-- ── Header ──────────────────────────────────────────────────────
              The reference portal's invoice head: number on the left, and on the right a
              large status word, the due date under it, and the pay action. --}}
+        {{-- The brand mark heads the sheet on the reference, with the status opposite it. --}}
+        <div class="wf-inv-brand">
+            <img src="{{ theme('logo') ? Storage::url(theme('logo')) : asset('logo.png') }}"
+                 alt="{{ config('app.name') }}" class="wf-inv-logo">
+        </div>
+
         <div class="wf-inv-head">
             <h1 class="wf-inv-number">
                 {{ !$invoice->number && config('settings.invoice_proforma', false)
@@ -99,10 +105,6 @@
                             <span wire:loading wire:target="processPayment">…</span>
                         </button>
                     @endif
-                    <button type="button" class="wf-btn wf-btn--ghost wf-btn--sm" wire:click="downloadPDF">
-                        <span wire:loading.remove wire:target="downloadPDF">{{ __('invoices.download_pdf') }}</span>
-                        <span wire:loading wire:target="downloadPDF">…</span>
-                    </button>
                 </div>
             </div>
         </div>
@@ -186,15 +188,13 @@
 
         {{-- ── Line items ──────────────────────────────────────────────── --}}
         <div class="wf-panel">
-            <div class="wf-panel-heading">{{ __('invoices.invoice', ['id' => $invoice->number ?? $invoice->id]) }}</div>
+            <div class="wf-panel-heading">{{ __('theme.invoice_items') }}</div>
             <div class="wf-table-wrap">
                 <table class="wf-table">
                     <thead>
                         <tr>
-                            <th>{{ __('invoices.item') }}</th>
-                            <th>{{ __('invoices.price') }}</th>
-                            <th>{{ __('invoices.quantity') }}</th>
-                            <th style="text-align:end">{{ __('invoices.total') }}</th>
+                            <th>{{ __('theme.inv_description') }}</th>
+                            <th style="text-align:end">{{ __('invoices.amount') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -209,9 +209,15 @@
                                         {{ $item->description }}
                                     @endif
                                 </td>
-                                <td>{{ $item->formattedPrice }}</td>
-                                <td>{{ $item->quantity }}</td>
-                                <td style="text-align:end"><strong>{{ $item->formattedTotal }}</strong></td>
+                                {{-- Quantity is not a column on the reference; it is said in
+                                     the line itself when there is more than one, so a
+                                     multiple is never hidden. --}}
+                                <td style="text-align:end">
+                                    @if ($item->quantity > 1)
+                                        <span class="wf-list-sub">{{ $item->quantity }} &times; {{ $item->formattedPrice }}</span>
+                                    @endif
+                                    {{ $item->formattedTotal }}
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -274,9 +280,9 @@
                     <table class="wf-table">
                         <thead>
                             <tr>
-                                <th>{{ __('invoices.date') }}</th>
-                                <th>{{ __('invoices.transaction_id') }}</th>
+                                <th>{{ __('theme.transaction_date') }}</th>
                                 <th>{{ __('invoices.gateway') }}</th>
+                                <th>{{ __('invoices.transaction_id') }}</th>
                                 <th>{{ __('invoices.amount') }}</th>
                                 <th style="text-align:end">{{ __('invoices.status') }}</th>
                             </tr>
@@ -285,7 +291,6 @@
                             @foreach ($invoice->transactions->sortByDesc('created_at') as $transaction)
                                 <tr>
                                     <td>{{ $transaction->created_at->format('d M Y H:i') }}</td>
-                                    <td class="wf-kv-value">{{ $transaction->transaction_id }}</td>
                                     <td>
                                         @if($transaction->is_credit_transaction)
                                             {{ __('invoices.paid_with_credits') }}
@@ -293,6 +298,7 @@
                                             {{ $transaction->gateway?->name }}
                                         @endif
                                     </td>
+                                    <td class="wf-kv-value">{{ $transaction->transaction_id }}</td>
                                     <td>{{ $transaction->formattedAmount }}</td>
                                     <td style="text-align:end">
                                         @if($transaction->status == \App\Enums\InvoiceTransactionStatus::Succeeded)
@@ -309,7 +315,44 @@
                     </table>
                 </div>
             </div>
+        @else
+            {{-- The reference says so rather than hiding the table, so the customer can see
+                 there is nothing on record against this invoice. --}}
+            <div class="wf-panel">
+                <div class="wf-table-wrap">
+                    <table class="wf-table">
+                        <thead>
+                            <tr>
+                                <th>{{ __('theme.transaction_date') }}</th>
+                                <th>{{ __('invoices.gateway') }}</th>
+                                <th>{{ __('invoices.transaction_id') }}</th>
+                                <th style="text-align:end">{{ __('invoices.amount') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="4"><div class="wf-empty">{{ __('theme.no_related_transactions') }}</div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         @endif
+
+        {{-- What is left to pay, under the transactions — the reference's closing line. --}}
+        <div class="wf-total-row wf-total-row--grand wf-inv-balance">
+            <span>{{ __('theme.balance') }}</span>
+            <span>{{ $invoice->formattedRemaining }}</span>
+        </div>
+
+        {{-- Print and Download close the sheet, as they do on the reference. --}}
+        <div class="wf-actions wf-inv-tools">
+            <button type="button" class="wf-btn wf-btn--ghost wf-btn--sm" onclick="window.print()">
+                {{ __('theme.print') }}
+            </button>
+            <button type="button" class="wf-btn wf-btn--ghost wf-btn--sm" wire:click="downloadPDF">
+                <span wire:loading.remove wire:target="downloadPDF">{{ __('invoices.download_pdf') }}</span>
+                <span wire:loading wire:target="downloadPDF">…</span>
+            </button>
+        </div>
     </div>
     </div>
 
