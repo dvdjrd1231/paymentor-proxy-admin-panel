@@ -694,6 +694,11 @@
         font-size: .75rem; font-weight: 600; line-height: 1.4; white-space: nowrap;
         background: #6b7280; color: #fff;
     }
+    /* A badge that is also a link: no underline, and it keeps its own white lettering
+       rather than taking the browser's link colour. */
+    a.wf-label, a.wf-label:hover { color: #fff; text-decoration: none; }
+    a.wf-label:hover { filter: brightness(.92); }
+
     .wf-label--success { background: #2e9e5b; }
     .wf-label--warning { background: #d68102; }
     .wf-label--danger  { background: #c9302c; }

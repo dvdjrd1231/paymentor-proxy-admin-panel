@@ -79,7 +79,14 @@
                             <td><a href="{{ route('invoices.show', $invoice) }}" wire:navigate>{{ $label }}</a></td>
                             <td>{{ $invoice->created_at->format('d M Y') }}</td>
                             <td>{{ $invoice->formattedTotal }}</td>
-                            <td style="text-align:end"><span class="wf-label {{ $tone }}">{{ ucfirst($invoice->status) }}</span></td>
+                            {{-- The badge opens the invoice, as it does on the reference —
+                                 it was the one thing in the row that looked clickable and
+                                 was not (Leandro, 2026-10-07). --}}
+                            <td style="text-align:end">
+                                <a class="wf-label {{ $tone }}" href="{{ route('invoices.show', $invoice) }}" wire:navigate>
+                                    {{ ucfirst($invoice->status) }}
+                                </a>
+                            </td>
                         </tr>
                     @empty
                         <tr><td colspan="4"><div class="wf-empty">{{ __('invoices.no_invoices') }}</div></td></tr>
