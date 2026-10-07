@@ -395,6 +395,24 @@
     }
     .wf-radio--on { border-color: currentColor; box-shadow: inset 0 0 0 3px currentColor; }
 
+    /* A chosen Status reads as a selected row, not as a menu item: the reference keeps the
+       dark slate for the Billing menu below and marks this one with a pale fill and its own
+       edge (Leandro, 2026-10-07). Stated against .wf-list a so it beats the shared
+       is-active rule, which is where the slate came from. */
+    .wf-list a.wf-statusrow.is-active,
+    .wf-list a.wf-statusrow.is-active:hover {
+        background: #f5f5f5; color: var(--wf-text);
+        box-shadow: inset 2px 0 0 var(--brand);
+    }
+    /* The count sits in its own pill, so it stays legible on either row colour. */
+    .wf-count {
+        min-width: 1.6rem; padding: .05rem .45rem;
+        border: 1px solid var(--wf-border); border-radius: 10px;
+        background: #fff; color: var(--wf-muted);
+        font-size: .78rem; text-align: center;
+    }
+    .wf-list a.wf-statusrow.is-active .wf-count { color: var(--wf-text); }
+
     /* Mass Payment: each invoice a banded heading over its own lines, the totals banded
        the same way — the reference's shape for this table. */
     .wf-masspay-head td { background: #fcebf0; color: var(--brand); font-weight: 600; }

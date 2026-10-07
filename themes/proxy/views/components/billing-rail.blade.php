@@ -102,12 +102,12 @@
                 @php($railOn = request('status') === $railStatus)
                 <li>
                     <a href="{{ route('invoices', $railOn ? [] : ['status' => $railStatus]) }}"
-                       class="{{ $railOn ? 'is-active' : '' }}">
+                       class="wf-statusrow {{ $railOn ? 'is-active' : '' }}">
                         <span>
                             <span class="wf-radio {{ $railOn ? 'wf-radio--on' : '' }}"></span>
                             {{ __('theme.status_' . $railStatus) }}
                         </span>
-                        <span class="wf-muted">{{ $railCounts[$railStatus] }}</span>
+                        <span class="wf-count">{{ $railCounts[$railStatus] }}</span>
                     </a>
                 </li>
             @endforeach
