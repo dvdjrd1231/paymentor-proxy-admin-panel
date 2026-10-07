@@ -387,6 +387,17 @@
     .wf-rowaction:hover button { color: var(--brand); }
     /* The page being shown, marked as the link rows are: slate, not brand, because the
        panel heading above is already brand and brand-on-brand loses the row. */
+    /* An action page: a brand heading with no panel around it, the explanation in a tinted
+       band under it, and a field and button that each run the full width — the reference's
+       layout for Set IP Rotation time and its siblings (Leandro, 2026-10-07). */
+    .wf-action-title {
+        margin: 0 0 .9rem; color: var(--brand);
+        font-size: 1.45rem; font-weight: 400; text-transform: uppercase; line-height: 1.3;
+    }
+    .wf-action-note { margin-bottom: 1rem; white-space: pre-line; text-align: left; }
+    .wf-input--block { width: 100%; }
+    .wf-action-go { width: 100%; margin-top: .75rem; text-align: center; text-transform: uppercase; }
+
     /* Overview's row is a button too, so switching panes never leaves the page. Same shape
        as a link row beside it. */
     .wf-rowbtn {

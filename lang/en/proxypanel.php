@@ -55,7 +55,15 @@ return [
     'change_password' => 'Change Your Password',
     'new_password' => 'Password',
     'rotation' => 'Set IP Rotation Time',
-    'rotation_time_hint' => 'Minutes between automatic rotations. Zero disables automatic rotation.',
+    // The reference's own explanation, line for line, shown above the field.
+    'rotation_time_hint' => 'This action will Change all the IPv6 assigned to your proxies.
+Lets say for example you put 15 minutes, that means all the IPs on your proxies will change every 15 minutes.
+In other words, you will get a new virgin & private IPs every 15 minutes! (According to the previous example).
+Rotating allowed from 5 minutes - 10080 minutes (7 days). If you put 0 that will disable rotating. If you put null this will switch to default rotation time.
+This means that the IPs for the proxies will only change the moment you enable this change to happen.
+That will cause less than 1-10 seconds of downtime, to assign new IPs to your Ports.',
+    'rotation_placeholder' => 'ROTATE INTERVAL MINUTES',
+    'rotation_save' => 'SAVE & ROTATE NOW',
     'save' => 'Save',
     'out_of_stock' => '(Out of stock)',
     'region_placeholder' => 'Select Geographic Region for IPv6 Proxies',
