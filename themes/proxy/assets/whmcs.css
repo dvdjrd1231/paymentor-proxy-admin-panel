@@ -387,6 +387,14 @@
     .wf-rowaction:hover button { color: var(--brand); }
     /* The page being shown, marked as the link rows are: slate, not brand, because the
        panel heading above is already brand and brand-on-brand loses the row. */
+    /* The radio mark on a Status filter row. A mark, not an <input>: the row is a link,
+       and the state is the status in the URL. */
+    .wf-radio {
+        display: inline-block; width: .8rem; height: .8rem; margin-inline-end: .45rem;
+        border: 1px solid #b9b9b9; border-radius: 50%; vertical-align: -1px;
+    }
+    .wf-radio--on { border-color: currentColor; box-shadow: inset 0 0 0 3px currentColor; }
+
     /* Mass Payment: each invoice a banded heading over its own lines, the totals banded
        the same way — the reference's shape for this table. */
     .wf-masspay-head td { background: #fcebf0; color: var(--brand); font-weight: 600; }

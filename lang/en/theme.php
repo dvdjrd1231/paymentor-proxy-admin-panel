@@ -145,6 +145,8 @@ return [
 
     // My Products & Services — table toolbar
     'showing_entries' => 'Showing :from to :to of :total entries',
+    'filtered_from' => '(filtered from :total total entries)',
+    'my_invoices_subtitle' => 'Your invoice history with us',
     'search' => 'Search',
 
     // Dashboard knowledgebase search band

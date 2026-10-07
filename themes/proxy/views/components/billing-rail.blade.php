@@ -90,9 +90,8 @@
         </div>
     @endif
 
-    {{-- Counts only. The reference filters its list from here; core's invoice page takes no
-         status, so these would be controls that change nothing — the figures are real, the
-         filtering is not claimed. --}}
+    {{-- Each count filters the invoice list, as the reference's do. The status in the
+         query is what marks the current one, so the rail and the list can never disagree. --}}
     <div class="wf-panel wf-panel--brand">
         <div class="wf-panel-heading">
             <span><span class="wf-head-icon"><x-ri-filter-3-fill /></span>{{ __('invoices.status') }}</span>
@@ -100,11 +99,16 @@
         </div>
         <ul class="wf-list">
             @foreach (['paid', 'unpaid', 'cancelled', 'refunded'] as $railStatus)
+                @php($railOn = request('status') === $railStatus)
                 <li>
-                    <span class="wf-list-row">
-                        <span>{{ __('theme.status_' . $railStatus) }}</span>
+                    <a href="{{ route('invoices', $railOn ? [] : ['status' => $railStatus]) }}"
+                       class="{{ $railOn ? 'is-active' : '' }}">
+                        <span>
+                            <span class="wf-radio {{ $railOn ? 'wf-radio--on' : '' }}"></span>
+                            {{ __('theme.status_' . $railStatus) }}
+                        </span>
                         <span class="wf-muted">{{ $railCounts[$railStatus] }}</span>
-                    </span>
+                    </a>
                 </li>
             @endforeach
         </ul>
