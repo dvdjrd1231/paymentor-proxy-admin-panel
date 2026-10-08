@@ -12,6 +12,16 @@
     $currency = session('currency', config('settings.default_currency'));
     $credit = $creditsEnabled ? Auth::user()->credits()->where('currency_code', $currency)->first() : null;
 
+    // Core hides Request Cancellation for a one-time plan, and every daily and weekly
+    // proxy is one-time by design — that is what puts it under TermLimits. So the row the
+    // reference always shows was never drawn for exactly the products this shop sells
+    // (Leandro, 2026-10-08: "esta faltando API, Cancelation Request").
+    //
+    // Services\Cancel does not consult that flag: it records the request and the event hook
+    // takes it from there. So the condition here is the one that actually matters — not
+    // already cancelled, and nothing already asked for.
+    $canCancel = $service->status !== 'cancelled' && !$service->cancellation()->exists();
+
     $statusTone = match ($service->status) {
         'active' => 'wf-prod-status--active',
         'cancelled' => 'wf-prod-status--danger',
@@ -51,7 +61,7 @@
         <div class="wf-alert wf-alert--danger">{{ session('error') }}</div>
     @endif
 
-    <div class="wf-layout" x-data="{ pane: 'info' }">
+    <div class="wf-layout" x-data="{ pane: '{{ request('tab') ? 'module' : 'info' }}' }">
         {{-- ── Rail ────────────────────────────────────────────────────── --}}
         <div>
             @if ($creditsEnabled)
@@ -86,7 +96,7 @@
 
             {{-- Every module action as a row of its own, rather than a strip of buttons in
                  the main column. --}}
-            @if($service->cancellable || $service->upgradable || count($buttons) > 0)
+            @if($canCancel || $service->upgradable || count($buttons) > 0)
                 <div class="wf-panel wf-panel--brand">
                     <div class="wf-panel-heading">
                         <span><span class="wf-head-icon"><x-ri-tools-fill /></span>{{ __('services.actions') }}</span>
@@ -143,7 +153,7 @@
                             @endif
                         @endforeach
 
-                        @if($service->cancellable)
+                        @if($canCancel)
                             <li class="wf-rowaction">
                                 <button type="button" wire:click="$set('showCancel', true)">
                                     {{ __('services.request_cancellation') }}

@@ -25,10 +25,24 @@ class ProxyPanelController
 
     private function back(string $key, ?string $message = null)
     {
+        // Back to the page the customer was on, not to the service's front page. core binds
+        // its current view to ?tab=, so naming it here keeps the form, its result and the
+        // rail's highlight together — without it, saving a password dropped them on
+        // Information with the form gone, which reads as nothing having happened (Leandro,
+        // 2026-10-08: "nao esta funcionando").
+        $params = [$this->serviceId];
+
+        if ($this->tab !== null) {
+            $params['tab'] = $this->tab;
+        }
+
         return redirect()
-            ->route('services.show', $this->serviceId)
+            ->route('services.show', $params)
             ->with($key, $message ?? '');
     }
+
+    /** The management page a request came from, so the redirect can return to it. */
+    private ?string $tab = null;
 
     private int|string|null $serviceId = null;
 
@@ -57,6 +71,7 @@ class ProxyPanelController
     public function updateAuthIps(Request $request, Service $service)
     {
         $service = $this->resolve($service);
+        $this->tab = 'authips';
 
         // The form is one field with an address per line (Leandro, 2026-10-07). Split here,
         // before validation, so "max:3" and the per-address ip rule still do the work — the
@@ -82,6 +97,7 @@ class ProxyPanelController
     public function updatePassword(Request $request, Service $service)
     {
         $service = $this->resolve($service);
+        $this->tab = 'password';
 
         // The panel takes exactly 8 alphanumeric characters and refuses everything else, so
         // catch it here with a readable message rather than letting the panel answer.
@@ -95,6 +111,7 @@ class ProxyPanelController
     public function updateRotation(Request $request, Service $service)
     {
         $service = $this->resolve($service);
+        $this->tab = 'rotation';
 
         $validated = $request->validate([
             'minutes' => ['required', 'integer', 'min:0', 'max:10080'],
