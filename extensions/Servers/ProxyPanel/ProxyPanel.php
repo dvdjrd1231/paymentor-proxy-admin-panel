@@ -1079,9 +1079,24 @@ class ProxyPanel extends Server
         return ['proxies' => Endpoints::all($service)];
     }
 
-    /** The region the service was bought on, which the API reports and gates on. */
+    /**
+     * The region the service was bought on, which the API reports.
+     *
+     * The Region select is part of getCheckoutConfig(), so the customer's choice is kept as
+     * a service property — not as a product configurable option, which is where the WHMCS
+     * module read it from and where this first looked. There is not one configurable option
+     * in the catalogue, so that lookup could never match and every `a=info` call reported
+     * `region: null`. The property is tried first; the option is kept as a fallback in case
+     * a product is ever given a Region option in the WHMCS style.
+     */
     public function regionOf(Service $service): ?string
     {
+        $property = $this->prop($service, 'Region');
+
+        if (filled($property)) {
+            return $property;
+        }
+
         foreach ($service->configs as $config) {
             if (($config->configOption?->name ?? null) === 'Region') {
                 return $config->configValue?->name;
