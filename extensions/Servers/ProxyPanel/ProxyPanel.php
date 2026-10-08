@@ -940,11 +940,15 @@ class ProxyPanel extends Server
         $call = fn (string $query): string => $base . '?id=' . $id . '&key=' . $key . '&a=' . $query;
 
         return [
+            // Row order is the WHMCS module's own (templates/api.tpl), not alphabetical and
+            // not grouped: a customer who knows that page finds each action where it was.
+            // Its seven actions are listed, as there — `version` and `reboot_hard` are
+            // served, and were undocumented on that page too.
             ['a' => 'info', 'what' => __('proxypanel.api_info'), 'example' => $call('info')],
-            ['a' => 'proxies', 'what' => __('proxypanel.api_proxies'), 'example' => $call('proxies')],
             ['a' => 'rotate', 'what' => __('proxypanel.api_rotate'), 'example' => $call('rotate')],
             ['a' => 'setrotate', 'what' => __('proxypanel.api_setrotate'), 'example' => $call('setrotate&minutes=10')],
             ['a' => 'authip', 'what' => __('proxypanel.api_authip'), 'example' => $call('authip&ips[]=1.1.1.1&ips[]=8.8.8.8')],
+            ['a' => 'proxies', 'what' => __('proxypanel.api_proxies'), 'example' => $call('proxies')],
             ['a' => 'password', 'what' => __('proxypanel.api_password'), 'example' => $call('password&password=abcd1234')],
             ['a' => 'reboot', 'what' => __('proxypanel.api_reboot'), 'example' => $call('reboot')],
         ];

@@ -567,19 +567,36 @@ request, so the route in `extensions/Servers/ProxyPanel/routes.php` was unreacha
 upstream owns this path, so an upgrade has nothing to conflict with; it is listed here
 because it lives inside core's `public/`.
 
-**Contents:** one line of substance —
+**Contents:** three lines of substance —
 
 ```php
+$_SERVER['SCRIPT_NAME'] = $_SERVER['PHP_SELF'] = '/index.php';
+$_SERVER['SCRIPT_FILENAME'] = dirname(__DIR__, 3) . '/index.php';
+
 require __DIR__ . '/../../../index.php';
 ```
+
+The first two lines are not decoration. Symfony derives the application's base URL from
+`SCRIPT_NAME` and strips it from the request URI to get the path it routes on. Left as FPM
+sets it, that base URL is this very file, so the path came out as `/` — every API call was
+answered by the dashboard with a **302 to `/login`**, not a word of JSON, and the route was
+never consulted. Presenting the front controller instead leaves the full URI as the path.
 
 **Notes:**
 - The file exists only to be found by nginx. Laravel then routes on the request URI as
   normal, and the logic lives in `ProxyPanelApiController`; nothing is duplicated here.
 - The alternative was an nginx `location` block, which would have to live in the Paymenter
   image or a bind-mounted config — more moving parts, and lost on an image change.
+- **The Docker deployment needs `./public/modules:/app/public/modules:ro` in
+  `docker-compose.vps.yml`.** core's `public/` is baked into the image and is not a mounted
+  volume, so without that mount the file exists on the host and not in the container.
+  Adding or changing a mount needs `docker compose -f docker-compose.vps.yml up -d paymenter`
+  to recreate the container — `scripts/deploy.sh` alone will not pick it up.
 - Impact if missing after an upgrade: **every customer API call returns "File not found."**
   The client area is unaffected, so this fails quietly from the shop's point of view.
+- Verified live on 2026-10-08: a call with no parameters answers
+  `{"status":"error","reason":"Service id not found"}` and a valid key returns the service's
+  real region, endpoint and credentials.
 
 ---
 
