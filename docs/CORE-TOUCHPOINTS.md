@@ -552,4 +552,35 @@ Every Livewire round-trip carrying a plan threw, and **Continue on the order for
 
 ---
 
+## 13. `public/modules/servers/proxypanel/api.php` (**applied**)
+
+**Why:** customers' own scripts call the proxy API at `/modules/servers/proxypanel/api.php`,
+the address the WHMCS module served it from. Leandro confirmed on 2026-10-08 that this is in
+use — "sim, alguns clientes usam essa API" — and must not change: "tudo igual ao whmcs".
+A different address would break every customer script on migration day.
+
+nginx hands anything matching `\.php$` to PHP-FPM, which resolves it against the filesystem.
+With no file at that path FPM answers **"File not found."** and Laravel never sees the
+request, so the route in `extensions/Servers/ProxyPanel/routes.php` was unreachable.
+
+**File:** `public/modules/servers/proxypanel/api.php` — **added**, not edited. Nothing
+upstream owns this path, so an upgrade has nothing to conflict with; it is listed here
+because it lives inside core's `public/`.
+
+**Contents:** one line of substance —
+
+```php
+require __DIR__ . '/../../../index.php';
+```
+
+**Notes:**
+- The file exists only to be found by nginx. Laravel then routes on the request URI as
+  normal, and the logic lives in `ProxyPanelApiController`; nothing is duplicated here.
+- The alternative was an nginx `location` block, which would have to live in the Paymenter
+  image or a bind-mounted config — more moving parts, and lost on an image change.
+- Impact if missing after an upgrade: **every customer API call returns "File not found."**
+  The client area is unaffected, so this fails quietly from the shop's point of view.
+
+---
+
 _(Everything else is implemented via extensions, themes, events, or configuration.)_
