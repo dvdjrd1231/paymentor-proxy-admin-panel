@@ -104,6 +104,13 @@ services:
       #                        logging.channels.daily.permission was set in the repo and
       #                        read back as null in the container, which left the daily log
       #                        unwritable and 500'd the order pages once a day.
+      #   public/modules/    - the entry point customers' API scripts hit. nginx sends
+      #                        anything ending .php to PHP-FPM, which resolves it on disk,
+      #                        so without a real file there every API call answers "File
+      #                        not found." and the route is never reached. Only this
+      #                        subdirectory is mounted: public/ also holds the image's
+      #                        compiled assets, and mounting the lot would shadow them.
+      - "./public/modules:/app/public/modules:ro"
       - "./config:/app/config"
       - appvar:/app/var               # persists .env + APP_KEY across restarts
       - ./storage/logs:/app/storage/logs
