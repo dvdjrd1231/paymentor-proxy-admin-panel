@@ -451,6 +451,26 @@
     .wf-api-table td { vertical-align: top; font-size: .82rem; }
     .wf-api-table td.wf-kv-value { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
 
+    /* The worked a=info response above the action table, in the reference's tinted band. */
+    .wf-api-sample {
+        margin: .9rem 0; padding: .9rem 1rem;
+        background: var(--wf-notice-bg, #fdf2f5); border: 1px solid var(--wf-notice-border, #f3cdd8);
+        border-radius: 6px; overflow-x: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: .8rem; line-height: 1.5; color: var(--brand); white-space: pre;
+    }
+    .wf-api-rule { margin: 1.2rem 0; border: 0; border-top: 1px solid var(--wf-border, #e6e6e6); }
+
+    /* ProxyList: the whole list in one box the customer can select in a single click. */
+    .wf-proxy-dump {
+        width: 100%; margin-top: .4rem; padding: .6rem .75rem; resize: vertical;
+        border: 1px solid var(--wf-border, #e6e6e6); border-radius: 6px; background: #fff;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: .82rem; line-height: 1.45; color: var(--brand);
+    }
+    /* The page's Export sits under the list, full width, as the reference has it. */
+    a.wf-btn--block.wf-action-go { display: block; text-align: center; margin-top: .9rem; }
+
     .wf-ips { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; line-height: 1.7; resize: vertical; }
     .wf-action-go { width: 100%; margin-top: .75rem; text-align: center; text-transform: uppercase; }
 

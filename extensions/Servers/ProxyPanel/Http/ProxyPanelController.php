@@ -134,6 +134,20 @@ class ProxyPanelController
         return $this->run($service, 'reboot', [], 'proxypanel.reboot_done');
     }
 
+    /**
+     * Rotate, once the customer has confirmed it on its own page.
+     *
+     * As with reboot, the raw rotate() is called rather than clientRotate(): run() already
+     * turns a refusal into a flash, and the wrapper would add a second one.
+     */
+    public function rotate(Request $request, Service $service)
+    {
+        $service = $this->resolve($service);
+        $this->tab = 'rotate';
+
+        return $this->run($service, 'rotate', [], 'proxypanel.rotate_done');
+    }
+
     /** Download the proxy list as a plain-text file. */
     public function export(Service $service)
     {

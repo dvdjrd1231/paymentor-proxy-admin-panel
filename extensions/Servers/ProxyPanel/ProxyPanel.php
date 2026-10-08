@@ -91,9 +91,6 @@ class ProxyPanel extends Server
     /** @var array<int, array<string, mixed>>|null memoised /v0/locations/list, all pages */
     private ?array $locationCatalogue = null;
 
-    /** Endpoints listed on the management page before it defers to the export. */
-    private const MANAGE_PREVIEW = 100;
-
     /**
      * The customer-facing management pages, each a sidebar entry on the service page and a
      * blade of the same name under resources/views. The first is the default, which is what
@@ -101,7 +98,7 @@ class ProxyPanel extends Server
      *
      * @var list<string>
      */
-    private const VIEWS = ['proxies', 'authips', 'rotation', 'password', 'reboot', 'api'];
+    private const VIEWS = ['proxies', 'rotate', 'authips', 'rotation', 'password', 'reboot', 'api'];
 
     private const LOG_CHANNEL = 'stack';
 
@@ -845,21 +842,28 @@ class ProxyPanel extends Server
         // single combined screen (Leandro, 2026-10-06).
         $actions[] = ['type' => 'view', 'name' => 'proxies', 'label' => __('proxypanel.menu_proxy_list')];
 
-        if ($this->truthy($settings['allow_rotation'] ?? false)) {
-            $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_rotate'), 'function' => 'clientRotate'];
-        }
+        // A page, not a button. The reference's rotate.tpl asks "are you sure you want to
+        // change your IPv6?" and only then offers the button — rotation is not undoable,
+        // and a customer who meant to open a settings page should not have rotated by
+        // reaching it (Leandro, 2026-10-08: "deixar desse jeito").
+        //
+        // The entry is unconditional, as it is there: the module always renders the page
+        // and hides only its button when the product forbids rotation. Gating the entry
+        // instead is what made "Rotate NOW!" vanish from products with allow_rotation off,
+        // where the reference still shows the page and explains itself.
+        $actions[] = ['type' => 'view', 'name' => 'rotate', 'label' => __('proxypanel.action_rotate')];
 
         $actions[] = ['type' => 'view', 'name' => 'authips', 'label' => __('proxypanel.menu_auth_ips')];
         $actions[] = ['type' => 'view', 'name' => 'rotation', 'label' => __('proxypanel.menu_rotation')];
         $actions[] = ['type' => 'view', 'name' => 'password', 'label' => __('proxypanel.menu_password')];
-        // A page, not a button: the reference asks before it takes the proxies down, and
-        // a reboot that happens on the first click is not undoable (Leandro, 2026-10-08).
+        // A page for the same reason as rotate: a reboot on the first click is not undoable.
         $actions[] = ['type' => 'view', 'name' => 'reboot', 'label' => __('proxypanel.action_reboot')];
         $actions[] = ['type' => 'view', 'name' => 'api', 'label' => __('proxypanel.api_title')];
 
-        // Not on the reference, and kept anyway: it is the only way for a customer to pull
-        // fresh state from the panel when provisioning has lagged.
-        $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_sync'), 'function' => 'clientSync'];
+        // Sync is deliberately absent. It was ours, not the reference's, and it left the
+        // rail with an entry the reference does not have, sitting between API and Request
+        // Cancellation (Leandro, 2026-10-08: "organizar menu"). Admin can still sync a
+        // service, and the panel's callback and the cron do it unattended.
 
         return $actions;
     }
@@ -909,10 +913,6 @@ class ProxyPanel extends Server
         return view('servers.proxypanel::' . $page, [
             'service' => $service,
             'endpoints' => $this->endpointList($service),
-            // The table shows at most MANAGE_PREVIEW rows; the total is what tells the
-            // customer whether they are looking at all of them.
-            'endpointTotal' => Endpoints::count($service),
-            'endpointPreview' => self::MANAGE_PREVIEW,
             'authIps' => array_filter(array_map('trim', explode(',', (string) $this->prop($service, self::AUTH_IPS_KEY)))),
             'maxAuthIps' => min(self::MAX_AUTH_IPS, (int) ($settings['auth_ips'] ?? self::MAX_AUTH_IPS)),
             'rotationTime' => $this->prop($service, self::ROTATION_TIME_KEY),
@@ -923,6 +923,8 @@ class ProxyPanel extends Server
             'username' => $this->prop($service, self::USERNAME_KEY),
             'apiKey' => $this->prop($service, self::API_KEY_KEY),
             'apiActions' => $this->apiActions($service),
+            'apiExample' => $this->apiExample($service),
+            'apiSample' => $this->apiSample($service),
         ])->render();
     }
 
@@ -931,6 +933,61 @@ class ProxyPanel extends Server
      *
      * The examples carry the service's own id and key, so they can be pasted and run.
      */
+    /** The one-line `a=info` request the API page quotes above its example response. */
+    private function apiExample(Service $service): string
+    {
+        return url('/modules/servers/proxypanel/api.php')
+            . '?id=' . $service->id
+            . '&key=' . ($this->prop($service, self::API_KEY_KEY) ?: 'YOUR-API-KEY')
+            . '&a=info';
+    }
+
+    /**
+     * A worked `a=info` response, built from this service's own values.
+     *
+     * The reference prints a fixed sample with invented values. Using the real ones costs
+     * nothing and means a customer can see their own region and port range before writing
+     * a line of code — and that what the page promises is what the endpoint returns.
+     */
+    private function apiSample(Service $service): string
+    {
+        // Host and port range come from our own endpoints table, not from the panel: this
+        // runs on every render of the page, and a sample is not worth an HTTP call that can
+        // hang or fail. `a=info` is the live reading; this is what it will look like.
+        $endpoints = Endpoints::all($service);
+
+        $host = null;
+        $ports = [];
+
+        foreach ($endpoints as $endpoint) {
+            $at = strrpos((string) $endpoint, ':');
+
+            if ($at === false) {
+                continue;
+            }
+
+            $host ??= substr((string) $endpoint, 0, $at);
+            $ports[] = (int) substr((string) $endpoint, $at + 1);
+        }
+
+        $sample = [
+            'status' => 'ok',
+            'region' => $this->regionOf($service) ?? 'Japan - Tokyo',
+            'server_ip' => $host ?: '123.123.123.123',
+            'first' => $ports ? min($ports) : 10000,
+            'last' => $ports ? max($ports) : 11499,
+            'username' => $this->prop($service, self::USERNAME_KEY) ?: 'username',
+            'password' => $this->prop($service, self::PASSWORD_KEY) ?: 'password',
+            'rotation' => $this->prop($service, self::ROTATION_TIME_KEY),
+            'authips' => array_values(array_filter(array_map(
+                'trim',
+                explode(',', (string) $this->prop($service, self::AUTH_IPS_KEY))
+            ))),
+        ];
+
+        return json_encode($sample, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    }
+
     private function apiActions(Service $service): array
     {
         $base = url('/modules/servers/proxypanel/api.php');
@@ -954,10 +1011,16 @@ class ProxyPanel extends Server
         ];
     }
 
-    /** `ip:port` endpoints for the management table. */
+    /**
+     * Every `ip:port` endpoint, for the ProxyList textarea.
+     *
+     * Not capped. The reference prints the whole list into its textarea, and the point of
+     * that page is that a customer can select all of it at once — a capped list silently
+     * withholds most of a large order, which is what the preview table did.
+     */
     private function endpointList(Service $service): array
     {
-        return Endpoints::all($service, self::MANAGE_PREVIEW);
+        return Endpoints::all($service);
     }
 
     // ── Client-initiated actions (called via this extension's routes) ────────

@@ -1,17 +1,24 @@
-{{-- API — the endpoints a customer's own script can call, at the address the WHMCS module
-     served them from, so scripts written against it keep working. --}}
+{{-- API — the reference's api.tpl, which Leandro asked for unchanged on 2026-10-08
+     ("deixar API desse jeito"): the heading, the three lines telling a customer where the
+     key and the service id come from, a worked `a=info` response, then the action table.
+
+     The example response is the real shape this app returns, not the reference's sample
+     text — same fields, same order. The service's own id and key are already in every
+     example request, so there is no separate key field here, exactly as there. --}}
 <div class="wf-proxy-manage">
     @include('servers.proxypanel::partials.flash')
 
-    <h2 class="wf-action-title">{{ __('proxypanel.api_title') }}</h2>
+    <h2 class="wf-action-title">{{ __('proxypanel.api_heading') }}</h2>
 
-    @if ($apiKey)
-        <div class="wf-field">
-            <label for="api_key_value">{{ __('proxypanel.api_key') }}</label>
-            <input class="wf-input wf-input--block wf-ips" id="api_key_value" type="text"
-                   value="{{ $apiKey }}" readonly onclick="this.select()">
-        </div>
-    @endif
+    <p class="wf-section-note">{{ __('proxypanel.api_intro_key') }}</p>
+    <p class="wf-section-note">{{ __('proxypanel.api_intro_id') }}</p>
+    <p class="wf-section-note">{{ __('proxypanel.api_intro_example') }} <code>{{ $apiExample }}</code></p>
+
+    <pre class="wf-api-sample">{{ $apiSample }}</pre>
+
+    <p class="wf-section-note">{{ __('proxypanel.api_intro_json') }}</p>
+
+    <hr class="wf-api-rule">
 
     <div class="wf-table-wrap">
         <table class="wf-table wf-api-table">

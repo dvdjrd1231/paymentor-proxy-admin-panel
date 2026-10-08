@@ -40,9 +40,24 @@ return [
 Are you sure you want to Reboot?',
     'reboot_done' => 'Reboot requested.',
 
+    // Rotate NOW! — its own confirmation page, wording from the reference's rotate.tpl.
+    'rotate_title' => 'Rotate NOW',
+    'rotate_warning' => 'This action will change all IPv6 assigned to your ports when clicking on "Rotate now".
+
+This means that the IPs for the proxies will only change the moment you enable this change to happen. That will cause less than 1-10 seconds of downtime, to assign new IPs to your Ports.
+
+Are you sure you want to change your IPv6?',
+    'action_rotate_confirm' => 'Rotate now',
+    'rotate_done' => 'Rotation requested.',
+
     // API page — the endpoints a customer's own script can call.
     'api_title' => 'API',
-    'api_action' => 'Action',
+    'api_heading' => 'API list with examples for managing your proxies',
+    'api_intro_key' => 'Every request has to be authenticated with a key. You can find your key on the service area page.',
+    'api_intro_id' => 'Every request needs your service ID. You can find it on the service area page.',
+    'api_intro_example' => 'Example GET request:',
+    'api_intro_json' => 'All responses are JSON encoded, with a status and a description.',
+    'api_action' => 'Action &a=',
     'api_description' => 'Description',
     'api_example' => 'Example request',
     'api_info' => 'Gets service information',
@@ -53,6 +68,8 @@ Are you sure you want to Reboot?',
     'api_password' => 'Sets a new password. It must be 8 symbols in length. Only alphanumeric characters',
     'api_reboot' => 'Reboot your proxy instance. Proxies will be unavailable for less than 5 minutes',
     'action_export' => 'Export proxy list',
+    // The ProxyList page's own button, which the reference labels with one word.
+    'action_export_short' => 'Export',
 
     // Errors shown to the customer
     'rotate_not_allowed' => 'Manual rotation is not available on this plan.',

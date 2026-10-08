@@ -1,59 +1,29 @@
-{{-- Proxy List — the reference's "Proxy List (download)" sidebar page. --}}
+{{-- ProxyList — the reference's proxies.tpl, which Leandro asked for unchanged on
+     2026-10-08 ("deixar deste jeito").
+
+     One textarea holding every endpoint, one per line, with a full-width Export beneath
+     it. Not a table: the point of this page is that the whole list can be selected and
+     copied in one gesture, which a table of rows cannot do. The table also showed only a
+     preview, so a customer with 31,500 proxies could not reach most of them without the
+     export — here they are all present and scrollable.
+
+     Readonly, because nothing on this page edits the list; `onclick="this.select()"` so a
+     single click takes the lot. --}}
 <div class="wf-proxy-manage">
     @include('servers.proxypanel::partials.flash')
 
-    <div class="wf-panel">
-        <div class="wf-panel-heading">
-            <span>{{ __('proxypanel.proxy_list') }}</span>
-            @if (count($endpoints))
-                <a class="wf-btn wf-btn--sm"
-                   href="{{ route('extensions.servers.proxypanel.export', $service) }}">
-                    {{ __('proxypanel.action_export') }}
-                </a>
-            @endif
-        </div>
+    <h2 class="wf-action-title">{{ __('proxypanel.proxy_list') }}</h2>
 
-        @if (count($endpoints))
-            <div class="wf-table-wrap">
-                <table class="wf-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>{{ __('proxypanel.endpoint') }}</th>
-                            <th>{{ __('proxypanel.proxy_username') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($endpoints as $i => $endpoint)
-                            <tr>
-                                <td>{{ $i + 1 }}</td>
-                                <td class="wf-kv-value">{{ $endpoint }}</td>
-                                <td class="wf-kv-value">{{ $username }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+    @if (count($endpoints))
+        <textarea class="wf-proxy-dump" rows="20" readonly
+                  aria-label="{{ __('proxypanel.proxy_list') }}"
+                  onclick="this.select()">{{ implode("\n", $endpoints) }}</textarea>
 
-            {{--
-                A service can hold 31,500 proxies, so the table shows the first
-                `endpointPreview` of them. Saying so — with the real total and a route to the
-                rest — is the difference between a deliberate preview and a list that looks
-                like it lost most of the customer's order.
-            --}}
-            @if ($endpointTotal > count($endpoints))
-                <div class="wf-panel-footnote">
-                    {{ __('proxypanel.showing_preview', [
-                        'shown' => number_format(count($endpoints)),
-                        'total' => number_format($endpointTotal),
-                    ]) }}
-                    <a href="{{ route('extensions.servers.proxypanel.export', $service) }}">
-                        {{ __('proxypanel.action_export') }}
-                    </a>
-                </div>
-            @endif
-        @else
-            <div class="wf-empty">{{ __('proxypanel.no_proxies') }}</div>
-        @endif
-    </div>
+        <a class="wf-btn wf-btn--block wf-action-go"
+           href="{{ route('extensions.servers.proxypanel.export', $service) }}">
+            {{ __('proxypanel.action_export_short') }}
+        </a>
+    @else
+        <div class="wf-empty">{{ __('proxypanel.no_proxies') }}</div>
+    @endif
 </div>

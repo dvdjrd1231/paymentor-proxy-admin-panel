@@ -64,4 +64,5 @@ Route::middleware(['web', 'auth'])
         Route::post('password', [ProxyPanelController::class, 'updatePassword'])->name('password');
         Route::post('rotation', [ProxyPanelController::class, 'updateRotation'])->name('rotation');
         Route::post('reboot', [ProxyPanelController::class, 'reboot'])->name('reboot');
+        Route::post('rotate', [ProxyPanelController::class, 'rotate'])->name('rotate');
     });
