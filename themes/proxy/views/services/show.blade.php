@@ -28,6 +28,36 @@
         default => 'wf-prod-status--warning',
     };
 
+    // How long a fixed-term service has left (Leandro, 2026-10-08: "preciso da informacao
+    // onde exiba o tempo restante em que o servico permanecera ativo, principalmente para
+    // servicos nao recorrentes"). Daily and weekly proxies are one-time plans, so they have
+    // no Next Due Date to read a remaining time from — TermLimits keeps their clock, and
+    // its open row is the only place the answer exists.
+    //
+    // Guarded by class_exists: the theme must still render with TermLimits turned off, and
+    // an extension can be disabled from Admin at any time.
+    $termEndsAt = null;
+
+    if ($service->status === 'active' && class_exists(\Paymenter\Extensions\Others\TermLimits\Models\ServiceTerm::class)) {
+        try {
+            $termEndsAt = \Paymenter\Extensions\Others\TermLimits\Models\ServiceTerm::query()
+                ->where('service_id', $service->id)
+                ->whereNull('ended_at')
+                ->orderByDesc('id')
+                ->first()?->ends_at;
+        } catch (\Throwable $e) {
+            // The table is gone because the extension's migrations were rolled back. The
+            // page is worth more than the row: show everything else rather than 500.
+            $termEndsAt = null;
+        }
+    }
+
+    // Past its moment the sweep has not caught up yet; counting down from a negative is
+    // worse than saying nothing.
+    if ($termEndsAt && $termEndsAt->isPast()) {
+        $termEndsAt = null;
+    }
+
     // The gateway the service was actually paid through, which is what the reference shows
     // as Payment Method. Nothing is invented when it has never been paid.
     $paymentMethod = null;
@@ -226,6 +256,36 @@
                         <span class="wf-fact-label">{{ __('theme.payment_method') }}</span>
                         <span class="wf-fact-value">{{ $paymentMethod ?: '-' }}</span>
                     </div>
+                    @if ($termEndsAt)
+                        {{-- A fixed-term service states what it has left, since its
+                             Next Due Date is empty by design. Rendered once from the
+                             server's own clock, then ticked in the browser so it stays
+                             true without a reload. --}}
+                        <div class="wf-fact wf-fact--term"
+                             x-data="{
+                                 left: {{ max(0, $termEndsAt->getTimestamp() - now()->getTimestamp()) }},
+                                 get parts() {
+                                     const s = Math.max(0, this.left);
+                                     return [
+                                         [Math.floor(s / 86400), '{{ __('theme.term_days') }}'],
+                                         [Math.floor(s / 3600) % 24, '{{ __('theme.term_hours') }}'],
+                                         [Math.floor(s / 60) % 60, '{{ __('theme.term_minutes') }}'],
+                                         [s % 60, '{{ __('theme.term_seconds') }}'],
+                                     ];
+                                 },
+                             }"
+                             x-init="setInterval(() => { if (left > 0) left-- }, 1000)">
+                            <span class="wf-fact-label">{{ __('theme.time_remaining') }}</span>
+                            <span class="wf-fact-value wf-term-clock">
+                                <template x-for="part in parts" :key="part[1]">
+                                    <span class="wf-term-part">
+                                        <b x-text="part[0]"></b> <i x-text="part[1]"></i>
+                                    </span>
+                                </template>
+                            </span>
+                            <span class="wf-fact-sub">{{ $termEndsAt->format('M d, Y H:i') }}</span>
+                        </div>
+                    @endif
                 </div>
             </div>
 

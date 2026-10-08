@@ -170,6 +170,14 @@ return [
     'next_due_date' => 'Next Due Date',
     'payment_method' => 'Payment Method',
 
+    // How long a fixed-term service has left. Daily and weekly proxies are one-time plans
+    // with no Next Due Date, so without this the page states no end at all.
+    'time_remaining' => 'Time Remaining',
+    'term_days' => 'Days',
+    'term_hours' => 'Hours',
+    'term_minutes' => 'Minutes',
+    'term_seconds' => 'Seconds',
+
     // Register — side rail
     'already_registered' => 'Already Registered?',
     'already_registered_help' => 'Already registered with us? If so, click the button below to login to our client area from where you can manage your account.',

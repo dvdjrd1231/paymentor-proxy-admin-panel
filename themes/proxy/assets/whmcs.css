@@ -376,6 +376,18 @@
     .wf-fact-label { display: block; color: var(--brand); font-size: 1.05rem; }
     .wf-fact-value { display: block; color: var(--brand); font-size: .9rem; margin-top: .2rem; }
 
+    /* Time Remaining: the four units on one line, the number carrying the weight and the
+       unit word beside it, with the exact moment underneath in a quieter tone. Declared
+       after .wf-fact-value so the two-class selector is not needed to beat it. */
+    .wf-term-clock {
+        display: flex; flex-wrap: wrap; justify-content: center;
+        gap: .15rem .6rem; margin-top: .3rem;
+    }
+    .wf-term-part { white-space: nowrap; font-size: .9rem; }
+    .wf-term-part b { font-weight: 700; font-style: normal; }
+    .wf-term-part i { font-style: normal; opacity: .75; }
+    .wf-fact-sub { display: block; margin-top: .25rem; font-size: .78rem; opacity: .6; color: var(--brand); }
+
     /* A module action as a rail row: the control is a <button> because it is wired to
        Livewire, but it has to read as the links above it. */
     .wf-rowaction button {
