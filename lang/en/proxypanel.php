@@ -39,6 +39,19 @@ return [
 
 Are you sure you want to Reboot?',
     'reboot_done' => 'Reboot requested.',
+
+    // API page — the endpoints a customer's own script can call.
+    'api_title' => 'API',
+    'api_action' => 'Action',
+    'api_description' => 'Description',
+    'api_example' => 'Example request',
+    'api_info' => 'Gets service information',
+    'api_proxies' => 'Retrieve list with proxies',
+    'api_rotate' => 'Rotate NOW',
+    'api_setrotate' => 'Sets rotation time. To disable rotation provide 0 for the minutes parameter',
+    'api_authip' => 'Sets/Clears authorized IPs. Provide an empty parameter to remove all authorized IPs',
+    'api_password' => 'Sets a new password. It must be 8 symbols in length. Only alphanumeric characters',
+    'api_reboot' => 'Reboot your proxy instance. Proxies will be unavailable for less than 5 minutes',
     'action_export' => 'Export proxy list',
 
     // Errors shown to the customer

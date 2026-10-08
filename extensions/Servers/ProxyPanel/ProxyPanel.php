@@ -101,7 +101,7 @@ class ProxyPanel extends Server
      *
      * @var list<string>
      */
-    private const VIEWS = ['proxies', 'authips', 'rotation', 'password', 'reboot'];
+    private const VIEWS = ['proxies', 'authips', 'rotation', 'password', 'reboot', 'api'];
 
     private const LOG_CHANNEL = 'stack';
 
@@ -855,6 +855,7 @@ class ProxyPanel extends Server
         // A page, not a button: the reference asks before it takes the proxies down, and
         // a reboot that happens on the first click is not undoable (Leandro, 2026-10-08).
         $actions[] = ['type' => 'view', 'name' => 'reboot', 'label' => __('proxypanel.action_reboot')];
+        $actions[] = ['type' => 'view', 'name' => 'api', 'label' => __('proxypanel.api_title')];
 
         // Not on the reference, and kept anyway: it is the only way for a customer to pull
         // fresh state from the panel when provisioning has lagged.
@@ -921,7 +922,32 @@ class ProxyPanel extends Server
             'canRotate' => $this->truthy($settings['allow_rotation'] ?? false),
             'username' => $this->prop($service, self::USERNAME_KEY),
             'apiKey' => $this->prop($service, self::API_KEY_KEY),
+            'apiActions' => $this->apiActions($service),
         ])->render();
+    }
+
+    /**
+     * What the customer API offers, written against the endpoint this app actually serves.
+     *
+     * The examples carry the service's own id and key, so they can be pasted and run.
+     */
+    private function apiActions(Service $service): array
+    {
+        $base = url('/modules/servers/proxypanel/api.php');
+        $id = $service->id;
+        $key = $this->prop($service, self::API_KEY_KEY) ?: 'YOUR-API-KEY';
+
+        $call = fn (string $query): string => $base . '?id=' . $id . '&key=' . $key . '&a=' . $query;
+
+        return [
+            ['a' => 'info', 'what' => __('proxypanel.api_info'), 'example' => $call('info')],
+            ['a' => 'proxies', 'what' => __('proxypanel.api_proxies'), 'example' => $call('proxies')],
+            ['a' => 'rotate', 'what' => __('proxypanel.api_rotate'), 'example' => $call('rotate')],
+            ['a' => 'setrotate', 'what' => __('proxypanel.api_setrotate'), 'example' => $call('setrotate&minutes=10')],
+            ['a' => 'authip', 'what' => __('proxypanel.api_authip'), 'example' => $call('authip&ips[]=1.1.1.1&ips[]=8.8.8.8')],
+            ['a' => 'password', 'what' => __('proxypanel.api_password'), 'example' => $call('password&password=abcd1234')],
+            ['a' => 'reboot', 'what' => __('proxypanel.api_reboot'), 'example' => $call('reboot')],
+        ];
     }
 
     /** `ip:port` endpoints for the management table. */
@@ -1019,6 +1045,50 @@ class ProxyPanel extends Server
 
             return null;
         }
+    }
+
+    /**
+     * What the customer API reports for `a=info`, in the field names the WHMCS module used.
+     *
+     * Read live from the panel, as that module did: a customer calling the API wants the
+     * state now, not whatever was last cached here.
+     */
+    public function apiInfo(Service $service, $settings = [], $properties = []): array
+    {
+        $data = $this->request('get', '/' . $this->requireRemoteId($service));
+        $payload = is_array($data['data'] ?? null) ? $data['data'] : $data;
+
+        return [
+            'region' => $this->regionOf($service),
+            'server_ip' => $payload['ip'] ?? null,
+            'first' => $payload['first'] ?? null,
+            'last' => $payload['last'] ?? null,
+            'username' => $payload['username'] ?? $this->prop($service, self::USERNAME_KEY),
+            'password' => $payload['password'] ?? $this->prop($service, self::PASSWORD_KEY),
+            'rotation' => $payload['rotation'] ?? $this->prop($service, self::ROTATION_TIME_KEY),
+            'authips' => $payload['auth_ips'] ?? array_values(array_filter(array_map(
+                'trim',
+                explode(',', (string) $this->prop($service, self::AUTH_IPS_KEY))
+            ))),
+        ];
+    }
+
+    /** The "ip:port" list for `a=proxies`, the same shape the WHMCS module returned. */
+    public function apiProxies(Service $service, $settings = [], $properties = []): array
+    {
+        return ['proxies' => Endpoints::all($service)];
+    }
+
+    /** The region the service was bought on, which the API reports and gates on. */
+    public function regionOf(Service $service): ?string
+    {
+        foreach ($service->configs as $config) {
+            if (($config->configOption?->name ?? null) === 'Region') {
+                return $config->configValue?->name;
+            }
+        }
+
+        return null;
     }
 
     public function syncStatus(Service $service, $settings = [], $properties = [])

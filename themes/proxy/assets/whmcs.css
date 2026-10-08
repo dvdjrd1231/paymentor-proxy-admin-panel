@@ -434,6 +434,11 @@
     .wf-input--block { width: 100%; }
     /* The IP list is data, not prose: a fixed-width face lines the addresses up and makes a
        typo visible, and it stays resizable because three short lines is a guess. */
+    /* The API table: addresses and action names are data, so they are set in a fixed-width
+       face and allowed to wrap rather than widening the page. */
+    .wf-api-table td { vertical-align: top; font-size: .82rem; }
+    .wf-api-table td.wf-kv-value { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+
     .wf-ips { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; line-height: 1.7; resize: vertical; }
     .wf-action-go { width: 100%; margin-top: .75rem; text-align: center; text-transform: uppercase; }
 

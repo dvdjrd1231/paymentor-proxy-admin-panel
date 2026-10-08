@@ -43,6 +43,15 @@ Route::get('/extensions/proxypanel/flags.woff2', function () {
     ]);
 })->name('extensions.servers.proxypanel.flagfont');
 
+// The customer API, at the address the WHMCS module served it from, because customers'
+// scripts already call it (Leandro, 2026-10-08: "tudo igual ao whmcs"). Authenticated by the
+// service's own API key, so no session and no CSRF — and throttled, which the module was not:
+// a key-authenticated public endpoint should not accept unlimited guesses.
+Route::match(['get', 'post'], '/modules/servers/proxypanel/api.php',
+    [\Paymenter\Extensions\Servers\ProxyPanel\Http\ProxyPanelApiController::class, 'handle'])
+    ->middleware('throttle:60,1')
+    ->name('extensions.servers.proxypanel.api');
+
 // Customer → Paymenter. Core's service page can only call zero-argument extension
 // functions, so the management forms post here. The controller authorizes each request
 // against the Service policy on top of `web` + `auth`.
