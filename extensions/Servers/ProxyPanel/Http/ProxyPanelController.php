@@ -120,6 +120,20 @@ class ProxyPanelController
         return $this->run($service, 'clientUpdateRotation', [(int) $validated['minutes']], 'proxypanel.rotation_updated');
     }
 
+    /**
+     * Reboot, once the customer has confirmed it on its own page.
+     *
+     * The raw reboot() is called rather than clientReboot(): run() already turns a refusal
+     * into a flash, and the wrapper would add a second one.
+     */
+    public function reboot(Request $request, Service $service)
+    {
+        $service = $this->resolve($service);
+        $this->tab = 'reboot';
+
+        return $this->run($service, 'reboot', [], 'proxypanel.reboot_done');
+    }
+
     /** Download the proxy list as a plain-text file. */
     public function export(Service $service)
     {

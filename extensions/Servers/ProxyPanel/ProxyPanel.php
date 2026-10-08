@@ -101,7 +101,7 @@ class ProxyPanel extends Server
      *
      * @var list<string>
      */
-    private const VIEWS = ['proxies', 'authips', 'rotation', 'password'];
+    private const VIEWS = ['proxies', 'authips', 'rotation', 'password', 'reboot'];
 
     private const LOG_CHANNEL = 'stack';
 
@@ -852,7 +852,9 @@ class ProxyPanel extends Server
         $actions[] = ['type' => 'view', 'name' => 'authips', 'label' => __('proxypanel.menu_auth_ips')];
         $actions[] = ['type' => 'view', 'name' => 'rotation', 'label' => __('proxypanel.menu_rotation')];
         $actions[] = ['type' => 'view', 'name' => 'password', 'label' => __('proxypanel.menu_password')];
-        $actions[] = ['type' => 'button', 'label' => __('proxypanel.action_reboot'), 'function' => 'clientReboot'];
+        // A page, not a button: the reference asks before it takes the proxies down, and
+        // a reboot that happens on the first click is not undoable (Leandro, 2026-10-08).
+        $actions[] = ['type' => 'view', 'name' => 'reboot', 'label' => __('proxypanel.action_reboot')];
 
         // Not on the reference, and kept anyway: it is the only way for a customer to pull
         // fresh state from the panel when provisioning has lagged.
@@ -996,11 +998,6 @@ class ProxyPanel extends Server
     public function clientRotate(Service $service, $settings = [], $properties = [])
     {
         return $this->withoutBlowingUp(fn () => $this->rotate($service, $settings, $properties));
-    }
-
-    public function clientReboot(Service $service, $settings = [], $properties = [])
-    {
-        return $this->withoutBlowingUp(fn () => $this->reboot($service, $settings, $properties));
     }
 
     public function clientSync(Service $service, $settings = [], $properties = [])

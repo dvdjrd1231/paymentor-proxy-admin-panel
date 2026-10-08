@@ -54,4 +54,5 @@ Route::middleware(['web', 'auth'])
         Route::post('auth-ips', [ProxyPanelController::class, 'updateAuthIps'])->name('auth-ips');
         Route::post('password', [ProxyPanelController::class, 'updatePassword'])->name('password');
         Route::post('rotation', [ProxyPanelController::class, 'updateRotation'])->name('rotation');
+        Route::post('reboot', [ProxyPanelController::class, 'reboot'])->name('reboot');
     });

@@ -33,6 +33,12 @@ return [
     'action_done' => 'Done.',
     'action_rotate' => 'Rotate NOW!',
     'action_reboot' => 'Reboot',
+    'action_reboot_confirm' => 'REBOOT',
+    'reboot_title' => 'Reboot your server',
+    'reboot_warning' => 'This action will Reboot the proxies will be down for less than 5 minutes.
+
+Are you sure you want to Reboot?',
+    'reboot_done' => 'Reboot requested.',
     'action_export' => 'Export proxy list',
 
     // Errors shown to the customer
